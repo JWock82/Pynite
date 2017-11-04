@@ -18,10 +18,8 @@ def FER_PtLoad(P, x, L):
     FER = np.zeros((6, 1))
     
     # Populate the fixed end reaction vector
-    FER[0, 0] = 0
     FER[1, 0] = P*b**2*(L+2*x)/L**3
     FER[2, 0] = P*x*b**2/L**2
-    FER[3, 0] = 0
     FER[4, 0] = P*x**2*(L+2*b)/L**3
     FER[5, 0] = -P*x**2*b/L**2
     
@@ -38,10 +36,8 @@ def FER_Moment(M, x, L):
     FER = np.zeros((6, 1))
     
     # Populate the fixed end reaction vector
-    FER[0, 0] = 0
     FER[1, 0] = M*(x**2+b**2-4*x*b-L**2)/L**3
     FER[2, 0] = -M*b*(2*x-b)/L**2
-    FER[3, 0] = 0
     FER[4, 0] = -M*(x**2+b**2-4*x*b-L**2)/L**3
     FER[5, 0] = -M*x*(2*b-x)/L**2
     
@@ -55,14 +51,12 @@ def FER_LinLoad(w1, w2, x1, x2, L):
     FER = np.zeros((6, 1))
     
     # Populate the fixed end reaction vector
-    FER[0, 0] = 0
     FER[1, 0] = (x1-x2)*(-3*L*(w1+w2)+w1*(2*x1+x2)+w2*(x1+2*x2))/(6*L)
     FER[2, 0] = -(x1-x2)*(12*w1*x1**3+3*w1*x2**3+3*w2*x1**3+12*w2*x2**3-30*L*w1*x1**2+
                           20*L**2*w1*x1-10*L*w1*x2**2-10*L*w2*x1**2+10*L**2*w1*x2+
                           10*L**2*w2*x1-30*L*w2*x2**2+20*L**2*w2*x2+6*w1*x1*x2**2+
                           9*w1*x1**2*x2+9*w2*x1*x2**2+6*w2*x1**2*x2-20*L*w1*x1*x2-
                           20*L*w2*x1*x2)/(60*L**2)
-    FER[3, 0] = 0
     FER[4, 0] = -(x1-x2)*(w1*(2*x1+x2)+w2*(x1+2*x2))/(6*L)
     FER[5, 0] = -(x1-x2)*(12*w1*x1**3+3*w1*x2**3+3*w2*x1**3+12*w2*x2**3-15*L*w1*x1**2-
                           5*L*w1*x2**2-5*L*w2*x1**2-15*L*w2*x2**2+6*w1*x1*x2**2+
@@ -79,11 +73,7 @@ def FER_AxialPtLoad(P, x, L):
     
     # Populate the fixed end reaction vector
     FER[0, 0] = -P*(L-x)/L
-    FER[1, 0] = 0
-    FER[2, 0] = 0
     FER[3, 0] = -P*x/L
-    FER[4, 0] = 0
-    FER[5, 0] = 0
     
     return FER
 
@@ -96,10 +86,6 @@ def FER_AxialLinLoad(p1, p2, x1, x2, L):
     
     # Populate the fixed end reaction vector
     FER[0, 0] = 1/(6*L)*(x1-x2)*(3*L*p1+3*L*p2-2*p1*x1-p1*x2-p2*x1-2*p2*x2)
-    FER[1, 0] = 0
-    FER[2, 0] = 0
     FER[3, 0] = 1/(6*L)*(x1-x2)*(2*p1*x1+p1*x2+p2*x1+2*p2*x2)
-    FER[4, 0] = 0
-    FER[5, 0] = 0
     
     return FER
