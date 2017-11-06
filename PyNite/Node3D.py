@@ -4,8 +4,6 @@ Created on Thu Nov  2 18:04:56 2017
 
 @author: D. Craig Brinck, SE
 """
-import numpy as np
-
   # %%      
 class Node3D():
     
