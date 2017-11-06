@@ -4,7 +4,7 @@ Created on Thu Nov  2 18:04:56 2017
 
 @author: D. Craig Brinck, SE
 """
-  # %%      
+# %%      
 class Node3D():
     
     def __init__(self, Name, X, Y, Z):
