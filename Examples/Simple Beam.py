@@ -35,5 +35,3 @@ SimpleBeam.Analyze()
 SimpleBeam.GetMember("M1").PlotShear("Fy")
 SimpleBeam.GetMember("M1").PlotMoment("Mz")
 SimpleBeam.GetMember("M1").PlotDeflection("dy")
-
-beam = SimpleBeam.GetMember("M1")
