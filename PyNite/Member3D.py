@@ -200,15 +200,15 @@ class Member3D():
             if ptLoad[0] == "Fx":
                 fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L))
             elif ptLoad[0] == "Fy":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, 1))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fy"))
             elif ptLoad[0] == "Fz":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, 2))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fz"))
             elif ptLoad[0] == "Mx":
                 fer = fer
             elif ptLoad[0] == "My":
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, 2))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "My"))
             elif ptLoad[0] == "Mz":     
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, 1))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "Mz"))
                 
         # Sum the fixed end reactions for the distributed loads
         for distLoad in self.DistLoads:
@@ -260,15 +260,15 @@ class Member3D():
             if ptLoad[0] == "Fx":
                 fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L))
             elif ptLoad[0] == "Fy":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, 1))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fy"))
             elif ptLoad[0] == "Fz":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, 2))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fz"))
             elif ptLoad[0] == "Mx":
                 fer = fer
             elif ptLoad[0] == "My":
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, 2))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "My"))
             elif ptLoad[0] == "Mz":     
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, 1))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "Mz"))
                 
         # Sum the fixed end reactions for the distributed loads
         for distLoad in self.DistLoads:
