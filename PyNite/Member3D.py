@@ -367,14 +367,14 @@ class Member3D():
     def F(self):
         
         # Calculate and return the global force vector
-        return matmul(self.T(), self.f())
+        return matmul(transpose(self.T()), self.f())
     
 #%% 
     # Global fixed end reaction vector
     def FER(self):
         
         # Calculate and return the fixed end reaction vector
-        return matmul(self.T(), self.fer())
+        return matmul(transpose(self.T()), self.fer())
 
 #%%
     def D(self):
