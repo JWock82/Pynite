@@ -50,7 +50,7 @@ class FEModel3D():
         self.__Nodes.append(newNode)
 
 #%%
-    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A):
+    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, origin=None):
         """
         Adds a new member to the model.
         
@@ -74,10 +74,12 @@ class FEModel3D():
             The polar moment of inertia of the member.
         A : number
             The cross-sectional area of the member.
+        origin : numpy.array(3)
+            A reference point in the member's ZX-plane, not colinear with the member (optional).
         """
         
         # Create a new member
-        newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A)
+        newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, origin)
         
         # Add the new member to the list
         self.__Members.append(newMember)
