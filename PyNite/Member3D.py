@@ -5,6 +5,7 @@ Created on Thu Nov  2 18:04:56 2017
 @author: D. Craig Brinck, SE
 """
 # %%
+import numpy as np
 from numpy import zeros, matrix, transpose, add, subtract, matmul, insert
 from numpy.linalg import inv
 from PyNite.BeamSegment import BeamSegment
@@ -17,7 +18,7 @@ class Member3D():
 
 #%%
     # Constructor
-    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A):
+    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, origin=None):
         
         self.Name = Name # A unique name for the member given by the user
         self.ID = None # Unique index number for the member assigned by the program
@@ -29,6 +30,8 @@ class Member3D():
         self.Iz = Iz # The z-axis moment of inertia
         self.J = J # The polar moment of inertia or torsional constant
         self.A = A # The cross-sectional area
+        self.__T = None # The transformation matrix; created on first use
+        self.origin = origin # A reference point in member-local zx-plane *** not colinear with member ***
         self.L = ((jNode.X-iNode.X)**2+(jNode.Y-iNode.Y)**2+(jNode.Z-iNode.Z)**2)**0.5 # Length of the element
         self.PtLoads = [] # A list of point loads & moments applied to the element (Direction, P, x) or (Direction, M, x)
         self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2)
@@ -288,52 +291,70 @@ class Member3D():
 
 #%%
     def d(self):
-       """
-       Returns the member's local displacement vector
-       """
+        """
+        Returns the member's local displacement vector
+        """
 
-       # Calculate and return the local displacement vector
-       return matmul(self.T(), self.D())
+        # Calculate and return the local displacement vector
+        return matmul(self.T(), self.D())
+
+#%%  
+    # Direction cosines for transformation matrix
+    def __direction_cosines(self):
+        if self.origin is not None:
+            r1 = np.asarray([self.iNode.X, self.iNode.Y, self.iNode.Z])
+            r2 = np.asarray([self.jNode.X, self.jNode.Y, self.jNode.Z])
+
+            i = r2 - r1
+            j = np.cross(r1 - self.origin, r2 - self.origin) # origin must not be colinear with the nodes
+            k = np.cross(i, j)
+
+            dirCos = np.matrix([i / np.linalg.norm(i), j / np.linalg.norm(j), k / np.linalg.norm(k)])
+        else:
+            x1 = self.iNode.X
+            x2 = self.jNode.X
+            y1 = self.iNode.Y
+            y2 = self.jNode.Y
+            z1 = self.iNode.Z
+            z2 = self.jNode.Z
+            L = self.L
+        
+            # Calculate direction cosines for the transformation matrix
+            l = (x2-x1)/L
+            m = (y2-y1)/L
+            n = (z2-z1)/L
+            D = (l**2+m**2)**0.5
+        
+            if l == 0 and m == 0 and n > 0:
+                dirCos = matrix([[0, 0, 1],
+                                 [0, 1, 0],
+                                 [-1, 0, 0]])
+            elif l == 0 and m == 0 and n < 0:
+                dirCos = matrix([[0, 0, -1],
+                                 [0, 1, 0],
+                                 [1, 0, 0]])
+            else:
+                dirCos = matrix([[l, m, n],
+                                 [-m/D, l/D, 0],
+                                 [-l*n/D, -m*n/D, D]])
+        return dirCos
         
 #%%  
     # Transformation matrix
     def T(self):
-        
-        x1 = self.iNode.X
-        x2 = self.jNode.X
-        y1 = self.iNode.Y
-        y2 = self.jNode.Y
-        z1 = self.iNode.Z
-        z2 = self.jNode.Z
-        L = self.L
-        
-        # Calculate direction cosines for the transformation matrix
-        l = (x2-x1)/L
-        m = (y2-y1)/L
-        n = (z2-z1)/L
-        D = (l**2+m**2)**0.5
-        
-        if l == 0 and m == 0 and n > 0:
-            dirCos = matrix([[0, 0, 1],
-                             [0, 1, 0],
-                             [-1, 0, 0]])
-        elif l == 0 and m == 0 and n < 0:
-            dirCos = matrix([[0, 0, -1],
-                             [0, 1, 0],
-                             [1, 0, 0]])
-        else:
-            dirCos = matrix([[l, m, n],
-                             [-m/D, l/D, 0],
-                             [-l*n/D, -m*n/D, D]])
-        
-        # Build the transformation matrix
-        transMatrix = zeros((12, 12))
-        transMatrix[0:3, 0:3] = dirCos
-        transMatrix[3:6, 3:6] = dirCos
-        transMatrix[6:9, 6:9] = dirCos
-        transMatrix[9:12, 9:12] = dirCos
-        
-        return transMatrix
+
+        if self.__T is None:
+            dirCos = self.__direction_cosines()
+
+            # Build the transformation matrix
+            transMatrix = zeros((12, 12))
+            transMatrix[0:3,  0:3 ] = dirCos
+            transMatrix[3:6,  3:6 ] = dirCos
+            transMatrix[6:9,  6:9 ] = dirCos
+            transMatrix[9:12, 9:12] = dirCos
+            self.__T = transMatrix
+
+        return self.__T
 
 #%%
     # Member global stiffness matrix
@@ -346,14 +367,14 @@ class Member3D():
     def F(self):
         
         # Calculate and return the global force vector
-        return matmul(self.T(), self.f())
+        return matmul(transpose(self.T()), self.f())
     
 #%% 
     # Global fixed end reaction vector
     def FER(self):
         
         # Calculate and return the fixed end reaction vector
-        return matmul(self.T(), self.fer())
+        return matmul(transpose(self.T()), self.fer())
 
 #%%
     def D(self):
