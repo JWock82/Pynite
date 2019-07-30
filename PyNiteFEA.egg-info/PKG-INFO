@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: PyNite
+Name: PyNiteFEA
 Version: 0.0.1
 Summary: A 3D frame, beam, and truss finite element package
 Home-page: https://github.com/JWock82/PyNite.git
