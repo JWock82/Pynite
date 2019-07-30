@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="PyNite",
+    name="PyNiteFEA",
     version="0.0.1",
     author="D. Craig Brinck, SE",
     author_email="Building.Code@outlook.com",
