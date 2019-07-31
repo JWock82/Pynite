@@ -3,6 +3,7 @@ A 3D frame, truss, and beam finite element library for Python.
 
 # Dependencies
 PyNite depends on the following packages:
+
 -numpy: used for matrix algebra
 -matplotlib: used for plotting member diagrams
 
