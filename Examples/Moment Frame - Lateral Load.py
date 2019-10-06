@@ -3,6 +3,7 @@
 
 # Import `FEModel3D` from `PyNite`
 from PyNite import FEModel3D
+from PyNite import Visualization
 
 # Create a new finite element model
 MomentFrame = FEModel3D()
@@ -31,6 +32,9 @@ MomentFrame.AddNodeLoad("N2", "FX", 50)
 
 # Analyze the frame
 MomentFrame.Analyze()
+
+# Display the model for viewing
+Visualization.RenderModel(MomentFrame)
 
 # Print the shear, moment, and deflection diagrams for each member
 MomentFrame.GetMember("M1").PlotShear("Fy")
