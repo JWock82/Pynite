@@ -36,15 +36,7 @@ MomentFrame.Analyze()
 # Display the model for viewing
 Visualization.RenderModel(MomentFrame)
 
-# Print the shear, moment, and deflection diagrams for each member
-MomentFrame.GetMember("M1").PlotShear("Fy")
-MomentFrame.GetMember("M1").PlotMoment("Mz")
-MomentFrame.GetMember("M1").PlotDeflection("dy")
-
-MomentFrame.GetMember("M2").PlotShear("Fy")
-MomentFrame.GetMember("M2").PlotMoment("Mz")
-MomentFrame.GetMember("M2").PlotDeflection("dy")
-
+# Print the shear, moment, and deflection diagrams for member 'M3'
 MomentFrame.GetMember("M3").PlotShear("Fy")
 MomentFrame.GetMember("M3").PlotMoment("Mz")
 MomentFrame.GetMember("M3").PlotDeflection("dy")
