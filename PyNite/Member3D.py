@@ -15,6 +15,11 @@ class Member3D():
     """
     A class representing a 3D frame element in a finite element model.
     """
+
+    # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows
+    # us to defer importing it until it's actually needed.
+    __plt = None
+
 #%%
     def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A):
         """
@@ -38,10 +43,6 @@ class Member3D():
         self.SegmentsY = [] # A list of mathematically continuous beam segments for y-bending
         self.FER = zeros((12,1)) # The fixed end reaction vector
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
-
-        # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows
-        # us to defer importing it until it's actually needed.
-        self.__plt = None
 
 #%%
     def k(self):
@@ -506,11 +507,11 @@ class Member3D():
         """
         
         # Import 'pyplot' if not already done
-        if self.__plt is None:
+        if Member3D.__plt is None:
             from matplotlib import pyplot as plt
-            self.__plt = plt
+            Member3D.__plt = plt
 
-        fig, ax = self.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
@@ -522,10 +523,10 @@ class Member3D():
             x.append(self.L / 19 * i)
             V.append(self.Shear(Direction, self.L / 19 * i))
 
-        self.__plt.plot(x, V)
-        self.__plt.ylabel('Shear')
-        self.__plt.xlabel('Location')
-        self.__plt.show()    
+        Member3D.__plt.plot(x, V)
+        Member3D.__plt.ylabel('Shear')
+        Member3D.__plt.xlabel('Location')
+        Member3D.__plt.show()    
         
 #%%
     def Moment(self, Direction, x):
@@ -641,11 +642,11 @@ class Member3D():
         """
                 
         # Import 'pyplot' if not already done
-        if self.__plt is None:
+        if Member3D.__plt is None:
             from matplotlib import pyplot as plt
-            self.__plt = plt
+            Member3D.__plt = plt
         
-        fig, ax = self.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
@@ -658,10 +659,10 @@ class Member3D():
             x.append(self.L / 19 * i)
             M.append(self.Moment(Direction, self.L / 19 * i))
 
-        self.__plt.plot(x, M)
-        self.__plt.ylabel('Moment')
-        self.__plt.xlabel('Location')
-        self.__plt.show()
+        Member3D.__plt.plot(x, M)
+        Member3D.__plt.ylabel('Moment')
+        Member3D.__plt.xlabel('Location')
+        Member3D.__plt.show()
 
 #%%
     def Deflection(self, Direction, x):
@@ -760,11 +761,11 @@ class Member3D():
         """
                 
         # Import 'pyplot' if not already done
-        if self.__plt is None:
+        if Member3D.__plt is None:
             from matplotlib import pyplot as plt
-            self.__plt = plt
+            Member3D.__plt = plt
         
-        fig, ax = self.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
@@ -777,10 +778,10 @@ class Member3D():
             x.append(self.L / 19 * i)
             d.append(self.Deflection(Direction, self.L / 19 * i))
 
-        self.__plt.plot(x, d)
-        self.__plt.ylabel('Deflection')
-        self.__plt.xlabel('Location')
-        self.__plt.show()
+        Member3D.__plt.plot(x, d)
+        Member3D.__plt.ylabel('Deflection')
+        Member3D.__plt.xlabel('Location')
+        Member3D.__plt.show()
         
 #%%    
     # Divides the element up into mathematically continuous segments along each axis
