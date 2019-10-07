@@ -50,7 +50,11 @@ def RenderModel(model):
   # Sets the pixel width, length of the window.
   window.SetSize(500, 500)
 
+  # Set up the interactor
+  # The interactor style determines how user interactions affect the view
   interactor = vtk.vtkRenderWindowInteractor()
+  style = vtk.vtkInteractorStyleTrackballCamera()
+  interactor.SetInteractorStyle(style)
   interactor.SetRenderWindow(window)
 
   renderer = vtk.vtkRenderer()
