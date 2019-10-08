@@ -7,8 +7,13 @@ import vtk
 def RenderModel(model):
 
   lines = []
+  memberIDs = []
   mappers = []
   actors = []
+
+  memberLabels = []
+  textActors = []
+  textMappers = []
   i = 0
 
   # Step through each member in the model
@@ -27,21 +32,39 @@ def RenderModel(model):
 
       # Check to see if the current node is the i-node
       if node.Name == iNode.Name:
-        lines[i].SetPoint1(node.X, node.Y, node.Z)
+        Xi = node.X
+        Yi = node.Y
+        Zi = node.Z
+        lines[i].SetPoint1(Xi, Yi, Zi)
 
       # Check to see if the current node is the j-node
       elif node.Name == jNode.Name:
-        lines[i].SetPoint2(node.X, node.Y, node.Z)
+        Xj = node.X
+        Yj = node.Y
+        Zj = node.Z
+        lines[i].SetPoint2(Xj, Yj, Zj)
     
-    # Create a new mapper for the line
+    # Create the text for the member label
+    memberLabels.append(vtk.vtkVectorText())
+    memberLabels[i].SetText(member.Name)
+
+    # Create new mappers
     # The mapper maps the data into graphics primitives
     mappers.append(vtk.vtkPolyDataMapper())
     mappers[i].SetInputConnection(lines[i].GetOutputPort())
 
-    # Connect the mapper to an actor
+    textMappers.append(vtk.vtkPolyDataMapper())
+    textMappers[i].SetInputConnection(memberLabels[i].GetOutputPort())
+
+    # Connect the mappers to the actors
     # The actor is concerned with how the model fits into the screen
     actors.append(vtk.vtkActor())
     actors[i].SetMapper(mappers[i])
+
+    textActors.append(vtk.vtkFollower())
+    textActors[i].SetMapper(textMappers[i])
+    textActors[i].SetScale(5, 5, 5)
+    textActors[i].SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
 
     # Prepare for the next iteration/member
     i += 1
@@ -53,18 +76,31 @@ def RenderModel(model):
   # Set up the interactor
   # The interactor style determines how user interactions affect the view
   interactor = vtk.vtkRenderWindowInteractor()
-  style = vtk.vtkInteractorStyleTrackballCamera()
+  style = vtk.vtkInteractorStyleTrackballCamera() # The trackball camera style behaves a lot like most CAD programs
   interactor.SetInteractorStyle(style)
   interactor.SetRenderWindow(window)
 
   renderer = vtk.vtkRenderer()
   window.AddRenderer(renderer)
 
+  # Add each member label's text actor
+  for textActor in textActors:
+    
+    # Add the text actor
+    renderer.AddActor(textActor)
+    
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    textActor.SetCamera(renderer.GetActiveCamera())
+    
   for actor in actors:
     renderer.AddActor(actor)
 
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
+
+  # Reset the camera
+  renderer.ResetCamera()
 
   window.Render()
   interactor.Start()
