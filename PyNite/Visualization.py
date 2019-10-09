@@ -7,13 +7,18 @@ import vtk
 def RenderModel(model):
 
   lines = []
-  memberIDs = []
   mappers = []
   actors = []
 
   memberLabels = []
   textActors = []
   textMappers = []
+
+  NodeVisuals = []
+
+  for node in model.Nodes:
+    NodeVisuals.append(NodeVisual(node))
+
   i = 0
 
   # Step through each member in the model
@@ -96,6 +101,11 @@ def RenderModel(model):
   for actor in actors:
     renderer.AddActor(actor)
 
+  for visual in NodeVisuals:
+    renderer.AddActor(visual.actor)
+    renderer.AddActor(visual.lblActor)
+    visual.lblActor.SetCamera(renderer.GetActiveCamera())
+
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
 
@@ -104,3 +114,43 @@ def RenderModel(model):
 
   window.Render()
   interactor.Start()
+
+# Converts a node object into a node in the viewer
+class NodeVisual():
+
+  # Constructor
+  def __init__(self, node):
+    
+    # Get the node's position
+    self.X = node.X          # Global X coordinate
+    self.Y = node.Y          # Global Y coordinate
+    self.Z = node.Z          # Global Z coordinate
+
+    # Generate a sphere for the node
+    self.sphere = vtk.vtkSphereSource()
+    self.sphere.SetCenter(self.X, self.Y, self.Z)
+    self.sphere.SetRadius(3)
+
+    # Set up a mapper for the node
+    self.mapper = vtk.vtkPolyDataMapper()
+    self.mapper.SetInputConnection(self.sphere.GetOutputPort())
+
+    # Set up an actor for the node
+    self.actor = vtk.vtkActor()
+    self.actor.SetMapper(self.mapper)
+
+    # Create the text for the node label
+    self.label = vtk.vtkVectorText()
+    self.label.SetText(node.Name)
+    
+    # Set up a mapper for the label
+    self.lblMapper = vtk.vtkPolyDataMapper()
+    self.lblMapper.SetInputConnection(self.label.GetOutputPort())
+
+    # Set up an actor for the label
+    self.lblActor = vtk.vtkFollower()
+    self.lblActor.SetMapper(self.lblMapper)
+    self.lblActor.SetScale(5, 5, 5)
+    self.lblActor.SetPosition(self.X+4, self.Y+4, self.Z+4)
+
+
