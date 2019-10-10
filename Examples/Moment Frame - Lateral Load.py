@@ -33,8 +33,8 @@ MomentFrame.AddNodeLoad("N2", "FX", 50)
 # Analyze the frame
 MomentFrame.Analyze()
 
-# Display the model for viewing
-Visualization.RenderModel(MomentFrame)
+# Display the model for viewing, with the text height 5 model units (inches) high
+Visualization.RenderModel(MomentFrame, 5)
 
 # Print the shear, moment, and deflection diagrams for member 'M3'
 MomentFrame.GetMember("M3").PlotShear("Fy")

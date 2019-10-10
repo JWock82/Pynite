@@ -3,15 +3,15 @@
 import vtk
 
 # Create a data source
-def RenderModel(model):
+def RenderModel(model, textHeight=5):
 
   visNodes = []
   for node in model.Nodes:
-    visNodes.append(VisNode(node))
+    visNodes.append(VisNode(node, textHeight))
   
   visMembers = []
   for member in model.Members:
-    visMembers.append(VisMember(member, model.Nodes))
+    visMembers.append(VisMember(member, model.Nodes, textHeight))
 
   # Create a window
   window = vtk.vtkRenderWindow()
@@ -69,7 +69,7 @@ def RenderModel(model):
 class VisNode():
 
   # Constructor
-  def __init__(self, node):
+  def __init__(self, node, textHeight=5):
     
     # Get the node's position
     X = node.X          # Global X coordinate
@@ -79,7 +79,7 @@ class VisNode():
     # Generate a sphere for the node
     sphere = vtk.vtkSphereSource()
     sphere.SetCenter(X, Y, Z)
-    sphere.SetRadius(3)
+    sphere.SetRadius(0.6*textHeight)
 
     # Set up a mapper for the node
     mapper = vtk.vtkPolyDataMapper()
@@ -100,13 +100,14 @@ class VisNode():
     # Set up an actor for the node label
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
-    self.lblActor.SetScale(5, 5, 5)
-    self.lblActor.SetPosition(X+4, Y+4, Z+4)
+    self.lblActor.SetScale(textHeight, textHeight, textHeight)
+    self.lblActor.SetPosition(X+0.8*textHeight, Y+0.8*textHeight, Z+0.8*textHeight)
 
 # Converts a member object into a member for the viewer
 class VisMember():
 
-  def __init__(self, member, nodes):
+  # Constructor
+  def __init__(self, member, nodes, textHeight=5):
 
     # Generate a line for the member
     line = vtk.vtkLineSource()
@@ -147,5 +148,5 @@ class VisMember():
     # Set up an actor for the member label
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
-    self.lblActor.SetScale(5, 5, 5)
+    self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
