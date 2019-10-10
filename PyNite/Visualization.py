@@ -1,81 +1,22 @@
-# Import the Visualization Toolkit
+# Import the Visualization Toolkit if it's not alread imported
 # You must be running a 64 bit version of Python for this to work
 import vtk
 
-## Create the visualization pipeline
 # Create a data source
 def RenderModel(model):
 
-  lines = []
-  mappers = []
-  actors = []
-
-  memberLabels = []
-  textActors = []
-  textMappers = []
-
-  NodeVisuals = []
-
+  visNodes = []
   for node in model.Nodes:
-    NodeVisuals.append(NodeVisual(node))
-
-  i = 0
-
-  # Step through each member in the model
+    visNodes.append(VisNode(node))
+  
+  visMembers = []
   for member in model.Members:
+    visMembers.append(VisMember(member, model.Nodes))
 
-    # Create a new line data source
-    lines.append(vtk.vtkLineSource())
-
-    # Identify the member's i-node and j-node
-    iNode = member.iNode
-    jNode = member.jNode
-
-    # Step through each node in the model and find the position of the
-    # i-node and j-node
-    for node in model.Nodes:
-
-      # Check to see if the current node is the i-node
-      if node.Name == iNode.Name:
-        Xi = node.X
-        Yi = node.Y
-        Zi = node.Z
-        lines[i].SetPoint1(Xi, Yi, Zi)
-
-      # Check to see if the current node is the j-node
-      elif node.Name == jNode.Name:
-        Xj = node.X
-        Yj = node.Y
-        Zj = node.Z
-        lines[i].SetPoint2(Xj, Yj, Zj)
-    
-    # Create the text for the member label
-    memberLabels.append(vtk.vtkVectorText())
-    memberLabels[i].SetText(member.Name)
-
-    # Create new mappers
-    # The mapper maps the data into graphics primitives
-    mappers.append(vtk.vtkPolyDataMapper())
-    mappers[i].SetInputConnection(lines[i].GetOutputPort())
-
-    textMappers.append(vtk.vtkPolyDataMapper())
-    textMappers[i].SetInputConnection(memberLabels[i].GetOutputPort())
-
-    # Connect the mappers to the actors
-    # The actor is concerned with how the model fits into the screen
-    actors.append(vtk.vtkActor())
-    actors[i].SetMapper(mappers[i])
-
-    textActors.append(vtk.vtkFollower())
-    textActors[i].SetMapper(textMappers[i])
-    textActors[i].SetScale(5, 5, 5)
-    textActors[i].SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
-
-    # Prepare for the next iteration/member
-    i += 1
-
+  # Create a window
   window = vtk.vtkRenderWindow()
-  # Sets the pixel width, length of the window.
+
+  # Set the pixel width and length of the window
   window.SetSize(500, 500)
 
   # Set up the interactor
@@ -85,26 +26,35 @@ def RenderModel(model):
   interactor.SetInteractorStyle(style)
   interactor.SetRenderWindow(window)
 
+  # Create a renderer
   renderer = vtk.vtkRenderer()
   window.AddRenderer(renderer)
+  
+  # Add actors for each member
+  for visMember in visMembers:
 
-  # Add each member label's text actor
-  for textActor in textActors:
-    
-    # Add the text actor
-    renderer.AddActor(textActor)
-    
+    # Add the actor for the member
+    renderer.AddActor(visMember.actor)
+
+    # Add the actor for the member label
+    renderer.AddActor(visMember.lblActor)
+
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
-    textActor.SetCamera(renderer.GetActiveCamera())
-    
-  for actor in actors:
-    renderer.AddActor(actor)
+    visMember.lblActor.SetCamera(renderer.GetActiveCamera())
 
-  for visual in NodeVisuals:
-    renderer.AddActor(visual.actor)
-    renderer.AddActor(visual.lblActor)
-    visual.lblActor.SetCamera(renderer.GetActiveCamera())
+  # Add actors for each node
+  for visNode in visNodes:
+
+    # Add the actor for the node
+    renderer.AddActor(visNode.actor)
+
+    # Add the actor for the node label
+    renderer.AddActor(visNode.lblActor)
+
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    visNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
@@ -115,42 +65,87 @@ def RenderModel(model):
   window.Render()
   interactor.Start()
 
-# Converts a node object into a node in the viewer
-class NodeVisual():
+# Converts a node object into a node for the viewer
+class VisNode():
 
   # Constructor
   def __init__(self, node):
     
     # Get the node's position
-    self.X = node.X          # Global X coordinate
-    self.Y = node.Y          # Global Y coordinate
-    self.Z = node.Z          # Global Z coordinate
+    X = node.X          # Global X coordinate
+    Y = node.Y          # Global Y coordinate
+    Z = node.Z          # Global Z coordinate
 
     # Generate a sphere for the node
-    self.sphere = vtk.vtkSphereSource()
-    self.sphere.SetCenter(self.X, self.Y, self.Z)
-    self.sphere.SetRadius(3)
+    sphere = vtk.vtkSphereSource()
+    sphere.SetCenter(X, Y, Z)
+    sphere.SetRadius(3)
 
     # Set up a mapper for the node
-    self.mapper = vtk.vtkPolyDataMapper()
-    self.mapper.SetInputConnection(self.sphere.GetOutputPort())
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(sphere.GetOutputPort())
 
     # Set up an actor for the node
     self.actor = vtk.vtkActor()
-    self.actor.SetMapper(self.mapper)
+    self.actor.SetMapper(mapper)
 
     # Create the text for the node label
-    self.label = vtk.vtkVectorText()
-    self.label.SetText(node.Name)
+    label = vtk.vtkVectorText()
+    label.SetText(node.Name)
     
-    # Set up a mapper for the label
-    self.lblMapper = vtk.vtkPolyDataMapper()
-    self.lblMapper.SetInputConnection(self.label.GetOutputPort())
+    # Set up a mapper for the node label
+    lblMapper = vtk.vtkPolyDataMapper()
+    lblMapper.SetInputConnection(label.GetOutputPort())
 
-    # Set up an actor for the label
+    # Set up an actor for the node label
     self.lblActor = vtk.vtkFollower()
-    self.lblActor.SetMapper(self.lblMapper)
+    self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(5, 5, 5)
-    self.lblActor.SetPosition(self.X+4, self.Y+4, self.Z+4)
+    self.lblActor.SetPosition(X+4, Y+4, Z+4)
 
+# Converts a member object into a member for the viewer
+class VisMember():
 
+  def __init__(self, member, nodes):
+
+    # Generate a line for the member
+    line = vtk.vtkLineSource()
+
+    # Step through each node in the model and find the position of the i-node and j-node
+    for node in nodes:
+
+      # Check to see if the current node is the i-node
+      if node.Name == member.iNode.Name:
+        Xi = node.X
+        Yi = node.Y
+        Zi = node.Z
+        line.SetPoint1(Xi, Yi, Zi)
+
+      # Check to see if the current node is the j-node
+      elif node.Name == member.jNode.Name:
+        Xj = node.X
+        Yj = node.Y
+        Zj = node.Z
+        line.SetPoint2(Xj, Yj, Zj)
+    
+    # Set up a mapper for the member
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(line.GetOutputPort())
+
+    # Set up an actor for the member
+    self.actor = vtk.vtkActor()
+    self.actor.SetMapper(mapper)
+
+    # Create the text for the member label
+    label = vtk.vtkVectorText()
+    label.SetText(member.Name)
+
+    # Set up a mapper for the member label
+    lblMapper = vtk.vtkPolyDataMapper()
+    lblMapper.SetInputConnection(label.GetOutputPort())
+
+    # Set up an actor for the member label
+    self.lblActor = vtk.vtkFollower()
+    self.lblActor.SetMapper(lblMapper)
+    self.lblActor.SetScale(5, 5, 5)
+    self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
