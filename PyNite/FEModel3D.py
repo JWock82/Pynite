@@ -6,7 +6,7 @@ Created on Thu Nov  9 21:11:20 2017
 """
 # %%
 from numpy import zeros, delete, insert, matmul, subtract
-from numpy.linalg import inv
+from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
 
@@ -533,8 +533,14 @@ class FEModel3D():
                 FER = delete(FER, node.ID * 6 + 0, axis = 0)
                 P = delete(P, node.ID * 6 + 0, axis = 0)
                         
-        # Calculate the global displacement vector
-        self.__D = matmul(inv(K), subtract(P, FER))
+        # Determine if 'K' is singular
+        if matrix_rank(K) < min(K.shape):
+            # Exit the program if 'K' is singular and provide an error message
+            from sys import exit
+            exit('Stiffness matrix is singular. Rigid body motion detected. Unstable structure.')
+        else:
+            # Calculate the global displacement vector
+            self.__D = matmul(inv(K), subtract(P, FER))
         
         # Save the displacements as a local variable for easier reference below
         D = self.__D
