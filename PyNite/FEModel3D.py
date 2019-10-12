@@ -535,9 +535,9 @@ class FEModel3D():
                         
         # Determine if 'K' is singular
         if matrix_rank(K) < min(K.shape):
-            # Exit the program if 'K' is singular and provide an error message
-            from sys import exit
-            exit('Stiffness matrix is singular. Rigid body motion detected. Unstable structure.')
+            # Return out of the method if 'K' is singular and provide an error message
+            print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+            return
         else:
             # Calculate the global displacement vector
             self.__D = matmul(inv(K), subtract(P, FER))
