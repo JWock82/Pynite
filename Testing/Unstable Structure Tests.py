@@ -1,10 +1,8 @@
 # This test checks the PyNite's ability to detect unstable support conditions
-
 # Units used in this test are inches, and kips
 
 # Import `FEModel3D` from `PyNite`
 from PyNite import FEModel3D
-from PyNite import Visualization
 
 # Create a new finite element model
 MomentFrame = FEModel3D()
@@ -24,14 +22,11 @@ MomentFrame.AddMember("M2", "N4", "N3", 29000, 11400, 100, 150, 250, 10)
 # E = 29000 ksi, G = 11400 ksi, Iy = 100 in^4, Iz = 250 in^4, J = 250 in^4, A = 15 in^2
 MomentFrame.AddMember("M3", "N2", "N3", 29000, 11400, 100, 250, 250, 15)
 
-# Provide unstable supports at the base of the frame - You can toggle these values to try different conditions
+# Provide unstable supports - You can change these supports to try different conditions
 MomentFrame.DefineSupport("N1", True, False, True, True, True, True)
 
 # Add a nodal lateral load of 50 kips at the left side of the frame
 MomentFrame.AddNodeLoad("N2", "FX", 50)
 
-# Analyze the frame
+# Analyze the frame - we should see an error message that the structure is unstable
 MomentFrame.Analyze()
-
-# Display the model for viewing, with the text height 5 model units (inches) high
-Visualization.RenderModel(MomentFrame, 5)
