@@ -101,7 +101,7 @@ class VisNode():
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
-    self.lblActor.SetPosition(X+0.8*textHeight, Y+0.8*textHeight, Z+0.8*textHeight)
+    self.lblActor.SetPosition(X+0.6*textHeight, Y+0.6*textHeight, Z)
 
 # Converts a member object into a member for the viewer
 class VisMember():
