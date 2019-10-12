@@ -56,6 +56,10 @@ def RenderModel(model, textHeight=5):
     # This next line will require us to reset the camera when we're done (below)
     visNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
+    # Add the actors for the node supports
+    for support in visNode.supportActors:
+      renderer.AddActor(support)
+
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
 
@@ -102,6 +106,294 @@ class VisNode():
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition(X+0.6*textHeight, Y+0.6*textHeight, Z)
+
+    # Generate any supports that occur at the node
+    supportMappers = []
+    self.supportActors = []
+
+    # Check for a fixed suppport
+    if (node.SupportDX == True) and (node.SupportDY == True) and (node.SupportDZ == True) \
+      and (node.SupportRX == True) and (node.SupportRY == True) and (node.SupportRZ == True):
+
+      # Create the fixed support
+      support = vtk.vtkCubeSource()
+      support.SetCenter(node.X, node.Y, node.Z)
+      support.SetXLength(textHeight*1.2)
+      support.SetYLength(textHeight*1.2)
+      support.SetZLength(textHeight*1.2)
+
+      # Change the node's mapper to the fixed support
+      mapper.SetInputConnection(support.GetOutputPort())
+    
+    # Check for a pinned support
+    elif (node.SupportDX == True) and (node.SupportDY == True) and (node.SupportDZ == True) \
+      and (node.SupportRX == False) and (node.SupportRY == False) and (node.SupportRZ == False):
+      
+      # Create the pinned support
+      support = vtk.vtkConeSource()
+      support.SetCenter(node.X, node.Y, node.Z)
+      support.SetDirection((0, 1, 0))
+      support.SetHeight(textHeight*1.2)
+      support.SetRadius(textHeight*1.2)
+
+      # Change the node's mapper to the pinned support
+      mapper.SetInputConnection(support.GetOutputPort())
+    
+    # Other support conditions
+    else:
+
+      # Restrained against X translation
+      if (node.SupportDX == True):
+        
+        # Create the support
+        support1 = vtk.vtkLineSource()  # The line showing the support direction
+        support1.SetPoint1(node.X-textHeight, node.Y, node.Z)
+        support1.SetPoint2(node.X+textHeight, node.Y, node.Z)
+
+        support2 = vtk.vtkConeSource()
+        support2.SetCenter(node.X-textHeight, node.Y, node.Z)
+        support2.SetDirection((1, 0, 0))
+        support2.SetHeight(textHeight*0.6)
+        support2.SetRadius(textHeight*0.3)
+
+        support3 = vtk.vtkConeSource()
+        support3.SetCenter(node.X+textHeight, node.Y, node.Z)
+        support3.SetDirection((-1, 0, 0))
+        support3.SetHeight(textHeight*0.6)
+        support3.SetRadius(textHeight*0.3)
+
+        # Set up mappers for the support
+        supportMapper1 = vtk.vtkPolyDataMapper()
+        supportMapper2 = vtk.vtkPolyDataMapper()
+        supportMapper3 = vtk.vtkPolyDataMapper()
+        supportMapper1.SetInputConnection(support1.GetOutputPort())
+        supportMapper2.SetInputConnection(support2.GetOutputPort())
+        supportMapper3.SetInputConnection(support3.GetOutputPort())
+        supportMappers.append(supportMapper1)
+        supportMappers.append(supportMapper2)
+        supportMappers.append(supportMapper3)
+
+        # Set up actors for the support
+        supportActor1 = vtk.vtkActor()
+        supportActor2 = vtk.vtkActor()
+        supportActor3 = vtk.vtkActor()
+        supportActor1.SetMapper(supportMapper1)
+        supportActor2.SetMapper(supportMapper2)
+        supportActor3.SetMapper(supportMapper3)
+        self.supportActors.append(supportActor1)
+        self.supportActors.append(supportActor2)
+        self.supportActors.append(supportActor3)
+      
+      # Restrained against Y translation
+      if (node.SupportDY == True):
+        
+        # Create the support
+        support1 = vtk.vtkLineSource()  # The line showing the support direction
+        support1.SetPoint1(node.X, node.Y-textHeight, node.Z)
+        support1.SetPoint2(node.X, node.Y+textHeight, node.Z)
+
+        support2 = vtk.vtkConeSource()
+        support2.SetCenter(node.X, node.Y-textHeight, node.Z)
+        support2.SetDirection((0, 1, 0))
+        support2.SetHeight(textHeight*0.6)
+        support2.SetRadius(textHeight*0.3)
+
+        support3 = vtk.vtkConeSource()
+        support3.SetCenter(node.X, node.Y+textHeight, node.Z)
+        support3.SetDirection((0, -1, 0))
+        support3.SetHeight(textHeight*0.6)
+        support3.SetRadius(textHeight*0.3)
+
+        # Set up mappers for the support
+        supportMapper1 = vtk.vtkPolyDataMapper()
+        supportMapper2 = vtk.vtkPolyDataMapper()
+        supportMapper3 = vtk.vtkPolyDataMapper()
+        supportMapper1.SetInputConnection(support1.GetOutputPort())
+        supportMapper2.SetInputConnection(support2.GetOutputPort())
+        supportMapper3.SetInputConnection(support3.GetOutputPort())
+        supportMappers.append(supportMapper1)
+        supportMappers.append(supportMapper2)
+        supportMappers.append(supportMapper3)
+
+        # Set up actors for the support
+        supportActor1 = vtk.vtkActor()
+        supportActor2 = vtk.vtkActor()
+        supportActor3 = vtk.vtkActor()
+        supportActor1.SetMapper(supportMapper1)
+        supportActor2.SetMapper(supportMapper2)
+        supportActor3.SetMapper(supportMapper3)
+        self.supportActors.append(supportActor1)
+        self.supportActors.append(supportActor2)
+        self.supportActors.append(supportActor3)
+      
+      # Restrained against Z translation
+      if (node.SupportDZ == True):
+        
+        # Create the support
+        support1 = vtk.vtkLineSource()  # The line showing the support direction
+        support1.SetPoint1(node.X, node.Y, node.Z-textHeight)
+        support1.SetPoint2(node.X, node.Y, node.Z+textHeight)
+
+        support2 = vtk.vtkConeSource()
+        support2.SetCenter(node.X, node.Y, node.Z-textHeight)
+        support2.SetDirection((0, 0, 1))
+        support2.SetHeight(textHeight*0.6)
+        support2.SetRadius(textHeight*0.3)
+
+        support3 = vtk.vtkConeSource()
+        support3.SetCenter(node.X, node.Y, node.Z+textHeight)
+        support3.SetDirection((0, 0, -1))
+        support3.SetHeight(textHeight*0.6)
+        support3.SetRadius(textHeight*0.3)
+
+        # Set up mappers for the support
+        supportMapper1 = vtk.vtkPolyDataMapper()
+        supportMapper2 = vtk.vtkPolyDataMapper()
+        supportMapper3 = vtk.vtkPolyDataMapper()
+        supportMapper1.SetInputConnection(support1.GetOutputPort())
+        supportMapper2.SetInputConnection(support2.GetOutputPort())
+        supportMapper3.SetInputConnection(support3.GetOutputPort())
+        supportMappers.append(supportMapper1)
+        supportMappers.append(supportMapper2)
+        supportMappers.append(supportMapper3)
+
+        # Set actors for the support
+        supportActor1 = vtk.vtkActor()
+        supportActor2 = vtk.vtkActor()
+        supportActor3 = vtk.vtkActor()
+        supportActor1.SetMapper(supportMapper1)
+        supportActor2.SetMapper(supportMapper2)
+        supportActor3.SetMapper(supportMapper3)
+        self.supportActors.append(supportActor1)
+        self.supportActors.append(supportActor2)
+        self.supportActors.append(supportActor3)
+
+      # Restrained against rotation about the X-axis
+      if (node.SupportRX == True):
+        
+        # Create the support
+        support1 = vtk.vtkLineSource()  # The line showing the support direction
+        support1.SetPoint1(node.X-1.6*textHeight, node.Y, node.Z)
+        support1.SetPoint2(node.X+1.6*textHeight, node.Y, node.Z)
+
+        support2 = vtk.vtkCubeSource()
+        support2.SetCenter(node.X-1.9*textHeight, node.Y, node.Z)
+        support2.SetXLength(textHeight*0.6)
+        support2.SetYLength(textHeight*0.6)
+        support2.SetZLength(textHeight*0.6)
+
+        support3 = vtk.vtkCubeSource()
+        support3.SetCenter(node.X+1.9*textHeight, node.Y, node.Z)
+        support3.SetXLength(textHeight*0.6)
+        support3.SetYLength(textHeight*0.6)
+        support3.SetZLength(textHeight*0.6)
+
+        # Set up mappers for the support
+        supportMapper1 = vtk.vtkPolyDataMapper()
+        supportMapper2 = vtk.vtkPolyDataMapper()
+        supportMapper3 = vtk.vtkPolyDataMapper()
+        supportMapper1.SetInputConnection(support1.GetOutputPort())
+        supportMapper2.SetInputConnection(support2.GetOutputPort())
+        supportMapper3.SetInputConnection(support3.GetOutputPort())
+        supportMappers.append(supportMapper1)
+        supportMappers.append(supportMapper2)
+        supportMappers.append(supportMapper3)
+
+        # Set up actors for the support
+        supportActor1 = vtk.vtkActor()
+        supportActor2 = vtk.vtkActor()
+        supportActor3 = vtk.vtkActor()
+        supportActor1.SetMapper(supportMapper1)
+        supportActor2.SetMapper(supportMapper2)
+        supportActor3.SetMapper(supportMapper3)
+        self.supportActors.append(supportActor1)
+        self.supportActors.append(supportActor2)
+        self.supportActors.append(supportActor3)
+           # Restrained against rotation about the X-axis
+      
+      # Restrained against rotation about the Y-axis
+      if (node.SupportRY == True):
+        
+        # Create the support
+        support1 = vtk.vtkLineSource()  # The line showing the support direction
+        support1.SetPoint1(node.X, node.Y-1.6*textHeight, node.Z)
+        support1.SetPoint2(node.X, node.Y+1.6*textHeight, node.Z)
+
+        support2 = vtk.vtkCubeSource()
+        support2.SetCenter(node.X, node.Y-1.9*textHeight, node.Z)
+        support2.SetXLength(textHeight*0.6)
+        support2.SetYLength(textHeight*0.6)
+        support2.SetZLength(textHeight*0.6)
+
+        support3 = vtk.vtkCubeSource()
+        support3.SetCenter(node.X, node.Y+1.9*textHeight, node.Z)
+        support3.SetXLength(textHeight*0.6)
+        support3.SetYLength(textHeight*0.6)
+        support3.SetZLength(textHeight*0.6)
+
+        # Set up mappers for the support
+        supportMapper1 = vtk.vtkPolyDataMapper()
+        supportMapper2 = vtk.vtkPolyDataMapper()
+        supportMapper3 = vtk.vtkPolyDataMapper()
+        supportMapper1.SetInputConnection(support1.GetOutputPort())
+        supportMapper2.SetInputConnection(support2.GetOutputPort())
+        supportMapper3.SetInputConnection(support3.GetOutputPort())
+        supportMappers.append(supportMapper1)
+        supportMappers.append(supportMapper2)
+        supportMappers.append(supportMapper3)
+
+        # Set up actors for the support
+        supportActor1 = vtk.vtkActor()
+        supportActor2 = vtk.vtkActor()
+        supportActor3 = vtk.vtkActor()
+        supportActor1.SetMapper(supportMapper1)
+        supportActor2.SetMapper(supportMapper2)
+        supportActor3.SetMapper(supportMapper3)
+        self.supportActors.append(supportActor1)
+        self.supportActors.append(supportActor2)
+        self.supportActors.append(supportActor3)
+      
+      # Restrained against rotation about the Z-axis
+      if (node.SupportRZ == True):
+        
+        # Create the support
+        support1 = vtk.vtkLineSource()  # The line showing the support direction
+        support1.SetPoint1(node.X, node.Y, node.Z-1.6*textHeight)
+        support1.SetPoint2(node.X, node.Y, node.Z+1.6*textHeight)
+
+        support2 = vtk.vtkCubeSource()
+        support2.SetCenter(node.X, node.Y, node.Z-1.9*textHeight)
+        support2.SetXLength(textHeight*0.6)
+        support2.SetYLength(textHeight*0.6)
+        support2.SetZLength(textHeight*0.6)
+
+        support3 = vtk.vtkCubeSource()
+        support3.SetCenter(node.X, node.Y, node.Z+1.9*textHeight)
+        support3.SetXLength(textHeight*0.6)
+        support3.SetYLength(textHeight*0.6)
+        support3.SetZLength(textHeight*0.6)
+
+        # Set up mappers for the support
+        supportMapper1 = vtk.vtkPolyDataMapper()
+        supportMapper2 = vtk.vtkPolyDataMapper()
+        supportMapper3 = vtk.vtkPolyDataMapper()
+        supportMapper1.SetInputConnection(support1.GetOutputPort())
+        supportMapper2.SetInputConnection(support2.GetOutputPort())
+        supportMapper3.SetInputConnection(support3.GetOutputPort())
+        supportMappers.append(supportMapper1)
+        supportMappers.append(supportMapper2)
+        supportMappers.append(supportMapper3)
+
+        # Set up actors for the support
+        supportActor1 = vtk.vtkActor()
+        supportActor2 = vtk.vtkActor()
+        supportActor3 = vtk.vtkActor()
+        supportActor1.SetMapper(supportMapper1)
+        supportActor2.SetMapper(supportMapper2)
+        supportActor3.SetMapper(supportMapper3)
+        self.supportActors.append(supportActor1)
+        self.supportActors.append(supportActor2)
+        self.supportActors.append(supportActor3)
 
 # Converts a member object into a member for the viewer
 class VisMember():
