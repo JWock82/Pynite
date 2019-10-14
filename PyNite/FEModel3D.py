@@ -236,7 +236,7 @@ class FEModel3D():
         self.GetMember(Member).PtLoads.append((Direction, P, x))
 
 #%%
-    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1, x2):
+    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None):
         """
         Adds a member distributed load to the model.
         
@@ -253,13 +253,27 @@ class FEModel3D():
         w2 : number
             The ending value (magnitude) of the load.
         x1 : number
-            The load's start location along the member's local x-axis.
+            The load's start location along the member's local x-axis. If this argument
+            is not specified, the start of the member will be used.
         x2 : number
-            The load's end location along the member's local x-axis.
+            The load's end location along the member's local x-axis. If this argument
+            is not specified, the end of the member will be used.
         """
         
+        # Determine if a starting and ending points for the load have been specified.
+        # If not, use the member start and end as defaults
+        if x1 == None:
+            start = 0
+        else:
+            start = x1
+        
+        if x2 == None:
+            end = self.GetMember(Member).L
+        else:
+            end = x2
+
         # Add the distributed load to the member
-        self.GetMember(Member).DistLoads.append((Direction, w1, w2, x1, x2))
+        self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end))
 
 #%%
     def GetNode(self, Name):
