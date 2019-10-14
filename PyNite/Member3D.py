@@ -526,6 +526,7 @@ class Member3D():
         Member3D.__plt.plot(x, V)
         Member3D.__plt.ylabel('Shear')
         Member3D.__plt.xlabel('Location')
+        Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()    
         
 #%%
@@ -662,6 +663,7 @@ class Member3D():
         Member3D.__plt.plot(x, M)
         Member3D.__plt.ylabel('Moment')
         Member3D.__plt.xlabel('Location')
+        Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()
 
 #%%
@@ -758,6 +760,11 @@ class Member3D():
     def PlotDeflection(self, Direction):
         """
         Plots the deflection diagram for the member
+        
+        Parameters
+        ----------
+        Direction : {"dy", "dz"}
+            The direction in which to plot the deflection.
         """
                 
         # Import 'pyplot' if not already done
@@ -781,6 +788,7 @@ class Member3D():
         Member3D.__plt.plot(x, d)
         Member3D.__plt.ylabel('Deflection')
         Member3D.__plt.xlabel('Location')
+        Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()
         
 #%%    
