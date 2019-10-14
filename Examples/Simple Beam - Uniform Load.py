@@ -28,6 +28,9 @@ SimpleBeam.DefineSupport("N2", True, True, True, True, False, False)
 # Add a uniform load of 200 lbs/ft to the beam
 SimpleBeam.AddMemberDistLoad("M1", "Fy", 200/1000/12, 200/1000/12, 0, 168)
 
+# Alternatively the following line would do apply the load to the full length of the member as well
+# SimpleBeam.AddMemberDistLoad("M1", "Fy", 200/1000/12, 200/1000/12)
+
 # Analyze the beam
 SimpleBeam.Analyze()
 
