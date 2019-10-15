@@ -6,7 +6,7 @@ Created on Thu Nov  9 21:11:20 2017
 """
 # %%
 from numpy import zeros, delete, insert, matmul, subtract
-from numpy.linalg import inv
+from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
 
@@ -22,8 +22,8 @@ class FEModel3D():
         Initializes a new 3D finite element model.
         """
         
-        self.__Nodes = []           # A list of the structure's nodes
-        self.__Members = []         # A list of the structure's members
+        self.Nodes = []           # A list of the structure's nodes
+        self.Members = []         # A list of the structure's members
         self.__D = []               # A list of the structure's nodal displacements
 
 #%%
@@ -47,7 +47,7 @@ class FEModel3D():
         newNode = Node3D(Name, X, Y, Z)
         
         # Add the new node to the list
-        self.__Nodes.append(newNode)
+        self.Nodes.append(newNode)
 
 #%%
     def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A):
@@ -80,7 +80,7 @@ class FEModel3D():
         newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A)
         
         # Add the new member to the list
-        self.__Members.append(newMember)
+        self.Members.append(newMember)
 
 #%%
     def RemoveNode(self, Node):
@@ -96,10 +96,10 @@ class FEModel3D():
         
         # Remove the node. Nodal loads are stored within the node, so they
         # will be deleted automatically when the node is deleted.
-        self.__Nodes.remove(self.GetNode(Node))
+        self.Nodes.remove(self.GetNode(Node))
         
         # Find any members attached to the node and remove them
-        self.__Members = [member for member in self.__Members if member.iNode.Name != Node and member.jNode.Name != Node]
+        self.Members = [member for member in self.Members if member.iNode.Name != Node and member.jNode.Name != Node]
         
 #%%
     def RemoveMember(self, Member):
@@ -115,7 +115,7 @@ class FEModel3D():
         
         # Remove the member. Member loads are stored within the member, so they
         # will be deleted automatically when the member is deleted.
-        self.__Members.remove(self.GetMember(Member))
+        self.Members.remove(self.GetMember(Member))
         
 #%%
     def DefineSupport(self, Node, SupportDX = False, SupportDY = False, SupportDZ = False, SupportRX = False, SupportRY = False, SupportRZ = False):
@@ -236,7 +236,7 @@ class FEModel3D():
         self.GetMember(Member).PtLoads.append((Direction, P, x))
 
 #%%
-    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1, x2):
+    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None):
         """
         Adds a member distributed load to the model.
         
@@ -253,13 +253,27 @@ class FEModel3D():
         w2 : number
             The ending value (magnitude) of the load.
         x1 : number
-            The load's start location along the member's local x-axis.
+            The load's start location along the member's local x-axis. If this argument
+            is not specified, the start of the member will be used.
         x2 : number
-            The load's end location along the member's local x-axis.
+            The load's end location along the member's local x-axis. If this argument
+            is not specified, the end of the member will be used.
         """
         
+        # Determine if a starting and ending points for the load have been specified.
+        # If not, use the member start and end as defaults
+        if x1 == None:
+            start = 0
+        else:
+            start = x1
+        
+        if x2 == None:
+            end = self.GetMember(Member).L
+        else:
+            end = x2
+
         # Add the distributed load to the member
-        self.GetMember(Member).DistLoads.append((Direction, w1, w2, x1, x2))
+        self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end))
 
 #%%
     def GetNode(self, Name):
@@ -272,8 +286,8 @@ class FEModel3D():
             The name of the node to be returned.
         """
         
-        # Step through each node in the '__Nodes' list
-        for node in self.__Nodes:
+        # Step through each node in the 'Nodes' list
+        for node in self.Nodes:
             
             # Check the name of the node
             if node.Name == Name:
@@ -292,8 +306,8 @@ class FEModel3D():
             The name of the member to be returned.
         """
         
-        # Step through each member in the '__Members' list
-        for member in self.__Members:
+        # Step through each member in the 'Members' list
+        for member in self.Members:
             
             # Check the name of the member
             if member.Name == Name:
@@ -312,13 +326,13 @@ class FEModel3D():
         
         # Number each node in the model
         i = 0
-        for node in self.__Nodes:
+        for node in self.Nodes:
             node.ID = i
             i += 1
         
         # Number each member in the model
         i = 0
-        for member in self.__Members:
+        for member in self.Members:
             member.ID = i
             i += 1
             
@@ -341,10 +355,10 @@ class FEModel3D():
             self.__Renumber()
         
         # Initialize a zero matrix to hold all the stiffness terms
-        K = zeros((len(self.__Nodes) * 6, len(self.__Nodes) * 6))
+        K = zeros((len(self.Nodes) * 6, len(self.Nodes) * 6))
         
         # Add stiffness terms for each member in the model
-        for member in self.__Members:
+        for member in self.Members:
             
             # Step through each term in the member's stiffness matrix
             # 'a' & 'b' below are row/column indices in the member's stiffness matrix
@@ -395,10 +409,10 @@ class FEModel3D():
             self.__Renumber()
         
         # Initialize a zero vector to hold all the terms
-        FER = zeros((len(self.__Nodes) * 6, 1))
+        FER = zeros((len(self.Nodes) * 6, 1))
         
         # Add terms for each member in the model
-        for member in self.__Members:
+        for member in self.Members:
             
             # Step through each term in the member's fixed end reaction vector
             # 'a' below is the row index in the member's fixed end reaction vector
@@ -439,10 +453,10 @@ class FEModel3D():
             self.__Renumber()
             
         # Initialize a zero vector to hold all the terms
-        P = zeros((len(self.__Nodes) * 6, 1))
+        P = zeros((len(self.Nodes) * 6, 1))
         
         # Add terms for each node in the model
-        for node in self.__Nodes:
+        for node in self.Nodes:
             
             # Get the node's ID
             ID = node.ID
@@ -495,7 +509,7 @@ class FEModel3D():
         # Work backwards through the node list so that the relationship between
         # the DOF's and node ID's is unnafected by the matrices/vectors
         # shrinking
-        for node in reversed(self.__Nodes):
+        for node in reversed(self.Nodes):
             
             if node.SupportRZ == True:
                 K = delete(K, node.ID * 6 + 5, axis = 0)
@@ -533,8 +547,14 @@ class FEModel3D():
                 FER = delete(FER, node.ID * 6 + 0, axis = 0)
                 P = delete(P, node.ID * 6 + 0, axis = 0)
                         
-        # Calculate the global displacement vector
-        self.__D = matmul(inv(K), subtract(P, FER))
+        # Determine if 'K' is singular
+        if matrix_rank(K) < min(K.shape):
+            # Return out of the method if 'K' is singular and provide an error message
+            print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+            return
+        else:
+            # Calculate the global displacement vector
+            self.__D = matmul(inv(K), subtract(P, FER))
         
         # Save the displacements as a local variable for easier reference below
         D = self.__D
@@ -542,7 +562,7 @@ class FEModel3D():
         # Expand the global displacement vector to include supported degrees of freedom
         # Work forwards through the node list so that the relationship between
         # the DOF's and node ID's is unnafected by the vector expanding
-        for node in self.__Nodes:
+        for node in self.Nodes:
             if node.SupportDX == True:
                 D = insert(D, node.ID * 6 + 0, 0, axis = 0)
             if node.SupportDY == True:
@@ -557,7 +577,7 @@ class FEModel3D():
                 D = insert(D, node.ID * 6 + 5, 0, axis = 0)
 
         # Store the calculated global nodal displacements into each node
-        for node in self.__Nodes:
+        for node in self.Nodes:
             node.DX = D.item((node.ID * 6 + 0, 0))
             node.DY = D.item((node.ID * 6 + 1, 0))
             node.DZ = D.item((node.ID * 6 + 2, 0))
@@ -566,10 +586,10 @@ class FEModel3D():
             node.RZ = D.item((node.ID * 6 + 5, 0))
         
         # Calculate and store the reactions at each node
-        for node in self.__Nodes:
+        for node in self.Nodes:
             
             # Sum the member end forces at the node
-            for member in self.__Members:
+            for member in self.Members:
                 
                 if member.iNode == node:
                     
@@ -606,5 +626,5 @@ class FEModel3D():
                     node.RxnMZ -= load[1]
                 
         # Segment all members in the model to make member results available
-        for member in self.__Members:
+        for member in self.Members:
             member.SegmentMember()
