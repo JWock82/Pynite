@@ -100,7 +100,7 @@ class Member3D():
                     [0, 0, -6*E*Iy/L**2, 0, 2*E*Iy/L, 0, 0, 0, 6*E*Iy/L**2, 0, 4*E*Iy/L, 0],
                     [0, 6*E*Iz/L**2, 0, 0, 0, 2*E*Iz/L, 0, -6*E*Iz/L**2, 0, 0, 0, 4*E*Iz/L]])
         
-        # Count the number of released degrees of freedom
+        # Count the number of released degrees of freedom in the member
         NumReleases = 0
         for DOF in self.Releases:
             if DOF == True:
@@ -244,7 +244,7 @@ class Member3D():
                 fer1.itemset((m1, 0), fer.item(m, 0))
                 m1 += 1
             
-            elif self.Releases == True:
+            elif self.Releases[m] == True:
                 
                 fer2.itemset((m2, 0), fer.item(m, 0))
                 m2 += 1
