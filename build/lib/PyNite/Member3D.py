@@ -447,10 +447,10 @@ class Member3D():
                 "Fz" = Shear acting on the local z-axis
         """        
         
-        Vmax = 0
-        
         if Direction == "Fy":
             
+            Vmax = self.SegmentsZ[0].Shear(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MaxShear() > Vmax:
@@ -459,6 +459,8 @@ class Member3D():
                     
         if Direction == "Fz":
             
+            Vmax = self.SegmentsY[0].Shear(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MaxShear() > Vmax:
@@ -480,10 +482,10 @@ class Member3D():
                 "Fz" = Shear acting on the local z-axis
         """        
         
-        Vmin = 0
-        
         if Direction == "Fy":
             
+            Vmin = self.SegmentsZ[0].Shear(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MinShear() < Vmin:
@@ -492,6 +494,8 @@ class Member3D():
                     
         if Direction == "Fz":
             
+            Vmin = self.SegmentsY[0].Shear(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MinShear() < Vmin:
@@ -585,10 +589,10 @@ class Member3D():
                 "Mz" = Moment about the local z-axis
         """        
         
-        Mmax = 0
-        
         if Direction == "Mz":
             
+            Mmax = self.SegmentsZ[0].Moment(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MaxMoment() > Mmax:
@@ -597,6 +601,8 @@ class Member3D():
                     
         if Direction == "My":
             
+            Mmax = self.SegmentsY[0].Moment(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MaxMoment() > Mmax:
@@ -604,6 +610,7 @@ class Member3D():
                     Mmax = segment.MaxMoment()
         
         return Mmax
+
 #%%
     def MinMoment(self, Direction):
         """
@@ -617,10 +624,10 @@ class Member3D():
                 "Mz" = Moment about the local z-axis
         """        
         
-        Mmin = 0
-        
         if Direction == "Mz":
             
+            Mmin = self.SegmentsZ[0].Moment(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MinMoment() < Mmin:
@@ -629,6 +636,8 @@ class Member3D():
                     
         if Direction == "My":
             
+            Mmin = self.SegmentsY[0].Moment(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MinMoment() < Mmin:
@@ -636,6 +645,7 @@ class Member3D():
                     Mmin = segment.MinMoment()
         
         return Mmin
+
 #%%
     def PlotMoment(self, Direction):
         """
@@ -666,6 +676,86 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()
 
+#%%
+    def Axial(self, x):
+        """
+        Returns the axial force at a point along the member's length
+        
+        Parameters
+        ----------
+        x : number
+            The location at which to find the shear
+        """
+            
+        # Check which segment "x" falls on
+        for segment in self.SegmentsZ:
+            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                return segment.Axial(x - segment.x1)
+                
+            if round(x, 10) == round(self.L, 10):  
+                lastIndex = len(self.SegmentsZ) - 1
+                return self.SegmentsZ[lastIndex].Axial(x - self.SegmentsZ[lastIndex].x1)
+#%%
+    def MaxAxial(self):
+        """
+        Returns the maximum axial force in the member
+        """        
+        
+        Pmax = self.SegmentsZ[0].Axial(0)   
+        
+        for segment in self.SegmentsZ:
+
+            if segment.MaxAxial() > Pmax:
+                    
+                Pmax = segment.MaxAxial()
+        
+        return Pmax
+    
+#%%
+    def MinAxial(self):
+        """
+        Returns the minimum axial force in the member
+        """        
+        
+        Pmin = self.SegmentsZ[0].Axial(0)
+            
+        for segment in self.SegmentsZ:
+                
+            if segment.MinAxial() < Pmin:
+                    
+                Pmin = segment.MinAxial()
+        
+        return Pmin
+    
+#%%
+    def PlotAxial(self):
+        """
+        Plots the axial force diagram for the member
+        """
+        
+        # Import 'pyplot' if not already done
+        if Member3D.__plt is None:
+            from matplotlib import pyplot as plt
+            Member3D.__plt = plt
+
+        fig, ax = Member3D.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        x = []
+        P = []
+        
+        # Calculate the axial force diagram
+        for i in range(20):
+            x.append(self.L / 19 * i)
+            P.append(self.Axial(self.L / 19 * i))
+
+        Member3D.__plt.plot(x, P)
+        Member3D.__plt.ylabel('Axial Force')
+        Member3D.__plt.xlabel('Location')
+        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.show()    
+                        
 #%%
     def Deflection(self, Direction, x):
         
