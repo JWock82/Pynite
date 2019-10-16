@@ -447,10 +447,10 @@ class Member3D():
                 "Fz" = Shear acting on the local z-axis
         """        
         
-        Vmax = 0
-        
         if Direction == "Fy":
             
+            Vmax = self.SegmentsZ[0].Shear(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MaxShear() > Vmax:
@@ -459,6 +459,8 @@ class Member3D():
                     
         if Direction == "Fz":
             
+            Vmax = self.SegmentsY[0].Shear(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MaxShear() > Vmax:
@@ -480,10 +482,10 @@ class Member3D():
                 "Fz" = Shear acting on the local z-axis
         """        
         
-        Vmin = 0
-        
         if Direction == "Fy":
             
+            Vmin = self.SegmentsZ[0].Shear(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MinShear() < Vmin:
@@ -492,6 +494,8 @@ class Member3D():
                     
         if Direction == "Fz":
             
+            Vmin = self.SegmentsY[0].Shear(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MinShear() < Vmin:
@@ -585,10 +589,10 @@ class Member3D():
                 "Mz" = Moment about the local z-axis
         """        
         
-        Mmax = 0
-        
         if Direction == "Mz":
             
+            Mmax = self.SegmentsZ[0].Moment(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MaxMoment() > Mmax:
@@ -597,6 +601,8 @@ class Member3D():
                     
         if Direction == "My":
             
+            Mmax = self.SegmentsY[0].Moment(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MaxMoment() > Mmax:
@@ -604,6 +610,7 @@ class Member3D():
                     Mmax = segment.MaxMoment()
         
         return Mmax
+
 #%%
     def MinMoment(self, Direction):
         """
@@ -617,10 +624,10 @@ class Member3D():
                 "Mz" = Moment about the local z-axis
         """        
         
-        Mmin = 0
-        
         if Direction == "Mz":
             
+            Mmin = self.SegmentsZ[0].Moment(0)
+
             for segment in self.SegmentsZ:
                 
                 if segment.MinMoment() < Mmin:
@@ -629,6 +636,8 @@ class Member3D():
                     
         if Direction == "My":
             
+            Mmin = self.SegmentsY[0].Moment(0)
+
             for segment in self.SegmentsY:
                 
                 if segment.MinMoment() < Mmin:
@@ -636,6 +645,7 @@ class Member3D():
                     Mmin = segment.MinMoment()
         
         return Mmin
+
 #%%
     def PlotMoment(self, Direction):
         """
@@ -691,10 +701,10 @@ class Member3D():
         Returns the maximum axial force in the member
         """        
         
-        Pmax = 0
-            
+        Pmax = self.SegmentsZ[0].Axial(0)   
+        
         for segment in self.SegmentsZ:
-                
+
             if segment.MaxAxial() > Pmax:
                     
                 Pmax = segment.MaxAxial()
@@ -707,7 +717,7 @@ class Member3D():
         Returns the minimum axial force in the member
         """        
         
-        Pmin = 0
+        Pmin = self.SegmentsZ[0].Axial(0)
             
         for segment in self.SegmentsZ:
                 
