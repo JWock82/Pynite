@@ -1,9 +1,14 @@
-# Import `FEModel3D` and `Visualization` from `PyNite`
+# Problem 6.64 - Engineering Mechanics: Statics, 4th Edition, by Bedford and Fowler
+# Units for this model are meters and kilonewtons
+
+# Import 'FEModel3D' and 'Visualization' from 'PyNite'
 from PyNite import FEModel3D
 from PyNite import Visualization
 
+# Create a new model
 truss = FEModel3D()
 
+# Define the nodes
 truss.AddNode('A', 1.1, -0.4, 0)
 truss.AddNode('B', 1, 0, 0)
 truss.AddNode('C', 0, 0, 0.6)
@@ -14,13 +19,18 @@ truss.DefineSupport('C', True, True, True, True, True, True)
 truss.DefineSupport('D', True, True, True, True, True, True)
 truss.DefineSupport('E', True, True, True, True, True, True)
 
-truss.AddMember('AB', 'A', 'B', 100, 100, 100, 100, 100, 100)
-truss.AddMember('AC', 'A', 'C', 100, 100, 100, 100, 100, 100)
-truss.AddMember('AD', 'A', 'D', 100, 100, 100, 100, 100, 100)
-truss.AddMember('BC', 'B', 'C', 100, 100, 100, 100, 100, 100)
-truss.AddMember('BD', 'B', 'D', 100, 100, 100, 100, 100, 100)
-truss.AddMember('BE', 'B', 'E', 100, 100, 100, 100, 100, 100)
+# Create members
+# Member properties were not given for this problem, so assumed values will be used
+# To make all the members act rigid, the modulus of elasticity will be set to a very large value
+E = 99999999
+truss.AddMember('AB', 'A', 'B', E, 100, 100, 100, 100, 100)
+truss.AddMember('AC', 'A', 'C', E, 100, 100, 100, 100, 100)
+truss.AddMember('AD', 'A', 'D', E, 100, 100, 100, 100, 100)
+truss.AddMember('BC', 'B', 'C', E, 100, 100, 100, 100, 100)
+truss.AddMember('BD', 'B', 'D', E, 100, 100, 100, 100, 100)
+truss.AddMember('BE', 'B', 'E', E, 100, 100, 100, 100, 100)
 
+# Release the moments at the ends of the members to make truss members
 truss.DefineReleases('AC', False, False, False, False, True, True, \
                            False, False, False, False, True, True)
 truss.DefineReleases('AD', False, False, False, False, True, True, \
@@ -32,14 +42,21 @@ truss.DefineReleases('BD', False, False, False, False, True, True, \
 truss.DefineReleases('BE', False, False, False, False, True, True, \
                            False, False, False, False, True, True)
 
+# Add nodal loads
 truss.AddNodeLoad('A', 'FX', 10)
 truss.AddNodeLoad('A', 'FY', 60)
 truss.AddNodeLoad('A', 'FZ', 20)
 
+# Analyze the model
 truss.Analyze()
 
-print(truss.GetMember('BC').MinAxial())
-print(truss.GetMember('BD').MinAxial())
-print(truss.GetMember('BE').MaxAxial())
+# Print resules
+print('Member BC calculated axial force: ' + str(truss.GetMember('BC').MaxAxial()))
+print('Member BC expected axial force: 32.7 Tension')
+print('Member BD calculated axial force: ' + str(truss.GetMember('BD').MaxAxial()))
+print('Member BD expected axial force: 45.2 Tension')
+print('Member BE calculated axial force: ' + str(truss.GetMember('BE').MaxAxial()))
+print('Member BE expected axial force: 112.1 Compression')
 
+# Render the model for viewing
 Visualization.RenderModel(truss, 0.05)
