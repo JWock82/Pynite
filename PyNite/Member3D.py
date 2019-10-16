@@ -667,6 +667,86 @@ class Member3D():
         Member3D.__plt.show()
 
 #%%
+    def Axial(self, x):
+        """
+        Returns the axial force at a point along the member's length
+        
+        Parameters
+        ----------
+        x : number
+            The location at which to find the shear
+        """
+            
+        # Check which segment "x" falls on
+        for segment in self.SegmentsZ:
+            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                return segment.Axial(x - segment.x1)
+                
+            if round(x, 10) == round(self.L, 10):  
+                lastIndex = len(self.SegmentsZ) - 1
+                return self.SegmentsZ[lastIndex].Axial(x - self.SegmentsZ[lastIndex].x1)
+#%%
+    def MaxAxial(self):
+        """
+        Returns the maximum axial force in the member
+        """        
+        
+        Pmax = 0
+            
+        for segment in self.SegmentsZ:
+                
+            if segment.MaxAxial() > Pmax:
+                    
+                Pmax = segment.MaxAxial()
+        
+        return Pmax
+    
+#%%
+    def MinAxial(self):
+        """
+        Returns the minimum axial force in the member
+        """        
+        
+        Pmin = 0
+            
+        for segment in self.SegmentsZ:
+                
+            if segment.MinAxial() < Pmin:
+                    
+                Pmin = segment.MinAxial()
+        
+        return Pmin
+    
+#%%
+    def PlotAxial(self):
+        """
+        Plots the axial force diagram for the member
+        """
+        
+        # Import 'pyplot' if not already done
+        if Member3D.__plt is None:
+            from matplotlib import pyplot as plt
+            Member3D.__plt = plt
+
+        fig, ax = Member3D.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        x = []
+        P = []
+        
+        # Calculate the axial force diagram
+        for i in range(20):
+            x.append(self.L / 19 * i)
+            P.append(self.Axial(self.L / 19 * i))
+
+        Member3D.__plt.plot(x, P)
+        Member3D.__plt.ylabel('Axial Force')
+        Member3D.__plt.xlabel('Location')
+        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.show()    
+                        
+#%%
     def Deflection(self, Direction, x):
         
         """
