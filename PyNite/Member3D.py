@@ -812,7 +812,7 @@ class Member3D():
         """
         
         # Initialize the maximum deflection
-        dmax = 0
+        dmax = self.Deflection(Direction, 0)
         
         # Check the deflection at 100 locations along the member and find the largest value
         for i in range(100):
@@ -835,7 +835,7 @@ class Member3D():
         """
         
         # Initialize the minimum deflection
-        dmin = 0
+        dmin = self.Deflection(Direction, 0)
         
         # Check the deflection at 100 locations along the member and find the smallest value
         for i in range(100):
