@@ -50,7 +50,7 @@ truss.AddNodeLoad('A', 'FZ', 20)
 # Analyze the model
 truss.Analyze()
 
-# Print resules
+# Print results
 print('Member BC calculated axial force: ' + str(truss.GetMember('BC').MaxAxial()))
 print('Member BC expected axial force: 32.7 Tension')
 print('Member BD calculated axial force: ' + str(truss.GetMember('BD').MaxAxial()))
@@ -58,5 +58,5 @@ print('Member BD expected axial force: 45.2 Tension')
 print('Member BE calculated axial force: ' + str(truss.GetMember('BE').MaxAxial()))
 print('Member BE expected axial force: 112.1 Compression')
 
-# Render the model for viewing
+# Render the model for viewing. The text height will be set to 50 mm.
 Visualization.RenderModel(truss, 0.05)
