@@ -131,7 +131,7 @@ class VisNode():
       
       # Create the pinned support
       support = vtk.vtkConeSource()
-      support.SetCenter(node.X, node.Y, node.Z)
+      support.SetCenter(node.X, node.Y-0.6*textHeight, node.Z)
       support.SetDirection((0, 1, 0))
       support.SetHeight(textHeight*1.2)
       support.SetRadius(textHeight*1.2)
