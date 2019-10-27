@@ -309,7 +309,6 @@ class VisNode():
         self.supportActors.append(supportActor1)
         self.supportActors.append(supportActor2)
         self.supportActors.append(supportActor3)
-           # Restrained against rotation about the X-axis
       
       # Restrained against rotation about the Y-axis
       if (node.SupportRY == True):
@@ -442,3 +441,47 @@ class VisMember():
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
+
+# TODO: Finish the following code for load visualization at a future time
+
+# # Creates an arrow for the viewer
+# class VisArrow():
+
+#   # Constructor
+#   def __init__(self, Position, Direction, Length, ArrowHeadHeight, LabelText = None):
+#     """
+#     Parameters
+#     ----------
+#     Position : tuple
+#       A tuple of X, Y and Z coordinates for the point of the arrow: (X, Y, Z)
+#     Direction : tuple
+#       A tuple indicating the direction vector for the arrow: (i, j, k)
+#     Length : number
+#       The length of the arrow
+#     ArrowHeadHeight : number
+#       The height of the arrow head
+#     LabelText : string
+#       Text that will show up at the tail of the arrow. Defaults to None.
+#     """
+
+#     # Create the arrow head
+#     arrowHead = vtk.vtkConeSource()
+#     arrowHead.SetCenter(Position)
+#     arrowHead.SetDirection(Direction)
+#     arrowHead.SetHeight(ArrowHeadHeight)
+#     arrowHead.SetRadius(ArrowHeadHeight/4)
+
+#     mapper.SetInputConnection(cone.GetOutputPort())
+    
+
+#     # Calculate a scalar to convert the direction to a unit vector
+#     scalar = (Direction[0]**2 + Direction[1]**2 + Direction[2]**2)**0.5
+
+#     # Calculate a unit vector in the direction of the arrow
+#     unitVector = (Direction[0]/scalar, Direction[1]/scalar, Direction[2]/scalar)
+    
+#     # Create the tail
+#     tail = vtk.vtkLineSource()
+#     tail.SetPoint1(Position)
+#     tail.SetPoint2((Position[0]-Length*unitVector[0], Position[1]-Length*unitVector[1], Position[2]-Length*unitVector[2]))
+    
