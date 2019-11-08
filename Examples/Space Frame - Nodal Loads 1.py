@@ -1,6 +1,7 @@
 # A First Course in the Finite Element Method, 4th Edition
 # Daryl L. Logan
 # Example 5.8
+# Units for this model are kips and inches
 
 # Import 'FEModel3D' and 'Visualization' from 'PyNite'
 from PyNite import FEModel3D
