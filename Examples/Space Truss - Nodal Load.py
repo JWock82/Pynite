@@ -15,6 +15,7 @@ truss.AddNode('C', 0, 0, 0.6)
 truss.AddNode('D', 0, 0, -0.4)
 truss.AddNode('E', 0, 0.8, 0)
 
+# Define the supports
 truss.DefineSupport('C', True, True, True, True, True, True)
 truss.DefineSupport('D', True, True, True, True, True, True)
 truss.DefineSupport('E', True, True, True, True, True, True)
