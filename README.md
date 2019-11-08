@@ -1,5 +1,5 @@
 # PyNite
-A 3D frame, truss, and beam finite element library for Python.
+A linear elastic 3D frame, truss, and beam finite element library for Python.
 
 # Dependencies
 PyNite depends on the following packages:
