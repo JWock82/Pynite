@@ -1,4 +1,4 @@
-# Simple beam created by using an end release at a fixed support
+# Simple beam created by using an end release at fixed supports
 # Units used in this example are inches, and kips
 
 # Import `FEModel3D` from `PyNite`
