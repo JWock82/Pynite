@@ -7,6 +7,7 @@ Created on Thu Nov  2 18:04:56 2017
 # %%
 from numpy import zeros, matrix, transpose, add, subtract, matmul, insert
 from numpy.linalg import inv
+from math import isclose
 from PyNite.BeamSegment import BeamSegment
 import PyNite.FixedEndReactions
 
@@ -320,11 +321,11 @@ class Member3D():
         n = (z2-z1)/L
         D = (l**2+m**2)**0.5
         
-        if l == 0 and m == 0 and n > 0:
+        if isclose(l, 0.0) and isclose(m, 0.0) and n > 0.0:
             dirCos = matrix([[0, 0, 1],
                              [0, 1, 0],
                              [-1, 0, 0]])
-        elif l == 0 and m == 0 and n < 0:
+        elif isclose(l, 0.0) and isclose(m, 0.0) and n < 0.0:
             dirCos = matrix([[0, 0, -1],
                              [0, 1, 0],
                              [1, 0, 0]])
