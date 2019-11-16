@@ -321,23 +321,23 @@ class Member3D():
         L = self.L()
         
         # Calculate direction cosines for the transformation matrix
-        l = (x2-x1)/L
-        m = (y2-y1)/L
-        n = (z2-z1)/L
-        D = (l**2+m**2)**0.5
-        
-        if isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and n > 0.0:
+        if isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 > 0.0):
             dirCos = matrix([[0, 0, 1],
                              [0, 1, 0],
                              [-1, 0, 0]])
-        elif isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and n < 0.0:
+        elif isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 < 0.0):
             dirCos = matrix([[0, 0, -1],
                              [0, 1, 0],
                              [1, 0, 0]])
         else:
+            l = (x2-x1)/L
+            m = (y2-y1)/L
+            n = (z2-z1)/L
+            D = (l**2+m**2)**0.5
+            D2 = ((-l*n/D)**2 + (-m*n/D)**2 +((l**2+m**2)/D)**2)**0.5
             dirCos = matrix([[l, m, n],
                              [-m/D, l/D, 0],
-                             [-l*n/D, -m*n/D, D]])
+                             [-l*n/(D*D2), -m*n/(D*D2), (l**2+m**2)/(D*D2)]])
         
         # Build the transformation matrix
         transMatrix = zeros((12, 12))
