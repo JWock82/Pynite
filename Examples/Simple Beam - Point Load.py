@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Sep 16 14:43:31 2018
-
-@author: craig
-"""
 # Example of a simply supported beam with a point load.
 # Units used in this example are inches, and kips
 
