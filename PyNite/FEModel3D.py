@@ -209,7 +209,7 @@ class FEModel3D():
         """
         
         # Add the node load to the model
-        self.GetNode(Node).NodeLoads.append([Direction, P])
+        self.GetNode(Node).NodeLoads.append((Direction, P))
 
 #%%      
     def AddMemberPtLoad(self, Member, Direction, P, x):
@@ -337,7 +337,7 @@ class FEModel3D():
             i += 1
             
 #%%    
-    def K(self, Renumber = True):
+    def K(self, Renumber=True):
         """
         Assembles and returns the global stiffness matrix.
         
@@ -428,7 +428,7 @@ class FEModel3D():
                     m = member.jNode.ID * 6 + (a - 6)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER.itemset((m, 0), FER[m, 0] + member.fer()[a, 0])
+                FER.itemset((m, 0), FER[m, 0] + member.FER()[a, 0])
         
         # Return the global fixed end reaction vector
         return FER
@@ -490,7 +490,7 @@ class FEModel3D():
         return self.__D
         
 #%%  
-    def Analyze(self):
+    def Analyze(self, check_statics=True):
         """
         Analyzes the model.
         """
@@ -628,3 +628,77 @@ class FEModel3D():
         # Segment all members in the model to make member results available
         for member in self.Members:
             member.SegmentMember()
+        
+        # Check statics if requested
+        if check_statics == True:
+            self.__CheckStatics()
+
+#%%
+    def __CheckStatics(self):
+
+        # Initialize force summations to zero
+        SumFX = 0
+        SumFY = 0
+        SumFZ = 0
+        SumMX = 0
+        SumMY = 0
+        SumMZ = 0
+        SumRFX = 0
+        SumRFY = 0
+        SumRFZ = 0
+        SumRMX = 0
+        SumRMY = 0
+        SumRMZ = 0
+
+        # Get the global force vector
+        P = self.P()
+
+        # Step through each node and sum its forces
+        for node in self.Nodes:
+
+            # Get the node's coordinates
+            X = node.X
+            Y = node.Y
+            Z = node.Z
+
+            # Get the nodal forces
+            FX = P[node.ID*6+0]
+            FY = P[node.ID*6+1]
+            FZ = P[node.ID*6+2]
+            MX = P[node.ID*6+3]
+            MY = P[node.ID*6+4]
+            MZ = P[node.ID*6+5]
+
+            # Get the nodal reactions
+            RFX = node.RxnFX
+            RFY = node.RxnFY
+            RFZ = node.RxnFZ
+            RMX = node.RxnMX
+            RMY = node.RxnMY
+            RMZ = node.RxnMZ
+
+            # Sum the global forces
+            SumFX += FX
+            SumFY += FY
+            SumFZ += FZ
+            SumMX += MX - FY*X + FZ*Y
+            SumMY += MY + FX*Z - FZ*X
+            SumMZ += MZ - FX*Y + FY*X
+
+            # Sum the global reactions
+            SumRFX += RFX
+            SumRFY += RFY
+            SumRFZ += RFZ
+            SumRMX += RMX - RFY*X + RFZ*Y
+            SumRMY += RMY + RFX*Z - RFZ*X
+            SumRMZ += RMZ - RFX*Y + RFY*X   
+        
+        # Print the load summation
+        print('**Applied Loads**')
+        print('Sum Forces X: ', SumFX, ', Sum Forces Y: ', SumFY, ', Sum Forces Z: ', SumFZ)
+        print('Sum Moments MX: ', SumMX, ', Sum Moments MY: ', SumMY, ', Sum Moments MZ: ', SumMZ)
+        print('**Reactions**')
+        print('Sum Forces X: ', SumRFX, ', Sum Forces Y: ', SumRFY, ', Sum Forces Z: ', SumRFZ)
+        print('Sum Moments MX: ', SumRMX, ', Sum Moments MY: ', SumRMY, ', Sum Moments MZ: ', SumRMZ)
+
+        return SumFX, SumFY, SumFZ, SumMX, SumMY, SumMZ
