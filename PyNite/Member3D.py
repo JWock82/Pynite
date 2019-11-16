@@ -37,13 +37,17 @@ class Member3D():
         self.Iz = Iz    # The z-axis moment of inertia
         self.J = J  # The polar moment of inertia or torsional constant
         self.A = A  # The cross-sectional area
-        self.L = ((jNode.X-iNode.X)**2+(jNode.Y-iNode.Y)**2+(jNode.Z-iNode.Z)**2)**0.5  # Length of the element
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x) or (Direction, M, x)
         self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2)
         self.SegmentsZ = [] # A list of mathematically continuous beam segments for z-bending
         self.SegmentsY = [] # A list of mathematically continuous beam segments for y-bending
-        self.FER = zeros((12,1)) # The fixed end reaction vector
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
+
+#%%
+    def L(self):
+        iNode = self.iNode
+        jNode = self.jNode
+        return ((jNode.X-iNode.X)**2+(jNode.Y-iNode.Y)**2+(jNode.Z-iNode.Z)**2)**0.5
 
 #%%
     def k(self):
@@ -85,7 +89,7 @@ class Member3D():
         Iz = self.Iz
         J = self.J
         A = self.A
-        L = self.L
+        L = self.L()
         
         # Create the uncondensed local stiffness matrix
         k = matrix([[A*E/L, 0, 0 , 0, 0, 0, -A*E/L, 0, 0, 0, 0, 0],
@@ -206,21 +210,21 @@ class Member3D():
         # Sum the fixed end reactions for the point loads & moments
         for ptLoad in self.PtLoads:
             if ptLoad[0] == "Fx":
-                fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L))
+                fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == "Fy":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fy"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fy"))
             elif ptLoad[0] == "Fz":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fz"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fz"))
             elif ptLoad[0] == "Mx":
                 fer = fer
             elif ptLoad[0] == "My":
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "My"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "My"))
             elif ptLoad[0] == "Mz":     
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "Mz"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "Mz"))
                 
         # Sum the fixed end reactions for the distributed loads
         for distLoad in self.DistLoads:
-            fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L, distLoad[0]))        
+            fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))        
  
         # Count the number of released degrees of freedom
         NumReleases = 0
@@ -266,22 +270,22 @@ class Member3D():
         # Sum the fixed end reactions for the point loads & moments
         for ptLoad in self.PtLoads:
             if ptLoad[0] == "Fx":
-                fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L))
+                fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == "Fy":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fy"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fy"))
             elif ptLoad[0] == "Fz":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L, "Fz"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fz"))
             # Torsional loads are not yet supported by PyNite
             elif ptLoad[0] == "Mx":
                 fer = fer
             elif ptLoad[0] == "My":
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "My"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "My"))
             elif ptLoad[0] == "Mz":     
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L, "Mz"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "Mz"))
                 
         # Sum the fixed end reactions for the distributed loads
         for distLoad in self.DistLoads:
-            fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L, distLoad[0]))
+            fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
         
         # Return the fixed end reaction vector, uncondensed
         return fer
@@ -314,7 +318,7 @@ class Member3D():
         y2 = self.jNode.Y
         z1 = self.iNode.Z
         z2 = self.jNode.Z
-        L = self.L
+        L = self.L()
         
         # Calculate direction cosines for the transformation matrix
         l = (x2-x1)/L
@@ -322,11 +326,11 @@ class Member3D():
         n = (z2-z1)/L
         D = (l**2+m**2)**0.5
         
-        if isclose(l, 0.0) and isclose(m, 0.0) and n > 0.0:
+        if isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and n > 0.0:
             dirCos = matrix([[0, 0, 1],
                              [0, 1, 0],
                              [-1, 0, 0]])
-        elif isclose(l, 0.0) and isclose(m, 0.0) and n < 0.0:
+        elif isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and n < 0.0:
             dirCos = matrix([[0, 0, -1],
                              [0, 1, 0],
                              [1, 0, 0]])
@@ -419,7 +423,7 @@ class Member3D():
                 if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                     return segment.Shear(x - segment.x1)
                 
-            if round(x, 10) == round(self.L, 10):  
+            if isclose(x, self.L()):  
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].Shear(x - self.SegmentsZ[lastIndex].x1)
                 
@@ -431,7 +435,7 @@ class Member3D():
                     
                     return segment.Shear(x - segment.x1)
                 
-            if round(x,10) == round(self.L,10):
+            if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsY) - 1
                 return self.SegmentsY[lastIndex].Shear(x - self.SegmentsY[lastIndex].x1)
@@ -526,8 +530,8 @@ class Member3D():
         
         # Calculate the shear diagram
         for i in range(20):
-            x.append(self.L / 19 * i)
-            V.append(self.Shear(Direction, self.L / 19 * i))
+            x.append(self.L() / 19 * i)
+            V.append(self.Shear(Direction, self.L() / 19 * i))
 
         Member3D.__plt.plot(x, V)
         Member3D.__plt.ylabel('Shear')
@@ -560,7 +564,7 @@ class Member3D():
                     
                     return segment.Moment(x - segment.x1)
                 
-            if round(x,10) == round(self.L,10):
+            if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsY) - 1
                 return self.SegmentsY[lastIndex].Moment(x - self.SegmentsY[lastIndex].x1)
@@ -573,7 +577,7 @@ class Member3D():
                     
                     return segment.Moment(x - segment.x1)
                 
-            if round(x,10) == round(self.L,10):
+            if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].Moment(x - self.SegmentsZ[lastIndex].x1)
@@ -669,8 +673,8 @@ class Member3D():
         # Calculate the moment diagram
         for i in range(20):
             
-            x.append(self.L / 19 * i)
-            M.append(self.Moment(Direction, self.L / 19 * i))
+            x.append(self.L() / 19 * i)
+            M.append(self.Moment(Direction, self.L() / 19 * i))
 
         Member3D.__plt.plot(x, M)
         Member3D.__plt.ylabel('Moment')
@@ -694,7 +698,7 @@ class Member3D():
             if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                 return segment.Axial(x - segment.x1)
                 
-            if round(x, 10) == round(self.L, 10):  
+            if isclose(x, self.L()):  
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].Axial(x - self.SegmentsZ[lastIndex].x1)
 #%%
@@ -749,8 +753,8 @@ class Member3D():
         
         # Calculate the axial force diagram
         for i in range(20):
-            x.append(self.L / 19 * i)
-            P.append(self.Axial(self.L / 19 * i))
+            x.append(self.L() / 19 * i)
+            P.append(self.Axial(self.L() / 19 * i))
 
         Member3D.__plt.plot(x, P)
         Member3D.__plt.ylabel('Axial Force')
@@ -784,7 +788,7 @@ class Member3D():
                     
                     return segment.Deflection(x - segment.x1)
                 
-            if round(x,10) == round(self.L,10):
+            if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].Deflection(x - self.SegmentsZ[lastIndex].x1)
@@ -797,7 +801,7 @@ class Member3D():
                     
                     return segment.Deflection(x - segment.x1)
                 
-            if round(x,10) == round(self.L,10):
+            if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsY) - 1
                 return self.SegmentsY[lastIndex].Deflection(x - self.SegmentsY[lastIndex].x1) 
@@ -818,7 +822,7 @@ class Member3D():
         
         # Check the deflection at 100 locations along the member and find the largest value
         for i in range(100):
-            d = self.Deflection(Direction, self.L * i / 99)
+            d = self.Deflection(Direction, self.L() * i / 99)
             if d > dmax:
                 dmax = d
         
@@ -841,7 +845,7 @@ class Member3D():
         
         # Check the deflection at 100 locations along the member and find the smallest value
         for i in range(100):
-            d = self.Deflection(Direction, self.L * i / 99)
+            d = self.Deflection(Direction, self.L() * i / 99)
             if d < dmin:
                 dmin = d
         
@@ -874,8 +878,8 @@ class Member3D():
         # Calculate the deflection diagram
         for i in range(20):
             
-            x.append(self.L / 19 * i)
-            d.append(self.Deflection(Direction, self.L / 19 * i))
+            x.append(self.L() / 19 * i)
+            d.append(self.Deflection(Direction, self.L() / 19 * i))
 
         Member3D.__plt.plot(x, d)
         Member3D.__plt.ylabel('Deflection')
@@ -888,7 +892,7 @@ class Member3D():
     def SegmentMember(self):
         
         # Get the member's length and stiffness properties
-        L = self.L
+        L = self.L()
         E = self.E
         Iz = self.Iz
         Iy = self.Iy
