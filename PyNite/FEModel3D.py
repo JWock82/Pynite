@@ -434,7 +434,7 @@ class FEModel3D():
         return FER
     
 #%%
-    def P(self, Renumber = True):
+    def P(self, Renumber=True):
         """
         Assembles and returns the global nodal force vector.
         
@@ -453,7 +453,7 @@ class FEModel3D():
             self.__Renumber()
             
         # Initialize a zero vector to hold all the terms
-        P = zeros((len(self.Nodes) * 6, 1))
+        P = zeros((len(self.Nodes)*6, 1))
         
         # Add terms for each node in the model
         for node in self.Nodes:
@@ -465,17 +465,17 @@ class FEModel3D():
             for load in node.NodeLoads:
                 
                 if load[0] == 'FX':
-                    P.itemset((ID * 6 + 0, 0), P[ID * 6 + 0, 0] + load[1])
+                    P.itemset((ID*6 + 0, 0), P[ID*6 + 0, 0] + load[1])
                 elif load[0] == 'FY':
-                    P.itemset((ID * 6 + 1, 0), P[ID * 6 + 1, 0] + load[1])
+                    P.itemset((ID*6 + 1, 0), P[ID*6 + 1, 0] + load[1])
                 elif load[0] == 'FZ':
-                    P.itemset((ID * 6 + 2, 0), P[ID * 6 + 2, 0] + load[1])
+                    P.itemset((ID*6 + 2, 0), P[ID*6 + 2, 0] + load[1])
                 elif load[0] == 'MX':
-                    P.itemset((ID * 6 + 3, 0), P[ID * 6 + 3, 0] + load[1])
+                    P.itemset((ID*6 + 3, 0), P[ID*6 + 3, 0] + load[1])
                 elif load[0] == 'MY':
-                    P.itemset((ID * 6 + 4, 0), P[ID * 6 + 4, 0] + load[1])
+                    P.itemset((ID*6 + 4, 0), P[ID*6 + 4, 0] + load[1])
                 elif load[0] == 'MZ':
-                    P.itemset((ID * 6 + 5, 0), P[ID * 6 + 5, 0] + load[1])
+                    P.itemset((ID*6 + 5, 0), P[ID*6 + 5, 0] + load[1])
         
         # Return the global nodal force vector
         return P
