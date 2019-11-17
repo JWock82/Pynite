@@ -5,7 +5,7 @@ Created on Thu Nov  2 18:04:56 2017
 @author: D. Craig Brinck, SE
 """
 # %%
-from numpy import zeros, matrix, transpose, add, subtract, matmul, insert
+from numpy import zeros, matrix, transpose, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
 from math import isclose
 from PyNite.BeamSegment import BeamSegment
@@ -320,24 +320,66 @@ class Member3D():
         z2 = self.jNode.Z
         L = self.L()
         
-        # Calculate direction cosines for the transformation matrix
-        if isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 > 0.0):
-            dirCos = matrix([[0, 0, 1],
-                             [0, 1, 0],
-                             [-1, 0, 0]])
-        elif isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 < 0.0):
-            dirCos = matrix([[0, 0, -1],
-                             [0, 1, 0],
-                             [1, 0, 0]])
+        # # Calculate direction cosines for the transformation matrix
+        # if isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 > 0.0):
+        #     dirCos = matrix([[0, 0, 1],
+        #                      [0, 1, 0],
+        #                      [-1, 0, 0]])
+        # elif isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 < 0.0):
+        #     dirCos = matrix([[0, 0, -1],
+        #                      [0, 1, 0],
+        #                      [1, 0, 0]])
+        # else:
+        #     l = (x2-x1)/L
+        #     m = (y2-y1)/L
+        #     n = (z2-z1)/L
+        #     D = (l**2+m**2)**0.5
+        #     D2 = ((-l*n/D)**2 + (-m*n/D)**2 +((l**2+m**2)/D)**2)**0.5
+        #     dirCos = matrix([[l, m, n],
+        #                      [-m/D, l/D, 0],
+        #                      [-l*n/(D*D2), -m*n/(D*D2), (l**2+m**2)/(D*D2)]])
+
+        # Calculate the direction cosines for the local x-axis
+        x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
+
+        # Calculate the remaining direction cosines. The local z-axis will be kept parallel to the global XZ plane in all cases
+        # Vertical members
+        if isclose(x1, x2) and isclose(z1, z2):
+
+            if y2 > y1:
+                y = [-1, 0, 0]
+                z = [0, 0, 1]
+            else:
+                y = [-1, 0, 0]
+                z = [0, 0, -1]
+
+        # Horizontal members
+        elif isclose(y1, y2):
+            
+            y = [0, 1, 0]
+            z = cross(x, y)
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+
+        # Members neither vertical or horizontal
         else:
-            l = (x2-x1)/L
-            m = (y2-y1)/L
-            n = (z2-z1)/L
-            D = (l**2+m**2)**0.5
-            D2 = ((-l*n/D)**2 + (-m*n/D)**2 +((l**2+m**2)/D)**2)**0.5
-            dirCos = matrix([[l, m, n],
-                             [-m/D, l/D, 0],
-                             [-l*n/(D*D2), -m*n/(D*D2), (l**2+m**2)/(D*D2)]])
+
+            # Find the projection of x on the global XZ plane
+            proj = [x2-x1, 0, z2-z1]
+
+            # Find the direction cosines for the local z-axis
+            if y2 > y1:
+                z = cross(proj, x)
+            else:
+                z = cross(x, proj)
+
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+
+            # Find the direction cosines for the local y-axis
+            y = cross(z, x)
+            y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
+
+        # Create the direction cosines matrix
+        dirCos = matrix([x, y, z])
         
         # Build the transformation matrix
         transMatrix = zeros((12, 12))
