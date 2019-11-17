@@ -337,7 +337,7 @@ class FEModel3D():
             i += 1
             
 #%%    
-    def K(self, Renumber=True):
+    def K(self, Renumber=False):
         """
         Assembles and returns the global stiffness matrix.
         
@@ -390,7 +390,7 @@ class FEModel3D():
         return K
     
 #%%    
-    def FER(self, Renumber = True):
+    def FER(self, Renumber=False):
         """
         Assembles and returns the global fixed end reaction vector.
         
@@ -434,7 +434,7 @@ class FEModel3D():
         return FER
     
 #%%
-    def P(self, Renumber=True):
+    def P(self, Renumber=False):
         """
         Assembles and returns the global nodal force vector.
         
@@ -453,7 +453,7 @@ class FEModel3D():
             self.__Renumber()
             
         # Initialize a zero vector to hold all the terms
-        P = zeros((len(self.Nodes)*6, 1))
+        Pvector = zeros((len(self.Nodes)*6, 1))
         
         # Add terms for each node in the model
         for node in self.Nodes:
@@ -465,20 +465,20 @@ class FEModel3D():
             for load in node.NodeLoads:
                 
                 if load[0] == 'FX':
-                    P.itemset((ID*6 + 0, 0), P[ID*6 + 0, 0] + load[1])
+                    Pvector.itemset((ID*6 + 0, 0), Pvector[ID*6 + 0, 0] + load[1])
                 elif load[0] == 'FY':
-                    P.itemset((ID*6 + 1, 0), P[ID*6 + 1, 0] + load[1])
+                    Pvector.itemset((ID*6 + 1, 0), Pvector[ID*6 + 1, 0] + load[1])
                 elif load[0] == 'FZ':
-                    P.itemset((ID*6 + 2, 0), P[ID*6 + 2, 0] + load[1])
+                    Pvector.itemset((ID*6 + 2, 0), Pvector[ID*6 + 2, 0] + load[1])
                 elif load[0] == 'MX':
-                    P.itemset((ID*6 + 3, 0), P[ID*6 + 3, 0] + load[1])
+                    Pvector.itemset((ID*6 + 3, 0), Pvector[ID*6 + 3, 0] + load[1])
                 elif load[0] == 'MY':
-                    P.itemset((ID*6 + 4, 0), P[ID*6 + 4, 0] + load[1])
+                    Pvector.itemset((ID*6 + 4, 0), Pvector[ID*6 + 4, 0] + load[1])
                 elif load[0] == 'MZ':
-                    P.itemset((ID*6 + 5, 0), P[ID*6 + 5, 0] + load[1])
+                    Pvector.itemset((ID*6 + 5, 0), Pvector[ID*6 + 5, 0] + load[1])
         
         # Return the global nodal force vector
-        return P
+        return Pvector
     
 #%%
     def D(self):
@@ -490,7 +490,7 @@ class FEModel3D():
         return self.__D
         
 #%%  
-    def Analyze(self, check_statics=True):
+    def Analyze(self, check_statics=False):
         """
         Analyzes the model.
         """
@@ -651,7 +651,7 @@ class FEModel3D():
         SumRMZ = 0
 
         # Get the global force vector
-        P = self.P()
+        P = self.P(False)
 
         # Step through each node and sum its forces
         for node in self.Nodes:
