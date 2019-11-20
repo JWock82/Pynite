@@ -490,7 +490,7 @@ class FEModel3D():
         return self.__D
         
 #%%  
-    def Analyze(self, check_statics=False):
+    def Analyze(self, check_statics=True):
         """
         Analyzes the model.
         """
@@ -681,7 +681,7 @@ class FEModel3D():
             SumFX += FX
             SumFY += FY
             SumFZ += FZ
-            SumMX += MX - FY*X + FZ*Y
+            SumMX += MX - FY*Z + FZ*Y
             SumMY += MY + FX*Z - FZ*X
             SumMZ += MZ - FX*Y + FY*X
 
@@ -689,7 +689,7 @@ class FEModel3D():
             SumRFX += RFX
             SumRFY += RFY
             SumRFZ += RFZ
-            SumRMX += RMX - RFY*X + RFZ*Y
+            SumRMX += RMX - RFY*Z + RFZ*Y
             SumRMY += RMY + RFX*Z - RFZ*X
             SumRMZ += RMZ - RFX*Y + RFY*X   
         
