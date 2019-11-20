@@ -662,12 +662,12 @@ class FEModel3D():
             Z = node.Z
 
             # Get the nodal forces
-            FX = P[node.ID*6+0]
-            FY = P[node.ID*6+1]
-            FZ = P[node.ID*6+2]
-            MX = P[node.ID*6+3]
-            MY = P[node.ID*6+4]
-            MZ = P[node.ID*6+5]
+            FX = P[node.ID*6+0][0]
+            FY = P[node.ID*6+1][0]
+            FZ = P[node.ID*6+2][0]
+            MX = P[node.ID*6+3][0]
+            MY = P[node.ID*6+4][0]
+            MZ = P[node.ID*6+5][0]
 
             # Get the nodal reactions
             RFX = node.RxnFX
