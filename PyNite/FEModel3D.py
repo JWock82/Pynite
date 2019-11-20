@@ -650,8 +650,9 @@ class FEModel3D():
         SumRMY = 0
         SumRMZ = 0
 
-        # Get the global force vector
+        # Get the global force vector and the global fixed end reaction vector
         P = self.P(False)
+        FER = self.FER()
 
         # Step through each node and sum its forces
         for node in self.Nodes:
@@ -662,12 +663,12 @@ class FEModel3D():
             Z = node.Z
 
             # Get the nodal forces
-            FX = P[node.ID*6+0][0]
-            FY = P[node.ID*6+1][0]
-            FZ = P[node.ID*6+2][0]
-            MX = P[node.ID*6+3][0]
-            MY = P[node.ID*6+4][0]
-            MZ = P[node.ID*6+5][0]
+            FX = P[node.ID*6+0][0] - FER[node.ID*6+0][0]
+            FY = P[node.ID*6+1][0] - FER[node.ID*6+1][0]
+            FZ = P[node.ID*6+2][0] - FER[node.ID*6+2][0]
+            MX = P[node.ID*6+3][0] - FER[node.ID*6+3][0]
+            MY = P[node.ID*6+4][0] - FER[node.ID*6+4][0]
+            MZ = P[node.ID*6+5][0] - FER[node.ID*6+5][0]
 
             # Get the nodal reactions
             RFX = node.RxnFX
