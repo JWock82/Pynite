@@ -698,6 +698,8 @@ class FEModel3D():
         print('**Applied Loads**')
         print('Sum Forces X: ', SumFX, ', Sum Forces Y: ', SumFY, ', Sum Forces Z: ', SumFZ)
         print('Sum Moments MX: ', SumMX, ', Sum Moments MY: ', SumMY, ', Sum Moments MZ: ', SumMZ)
+
+        # Print the reaction summation
         print('**Reactions**')
         print('Sum Forces X: ', SumRFX, ', Sum Forces Y: ', SumRFY, ', Sum Forces Z: ', SumRFZ)
         print('Sum Moments MX: ', SumRMX, ', Sum Moments MY: ', SumRMY, ', Sum Moments MZ: ', SumRMZ)
