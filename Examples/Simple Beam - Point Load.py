@@ -22,8 +22,8 @@ SimpleBeam.DefineSupport("N2", True, True, True, True, False, False)
 # Add a point load of 5 kips at the midspan of the beam
 SimpleBeam.AddMemberPtLoad("M1", "Fy", 5, 7 * 12)
 
-# Analyze the beam
-SimpleBeam.Analyze()
+# Analyze the beam and perform a statics check
+SimpleBeam.Analyze(check_statics=True)
 
 # Print the shear, moment, and deflection diagrams
 SimpleBeam.GetMember("M1").PlotShear("Fy")
