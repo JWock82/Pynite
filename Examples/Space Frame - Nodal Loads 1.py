@@ -29,16 +29,17 @@ E = 30000
 G = 10000
 A = 10
 
-frame.AddMember('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-frame.AddMember('M2', 'N1', 'N3', E, G, Iy, Iz, J, A)
-frame.AddMember('M3', 'N1', 'N4', E, G, Iy, Iz, J, A)
+frame.AddMember('M1', 'N2', 'N1', E, G, Iy, Iz, J, A)
+frame.AddMember('M2', 'N3', 'N1', E, G, Iy, Iz, J, A)
+frame.AddMember('M3', 'N4', 'N1', E, G, Iy, Iz, J, A)
 
 # Add nodal loads
 frame.AddNodeLoad('N1', 'FY', -50)
 frame.AddNodeLoad('N1', 'MX', -1000)
 
-frame.Analyze()
-Visualization.RenderModel(frame)
-print('Node 1 deformations:')
-print('Calculated values: ', [frame.GetNode('N1').DX, frame.GetNode('N1').DY, frame.GetNode('N1').DZ, frame.GetNode('N1').RX, frame.GetNode('N1').RY, frame.GetNode('N1').RZ])
-print('Expected values: ', [7.098e-5, -0.014, -2.352e-3, -3.996e-3, 1.78e-5, -1.033e-4])
+frame.Analyze(False)
+# Visualization.RenderModel(frame)
+# print('Node 1 deformations:')
+# print('Calculated values: ', [frame.GetNode('N1').DX, frame.GetNode('N1').DY, frame.GetNode('N1').DZ, frame.GetNode('N1').RX, frame.GetNode('N1').RY, frame.GetNode('N1').RZ])
+# print('Expected values: ', [7.098e-5, -0.014, -2.352e-3, -3.996e-3, 1.78e-5, -1.033e-4])
+print(frame.GetMember('M3').T())

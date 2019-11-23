@@ -1,4 +1,6 @@
-# Problem 6.64 - Engineering Mechanics: Statics, 4th Edition, by Bedford and Fowler
+# Engineering Mechanics: Statics, 4th Edition
+# Bedford and Fowler
+# Problem 6.64
 # Units for this model are meters and kilonewtons
 
 # Import 'FEModel3D' and 'Visualization' from 'PyNite'

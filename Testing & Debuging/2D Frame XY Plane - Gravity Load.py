@@ -43,13 +43,11 @@ frame.AddNodeLoad('N4', 'FY', -30)
 # Analyze the model
 frame.Analyze()
 
+node1 = frame.GetNode('N1')
+node6 = frame.GetNode('N6')
+print('Calculated reactions: ', node1.RxnFX, node1.RxnFY, node1.RxnMZ, node6.RxnFX, node6.RxnFY, node6.RxnMZ)
+print('Expected reactions: ', 11.69, 30, -1810, -11.69, 30, 1810)
+print('Calculated displacements: ', frame.GetNode('N3').DY, frame.GetNode('N4').DY, frame.GetNode('N3').RZ, frame.GetNode('N4').RZ)
+
 # Render the model for viewing
-# Visualization.RenderModel(frame)
-
-# node1 = frame.GetNode('N1')
-# node6 = frame.GetNode('N6')
-# print('Calculated reactions: ', node1.RxnFX, node1.RxnFY, node1.RxnMZ, node6.RxnFX, node6.RxnFY, node6.RxnMZ)
-# print('Expected reactions: ', 11.69, 30, -1810, -11.69, 30, 1810)
-# print('Calculated displacements: ', frame.GetNode('N3').DY, frame.GetNode('N4').DY, frame.GetNode('N3').RZ, frame.GetNode('N4').RZ)
-
-print(frame.GetMember('M2').K())
+Visualization.RenderModel(frame, 15)

@@ -30,25 +30,24 @@ E = 30000
 G = 250
 A = 12
 
-frame.AddMember('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
+frame.AddMember('M1', 'N1', 'N2', E, G, Iz, Iy, J, A)
 frame.AddMember('M2', 'N2', 'N3', E, G, Iy, Iz, J, A)
 frame.AddMember('M3', 'N3', 'N4', E, G, Iy, Iz, J, A)
 frame.AddMember('M4', 'N4', 'N5', E, G, Iy, Iz, J, A)
-frame.AddMember('M5', 'N5', 'N6', E, G, Iy, Iz, J, A)
+frame.AddMember('M5', 'N5', 'N6', E, G, Iz, Iy, J, A)
 
 # Add nodal loads
 frame.AddNodeLoad('N3', 'FY', -30)
 frame.AddNodeLoad('N4', 'FY', -30)
 
 # Analyze the model
-frame.Analyze(False)
+frame.Analyze(check_statics=True)
 
 # Render the model for viewing
-Visualization.RenderModel(frame)
+Visualization.RenderModel(frame, 15)
 
 node1 = frame.GetNode('N1')
 node6 = frame.GetNode('N6')
 print('Calculated reactions: ', node1.RxnFZ, node1.RxnFY, node1.RxnMX, node6.RxnFZ, node6.RxnFY, node6.RxnMX)
-print('Expected reactions: ', 11.69, 30, -1810, -11.69, 30, 1810)
+print('Expected reactions: ', 11.69, 30, 1810, -11.69, 30, -1810)
 print('Calculated displacements: ', frame.GetNode('N3').DY, frame.GetNode('N4').DY, frame.GetNode('N3').RX, frame.GetNode('N4').RX)
-# print(frame.GetMember('M3').d())

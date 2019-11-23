@@ -37,8 +37,11 @@ frame.AddNodeLoad('N2', 'FY', -5)
 frame.AddNodeLoad('N2', 'MX', -100*12)
 frame.AddNodeLoad('N3', 'FZ', 40)
 
+# Analyze the frame
 frame.Analyze()
-Visualization.RenderModel(frame)
 
 print('Calculated results: ', frame.GetNode('N2').DY, frame.GetNode('N3').DZ)
 print('Expected results: ', -0.063, 1.825)
+
+# Render the model for viewing
+Visualization.RenderModel(frame)

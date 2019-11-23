@@ -1,0 +1,14 @@
+README.md
+setup.py
+PyNite/BeamSegment.py
+PyNite/FEModel3D.py
+PyNite/FixedEndReactions.py
+PyNite/Member3D.py
+PyNite/Node3D.py
+PyNite/Plate2D.py
+PyNite/Visualization.py
+PyNite/__init__.py
+PyNiteFEA.egg-info/PKG-INFO
+PyNiteFEA.egg-info/SOURCES.txt
+PyNiteFEA.egg-info/dependency_links.txt
+PyNiteFEA.egg-info/top_level.txt
