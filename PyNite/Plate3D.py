@@ -1,4 +1,4 @@
-from numpy import matrix, matmul, transpose, insert, cross, divide
+from numpy import zeros, matrix, matmul, transpose, insert, cross, divide
 from numpy.linalg import inv
 
 # A 3D isotropic plate bending element
@@ -51,6 +51,8 @@ class Plate3D():
                     [-60*(2*g**2-b**2)+24*m-84, (-5*b**2+(1+4*m))*6*y3,  (10*g**2+(1-m))*6*x2,   -60*(b**2+g**2)-24*m+84,   (5*b**2-(1-m))*6*y3,    (5*g**2-(1-m))*6*x2,    60*(g**2-2*b**2)+24*m-84, (10*b**2+(1-m))*6*y3,   (5*g**2-(1+4*m))*6*x2,  120*(b**2+g**2)-24*m+84, 0,                      0],
                     [(5*b**2-(1+4*m))*6*y3,     20*x2**2-8*(1-m)*y3**2,  0,                      (-5*b**2+(1-m))*6*y3,      10*x2**2+2*(1-m)*y3**2, 0,                      -(10*b**2+(1-m))*6*y3,    20*x2**2-2*(1-m)*y3**2, 0,                      (10*b**2+(1+4*m))*6*y3,  40*x2**2+8*(1-m)*y3**2, 0],
                     [-(10*g**2+(1-m))*6*x2,     0,                       20*y3**2-2*(1-m)*x2**2, (-5*g**2+(1-m))*6*x2,      0,                      10*y3**2+2*(1-m)*x2**2, (5*g**2-(1+4*m))*6*x2,    0,                      20*y3**2-8*(1-m)*x2**2, (10*g**2+(1+4*m))*6*x2,  30*m*x2*y3,             40*y3**2+8*(1-m)*x2**2]])
+
+        k = k*(E*t**3/(360*(1-m**2)*x2*y3)) 
 
         # Apply symmetry to the matrix
         for i in range(12):
@@ -116,7 +118,7 @@ class Plate3D():
         xy = [xm-xj, ym-yj, zm-zj]
 
         # Find a vector perpendicular to the plate surface to get the orientation of the local z-axis
-        z = cross(xy, x)
+        z = cross(x, xy)
         
         # Divide the vector by its magnitude to produce a unit z-vector of direction cosines
         z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
@@ -136,8 +138,10 @@ class Plate3D():
         transMatrix[3:6, 3:6] = dirCos
         transMatrix[6:9, 6:9] = dirCos
         transMatrix[9:12, 9:12] = dirCos
-        transMatrix[12:18, 12:18] = dirCos
-        transMatrix[18:24, 18:24] = dirCos
+        transMatrix[12:15, 12:15] = dirCos
+        transMatrix[15:18, 15:18] = dirCos
+        transMatrix[18:21, 18:21] = dirCos
+        transMatrix[21:24, 21:24] = dirCos
         
         return transMatrix
 

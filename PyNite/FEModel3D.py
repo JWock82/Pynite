@@ -9,6 +9,7 @@ from numpy import zeros, delete, insert, matmul, subtract
 from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
+from PyNite.Plate3D import Plate3D
 
 # %%
 class FEModel3D():
