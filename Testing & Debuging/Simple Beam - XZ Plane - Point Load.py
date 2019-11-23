@@ -40,9 +40,3 @@ SimpleBeam.GetMember("M1").PlotDeflection("dy")
 # Print reactions at each end of the beam
 print("Left Support Reaction: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N1").RxnFY))
 print("Right Support Reacton: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N2").RxnFY))
-
-# print(SimpleBeam.GetNode('N1').RxnMX)
-# print('K = ', SimpleBeam.K())
-# print(SimpleBeam.GetMember('M1').T())
-# print(SimpleBeam.GetMember('M1').d())
-# print(SimpleBeam.GetMember('M1').D())
