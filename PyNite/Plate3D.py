@@ -63,34 +63,34 @@ class Plate3D():
         k = insert(k, 12, 0, axis=0)
         k = insert(k, 12, 0, axis=1)
 
-        k = insert(k, 10, 0, axis=0)
-        k = insert(k, 10, 0, axis=1)
-        k = insert(k, 10, 0, axis=0)
-        k = insert(k, 10, 0, axis=1)
+        k = insert(k, 9, 0, axis=0)
+        k = insert(k, 9, 0, axis=1)
+        k = insert(k, 9, 0, axis=0)
+        k = insert(k, 9, 0, axis=1)
 
         k = insert(k, 9, 0, axis=0)
         k = insert(k, 9, 0, axis=1)
 
-        k = insert(k, 7, 0, axis=0)
-        k = insert(k, 7, 0, axis=1)
-        k = insert(k, 7, 0, axis=0)
-        k = insert(k, 7, 0, axis=1)
+        k = insert(k, 6, 0, axis=0)
+        k = insert(k, 6, 0, axis=1)
+        k = insert(k, 6, 0, axis=0)
+        k = insert(k, 6, 0, axis=1)
 
         k = insert(k, 6, 0, axis=0)
         k = insert(k, 6, 0, axis=1)
 
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
+        k = insert(k, 3, 0, axis=0)
+        k = insert(k, 3, 0, axis=1)
+        k = insert(k, 3, 0, axis=0)
+        k = insert(k, 3, 0, axis=1)
 
         k = insert(k, 3, 0, axis=0)
         k = insert(k, 3, 0, axis=1)
 
-        k = insert(k, 1, 0, axis=0)
-        k = insert(k, 1, 0, axis=1)
-        k = insert(k, 1, 0, axis=0)
-        k = insert(k, 1, 0, axis=1)
+        k = insert(k, 0, 0, axis=0)
+        k = insert(k, 0, 0, axis=1)
+        k = insert(k, 0, 0, axis=0)
+        k = insert(k, 0, 0, axis=1)
 
         # Return the local stiffness matrix
         return k
