@@ -47,6 +47,6 @@ plModel.DefineSupport('N5', True, True, False, False, False, True)
 # Check to see if the global stiffness matrix is symmetric
 # print(allclose(plModel.K(Renumber=True), plModel.K(Renumber=False).T))
 
-plModel.Analyze(check_statics=False)
+plModel.Analyze(check_statics=True)
 
-# print('Displacement: ', plModel.GetNode('N5').DZ)
+print('Displacement: ', plModel.GetNode('N5').DZ)
