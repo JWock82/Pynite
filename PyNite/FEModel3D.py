@@ -626,7 +626,7 @@ class FEModel3D():
                 K = delete(K, node.ID * 6 + 0, axis = 1)
                 FER = delete(FER, node.ID * 6 + 0, axis = 0)
                 P = delete(P, node.ID * 6 + 0, axis = 0)
-                        
+        
         # Determine if 'K' is singular
         if matrix_rank(K) < min(K.shape):
             # Return out of the method if 'K' is singular and provide an error message
