@@ -309,6 +309,21 @@ class FEModel3D():
         self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end))
 
 #%%
+    def ClearLoads(self):
+        """
+        Clears all loads from the model
+        """
+
+        # Clear out the member loads
+        for member in self.Members:
+            member.DistLoads = []
+            member.PtLoads = []
+        
+        # Clear out the nodal loads
+        for node in self.Nodes:
+            node.NodeLoads = []
+
+#%%
     def GetNode(self, Name):
         """
         Returns the node with the given name.
