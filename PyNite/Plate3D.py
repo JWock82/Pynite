@@ -1,4 +1,4 @@
-from numpy import zeros, matrix, matmul, transpose, insert, cross, divide
+from numpy import zeros, matrix, matmul, transpose, insert, cross, divide, add
 from numpy.linalg import inv
 
 # A 3D isotropic plate bending element
@@ -94,6 +94,73 @@ class Plate3D():
 
         # Return the local stiffness matrix
         return k
+
+#%%   
+    def f(self):
+        """
+        Returns the plate's local end force vector
+        """
+        
+        # Calculate and return the plate's local end force vector
+        return add(matmul(self.k(), self.d()), self.fer())
+
+#%%
+    def fer(self):
+        """
+        Returns the plate's local fixed end reaction vector (zero's for now until surface loads get added)
+        """
+
+        return zeros((24, 1))
+
+#%%
+    def d(self):
+       """
+       Returns the plate's local displacement vector
+       """
+
+       # Calculate and return the local displacement vector
+       return matmul(self.T(), self.D())
+
+#%%
+    def D(self):
+        """
+        Returns the plate's global displacement vector
+        """
+        
+        # Initialize the displacement vector
+        Dvector = zeros((24, 1))
+        
+        # Read in the global displacements from the nodes
+        Dvector.itemset((0, 0), self.iNode.DX)
+        Dvector.itemset((1, 0), self.iNode.DY)
+        Dvector.itemset((2, 0), self.iNode.DZ)
+        Dvector.itemset((3, 0), self.iNode.RX)
+        Dvector.itemset((4, 0), self.iNode.RY)
+        Dvector.itemset((5, 0), self.iNode.RZ)
+
+        Dvector.itemset((6, 0), self.jNode.DX)
+        Dvector.itemset((7, 0), self.jNode.DY)
+        Dvector.itemset((8, 0), self.jNode.DZ)
+        Dvector.itemset((9, 0), self.jNode.RX)
+        Dvector.itemset((10, 0), self.jNode.RY)
+        Dvector.itemset((11, 0), self.jNode.RZ)
+
+        Dvector.itemset((12, 0), self.mNode.DX)
+        Dvector.itemset((13, 0), self.mNode.DY)
+        Dvector.itemset((14, 0), self.mNode.DZ)
+        Dvector.itemset((15, 0), self.mNode.RX)
+        Dvector.itemset((16, 0), self.mNode.RY)
+        Dvector.itemset((17, 0), self.mNode.RZ)
+
+        Dvector.itemset((18, 0), self.nNode.DX)
+        Dvector.itemset((19, 0), self.nNode.DY)
+        Dvector.itemset((20, 0), self.nNode.DZ)
+        Dvector.itemset((21, 0), self.nNode.RX)
+        Dvector.itemset((22, 0), self.nNode.RY)
+        Dvector.itemset((23, 0), self.nNode.RZ)
+        
+        # Return the global displacement vector
+        return Dvector
 
 #%%  
     # Transformation matrix
