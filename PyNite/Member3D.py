@@ -435,7 +435,7 @@ class Member3D():
         """
         
         # Initialize the displacement vector
-        Dvector = zeros((12,1))
+        Dvector = zeros((12, 1))
         
         # Read in the global displacements from the nodes
         Dvector.itemset((0, 0), self.iNode.DX)
