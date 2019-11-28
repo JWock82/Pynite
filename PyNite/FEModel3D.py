@@ -414,6 +414,10 @@ class FEModel3D():
         # Add stiffness terms for each member in the model
         for member in self.Members:
             
+            # Get the member's global stiffness matrix
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            member_K = member.K()
+
             # Step through each term in the member's stiffness matrix
             # 'a' & 'b' below are row/column indices in the member's stiffness matrix
             # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
@@ -438,11 +442,15 @@ class FEModel3D():
                         n = member.jNode.ID*6 + (b-6)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K.itemset((m, n), K.item((m, n)) + member.K().item((a, b)))
+                    K.itemset((m, n), K.item((m, n)) + member_K.item((a, b)))
         
         # Add stiffness terms for each plate in the model
         for plate in self.Plates:
             
+            # Get the plate's global stiffness matrix
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            plate_K = plate.K()
+
             # Step through each term in the plate's stiffness matrix
             # 'a' & 'b' below are row/column indices in the plate's stiffness matrix
             # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
@@ -479,7 +487,7 @@ class FEModel3D():
                         n = plate.nNode.ID*6 + (b-18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K.itemset((m, n), K.item((m, n)) + plate.K().item((a, b)))
+                    K.itemset((m, n), K.item((m, n)) + plate_K.item((a, b)))
 
         # Return the global stiffness matrix
         return K
