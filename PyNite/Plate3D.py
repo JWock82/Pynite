@@ -22,14 +22,8 @@ class Plate3D():
     # Creates the local stiffness matrix
     def k(self):
 
-        x1 = self.iNode.X
-        y1 = self.iNode.Y
-        x2 = self.jNode.X
-        y2 = self.jNode.Y
-        x3 = self.mNode.X
-        y3 = self.mNode.Y
-        x4 = self.nNode.X
-        y4 = self.nNode.Y
+        x2 = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
+        y3 = ((self.mNode.X-self.jNode.X)**2 + (self.mNode.Y-self.jNode.Y)**2 + (self.mNode.Z-self.jNode.Z)**2)**0.5
 
         E = self.E
         t = self.t
