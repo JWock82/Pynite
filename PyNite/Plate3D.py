@@ -3,6 +3,7 @@ from numpy.linalg import inv
 
 # A 3D isotropic plate bending element
 # Membrane stresses are not yet supported
+# This feature is still in development. There are known errors in the plate element code at this point.
 class Plate3D():
 
     def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, mew):
