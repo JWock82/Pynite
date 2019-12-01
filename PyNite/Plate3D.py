@@ -116,6 +116,12 @@ class Plate3D():
        return matmul(self.T(), self.D())
 
 #%%
+    def F(self):
+        
+        # Calculate and return the global force vector
+        return matmul(inv(self.T()), self.f())
+
+#%%
     def D(self):
         """
         Returns the plate's global displacement vector
