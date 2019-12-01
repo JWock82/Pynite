@@ -287,7 +287,7 @@ class Member3D():
         for distLoad in self.DistLoads:
             if distLoad[0] == 'Fx':
                 fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L()))
-            else
+            else:
                 fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
         
         # Return the fixed end reaction vector, uncondensed
