@@ -209,22 +209,27 @@ class Member3D():
         
         # Sum the fixed end reactions for the point loads & moments
         for ptLoad in self.PtLoads:
-            if ptLoad[0] == "Fx":
+
+            if ptLoad[0] == 'Fx':
                 fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L()))
-            elif ptLoad[0] == "Fy":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fy"))
-            elif ptLoad[0] == "Fz":
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fz"))
-            elif ptLoad[0] == "Mx":
+            elif ptLoad[0] == 'Fy':
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), 'Fy'))
+            elif ptLoad[0] == 'Fz':
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), 'Fz'))
+            elif ptLoad[0] == 'Mx':
                 fer = fer
-            elif ptLoad[0] == "My":
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "My"))
-            elif ptLoad[0] == "Mz":     
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "Mz"))
+            elif ptLoad[0] == 'My':
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), 'My'))
+            elif ptLoad[0] == 'Mz':     
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), 'Mz'))
                 
         # Sum the fixed end reactions for the distributed loads
         for distLoad in self.DistLoads:
-            fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))        
+
+            if distLoad[0] == 'Fx':
+                fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L()))
+            else:
+                fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))        
  
         # Count the number of released degrees of freedom
         NumReleases = 0
@@ -269,6 +274,7 @@ class Member3D():
         
         # Sum the fixed end reactions for the point loads & moments
         for ptLoad in self.PtLoads:
+
             if ptLoad[0] == 'Fx':
                 fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == 'Fy':
@@ -285,6 +291,7 @@ class Member3D():
                 
         # Sum the fixed end reactions for the distributed loads
         for distLoad in self.DistLoads:
+
             if distLoad[0] == 'Fx':
                 fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L()))
             else:
