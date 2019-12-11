@@ -1,12 +1,11 @@
 from numpy import zeros, matrix, matmul, transpose, insert, cross, divide, add
 from numpy.linalg import inv
 
-# A 3D isotropic plate bending element
+# A rectangular plate bending element
 # Membrane stresses are not yet supported
-# This feature is still in development. There are known errors in the plate element code at this point.
 class Plate3D():
 
-    def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, mew):
+    def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
 
         self.Name = Name
         self.ID = None
@@ -18,36 +17,55 @@ class Plate3D():
 
         self.t = t
         self.E = E
-        self.mew = mew
+        self.nu = nu
     
     # Creates the local stiffness matrix
     def k(self):
 
-        x2 = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
-        y3 = ((self.mNode.X-self.jNode.X)**2 + (self.mNode.Y-self.jNode.Y)**2 + (self.mNode.Z-self.jNode.Z)**2)**0.5
+        a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
+        b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
+        beta = b/a
 
         E = self.E
         t = self.t
-        m = self.mew
+        nu = self.nu
 
-        # Stiffness matrix for plate bending and out-of-plane displacement based on a 12-term polynomial
-        b = x2/y3
-        g = y3/x2
+        # # Stiffness matrix for plate bending and out-of-plane displacement based on a 12-term polynomial
+        # # Based on "Finite Element Analysis Fundamentals" by Richard H. Gallagher
+        # # There seems to be an error in this formulation, so an alternate formulation will be used below
 
-        k = matrix([[120*(b**2+g**2)-24*m+84,   0,                       0,                      0,                         0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
-                    [(10*b**2+(1+4*m))*6*y3,    40*x2**2+8*(1-m)*y3**2,  0,                      0,                         0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
-                    [-(10*g**2+(1+4*m))*6*x2,   -30*m*x2*y3,             40*y3**2+8*(1-m)*x2**2, 0,                         0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
-                    [60*(g**2-2*b**2)+24*m-84,  -(10*b**2+(1-m))*6*y3,   (-5*g**2+(1+4*m))*6*x2, 120*(b**2+g**2)-24*m+84,   0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
-                    [(10*b**2+(1-m))*6*y3,      20*x2**2-2*(1-m)*y3**2,  0,                      -(10*b**2+(1+4*m))*6*y3,   40*x2**2+8*(1-m)*y3**2, 0,                      0,                        0,                      0,                      0,                       0,                      0],
-                    [(-5*g**2+(1+4*m))*6*x2,    0,                       20*y3**2-8*(1-m)*x2**2, -(10*g**2+(1+4*m))*6*x2,   30*m*x2*y3,             40*y3**2+8*(1-m)*x2**2, 0,                        0,                      0,                      0,                       0,                      0],
-                    [-60*(g**2+b**2)-24*m+84,   (-5*b**2+(1-m))*6*y3,    (5*g**2-(1-m))*6*x2,    -60*(2*g**2-b**2)+24*m-84, (-5*b**2+(1+4*m))*6*y3, (10*g**2+(1-m))*6*x2,   120*(b**2+g**2)-24*m+84,  0,                      0,                      0,                       0,                      0],
-                    [(5*b**2-(1-m))*6*y3,       10*x2**2+2*(1-m)*y3**2,  0,                      (-5*b**2+(1+4*m))*6*y3,    20*x2**2-8*(1-m)*y3**2, 0,                      -(10*b**2+(1+4*m))*6*y3,  40*x2**2+8*(1-m)*y3**2, 0,                      0,                       0,                      0],
-                    [(-5*g**2+(1-m))*6*x2,      0,                       10*y3**2+2*(1-m)*x2**2, -(10*g**2+(1-m))*6*x2,     0,                      20*y3**2-2*(1-m)*x2**2, (10*g**2+(1+4*m))*6*x2,   -30*m*x2*y3,            40*y3**2+8*(1-m)*x2**2, 0,                       0,                      0],
-                    [-60*(2*g**2-b**2)+24*m-84, (-5*b**2+(1+4*m))*6*y3,  (10*g**2+(1-m))*6*x2,   -60*(b**2+g**2)-24*m+84,   (5*b**2-(1-m))*6*y3,    (5*g**2-(1-m))*6*x2,    60*(g**2-2*b**2)+24*m-84, (10*b**2+(1-m))*6*y3,   (5*g**2-(1+4*m))*6*x2,  120*(b**2+g**2)-24*m+84, 0,                      0],
-                    [(5*b**2-(1+4*m))*6*y3,     20*x2**2-8*(1-m)*y3**2,  0,                      (-5*b**2+(1-m))*6*y3,      10*x2**2+2*(1-m)*y3**2, 0,                      -(10*b**2+(1-m))*6*y3,    20*x2**2-2*(1-m)*y3**2, 0,                      (10*b**2+(1+4*m))*6*y3,  40*x2**2+8*(1-m)*y3**2, 0],
-                    [-(10*g**2+(1-m))*6*x2,     0,                       20*y3**2-2*(1-m)*x2**2, (-5*g**2+(1-m))*6*x2,      0,                      10*y3**2+2*(1-m)*x2**2, (5*g**2-(1+4*m))*6*x2,    0,                      20*y3**2-8*(1-m)*x2**2, (10*g**2+(1+4*m))*6*x2,  30*m*x2*y3,             40*y3**2+8*(1-m)*x2**2]])
+        # b = x2/y3
+        # g = y3/x2
 
-        k = k*(E*t**3/(360*(1-m**2)*x2*y3)) 
+        # k = matrix([[120*(b**2+g**2)-24*m+84,   0,                       0,                      0,                         0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
+        #             [(10*b**2+(1+4*m))*6*y3,    40*x2**2+8*(1-m)*y3**2,  0,                      0,                         0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
+        #             [-(10*g**2+(1+4*m))*6*x2,   -30*m*x2*y3,             40*y3**2+8*(1-m)*x2**2, 0,                         0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
+        #             [60*(g**2-2*b**2)+24*m-84,  -(10*b**2+(1-m))*6*y3,   (-5*g**2+(1+4*m))*6*x2, 120*(b**2+g**2)-24*m+84,   0,                      0,                      0,                        0,                      0,                      0,                       0,                      0],
+        #             [(10*b**2+(1-m))*6*y3,      20*x2**2-2*(1-m)*y3**2,  0,                      -(10*b**2+(1+4*m))*6*y3,   40*x2**2+8*(1-m)*y3**2, 0,                      0,                        0,                      0,                      0,                       0,                      0],
+        #             [(-5*g**2+(1+4*m))*6*x2,    0,                       20*y3**2-8*(1-m)*x2**2, -(10*g**2+(1+4*m))*6*x2,   30*m*x2*y3,             40*y3**2+8*(1-m)*x2**2, 0,                        0,                      0,                      0,                       0,                      0],
+        #             [-60*(g**2+b**2)-24*m+84,   (-5*b**2+(1-m))*6*y3,    (5*g**2-(1-m))*6*x2,    -60*(2*g**2-b**2)+24*m-84, (-5*b**2+(1+4*m))*6*y3, (10*g**2+(1-m))*6*x2,   120*(b**2+g**2)-24*m+84,  0,                      0,                      0,                       0,                      0],
+        #             [(5*b**2-(1-m))*6*y3,       10*x2**2+2*(1-m)*y3**2,  0,                      (-5*b**2+(1+4*m))*6*y3,    20*x2**2-8*(1-m)*y3**2, 0,                      -(10*b**2+(1+4*m))*6*y3,  40*x2**2+8*(1-m)*y3**2, 0,                      0,                       0,                      0],
+        #             [(-5*g**2+(1-m))*6*x2,      0,                       10*y3**2+2*(1-m)*x2**2, -(10*g**2+(1-m))*6*x2,     0,                      20*y3**2-2*(1-m)*x2**2, (10*g**2+(1+4*m))*6*x2,   -30*m*x2*y3,            40*y3**2+8*(1-m)*x2**2, 0,                       0,                      0],
+        #             [-60*(2*g**2-b**2)+24*m-84, (-5*b**2+(1+4*m))*6*y3,  (10*g**2+(1-m))*6*x2,   -60*(b**2+g**2)-24*m+84,   (5*b**2-(1-m))*6*y3,    (5*g**2-(1-m))*6*x2,    60*(g**2-2*b**2)+24*m-84, (10*b**2+(1-m))*6*y3,   (5*g**2-(1+4*m))*6*x2,  120*(b**2+g**2)-24*m+84, 0,                      0],
+        #             [(5*b**2-(1+4*m))*6*y3,     20*x2**2-8*(1-m)*y3**2,  0,                      (-5*b**2+(1-m))*6*y3,      10*x2**2+2*(1-m)*y3**2, 0,                      -(10*b**2+(1-m))*6*y3,    20*x2**2-2*(1-m)*y3**2, 0,                      (10*b**2+(1+4*m))*6*y3,  40*x2**2+8*(1-m)*y3**2, 0],
+        #             [-(10*g**2+(1-m))*6*x2,     0,                       20*y3**2-2*(1-m)*x2**2, (-5*g**2+(1-m))*6*x2,      0,                      10*y3**2+2*(1-m)*x2**2, (5*g**2-(1+4*m))*6*x2,    0,                      20*y3**2-8*(1-m)*x2**2, (10*g**2+(1+4*m))*6*x2,  30*m*x2*y3,             40*y3**2+8*(1-m)*x2**2]])
+
+        # k = k*(E*t**3/(360*(1-m**2)*x2*y3))
+
+        k = matrix([[4*(beta**2+beta**(-2))+1/5*(14-4*nu),    0,                                 0,                              0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
+                    [(2*beta**(-2)+1/5*(1+4*nu))*b,           (4/3*beta**(-2)+4/15*(1-nu))*b**2, 0,                              0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
+                    [-(2*beta**2+1/5*(1+4*nu))*a,             -nu*a*b,                           (4/3*beta**2+4/15*(1-nu))*a**2, 0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
+                    [2*(beta**2-2*beta**(-2))-1/5*(14-4*nu),  -(2*beta**(-2)+1/5*(1-nu))*b,      (-beta**2+1/5*(1+4*nu))*a,      4*(beta**2+beta**(-2))+1/5*(14-4*nu),    0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
+                    [(2*beta**(-2)+1/5*(1-nu))*b,             (2/3*beta**(-2)-1/15*(1-nu))*b**2, 0,                              -(2*beta**(-2)+1/5*(1+4*nu))*b,          (4/3*beta**(-2)+4/15*(1-nu))*b**2, 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
+                    [(-beta**2+1/5*(1+4*nu))*a,               0,                                 (2/3*beta**2-4/15*(1-nu))*a**2, -(2*beta**2+1/5*(1+4*nu))*a,             nu*a*b,                            (4/3*beta**2+4/15*(1-nu))*a**2,  0,                                      0,                                 0,                              0,                                    0,                                  0],
+                    [-2*(beta**2+beta**(-2))+1/5*(14-4*nu),   (-beta**(-2)+1/5*(1-nu))*b,        (beta**2-1/5*(1-nu))*a,         -2*(2*beta**2-beta**(-2))-1/5*(14-4*nu), (-beta**(-2)+1/5*(1+4*nu))*b,      (2*beta**2+1/5*(1-nu))*a,        4*(beta**2+beta**(-2))+1/5*(14-4*nu),   0,                                 0,                              0,                                    0,                                  0],
+                    [(beta**(-2)-1/5*(1-nu))*b,               (1/3*beta**(-2)+1/15*(1-nu))*b**2, 0,                              (-beta**(-2)+1/5*(1+4*nu))*b,            (2/3*beta**(-2)-4/15*(1-nu))*b**2, 0,                               -(2*beta**(-2)+1/5*(1+4*nu))*b,         (4/3*beta**(-2)+4/15*(1-nu))*b**2, 0,                              0,                                    0,                                  0],
+                    [(-beta**2+1/5*(1-nu))*a,                 0,                                 (1/3*beta**2+1/15*(1-nu))*a**2, -(2*beta**2+1/5*(1-nu))*a,               0,                                 (2/3*beta**2-1/15*(1-nu))*a**2,  (2*beta**2+1/5*(1+4*nu))*a,             -nu*a*b,                           (4/3*beta**2+4/15*(1-nu))*a**2, 0,                                    0,                                  0],
+                    [-2*(2*beta**2-beta**(-2))-1/5*(14-4*nu), (beta**(-2)-1/5*(1+4*nu))*b,       (2*beta**2+1/5*(1-nu))*a,       -2*(beta**2+beta**(-2))+1/5*(14-4*nu),   (beta**(-2)-1/5*(1-nu))*b,         (beta**2-1/5*(1-nu))*a,          2*(beta**2-2*beta**(-2))-1/5*(14-4*nu), (2*beta**(-2)+1/5*(1-nu))*b,       (beta**2-1/5*(1+4*nu))*a,       4*(beta**2+beta**(-2))+1/5*(14-4*nu), 0,                                  0],
+                    [(beta**(-2)-1/5*(1+4*nu))*b,             (2/3*beta**(-2)-4/15*(1-nu))*b**2, 0,                              (-beta**(-2)+1/5*(1-nu))*b,              (1/3*beta**(-2)+1/15*(1-nu))*b**2, 0,                               -(2*beta**(-2)+1/5*(1-nu))*b,           (2/3*beta**(-2)-1/15*(1-nu))*b**2, 0,                              (2*beta**(-2)+1/5*(1+4*nu))*b,        (4/3*beta**(-2)+4/15*(1-nu))*b**2,  0],
+                    [-(2*beta**2+1/5*(1-nu))*a,               0,                                 (2/3*beta**2-1/15*(1-nu))*a**2, (-beta**2+1/5*(1-nu))*a,                 0,                                 (1/3*beta**2+1/15*(1-nu))*a**2,  (beta**2-1/5*(1+4*nu))*a,               0,                                 (2/3*beta**2-4/15*(1-nu))*a**2, (2*beta**2+1/5*(1+4*nu))*a,           nu*a*b,                             (4/3*beta**2+4/15*(1-nu))*a**2]])
+
+        k = k*E*t**3/(12*(1-nu**2)*a*b)
 
         # Apply symmetry to the matrix
         for i in range(12):
@@ -168,22 +186,22 @@ class Plate3D():
     def T(self):
 
         # Calculate the direction cosines for the local x-axis
-        # The local x-axis will run from the i-node to the j-node
+        # The local x-axis will run from the i-node to the n-node
         xi = self.iNode.X
-        xj = self.jNode.X
+        xn = self.nNode.X
         yi = self.iNode.Y
-        yj = self.jNode.Y
+        yn = self.nNode.Y
         zi = self.iNode.Z
-        zj = self.jNode.Z
-        Lx = ((xj-xi)**2 + (yj-yi)**2 + (zj-zi)**2)**0.5
-        x = [(xj-xi)/Lx, (yj-yi)/Lx, (zj-zi)/Lx]
+        zn = self.nNode.Z
+        Lx = ((xn-xi)**2 + (yn-yi)**2 + (zn-zi)**2)**0.5
+        x = [(xn-xi)/Lx, (yn-yi)/Lx, (zn-zi)/Lx]
         
         # The local y-axis will be in the plane of the plate
         # Find a vector in the plate's local xy plane
-        xm = self.mNode.X
-        ym = self.mNode.Y
-        zm = self.mNode.Z
-        xy = [xm-xj, ym-yj, zm-zj]
+        xj = self.jNode.X
+        yj = self.jNode.Y
+        zj = self.jNode.Z
+        xy = [xj-xi, yj-yi, zj-zi]
 
         # Find a vector perpendicular to the plate surface to get the orientation of the local z-axis
         z = cross(x, xy)
@@ -221,94 +239,107 @@ class Plate3D():
         return matmul(matmul(transpose(self.T()), self.k()), self.T())
 
 #%%
-    # CODE BELOW NOT USED - INCOMPLETE ALTERNATE STIFFNESS MATRIX DERIVATION
-    # **********************************************************************
+#     # CODE BELOW NOT USED - INCOMPLETE ALTERNATE STIFFNESS MATRIX DERIVATION
+#     # **********************************************************************
 
-    # # Calculates and returns the [C] coefficient matrix
-    # def __C(self):
+#     # Calculates and returns the [C] coefficient matrix
+#     def __C(self):
 
-    #     # Find the x and y coordinates at each node
-    #     xi = iNode.X
-    #     yi = iNode.Y
-    #     xj = jNode.X
-    #     yj = jNode.Y
-    #     xm = mNode.X
-    #     ym = mNode.Y
-    #     xn = nNode.X
-    #     yn = nNode.Y
+#         # Find the x and y coordinates at each node
+#         xi = iNode.X
+#         yi = iNode.Y
+#         xj = jNode.X
+#         yj = jNode.Y
+#         xm = mNode.X
+#         ym = mNode.Y
+#         xn = nNode.X
+#         yn = nNode.Y
 
-    #     # Calculate the [C] coefficient matrix
-    #     C = matrix([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
-    #                 [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
-    #                 [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
+#         # Calculate the [C] coefficient matrix
+#         C = matrix([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
+#                     [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
+#                     [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
 
-    #                 [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
-    #                 [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
-    #                 [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3],
+#                     [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
+#                     [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
+#                     [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3],
 
-    #                 [1, xm, ym, xm**2, xm*ym, ym**2, xm**3, xm**2*ym, xm*ym**2, ym**3, xm**3*ym, xm*ym**3],
-    #                 [0, 0, 1, 0, xm, 2*ym, 0, xm**2, 2*xm*ym, 3*ym**2, xm**3, 3*xm*ym**2],
-    #                 [0, -1, 0, -2*xm, -ym, 0, -3*xm**2, -2*xm*ym, -ym**2, 0, -3*xm**2*ym, -ym**3],
+#                     [1, xm, ym, xm**2, xm*ym, ym**2, xm**3, xm**2*ym, xm*ym**2, ym**3, xm**3*ym, xm*ym**3],
+#                     [0, 0, 1, 0, xm, 2*ym, 0, xm**2, 2*xm*ym, 3*ym**2, xm**3, 3*xm*ym**2],
+#                     [0, -1, 0, -2*xm, -ym, 0, -3*xm**2, -2*xm*ym, -ym**2, 0, -3*xm**2*ym, -ym**3],
                     
-    #                 [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
-    #                 [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
-    #                 [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3]])
+#                     [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
+#                     [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
+#                     [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3]])
 
-    #     # Return the coefficient matrix
-    #     return C
+#         # Return the coefficient matrix
+#         return C
 
-    # # Calculates and returns the [Q] coefficient matrix
-    # def __Q(self):
+#     # Calculates and returns the [Q] coefficient matrix
+#     def __Q(self):
 
-    #     # Find the x and y coordinates at each node
-    #     xi = iNode.X
-    #     yi = iNode.Y
-    #     xj = jNode.X
-    #     yj = jNode.Y
-    #     xm = mNode.X
-    #     ym = mNode.Y
-    #     xn = nNode.X
-    #     yn = nNode.Y
+#         # Find the x and y coordinates at each node
+#         xi = iNode.X
+#         yi = iNode.Y
+#         xj = jNode.X
+#         yj = jNode.Y
+#         xm = mNode.X
+#         ym = mNode.Y
+#         xn = nNode.X
+#         yn = nNode.Y
 
-    #     # Calculate the [Q] coefficient matrix
-    #     Q = matrix([[0, 0, 0, -2, 0, 0, -6*xi, -2*yi, 0, 0, -6*xi*yi, 0],
-    #                 [0, 0, 0, 0, 0, -2, 0, 0, -2*xi, -6*yi, 0, -6*xi*yi],
-    #                 [0, 0, 0, 0, -2, 0, 0, -4*xi, -4*yi, 0, -6*xi**2, -6*yi**2],
+#         # Calculate the [Q] coefficient matrix
+#         Q = matrix([[0, 0, 0, -2, 0, 0, -6*xi, -2*yi, 0, 0, -6*xi*yi, 0],
+#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xi, -6*yi, 0, -6*xi*yi],
+#                     [0, 0, 0, 0, -2, 0, 0, -4*xi, -4*yi, 0, -6*xi**2, -6*yi**2],
 
-    #                 [0, 0, 0, -2, 0, 0, -6*xj, -2*yj, 0, 0, -6*xj*yj, 0],
-    #                 [0, 0, 0, 0, 0, -2, 0, 0, -2*xj, -6*yj, 0, -6*xj*yj],
-    #                 [0, 0, 0, 0, -2, 0, 0, -4*xj, -4*yj, 0, -6*xj**2, -6*yj**2],
+#                     [0, 0, 0, -2, 0, 0, -6*xj, -2*yj, 0, 0, -6*xj*yj, 0],
+#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xj, -6*yj, 0, -6*xj*yj],
+#                     [0, 0, 0, 0, -2, 0, 0, -4*xj, -4*yj, 0, -6*xj**2, -6*yj**2],
 
-    #                 [0, 0, 0, -2, 0, 0, -6*xm, -2*ym, 0, 0, -6*xm*ym, 0],
-    #                 [0, 0, 0, 0, 0, -2, 0, 0, -2*xm, -6*ym, 0, -6*xm*ym],
-    #                 [0, 0, 0, 0, -2, 0, 0, -4*xm, -4*ym, 0, -6*xm**2, -6*ym**2],
+#                     [0, 0, 0, -2, 0, 0, -6*xm, -2*ym, 0, 0, -6*xm*ym, 0],
+#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xm, -6*ym, 0, -6*xm*ym],
+#                     [0, 0, 0, 0, -2, 0, 0, -4*xm, -4*ym, 0, -6*xm**2, -6*ym**2],
                     
-    #                 [0, 0, 0, -2, 0, 0, -6*xn, -2*yn, 0, 0, -6*xn*yn, 0],
-    #                 [0, 0, 0, 0, 0, -2, 0, 0, -2*xn, -6*yn, 0, -6*xn*yn],
-    #                 [0, 0, 0, 0, -2, 0, 0, -4*xn, -4*yn, 0, -6*xn**2, -6*yn**2]])
+#                     [0, 0, 0, -2, 0, 0, -6*xn, -2*yn, 0, 0, -6*xn*yn, 0],
+#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xn, -6*yn, 0, -6*xn*yn],
+#                     [0, 0, 0, 0, -2, 0, 0, -4*xn, -4*yn, 0, -6*xn**2, -6*yn**2]])
         
-    #     # Return the [Q] coefficient matrix
-    #     return Q
+#         # Return the [Q] coefficient matrix
+#         return Q
     
-    # # Calculates and returns the gradient matrix [B]
-    # def __B(self):
+#     # Calculates and returns the gradient matrix [B]
+#     def __B(self):
 
-    #     # Calculate the gradient matrix [B]
-    #     B = matmul(self.__Q(), inv(self.__C()))
+#         # Calculate the gradient matrix [B]
+#         B = matmul(self.__Q(), inv(self.__C()))
 
-    #     # Return the gradient matrix [B]
-    #     return B
+#         # Return the gradient matrix [B]
+#         return B
     
-    # # Calculates and returns the constitutive matrix for isotropic materials [D]
-    # def __D(self):
+#     # Calculates and returns the constitutive matrix for isotropic materials [D]
+#     def __D(self):
 
-    #     # Calculate the coefficient for the constitutive matrix [D]
-    #     C = self.E*self.t**3/(12*(1-self.nu**2))
+#         # Calculate the coefficient for the constitutive matrix [D]
+#         C = self.E*self.t**3/(12*(1-self.nu**2))
+#         nu = self.nu
 
-    #     # Calculate the constitutive matrix [D]
-    #     D = matrix([[C, C*self.nu, 0],
-    #                 [C*self.nu, C, 0],
-    #                 [0, 0, C*(1-self.nu)/2]])
+#         # Calculate the constitutive matrix [D]
+#         D = C*matrix([[1, nu, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                       [nu, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                       [0, 0, (1-nu)/2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            
+#                       [0, 0, 0, 1, nu, 0, 0, 0, 0, 0, 0, 0],
+#                       [0, 0, 0, nu, 1, 0, 0, 0, 0, 0, 0, 0],
+#                       [0, 0, 0, 0, 0, (1-nu)/2,  0, 0, 0, 0, 0, 0],
+            
+#                       [0, 0, 0, 0, 0, 0, 1, nu, 0, 0, 0, 0],
+#                       [0, 0, 0, 0, 0, 0, nu, 1, 0, 0, 0, 0],
+#                       [0, 0, 0, 0, 0, 0, 0, 0, (1-nu)/2, 0, 0, 0],
+            
+#                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, nu, 0],
+#                       [0, 0, 0, 0, 0, 0, 0, 0, 0, nu, 1, 0],
+#                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (1-nu)/2]])
 
-    #     # Return the constitutive matrix [D]
-    #     return D
+#         # Return the constitutive matrix [D]
+#         return D
