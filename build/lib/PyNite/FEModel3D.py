@@ -9,6 +9,7 @@ from numpy import zeros, delete, insert, matmul, subtract
 from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
+from PyNite.Plate3D import Plate3D
 
 # %%
 class FEModel3D():
@@ -22,9 +23,10 @@ class FEModel3D():
         Initializes a new 3D finite element model.
         """
         
-        self.Nodes = []           # A list of the structure's nodes
-        self.Members = []         # A list of the structure's members
-        self.__D = []               # A list of the structure's nodal displacements
+        self.Nodes = []    # A list of the structure's nodes
+        self.Members = []  # A list of the structure's members
+        self.Plates = []   # A list of the structure's plates
+        self.__D = []      # A list of the structure's nodal displacements
 
 #%%
     def AddNode(self, Name, X, Y, Z):
@@ -81,6 +83,37 @@ class FEModel3D():
         
         # Add the new member to the list
         self.Members.append(newMember)
+
+#%%
+    def AddPlate(self, Name, iNode, jNode, mNode, nNode, t, E, mew):
+        """
+        Adds a new plate to the model.
+        
+        Parameters
+        ----------
+        Name : string
+            A unique user-defined name for the plate.
+        iNode : string
+            The name of the i-node (1st node definded in counter-clockwise order).
+        jNode : string
+            The name of the j-node (2nd node defined in counter-clockwise order).
+        mNode : string
+            The name of the m-node (3rd node defined in counter-clockwise order).
+        nNode : string
+            The name of the n-node (4th node defined in counter-clockwise order).
+        t : number
+            The thickness of the plate.
+        E : number
+            The modulus of elasticity of the plate.
+        mew : number
+            Posson's ratio for the plate.
+        """
+        
+        # Create a new member
+        newPlate = Plate3D(Name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, mew)
+        
+        # Add the new member to the list
+        self.Plates.append(newPlate)
 
 #%%
     def RemoveNode(self, Node):
@@ -276,6 +309,21 @@ class FEModel3D():
         self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end))
 
 #%%
+    def ClearLoads(self):
+        """
+        Clears all loads from the model
+        """
+
+        # Clear out the member loads
+        for member in self.Members:
+            member.DistLoads = []
+            member.PtLoads = []
+        
+        # Clear out the nodal loads
+        for node in self.Nodes:
+            node.NodeLoads = []
+
+#%%
     def GetNode(self, Name):
         """
         Returns the node with the given name.
@@ -318,8 +366,8 @@ class FEModel3D():
 #%%
     def __Renumber(self):
         """
-        Assigns node and member ID numbers to be used internally by the
-        program. Numbers are assigned according to the order nodes and members
+        Assigns node, plate, and member ID numbers to be used internally by the
+        program. Numbers are assigned according to the order nodes, members, and plates
         were added to the model.
         
         """
@@ -334,6 +382,12 @@ class FEModel3D():
         i = 0
         for member in self.Members:
             member.ID = i
+            i += 1
+        
+        # Number each plate in the model
+        i = 0
+        for plate in self.Plates:
+            plate.ID = i
             i += 1
             
 #%%    
@@ -360,6 +414,10 @@ class FEModel3D():
         # Add stiffness terms for each member in the model
         for member in self.Members:
             
+            # Get the member's global stiffness matrix
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            member_K = member.K()
+
             # Step through each term in the member's stiffness matrix
             # 'a' & 'b' below are row/column indices in the member's stiffness matrix
             # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
@@ -368,24 +426,69 @@ class FEModel3D():
                 # Determine if index 'a' is related to the i-node or j-node
                 if a < 6:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = member.iNode.ID * 6 + a
+                    m = member.iNode.ID*6 + a
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = member.jNode.ID * 6 + (a - 6)
+                    m = member.jNode.ID*6 + (a-6)
                     
                 for b in range(12):
                     
                     # Determine if index 'b' is related to the i-node or j-node
                     if b < 6:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = member.iNode.ID * 6 + b
+                        n = member.iNode.ID*6 + b
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = member.jNode.ID * 6 + (b - 6)
+                        n = member.jNode.ID*6 + (b-6)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K.itemset((m, n), K.item((m, n)) + member.K().item((a, b)))
+                    K.itemset((m, n), K.item((m, n)) + member_K.item((a, b)))
         
+        # Add stiffness terms for each plate in the model
+        for plate in self.Plates:
+            
+            # Get the plate's global stiffness matrix
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            plate_K = plate.K()
+
+            # Step through each term in the plate's stiffness matrix
+            # 'a' & 'b' below are row/column indices in the plate's stiffness matrix
+            # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+            for a in range(24):
+
+                # Determine which node the index 'a' is related to
+                if a < 6:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = plate.iNode.ID*6 + a
+                elif a < 12:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = plate.jNode.ID*6 + (a-6)
+                elif a < 18:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = plate.mNode.ID*6 + (a-12)
+                else:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = plate.nNode.ID*6 + (a-18)
+
+                for b in range(24):
+
+                    # Determine which node the index 'b' is related to
+                    if b < 6:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = plate.iNode.ID*6 + b
+                    elif b < 12:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = plate.jNode.ID*6 + (b-6)
+                    elif b < 18:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = plate.mNode.ID*6 + (b-12)
+                    else:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = plate.nNode.ID*6 + (b-18)
+                    
+                    # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                    K.itemset((m, n), K.item((m, n)) + plate_K.item((a, b)))
+
         # Return the global stiffness matrix
         return K
     
@@ -546,7 +649,7 @@ class FEModel3D():
                 K = delete(K, node.ID * 6 + 0, axis = 1)
                 FER = delete(FER, node.ID * 6 + 0, axis = 0)
                 P = delete(P, node.ID * 6 + 0, axis = 0)
-                        
+        
         # Determine if 'K' is singular
         if matrix_rank(K) < min(K.shape):
             # Return out of the method if 'K' is singular and provide an error message
@@ -608,7 +711,46 @@ class FEModel3D():
                     node.RxnMX += member.F()[9, 0]
                     node.RxnMY += member.F()[10, 0]
                     node.RxnMZ += member.F()[11, 0]
+
+            # Sum the plate forces at the node
+            for plate in self.Plates:
+
+                if plate.iNode == node:
+
+                    node.RxnFX += plate.F()[0, 0]
+                    node.RxnFY += plate.F()[1, 0]
+                    node.RxnFZ += plate.F()[2, 0]
+                    node.RxnMX += plate.F()[3, 0]
+                    node.RxnMY += plate.F()[4, 0]
+                    node.RxnMZ += plate.F()[5, 0]
                 
+                elif plate.jNode == node:
+
+                    node.RxnFX += plate.F()[6, 0]
+                    node.RxnFY += plate.F()[7, 0]
+                    node.RxnFZ += plate.F()[8, 0]
+                    node.RxnMX += plate.F()[9, 0]
+                    node.RxnMY += plate.F()[10, 0]
+                    node.RxnMZ += plate.F()[11, 0]
+                
+                elif plate.mNode == node:
+
+                    node.RxnFX += plate.F()[12, 0]
+                    node.RxnFY += plate.F()[13, 0]
+                    node.RxnFZ += plate.F()[14, 0]
+                    node.RxnMX += plate.F()[15, 0]
+                    node.RxnMY += plate.F()[16, 0]
+                    node.RxnMZ += plate.F()[17, 0]
+                
+                elif plate.nNode == node:
+
+                    node.RxnFX += plate.F()[18, 0]
+                    node.RxnFY += plate.F()[19, 0]
+                    node.RxnFZ += plate.F()[20, 0]
+                    node.RxnMX += plate.F()[21, 0]
+                    node.RxnMY += plate.F()[22, 0]
+                    node.RxnMZ += plate.F()[23, 0]
+
             # Sum the joint forces at the node
             for load in node.NodeLoads:
                 
