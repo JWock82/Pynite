@@ -85,7 +85,7 @@ class FEModel3D():
         self.Members.append(newMember)
 
 #%%
-    def AddPlate(self, Name, iNode, jNode, mNode, nNode, t, E, mew):
+    def AddPlate(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
         """
         Adds a new plate to the model.
         
@@ -110,7 +110,7 @@ class FEModel3D():
         """
         
         # Create a new member
-        newPlate = Plate3D(Name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, mew)
+        newPlate = Plate3D(Name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
         
         # Add the new member to the list
         self.Plates.append(newPlate)
