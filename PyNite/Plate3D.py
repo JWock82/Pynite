@@ -294,9 +294,14 @@ class Plate3D():
 #%%
     # Returns the vector of constants for plate bending
     def __a(self):
+        """
+        Returns the vector of plate bending constants for the displacement function
+        """
 
+        # Get the plate's local displacement vector
         d = self.d()
 
+        # Remove degrees of freedom not related to plate bending
         d = delete(d, 23, axis=0)
         d = delete(d, 19, axis=0)
         d = delete(d, 18, axis=0)
@@ -313,6 +318,7 @@ class Plate3D():
         d = delete(d, 1, axis=0)
         d = delete(d, 0, axis=0)
 
+        # Return the plate bending constants
         return inv(self.__C())*d
 
 #%%  
@@ -334,22 +340,25 @@ class Plate3D():
 #%%   
     def moment(self, x, y):
         """
-        Returns the internal moments at any point (x, y) in the plate's local
+        Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
         """
         
+        # Calculate and return internal moments
         return self.__D()*self.__Q(x, y)*self.__a()
 
 #%%  
     def shear(self, x, y):
         """
-        Returns the internal shears at any point (x, y) in the plate's local
+        Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
         """
 
+        # Store matrices into local variables for quicker access
         D = self.__D()
         a = self.__a()
 
+        # Calculate the derivatives of the plate moments needed to compute shears
         dMx_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
                             [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
                             [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[0]
@@ -366,9 +375,11 @@ class Plate3D():
                              [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
                              [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[2]
         
+        # Calculate internal shears
         Qx = (dMx_dx + dMxy_dy)[0, 0]
         Qy = (dMy_dy + dMxy_dx)[0, 0]
 
+        # Return internal shears
         return matrix([[Qx], 
                        [Qy]])
         

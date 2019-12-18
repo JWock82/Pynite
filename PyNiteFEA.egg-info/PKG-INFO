@@ -1,9 +1,9 @@
 Metadata-Version: 2.1
 Name: PyNiteFEA
-Version: 0.0.4
-Summary: A 3D frame, beam, and truss finite element package
+Version: 0.0.5
+Summary: A linear elastic 3D frame, truss, and beam finite element library for Python.
 Home-page: https://github.com/JWock82/PyNite.git
-Author: D. Craig Brinck, SE
+Author: D. Craig Brinck, PE, SE
 Author-email: Building.Code@outlook.com
 License: UNKNOWN
 Description: # PyNite
@@ -40,4 +40,5 @@ Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
 Description-Content-Type: text/markdown

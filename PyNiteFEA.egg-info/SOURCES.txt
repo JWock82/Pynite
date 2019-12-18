@@ -5,7 +5,7 @@ PyNite/FEModel3D.py
 PyNite/FixedEndReactions.py
 PyNite/Member3D.py
 PyNite/Node3D.py
-PyNite/Plate2D.py
+PyNite/Plate3D.py
 PyNite/Visualization.py
 PyNite/__init__.py
 PyNiteFEA.egg-info/PKG-INFO
