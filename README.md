@@ -2,9 +2,10 @@
 A linear elastic 3D frame, truss, and beam finite element library for Python.
 
 # Current Capabilities
-* 3D static analysis of linear elastic frame structures.
+* 3D static analysis of linear elastic structures.
 * Member point loads, linearly varying distributed loads, and nodal loads are supported.
 * Produces shear, moment, and deflection results and diagrams for each member.
+* Rectangular plate bending elements (documentation to come soon).
 * Reports support reactions.
 * Basic rendering of model geometry.
 
