@@ -1,4 +1,4 @@
-from numpy import zeros, matrix, matmul, transpose, insert, cross, divide, add
+from numpy import zeros, delete, matrix, matmul, transpose, insert, cross, divide, add
 from numpy.linalg import inv
 
 # A rectangular plate bending element
@@ -19,6 +19,12 @@ class Plate3D():
         self.E = E
         self.nu = nu
     
+    def width(self):
+        return ((self.nNode.X - self.iNode.X)**2 + (self.nNode.Y - self.iNode.Y)**2 + (self.nNode.Z - self.iNode.Z)**2)**0.5
+
+    def height(self):
+        return ((self.jNode.X - self.iNode.X)**2 + (self.jNode.Y - self.iNode.Y)**2 + (self.jNode.Z - self.iNode.Z)**2)**0.5
+
     # Creates the local stiffness matrix
     def k(self):
 
@@ -52,6 +58,7 @@ class Plate3D():
 
         # k = k*(E*t**3/(360*(1-m**2)*x2*y3))
 
+        # Stiffness matrix for plate bending
         k = matrix([[4*(beta**2+beta**(-2))+1/5*(14-4*nu),    0,                                 0,                              0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
                     [(2*beta**(-2)+1/5*(1+4*nu))*b,           (4/3*beta**(-2)+4/15*(1-nu))*b**2, 0,                              0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
                     [-(2*beta**2+1/5*(1+4*nu))*a,             -nu*a*b,                           (4/3*beta**2+4/15*(1-nu))*a**2, 0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
@@ -242,71 +249,72 @@ class Plate3D():
 #     # CODE BELOW NOT USED - INCOMPLETE ALTERNATE STIFFNESS MATRIX DERIVATION
 #     # **********************************************************************
 
-#     # Calculates and returns the [C] coefficient matrix
-#     def __C(self):
+    # Calculates and returns the displacement coefficient matrix [C]
+    def __C(self):
 
-#         # Find the x and y coordinates at each node
-#         xi = iNode.X
-#         yi = iNode.Y
-#         xj = jNode.X
-#         yj = jNode.Y
-#         xm = mNode.X
-#         ym = mNode.Y
-#         xn = nNode.X
-#         yn = nNode.Y
+        # Find the x and y coordinates at each node
+        xi = 0
+        yi = 0
+        xj = 0
+        yj = ((self.jNode.X - self.iNode.X)**2 + (self.jNode.Y - self.iNode.Y)**2 + (self.jNode.Z - self.iNode.Z)**2)**0.5
+        xm = ((self.mNode.X - self.jNode.X)**2 + (self.mNode.Y - self.jNode.Y)**2 + (self.mNode.Z - self.jNode.Z)**2)**0.5
+        ym = yj
+        xn = xm
+        yn = 0
 
-#         # Calculate the [C] coefficient matrix
-#         C = matrix([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
-#                     [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
-#                     [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
+        # Calculate the [C] coefficient matrix
+        C = matrix([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
+                    [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
+                    [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
 
-#                     [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
-#                     [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
-#                     [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3],
+                    [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
+                    [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
+                    [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3],
 
-#                     [1, xm, ym, xm**2, xm*ym, ym**2, xm**3, xm**2*ym, xm*ym**2, ym**3, xm**3*ym, xm*ym**3],
-#                     [0, 0, 1, 0, xm, 2*ym, 0, xm**2, 2*xm*ym, 3*ym**2, xm**3, 3*xm*ym**2],
-#                     [0, -1, 0, -2*xm, -ym, 0, -3*xm**2, -2*xm*ym, -ym**2, 0, -3*xm**2*ym, -ym**3],
+                    [1, xm, ym, xm**2, xm*ym, ym**2, xm**3, xm**2*ym, xm*ym**2, ym**3, xm**3*ym, xm*ym**3],
+                    [0, 0, 1, 0, xm, 2*ym, 0, xm**2, 2*xm*ym, 3*ym**2, xm**3, 3*xm*ym**2],
+                    [0, -1, 0, -2*xm, -ym, 0, -3*xm**2, -2*xm*ym, -ym**2, 0, -3*xm**2*ym, -ym**3],
                     
-#                     [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
-#                     [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
-#                     [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3]])
+                    [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
+                    [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
+                    [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3]])
 
-#         # Return the coefficient matrix
-#         return C
+        # Return the coefficient matrix
+        return C
 
-#     # Calculates and returns the [Q] coefficient matrix
-#     def __Q(self):
+    # Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y) in the plate's local system
+    def __Q(self, x, y):
 
-#         # Find the x and y coordinates at each node
-#         xi = iNode.X
-#         yi = iNode.Y
-#         xj = jNode.X
-#         yj = jNode.Y
-#         xm = mNode.X
-#         ym = mNode.Y
-#         xn = nNode.X
-#         yn = nNode.Y
-
-#         # Calculate the [Q] coefficient matrix
-#         Q = matrix([[0, 0, 0, -2, 0, 0, -6*xi, -2*yi, 0, 0, -6*xi*yi, 0],
-#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xi, -6*yi, 0, -6*xi*yi],
-#                     [0, 0, 0, 0, -2, 0, 0, -4*xi, -4*yi, 0, -6*xi**2, -6*yi**2],
-
-#                     [0, 0, 0, -2, 0, 0, -6*xj, -2*yj, 0, 0, -6*xj*yj, 0],
-#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xj, -6*yj, 0, -6*xj*yj],
-#                     [0, 0, 0, 0, -2, 0, 0, -4*xj, -4*yj, 0, -6*xj**2, -6*yj**2],
-
-#                     [0, 0, 0, -2, 0, 0, -6*xm, -2*ym, 0, 0, -6*xm*ym, 0],
-#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xm, -6*ym, 0, -6*xm*ym],
-#                     [0, 0, 0, 0, -2, 0, 0, -4*xm, -4*ym, 0, -6*xm**2, -6*ym**2],
-                    
-#                     [0, 0, 0, -2, 0, 0, -6*xn, -2*yn, 0, 0, -6*xn*yn, 0],
-#                     [0, 0, 0, 0, 0, -2, 0, 0, -2*xn, -6*yn, 0, -6*xn*yn],
-#                     [0, 0, 0, 0, -2, 0, 0, -4*xn, -4*yn, 0, -6*xn**2, -6*yn**2]])
+        # Calculate the [Q] coefficient matrix
+        Q = matrix([[0, 0, 0, -2, 0, 0, -6*x, -2*y, 0, 0, -6*x*y, 0],
+                    [0, 0, 0, 0, 0, -2, 0, 0, -2*x, -6*y, 0, -6*x*y],
+                    [0, 0, 0, 0, -2, 0, 0, -4*x, -4*y, 0, -6*x**2, -6*y**2]])
         
-#         # Return the [Q] coefficient matrix
-#         return Q
+        # Return the [Q] coefficient matrix
+        return Q
+
+    # Returns the vector of constants for plate bending
+    def __a(self):
+
+        d = self.d()
+
+        d = delete(d, 23, axis=0)
+        d = delete(d, 19, axis=0)
+        d = delete(d, 18, axis=0)
+
+        d = delete(d, 17, axis=0)
+        d = delete(d, 13, axis=0)
+        d = delete(d, 12, axis=0)
+
+        d = delete(d, 11, axis=0)
+        d = delete(d, 7, axis=0)
+        d = delete(d, 6, axis=0)
+        
+        d = delete(d, 5, axis=0)
+        d = delete(d, 1, axis=0)
+        d = delete(d, 0, axis=0)
+
+        return inv(self.__C())*d
     
 #     # Calculates and returns the gradient matrix [B]
 #     def __B(self):
@@ -317,29 +325,57 @@ class Plate3D():
 #         # Return the gradient matrix [B]
 #         return B
     
-#     # Calculates and returns the constitutive matrix for isotropic materials [D]
-#     def __D(self):
+    # Calculates and returns the constitutive matrix for isotropic materials [D]
+    def __D(self):
 
-#         # Calculate the coefficient for the constitutive matrix [D]
-#         C = self.E*self.t**3/(12*(1-self.nu**2))
-#         nu = self.nu
+        # Calculate the coefficient for the constitutive matrix [D]
+        C = self.E*self.t**3/(12*(1-self.nu**2))
+        nu = self.nu
 
-#         # Calculate the constitutive matrix [D]
-#         D = C*matrix([[1, nu, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-#                       [nu, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-#                       [0, 0, (1-nu)/2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            
-#                       [0, 0, 0, 1, nu, 0, 0, 0, 0, 0, 0, 0],
-#                       [0, 0, 0, nu, 1, 0, 0, 0, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, 0, (1-nu)/2,  0, 0, 0, 0, 0, 0],
-            
-#                       [0, 0, 0, 0, 0, 0, 1, nu, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, 0, 0, nu, 1, 0, 0, 0, 0],
-#                       [0, 0, 0, 0, 0, 0, 0, 0, (1-nu)/2, 0, 0, 0],
-            
-#                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, nu, 0],
-#                       [0, 0, 0, 0, 0, 0, 0, 0, 0, nu, 1, 0],
-#                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (1-nu)/2]])
+        # Calculate the constitutive matrix [D]
+        D = C*matrix([[1, nu, 0],
+                      [nu, 1, 0],
+                      [0, 0, (1-nu)/2]])
 
-#         # Return the constitutive matrix [D]
-#         return D
+        # Return the constitutive matrix [D]
+        return D
+    
+    def moment(self, x, y):
+        """
+        Returns the internal moments at any point (x, y) in the plate's local
+        coordinate system
+        """
+        
+        return self.__D()*self.__Q(x, y)*self.__a()
+    
+    def shear(self, x, y):
+        """
+        Returns the internal shears at any point (x, y) in the plate's local
+        coordinate system
+        """
+
+        D = self.__D()
+        a = self.__a()
+
+        dMx_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+                            [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
+                            [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[0]
+
+        dMxy_dy = (D*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
+                             [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[2]
+        
+        dMy_dy = (D*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
+                             [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[1]
+
+        dMxy_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
+                             [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[2]
+        
+        Qx = (dMx_dx + dMxy_dy)[0, 0]
+        Qy = (dMy_dy + dMxy_dx)[0, 0]
+
+        return matrix([[Qx], 
+                       [Qy]])
+        
