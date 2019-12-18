@@ -246,9 +246,6 @@ class Plate3D():
         return matmul(matmul(transpose(self.T()), self.k()), self.T())
 
 #%%
-#     # CODE BELOW NOT USED - INCOMPLETE ALTERNATE STIFFNESS MATRIX DERIVATION
-#     # **********************************************************************
-
     # Calculates and returns the displacement coefficient matrix [C]
     def __C(self):
 
@@ -282,6 +279,7 @@ class Plate3D():
         # Return the coefficient matrix
         return C
 
+#%%
     # Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y) in the plate's local system
     def __Q(self, x, y):
 
@@ -293,6 +291,7 @@ class Plate3D():
         # Return the [Q] coefficient matrix
         return Q
 
+#%%
     # Returns the vector of constants for plate bending
     def __a(self):
 
@@ -315,16 +314,8 @@ class Plate3D():
         d = delete(d, 0, axis=0)
 
         return inv(self.__C())*d
-    
-#     # Calculates and returns the gradient matrix [B]
-#     def __B(self):
 
-#         # Calculate the gradient matrix [B]
-#         B = matmul(self.__Q(), inv(self.__C()))
-
-#         # Return the gradient matrix [B]
-#         return B
-    
+#%%  
     # Calculates and returns the constitutive matrix for isotropic materials [D]
     def __D(self):
 
@@ -339,7 +330,8 @@ class Plate3D():
 
         # Return the constitutive matrix [D]
         return D
-    
+
+#%%   
     def moment(self, x, y):
         """
         Returns the internal moments at any point (x, y) in the plate's local
@@ -347,7 +339,8 @@ class Plate3D():
         """
         
         return self.__D()*self.__Q(x, y)*self.__a()
-    
+
+#%%  
     def shear(self, x, y):
         """
         Returns the internal shears at any point (x, y) in the plate's local
