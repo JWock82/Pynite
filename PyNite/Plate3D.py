@@ -2,7 +2,6 @@ from numpy import zeros, delete, matrix, matmul, transpose, insert, cross, divid
 from numpy.linalg import inv
 
 # A rectangular plate bending element
-# Membrane stresses are not yet supported
 class Plate3D():
 
     def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
@@ -27,6 +26,12 @@ class Plate3D():
 
     # Creates the local stiffness matrix
     def k(self):
+        return add(self.k_b(), self.k_m())
+    
+    def k_b(self):
+        """
+        Returns the local stiffness matrix for bending
+        """
 
         a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
         b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
@@ -113,6 +118,75 @@ class Plate3D():
         k = insert(k, 0, 0, axis=1)
 
         # Return the local stiffness matrix
+        return k
+
+#%%
+    def k_m(self):
+        """
+        Returns the local stiffness matrix for membrane forces
+        """
+
+        a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
+        b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
+        beta = b/a
+        
+        E = self.E
+        t = self.t
+        nu = self.nu
+        
+        k = matrix([[4*beta+2*(1-nu)*beta**(-1), 0,                          0,                          0,                          0,                          0,                          0,                          0],
+                    [3/2*(1+nu),                 4*beta**(-1)+2*(1-nu)*beta, 0,                          0,                          0,                          0,                          0,                          0],
+                    [2*beta-2*(1-nu)*beta**(-1), -3/2*(1-3*nu),              4*beta+2*(1-nu)*beta**(-1), 0,                          0,                          0,                          0,                          0],
+                    [3/2*(1-3*nu),               -4*beta**(-1)+(1-nu)*beta,  -3/2*(1+nu),                4*beta**(-1)+2*(1-nu)*beta, 0,                          0,                          0,                          0],
+                    [-2*beta-(1-nu)*beta**(-1),  -3/2*(1+nu),                -4*beta+(1-nu)*beta**(-1),  -3/2*(1-3*nu),              4*beta+2*(1-nu)*beta**(-1), 0,                          0,                          0],
+                    [-3/2*(1+nu),                -2*beta**(-1)-(1-nu)*beta,  3/2*(1-3*nu),               2*beta**(-1)-2*(1-nu)*beta, 3/2*(1+nu),                 4*beta**(-1)+2*(1-nu)*beta, 0,                          0],
+                    [-4*beta+(1-nu)*beta**(-1),  3/2*(1-3*nu),               -2*beta-(1-nu)*beta**(-1),  3/2*(1+nu),                 2*beta-2*(1-nu)*beta**(-1), -3/2*(1-3*nu),              4*beta+2*(1-nu)*beta**(-1), 0],
+                    [-3/2*(1-3*nu),              2*beta**(-1)-2*(1-nu)*beta, 3/2*(1+nu),                 -2*beta**(-1)-(1-nu)*beta,  3/2*(1-3*nu),               -4*beta**(-1)+(1-nu)*beta,  -3/2*(1+nu),                4*beta**(-1)+2*(1-nu)*beta]])
+        
+        k = k*E*t/(12*(1-nu**2))
+
+        # Apply symmetry to the matrix
+        for i in range(8):
+            for j in range(i, 8):
+                k[i, j] = k[j, i]
+        
+        # Insert rows of zeros for degrees of freedom not included in the matrix above
+        k = insert(k, 8, 0, axis=0)
+        k = insert(k, 8, 0, axis=1)
+        k = insert(k, 8, 0, axis=0)
+        k = insert(k, 8, 0, axis=1)
+        k = insert(k, 8, 0, axis=0)
+        k = insert(k, 8, 0, axis=1)
+        k = insert(k, 8, 0, axis=0)
+        k = insert(k, 8, 0, axis=1)
+
+        k = insert(k, 6, 0, axis=0)
+        k = insert(k, 6, 0, axis=1)
+        k = insert(k, 6, 0, axis=0)
+        k = insert(k, 6, 0, axis=1)
+        k = insert(k, 6, 0, axis=0)
+        k = insert(k, 6, 0, axis=1)
+        k = insert(k, 6, 0, axis=0)
+        k = insert(k, 6, 0, axis=1)
+
+        k = insert(k, 4, 0, axis=0)
+        k = insert(k, 4, 0, axis=1)
+        k = insert(k, 4, 0, axis=0)
+        k = insert(k, 4, 0, axis=1)
+        k = insert(k, 4, 0, axis=0)
+        k = insert(k, 4, 0, axis=1)
+        k = insert(k, 4, 0, axis=0)
+        k = insert(k, 4, 0, axis=1)
+        
+        k = insert(k, 2, 0, axis=0)
+        k = insert(k, 2, 0, axis=1)
+        k = insert(k, 2, 0, axis=0)
+        k = insert(k, 2, 0, axis=1)
+        k = insert(k, 2, 0, axis=0)
+        k = insert(k, 2, 0, axis=1)
+        k = insert(k, 2, 0, axis=0)
+        k = insert(k, 2, 0, axis=1)
+
         return k
 
 #%%   
