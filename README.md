@@ -1,5 +1,5 @@
 # PyNite
-A linear elastic 3D frame, truss, and beam finite element library for Python.
+A linear elastic 3D structural engineering finite element library for Python.
 
 # Current Capabilities
 * 3D static analysis of linear elastic structures.
