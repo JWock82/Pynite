@@ -432,6 +432,7 @@ class FEModel3D():
         K = zeros((len(self.Nodes) * 6, len(self.Nodes) * 6))
         
         # Add stiffness terms for each member in the model
+        print('...Adding member stiffness terms to global stiffness matrix')
         for member in self.Members:
             
             # Get the member's global stiffness matrix
@@ -465,6 +466,7 @@ class FEModel3D():
                     K.itemset((m, n), K.item((m, n)) + member_K.item((a, b)))
         
         # Add stiffness terms for each plate in the model
+        print('...Adding plate stiffness terms to global stiffness matrix')
         for plate in self.Plates:
             
             # Get the plate's global stiffness matrix
@@ -621,7 +623,9 @@ class FEModel3D():
         """
         Analyzes the model.
         """
-            
+        
+        print("**Analyzing**")
+
         # Get the global stiffness matrix and renumber the nodes & members
         # in the process of creating it
         K = self.K(True)
@@ -675,12 +679,14 @@ class FEModel3D():
                 P = delete(P, node.ID * 6 + 0, axis = 0)
         
         # Determine if 'K' is singular
+        print("...Checking global stability")
         if matrix_rank(K) < min(K.shape):
             # Return out of the method if 'K' is singular and provide an error message
             print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
             return
         else:
             # Calculate the global displacement vector
+            print("...Calculating global displacement vector")
             self.__D = matmul(inv(K), subtract(P, FER))
         
         # Save the displacements as a local variable for easier reference below
@@ -713,6 +719,7 @@ class FEModel3D():
             node.RZ = D.item((node.ID * 6 + 5, 0))
         
         # Calculate and store the reactions at each node
+        print("...Calculating reactions")
         for node in self.Nodes:
             
             # Sum the member end forces at the node
@@ -792,10 +799,12 @@ class FEModel3D():
                     node.RxnMZ -= load[1]
                 
         # Segment all members in the model to make member results available
+        print('...Calculating member internal forces')
         for member in self.Members:
             member.SegmentMember()
         
         # Check statics if requested
+        print('...Checking statics')
         if check_statics == True:
             self.__CheckStatics()
 
