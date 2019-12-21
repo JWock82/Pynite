@@ -535,16 +535,17 @@ class VisPlate():
     label = vtk.vtkVectorText()
     label.SetText(plate.Name)
 
-    # Set up a mapper for the member label
+    # Set up a mapper for the plate label
     lblMapper = vtk.vtkPolyDataMapper()
     lblMapper.SetInputConnection(label.GetOutputPort())
 
-    # Set up an actor for the member label
+    # Set up an actor for the plate label
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, (Yi+Yj+Ym+Yn)/4, (Zi+Zj+Zm+Zn)/4)
 
+#%%
 # TODO: Finish the following code for load visualization at a future time
 
 # # Creates an arrow for the viewer
