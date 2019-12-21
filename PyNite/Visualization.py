@@ -13,6 +13,10 @@ def RenderModel(model, textHeight=5):
   for member in model.Members:
     visMembers.append(VisMember(member, model.Nodes, textHeight))
 
+  visPlates = []
+  for plate in model.Plates:
+    visPlates.append(VisPlate(plate, model.Nodes, textHeight))
+
   # Create a window
   window = vtk.vtkRenderWindow()
 
@@ -59,6 +63,22 @@ def RenderModel(model, textHeight=5):
     # Add the actors for the node supports
     for support in visNode.supportActors:
       renderer.AddActor(support)
+
+  # Add actors for each plate
+  for visPlate in visPlates:
+
+    # Add the actors for the plate
+    renderer.AddActor(visPlate.actor1)
+    renderer.AddActor(visPlate.actor2)
+    renderer.AddActor(visPlate.actor3)
+    renderer.AddActor(visPlate.actor4)
+
+    # Add the actor for the plate label
+    renderer.AddActor(visPlate.lblActor)
+
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    visPlate.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
@@ -441,6 +461,89 @@ class VisMember():
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
+
+# Converts a plate object into a plate for the viewer
+class VisPlate():
+
+  # Constructor
+  def __init__(self, plate, nodes, textHeight=5):
+
+    # Generate lines for the plate
+    line1 = vtk.vtkLineSource()
+    line2 = vtk.vtkLineSource()
+    line3 = vtk.vtkLineSource()
+    line4 = vtk.vtkLineSource()
+
+    # Step through each node in the model and find the position of the i-node and j-node
+    for node in nodes:
+
+      # Check to see if the current node is the i-node
+      if node.Name == plate.iNode.Name:
+        Xi = node.X
+        Yi = node.Y
+        Zi = node.Z
+        line1.SetPoint1(Xi, Yi, Zi)
+        line4.SetPoint2(Xi, Yi, Zi)
+
+      # Check to see if the current node is the j-node
+      elif node.Name == plate.jNode.Name:
+        Xj = node.X
+        Yj = node.Y
+        Zj = node.Z
+        line1.SetPoint2(Xj, Yj, Zj)
+        line2.SetPoint1(Xj, Yj, Zj)
+
+      # Check to see if the current node is the m-node
+      elif node.Name == plate.mNode.Name:
+        Xm = node.X
+        Ym = node.Y
+        Zm = node.Z
+        line2.SetPoint2(Xm, Ym, Zm)
+        line3.SetPoint1(Xm, Ym, Zm)
+      
+      # Check to see if the current node is the n-node
+      elif node.Name == plate.nNode.Name:
+        Xn = node.X
+        Yn = node.Y
+        Zn = node.Z
+        line3.SetPoint2(Xn, Yn, Zn)
+        line4.SetPoint1(Xn, Yn, Zn)
+
+    # Set up mappers for the plate
+    mapper1 = vtk.vtkPolyDataMapper()
+    mapper2 = vtk.vtkPolyDataMapper()
+    mapper3 = vtk.vtkPolyDataMapper()
+    mapper4 = vtk.vtkPolyDataMapper()
+
+    mapper1.SetInputConnection(line1.GetOutputPort())
+    mapper2.SetInputConnection(line2.GetOutputPort())
+    mapper3.SetInputConnection(line3.GetOutputPort())
+    mapper4.SetInputConnection(line4.GetOutputPort())
+
+    # Set up actors for the plate
+    self.actor1 = vtk.vtkActor()
+    self.actor2 = vtk.vtkActor()
+    self.actor3 = vtk.vtkActor()
+    self.actor4 = vtk.vtkActor()
+
+    self.actor1.SetMapper(mapper1)
+    self.actor2.SetMapper(mapper2)
+    self.actor3.SetMapper(mapper3)
+    self.actor4.SetMapper(mapper4)
+
+    # Create the text for the plate label
+    label = vtk.vtkVectorText()
+    label.SetText(plate.Name)
+
+    # Set up a mapper for the member label
+    lblMapper = vtk.vtkPolyDataMapper()
+    lblMapper.SetInputConnection(label.GetOutputPort())
+
+    # Set up an actor for the member label
+    self.lblActor = vtk.vtkFollower()
+    self.lblActor.SetMapper(lblMapper)
+    self.lblActor.SetScale(textHeight, textHeight, textHeight)
+    self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, (Yi+Yj+Ym+Yn)/4, (Zi+Zj+Zm+Zn)/4)
 
 # TODO: Finish the following code for load visualization at a future time
 
