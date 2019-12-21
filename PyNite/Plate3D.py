@@ -412,7 +412,7 @@ class Plate3D():
         return D
 
 #%%   
-    def moment(self, x, y):
+    def Moment(self, x, y):
         """
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
@@ -422,7 +422,7 @@ class Plate3D():
         return self.__D()*self.__Q(x, y)*self.__a()
 
 #%%  
-    def shear(self, x, y):
+    def Shear(self, x, y):
         """
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
