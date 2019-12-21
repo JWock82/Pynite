@@ -364,6 +364,26 @@ class FEModel3D():
                 return member
 
 #%%
+    def GetPlate(self, Name):
+        """
+        Returns the plate with the given name.
+        
+        Parameters
+        ----------
+        Name : string
+            The name of the plate to be returned.
+        """
+        
+        # Step through each plate in the 'Plates' list
+        for plate in self.Plates:
+            
+            # Check the name of the plate
+            if plate.Name == Name:
+                
+                # Return the plate of interest
+                return plate
+
+#%%
     def __Renumber(self):
         """
         Assigns node, plate, and member ID numbers to be used internally by the
