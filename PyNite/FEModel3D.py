@@ -730,60 +730,84 @@ class FEModel3D():
                     
                     if member.iNode == node:
                         
-                        node.RxnFX += member.F()[0, 0]
-                        node.RxnFY += member.F()[1, 0]
-                        node.RxnFZ += member.F()[2, 0]
-                        node.RxnMX += member.F()[3, 0]
-                        node.RxnMY += member.F()[4, 0]
-                        node.RxnMZ += member.F()[5, 0]
+                        # Get the member's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        member_F = member.F()
+
+                        node.RxnFX += member_F[0, 0]
+                        node.RxnFY += member_F[1, 0]
+                        node.RxnFZ += member_F[2, 0]
+                        node.RxnMX += member_F[3, 0]
+                        node.RxnMY += member_F[4, 0]
+                        node.RxnMZ += member_F[5, 0]
 
                     elif member.jNode == node:
                         
-                        node.RxnFX += member.F()[6, 0]
-                        node.RxnFY += member.F()[7, 0]
-                        node.RxnFZ += member.F()[8, 0]
-                        node.RxnMX += member.F()[9, 0]
-                        node.RxnMY += member.F()[10, 0]
-                        node.RxnMZ += member.F()[11, 0]
+                        # Get the member's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        member_F = member.F()
+                        
+                        node.RxnFX += member_F[6, 0]
+                        node.RxnFY += member_F[7, 0]
+                        node.RxnFZ += member_F[8, 0]
+                        node.RxnMX += member_F[9, 0]
+                        node.RxnMY += member_F[10, 0]
+                        node.RxnMZ += member_F[11, 0]
 
                 # Sum the plate forces at the node
                 for plate in self.Plates:
-                    
+
                     if plate.iNode == node:
 
-                        node.RxnFX += plate.F()[0, 0]
-                        node.RxnFY += plate.F()[1, 0]
-                        node.RxnFZ += plate.F()[2, 0]
-                        node.RxnMX += plate.F()[3, 0]
-                        node.RxnMY += plate.F()[4, 0]
-                        node.RxnMZ += plate.F()[5, 0]
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[0, 0]
+                        node.RxnFY += plate_F[1, 0]
+                        node.RxnFZ += plate_F[2, 0]
+                        node.RxnMX += plate_F[3, 0]
+                        node.RxnMY += plate_F[4, 0]
+                        node.RxnMZ += plate_F[5, 0]
 
                     elif plate.jNode == node:
 
-                        node.RxnFX += plate.F()[6, 0]
-                        node.RxnFY += plate.F()[7, 0]
-                        node.RxnFZ += plate.F()[8, 0]
-                        node.RxnMX += plate.F()[9, 0]
-                        node.RxnMY += plate.F()[10, 0]
-                        node.RxnMZ += plate.F()[11, 0]
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[6, 0]
+                        node.RxnFY += plate_F[7, 0]
+                        node.RxnFZ += plate_F[8, 0]
+                        node.RxnMX += plate_F[9, 0]
+                        node.RxnMY += plate_F[10, 0]
+                        node.RxnMZ += plate_F[11, 0]
 
                     elif plate.mNode == node:
 
-                        node.RxnFX += plate.F()[12, 0]
-                        node.RxnFY += plate.F()[13, 0]
-                        node.RxnFZ += plate.F()[14, 0]
-                        node.RxnMX += plate.F()[15, 0]
-                        node.RxnMY += plate.F()[16, 0]
-                        node.RxnMZ += plate.F()[17, 0]
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[12, 0]
+                        node.RxnFY += plate_F[13, 0]
+                        node.RxnFZ += plate_F[14, 0]
+                        node.RxnMX += plate_F[15, 0]
+                        node.RxnMY += plate_F[16, 0]
+                        node.RxnMZ += plate_F[17, 0]
 
                     elif plate.nNode == node:
 
-                        node.RxnFX += plate.F()[18, 0]
-                        node.RxnFY += plate.F()[19, 0]
-                        node.RxnFZ += plate.F()[20, 0]
-                        node.RxnMX += plate.F()[21, 0]
-                        node.RxnMY += plate.F()[22, 0]
-                        node.RxnMZ += plate.F()[23, 0]
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[18, 0]
+                        node.RxnFY += plate_F[19, 0]
+                        node.RxnFZ += plate_F[20, 0]
+                        node.RxnMX += plate_F[21, 0]
+                        node.RxnMY += plate_F[22, 0]
+                        node.RxnMZ += plate_F[23, 0]
 
                 # Sum the joint forces at the node
                 for load in node.NodeLoads:
