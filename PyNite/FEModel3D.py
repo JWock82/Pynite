@@ -679,14 +679,14 @@ class FEModel3D():
                 P = delete(P, node.ID * 6 + 0, axis = 0)
         
         # Determine if 'K' is singular
-        print("...Checking global stability")
+        print('...Checking global stability')
         if matrix_rank(K) < min(K.shape):
             # Return out of the method if 'K' is singular and provide an error message
             print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
             return
         else:
             # Calculate the global displacement vector
-            print("...Calculating global displacement vector")
+            print('...Calculating global displacement vector')
             self.__D = matmul(inv(K), subtract(P, FER))
         
         # Save the displacements as a local variable for easier reference below
@@ -719,84 +719,87 @@ class FEModel3D():
             node.RZ = D.item((node.ID * 6 + 5, 0))
         
         # Calculate and store the reactions at each node
-        print("...Calculating reactions")
+        print('...Calculating reactions')
         for node in self.Nodes:
             
-            # Sum the member end forces at the node
-            for member in self.Members:
-                
-                if member.iNode == node:
+            # Determine if the node has a support
+            if (node.SupportDX == True) or (node.SupportDY == True) or (node.SupportDZ == True) or (node.SupportRX == True) or (node.SupportRY == True) or (node.SupportRZ == True):
+
+                # Sum the member end forces at the node
+                for member in self.Members:
                     
-                    node.RxnFX += member.F()[0, 0]
-                    node.RxnFY += member.F()[1, 0]
-                    node.RxnFZ += member.F()[2, 0]
-                    node.RxnMX += member.F()[3, 0]
-                    node.RxnMY += member.F()[4, 0]
-                    node.RxnMZ += member.F()[5, 0]
-                
-                elif member.jNode == node:
+                    if member.iNode == node:
+                        
+                        node.RxnFX += member.F()[0, 0]
+                        node.RxnFY += member.F()[1, 0]
+                        node.RxnFZ += member.F()[2, 0]
+                        node.RxnMX += member.F()[3, 0]
+                        node.RxnMY += member.F()[4, 0]
+                        node.RxnMZ += member.F()[5, 0]
+
+                    elif member.jNode == node:
+                        
+                        node.RxnFX += member.F()[6, 0]
+                        node.RxnFY += member.F()[7, 0]
+                        node.RxnFZ += member.F()[8, 0]
+                        node.RxnMX += member.F()[9, 0]
+                        node.RxnMY += member.F()[10, 0]
+                        node.RxnMZ += member.F()[11, 0]
+
+                # Sum the plate forces at the node
+                for plate in self.Plates:
                     
-                    node.RxnFX += member.F()[6, 0]
-                    node.RxnFY += member.F()[7, 0]
-                    node.RxnFZ += member.F()[8, 0]
-                    node.RxnMX += member.F()[9, 0]
-                    node.RxnMY += member.F()[10, 0]
-                    node.RxnMZ += member.F()[11, 0]
+                    if plate.iNode == node:
 
-            # Sum the plate forces at the node
-            for plate in self.Plates:
+                        node.RxnFX += plate.F()[0, 0]
+                        node.RxnFY += plate.F()[1, 0]
+                        node.RxnFZ += plate.F()[2, 0]
+                        node.RxnMX += plate.F()[3, 0]
+                        node.RxnMY += plate.F()[4, 0]
+                        node.RxnMZ += plate.F()[5, 0]
 
-                if plate.iNode == node:
+                    elif plate.jNode == node:
 
-                    node.RxnFX += plate.F()[0, 0]
-                    node.RxnFY += plate.F()[1, 0]
-                    node.RxnFZ += plate.F()[2, 0]
-                    node.RxnMX += plate.F()[3, 0]
-                    node.RxnMY += plate.F()[4, 0]
-                    node.RxnMZ += plate.F()[5, 0]
-                
-                elif plate.jNode == node:
+                        node.RxnFX += plate.F()[6, 0]
+                        node.RxnFY += plate.F()[7, 0]
+                        node.RxnFZ += plate.F()[8, 0]
+                        node.RxnMX += plate.F()[9, 0]
+                        node.RxnMY += plate.F()[10, 0]
+                        node.RxnMZ += plate.F()[11, 0]
 
-                    node.RxnFX += plate.F()[6, 0]
-                    node.RxnFY += plate.F()[7, 0]
-                    node.RxnFZ += plate.F()[8, 0]
-                    node.RxnMX += plate.F()[9, 0]
-                    node.RxnMY += plate.F()[10, 0]
-                    node.RxnMZ += plate.F()[11, 0]
-                
-                elif plate.mNode == node:
+                    elif plate.mNode == node:
 
-                    node.RxnFX += plate.F()[12, 0]
-                    node.RxnFY += plate.F()[13, 0]
-                    node.RxnFZ += plate.F()[14, 0]
-                    node.RxnMX += plate.F()[15, 0]
-                    node.RxnMY += plate.F()[16, 0]
-                    node.RxnMZ += plate.F()[17, 0]
-                
-                elif plate.nNode == node:
+                        node.RxnFX += plate.F()[12, 0]
+                        node.RxnFY += plate.F()[13, 0]
+                        node.RxnFZ += plate.F()[14, 0]
+                        node.RxnMX += plate.F()[15, 0]
+                        node.RxnMY += plate.F()[16, 0]
+                        node.RxnMZ += plate.F()[17, 0]
 
-                    node.RxnFX += plate.F()[18, 0]
-                    node.RxnFY += plate.F()[19, 0]
-                    node.RxnFZ += plate.F()[20, 0]
-                    node.RxnMX += plate.F()[21, 0]
-                    node.RxnMY += plate.F()[22, 0]
-                    node.RxnMZ += plate.F()[23, 0]
+                    elif plate.nNode == node:
 
-            # Sum the joint forces at the node
-            for load in node.NodeLoads:
-                
-                if load[0] == "FX":
-                    node.RxnFX -= load[1]
-                elif load[0] == "FY":
-                    node.RxnFY -= load[1]
-                elif load[0] == "FZ":
-                    node.RxnFZ -= load[1]
-                elif load[0] == "MX":
-                    node.RxnMX -= load[1]
-                elif load[0] == "MY":
-                    node.RxnMY -= load[1]
-                elif load[0] == "MZ":
-                    node.RxnMZ -= load[1]
+                        node.RxnFX += plate.F()[18, 0]
+                        node.RxnFY += plate.F()[19, 0]
+                        node.RxnFZ += plate.F()[20, 0]
+                        node.RxnMX += plate.F()[21, 0]
+                        node.RxnMY += plate.F()[22, 0]
+                        node.RxnMZ += plate.F()[23, 0]
+
+                # Sum the joint forces at the node
+                for load in node.NodeLoads:
+                    
+                    if load[0] == "FX":
+                        node.RxnFX -= load[1]
+                    elif load[0] == "FY":
+                        node.RxnFY -= load[1]
+                    elif load[0] == "FZ":
+                        node.RxnFZ -= load[1]
+                    elif load[0] == "MX":
+                        node.RxnMX -= load[1]
+                    elif load[0] == "MY":
+                        node.RxnMY -= load[1]
+                    elif load[0] == "MZ":
+                        node.RxnMZ -= load[1]
                 
         # Segment all members in the model to make member results available
         print('...Calculating member internal forces')
