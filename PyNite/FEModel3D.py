@@ -537,6 +537,10 @@ class FEModel3D():
         # Add terms for each member in the model
         for member in self.Members:
             
+            # Get the member's global fixed end reaction vector
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            member_FER = member.FER()
+
             # Step through each term in the member's fixed end reaction vector
             # 'a' below is the row index in the member's fixed end reaction vector
             # 'm' below is the corresponding row index in the global fixed end reaction vector
@@ -551,7 +555,7 @@ class FEModel3D():
                     m = member.jNode.ID * 6 + (a - 6)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER.itemset((m, 0), FER[m, 0] + member.FER()[a, 0])
+                FER.itemset((m, 0), FER[m, 0] + member_FER[a, 0])
         
         # Return the global fixed end reaction vector
         return FER
