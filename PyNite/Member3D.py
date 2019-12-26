@@ -22,7 +22,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A):
+    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None):
         """
         Initializes a new member.
         """
