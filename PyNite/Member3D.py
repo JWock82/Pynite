@@ -171,6 +171,106 @@ class Member3D():
         
         # Return the matrix, partitioned into 4 submatrices
         return k11, k12, k21, k22
+
+#%%
+    def __kg_Partition(self, P=0):
+        """
+        Partitions the local geometric stiffness matrix in preparation for static
+        condensation. Used for applying end releases to the member.
+
+        Parameters
+        ----------
+        P : number
+            The axial force acting on the member (compression = +, tension = -)
+        """
+        
+        # Get the properties needed to form the local geometric stiffness matrix
+        Ip = self.Iy + self.Iz
+        A = self.A
+        L = self.L()
+        
+        # Create the uncondensed local geometric stiffness matrix
+        kg = matrix([[0, 0,    0,     0,     0,         0,         0, 0,     0,    0,     0,         0],
+                     [0, 6/5,  0,     0,     0,         L/10,      0, -6/5,  0,    0,     0,         L/10],
+                     [0, 0,    6/5,   0,     -L/10,     0,         0, 0,     -6/5, 0,     -L/10,     0],
+                     [0, 0,    0,     Ip/A,  0,         0,         0, 0,     0,    -Ip/A, 0,         0],
+                     [0, 0,    -L/10, 0,     2*L**2/15, 0,         0, 0,     L/10, 0,     -L**2/30,  0],
+                     [0, L/10, 0,     0,     0,         2*L**2/15, 0, -L/10, 0,    0,     0,         -L**2/30],
+                     [0, 0,    0,     0,     0,         0,         0, 0,     0,    0,     0,         0],
+                     [0, -6/5, 0,     0,     0,         -L/10,     0, 6/5,   0,    0,     0,         -L/10],
+                     [0, 0,    -6/5,  0,     L/10,      0,         0, 0,     6/5,  0,     L/10,      0],
+                     [0, 0,    0,     -Ip/A, 0,         0,         0, 0,     0,    Ip/A,  0,         0],
+                     [0, 0,    -L/10, 0,     -L**2/30,  0,         0, 0,     L/10, 0,     2*L**2/15, 0],
+                     [0, L/10, 0,     0,     0,         -L**2/30,  0, -L/10, 0,    0,     0,         2*L**2/15]])
+        
+        kg = kg*P/L
+
+        # Count the number of released degrees of freedom in the member
+        NumReleases = 0
+        for DOF in self.Releases:
+            if DOF == True:
+                NumReleases += 1
+                    
+        # Initialize each partitioned matrix
+        kg11 = zeros((12 - NumReleases, 12 - NumReleases))
+        kg12 = zeros((12 - NumReleases, NumReleases))
+        kg21 = zeros((NumReleases, 12 - NumReleases))
+        kg22 = zeros((NumReleases, NumReleases))
+        
+        # Initialize variables used to track rows and columns as the matrix is partitioned
+        m11 = 0
+        n11 = 0
+        m12 = 0
+        n12 = 0
+        m21 = 0
+        n21 = 0
+        m22 = 0
+        n22 = 0
+        
+        # Partition the geometric stiffness matrix
+        # Step through each term in the local geometric stiffness matrix (m = row, n = column)
+        for m in range(12):
+            for n in range(12):
+                
+                # Determine which partitioned matrix this term belongs in
+                if self.Releases[m] == False and self.Releases[n] == False:
+                    
+                    kg11.itemset((m11, n11), kg[m, n])
+                    
+                    n11 += 1
+                    if n11 == 12 - NumReleases:
+                        n11 = 0
+                        m11 += 1            
+                        
+                elif self.Releases[m] == False and self.Releases[n] == True:
+                    
+                    kg12.itemset((m12, n12), kg[m, n])
+                    
+                    n12 += 1
+                    if n12 == NumReleases:
+                        n12 = 0
+                        m12 += 1
+                    
+                elif self.Releases[m] == True and self.Releases[n] == False:
+                    
+                    kg21.itemset((m21, n21), kg[m, n])
+                    
+                    n21 += 1
+                    if n21 == 12 - NumReleases:
+                        n21 = 0
+                        m21 += 1
+                    
+                elif self.Releases[m] == True and self.Releases[n] == True:
+                    
+                    kg22.itemset((m22, n22), kg[m, n])
+                    
+                    n22 += 1
+                    if n22 == NumReleases:
+                        n22 = 0
+                        m22 += 1
+        
+        # Return the matrix, partitioned into 4 submatrices
+        return kg11, kg12, kg21, kg22
     
 #%%
     def fer(self):
