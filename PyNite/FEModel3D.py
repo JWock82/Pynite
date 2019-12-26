@@ -53,7 +53,7 @@ class FEModel3D():
         self.Nodes.append(newNode)
         
 
-     def AddAuxNode(self, Name, X, Y, Z):
+    def AddAuxNode(self, Name, X, Y, Z):
         """
         Adds a new auxiliary node to the model.
         
