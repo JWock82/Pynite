@@ -435,7 +435,7 @@ class Member3D():
         x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
         
         # Calculate the direction cosines for the local z-axis based on the auxiliary node
-        if auxNode != None:
+        if self.auxNode != None:
             
             xa = self.auxNode.X
             ya = self.auxNode.Y
