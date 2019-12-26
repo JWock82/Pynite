@@ -330,31 +330,81 @@ class Member3D():
         z1 = self.iNode.Z
         z2 = self.jNode.Z
         L = self.L()
-           
-        # Auxiliary point's coordinates
+        
+        # Calculate the direction cosines for the local x-axis
+        x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
+        
+        # Calculate the direction cosines for the local z-axis based on the auxiliary node
         if auxNode != None:
             
             xa = self.auxNode.X
             ya = self.auxNode.Y
             za = self.auxNode.Z
             
-            # Calculate the distance from the i-node to the auxiliary node
-            aL=((xa-x1)**2 + (ya-y1)**2 + (za-z1)**2)**0.5
+            # Define a vector in the local xz plane using the auxiliary point 
+            z = [xa-x1, ya-y1, za-z1]
             
-            # Calculate direction cosines for the local z-axis using the auxiliary point 
-            z=[(xa-x1)/aL,(ya-y1)/aL, (za-z1)/aL]   
-           
-        # Calculate the direction cosines for the local x-axis
-        x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
-                  
-        # Calculate other direction cosines. Auxiliary point is used to orient local z axis.
-        #Then, local y-axis will be obtained by the cross-product of the local x-axis and the local z-axis.
-        #This vector will be perpendicular to both the local x-axis and the local z-axis.
-        #Distance between iNode and auxiliary node used to orient local z axis            
+            # Find the direction cosines for the local y-axis
+            y = cross(z, x)
+            y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
+            
+            # Ensure the z-axis is perpendicular to the x-axis.
+            # If the vector from the i-node to the auxiliary node is not perpendicular to the member, this will ensure the local coordinate system is orthogonal
+            z = cross(x, y)
+            
+            # Turn the z-vector into a unit vector of direction cosines
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+        
+        # If no auxiliary node is specified the program will determine the member's local z-axis automatically
+        else:
+            
+            # Calculate the remaining direction cosines. The local z-axis will be kept parallel to the global XZ plane in all cases
+            # Vertical members
+            if isclose(x1, x2) and isclose(z1, z2):
+                
+                # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
+                if y2 > y1:
+                    y = [-1, 0, 0]
+                    z = [0, 0, 1]
+                else:
+                    y = [1, 0, 0]
+                    z = [0, 0, 1]
 
-        # Direction cosines of local y-axis
-        y=cross(z, x)
-        y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
+            # Horizontal members
+            elif isclose(y1, y2):
+            
+                # Find a vector in the direction of the local z-axis by taking the cross-product
+                # of the local x-axis and the local y-axis. This vector will be perpendicular to
+                # both the local x-axis and the local y-axis.
+                y = [0, 1, 0]
+                z = cross(x, y)
+
+                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+
+            # Members neither vertical or horizontal
+            else:
+
+                # Find the projection of x on the global XZ plane
+                proj = [x2-x1, 0, z2-z1]
+
+                # Find a vector in the direction of the local z-axis by taking the cross-product
+                # of the local x-axis and its projection on a plane parallel to the XZ plane. This
+                # produces a vector perpendicular to both the local x-axis and its projection. This
+                # vector will always be horizontal since it's parallel to the XZ plane. The order
+                # in which the vectors are 'crossed' has been selected to ensure the y-axis always
+                # has an upward component (i.e. the top of the beam is always on top).
+                if y2 > y1:
+                    z = cross(proj, x)
+                else:
+                    z = cross(x, proj)
+
+                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+                
+                # Find the direction cosines for the local y-axis
+                y = cross(z, x)
+                y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
 
         # Create the direction cosines matrix
         dirCos = matrix([x, y, z])
@@ -367,7 +417,6 @@ class Member3D():
         transMatrix[9:12, 9:12] = dirCos
         
         return transMatrix
-        
 
 #%%
     # Member global stiffness matrix
