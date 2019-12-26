@@ -37,7 +37,7 @@ class Member3D():
         self.Iz = Iz    # The z-axis moment of inertia
         self.J = J  # The polar moment of inertia or torsional constant
         self.A = A  # The cross-sectional area
-        self.aNode = aNode #auxiliary node
+        self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x) or (Direction, M, x)
         self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2)
         self.SegmentsZ = [] # A list of mathematically continuous beam segments for z-bending
