@@ -331,25 +331,29 @@ class Member3D():
         z2 = self.jNode.Z
         L = self.L()
            
-        #auxiliary point's coordinates
-        xa = self.aNode.X
-        ya = self.aNode.Y
-        za = self.aNode.Z
+        # Auxiliary point's coordinates
+        if auxNode != None:
+            
+            xa = self.auxNode.X
+            ya = self.auxNode.Y
+            za = self.auxNode.Z
+            
+            # Calculate the distance from the i-node to the auxiliary node
+            aL=((xa-x1)**2 + (ya-y1)**2 + (za-z1)**2)**0.5
+            
+            # Calculate direction cosines for the local z-axis using the auxiliary point 
+            z=[(xa-x1)/aL,(ya-y1)/aL, (za-z1)/aL]   
            
-        # Calculate the direction cosines for the local x-axis like in previously case
+        # Calculate the direction cosines for the local x-axis
         x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
                   
-        #Calculate other direction cosines. Auxiliary point is used to orient local z axis.
+        # Calculate other direction cosines. Auxiliary point is used to orient local z axis.
         #Then, local y-axis will be obtained by the cross-product of the local x-axis and the local z-axis.
         #This vector will be perpendicular to both the local x-axis and the local z-axis.
-        #Distance between iNode and auxiliary node used to orient local z axis
-        aL=((xa-x1)**2 + (ya-y1)**2 + (za-z1)**2)**0.5  
+        #Distance between iNode and auxiliary node used to orient local z axis            
 
-        #Direction cosines for the local z-axis using auxiliary point 
-        z=[(xa-x1)/aL,(ya-y1)/aL, (za-z1)/aL]               
-
-        #Direction cosines of local y-axis
-        y=cross(z,x)
+        # Direction cosines of local y-axis
+        y=cross(z, x)
         y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
 
         # Create the direction cosines matrix
