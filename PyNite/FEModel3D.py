@@ -53,7 +53,7 @@ class FEModel3D():
         self.Nodes.append(newNode)
         
 
-     def AddaNode(self, Name, X, Y, Z):
+     def AddAuxNode(self, Name, X, Y, Z):
         """
         Adds a new auxiliary node to the model.
         
@@ -73,11 +73,11 @@ class FEModel3D():
         newNode = Node3D(Name, X, Y, Z)
         
         # Add the new node to the list
-        self.aNodes.append(newNode)
+        self.auxNodes.append(newNode)
         
         
 #%%
-    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, aNode=None):
+    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None):
         """
         Adds a new member to the model.
         
@@ -104,7 +104,10 @@ class FEModel3D():
         """
         
         # Create a new member
-        newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetaNode(aNode))
+        if auxNode == None:
+            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, Z)
+        else:
+            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode))
         
         # Add the new member to the list
         self.Members.append(newMember)
@@ -369,7 +372,7 @@ class FEModel3D():
                 return node
 
             
-    def GetaNode(self, Name):
+    def GetAuxNode(self, Name):
         """
         Returns the auxiliary node with the given name.
         
@@ -380,7 +383,7 @@ class FEModel3D():
         """
         
         # Step through each node in the 'Nodes' list
-        for node in self.aNodes:
+        for node in self.auxNodes:
             
             # Check the name of the node
             if node.Name == Name:
