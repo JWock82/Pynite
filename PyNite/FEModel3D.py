@@ -24,6 +24,7 @@ class FEModel3D():
         """
         
         self.Nodes = []    # A list of the structure's nodes
+        self.auxNodes = []   # A list of the structure's auxiliary nodes
         self.Members = []  # A list of the structure's members
         self.Plates = []   # A list of the structure's plates
         self.__D = []      # A list of the structure's nodal displacements
@@ -50,9 +51,33 @@ class FEModel3D():
         
         # Add the new node to the list
         self.Nodes.append(newNode)
+        
 
+     def AddAuxNode(self, Name, X, Y, Z):
+        """
+        Adds a new auxiliary node to the model.
+        
+        Parameters
+        ----------
+        Name : string
+            A unique user-defined name for the node.
+        X : number
+            The global X-coordinate of the node.
+        Y : number
+            The global Y-coordinate of the node.
+        Z : number
+            The global Z-coordinate of the node.
+        """
+        
+        # Create a new node
+        newNode = Node3D(Name, X, Y, Z)
+        
+        # Add the new node to the list
+        self.auxNodes.append(newNode)
+        
+        
 #%%
-    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A):
+    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None):
         """
         Adds a new member to the model.
         
@@ -79,7 +104,10 @@ class FEModel3D():
         """
         
         # Create a new member
-        newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A)
+        if auxNode == None:
+            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A)
+        else:
+            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode))
         
         # Add the new member to the list
         self.Members.append(newMember)
@@ -343,6 +371,26 @@ class FEModel3D():
                 # Return the node of interest
                 return node
 
+            
+    def GetAuxNode(self, Name):
+        """
+        Returns the auxiliary node with the given name.
+        
+        Parameters
+        ----------
+        Name : string
+            The name of the auxiliary node to be returned.
+        """
+        
+        # Step through each node in the 'Nodes' list
+        for node in self.auxNodes:
+            
+            # Check the name of the node
+            if node.Name == Name:
+                
+                # Return the node of interest
+                return node            
+            
 #%%
     def GetMember(self, Name):
         """
