@@ -24,7 +24,7 @@ class FEModel3D():
         """
         
         self.Nodes = []    # A list of the structure's nodes
-        self.aNodes = []   # A list of the structure's auxiliary nodes
+        self.auxNodes = []   # A list of the structure's auxiliary nodes
         self.Members = []  # A list of the structure's members
         self.Plates = []   # A list of the structure's plates
         self.__D = []      # A list of the structure's nodal displacements
