@@ -22,7 +22,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A):
+    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None):
         """
         Initializes a new member.
         """
@@ -37,6 +37,7 @@ class Member3D():
         self.Iz = Iz    # The z-axis moment of inertia
         self.J = J  # The polar moment of inertia or torsional constant
         self.A = A  # The cross-sectional area
+        self.aNode = aNode #auxiliary node
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x) or (Direction, M, x)
         self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2)
         self.SegmentsZ = [] # A list of mathematically continuous beam segments for z-bending
@@ -330,85 +331,84 @@ class Member3D():
         z2 = self.jNode.Z
         L = self.L()
         
-        # The following commented code is no longer used to formulate the transformation matrix.
-        # It was found to be incorrect, even though it follows 'A First Course in the Finite Element Method, 4th Ed.'.
-        # It's being kept for reference for now. The 'z' direction cosines in it are not a unit vector.
-        # It also keeps the local y-axis perpendicular to the global Z-axis, which isn't very intuitive
-        # for the user. It can lead to unexpected member local axis 'flipping'. A better formulation has
-        # been implemented below.
-
-        # # Calculate direction cosines for the transformation matrix
-        # if isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 > 0.0):
-        #     dirCos = matrix([[0, 0, 1],
-        #                      [0, 1, 0],
-        #                      [-1, 0, 0]])
-        # elif isclose(x2-x1, 0.0) and isclose(y2-y1, 0.0) and (z2-z1 < 0.0):
-        #     dirCos = matrix([[0, 0, -1],
-        #                      [0, 1, 0],
-        #                      [1, 0, 0]])
-        # else:
-        #     l = (x2-x1)/L
-        #     m = (y2-y1)/L
-        #     n = (z2-z1)/L
-        #     D = (l**2+m**2)**0.5
-        #     dirCos = matrix([[l, m, n],
-        #                      [-m/D, l/D, 0],
-        #                      [-l*n/D, -m*n/D, D]])
-
         # Calculate the direction cosines for the local x-axis
         x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
-
-        # Calculate the remaining direction cosines. The local z-axis will be kept parallel to the global XZ plane in all cases
-        # Vertical members
-        if isclose(x1, x2) and isclose(z1, z2):
-
-            # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
-            if y2 > y1:
-                y = [-1, 0, 0]
-                z = [0, 0, 1]
-            else:
-                y = [1, 0, 0]
-                z = [0, 0, 1]
-
-        # Horizontal members
-        elif isclose(y1, y2):
+        
+        # Calculate the direction cosines for the local z-axis based on the auxiliary node
+        if auxNode != None:
             
-            # Find a vector in the direction of the local z-axis by taking the cross-product
-            # of the local x-axis and the local y-axis. This vector will be perpendicular to
-            # both the local x-axis and the local y-axis.
-            y = [0, 1, 0]
-            z = cross(x, y)
-
-            # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
-            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
-
-        # Members neither vertical or horizontal
-        else:
-
-            # Find the projection of x on the global XZ plane
-            proj = [x2-x1, 0, z2-z1]
-
-            # Find a vector in the direction of the local z-axis by taking the cross-product
-            # of the local x-axis and its projection on a plane parallel to the XZ plane. This
-            # produces a vector perpendicular to both the local x-axis and its projection. This
-            # vector will always be horizontal since it's parallel to the XZ plane. The order
-            # in which the vectors are 'crossed' has been selected to ensure the y-axis always
-            # has an upward component (i.e. the top of the beam is always on top).
-            if y2 > y1:
-                z = cross(proj, x)
-            else:
-                z = cross(x, proj)
-
-            # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
-            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
-
+            xa = self.auxNode.X
+            ya = self.auxNode.Y
+            za = self.auxNode.Z
+            
+            # Define a vector in the local xz plane using the auxiliary point 
+            z = [xa-x1, ya-y1, za-z1]
+            
             # Find the direction cosines for the local y-axis
             y = cross(z, x)
             y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
+            
+            # Ensure the z-axis is perpendicular to the x-axis.
+            # If the vector from the i-node to the auxiliary node is not perpendicular to the member, this will ensure the local coordinate system is orthogonal
+            z = cross(x, y)
+            
+            # Turn the z-vector into a unit vector of direction cosines
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+        
+        # If no auxiliary node is specified the program will determine the member's local z-axis automatically
+        else:
+            
+            # Calculate the remaining direction cosines. The local z-axis will be kept parallel to the global XZ plane in all cases
+            # Vertical members
+            if isclose(x1, x2) and isclose(z1, z2):
+                
+                # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
+                if y2 > y1:
+                    y = [-1, 0, 0]
+                    z = [0, 0, 1]
+                else:
+                    y = [1, 0, 0]
+                    z = [0, 0, 1]
+
+            # Horizontal members
+            elif isclose(y1, y2):
+            
+                # Find a vector in the direction of the local z-axis by taking the cross-product
+                # of the local x-axis and the local y-axis. This vector will be perpendicular to
+                # both the local x-axis and the local y-axis.
+                y = [0, 1, 0]
+                z = cross(x, y)
+
+                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+
+            # Members neither vertical or horizontal
+            else:
+
+                # Find the projection of x on the global XZ plane
+                proj = [x2-x1, 0, z2-z1]
+
+                # Find a vector in the direction of the local z-axis by taking the cross-product
+                # of the local x-axis and its projection on a plane parallel to the XZ plane. This
+                # produces a vector perpendicular to both the local x-axis and its projection. This
+                # vector will always be horizontal since it's parallel to the XZ plane. The order
+                # in which the vectors are 'crossed' has been selected to ensure the y-axis always
+                # has an upward component (i.e. the top of the beam is always on top).
+                if y2 > y1:
+                    z = cross(proj, x)
+                else:
+                    z = cross(x, proj)
+
+                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+                
+                # Find the direction cosines for the local y-axis
+                y = cross(z, x)
+                y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
 
         # Create the direction cosines matrix
         dirCos = matrix([x, y, z])
-        
+      
         # Build the transformation matrix
         transMatrix = zeros((12, 12))
         transMatrix[0:3, 0:3] = dirCos
