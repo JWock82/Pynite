@@ -72,7 +72,7 @@ class Member3D():
                 k_Condensed = insert(k_Condensed, i, 0, axis = 1)
                 
             i += 1
-        
+
         # Return the local stiffness matrix, with end releases applied
         return k_Condensed
     
@@ -172,6 +172,32 @@ class Member3D():
         
         # Return the matrix, partitioned into 4 submatrices
         return k11, k12, k21, k22
+
+#%%
+    def kg(self, P=0):
+        """
+        Returns the local condensed geometric stiffness matrix
+        """
+        
+        # Get the local geometric stiffness matrix, partitioned as 4 submatrices in
+        # preparation for static condensation
+        kg11, kg12, kg21, kg22 = self.__kg_Partition(P)
+               
+        # Calculate the condensed local geometric stiffness matrix
+        kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
+        
+        # Expand the condensed local geometric stiffness matrix
+        i=0
+        for DOF in self.Releases:
+            
+            if DOF == True:
+                kg_Condensed = insert(kg_Condensed, i, 0, axis = 0)
+                kg_Condensed = insert(kg_Condensed, i, 0, axis = 1)
+                
+            i += 1
+
+        # Return the local geomtric stiffness matrix, with end releases applied
+        return kg_Condensed
 
 #%%
     def __kg_Partition(self, P=0):
@@ -524,6 +550,13 @@ class Member3D():
         
         # Calculate and return the stiffness matrix in global coordinates
         return matmul(matmul(transpose(self.T()), self.k()), self.T())
+
+#%%
+    # Member global geometric stiffness matrix
+    def Kg(self, P=0):
+        
+        # Calculate and return the geometric stiffness matrix in global coordinates
+        return matmul(matmul(transpose(self.T()), self.kg(P)), self.T())
 
 #%%
     def F(self):
