@@ -5,7 +5,7 @@ Created on Thu Nov  9 21:11:20 2017
 @author: D. Craig Brinck, SE
 """
 # %%
-from numpy import zeros, delete, insert, matmul, subtract
+from numpy import zeros, delete, insert, matmul, add, subtract
 from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
@@ -561,7 +561,63 @@ class FEModel3D():
 
         # Return the global stiffness matrix
         return K
-    
+
+#%%    
+    def Kg(self):
+        """
+        Assembles and returns the global geometric stiffness matrix.
+
+        The model must have a static solution prior to obtaining the geometric stiffness matrix.
+        Geometric stiffness of plates is not included.
+        """
+        
+        # Initialize a zero matrix to hold all the stiffness terms
+        Kg = zeros((len(self.Nodes) * 6, len(self.Nodes) * 6))
+        
+        # Add stiffness terms for each member in the model
+        print('...Adding member geometric stiffness terms to global geometric stiffness matrix')
+        for member in self.Members:
+            
+            # Calculate the axial force in the member
+            E = member.E
+            A = member.A
+            L = member.L()
+            d = member.d()
+            P = E*A/L*(d[6, 0] - d[0, 0])
+
+            # Get the member's global stiffness matrix
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            member_Kg = member.Kg(P)
+
+            # Step through each term in the member's stiffness matrix
+            # 'a' & 'b' below are row/column indices in the member's stiffness matrix
+            # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+            for a in range(12):
+                
+                # Determine if index 'a' is related to the i-node or j-node
+                if a < 6:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = member.iNode.ID*6 + a
+                else:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = member.jNode.ID*6 + (a-6)
+                    
+                for b in range(12):
+                    
+                    # Determine if index 'b' is related to the i-node or j-node
+                    if b < 6:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = member.iNode.ID*6 + b
+                    else:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = member.jNode.ID*6 + (b-6)
+                    
+                    # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                    Kg.itemset((m, n), Kg.item((m, n)) + member_Kg.item((a, b)))
+
+        # Return the global geometric stiffness matrix
+        return Kg
+     
 #%%    
     def FER(self, Renumber=False):
         """
@@ -609,7 +665,7 @@ class FEModel3D():
         
         # Return the global fixed end reaction vector
         return FER
-    
+
 #%%
     def P(self, Renumber=False):
         """
@@ -882,6 +938,138 @@ class FEModel3D():
         print('...Checking statics')
         if check_statics == True:
             self.__CheckStatics()
+
+#%%
+    def Analyze_PDelta(self):
+        """
+        Runs a second order (P-Delta) analysis on the structure.
+        """
+        print("**Running P-Delta analysis**")
+
+        # Keep track of the number of iterations
+        iter_count = 1
+        convergence = False
+        divergence = False
+
+        # Iterate until convergence or divergence occurs
+        while convergence == False and divergence == False:
+            
+            # Inform the user which iteration we're on
+            print('...Beginning P-Delta iteration #' + str(iter_count))
+
+            # Get the global stiffness matrix and renumber the nodes & members
+            # in the process of creating it
+            if iter_count == 1:
+                K = self.K(True)      # Initial stiffness matrix
+                FER = self.FER(False) # Fixed end reactions
+                P = self.P(False)     # Nodal forces
+            else:
+                # Adjust the stiffness matrix
+                K = add(self.K(False), self.Kg())        
+
+            # Eliminate supported degrees of freedom from each of the matrices/vectors
+            # Work backwards through the node list so that the relationship between
+            # the DOF's and node ID's is unnafected by the matrices/vectors
+            # shrinking
+            for node in reversed(self.Nodes):
+                
+                if node.SupportRZ == True:
+                    K = delete(K, node.ID * 6 + 5, axis = 0)
+                    K = delete(K, node.ID * 6 + 5, axis = 1)
+                    if iter_count == 1:
+                        FER = delete(FER, node.ID * 6 + 5, axis = 0)
+                        P = delete(P, node.ID * 6 + 5, axis = 0)
+                
+                if node.SupportRY == True:
+                    K = delete(K, node.ID * 6 + 4, axis = 0)
+                    K = delete(K, node.ID * 6 + 4, axis = 1)
+                    if iter_count == 1:
+                        FER = delete(FER, node.ID * 6 + 4, axis = 0)
+                        P = delete(P, node.ID * 6 + 4, axis = 0)
+
+                if node.SupportRX == True:
+                    K = delete(K, node.ID * 6 + 3, axis = 0)
+                    K = delete(K, node.ID * 6 + 3, axis = 1)
+                    if iter_count == 1:
+                        FER = delete(FER, node.ID * 6 + 3, axis = 0)
+                        P = delete(P, node.ID * 6 + 3, axis = 0)
+
+                if node.SupportDZ == True:
+                    K = delete(K, node.ID * 6 + 2, axis = 0)
+                    K = delete(K, node.ID * 6 + 2, axis = 1)
+                    if iter_count == 1:
+                        FER = delete(FER, node.ID * 6 + 2, axis = 0)
+                        P = delete(P, node.ID * 6 + 2, axis = 0)
+
+                if node.SupportDY == True:
+                    K = delete(K, node.ID * 6 + 1, axis = 0)
+                    K = delete(K, node.ID * 6 + 1, axis = 1)
+                    if iter_count == 1:
+                        FER = delete(FER, node.ID * 6 + 1, axis = 0)
+                        P = delete(P, node.ID * 6 + 1, axis = 0)
+
+                if node.SupportDX == True:
+                    K = delete(K, node.ID * 6 + 0, axis = 0)
+                    K = delete(K, node.ID * 6 + 0, axis = 1)
+                    if iter_count == 1:
+                        FER = delete(FER, node.ID * 6 + 0, axis = 0)
+                        P = delete(P, node.ID * 6 + 0, axis = 0)
+        
+            # Determine if 'K' is singular
+            print('...Checking global stability')
+            if matrix_rank(K) < min(K.shape):
+                # Return out of the method if 'K' is singular and provide an error message
+                print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+                return
+            else:
+                # Calculate the global displacement vector
+                print('...Calculating global displacement vector')
+                self.__D = matmul(inv(K), subtract(P, FER))
+        
+            # Save the displacements as a local variable for easier reference below
+            D = self.__D
+        
+            # Expand the global displacement vector to include supported degrees of freedom
+            # Work forwards through the node list so that the relationship between
+            # the DOF's and node ID's is unnafected by the vector expanding
+            for node in self.Nodes:
+                if node.SupportDX == True:
+                    D = insert(D, node.ID * 6 + 0, 0, axis = 0)
+                if node.SupportDY == True:
+                    D = insert(D, node.ID * 6 + 1, 0, axis = 0)
+                if node.SupportDZ == True:
+                    D = insert(D, node.ID * 6 + 2, 0, axis = 0)
+                if node.SupportRX == True:
+                    D = insert(D, node.ID * 6 + 3, 0, axis = 0)
+                if node.SupportRY == True:
+                    D = insert(D, node.ID * 6 + 4, 0, axis = 0)
+                if node.SupportRZ == True:
+                    D = insert(D, node.ID * 6 + 5, 0, axis = 0)
+
+            # Store the calculated global nodal displacements into each node
+            for node in self.Nodes:
+                node.DX = D.item((node.ID * 6 + 0, 0))
+                node.DY = D.item((node.ID * 6 + 1, 0))
+                node.DZ = D.item((node.ID * 6 + 2, 0))
+                node.RX = D.item((node.ID * 6 + 3, 0))
+                node.RY = D.item((node.ID * 6 + 4, 0))
+                node.RZ = D.item((node.ID * 6 + 5, 0))
+            
+            if iter_count == 1:
+                prev_results = D
+            else:
+                print("...Checking for convergence.")
+                # Check for convergence
+                if abs(1 - max(prev_results/D)) <= 0.01:
+                    convergence = True
+                    print("...P-Delta analysis converged after "+str(iter_count)+" iterations.")
+                # Check for divergence
+                elif iter_count > 30:
+                    divergence = True
+                    print("...P-Delta analysis failed to converge after 30 iterations.")
+
+            # Prepare for the next iteration
+            iter_count += 1
 
 #%%
     def __CheckStatics(self):
