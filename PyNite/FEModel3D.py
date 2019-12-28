@@ -5,7 +5,7 @@ Created on Thu Nov  9 21:11:20 2017
 @author: D. Craig Brinck, SE
 """
 # %%
-from numpy import zeros, delete, insert, matmul, add, subtract
+from numpy import zeros, delete, insert, matmul, add, subtract, nanmax
 from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
@@ -1055,20 +1055,21 @@ class FEModel3D():
                 node.RY = D.item((node.ID * 6 + 4, 0))
                 node.RZ = D.item((node.ID * 6 + 5, 0))
             
-            if iter_count == 1:
-                prev_results = D
-            else:
+            if iter_count != 1:
                 print("...Checking for convergence.")
                 # Check for convergence
-                if abs(1 - max(prev_results/D)) <= 0.01:
+                if abs(1 - nanmax(prev_results/D)) <= 0.01:
                     convergence = True
                     print("...P-Delta analysis converged after "+str(iter_count)+" iterations.")
                 # Check for divergence
                 elif iter_count > 30:
                     divergence = True
                     print("...P-Delta analysis failed to converge after 30 iterations.")
+            
+            # Save the results for the next iteration
+            prev_results = D
 
-            # Prepare for the next iteration
+            # Increment the iteration count
             iter_count += 1
 
 #%%
