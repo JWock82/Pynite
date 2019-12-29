@@ -1071,6 +1071,118 @@ class FEModel3D():
 
             # Increment the iteration count
             iter_count += 1
+                # Calculate and store the reactions at each node
+        
+        print('...Calculating reactions')
+        for node in self.Nodes:
+            
+            # Determine if the node has a support
+            if (node.SupportDX == True) or (node.SupportDY == True) or (node.SupportDZ == True) or (node.SupportRX == True) or (node.SupportRY == True) or (node.SupportRZ == True):
+
+                # Sum the member end forces at the node
+                for member in self.Members:
+                    
+                    if member.iNode == node:
+                        
+                        # Get the member's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        member_F = member.F()
+
+                        node.RxnFX += member_F[0, 0]
+                        node.RxnFY += member_F[1, 0]
+                        node.RxnFZ += member_F[2, 0]
+                        node.RxnMX += member_F[3, 0]
+                        node.RxnMY += member_F[4, 0]
+                        node.RxnMZ += member_F[5, 0]
+
+                    elif member.jNode == node:
+                        
+                        # Get the member's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        member_F = member.F()
+                        
+                        node.RxnFX += member_F[6, 0]
+                        node.RxnFY += member_F[7, 0]
+                        node.RxnFZ += member_F[8, 0]
+                        node.RxnMX += member_F[9, 0]
+                        node.RxnMY += member_F[10, 0]
+                        node.RxnMZ += member_F[11, 0]
+
+                # Sum the plate forces at the node
+                for plate in self.Plates:
+
+                    if plate.iNode == node:
+
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[0, 0]
+                        node.RxnFY += plate_F[1, 0]
+                        node.RxnFZ += plate_F[2, 0]
+                        node.RxnMX += plate_F[3, 0]
+                        node.RxnMY += plate_F[4, 0]
+                        node.RxnMZ += plate_F[5, 0]
+
+                    elif plate.jNode == node:
+
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[6, 0]
+                        node.RxnFY += plate_F[7, 0]
+                        node.RxnFZ += plate_F[8, 0]
+                        node.RxnMX += plate_F[9, 0]
+                        node.RxnMY += plate_F[10, 0]
+                        node.RxnMZ += plate_F[11, 0]
+
+                    elif plate.mNode == node:
+
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[12, 0]
+                        node.RxnFY += plate_F[13, 0]
+                        node.RxnFZ += plate_F[14, 0]
+                        node.RxnMX += plate_F[15, 0]
+                        node.RxnMY += plate_F[16, 0]
+                        node.RxnMZ += plate_F[17, 0]
+
+                    elif plate.nNode == node:
+
+                        # Get the plate's global force matrix
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        plate_F = plate.F()
+                    
+                        node.RxnFX += plate_F[18, 0]
+                        node.RxnFY += plate_F[19, 0]
+                        node.RxnFZ += plate_F[20, 0]
+                        node.RxnMX += plate_F[21, 0]
+                        node.RxnMY += plate_F[22, 0]
+                        node.RxnMZ += plate_F[23, 0]
+
+                # Sum the joint forces at the node
+                for load in node.NodeLoads:
+                    
+                    if load[0] == "FX":
+                        node.RxnFX -= load[1]
+                    elif load[0] == "FY":
+                        node.RxnFY -= load[1]
+                    elif load[0] == "FZ":
+                        node.RxnFZ -= load[1]
+                    elif load[0] == "MX":
+                        node.RxnMX -= load[1]
+                    elif load[0] == "MY":
+                        node.RxnMY -= load[1]
+                    elif load[0] == "MZ":
+                        node.RxnMZ -= load[1]
+                
+        # Segment all members in the model to make member results available
+        print('...Calculating member internal forces')
+        for member in self.Members:
+            member.SegmentMember()
 
 #%%
     def __CheckStatics(self):
