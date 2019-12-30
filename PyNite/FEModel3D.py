@@ -5,7 +5,7 @@ Created on Thu Nov  9 21:11:20 2017
 @author: D. Craig Brinck, SE
 """
 # %%
-from numpy import zeros, delete, insert, matmul, add, subtract, nanmax
+from numpy import zeros, delete, insert, matmul, divide, add, subtract, nanmax, seterr
 from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
@@ -835,7 +835,7 @@ class FEModel3D():
             self.__CheckStatics()
 
 #%%
-    def Analyze_PDelta(self):
+    def Analyze_PDelta(self, max_iter=30, tol=0.01):
         """
         Runs a second order (P-Delta) analysis on the structure.
         """
@@ -951,16 +951,26 @@ class FEModel3D():
                 node.RZ = D.item((node.ID * 6 + 5, 0))
             
             if iter_count != 1:
+                
+                # Print a status update for the user
                 print("...Checking for convergence.")
+
+                # Temporarily disable error messages for invalid values.
+                # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
+                seterr(invalid='ignore')
+
                 # Check for convergence
-                if abs(1 - nanmax(prev_results/D)) <= 0.01:
+                if abs(1 - nanmax(divide(prev_results, D))) <= tol:
                     convergence = True
                     print("...P-Delta analysis converged after "+str(iter_count)+" iterations.")
                 # Check for divergence
-                elif iter_count > 30:
+                elif iter_count > max_iter:
                     divergence = True
                     print("...P-Delta analysis failed to converge after 30 iterations.")
-            
+
+                # Turn invalid value warnings back on
+                seterr(invalid='warn') 
+
             # Save the results for the next iteration
             prev_results = D
 
