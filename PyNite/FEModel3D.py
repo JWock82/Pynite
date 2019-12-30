@@ -1186,6 +1186,9 @@ class FEModel3D():
 
 #%%
     def __CheckStatics(self):
+        """
+        Sums global forces and reactions and prints them to the console.
+        """
 
         # Initialize force summations to zero
         SumFX = 0
