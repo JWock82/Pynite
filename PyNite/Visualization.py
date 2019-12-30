@@ -8,7 +8,11 @@ def RenderModel(model, textHeight=5):
   visNodes = []
   for node in model.Nodes:
     visNodes.append(VisNode(node, textHeight))
-  
+
+  visAuxNodes = []
+  for auxnode in model.auxNodes:
+    visAuxNodes.append(VisAuxNode(auxnode, textHeight))
+
   visMembers = []
   for member in model.Members:
     visMembers.append(VisMember(member, model.Nodes, textHeight))
@@ -79,6 +83,19 @@ def RenderModel(model, textHeight=5):
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
     visPlate.lblActor.SetCamera(renderer.GetActiveCamera())
+
+  # Add actors for each auxnode
+  for visAuxNode in visAuxNodes:
+
+    # Add the actor for the node
+    renderer.AddActor(visAuxNode.actor)
+
+    # Add the actor for the node label
+    renderer.AddActor(visAuxNode.lblActor)
+
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
@@ -414,6 +431,47 @@ class VisNode():
         self.supportActors.append(supportActor2)
         self.supportActors.append(supportActor3)
 
+# Converts a auxNode object into a auxnode for the viewer
+class VisAuxNode():
+ 
+  # Constructor
+  def __init__(self, auxnode, textHeight):
+    
+    # Get the node's position
+    X = auxnode.X          # Global X coordinate
+    Y = auxnode.Y          # Global Y coordinate
+    Z = auxnode.Z          # Global Z coordinate
+
+    # Generate a sphere for the node
+    sphere = vtk.vtkSphereSource()
+    sphere.SetCenter(X, Y, Z)
+    sphere.SetRadius(0.6*textHeight)
+
+    # Set up a mapper for the node
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(sphere.GetOutputPort())
+
+    # Set up an actor for the node
+    self.actor = vtk.vtkActor()
+    self.actor.GetProperty().SetColor(255,0,0) #red
+    self.actor.SetMapper(mapper)
+
+    # Create the text for the node label
+    label = vtk.vtkVectorText()
+    label.SetText(auxnode.Name)
+    
+    # Set up a mapper for the node label
+    lblMapper = vtk.vtkPolyDataMapper()
+    lblMapper.SetInputConnection(label.GetOutputPort())
+
+    # Set up an actor for the node label
+    self.lblActor = vtk.vtkFollower()
+    self.lblActor.SetMapper(lblMapper)
+    self.lblActor.SetScale(textHeight, textHeight, textHeight)
+    self.lblActor.SetPosition(X+0.6*textHeight, Y+0.6*textHeight, Z)
+    self.lblActor.GetProperty().SetColor(255,0,0) #red
+        
+        
 # Converts a member object into a member for the viewer
 class VisMember():
 
