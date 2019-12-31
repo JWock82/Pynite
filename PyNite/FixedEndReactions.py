@@ -128,3 +128,27 @@ def FER_AxialLinLoad(p1, p2, x1, x2, L):
     FER.itemset((6, 0), 1/(6*L)*(x1-x2)*(2*p1*x1+p1*x2+p2*x1+2*p2*x2))
     
     return FER
+
+# Returns the fixed end reaction vector for a concentrated torque 
+def FER_Torque(T,x,L):
+    """
+    Returns the fixed end reaction vector for a concentrated torque
+
+    Parameters
+    ----------
+    T : number
+        The magnitude of the torque
+    x : number
+        The location of the torque relative to the start of the member
+    """
+
+    b = L - x
+
+    # Create the fixed end reaction vector
+    FER = zeros((12, 1))
+    
+    # Populate the fixed end reaction vector
+    FER.itemset((3, 0), -T*(L-x)/L)
+    FER.itemset((9, 0), -T*x/L)
+
+    return FER
