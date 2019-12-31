@@ -281,12 +281,12 @@ class FEModel3D():
         ----------
         Member : string
             The name of the member the load is being applied to.
-        Direction : {'Fx', 'Fy', 'Fz', 'My', 'Mz'}
+        Direction : {'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'}
             The direction in which the force is to be applied. Note that
             typical beam sign convention is used. Transverse forces acting
             toward the beam are positive. Moments are positive if they act
             counter-clockwise relative to the beam's local coordinate system.
-            Torsional point loads are not supported at this time.
+            Torsional point loads are positive if torque direction is equal to local x axis direction.
         P : number
             The numeric value (magnitude) of the load.
         x : number
