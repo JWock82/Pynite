@@ -140,8 +140,6 @@ def FER_Torque(T, x, L):
         The location of the torque relative to the start of the member
     """
 
-    b = L - x
-
     # Create the fixed end reaction vector
     FER = zeros((12, 1))
     
