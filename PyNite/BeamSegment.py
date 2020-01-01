@@ -381,7 +381,7 @@ class BeamSegment():
         return min(P1, P2, P3)
 
 #%%
-    # Returns the maximum axial force in the segment
+    # Returns the maximum torsional moment in the segment
     def MaxTorsion(self):
     
         # Return the maximum torsional moment
