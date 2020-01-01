@@ -895,7 +895,7 @@ class Member3D():
         Parameters
         ----------
         x : number
-            The location at which to find the shear
+            The location at which to find the torque
         """
             
         # Check which segment "x" falls on
@@ -963,7 +963,7 @@ class Member3D():
             T.append(self.Torsion(self.L() / 19 * i))
 
         Member3D.__plt.plot(x, T)
-        Member3D.__plt.ylabel('Pure Torsional Moment') # Torsion results are for pure torsion. Torsional warping has not been considered
+        Member3D.__plt.ylabel('Torsional Moment (Warping Torsion Not Included)') # Torsion results are for pure torsion. Torsional warping has not been considered
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()   
