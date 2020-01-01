@@ -409,7 +409,6 @@ class Member3D():
                 fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fy"))
             elif ptLoad[0] == 'Fz':
                 fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fz"))
-            # Torsional loads are not yet supported by PyNite
             elif ptLoad[0] == 'Mx':
                 fer = add(fer, PyNite.FixedEndReactions.FER_Torque(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == 'My':
