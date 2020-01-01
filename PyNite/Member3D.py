@@ -42,6 +42,7 @@ class Member3D():
         self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2)
         self.SegmentsZ = [] # A list of mathematically continuous beam segments for z-bending
         self.SegmentsY = [] # A list of mathematically continuous beam segments for y-bending
+        self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
 
 #%%
@@ -344,7 +345,7 @@ class Member3D():
             elif ptLoad[0] == 'Fz':
                 fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), 'Fz'))
             elif ptLoad[0] == 'Mx':
-                fer = fer
+                fer = add(fer, PyNite.FixedEndReactions.FER_Torque(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == 'My':
                 fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), 'My'))
             elif ptLoad[0] == 'Mz':     
@@ -408,9 +409,8 @@ class Member3D():
                 fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fy"))
             elif ptLoad[0] == 'Fz':
                 fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fz"))
-            # Torsional loads are not yet supported by PyNite
             elif ptLoad[0] == 'Mx':
-                fer = fer
+                fer = add(fer, PyNite.FixedEndReactions.FER_Torque(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == 'My':
                 fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "My"))
             elif ptLoad[0] == 'Mz':     
@@ -885,6 +885,89 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()
 
+        
+        
+#%%
+    def Torsion(self, x):
+        """
+        Returns the torsional moment at a point along the member's length
+        
+        Parameters
+        ----------
+        x : number
+            The location at which to find the torque
+        """
+            
+        # Check which segment "x" falls on
+        for segment in self.SegmentsX:
+            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                return segment.Torsion()
+                
+            if isclose(x, self.L()):  
+                lastIndex = len(self.SegmentsX) - 1
+                return self.SegmentsX[lastIndex].Torsion()
+
+#%%
+    def MaxTorsion(self):
+        """
+        Returns the maximum torsional moment in the member
+        """        
+        
+        Tmax = self.SegmentsX[0].Torsion()   
+        
+        for segment in self.SegmentsX:
+
+            if segment.MaxTorsion() > Tmax:
+                    
+                Tmax = segment.MaxTorsion()
+        
+        return Tmax
+    
+#%%
+    def MinTorsion(self):
+        """
+        Returns the minimum torsional moment in the member
+        """        
+        
+        Tmin = self.SegmentsX[0].Torsion()
+            
+        for segment in self.SegmentsX:
+                
+            if segment.MinTorsion() < Tmin:
+                    
+                Tmin = segment.MinTorsion()
+        
+        return Tmin
+
+#%%
+    def PlotTorsion(self):
+        """
+        Plots the axial force diagram for the member
+        """
+        
+        # Import 'pyplot' if not already done
+        if Member3D.__plt is None:
+            from matplotlib import pyplot as plt
+            Member3D.__plt = plt
+
+        fig, ax = Member3D.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        x = []
+        T = []
+        
+        # Calculate the torsional moment diagram
+        for i in range(20):
+            x.append(self.L() / 19 * i)
+            T.append(self.Torsion(self.L() / 19 * i))
+
+        Member3D.__plt.plot(x, T)
+        Member3D.__plt.ylabel('Torsional Moment (Warping Torsion Not Included)') # Torsion results are for pure torsion. Torsional warping has not been considered
+        Member3D.__plt.xlabel('Location')
+        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.show()   
+        
 #%%
     def Axial(self, x):
         """
@@ -1101,6 +1184,7 @@ class Member3D():
         Iy = self.Iy
         SegmentsZ = self.SegmentsZ
         SegmentsY = self.SegmentsY
+        SegmentsX = self.SegmentsX
         
         # Create a list of discontinuity locations
         disconts = [0, L] # Member ends
@@ -1118,6 +1202,7 @@ class Member3D():
         # Clear out old data from any previous analyses
         SegmentsZ.clear()
         SegmentsY.clear()
+        SegmentsX.clear()
         
         # Create a list of mathematically continuous segments for each direction
         for index in range(len(disconts) - 1):
@@ -1135,6 +1220,12 @@ class Member3D():
             newSeg.x2 = disconts[index+1] # Segment end location
             newSeg.EI = E*Iy              # Segment flexural stiffness
             SegmentsY.append(newSeg)      # Add the segment to the list
+            
+            # x-direction segments (for torsional moment)
+            newSeg = BeamSegment()        # Create the new segment
+            newSeg.x1 = disconts[index]   # Segment start location
+            newSeg.x2 = disconts[index+1] # Segment end location
+            SegmentsX.append(newSeg)      # Add the segment to the list
         
         # Get the member local end forces, local fixed end reactions, and local displacements
         f = self.f()     # Member local end force vector
@@ -1191,6 +1282,7 @@ class Member3D():
             SegmentsY[i].P1 = f[0,0]
             SegmentsY[i].V1 = f[2,0]
             SegmentsY[i].M1 = f[4,0] + f[2,0]*x
+            SegmentsX[i].T1 = f[3,0]
             
             # Add effects of point loads occuring prior to this segment
             for ptLoad in self.PtLoads:
@@ -1205,6 +1297,8 @@ class Member3D():
                     elif ptLoad[0] == "Fz":
                         SegmentsY[i].V1 -= ptLoad[1]
                         SegmentsY[i].M1 -= ptLoad[1]*(x - ptLoad[2])
+                    elif ptLoad[0] == "Mx":
+                        SegmentsX[i].T1 += ptLoad[1]    
                     elif ptLoad[0] == "My":
                         SegmentsY[i].M1 -= ptLoad[1]
                     elif ptLoad[0] == "Mz":
