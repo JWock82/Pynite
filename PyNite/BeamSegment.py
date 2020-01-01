@@ -120,16 +120,18 @@ class BeamSegment():
         return P1+(p2-p1)/(2*L)*x**2+p1*x
 
     
-#%% Modify when distributed torsional moment is supported
-
-    # Returns the torsional moment at a location 'x' on the segment
-    def Torsion(self, x):
-
+#%%
+    def Torsion(self):
+        """
+        Returns the torsional moment in the segment.
+        """
+        
+        # The torsional moment is constant across the segment
+        # This can be updated in the future for distributed torsional forces
         return self.T1
     
 #%%
     def Slope(self, x):
-        
         """
         Returns the slope at a point on the segment
         
@@ -381,8 +383,10 @@ class BeamSegment():
         return min(P1, P2, P3)
 
 #%%
-    # Returns the maximum torsional moment in the segment
     def MaxTorsion(self):
+        """
+        Returns the maximum torsional moment in the segment.
+        """
     
         # Return the maximum torsional moment
         # Since the torsional moment is constant on the segment, the maximum torsional moment is T1
@@ -390,8 +394,10 @@ class BeamSegment():
         return self.T1
 
 #%%
-    # Returns the minimum torsional moment in the segment
     def MinTorsion(self):
+        """
+        Returns the minimum torsional moment in the segment.
+        """
 
         # Return the minimum torsional moment
         # Since the torsional moment is constant on the segment, the minimum torsional moment is T1
