@@ -242,6 +242,7 @@ class RectWall():
         # Analyze the model
         self.fem.Analyze()
 
+        # Find the maximum displacement
         DZ = self.fem.Nodes[0].DZ
         for node in self.fem.Nodes:
             if abs(node.DZ) > abs(DZ):
@@ -419,7 +420,7 @@ t = 1 # ft
 width = 20 # ft
 height = 20 # ft
 nu = 0.3
-meshsize = 2 # ft
+meshsize = 1 # ft
 load = 250 # psf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
