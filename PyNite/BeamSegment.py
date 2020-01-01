@@ -30,6 +30,8 @@ class BeamSegment():
       The internal moment at the start of the segment
     P1 : number
       The internal axial force at the start of the segment
+    T1 : number
+      Torsional moment at start of segment
     theta1: number
       The slope (radians) at the start of the segment
     delta1: number
@@ -68,6 +70,7 @@ class BeamSegment():
         self.V1 = None # Internal shear force at start of segment
         self.M1 = None # Internal moment at start of segment
         self.P1 = None # Internal axial force at start of segment
+        self.T1 = None # Torsional moment at start of segment
         self.theta1 = None # Slope at start of beam segment
         self.delta1 = None # Displacement at start of beam segment
         self.EI = None # Flexural stiffness of the beam segment
@@ -116,9 +119,19 @@ class BeamSegment():
         
         return P1+(p2-p1)/(2*L)*x**2+p1*x
 
+    
+#%%
+    def Torsion(self):
+        """
+        Returns the torsional moment in the segment.
+        """
+        
+        # The torsional moment is constant across the segment
+        # This can be updated in the future for distributed torsional forces
+        return self.T1
+    
 #%%
     def Slope(self, x):
-        
         """
         Returns the slope at a point on the segment
         
@@ -369,3 +382,24 @@ class BeamSegment():
         # Return the minimum axial force
         return min(P1, P2, P3)
 
+#%%
+    def MaxTorsion(self):
+        """
+        Returns the maximum torsional moment in the segment.
+        """
+    
+        # Return the maximum torsional moment
+        # Since the torsional moment is constant on the segment, the maximum torsional moment is T1
+        # This can be updated in the future for distributed torsional forces
+        return self.T1
+
+#%%
+    def MinTorsion(self):
+        """
+        Returns the minimum torsional moment in the segment.
+        """
+
+        # Return the minimum torsional moment
+        # Since the torsional moment is constant on the segment, the minimum torsional moment is T1
+        # This can be updated in the future for distributed torsional forces
+        return self.T1
