@@ -38,8 +38,6 @@ class BeamSegment():
       The displacement at the start of the segment
     EI : number
       The flexural stiffness of the segment
-    GJ : number
-      The torsional stiffness of the segment
     
     Methods
     -------
@@ -76,7 +74,6 @@ class BeamSegment():
         self.theta1 = None # Slope at start of beam segment
         self.delta1 = None # Displacement at start of beam segment
         self.EI = None # Flexural stiffness of the beam segment
-        self.GJ = None # Torsional stiffness of the beam segment
 
 #%%
     # Returns the length of the segment
@@ -127,16 +124,8 @@ class BeamSegment():
 
     # Returns the torsional moment at a location 'x' on the segment
     def Torsion(self, x):
-        
-        T1 = self.T1
-        L =  self.Length()
-        
 
-        return -T1
-        # -T1 becasue of sign convention of torsional moment. Thinking about infinitesimal element of beam, torsional moment on the 
-        # right face is positive if it's rightwards, torsional moment on the left face is positive
-        # if it's leftwards.
-    
+        return self.T1
     
 #%%
     def Slope(self, x):
@@ -391,35 +380,20 @@ class BeamSegment():
         # Return the minimum axial force
         return min(P1, P2, P3)
 
-#%% Modify when distributed torsional moment is supported
-
+#%%
     # Returns the maximum axial force in the segment
     def MaxTorsion(self):
-        
-        L = self.Length()
-          
-        x1 = 0
-        x2 = L
-    
-        # Find the torsional at each location of interest
-        T1 = self.Torsion(x1)
-        T2 = self.Torsion(x2)
     
         # Return the maximum torsional moment
-        return max(T1, T2)
+        # Since the torsional moment is constant on the segment, the maximum torsional moment is T1
+        # This can be updated in the future for distributed torsional forces
+        return self.T1
 
 #%%
     # Returns the minimum torsional moment in the segment
     def MinTorsion(self):
-        
-        L = self.Length()
-        
-        x1 = 0
-        x2 = L
-    
-        # Find the torsional moment at each location of interest
-        T1 = self.Torsion(x1)
-        T2 = self.Torsion(x2)
 
         # Return the minimum torsional moment
-        return min(T1, T2)
+        # Since the torsional moment is constant on the segment, the minimum torsional moment is T1
+        # This can be updated in the future for distributed torsional forces
+        return self.T1
