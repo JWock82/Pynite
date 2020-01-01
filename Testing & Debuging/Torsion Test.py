@@ -26,7 +26,7 @@ TorqueBeam.AddMemberPtLoad("M1", "Mx", 10, 11*12)
 # Analyze the beam and perform a statics check
 TorqueBeam.Analyze(check_statics=True)
 
-# Print the shear, moment, and deflection diagrams
+# Print the torsion diagram
 TorqueBeam.GetMember("M1").PlotTorsion()
 
 # Print reactions at each end of the beam
