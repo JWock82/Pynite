@@ -286,7 +286,7 @@ class FEModel3D():
             typical beam sign convention is used. Transverse forces acting
             toward the beam are positive. Moments are positive if they act
             counter-clockwise relative to the beam's local coordinate system.
-            Torsional point loads are positive if torque direction is equal to local x axis direction.
+            Torsional point loads follow the right hand rule for sign convention.
         P : number
             The numeric value (magnitude) of the load.
         x : number
