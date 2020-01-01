@@ -18,7 +18,7 @@ E = 29000*12**2 # modulus of elasticity (ksf)
 I = 100/12**4 # moment of inertia (ft^4)
 
 # Break the column into several segments in order to capture P-little-delta effects
-num_segs = 10
+num_segs = 5
 num_nodes = num_segs + 1
 for i in range(num_nodes):
     # Add nodes
@@ -41,7 +41,8 @@ cantilever.AddNodeLoad(str(num_nodes), 'FX', H)
 Visualization.RenderModel(cantilever, 0.3)
 
 # Perform 2nd order analysis
-cantilever.Analyze_PDelta()
+cantilever.Analyze_PDelta() 
+# cantilever.Analyze()
 
 # Print the moment at the base of the column
 print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001))
