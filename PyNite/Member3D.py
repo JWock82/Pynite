@@ -1180,10 +1180,8 @@ class Member3D():
         # Get the member's length and stiffness properties
         L = self.L()
         E = self.E
-        G = self.G
         Iz = self.Iz
         Iy = self.Iy
-        J = self.J
         SegmentsZ = self.SegmentsZ
         SegmentsY = self.SegmentsY
         SegmentsX = self.SegmentsX
@@ -1227,7 +1225,6 @@ class Member3D():
             newSeg = BeamSegment()        # Create the new segment
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
-            newSeg.GJ = G*J               # Segment torsional stiffness
             SegmentsX.append(newSeg)      # Add the segment to the list
         
         # Get the member local end forces, local fixed end reactions, and local displacements
