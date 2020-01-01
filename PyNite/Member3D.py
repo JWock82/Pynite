@@ -889,7 +889,7 @@ class Member3D():
         
         
 #%%
-    def Torsion(self,x):
+    def Torsion(self, x):
         """
         Returns the torsional moment at a point along the member's length
         
@@ -902,11 +902,11 @@ class Member3D():
         # Check which segment "x" falls on
         for segment in self.SegmentsX:
             if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                return segment.Torsion(x - segment.x1)
+                return segment.Torsion()
                 
             if isclose(x, self.L()):  
                 lastIndex = len(self.SegmentsX) - 1
-                return self.SegmentsX[lastIndex].Torsion(x - self.SegmentsX[lastIndex].x1)
+                return self.SegmentsX[lastIndex].Torsion()
 
 #%%
     def MaxTorsion(self):
@@ -914,7 +914,7 @@ class Member3D():
         Returns the maximum torsional moment in the member
         """        
         
-        Tmax = self.SegmentsX[0].Torsion(0)   
+        Tmax = self.SegmentsX[0].Torsion()   
         
         for segment in self.SegmentsX:
 
@@ -930,7 +930,7 @@ class Member3D():
         Returns the minimum torsional moment in the member
         """        
         
-        Tmin = self.SegmentsX[0].Torsion(0)
+        Tmin = self.SegmentsX[0].Torsion()
             
         for segment in self.SegmentsX:
                 
@@ -964,12 +964,10 @@ class Member3D():
             T.append(self.Torsion(self.L() / 19 * i))
 
         Member3D.__plt.plot(x, T)
-        Member3D.__plt.ylabel('Torsional Moment')
+        Member3D.__plt.ylabel('Pure Torsional Moment') # Torsion results are for pure torsion. Torsional warping has not been considered
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()   
-        
-        
         
 #%%
     def Axial(self, x):
