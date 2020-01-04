@@ -8,7 +8,8 @@ Created on Thu Nov  2 18:04:56 2017
 from numpy import zeros, matrix, transpose, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
 from math import isclose
-from PyNite.BeamSegment import BeamSegment
+from PyNite.BeamSegZ import BeamSegZ
+from PyNite.BeamSegY import BeamSegY
 import PyNite.FixedEndReactions
 
 # %%
@@ -1208,21 +1209,21 @@ class Member3D():
         for index in range(len(disconts) - 1):
             
             # z-direction segments (bending about local z-axis)
-            newSeg = BeamSegment()        # Create the new segment
+            newSeg = BeamSegZ()        # Create the new segment
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
             newSeg.EI = E*Iz              # Segment flexural stiffness
             SegmentsZ.append(newSeg)      # Add the segment to the list
             
             # y-direction segments (bending about local y-axis)
-            newSeg = BeamSegment()        # Create the new segment
+            newSeg = BeamSegY()        # Create the new segment
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
             newSeg.EI = E*Iy              # Segment flexural stiffness
             SegmentsY.append(newSeg)      # Add the segment to the list
             
             # x-direction segments (for torsional moment)
-            newSeg = BeamSegment()        # Create the new segment
+            newSeg = BeamSegZ()        # Create the new segment
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
             SegmentsX.append(newSeg)      # Add the segment to the list
@@ -1233,16 +1234,18 @@ class Member3D():
         d = self.d()     # Member local displacement vector
         
         # Get the local deflections and calculate the slope at the start of the member
-        # Note that the slope may not be available directly from the local displacement vector if member end releases have been used,
-        # so slope-deflection has been applied to solve for it
-        m1z = f[5, 0]       # local z-axis moment at start of member
-        m2z = f[11, 0]      # local z-axis moment at end of member
-        m1y = -f[4, 0]       # local y-axis moment at start of member
-        m2y = -f[10, 0]      # local y-axis moment at end of member
-        fem1z = fer[5, 0]   # local z-axis fixed end moment at start of member
-        fem2z = fer[11, 0]  # local z-axis fixed end moment at end of member
-        fem1y = -fer[4, 0]   # local y-axis fixed end moment at start of member
-        fem2y = -fer[10, 0]  # local y-axis fixed end moment at end of member
+        # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used,
+        #         so slope-deflection has been applied to solve for it.
+        # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what PyNite uses for moments about
+        #         the local y-axis, so a negative value has been applied to those value specifically.
+        m1z = -f[5, 0]       # local z-axis moment at start of member
+        m2z = -f[11, 0]      # local z-axis moment at end of member
+        m1y = -f[4, 0]      # local y-axis moment at start of member
+        m2y = -f[10, 0]     # local y-axis moment at end of member
+        fem1z = -fer[5, 0]   # local z-axis fixed end moment at start of member
+        fem2z = -fer[11, 0]  # local z-axis fixed end moment at end of member
+        fem1y = -fer[4, 0]  # local y-axis fixed end moment at start of member
+        fem2y = -fer[10, 0] # local y-axis fixed end moment at end of member
         delta1y = d[1, 0]   # local y displacement at start of member
         delta2y = d[7, 0]   # local y displacement at end of member
         delta1z = d[2, 0]   # local z displacement at start of member
@@ -1276,13 +1279,13 @@ class Member3D():
                 SegmentsY[i].delta1 = SegmentsY[i-1].Deflection(SegmentsY[i-1].Length())
                 
             # Add the effects of the beam end forces to the segment
-            SegmentsZ[i].P1 = f[0,0]
-            SegmentsZ[i].V1 = f[1,0]
-            SegmentsZ[i].M1 = -f[5,0] + f[1,0]*x
-            SegmentsY[i].P1 = f[0,0]
-            SegmentsY[i].V1 = f[2,0]
-            SegmentsY[i].M1 = f[4,0] + f[2,0]*x
-            SegmentsX[i].T1 = f[3,0]
+            SegmentsZ[i].P1 = f[0, 0]
+            SegmentsZ[i].V1 = f[1, 0]
+            SegmentsZ[i].M1 = f[5, 0] - f[1, 0]*x
+            SegmentsY[i].P1 = f[0, 0]
+            SegmentsY[i].V1 = f[2, 0]
+            SegmentsY[i].M1 = f[4, 0] + f[2, 0]*x
+            SegmentsX[i].T1 = f[3, 0]
             
             # Add effects of point loads occuring prior to this segment
             for ptLoad in self.PtLoads:
@@ -1292,17 +1295,17 @@ class Member3D():
                     if ptLoad[0] == "Fx":
                         SegmentsZ[i].P1 += ptLoad[1]
                     elif ptLoad[0] == "Fy":
-                        SegmentsZ[i].V1 -= ptLoad[1]
-                        SegmentsZ[i].M1 -= ptLoad[1]*(x-ptLoad[2])
+                        SegmentsZ[i].V1 += ptLoad[1]
+                        SegmentsZ[i].M1 += ptLoad[1]*(x - ptLoad[2])
                     elif ptLoad[0] == "Fz":
-                        SegmentsY[i].V1 -= ptLoad[1]
-                        SegmentsY[i].M1 -= ptLoad[1]*(x - ptLoad[2])
+                        SegmentsY[i].V1 += ptLoad[1]
+                        SegmentsY[i].M1 += ptLoad[1]*(x - ptLoad[2])
                     elif ptLoad[0] == "Mx":
                         SegmentsX[i].T1 += ptLoad[1]    
                     elif ptLoad[0] == "My":
-                        SegmentsY[i].M1 -= ptLoad[1]
+                        SegmentsY[i].M1 += ptLoad[1]
                     elif ptLoad[0] == "Mz":
-                        SegmentsZ[i].M1 -= ptLoad[1]
+                        SegmentsZ[i].M1 += ptLoad[1]
             
             # Add distributed loads to the segment
             for distLoad in self.DistLoads:
@@ -1352,8 +1355,8 @@ class Member3D():
                             x2 = x
                         
                         # Calculate the shear and moment at the start of the segment due to the load
-                        SegmentsZ[i].V1 -= (w1 + w2)/2*(x2 - x1)
-                        SegmentsZ[i].M1 -= (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
+                        SegmentsZ[i].V1 += (w1 + w2)/2*(x2 - x1)
+                        SegmentsZ[i].M1 += (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
                     
                     elif Direction == "Fz":
                         
@@ -1369,5 +1372,5 @@ class Member3D():
                             x2 = x
                         
                         # Calculate the shear and moment at the start of the segment due to the load
-                        SegmentsY[i].V1 -= (w1 + w2)/2*(x2 - x1)
-                        SegmentsY[i].M1 -= (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
+                        SegmentsY[i].V1 += (w1 + w2)/2*(x2 - x1)
+                        SegmentsY[i].M1 += (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6

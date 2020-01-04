@@ -6,7 +6,7 @@ Created on Mon Nov  6 20:52:31 2017
 """
 # %%
 # A mathematically continuous beam segment
-class BeamSegment():
+class BeamSegZ():
     """
     A mathematically continuous beam segment
     
@@ -94,7 +94,7 @@ class BeamSegment():
         w2 = self.w2
         L = self.Length()
         
-        return V1-(w2-w1)/(2*L)*x**2-w1*x
+        return V1 + w1*x + x**2*(-w1 + w2)/(2*L)
 
 #%% 
     # Returns the moment at a location on the segment
@@ -106,7 +106,7 @@ class BeamSegment():
         w2 = self.w2
         L = self.Length()
         
-        return M1+V1*x-(w2-w1)/(6*L)*x**3-w1*x**2/2    
+        return M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
 #%%
     # Returns the axial force at a location on the segment
@@ -161,7 +161,7 @@ class BeamSegment():
         L = self.Length()
         EI = self.EI
         
-        return theta1 + 1/EI*(M1*x + V1/2*x**2 - (w2-w1)/(24*L)*x**4 - w1/6*x**3)
+        return theta1 + (M1*x - V1*x**2/2 - w1*x**3/6 + x**4*(w1 - w2)/(24*L))/(EI)
 
 #%%
     # Returns the deflection at a location on the segment
@@ -176,7 +176,7 @@ class BeamSegment():
         L = self.Length()
         EI = self.EI
         
-        return delta1 + theta1*x + 1/EI*(M1/2*x**2 + V1/6*x**3 - (w2 - w1)/(120*L)*x**5 - w1/24*x**4)
+        return delta1 - theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) - x**5*(w1 - w2)/(120*EI*L)
 
 #%%
     # Returns the maximum shear in the segment
@@ -244,9 +244,9 @@ class BeamSegment():
         L = self.Length()
         
         # Find the quadratic equation parameters
-        a = (w1-w2)/(2*L)
+        a = -(w2-w1)/(2*L)
         b = -w1
-        c = V1
+        c = -V1
     
         # Determine possible locations of maximum moment
         if a == 0:
@@ -290,9 +290,9 @@ class BeamSegment():
         L = self.Length()
         
         # Find the quadratic equation parameters
-        a = (w1-w2)/(2*L)
+        a = -(w2-w1)/(2*L)
         b = -w1
-        c = V1
+        c = -V1
     
         # Determine possible locations of minimum moment
         if a == 0:
