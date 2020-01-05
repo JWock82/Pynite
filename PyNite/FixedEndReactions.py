@@ -70,14 +70,14 @@ def FER_Moment(M, x, L, Direction):
     
     # Populate the fixed end reaction vector
     if Direction == "Mz":
-        FER.itemset((1, 0), M*(x**2+b**2-4*x*b-L**2)/L**3)
+        FER.itemset((1, 0), 6*M*x*b/L**3)
         FER.itemset((5, 0), M*b*(2*x-b)/L**2)
-        FER.itemset((7, 0), -M*(x**2+b**2-4*x*b-L**2)/L**3)
+        FER.itemset((7, 0), -M*x*b/L**3)
         FER.itemset((11, 0), M*x*(2*b-x)/L**2)
     elif Direction == "My":
-        FER.itemset((2, 0), -M*(x**2+b**2-4*x*b-L**2)/L**3)
+        FER.itemset((2, 0), -6*M*x*b/L**3)
         FER.itemset((4, 0), M*b*(2*x-b)/L**2)
-        FER.itemset((8, 0), M*(x**2+b**2-4*x*b-L**2)/L**3)
+        FER.itemset((8, 0), M*x*b/L**3)
         FER.itemset((10, 0), M*x*(2*b-x)/L**2)
     return FER
     
