@@ -1238,12 +1238,12 @@ class Member3D():
         #         so slope-deflection has been applied to solve for it.
         # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what PyNite uses for moments about
         #         the local y-axis, so a negative value has been applied to those value specifically.
-        m1z = -f[5, 0]       # local z-axis moment at start of member
-        m2z = -f[11, 0]      # local z-axis moment at end of member
+        m1z = f[5, 0]       # local z-axis moment at start of member
+        m2z = f[11, 0]      # local z-axis moment at end of member
         m1y = -f[4, 0]      # local y-axis moment at start of member
         m2y = -f[10, 0]     # local y-axis moment at end of member
-        fem1z = -fer[5, 0]   # local z-axis fixed end moment at start of member
-        fem2z = -fer[11, 0]  # local z-axis fixed end moment at end of member
+        fem1z = fer[5, 0]   # local z-axis fixed end moment at start of member
+        fem2z = fer[11, 0]  # local z-axis fixed end moment at end of member
         fem1y = -fer[4, 0]  # local y-axis fixed end moment at start of member
         fem2y = -fer[10, 0] # local y-axis fixed end moment at end of member
         delta1y = d[1, 0]   # local y displacement at start of member
@@ -1253,7 +1253,7 @@ class Member3D():
         SegmentsZ[0].delta1 = delta1y
         SegmentsY[0].delta1 = delta1z
         SegmentsZ[0].theta1 = 1/3*((m1z - fem1z)*L/(E*Iz) - (m2z - fem2z)*L/(2*E*Iz) + 3*(delta2y - delta1y)/L)
-        SegmentsY[0].theta1 = 1/3*((m1y - fem1y)*L/(E*Iy) - (m2y - fem2y)*L/(2*E*Iy) + 3*(delta2z - delta1z)/L)
+        SegmentsY[0].theta1 = -1/3*((m1y - fem1y)*L/(E*Iy) - (m2y - fem2y)*L/(2*E*Iy) + 3*(delta2z - delta1z)/L)
         
         # Add loads to each segment
         for i in range(len(SegmentsZ)):

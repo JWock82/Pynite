@@ -161,7 +161,7 @@ class BeamSegZ():
         L = self.Length()
         EI = self.EI
         
-        return theta1 + (M1*x - V1*x**2/2 - w1*x**3/6 + x**4*(w1 - w2)/(24*L))/(EI)
+        return theta1 - (M1*x - V1*x**2/2 - w1*x**3/6 + x**4*(w1 - w2)/(24*L))/(EI)
 
 #%%
     # Returns the deflection at a location on the segment
@@ -176,7 +176,7 @@ class BeamSegZ():
         L = self.Length()
         EI = self.EI
         
-        return delta1 - theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) - x**5*(w1 - w2)/(120*EI*L)
+        return delta1 + theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
 #%%
     # Returns the maximum shear in the segment
