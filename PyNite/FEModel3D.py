@@ -329,7 +329,7 @@ class FEModel3D():
             start = x1
         
         if x2 == None:
-            end = self.GetMember(Member).L
+            end = self.GetMember(Member).L()
         else:
             end = x2
 
