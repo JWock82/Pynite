@@ -1296,7 +1296,7 @@ class Member3D():
                         SegmentsZ[i].P1 += ptLoad[1]
                     elif ptLoad[0] == "Fy":
                         SegmentsZ[i].V1 += ptLoad[1]
-                        SegmentsZ[i].M1 += ptLoad[1]*(x - ptLoad[2])
+                        SegmentsZ[i].M1 -= ptLoad[1]*(x - ptLoad[2])
                     elif ptLoad[0] == "Fz":
                         SegmentsY[i].V1 += ptLoad[1]
                         SegmentsY[i].M1 += ptLoad[1]*(x - ptLoad[2])
@@ -1356,7 +1356,7 @@ class Member3D():
                         
                         # Calculate the shear and moment at the start of the segment due to the load
                         SegmentsZ[i].V1 += (w1 + w2)/2*(x2 - x1)
-                        SegmentsZ[i].M1 += (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
+                        SegmentsZ[i].M1 -= (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
                     
                     elif Direction == "Fz":
                         
