@@ -339,17 +339,26 @@ class FEModel3D():
 #%%
     def ClearLoads(self):
         """
-        Clears all loads from the model
+        Clears all loads from the model along with any results based on the loads.
         """
 
-        # Clear out the member loads
+        # Clear out the member loads and the calculated internal forces
         for member in self.Members:
             member.DistLoads = []
             member.PtLoads = []
+            member.SegmentsZ = []
+            member.SegmentsY = []
+            member.SegmentsX = []
         
-        # Clear out the nodal loads
+        # Clear out the nodal loads and the nodal displacements
         for node in self.Nodes:
             node.NodeLoads = []
+            node.SupportDX = None
+            node.SupportDY = None
+            node.SupportDZ = None
+            node.SupportRX = None
+            node.SupportRY = None
+            node.SupportRZ = None       
 
 #%%
     def GetNode(self, Name):
