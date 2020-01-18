@@ -603,6 +603,233 @@ class VisPlate():
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, (Yi+Yj+Ym+Yn)/4, (Zi+Zj+Zm+Zn)/4)
 
+class VisDeformedNode():
+
+    def __init__(self, node, scalefactor, textHeight):
+
+        #Node position in deformed configuration
+        newX = node.X + scalefactor*(node.DX)
+        newY = node.Y + scalefactor*(node.DY)
+        newZ = node.Z + scalefactor*(node.DZ)
+
+        # Generate a sphere for the node
+        sphere = vtk.vtkSphereSource()
+        sphere.SetCenter(newX, newY, newZ)
+        sphere.SetRadius(0.6*textHeight)
+
+        # Set up a mapper for the node
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(sphere.GetOutputPort())
+
+        # Set up an actor for the node
+        self.actor = vtk.vtkActor()
+        self.actor.GetProperty().SetColor(255,255,0) #yellow
+        self.actor.SetMapper(mapper)
+        
+
+        # Create the text for the node label
+        label = vtk.vtkVectorText()
+        label.SetText(node.Name)
+
+        # Set up a mapper for the node label
+        lblMapper = vtk.vtkPolyDataMapper()
+        lblMapper.SetInputConnection(label.GetOutputPort())
+
+        # Set up an actor for the node label
+        self.lblActor = vtk.vtkFollower()
+        self.lblActor.SetMapper(lblMapper)
+        self.lblActor.SetScale(textHeight, textHeight, textHeight)
+        self.lblActor.SetPosition(newX+0.6*textHeight, newY+0.6*textHeight, newZ)
+        self.lblActor.GetProperty().SetColor(255,255,0)
+
+class VisDeformedMember():
+
+    def __init__(self, member, nodes, scalefactor, textHeight):
+
+
+        L=member.L()
+        T=member.T()
+        cos_x=array([T[0,0:3]]) #direction cosines of local x-axis
+        cos_y=array([T[1,0:3]]) #direction cosines of local y-axis
+        cos_z=array([T[2,0:3]]) #direction cosines of local z-axis
+
+
+        # Step through each node in the model and find the position of the i-node 
+        for node in nodes:
+
+            # Check to see if the current node is the i-node
+            if node.Name == member.iNode.Name:
+                newXi = (node.X) + (node.DX)
+                newYi = (node.Y) + (node.DY)
+                newZi = (node.Z) + (node.DZ)
+                     
+        dy_plot=empty((0,3))
+        for i in range(20):
+
+            dy_tot=member.Deflection("dy",L/ 19 * i)
+            dy_plot=append(dy_plot,(dy_tot*cos_y)*scalefactor, axis=0)
+
+
+        dz_plot=empty((0,3)) 
+        for i in range(20):
+
+            dz_tot=member.Deflection("dz",L/ 19 * i)
+            dz_plot=append(dz_plot,(dz_tot*cos_z)*scalefactor, axis=0)
+
+
+        x_plot=empty((0,3)) 
+        for i in range(20):
+
+            x= [[newXi, newYi, newZi]] + ((L/19 *i) + member.AxialTranslation(L/19 *i)*scalefactor)*cos_x
+            x_plot=append(x_plot,x,axis=0)
+        
+
+        #Vector to plot        
+        d_plot=(dy_plot+dz_plot+x_plot)
+
+        # Generate points
+        points = vtk.vtkPoints()
+        points.SetNumberOfPoints(len(d_plot))
+
+        for i in range(len(d_plot)):
+            points.SetPoint(i, d_plot[i,0], d_plot[i,1], d_plot[i,2])
+
+        # Generate lines
+        lines = vtk.vtkCellArray()
+        lines.InsertNextCell(len(d_plot))
+
+        for i in range(len(d_plot)):
+            lines.InsertCellPoint(i)
+
+        polyline = vtk.vtkPolyData()
+        polyline.SetPoints(points)
+        polyline.SetLines(lines)
+
+        polylineMapper = vtk.vtkPolyDataMapper()
+        polylineMapper.SetInputData(polyline)
+        polylineMapper.Update()
+
+        self.polylineActor = vtk.vtkActor()
+        self.polylineActor.SetMapper(polylineMapper)
+        self.polylineActor.GetProperty().SetColor(255,255,0) #yellow
+
+
+def DeformedShape(model, scalefactor, textHeight):
+
+  visNodes = []
+  for node in model.Nodes:
+
+    visNodes.append(VisNode(node, textHeight))
+
+  visAuxNodes = []
+  for auxnode in model.auxNodes:
+    visAuxNodes.append(VisAuxNode(auxnode, textHeight))
+
+  visMembers = []
+  for member in model.Members:
+    visMembers.append(VisMember(member, model.Nodes, textHeight))
+
+  visDeformedNodes = []
+  for node in model.Nodes:
+    visDeformedNodes.append(VisDeformedNode(node,scalefactor, textHeight))
+  
+  visDeformedMembers = []
+  for member in model.Members:
+    visDeformedMembers.append(VisDeformedMember(member, model.Nodes,scalefactor, textHeight))
+
+
+  # Create a window
+  window = vtk.vtkRenderWindow()
+
+  # Set the pixel width and length of the window
+  window.SetSize(500, 500)
+
+  # Set up the interactor
+  # The interactor style determines how user interactions affect the view
+  interactor = vtk.vtkRenderWindowInteractor()
+  style = vtk.vtkInteractorStyleTrackballCamera() # The trackball camera style behaves a lot like most CAD programs
+  interactor.SetInteractorStyle(style)
+  interactor.SetRenderWindow(window)
+
+  # Create a renderer
+  renderer = vtk.vtkRenderer()
+  window.AddRenderer(renderer)
+  
+  # Add actors for each member
+  for visMember in visMembers:
+
+    # Add the actor for the member
+    renderer.AddActor(visMember.actor)
+
+    # Add the actor for the member label
+    renderer.AddActor(visMember.lblActor)
+
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    visMember.lblActor.SetCamera(renderer.GetActiveCamera())
+
+  # Add actors for each node
+  for visNode in visNodes:
+
+    # Add the actor for the node
+    renderer.AddActor(visNode.actor)
+
+    # Add the actor for the node label
+    renderer.AddActor(visNode.lblActor)
+
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    visNode.lblActor.SetCamera(renderer.GetActiveCamera())
+
+
+  # Add actors for each aux node
+  for visAuxNode in visAuxNodes:
+
+    # Add the actor for the node
+    renderer.AddActor(visAuxNode.actor)
+
+    # Add the actor for the node label
+    renderer.AddActor(visAuxNode.lblActor)
+
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
+
+
+  # Add actors for each deformed member
+  for visDeformedMember in visDeformedMembers:
+
+    # Add the actor for the member
+    renderer.AddActor(visDeformedMember.polylineActor)
+
+  # Add actors for each deformed node
+  for visDeformedNode in visDeformedNodes:
+
+    # Add the actor for the node
+    renderer.AddActor(visDeformedNode.actor)
+
+    # Add the actor for the node label
+    renderer.AddActor(visDeformedNode.lblActor)
+
+    # Set the text to follow the camera as the user interacts
+    # This next line will require us to reset the camera when we're done (below)
+    visNode.lblActor.SetCamera(renderer.GetActiveCamera())
+
+    # Add the actors for the node supports
+    for support in visNode.supportActors:
+      renderer.AddActor(support)
+
+  # Setting the background to blue.
+  renderer.SetBackground(0.1, 0.1, 0.4)
+
+  # Reset the camera
+  renderer.ResetCamera()
+
+  window.Render()
+  interactor.Start()
+    
+   
+    
 #%%
 # TODO: Finish the following code for load visualization at a future time
 
