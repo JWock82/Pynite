@@ -603,122 +603,114 @@ class VisPlate():
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, (Yi+Yj+Ym+Yn)/4, (Zi+Zj+Zm+Zn)/4)
 
+# Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
+  
+  def __init__(self, node, scale_factor, textHeight):
+  
+    # Calculate the node's deformed position
+    newX = node.X + scale_factor*(node.DX)
+    newY = node.Y + scale_factor*(node.DY)
+    newZ = node.Z + scale_factor*(node.DZ)
 
-    def __init__(self, node, scalefactor, textHeight):
+    # Generate a sphere for the node
+    sphere = vtk.vtkSphereSource()
+    sphere.SetCenter(newX, newY, newZ)
+    sphere.SetRadius(0.6*textHeight)
 
-        #Node position in deformed configuration
-        newX = node.X + scalefactor*(node.DX)
-        newY = node.Y + scalefactor*(node.DY)
-        newZ = node.Z + scalefactor*(node.DZ)
+    # Set up a mapper for the node
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(sphere.GetOutputPort())
 
-        # Generate a sphere for the node
-        sphere = vtk.vtkSphereSource()
-        sphere.SetCenter(newX, newY, newZ)
-        sphere.SetRadius(0.6*textHeight)
-
-        # Set up a mapper for the node
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(sphere.GetOutputPort())
-
-        # Set up an actor for the node
-        self.actor = vtk.vtkActor()
-        self.actor.GetProperty().SetColor(255,255,0) #yellow
-        self.actor.SetMapper(mapper)
+    # Set up an actor for the node
+    self.actor = vtk.vtkActor()
+    self.actor.GetProperty().SetColor(255,255,0) # yellow
+    self.actor.SetMapper(mapper)
         
+    # Create the text for the node label
+    label = vtk.vtkVectorText()
+    label.SetText(node.Name)
 
-        # Create the text for the node label
-        label = vtk.vtkVectorText()
-        label.SetText(node.Name)
+    # Set up a mapper for the node label
+    lblMapper = vtk.vtkPolyDataMapper()
+    lblMapper.SetInputConnection(label.GetOutputPort())
 
-        # Set up a mapper for the node label
-        lblMapper = vtk.vtkPolyDataMapper()
-        lblMapper.SetInputConnection(label.GetOutputPort())
+    # Set up an actor for the node label
+    self.lblActor = vtk.vtkFollower()
+    self.lblActor.SetMapper(lblMapper)
+    self.lblActor.SetScale(textHeight, textHeight, textHeight)
+    self.lblActor.SetPosition(newX + 0.6*textHeight, newY + 0.6*textHeight, newZ)
+    self.lblActor.GetProperty().SetColor(255,255,0)
 
-        # Set up an actor for the node label
-        self.lblActor = vtk.vtkFollower()
-        self.lblActor.SetMapper(lblMapper)
-        self.lblActor.SetScale(textHeight, textHeight, textHeight)
-        self.lblActor.SetPosition(newX+0.6*textHeight, newY+0.6*textHeight, newZ)
-        self.lblActor.GetProperty().SetColor(255,255,0)
-
+# Converts a member object into a member in its deformed position for the viewer
 class VisDeformedMember():
 
-    def __init__(self, member, nodes, scalefactor, textHeight):
+  def __init__(self, member, nodes, scale_factor, textHeight):
 
+    L = member.L()
+    T = member.T()
+    cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
+    cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
+    cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
 
-        L=member.L()
-        T=member.T()
-        cos_x=array([T[0,0:3]]) #direction cosines of local x-axis
-        cos_y=array([T[1,0:3]]) #direction cosines of local y-axis
-        cos_z=array([T[2,0:3]]) #direction cosines of local z-axis
-
-
-        # Step through each node in the model and find the position of the i-node 
-        for node in nodes:
-
-            # Check to see if the current node is the i-node
-            if node.Name == member.iNode.Name:
-                newXi = (node.X) + (node.DX)
-                newYi = (node.Y) + (node.DY)
-                newZi = (node.Z) + (node.DZ)
+    # Find the deformed position of the local i-node
+    # Step through each node
+    for node in nodes:
+      
+      # Check to see if the current node is the i-node
+      if node.Name == member.iNode.Name:
+        newXi = node.X + node.DX
+        newYi = node.Y + node.DY
+        newZi = node.Z + node.DZ
                      
-        dy_plot=empty((0,3))
-        for i in range(20):
+    dy_plot = empty((0,3))
+    for i in range(20):
+      dy_tot = member.Deflection("dy", L/ 19*i)
+      dy_plot = append(dy_plot, dy_tot*cos_y*scale_factor, axis=0)
 
-            dy_tot=member.Deflection("dy",L/ 19 * i)
-            dy_plot=append(dy_plot,(dy_tot*cos_y)*scalefactor, axis=0)
+    dz_plot = empty((0,3)) 
+    for i in range(20):
+      dz_tot = member.Deflection("dz", L/ 19*i)
+      dz_plot = append(dz_plot, dz_tot*cos_z*scale_factor, axis=0)
 
+    x_plot=empty((0,3)) 
+    for i in range(20):
+      x= [[newXi, newYi, newZi]] + (L/19*i + member.Deflection('dx', L/19*i)*scale_factor)*cos_x
+      x_plot = append(x_plot, x, axis=0)
+    
+    #Vector to plot        
+    d_plot = (dy_plot + dz_plot + x_plot)
 
-        dz_plot=empty((0,3)) 
-        for i in range(20):
+    # Generate points
+    points = vtk.vtkPoints()
+    points.SetNumberOfPoints(len(d_plot))
 
-            dz_tot=member.Deflection("dz",L/ 19 * i)
-            dz_plot=append(dz_plot,(dz_tot*cos_z)*scalefactor, axis=0)
+    for i in range(len(d_plot)):
+      points.SetPoint(i, d_plot[i, 0], d_plot[i, 1], d_plot[i, 2])
 
+    # Generate lines
+    lines = vtk.vtkCellArray()
+    lines.InsertNextCell(len(d_plot))
 
-        x_plot=empty((0,3)) 
-        for i in range(20):
+    for i in range(len(d_plot)):
+      lines.InsertCellPoint(i)
 
-            x= [[newXi, newYi, newZi]] + ((L/19 *i) + member.AxialTranslation(L/19 *i)*scalefactor)*cos_x
-            x_plot=append(x_plot,x,axis=0)
-        
+    polyline = vtk.vtkPolyData()
+    polyline.SetPoints(points)
+    polyline.SetLines(lines)
 
-        #Vector to plot        
-        d_plot=(dy_plot+dz_plot+x_plot)
+    polylineMapper = vtk.vtkPolyDataMapper()
+    polylineMapper.SetInputData(polyline)
+    polylineMapper.Update()
 
-        # Generate points
-        points = vtk.vtkPoints()
-        points.SetNumberOfPoints(len(d_plot))
+    self.polylineActor = vtk.vtkActor()
+    self.polylineActor.SetMapper(polylineMapper)
+    self.polylineActor.GetProperty().SetColor(255,255,0) #yellow
 
-        for i in range(len(d_plot)):
-            points.SetPoint(i, d_plot[i,0], d_plot[i,1], d_plot[i,2])
-
-        # Generate lines
-        lines = vtk.vtkCellArray()
-        lines.InsertNextCell(len(d_plot))
-
-        for i in range(len(d_plot)):
-            lines.InsertCellPoint(i)
-
-        polyline = vtk.vtkPolyData()
-        polyline.SetPoints(points)
-        polyline.SetLines(lines)
-
-        polylineMapper = vtk.vtkPolyDataMapper()
-        polylineMapper.SetInputData(polyline)
-        polylineMapper.Update()
-
-        self.polylineActor = vtk.vtkActor()
-        self.polylineActor.SetMapper(polylineMapper)
-        self.polylineActor.GetProperty().SetColor(255,255,0) #yellow
-
-
-def DeformedShape(model, scalefactor, textHeight):
+def DeformedShape(model, scale_factor, textHeight):
 
   visNodes = []
   for node in model.Nodes:
-
     visNodes.append(VisNode(node, textHeight))
 
   visAuxNodes = []
@@ -731,11 +723,11 @@ def DeformedShape(model, scalefactor, textHeight):
 
   visDeformedNodes = []
   for node in model.Nodes:
-    visDeformedNodes.append(VisDeformedNode(node,scalefactor, textHeight))
+    visDeformedNodes.append(VisDeformedNode(node,scale_factor, textHeight))
   
   visDeformedMembers = []
   for member in model.Members:
-    visDeformedMembers.append(VisDeformedMember(member, model.Nodes,scalefactor, textHeight))
+    visDeformedMembers.append(VisDeformedMember(member, model.Nodes,scale_factor, textHeight))
 
 
   # Create a window
@@ -799,7 +791,7 @@ def DeformedShape(model, scalefactor, textHeight):
   # Add actors for each deformed member
   for visDeformedMember in visDeformedMembers:
 
-    # Add the actor for the member
+    # Add the actor for the deformed member
     renderer.AddActor(visDeformedMember.polylineActor)
 
   # Add actors for each deformed node
@@ -827,8 +819,6 @@ def DeformedShape(model, scalefactor, textHeight):
 
   window.Render()
   interactor.Start()
-    
-   
     
 #%%
 # TODO: Finish the following code for load visualization at a future time
