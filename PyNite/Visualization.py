@@ -1,6 +1,7 @@
 # Import the Visualization Toolkit if it's not alread imported
 # You must be running a 64 bit version of Python for this to work
 import vtk
+from numpy import array, empty, append
 
 # Create a data source
 def RenderModel(model, textHeight=5):
