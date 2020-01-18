@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Thu Nov  2 18:04:56 2017
 
 @author: D. Craig Brinck, SE
-"""
+'''
 # %%
 from numpy import zeros, matrix, transpose, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
@@ -14,9 +14,9 @@ import PyNite.FixedEndReactions
 
 # %%
 class Member3D():
-    """
+    '''
     A class representing a 3D frame element in a finite element model.
-    """
+    '''
 
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows
     # us to defer importing it until it's actually needed.
@@ -24,9 +24,9 @@ class Member3D():
 
 #%%
     def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None):
-        """
+        '''
         Initializes a new member.
-        """
+        '''
         
         self.Name = Name    # A unique name for the member given by the user
         self.ID = None      # Unique index number for the member assigned by the program
@@ -54,9 +54,9 @@ class Member3D():
 
 #%%
     def k(self):
-        """
+        '''
         Returns the local condensed stiffness matrix
-        """
+        '''
         
         # Get the local stiffness matrix, partitioned as 4 submatrices in
         # preparation for static condensation
@@ -80,10 +80,10 @@ class Member3D():
     
 #%%
     def __k_Partition(self):
-        """
+        '''
         Partitions the local stiffness matrix in preparation for static
         condensation. Used for applying end releases to the member.
-        """
+        '''
         
         # Get the properties needed to form the local stiffness matrix
         E = self.E
@@ -177,9 +177,9 @@ class Member3D():
 
 #%%
     def kg(self, P=0):
-        """
+        '''
         Returns the local condensed geometric stiffness matrix
-        """
+        '''
         
         # Get the local geometric stiffness matrix, partitioned as 4 submatrices in
         # preparation for static condensation
@@ -203,7 +203,7 @@ class Member3D():
 
 #%%
     def __kg_Partition(self, P=0):
-        """
+        '''
         Partitions the local geometric stiffness matrix in preparation for static
         condensation. Used for applying end releases to the member.
 
@@ -211,7 +211,7 @@ class Member3D():
         ----------
         P : number
             The axial force acting on the member (compression = +, tension = -)
-        """
+        '''
         
         # Get the properties needed to form the local geometric stiffness matrix
         Ip = self.Iy + self.Iz
@@ -303,9 +303,9 @@ class Member3D():
     
 #%%
     def fer(self):
-        """
+        '''
         Returns the member's local fixed end reaction vector
-        """
+        '''
         
         # Partition the local stiffness matrix and local fixed end reaction vector
         k11, k12, k21, k22 = self.__k_Partition()
@@ -328,10 +328,10 @@ class Member3D():
     
 #%%
     def __fer_Partition(self):
-        """
+        '''
         Partitions the local stiffness matrix in preparation for static
         condensation. Used for applying end releases to the member.
-        """
+        '''
         
         # Initialize the fixed end reaction vector
         fer = zeros((12,1))
@@ -393,10 +393,10 @@ class Member3D():
     
 #%%
     def __fer_Unc(self):
-        """
+        '''
         Returns the member's local fixed end reaction vector, ignoring the effects of end releases.
         Needed to apply the slope-deflection equation properly.
-        """
+        '''
         
         # Initialize the fixed end reaction vector
         fer = zeros((12,1))
@@ -407,15 +407,15 @@ class Member3D():
             if ptLoad[0] == 'Fx':
                 fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == 'Fy':
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fy"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), 'Fy'))
             elif ptLoad[0] == 'Fz':
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), "Fz"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), 'Fz'))
             elif ptLoad[0] == 'Mx':
                 fer = add(fer, PyNite.FixedEndReactions.FER_Torque(ptLoad[1], ptLoad[2], self.L()))
             elif ptLoad[0] == 'My':
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "My"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), 'My'))
             elif ptLoad[0] == 'Mz':     
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), "Mz"))
+                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), 'Mz'))
                 
         # Sum the fixed end reactions for the distributed loads
         for distLoad in self.DistLoads:
@@ -430,18 +430,18 @@ class Member3D():
 
 #%%   
     def f(self):
-        """
+        '''
         Returns the member's local end force vector
-        """
+        '''
         
         # Calculate and return the member's local end force vector
         return add(matmul(self.k(), self.d()), self.fer())
 
 #%%
     def d(self):
-       """
+       '''
        Returns the member's local displacement vector
-       """
+       '''
 
        # Calculate and return the local displacement vector
        return matmul(self.T(), self.D())
@@ -574,9 +574,9 @@ class Member3D():
 
 #%%
     def D(self):
-        """
+        '''
         Returns the member's global displacement vector
-        """
+        '''
         
         # Initialize the displacement vector
         Dvector = zeros((12, 1))
@@ -606,23 +606,23 @@ class Member3D():
 
 #%%
     def Shear(self, Direction, x):
-        """
+        '''
         Returns the shear at a point along the member's length
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the shear. Must be one of the following:
-                "Fy" = Shear acting on the local y-axis
-                "Fz" = Shear acting on the local z-axis
+                'Fy' = Shear acting on the local y-axis
+                'Fz' = Shear acting on the local z-axis
         x : number
             The location at which to find the shear
-        """
+        '''
         
         # Check which direction is of interest
-        if Direction == "Fy":
+        if Direction == 'Fy':
             
-            # Check which segment "x" falls on
+            # Check which segment 'x' falls on
             for segment in self.SegmentsZ:
                 if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                     return segment.Shear(x - segment.x1)
@@ -631,7 +631,7 @@ class Member3D():
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].Shear(x - self.SegmentsZ[lastIndex].x1)
                 
-        elif Direction == "Fz":
+        elif Direction == 'Fz':
             
             for segment in self.SegmentsY:
                 
@@ -646,18 +646,18 @@ class Member3D():
             
 #%%
     def MaxShear(self, Direction):
-        """
+        '''
         Returns the maximum shear in the member for the given direction
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the maximum shear. Must be one of the following:
-                "Fy" = Shear acting on the local y-axis
-                "Fz" = Shear acting on the local z-axis
-        """        
+                'Fy' = Shear acting on the local y-axis
+                'Fz' = Shear acting on the local z-axis
+        '''        
         
-        if Direction == "Fy":
+        if Direction == 'Fy':
             
             Vmax = self.SegmentsZ[0].Shear(0)
 
@@ -667,7 +667,7 @@ class Member3D():
                     
                     Vmax = segment.MaxShear()
                     
-        if Direction == "Fz":
+        if Direction == 'Fz':
             
             Vmax = self.SegmentsY[0].Shear(0)
 
@@ -681,18 +681,18 @@ class Member3D():
     
 #%%
     def MinShear(self, Direction):
-        """
+        '''
         Returns the minimum shear in the member for the given direction
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the minimum shear. Must be one of the following:
-                "Fy" = Shear acting on the local y-axis
-                "Fz" = Shear acting on the local z-axis
-        """        
+                'Fy' = Shear acting on the local y-axis
+                'Fz' = Shear acting on the local z-axis
+        '''        
         
-        if Direction == "Fy":
+        if Direction == 'Fy':
             
             Vmin = self.SegmentsZ[0].Shear(0)
 
@@ -702,7 +702,7 @@ class Member3D():
                     
                     Vmin = segment.MinShear()
                     
-        if Direction == "Fz":
+        if Direction == 'Fz':
             
             Vmin = self.SegmentsY[0].Shear(0)
 
@@ -716,9 +716,9 @@ class Member3D():
     
 #%%
     def PlotShear(self, Direction):
-        """
+        '''
         Plots the shear diagram for the member
-        """
+        '''
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -745,23 +745,23 @@ class Member3D():
         
 #%%
     def Moment(self, Direction, x):
-        """
+        '''
         Returns the moment at a point along the member's length
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the moment. Must be one of the following:
-                "My" = Moment about the local y-axis
-                "Mz" = moment about the local z-axis
+                'My' = Moment about the local y-axis
+                'Mz' = moment about the local z-axis
         x : number
             The location at which to find the moment
-        """
+        '''
         
         # Check which axis is of interest
-        if Direction == "My":
+        if Direction == 'My':
             
-            # Check which segment "x" falls on
+            # Check which segment 'x' falls on
             for segment in self.SegmentsY:
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
@@ -773,7 +773,7 @@ class Member3D():
                 lastIndex = len(self.SegmentsY) - 1
                 return self.SegmentsY[lastIndex].Moment(x - self.SegmentsY[lastIndex].x1)
                 
-        elif Direction == "Mz":
+        elif Direction == 'Mz':
             
             for segment in self.SegmentsZ:
                 
@@ -788,18 +788,18 @@ class Member3D():
             
 #%%
     def MaxMoment(self, Direction):
-        """
+        '''
         Returns the maximum moment in the member for the given direction
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the maximum moment. Must be one of the following:
-                "My" = Moment about the local y-axis
-                "Mz" = Moment about the local z-axis
-        """        
+                'My' = Moment about the local y-axis
+                'Mz' = Moment about the local z-axis
+        '''        
         
-        if Direction == "Mz":
+        if Direction == 'Mz':
             
             Mmax = self.SegmentsZ[0].Moment(0)
 
@@ -809,7 +809,7 @@ class Member3D():
                     
                     Mmax = segment.MaxMoment()
                     
-        if Direction == "My":
+        if Direction == 'My':
             
             Mmax = self.SegmentsY[0].Moment(0)
 
@@ -823,18 +823,18 @@ class Member3D():
 
 #%%
     def MinMoment(self, Direction):
-        """
+        '''
         Returns the minimum moment in the member for the given direction
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the minimum moment. Must be one of the following:
-                "My" = Moment about the local y-axis
-                "Mz" = Moment about the local z-axis
-        """        
+                'My' = Moment about the local y-axis
+                'Mz' = Moment about the local z-axis
+        '''        
         
-        if Direction == "Mz":
+        if Direction == 'Mz':
             
             Mmin = self.SegmentsZ[0].Moment(0)
 
@@ -844,7 +844,7 @@ class Member3D():
                     
                     Mmin = segment.MinMoment()
                     
-        if Direction == "My":
+        if Direction == 'My':
             
             Mmin = self.SegmentsY[0].Moment(0)
 
@@ -858,9 +858,9 @@ class Member3D():
 
 #%%
     def PlotMoment(self, Direction):
-        """
+        '''
         Plots the moment diagram for the member
-        """
+        '''
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -890,16 +890,16 @@ class Member3D():
         
 #%%
     def Torsion(self, x):
-        """
+        '''
         Returns the torsional moment at a point along the member's length
         
         Parameters
         ----------
         x : number
             The location at which to find the torque
-        """
+        '''
             
-        # Check which segment "x" falls on
+        # Check which segment 'x' falls on
         for segment in self.SegmentsX:
             if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                 return segment.Torsion()
@@ -910,9 +910,9 @@ class Member3D():
 
 #%%
     def MaxTorsion(self):
-        """
+        '''
         Returns the maximum torsional moment in the member
-        """        
+        '''        
         
         Tmax = self.SegmentsX[0].Torsion()   
         
@@ -926,9 +926,9 @@ class Member3D():
     
 #%%
     def MinTorsion(self):
-        """
+        '''
         Returns the minimum torsional moment in the member
-        """        
+        '''        
         
         Tmin = self.SegmentsX[0].Torsion()
             
@@ -942,9 +942,9 @@ class Member3D():
 
 #%%
     def PlotTorsion(self):
-        """
+        '''
         Plots the axial force diagram for the member
-        """
+        '''
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -971,16 +971,16 @@ class Member3D():
         
 #%%
     def Axial(self, x):
-        """
+        '''
         Returns the axial force at a point along the member's length
         
         Parameters
         ----------
         x : number
             The location at which to find the shear
-        """
+        '''
             
-        # Check which segment "x" falls on
+        # Check which segment 'x' falls on
         for segment in self.SegmentsZ:
             if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                 return segment.Axial(x - segment.x1)
@@ -990,9 +990,9 @@ class Member3D():
                 return self.SegmentsZ[lastIndex].Axial(x - self.SegmentsZ[lastIndex].x1)
 #%%
     def MaxAxial(self):
-        """
+        '''
         Returns the maximum axial force in the member
-        """        
+        '''        
         
         Pmax = self.SegmentsZ[0].Axial(0)   
         
@@ -1006,9 +1006,9 @@ class Member3D():
     
 #%%
     def MinAxial(self):
-        """
+        '''
         Returns the minimum axial force in the member
-        """        
+        '''        
         
         Pmin = self.SegmentsZ[0].Axial(0)
             
@@ -1022,9 +1022,9 @@ class Member3D():
     
 #%%
     def PlotAxial(self):
-        """
+        '''
         Plots the axial force diagram for the member
-        """
+        '''
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1051,24 +1051,37 @@ class Member3D():
                         
 #%%
     def Deflection(self, Direction, x):
-        
-        """
+        '''
         Returns the deflection at a point along the member's length
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the deflection. Must be one of the following:
-                "dy" = Deflection in the local y-axis
-                "dz" = Deflection in the local x-axis
+                'dx' = Deflection in the local x-axis
+                'dy' = Deflection in the local y-axis
+                'dz' = Deflection in the local z-axis
         x : number
             The location at which to find the deflection
-        """
+        '''
         
         # Check which axis is of interest
-        if Direction == "dy":
+        if Direction == 'dx':
             
-            # Check which segment "x" falls on
+            # Check which segment 'x' falls on
+            for segment in self.SegmentsZ:
+                
+                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                    return segment.AxialDeflection(x - segment.x1)
+                
+            if isclose(x, self.L()):
+                
+                lastIndex = len(self.SegmentsZ) - 1
+                return self.SegmentsZ[lastIndex].AxialDeflection(x - self.SegmentsZ[lastIndex].x1)
+
+        elif Direction == 'dy':
+            
+            # Check which segment 'x' falls on
             for segment in self.SegmentsZ:
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
@@ -1080,7 +1093,7 @@ class Member3D():
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].Deflection(x - self.SegmentsZ[lastIndex].x1)
                 
-        elif Direction == "dz":
+        elif Direction == 'dz':
             
             for segment in self.SegmentsY:
                 
@@ -1095,14 +1108,14 @@ class Member3D():
 
 #%%
     def MaxDeflection(self, Direction):
-        """
+        '''
         Returns the maximum deflection in the member.
         
         Parameters
         ----------
-        Direction : {"dy", "dz"}
+        Direction : {'dy', 'dz'}
             The direction in which to find the maximum deflection.
-        """
+        '''
         
         # Initialize the maximum deflection
         dmax = self.Deflection(Direction, 0)
@@ -1118,14 +1131,14 @@ class Member3D():
     
 #%%
     def MinDeflection(self, Direction):
-        """
+        '''
         Returns the minimum deflection in the member.
         
         Parameters
         ----------
-        Direction : {"dy", "dz"}
+        Direction : {'dy', 'dz'}
             The direction in which to find the minimum deflection.
-        """
+        '''
         
         # Initialize the minimum deflection
         dmin = self.Deflection(Direction, 0)
@@ -1141,14 +1154,14 @@ class Member3D():
               
 #%%
     def PlotDeflection(self, Direction):
-        """
+        '''
         Plots the deflection diagram for the member
         
         Parameters
         ----------
-        Direction : {"dy", "dz"}
+        Direction : {'dy', 'dz'}
             The direction in which to plot the deflection.
-        """
+        '''
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1181,6 +1194,7 @@ class Member3D():
         # Get the member's length and stiffness properties
         L = self.L()
         E = self.E
+        A = self.A
         Iz = self.Iz
         Iy = self.Iy
         SegmentsZ = self.SegmentsZ
@@ -1213,6 +1227,7 @@ class Member3D():
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
             newSeg.EI = E*Iz              # Segment flexural stiffness
+            newSeg.EA = E*A
             SegmentsZ.append(newSeg)      # Add the segment to the list
             
             # y-direction segments (bending about local y-axis)
@@ -1220,12 +1235,14 @@ class Member3D():
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
             newSeg.EI = E*Iy              # Segment flexural stiffness
+            newSeg.EA = E*A
             SegmentsY.append(newSeg)      # Add the segment to the list
             
             # x-direction segments (for torsional moment)
             newSeg = BeamSegZ()        # Create the new segment
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
+            newSeg.EA = E*A
             SegmentsX.append(newSeg)      # Add the segment to the list
         
         # Get the member local end forces, local fixed end reactions, and local displacements
@@ -1254,6 +1271,11 @@ class Member3D():
         SegmentsY[0].delta1 = delta1z
         SegmentsZ[0].theta1 = 1/3*((m1z - fem1z)*L/(E*Iz) - (m2z - fem2z)*L/(2*E*Iz) + 3*(delta2y - delta1y)/L)
         SegmentsY[0].theta1 = -1/3*((m1y - fem1y)*L/(E*Iy) - (m2y - fem2y)*L/(2*E*Iy) + 3*(delta2z - delta1z)/L)
+
+        # Add the axial deflection at the start of the member
+        SegmentsZ[0].delta_x1 = d[0, 0]
+        SegmentsY[0].delta_x1 = d[0, 0]
+        SegmentsX[0].delta_x1 = d[0, 0]
         
         # Add loads to each segment
         for i in range(len(SegmentsZ)):
@@ -1275,8 +1297,10 @@ class Member3D():
             if i > 0: # The first segment has already been initialized
                 SegmentsZ[i].theta1 = SegmentsZ[i-1].Slope(SegmentsZ[i-1].Length())
                 SegmentsZ[i].delta1 = SegmentsZ[i-1].Deflection(SegmentsZ[i-1].Length())
+                SegmentsZ[i].delta_x1 = SegmentsZ[i-1].AxialDeflection(SegmentsZ[i-1].Length())
                 SegmentsY[i].theta1 = SegmentsY[i-1].Slope(SegmentsY[i-1].Length())
                 SegmentsY[i].delta1 = SegmentsY[i-1].Deflection(SegmentsY[i-1].Length())
+                SegmentsY[i].delta_x1 = SegmentsY[i-1].AxialDeflection(SegmentsY[i-1].Length())
                 
             # Add the effects of the beam end forces to the segment
             SegmentsZ[i].P1 = f[0, 0]
@@ -1292,19 +1316,19 @@ class Member3D():
                 
                 if round(ptLoad[2],10) <= round(x,10):
                     
-                    if ptLoad[0] == "Fx":
+                    if ptLoad[0] == 'Fx':
                         SegmentsZ[i].P1 += ptLoad[1]
-                    elif ptLoad[0] == "Fy":
+                    elif ptLoad[0] == 'Fy':
                         SegmentsZ[i].V1 += ptLoad[1]
                         SegmentsZ[i].M1 -= ptLoad[1]*(x - ptLoad[2])
-                    elif ptLoad[0] == "Fz":
+                    elif ptLoad[0] == 'Fz':
                         SegmentsY[i].V1 += ptLoad[1]
                         SegmentsY[i].M1 += ptLoad[1]*(x - ptLoad[2])
-                    elif ptLoad[0] == "Mx":
+                    elif ptLoad[0] == 'Mx':
                         SegmentsX[i].T1 += ptLoad[1]    
-                    elif ptLoad[0] == "My":
+                    elif ptLoad[0] == 'My':
                         SegmentsY[i].M1 += ptLoad[1]
-                    elif ptLoad[0] == "Mz":
+                    elif ptLoad[0] == 'Mz':
                         SegmentsZ[i].M1 += ptLoad[1]
             
             # Add distributed loads to the segment
@@ -1320,7 +1344,7 @@ class Member3D():
                 # Determine if the load affects the segment
                 if round(x1,10) <= round(x,10):
                     
-                    if Direction == "Fx":
+                    if Direction == 'Fx':
                         
                         # Determine if the load ends after the start of the segment
                         if round(x2,10) > round(x,10):
@@ -1340,7 +1364,7 @@ class Member3D():
                         SegmentsZ[i].P1 -= (w1 + w2)/2*(x2 - x1)
                         SegmentsY[i].P1 -= (w1 + w2)/2*(x2 - x1)
                     
-                    elif Direction == "Fy":
+                    elif Direction == 'Fy':
                         
                         # Determine if the load ends after the start of the segment
                         if round(x2,10) > round(x,10):
@@ -1358,7 +1382,7 @@ class Member3D():
                         SegmentsZ[i].V1 += (w1 + w2)/2*(x2 - x1)
                         SegmentsZ[i].M1 -= (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
                     
-                    elif Direction == "Fz":
+                    elif Direction == 'Fz':
                         
                         # Determine if the load ends after the start of the segment
                         if round(x2,10) > round(x,10):
