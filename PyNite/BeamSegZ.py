@@ -35,9 +35,13 @@ class BeamSegZ():
     theta1: number
       The slope (radians) at the start of the segment
     delta1: number
-      The displacement at the start of the segment
+      The transverse displacement at the start of the segment
+    delta_x1 : number
+      The axial displacement at the start of the segment
     EI : number
       The flexural stiffness of the segment
+    EA : number
+      The axial stiffness of the segment
     
     Methods
     -------
@@ -56,7 +60,6 @@ class BeamSegZ():
 
 #%%
     def __init__(self):
-        
         """
         Constructor
         """
@@ -73,7 +76,9 @@ class BeamSegZ():
         self.T1 = None # Torsional moment at start of segment
         self.theta1 = None # Slope at start of beam segment
         self.delta1 = None # Displacement at start of beam segment
+        self.delta_x1 = None # Axial displacement at start of beam segment
         self.EI = None # Flexural stiffness of the beam segment
+        self.EA = None # Axial stiffness of the beam segment
 
 #%%
     # Returns the length of the segment
@@ -177,6 +182,18 @@ class BeamSegZ():
         EI = self.EI
         
         return delta1 + theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**5*(-w1 + w2)/(120*EI*L)
+
+#%%
+    def AxialDeflection(self, x):
+
+        delta_x1 = self.delta_x1
+        P1 = self.P1
+        p1 = self.p1
+        p2 = self.p2
+        L = self.Length()
+        EA = self.EA
+
+        return delta_x1 - 1/EA*(P1*x + p1*x**2/2 + (p2 - p1)*x**3/(6*L))
 
 #%%
     # Returns the maximum shear in the segment
