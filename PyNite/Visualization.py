@@ -114,9 +114,9 @@ class VisNode():
   def __init__(self, node, textHeight=5):
     
     # Get the node's position
-    X = node.X          # Global X coordinate
-    Y = node.Y          # Global Y coordinate
-    Z = node.Z          # Global Z coordinate
+    X = node.X # Global X coordinate
+    Y = node.Y # Global Y coordinate
+    Z = node.Z # Global Z coordinate
 
     # Generate a sphere for the node
     sphere = vtk.vtkSphereSource()
@@ -436,7 +436,7 @@ class VisNode():
 class VisAuxNode():
  
   # Constructor
-  def __init__(self, auxnode, textHeight):
+  def __init__(self, auxnode, textHeight=5):
     
     # Get the node's position
     X = auxnode.X          # Global X coordinate
@@ -471,8 +471,7 @@ class VisAuxNode():
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition(X+0.6*textHeight, Y+0.6*textHeight, Z)
     self.lblActor.GetProperty().SetColor(255,0,0) #red
-        
-        
+               
 # Converts a member object into a member for the viewer
 class VisMember():
 
@@ -607,7 +606,7 @@ class VisPlate():
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
   
-  def __init__(self, node, scale_factor, textHeight):
+  def __init__(self, node, scale_factor, textHeight=5):
   
     # Calculate the node's deformed position
     newX = node.X + scale_factor*(node.DX)
@@ -646,7 +645,7 @@ class VisDeformedNode():
 # Converts a member object into a member in its deformed position for the viewer
 class VisDeformedMember():
 
-  def __init__(self, member, nodes, scale_factor, textHeight):
+  def __init__(self, member, nodes, scale_factor, textHeight=5):
 
     L = member.L()
     T = member.T()
@@ -660,23 +659,23 @@ class VisDeformedMember():
       
       # Check to see if the current node is the i-node
       if node.Name == member.iNode.Name:
-        newXi = node.X + node.DX
-        newYi = node.Y + node.DY
-        newZi = node.Z + node.DZ
+        Xi = node.X
+        Yi = node.Y
+        Zi = node.Z
                      
     dy_plot = empty((0,3))
     for i in range(20):
-      dy_tot = member.Deflection("dy", L/ 19*i)
+      dy_tot = member.Deflection("dy", L/19*i)
       dy_plot = append(dy_plot, dy_tot*cos_y*scale_factor, axis=0)
 
     dz_plot = empty((0,3)) 
     for i in range(20):
-      dz_tot = member.Deflection("dz", L/ 19*i)
+      dz_tot = member.Deflection("dz", L/19*i)
       dz_plot = append(dz_plot, dz_tot*cos_z*scale_factor, axis=0)
 
-    x_plot=empty((0,3)) 
+    x_plot = empty((0,3)) 
     for i in range(20):
-      x= [[newXi, newYi, newZi]] + (L/19*i + member.Deflection('dx', L/19*i)*scale_factor)*cos_x
+      x = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i)*scale_factor)*cos_x
       x_plot = append(x_plot, x, axis=0)
     
     #Vector to plot        
@@ -706,9 +705,9 @@ class VisDeformedMember():
 
     self.polylineActor = vtk.vtkActor()
     self.polylineActor.SetMapper(polylineMapper)
-    self.polylineActor.GetProperty().SetColor(255,255,0) #yellow
+    self.polylineActor.GetProperty().SetColor(255,255,0) # yellow
 
-def DeformedShape(model, scale_factor, textHeight):
+def DeformedShape(model, scale_factor, textHeight=5):
 
   visNodes = []
   for node in model.Nodes:
