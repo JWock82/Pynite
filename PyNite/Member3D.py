@@ -1047,8 +1047,59 @@ class Member3D():
         Member3D.__plt.ylabel('Axial Force')
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.Name)
-        Member3D.__plt.show()    
-                        
+        Member3D.__plt.show()  
+        
+#%%
+    def AxialDeformation(self, x):
+        """
+        Returns the axial deformation at a point along the member's length
+        
+        Parameters
+        ----------
+        x : number
+    
+        """
+            
+        # Check which segment "x" falls on
+        for segment in self.SegmentsZ:
+            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                return segment.AxialDeformation(x - segment.x1)
+                
+            if isclose(x, self.L()):  
+                lastIndex = len(self.SegmentsZ) - 1
+                return self.SegmentsZ[lastIndex].AxialDeformation(x - self.SegmentsZ[lastIndex].x1)           
+
+#%%
+    def PlotAxialDeformation(self):
+        """
+        Plots the axial deformation diagram for the member
+        
+        """
+                
+        # Import 'pyplot' if not already done
+        if Member3D.__plt is None:
+            from matplotlib import pyplot as plt
+            Member3D.__plt = plt
+        
+        fig, ax = Member3D.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        x = []
+        epsilon = []
+        
+        # Calculate the diagram
+        for i in range(20):
+            
+            x.append(self.L() / 19 * i)
+            epsilon.append(self.AxialDeformation(self.L() / 19 * i)*100)
+
+        Member3D.__plt.plot(x, epsilon)
+        Member3D.__plt.ylabel('Axial deformation [%]')
+        Member3D.__plt.xlabel('Location')
+        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.show() 
+
 #%%
     def Deflection(self, Direction, x):
         '''
