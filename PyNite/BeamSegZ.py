@@ -194,7 +194,14 @@ class BeamSegZ():
         EA = self.EA
 
         return delta_x1 - 1/EA*(P1*x + p1*x**2/2 + (p2 - p1)*x**3/(6*L))
-
+   
+#%%
+    def AxialDeformation(self, x):
+        
+        EA = self.EA
+        
+        return self.Axial(x)/(EA)
+    
 #%%
     # Returns the maximum shear in the segment
     def MaxShear(self):
