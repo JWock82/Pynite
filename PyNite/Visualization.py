@@ -454,7 +454,7 @@ class VisAuxNode():
 
     # Set up an actor for the node
     self.actor = vtk.vtkActor()
-    self.actor.GetProperty().SetColor(255,0,0) #red
+    self.actor.GetProperty().SetColor(255,0,0) # Red
     self.actor.SetMapper(mapper)
 
     # Create the text for the node label
@@ -649,6 +649,7 @@ class VisDeformedMember():
 
     L = member.L() # Member length
     T = member.T() # Member local transformation matrix
+
     cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
     cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
     cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
@@ -664,50 +665,50 @@ class VisDeformedMember():
         Zi = node.Z
 
     # Calculate the local y-axis displacements at 20 points along the member's length
-    dy_plot = empty((0,3))
+    DY_plot = empty((0,3))
     for i in range(20):
 
       # Displacements in local coordinates
-      dy_tot = member.Deflection("dy", L/19*i)
+      dy_tot = member.Deflection('dy', L/19*i)
 
       # Magnified displacements in global coordinates
-      dy_plot = append(dy_plot, dy_tot*cos_y*scale_factor, axis=0)
+      DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
 
     # Calculate the local z-axis displacements at 20 points along the member's length
-    dz_plot = empty((0,3)) 
+    DZ_plot = empty((0,3)) 
     for i in range(20):
 
       # Displacements in local coordinates
-      dz_tot = member.Deflection("dz", L/19*i)
+      dz_tot = member.Deflection('dz', L/19*i)
 
       # Magnified displacements in global coordinates
-      dz_plot = append(dz_plot, dz_tot*cos_z*scale_factor, axis=0)
+      DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
 
     # Calculate the local x-axis displacements at 20 points along the member's length
-    dx_plot = empty((0,3)) 
+    DX_plot = empty((0,3)) 
     for i in range(20):
 
       # Displacements in local coordinates
       dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i)*scale_factor)*cos_x
       
       # Magnified displacements in global coordinates
-      dx_plot = append(dx_plot, dx_tot, axis=0)
+      DX_plot = append(DX_plot, dx_tot, axis=0)
     
     # Sum the component displacements to obtain overall displacement
-    d_plot = (dy_plot + dz_plot + dx_plot)
+    D_plot = (DY_plot + DZ_plot + DX_plot)
 
     # Generate vtk points
     points = vtk.vtkPoints()
-    points.SetNumberOfPoints(len(d_plot))
+    points.SetNumberOfPoints(len(D_plot))
 
-    for i in range(len(d_plot)):
-      points.SetPoint(i, d_plot[i, 0], d_plot[i, 1], d_plot[i, 2])
+    for i in range(len(D_plot)):
+      points.SetPoint(i, D_plot[i, 0], D_plot[i, 1], D_plot[i, 2])
 
     # Generate vtk lines
     lines = vtk.vtkCellArray()
-    lines.InsertNextCell(len(d_plot))
+    lines.InsertNextCell(len(D_plot))
 
-    for i in range(len(d_plot)):
+    for i in range(len(D_plot)):
       lines.InsertCellPoint(i)
 
     # Create a polyline from the defined points and lines
@@ -846,7 +847,7 @@ def DeformedShape(model, scale_factor, textHeight=5):
 
 #   # Constructor
 #   def __init__(self, Position, Direction, Length, ArrowHeadHeight, LabelText = None):
-#     """
+#     '''
 #     Parameters
 #     ----------
 #     Position : tuple
@@ -859,7 +860,7 @@ def DeformedShape(model, scale_factor, textHeight=5):
 #       The height of the arrow head
 #     LabelText : string
 #       Text that will show up at the tail of the arrow. Defaults to None.
-#     """
+#     '''
 
 #     # Create the arrow head
 #     arrowHead = vtk.vtkConeSource()
