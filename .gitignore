@@ -1,6 +1,6 @@
 *.pyc
 .vscode/
-PyNiteFEA.egg-info/
+PyNiteFEA.egg-info/*
 .build/
 .dist/
 setup.py
