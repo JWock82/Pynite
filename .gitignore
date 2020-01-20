@@ -1,7 +1,14 @@
 *.pyc
 .vscode/
 PyNiteFEA.egg-info/*
-.build/
+build/*
 .dist/
 setup.py
 PyNiteFEA.egg-info/dependency_links.txt
+build/lib/PyNite/BeamSegment.py
+build/lib/PyNite/BeamSegY.py
+build/lib/PyNite/BeamSegZ.py
+build/lib/PyNite/FEModel3D.py
+build/lib/PyNite/FixedEndReactions.py
+build/lib/PyNite/__init__.py
+build/lib/PyNite/Member3D.py
