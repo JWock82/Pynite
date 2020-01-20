@@ -647,13 +647,13 @@ class VisDeformedMember():
 
   def __init__(self, member, nodes, scale_factor, textHeight=5):
 
-    L = member.L()
-    T = member.T()
+    L = member.L() # Member length
+    T = member.T() # Member local transformation matrix
     cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
     cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
     cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
 
-    # Find the deformed position of the local i-node
+    # Find the initial position of the local i-node
     # Step through each node
     for node in nodes:
       
@@ -662,50 +662,68 @@ class VisDeformedMember():
         Xi = node.X
         Yi = node.Y
         Zi = node.Z
-                     
+
+    # Calculate the local y-axis displacements at 20 points along the member's length
     dy_plot = empty((0,3))
     for i in range(20):
+
+      # Displacements in local coordinates
       dy_tot = member.Deflection("dy", L/19*i)
+
+      # Magnified displacements in global coordinates
       dy_plot = append(dy_plot, dy_tot*cos_y*scale_factor, axis=0)
 
+    # Calculate the local z-axis displacements at 20 points along the member's length
     dz_plot = empty((0,3)) 
     for i in range(20):
+
+      # Displacements in local coordinates
       dz_tot = member.Deflection("dz", L/19*i)
+
+      # Magnified displacements in global coordinates
       dz_plot = append(dz_plot, dz_tot*cos_z*scale_factor, axis=0)
 
-    x_plot = empty((0,3)) 
+    # Calculate the local x-axis displacements at 20 points along the member's length
+    dx_plot = empty((0,3)) 
     for i in range(20):
-      x = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i)*scale_factor)*cos_x
-      x_plot = append(x_plot, x, axis=0)
-    
-    #Vector to plot        
-    d_plot = (dy_plot + dz_plot + x_plot)
 
-    # Generate points
+      # Displacements in local coordinates
+      dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i)*scale_factor)*cos_x
+      
+      # Magnified displacements in global coordinates
+      dx_plot = append(dx_plot, dx_tot, axis=0)
+    
+    # Sum the component displacements to obtain overall displacement
+    d_plot = (dy_plot + dz_plot + dx_plot)
+
+    # Generate vtk points
     points = vtk.vtkPoints()
     points.SetNumberOfPoints(len(d_plot))
 
     for i in range(len(d_plot)):
       points.SetPoint(i, d_plot[i, 0], d_plot[i, 1], d_plot[i, 2])
 
-    # Generate lines
+    # Generate vtk lines
     lines = vtk.vtkCellArray()
     lines.InsertNextCell(len(d_plot))
 
     for i in range(len(d_plot)):
       lines.InsertCellPoint(i)
 
+    # Create a polyline from the defined points and lines
     polyline = vtk.vtkPolyData()
     polyline.SetPoints(points)
     polyline.SetLines(lines)
 
+    # Set up a mapper
     polylineMapper = vtk.vtkPolyDataMapper()
     polylineMapper.SetInputData(polyline)
     polylineMapper.Update()
 
+    # Set up an actor for the polyline
     self.polylineActor = vtk.vtkActor()
     self.polylineActor.SetMapper(polylineMapper)
-    self.polylineActor.GetProperty().SetColor(255,255,0) # yellow
+    self.polylineActor.GetProperty().SetColor(255,255,0) # Yellow
 
 def DeformedShape(model, scale_factor, textHeight=5):
 
