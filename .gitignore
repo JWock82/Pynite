@@ -1,6 +1,7 @@
 *.pyc
 .vscode/
-.PyNiteFEA.egg-info/
+PyNiteFEA.egg-info/
 .build/
 .dist/
 setup.py
+PyNiteFEA.egg-info/dependency_links.txt
