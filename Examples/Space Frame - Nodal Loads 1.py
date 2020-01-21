@@ -37,9 +37,13 @@ frame.AddMember('M3', 'N4', 'N1', E, G, Iy, Iz, J, A)
 frame.AddNodeLoad('N1', 'FY', -50)
 frame.AddNodeLoad('N1', 'MX', -1000)
 
-frame.Analyze(False)
-# Visualization.RenderModel(frame)
-# print('Node 1 deformations:')
-# print('Calculated values: ', [frame.GetNode('N1').DX, frame.GetNode('N1').DY, frame.GetNode('N1').DZ, frame.GetNode('N1').RX, frame.GetNode('N1').RY, frame.GetNode('N1').RZ])
-# print('Expected values: ', [7.098e-5, -0.014, -2.352e-3, -3.996e-3, 1.78e-5, -1.033e-4])
-print(frame.GetMember('M3').T())
+# Analyze the model
+frame.Analyze(check_statics=False)
+
+# Render the deformed shape
+Visualization.DeformedShape(frame, 100, 5)
+
+# Print the node 1 displacements
+print('Node 1 deformations:')
+print('Calculated values: ', frame.GetNode('N1').DX, frame.GetNode('N1').DY, frame.GetNode('N1').DZ, frame.GetNode('N1').RX, frame.GetNode('N1').RY, frame.GetNode('N1').RZ)
+print('Expected values: ', 7.098e-5, -0.014, -2.352e-3, -3.996e-3, 1.78e-5, -1.033e-4)
