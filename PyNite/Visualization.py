@@ -143,7 +143,7 @@ class VisNode():
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
-    self.lblActor.SetPosition(X+0.6*textHeight, Y+0.6*textHeight, Z)
+    self.lblActor.SetPosition(X + 0.6*textHeight, Y + 0.6*textHeight, Z)
 
     # Generate any supports that occur at the node
     supportMappers = []
@@ -792,7 +792,6 @@ def DeformedShape(model, scale_factor, textHeight=5):
     # This next line will require us to reset the camera when we're done (below)
     visNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
-
   # Add actors for each aux node
   for visAuxNode in visAuxNodes:
 
@@ -824,7 +823,7 @@ def DeformedShape(model, scale_factor, textHeight=5):
 
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
-    visNode.lblActor.SetCamera(renderer.GetActiveCamera())
+    visDeformedNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
     # Add the actors for the node supports
     for support in visNode.supportActors:
