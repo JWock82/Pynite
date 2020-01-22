@@ -1189,14 +1189,6 @@ class Member3D():
     
 #%%   
     def RelativeDeflection(self, Direction, x):
-        
-        d = self.d()
-        d1y = d[1,0]
-        d2y = d[7,0]
-        d1z = d[2,0]
-        d2z = d[8,0]
-        L = self.L()
-
         """
         Returns the relative deflection at a point along the member's length
         
@@ -1210,6 +1202,13 @@ class Member3D():
             The location at which to find the relative deflection
         """
         
+        d = self.d()
+        dyi = d[1,0]
+        dyj = d[7,0]
+        dzi = d[2,0]
+        dzj = d[8,0]
+        L = self.L()
+       
         # Check which axis is of interest
         if Direction == "dy":
             
@@ -1218,12 +1217,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return (segment.Deflection(x - segment.x1)) - (d1y + (d2y-d1y)/L *x)
+                    return (segment.Deflection(x - segment.x1)) - (dyi + (dyj-dyi)/L*x)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsZ) - 1
-                return (self.SegmentsZ[lastIndex].Deflection(x - self.SegmentsZ[lastIndex].x1))-d2y
+                return (self.SegmentsZ[lastIndex].Deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
                 
         elif Direction == "dz":
             
@@ -1231,12 +1230,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return (segment.Deflection(x - segment.x1)) - (d1z + (d2z-d1z)/L *x)
+                    return (segment.Deflection(x - segment.x1)) - (dzi + (dzj-dzi)/L*x)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsY) - 1
-                return (self.SegmentsY[lastIndex].Deflection(x - self.SegmentsY[lastIndex].x1)) - d2z
+                return (self.SegmentsY[lastIndex].Deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
 
 #%%
     def PlotRelativeDeflection(self, Direction):
@@ -1264,8 +1263,8 @@ class Member3D():
         # Calculate the relative deflection diagram
         for i in range(20):
             
-            x.append(self.L() / 19 * i)
-            d_relative.append(self.RelativeDeflection(Direction, self.L() / 19 * i))
+            x.append(self.L()/19*i)
+            d_relative.append(self.RelativeDeflection(Direction, self.L()/19*i))
 
         Member3D.__plt.plot(x, d_relative)
         Member3D.__plt.ylabel('Relative Deflection')
