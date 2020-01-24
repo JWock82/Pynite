@@ -800,10 +800,7 @@ class FEModel3D():
         else:
             # Calculate the global displacement vector
             print('...Calculating global displacement vector')
-            self.__D = matmul(inv(K), subtract(P, FER))
-        
-        # Save the displacements as a local variable for easier reference below
-        D = self.__D
+            D = matmul(inv(K), subtract(P, FER))
         
         # Expand the global displacement vector to include supported degrees of freedom
         # Work forwards through the node list so that the relationship between
@@ -821,6 +818,9 @@ class FEModel3D():
                 D = insert(D, node.ID * 6 + 4, 0, axis = 0)
             if node.SupportRZ == True:
                 D = insert(D, node.ID * 6 + 5, 0, axis = 0)
+
+        # Save the expanded global displacement vector
+        self.__D = D
 
         # Store the calculated global nodal displacements into each node
         for node in self.Nodes:
@@ -928,10 +928,7 @@ class FEModel3D():
             else:
                 # Calculate the global displacement vector
                 print('...Calculating global displacement vector')
-                self.__D = matmul(inv(K), subtract(P, FER))
-        
-            # Save the displacements as a local variable for easier reference below
-            D = self.__D
+                D = matmul(inv(K), subtract(P, FER))
         
             # Expand the global displacement vector to include supported degrees of freedom
             # Work forwards through the node list so that the relationship between
@@ -949,6 +946,9 @@ class FEModel3D():
                     D = insert(D, node.ID * 6 + 4, 0, axis = 0)
                 if node.SupportRZ == True:
                     D = insert(D, node.ID * 6 + 5, 0, axis = 0)
+
+            # Save the expanded global displacement vector
+            self.__D = D
 
             # Store the calculated global nodal displacements into each node
             for node in self.Nodes:
