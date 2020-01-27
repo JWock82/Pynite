@@ -885,8 +885,7 @@ class Member3D():
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.Name)
         Member3D.__plt.show()
-
-        
+        return fig
         
 #%%
     def Torsion(self, x):
