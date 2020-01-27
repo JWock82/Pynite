@@ -10,6 +10,8 @@ from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
 from PyNite.Plate3D import Plate3D
+from errno import EEXIST 
+from os import path,mkdir
 
 # %%
 class FEModel3D():
@@ -28,6 +30,23 @@ class FEModel3D():
         self.Members = []  # A list of the structure's members
         self.Plates = []   # A list of the structure's plates
         self.__D = []      # A list of the structure's nodal displacements
+    
+#%%  
+    def makedir(self, name): 
+        '''
+        Creates a directory
+
+        Parameters
+        ----------
+        Name : string, name of new folder
+        ''' 
+
+        try: 
+         mkdir(name) 
+        except OSError as exc:  
+         if exc.errno == EEXIST and path.isdir(name): 
+          pass 
+         else: raise
 
 #%%
     def AddNode(self, Name, X, Y, Z):
