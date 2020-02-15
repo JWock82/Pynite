@@ -5,7 +5,7 @@ Created on Thu Nov  9 21:11:20 2017
 @author: D. Craig Brinck, SE
 """
 # %%
-from numpy import zeros, delete, insert, matmul, divide, add, subtract, nanmax, seterr
+from numpy import zeros, delete, insert, matmul, divide, add, subtract, nanmax, seterr, shape, asarray
 from numpy.linalg import inv, matrix_rank
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
@@ -189,30 +189,87 @@ class FEModel3D():
         ----------
         Node : string
             The name of the node where the support is being defined
-        SupportDX : boolean
-            Indicates whether the node is supported against translation in the global X-direction.
-        SupportDY : boolean
-            Indicates whether the node is supported against translation in the global Y-direction.
-        SupportDZ : boolean
-            Indicates whether the node is supported against translation in the global Z-direction.
-        SupportRX : boolean
-            Indicates whether the node is supported against rotation about the global X-axis.
-        SupportRY : boolean
-            Indicates whether the node is supported against rotation about the global Y-axis.
-        SupportRZ : boolean
-            Indicates whether the node is supported against rotation about the global Z-axis.
+        Node : string
+            The name of the node where the support is being defined
+        SupportDX : boolean or number
+            Indicates whether the node is supported against translation in the global X-direction or if there is a support's settlement.
+        SupportDY : boolean or number
+            Indicates whether the node is supported against translation in the global Y-direction or if there is a support's settlement..
+        SupportDZ : boolean or number
+            Indicates whether the node is supported against translation in the global Z-direction or if there is a support's settlement..
+        SupportRX : boolean or number
+            Indicates whether the node is supported against rotation about the global X-axis or if there is a support's settlement.
+        SupportRY : boolean or number
+            Indicates whether the node is supported against rotation about the global Y-axis or if there is a support's settlement..
+        SupportRZ : boolean or number
+            Indicates whether the node is supported against rotation about the global Z-axis or if there is a support's settlement..
         """
         
         # Get the node to be supported
         node = self.GetNode(Node)
                 
         # Set the node's supports
-        node.SupportDX = SupportDX
-        node.SupportDY = SupportDY
-        node.SupportDZ = SupportDZ
-        node.SupportRX = SupportRX
-        node.SupportRY = SupportRY
-        node.SupportRZ = SupportRZ
+                if SupportDX != False and SupportDX != True:
+            node.DX = SupportDX
+        else:
+            node.SupportDX = SupportDX
+        
+        if SupportDY != False and SupportDY != True:
+            node.DY = SupportDY
+        else:
+            node.SupportDY = SupportDY
+
+        if SupportDZ != False and SupportDZ != True:
+            node.DZ = SupportDZ
+        else:
+            node.SupportDZ = SupportDZ
+
+        if SupportRX != False and SupportRX != True:
+            node.RX = SupportRX
+        else:
+            node.SupportRX = SupportRX
+
+        if SupportRY != False and SupportRY != True:
+            node.RY = SupportRY
+        else:
+            node.SupportRY = SupportRY
+
+        if SupportRZ != False and SupportRZ != True:
+            node.RZ = SupportRZ
+        else:
+            node.SupportRZ = SupportRZ
+
+#%%            
+    def AddNodalDisplacement (self, Node, Direction, value): 
+        '''
+        Defines a nodal displacements at a free node.
+
+        Node : string
+            The name of the node where the nodal displacement is being applied.
+        Direction : {'DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'}
+            The global direction the nodal displacement is being applied in. Displacements are 'DX', 'DY', and 'DZ'. Rotations are 'RX', 'RY', and 'RZ'.
+            Positive convention is referred to global coordinates system 
+        P : number
+            The numeric value (magnitude) of the displacement.
+
+        '''
+
+        # Get the node
+        node = self.GetNode(Node)
+
+        if Direction == "DX":
+            node.DX = value
+        if Direction == "DY":
+            node.DY = value
+        if Direction == "DZ":
+            node.DZ = value
+        if Direction == "RX":
+            node.RX = value
+        if Direction == "RY":
+            node.RY = value
+        if Direction == "RZ":
+            node.RZ = value
+
 
 #%%
     def DefineReleases(self, Member, Dxi = False, Dyi = False, Dzi = False, Rxi = False, Ryi = False, Rzi = False, Dxj = False, Dyj = False, Dzj = False, Rxj = False, Ryj = False, Rzj = False):
@@ -466,24 +523,84 @@ class FEModel3D():
         for plate in self.Plates:
             plate.ID = i
             i += 1
+
+#%%    
+    def __auxiliarytab(self):
+        '''
+        Builds a table with known nodal displacements and with the positions in global stiffness matrix of known 
+        and unknown nodal displacements
+
+        '''       
+        self.__Renumber()
+
+        posD_known = []     # positions of known nodal displacements
+        posD_unknown = []   # positions of unknown nodal displacements
+        D_known = []        # known nodal displacements (D=0 or D != 0)
+
+        for nodes in self.Nodes:
+            if nodes.DX != 0:
+                posD_known.append((nodes.ID*6)+0)
+                D_known.append(nodes.DX)
+            elif nodes.SupportDX == True:
+                posD_known.append((nodes.ID*6)+0)
+                D_known.append(0)
+            else:
+                posD_unknown.append((nodes.ID*6)+0)
+
+            if nodes.DY != 0:
+                posD_known.append((nodes.ID*6)+1)
+                D_known.append(nodes.DY)
+            elif nodes.SupportDY == True:
+                posD_known.append((nodes.ID*6)+1)
+                D_known.append(0)
+            else:
+                posD_unknown.append((nodes.ID*6)+1)
+
+            if nodes.DZ != 0:
+                posD_known.append((nodes.ID*6)+2)
+                D_known.append(nodes.DZ)
+            elif nodes.SupportDZ == True:
+                posD_known.append((nodes.ID*6)+2)
+                D_known.append(0)
+            else:
+                posD_unknown.append((nodes.ID*6)+2)
+
+            if nodes.RX != 0:
+                posD_known.append((nodes.ID*6)+3)
+                D_known.append(nodes.RX)
+            elif nodes.SupportRX == True:
+                posD_known.append((nodes.ID*6)+3)
+                D_known.append(0)
+            else:
+                posD_unknown.append((nodes.ID*6)+3)
+
+            if nodes.RY != 0:
+                posD_known.append((nodes.ID*6)+4)
+                D_known.append(nodes.RY)
+            elif nodes.SupportRY == True:
+                posD_known.append((nodes.ID*6)+4)
+                D_known.append(0)
+            else:
+                posD_unknown.append((nodes.ID*6)+4)
+
+            if nodes.RZ != 0:
+                posD_known.append((nodes.ID*6)+5)
+                D_known.append(nodes.RZ)
+            elif nodes.SupportRZ == True:
+                posD_known.append((nodes.ID*6)+5)
+                D_known.append(0)
+            else:
+                posD_unknown.append((nodes.ID*6)+5)
+
+        return posD_known, posD_unknown, D_known
             
 #%%    
-    def K(self, Renumber=False):
+    def K(self):
         """
         Assembles and returns the global stiffness matrix.
-        
-        Parameters
-        ----------
-        Renumber : boolean
-            Indicates whether nodes and members should be renumbered prior to
-            calculating the stiffness matrix. This may be necessary if a model
-            is being solved for the first time, or if it has been changed since
-            the last run, potentially creating a gap in the numbering.
         """
         
-        # Renumber the nodes and members in the model if requested
-        if Renumber == True:
-            self.__Renumber()
+        self.__Renumber()
         
         # Initialize a zero matrix to hold all the stiffness terms
         K = zeros((len(self.Nodes) * 6, len(self.Nodes) * 6))
@@ -571,6 +688,85 @@ class FEModel3D():
         # Return the global stiffness matrix
         return K
 
+#%%
+    def __K_partition(self):  
+        """
+        Partitions global stiffness matrix in preparation for static
+        condensation. Used for solvinng the model
+        """
+        
+        posD_known, posD_unknown, D_known= self.__auxiliarytab()
+        K = self.K()
+
+        # Initialize each partitioned matrix
+        K_dim = len(K)       
+        K11 = zeros((K_dim - len(D_known), K_dim - len(D_known) ))
+        K12 = zeros((K_dim - len(D_known), len(D_known)))
+        K21 = zeros((len(D_known), K_dim - len(D_known)))
+        K22 = zeros((len(D_known), len(D_known)))
+
+        # Initialize variables used to track rows and columns as the matrix is partitioned
+        
+        # m = row
+        # n = column
+
+        # 1 = unknown dof
+        # 2 = known dof
+
+        m11 = 0
+        n11 = 0
+        m12 = 0
+        n12 = 0
+        m21 = 0
+        n21 = 0
+        m22 = 0
+        n22 = 0
+
+        for m in range(K_dim):
+            for n in range(K_dim):
+
+                        #K11 ---> dof in row and column are unknown
+
+                            if all(p!=m for p in posD_known) and all(p != n for p in posD_known):
+                                K11.itemset((m11, n11), K [m, n])
+                    
+                                n11 += 1
+                                if n11 == K_dim - len(D_known):
+                                    n11 = 0
+                                    m11 += 1
+
+                        #K12 ---> dof in row are unknown, dof in column are known
+
+                            elif posD_known.count(m)==0 and posD_known.count(n)==1:
+                                K12.itemset((m12, n12), K [m, n])
+
+                                n12 += 1
+                                if n12 == len(D_known):
+                                    n12 = 0
+                                    m12 += 1
+
+                        #K21 ---> dof in row are known, dof in column are unknown
+
+                            elif posD_known.count(m)==1 and posD_known.count(n)==0:
+                                K21.itemset((m21, n21), K[m, n])
+
+                                n21 += 1
+                                if n21 == K_dim - len(D_known):
+                                    n21 = 0
+                                    m21 += 1
+
+                        #K22 --> dof in row and column are known 
+
+                            elif posD_known.count(m)==1 and posD_known.count(n)==1:
+                                K22.itemset((m22, n22), K[m, n])
+
+                                n22 += 1
+                                if n22 == len(D_known):
+                                    n22 = 0
+                                    m22 += 1
+
+        # Return the matrix partitioned into 4 submatrices
+        return K11, K12, K21, K22         
 #%%    
     def Kg(self):
         """
@@ -628,23 +824,13 @@ class FEModel3D():
         return Kg
      
 #%%    
-    def FER(self, Renumber=False):
+    def FER(self):
         """
         Assembles and returns the global fixed end reaction vector.
         
-        Parameters
-        ----------
-        Renumber : boolean
-            Indicates whether nodes and members should be renumbered prior to
-            calculating the fixed end reaction vector. This may be necessary if
-            a model is being solved for the first time, or if it has been
-            changed since the last run, potentially creating a gap in the
-            numbering.
-        """
+     """
         
-        # Renumber the nodes and members in the model if requested
-        if Renumber == True:
-            self.__Renumber()
+        self.__Renumber()
         
         # Initialize a zero vector to hold all the terms
         FER = zeros((len(self.Nodes) * 6, 1))
@@ -675,24 +861,57 @@ class FEModel3D():
         # Return the global fixed end reaction vector
         return FER
 
+#%%    
+    def __FER_partition(self):
+        """
+        Partitions global fixed end reaction vector in preparation for static
+        condensation. Used for solving the model
+        """
+    
+        posD_known, posD_unknown, D_known= self.__auxiliarytab()        
+        FER = self.FER()
+
+        # Initialize each partitioned matrix
+        FER_dim = len(FER)             
+        FER1 = zeros((FER_dim - len(D_known), 1))
+        FER2 = zeros((len(D_known), 1))
+
+        # Variables used to track indexing during partitioning
+
+        # m = row
+        # n = column
+
+        # 1 = unknown dof
+        # 2 = known dof
+
+        m1 = 0
+        m2 = 0
+
+        for m in range(FER_dim):
+
+                #FER1 --> unknown dof
+                if posD_known.count(m) == 0:
+
+                    FER1.itemset((m1, 0), FER.item(m, 0))
+                    m1 += 1
+
+                #FER2 --> known dof 
+                else:
+
+                    FER2.itemset((m2, 0), FER.item(m, 0))
+                    m2 += 1
+
+        # Return the vector partitioned as 2 subvectors
+        return FER1, FER2
+    
 #%%
-    def P(self, Renumber=False):
+    def P(self):
         """
         Assembles and returns the global nodal force vector.
         
-        Parameters
-        ----------
-        Renumber : boolean
-            Indicates whether nodes and members should be renumbered prior to
-            calculating the fixed end reaction vector. This may be necessary if
-            a model is being solved for the first time, or if it has been
-            changed since the last run, potentially creating a gap in the
-            numbering.
-        """
+       """
         
-        # Renumber the nodes and members in the model if requested
-        if Renumber == True:
-            self.__Renumber()
+        self.__Renumber()
             
         # Initialize a zero vector to hold all the terms
         Pvector = zeros((len(self.Nodes)*6, 1))
@@ -723,6 +942,50 @@ class FEModel3D():
         return Pvector
     
 #%%
+    def __P_partition(self):
+        """
+        Partitions the global nodal force vector in preparation for static
+        condensation. Used for solvinng the model
+               
+        """
+        
+        posD_known, posD_unknown, D_known= self.__auxiliarytab()             
+        Pvector = self.P()
+
+        # Initialize each partitioned matrix
+        P_dim = len(Pvector)             
+        P1 = zeros((P_dim - len(D_known), 1))
+        P2 = zeros((len(D_known), 1))
+
+        # Variables used to track indexing during partitioning
+
+        # m = row
+        # n = column
+        
+        # 1 = unknown dof
+        # 2 = known dof
+
+        m1 = 0
+        m2 = 0
+
+        for m in range(P_dim):
+
+                #P1 --> unknown dof 
+                if posD_known.count(m) == 0:
+
+                    P1.itemset((m1, 0), Pvector.item(m, 0))
+                    m1 += 1
+
+                #P2 --> known dof 
+                else:
+
+                    P2.itemset((m2, 0), Pvector.item(m, 0))
+                    m2 += 1
+
+        # Return the vector partitioned as 2 subvectors
+        return P1, P2
+    
+#%%
     def D(self):
         """
         Returns the global displacement vector for the model.
@@ -739,87 +1002,82 @@ class FEModel3D():
         
         print("**Analyzing**")
 
-        # Get the global stiffness matrix and renumber the nodes & members
-        # in the process of creating it
-        K = self.K(True)
+
+        # Get the partitioned matrix K11, K12, K21, K22
+        K11, K12, K21, K22 = self.__K_partition()
         
         # Get the global fixed end reaction vector
-        FER = self.FER(False)
+        FER1, FER2 = self.__FER_partition()
         
         # Get the global nodal force vector
-        P = self.P(False)
+        P1, P2 = self.__P_partition()
+
         
-        # Eliminate supported degrees of freedom from each of the matrices/vectors
-        # Work backwards through the node list so that the relationship between
-        # the DOF's and node ID's is unnafected by the matrices/vectors
-        # shrinking
-        for node in reversed(self.Nodes):
-            
-            if node.SupportRZ == True:
-                K = delete(K, node.ID * 6 + 5, axis = 0)
-                K = delete(K, node.ID * 6 + 5, axis = 1)
-                FER = delete(FER, node.ID * 6 + 5, axis = 0)
-                P = delete(P, node.ID * 6 + 5, axis = 0)
-                
-            if node.SupportRY == True:
-                K = delete(K, node.ID * 6 + 4, axis = 0)
-                K = delete(K, node.ID * 6 + 4, axis = 1)
-                FER = delete(FER, node.ID * 6 + 4, axis = 0)
-                P = delete(P, node.ID * 6 + 4, axis = 0)
-                
-            if node.SupportRX == True:
-                K = delete(K, node.ID * 6 + 3, axis = 0)
-                K = delete(K, node.ID * 6 + 3, axis = 1)
-                FER = delete(FER, node.ID * 6 + 3, axis = 0)
-                P = delete(P, node.ID * 6 + 3, axis = 0)
-                
-            if node.SupportDZ == True:
-                K = delete(K, node.ID * 6 + 2, axis = 0)
-                K = delete(K, node.ID * 6 + 2, axis = 1)
-                FER = delete(FER, node.ID * 6 + 2, axis = 0)
-                P = delete(P, node.ID * 6 + 2, axis = 0)
-                
-            if node.SupportDY == True:
-                K = delete(K, node.ID * 6 + 1, axis = 0)
-                K = delete(K, node.ID * 6 + 1, axis = 1)
-                FER = delete(FER, node.ID * 6 + 1, axis = 0)
-                P = delete(P, node.ID * 6 + 1, axis = 0)
-                
-            if node.SupportDX == True:
-                K = delete(K, node.ID * 6 + 0, axis = 0)
-                K = delete(K, node.ID * 6 + 0, axis = 1)
-                FER = delete(FER, node.ID * 6 + 0, axis = 0)
-                P = delete(P, node.ID * 6 + 0, axis = 0)
+        # Global displacement vector is composed by two vectors, D1 and D2:
+
+        # - D1: unknown displacements
+        # - D2: known displacements
         
-        # Determine if 'K' is singular
+        # Get vector D2 wich contains known nodal displacements (D=0 and D!=0)
+        posD_known, posD_unknown, D_known= self.__auxiliarytab()             
+
+        #Trasforming D_known from a list to an array
+        D2 = zeros((len(D_known),1))
+
+        i=0
+        for i in range(len(D_known)):
+            D2.itemset((i,0),D_known[i])
+            i+=1
+
+        #Determine if 'K11' is singular
         print('...Checking global stability')
-        if matrix_rank(K) < min(K.shape):
+        if matrix_rank(K11) < min(K11.shape):
             # Return out of the method if 'K' is singular and provide an error message
             print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
             return
         else:
-            # Calculate the global displacement vector
+            #Calculate the unknown displacements D1
             print('...Calculating global displacement vector')
-            D = matmul(inv(K), subtract(P, FER))
-        
-        # Expand the global displacement vector to include supported degrees of freedom
+            D1 = matmul(inv(K11),subtract(subtract(P1,FER1),matmul(K12,D2)))
+
+        # Expand the global displacement vector to include supported degrees of freedom and nodal displacements applied by myself.
         # Work forwards through the node list so that the relationship between
         # the DOF's and node ID's is unnafected by the vector expanding
-        for node in self.Nodes:
-            if node.SupportDX == True:
-                D = insert(D, node.ID * 6 + 0, 0, axis = 0)
-            if node.SupportDY == True:
-                D = insert(D, node.ID * 6 + 1, 0, axis = 0)
-            if node.SupportDZ == True:
-                D = insert(D, node.ID * 6 + 2, 0, axis = 0)
-            if node.SupportRX == True:
-                D = insert(D, node.ID * 6 + 3, 0, axis = 0)
-            if node.SupportRY == True:
-                D = insert(D, node.ID * 6 + 4, 0, axis = 0)
-            if node.SupportRZ == True:
-                D = insert(D, node.ID * 6 + 5, 0, axis = 0)
 
-        # Save the expanded global displacement vector
+        D = zeros((len(self.Nodes)*6,1))
+
+        for node in self.Nodes:
+            if posD_known.count((node.ID*6)+0) == 1:
+                D.itemset(((node.ID*6)+0), D_known[posD_known.index((node.ID*6)+0)])
+            else:
+                D.itemset(((node.ID*6)+0), D1[posD_unknown.index((node.ID*6)+0),0]) 
+
+            if posD_known.count((node.ID*6)+1) == 1:
+                D.itemset(((node.ID*6)+1), D_known[posD_known.index((node.ID*6)+1)])
+            else:
+                D.itemset(((node.ID*6)+1), D1[posD_unknown.index((node.ID*6)+1),0]) 
+
+            if posD_known.count((node.ID*6)+2) == 1:
+                D.itemset(((node.ID*6)+2), D_known[posD_known.index((node.ID*6)+2)])
+            else:
+                D.itemset(((node.ID*6)+2), D1[posD_unknown.index((node.ID*6)+2),0]) 
+
+            if posD_known.count((node.ID*6)+3) == 1:
+                D.itemset(((node.ID*6)+3), D_known[posD_known.index((node.ID*6)+3)])
+            else:
+                D.itemset(((node.ID*6)+3), D1[posD_unknown.index((node.ID*6)+3),0]) 
+
+            if posD_known.count((node.ID*6)+4) == 1:
+                D.itemset(((node.ID*6)+4), D_known[posD_known.index((node.ID*6)+4)])
+            else:
+                D.itemset(((node.ID*6)+4), D1[posD_unknown.index((node.ID*6)+4),0]) 
+
+            if posD_known.count((node.ID*6)+5) == 1:
+                D.itemset(((node.ID*6)+5), D_known[posD_known.index((node.ID*6)+5)])
+            else:
+                D.itemset(((node.ID*6)+5), D1[posD_unknown.index((node.ID*6)+5),0]) 
+
+        # Save the displacements as a local variable for easier reference below
         self.__D = D
 
         # Store the calculated global nodal displacements into each node
@@ -831,14 +1089,15 @@ class FEModel3D():
             node.RY = D.item((node.ID * 6 + 4, 0))
             node.RZ = D.item((node.ID * 6 + 5, 0))
         
-        # Calculate reactions
-        self.__CalcReactions()
                 
         # Segment all members in the model to make member results available
         print('...Calculating member internal forces')
         for member in self.Members:
             member.SegmentMember()
         
+        # Calculate reactions
+        self.__CalcReactions()
+    
         # Check statics if requested
         if check_statics == True:
             self.__CheckStatics()
@@ -1133,7 +1392,7 @@ class FEModel3D():
         SumRMZ = 0
 
         # Get the global force vector and the global fixed end reaction vector
-        P = self.P(False)
+        P = self.P()
         FER = self.FER()
 
         # Step through each node and sum its forces
