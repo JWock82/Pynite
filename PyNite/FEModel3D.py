@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Thu Nov  9 21:11:20 2017
 
 @author: D. Craig Brinck, SE
-"""
+'''
 # %%
 from numpy import matrix, zeros, delete, insert, matmul, divide, add, subtract, nanmax, seterr, shape
 from numpy.linalg import inv, matrix_rank
@@ -14,15 +14,15 @@ from PyNite.Plate3D import Plate3D
 
 # %%
 class FEModel3D():
-    """
+    '''
     A class representing a 3D finite element model.
-    """
+    '''
 
 #%% 
     def __init__(self):
-        """
+        '''
         Initializes a new 3D finite element model.
-        """
+        '''
         
         self.Nodes = []    # A list of the structure's nodes
         self.auxNodes = [] # A list of the structure's auxiliary nodes
@@ -32,7 +32,7 @@ class FEModel3D():
 
 #%%
     def AddNode(self, Name, X, Y, Z):
-        """
+        '''
         Adds a new node to the model.
         
         Parameters
@@ -45,17 +45,17 @@ class FEModel3D():
             The global Y-coordinate of the node.
         Z : number
             The global Z-coordinate of the node.
-        """
+        '''
         
         # Create a new node
         newNode = Node3D(Name, X, Y, Z)
         
         # Add the new node to the list
         self.Nodes.append(newNode)
-        
 
+#%%
     def AddAuxNode(self, Name, X, Y, Z):
-        """
+        '''
         Adds a new auxiliary node to the model.
         
         Parameters
@@ -68,18 +68,17 @@ class FEModel3D():
             The global Y-coordinate of the node.
         Z : number
             The global Z-coordinate of the node.
-        """
+        '''
         
         # Create a new node
         newNode = Node3D(Name, X, Y, Z)
         
         # Add the new node to the list
         self.auxNodes.append(newNode)
-        
-        
+  
 #%%
     def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None):
-        """
+        '''
         Adds a new member to the model.
         
         Parameters
@@ -102,7 +101,7 @@ class FEModel3D():
             The polar moment of inertia of the member.
         A : number
             The cross-sectional area of the member.
-        """
+        '''
         
         # Create a new member
         if auxNode == None:
@@ -115,7 +114,7 @@ class FEModel3D():
 
 #%%
     def AddPlate(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
-        """
+        '''
         Adds a new plate to the model.
         
         Parameters
@@ -136,7 +135,7 @@ class FEModel3D():
             The modulus of elasticity of the plate.
         mew : number
             Posson's ratio for the plate.
-        """
+        '''
         
         # Create a new member
         newPlate = Plate3D(Name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
@@ -146,7 +145,7 @@ class FEModel3D():
 
 #%%
     def RemoveNode(self, Node):
-        """
+        '''
         Removes a node from the model. All nodal loads associated with the
         node and members attached to the node will also be removed.
         
@@ -154,7 +153,7 @@ class FEModel3D():
         ----------
         Node : string
             The name of the node to be removed.
-        """
+        '''
         
         # Remove the node. Nodal loads are stored within the node, so they
         # will be deleted automatically when the node is deleted.
@@ -165,7 +164,7 @@ class FEModel3D():
         
 #%%
     def RemoveMember(self, Member):
-        """
+        '''
         Removes a member from the model. All member loads associated with the
         member will also be removed.
         
@@ -173,7 +172,7 @@ class FEModel3D():
         ----------
         Member : string
             The name of the member to be removed.
-        """
+        '''
         
         # Remove the member. Member loads are stored within the member, so they
         # will be deleted automatically when the member is deleted.
@@ -181,7 +180,7 @@ class FEModel3D():
         
 #%%
     def DefineSupport(self, Node, SupportDX=False, SupportDY=False, SupportDZ=False, SupportRX=False, SupportRY=False, SupportRZ=False):
-        """
+        '''
         Defines the support conditions at a node.
         
         Nodes will default to fully unsupported unless specified otherwise.
@@ -202,7 +201,7 @@ class FEModel3D():
             Indicates whether the node is supported against rotation about the global Y-axis or if there is a support's settlement.
         SupportRZ : number
             Indicates whether the node is supported against rotation about the global Z-axis or if there is a support's settlement.
-        """
+        '''
         
         # Get the node to be supported
         node = self.GetNode(Node)
@@ -270,7 +269,7 @@ class FEModel3D():
 
 #%%
     def DefineReleases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
-        """
+        '''
         Defines member end releases.
         
         All member end releases will default to unreleased unless specified otherwise.
@@ -303,14 +302,14 @@ class FEModel3D():
             Indicates whether the member is released for moment about the local y-axis at its end.
         Rzj : boolean
             Indicates whether the member is released for moment about the local z-axis at its end.
-        """
+        '''
         
         # Apply the end releases to the member
         self.GetMember(Member).Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
             
 #%%
     def AddNodeLoad(self, Node, Direction, P):
-        """
+        '''
         Adds a nodal load to the model.
         
         Parameters
@@ -321,14 +320,14 @@ class FEModel3D():
             The global direction the load is being applied in. Forces are 'FX', 'FY', and 'FZ'. Moments are 'MX', 'MY', and 'MZ'.
         P : number
             The numeric value (magnitude) of the load.
-        """
+        '''
         
         # Add the node load to the model
         self.GetNode(Node).NodeLoads.append((Direction, P))
 
 #%%      
     def AddMemberPtLoad(self, Member, Direction, P, x):
-        """
+        '''
         Adds a member point load to the model.
         
         Parameters
@@ -345,14 +344,14 @@ class FEModel3D():
             The numeric value (magnitude) of the load.
         x : number
             The load's location along the member's local x-axis.
-        """
+        '''
         
         # Add the point load to the member
         self.GetMember(Member).PtLoads.append((Direction, P, x))
 
 #%%
     def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None):
-        """
+        '''
         Adds a member distributed load to the model.
         
         Parameters
@@ -373,7 +372,7 @@ class FEModel3D():
         x2 : number
             The load's end location along the member's local x-axis. If this argument
             is not specified, the end of the member will be used.
-        """
+        '''
         
         # Determine if a starting and ending points for the load have been specified.
         # If not, use the member start and end as defaults
@@ -392,9 +391,9 @@ class FEModel3D():
 
 #%%
     def ClearLoads(self):
-        """
+        '''
         Clears all loads from the model along with any results based on the loads.
-        """
+        '''
 
         # Clear out the member loads and the calculated internal forces
         for member in self.Members:
@@ -407,23 +406,29 @@ class FEModel3D():
         # Clear out the nodal loads and the nodal displacements
         for node in self.Nodes:
             node.NodeLoads = []
-            node.SupportDX = None
-            node.SupportDY = None
-            node.SupportDZ = None
-            node.SupportRX = None
-            node.SupportRY = None
-            node.SupportRZ = None       
+            if not isclose(node.DX, 0.0):
+                node.DX = None
+            if not isclose(node.DY, 0.0):
+                node.DY = None
+            if not isclose(node.DZ, 0.0):
+                node.DZ = None
+            if not isclose(node.RX, 0.0):
+                node.RX = None
+            if not isclose(node.RY, 0.0):
+                node.RY = None
+            if not isclose(node.RZ, 0.0):
+                node.RZ = None       
 
 #%%
     def GetNode(self, Name):
-        """
+        '''
         Returns the node with the given name.
         
         Parameters
         ----------
         Name : string
             The name of the node to be returned.
-        """
+        '''
         
         # Step through each node in the 'Nodes' list
         for node in self.Nodes:
@@ -436,14 +441,14 @@ class FEModel3D():
 
             
     def GetAuxNode(self, Name):
-        """
+        '''
         Returns the auxiliary node with the given name.
         
         Parameters
         ----------
         Name : string
             The name of the auxiliary node to be returned.
-        """
+        '''
         
         # Step through each node in the 'Nodes' list
         for node in self.auxNodes:
@@ -456,14 +461,14 @@ class FEModel3D():
             
 #%%
     def GetMember(self, Name):
-        """
+        '''
         Returns the member with the given name.
         
         Parameters
         ----------
         Name : string
             The name of the member to be returned.
-        """
+        '''
         
         # Step through each member in the 'Members' list
         for member in self.Members:
@@ -476,14 +481,14 @@ class FEModel3D():
 
 #%%
     def GetPlate(self, Name):
-        """
+        '''
         Returns the plate with the given name.
         
         Parameters
         ----------
         Name : string
             The name of the plate to be returned.
-        """
+        '''
         
         # Step through each plate in the 'Plates' list
         for plate in self.Plates:
@@ -496,12 +501,12 @@ class FEModel3D():
 
 #%%
     def __Renumber(self):
-        """
+        '''
         Assigns node, plate, and member ID numbers to be used internally by the
         program. Numbers are assigned according to the order nodes, members, and plates
         were added to the model.
         
-        """
+        '''
         
         # Number each node in the model
         i = 0
@@ -962,9 +967,9 @@ class FEModel3D():
     
 #%%
     def D(self):
-        """
+        '''
         Returns the global displacement vector for the model.
-        """
+        '''
         
         # Return the global displacement vector
         return self.__D
@@ -1072,10 +1077,10 @@ class FEModel3D():
 
 #%%
     def Analyze_PDelta(self, max_iter=30, tol=0.01):
-        """
+        '''
         Runs a second order (P-Delta) analysis on the structure.
-        """
-        print("**Running P-Delta analysis**")
+        '''
+        print('**Running P-Delta analysis**')
 
         # Keep track of the number of iterations
         iter_count = 1
@@ -1189,7 +1194,7 @@ class FEModel3D():
             if iter_count != 1:
                 
                 # Print a status update for the user
-                print("...Checking for convergence.")
+                print('...Checking for convergence.')
 
                 # Temporarily disable error messages for invalid values.
                 # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
@@ -1198,11 +1203,11 @@ class FEModel3D():
                 # Check for convergence
                 if abs(1 - nanmax(divide(prev_results, D))) <= tol:
                     convergence = True
-                    print("...P-Delta analysis converged after "+str(iter_count)+" iterations.")
+                    print('...P-Delta analysis converged after '+str(iter_count)+' iterations.')
                 # Check for divergence
                 elif iter_count > max_iter:
                     divergence = True
-                    print("...P-Delta analysis failed to converge after 30 iterations.")
+                    print('...P-Delta analysis failed to converge after 30 iterations.')
 
                 # Turn invalid value warnings back on
                 seterr(invalid='warn') 
@@ -1223,9 +1228,9 @@ class FEModel3D():
 
 #%%
     def __CalcReactions(self):
-        """
+        '''
         Calculates reactions once the model is solved.
-        """
+        '''
 
         # Print a status update to the console
         print('...Calculating reactions')
@@ -1323,24 +1328,24 @@ class FEModel3D():
                 # Sum the joint forces at the node
                 for load in node.NodeLoads:
                     
-                    if load[0] == "FX":
+                    if load[0] == 'FX':
                         node.RxnFX -= load[1]
-                    elif load[0] == "FY":
+                    elif load[0] == 'FY':
                         node.RxnFY -= load[1]
-                    elif load[0] == "FZ":
+                    elif load[0] == 'FZ':
                         node.RxnFZ -= load[1]
-                    elif load[0] == "MX":
+                    elif load[0] == 'MX':
                         node.RxnMX -= load[1]
-                    elif load[0] == "MY":
+                    elif load[0] == 'MY':
                         node.RxnMY -= load[1]
-                    elif load[0] == "MZ":
+                    elif load[0] == 'MZ':
                         node.RxnMZ -= load[1]
 
 #%%
     def __CheckStatics(self):
-        """
+        '''
         Sums global forces and reactions and prints them to the console.
-        """
+        '''
         
         # Print a status update to the console
         print('...Checking statics')
