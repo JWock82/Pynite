@@ -22,22 +22,15 @@ class Node3D():
         self.Y = Y          # Global Y coordinate
         self.Z = Z          # Global Z coordinate
         
-        self.SupportDX = False  # Flag indicating support in the X direction
-        self.SupportDY = False  # Flag indicating support in the Y direction
-        self.SupportDZ = False  # Flag indicating support in the Z direction
-        self.SupportRX = False  # Flag indicating rotational support about the X axis
-        self.SupportRY = False  # Flag indicating rotational support about the Y axis
-        self.SupportRZ = False  # Flag indicating rotational support about the Z axis
-        
         self.NodeLoads = []     # A list of loads applied to the node (Direction, P) or (Direction, M)
         
-        # Initialize nodal displacements to zero
-        self.DX = 0
-        self.DY = 0
-        self.DZ = 0
-        self.RX = 0
-        self.RY = 0
-        self.RZ = 0
+        # Initialize nodal displacements to 'None'
+        self.DX = None
+        self.DY = None
+        self.DZ = None
+        self.RX = None
+        self.RY = None
+        self.RZ = None
         
         # Initialize Reactions to zero
         self.RxnFX = 0
