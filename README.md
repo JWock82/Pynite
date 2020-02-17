@@ -26,7 +26,7 @@ After 12 years as a structural engineer, I've found there's a need for an easy t
 PyNite depends on the following packages:
 * numpy: used for matrix algebra
 * matplotlib: used for plotting member diagrams
-* vtk: used for visualization - note that vtk requires a 64 bit installation of python. vtk does not need to be installed if you don't plan to used the visualization tools in PyNite.
+* vtk: used for visualization - note that vtk requires a 64 bit installation of python. vtk does not need to be installed if you don't plan to use the visualization tools in PyNite.
 
 # Contributions Welcome
 If you would like to contribute to this project to expand, debug or improve it, I welcome your contributions. I'd like to get the library doing a lot more. Don't be offended if I'm a little slow to accept your contributions. FEA is a very technical subject and accuracy is extremely important to me. Sometimes I'm a little slow understanding both FEA and Python and it takes some time for me to comprehend what's being proposed. Also I have 4 little kids to take care of that diverts a lot of my attention :)
