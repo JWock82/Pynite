@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-'''
-Created on Thu Nov  9 21:11:20 2017
-
-@author: D. Craig Brinck, SE
-'''
 # %%
 from numpy import matrix, zeros, delete, insert, matmul, divide, add, subtract, nanmax, seterr, shape
 from numpy.linalg import inv, matrix_rank
@@ -255,17 +249,17 @@ class FEModel3D():
         node = self.GetNode(Node)
 
         if Direction == 'DX':
-            node.DX = value
+            node.DX = Magnitude
         if Direction == 'DY':
-            node.DY = value
+            node.DY = Magnitude
         if Direction == 'DZ':
-            node.DZ = value
+            node.DZ = Magnitude
         if Direction == 'RX':
-            node.RX = value
+            node.RX = Magnitude
         if Direction == 'RY':
-            node.RY = value
+            node.RY = Magnitude
         if Direction == 'RZ':
-            node.RZ = value
+            node.RZ = Magnitude
 
 #%%
     def DefineReleases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
