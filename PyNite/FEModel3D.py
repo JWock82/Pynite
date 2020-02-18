@@ -521,7 +521,7 @@ class FEModel3D():
             i += 1
 
 #%%
-    def __AuxTable(self):
+    def __AuxList(self):
         '''
         Builds a table with known nodal displacements and with the positions in global stiffness matrix of known 
         and unknown nodal displacements
@@ -692,14 +692,16 @@ class FEModel3D():
         Partitions global stiffness matrix in preparation for analysis
         '''
         
-        # Get the auxiliary table to help with partitioning the matrix by known & unknown DOFs
-        D1_indices, D2_indices, D2 = self.__AuxTable()
+        print('...Partitioning global stiffness matrix')
 
-        # Initialize each partitioned matrix     
-        K11 = zeros((K.shape[0] - len(D2), K.shape[0] - len(D2)))
-        K12 = zeros((K.shape[0] - len(D2), len(D2)))
-        K21 = zeros((len(D2), K.shape[0] - len(D2)))
-        K22 = zeros((len(D2), len(D2)))
+        # Get the auxiliary table to help with partitioning the matrix by known & unknown DOFs
+        D1_indices, D2_indices, D2 = self.__AuxList()
+
+        # Initialize each partitioned matrix  
+        # K11 = zeros((K.shape[0] - len(D2), K.shape[0] - len(D2)))
+        # K12 = zeros((K.shape[0] - len(D2), len(D2)))
+        # K21 = zeros((len(D2), K.shape[0] - len(D2)))
+        # K22 = zeros((len(D2), len(D2)))
 
         # Initialize variables used to track rows and columns as the matrix is partitioned
 
@@ -708,50 +710,56 @@ class FEModel3D():
         # 1 = Unknown DOF
         # 2 = Known DOF
 
-        m11, n11 = 0, 0
-        m12, n12 = 0, 0
-        m21, n21 = 0, 0
-        m22, n22 = 0, 0
+        # m11, n11 = 0, 0
+        # m12, n12 = 0, 0
+        # m21, n21 = 0, 0
+        # m22, n22 = 0, 0
 
-        for m in range(K.shape[0]):
+        # Use slicers to partition the matrix
+        K11 = K[D1_indices, :][:, D1_indices]
+        K12 = K[D1_indices, :][:, D2_indices]
+        K21 = K[D2_indices, :][:, D1_indices]
+        K22 = K[D2_indices, :][:, D2_indices]
+        
+        # for m in range(K.shape[0]):
 
-            for n in range(K.shape[0]):
+        #     for n in range(K.shape[1]):
 
-                # K11 ---> DOF in row and column are both unknown
-                if D2_indices.count(m) == 0 and D2_indices.count(n) == 0:
+        #         # K11 ---> DOF in row and column are both unknown
+        #         if D2_indices.count(m) == 0 and D2_indices.count(n) == 0:
                     
-                    K11.itemset((m11, n11), K[m, n])
-                    n11 += 1
-                    if n11 == K.shape[0] - len(D2):
-                        n11 = 0
-                        m11 += 1
+        #             K11.itemset((m11, n11), K[m, n])
+        #             n11 += 1
+        #             if n11 == K.shape[0] - len(D2):
+        #                 n11 = 0
+        #                 m11 += 1
 
-                # K12 ---> DOF in row is unknown, DOF in column is known
-                elif D2_indices.count(m) == 0 and D2_indices.count(n) == 1:
+        #         # K12 ---> DOF in row is unknown, DOF in column is known
+        #         elif D2_indices.count(m) == 0 and D2_indices.count(n) == 1:
                     
-                    K12.itemset((m12, n12), K[m, n])
-                    n12 += 1
-                    if n12 == len(D2):
-                        n12 = 0
-                        m12 += 1
+        #             K12.itemset((m12, n12), K[m, n])
+        #             n12 += 1
+        #             if n12 == len(D2):
+        #                 n12 = 0
+        #                 m12 += 1
 
-                # K21 ---> DOF in row is known, DOF in column is unknown
-                elif D2_indices.count(m) == 1 and D2_indices.count(n) == 0:
+        #         # K21 ---> DOF in row is known, DOF in column is unknown
+        #         elif D2_indices.count(m) == 1 and D2_indices.count(n) == 0:
                     
-                    K21.itemset((m21, n21), K[m, n])
-                    n21 += 1
-                    if n21 == K.shape[0] - len(D2):
-                        n21 = 0
-                        m21 += 1
+        #             K21.itemset((m21, n21), K[m, n])
+        #             n21 += 1
+        #             if n21 == K.shape[0] - len(D2):
+        #                 n21 = 0
+        #                 m21 += 1
 
-                # K22 --> DOF in row and column are both known 
-                elif D2_indices.count(m) == 1 and D2_indices.count(n) == 1:
+        #         # K22 --> DOF in row and column are both known 
+        #         elif D2_indices.count(m) == 1 and D2_indices.count(n) == 1:
                     
-                    K22.itemset((m22, n22), K[m, n])
-                    n22 += 1
-                    if n22 == len(D2):
-                        n22 = 0
-                        m22 += 1
+        #             K22.itemset((m22, n22), K[m, n])
+        #             n22 += 1
+        #             if n22 == len(D2):
+        #                 n22 = 0
+        #                 m22 += 1
 
         # Return the matrix partitioned into 4 submatrices
         return K11, K12, K21, K22       
@@ -853,7 +861,7 @@ class FEModel3D():
         Partitions global fixed end reaction vector prior to analysis
         '''
     
-        D1_indices, D2_indices, D2 = self.__AuxTable()        
+        D1_indices, D2_indices, D2 = self.__AuxList()        
         FER = self.FER()
 
         # Initialize each partitioned matrix          
@@ -924,7 +932,7 @@ class FEModel3D():
         Partitions the global nodal force vector prior to analysis 
         '''
         
-        D1_indices, D2_indices, D2= self.__AuxTable()             
+        D1_indices, D2_indices, D2= self.__AuxList()             
         P = self.P()
 
         # Initialize each partitioned matrix         
@@ -994,7 +1002,7 @@ class FEModel3D():
         # D2: Known displacements
         
         # Get vector D2 wich contains known nodal displacements (D != None)
-        D1_indices, D2_indices, D2 = self.__AuxTable()             
+        D1_indices, D2_indices, D2 = self.__AuxList()             
 
         # Convert D2 from a list to a matrix
         D2 = matrix(D2).T
