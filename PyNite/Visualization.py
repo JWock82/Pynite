@@ -166,7 +166,7 @@ class VisNode():
     
     # Check for a pinned support
     elif isclose(node.DX, 0.0) and isclose(node.DY, 0.0) and isclose(node.DZ, 0.0) \
-      and not isclose(node.RX, 0.0) and not isclose(node.RY, 0.0) and not isclose(node.RZ, 0.0):
+      and (not isclose(node.RX, 0.0)) and (not isclose(node.RY, 0.0)) and (not isclose(node.RZ, 0.0)):
       
       # Create the pinned support
       support = vtk.vtkConeSource()
