@@ -151,8 +151,8 @@ class VisNode():
     self.supportActors = []
 
     # Check for a fixed suppport
-    if isclose(node.DX, 0.0) and isclose(node.DY, 0.0) and isclose(node.DZ, 0.0) \
-      and isclose(node.RX, 0.0) and isclose(node.RY, 0.0) and isclose(node.RZ, 0.0):
+    if node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
+      and node.SupportRX == True and node.SupportRY == True and node.SupportRZ == True:
 
       # Create the fixed support
       support = vtk.vtkCubeSource()
@@ -165,8 +165,8 @@ class VisNode():
       mapper.SetInputConnection(support.GetOutputPort())
     
     # Check for a pinned support
-    elif isclose(node.DX, 0.0) and isclose(node.DY, 0.0) and isclose(node.DZ, 0.0) \
-      and (not isclose(node.RX, 0.0)) and (not isclose(node.RY, 0.0)) and (not isclose(node.RZ, 0.0)):
+    elif node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
+      and node.SupportRX == False and node.SupportRY == False and node.SupportRZ == False:
       
       # Create the pinned support
       support = vtk.vtkConeSource()
@@ -182,7 +182,7 @@ class VisNode():
     else:
 
       # Restrained against X translation
-      if isclose(node.DX, 0.0):
+      if node.SupportDX == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -224,7 +224,7 @@ class VisNode():
         self.supportActors.append(supportActor3)
       
       # Restrained against Y translation
-      if isclose(node.DY, 0.0):
+      if node.SupportDY == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -266,7 +266,7 @@ class VisNode():
         self.supportActors.append(supportActor3)
       
       # Restrained against Z translation
-      if isclose(node.DZ, 0.0):
+      if node.SupportDZ == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -308,7 +308,7 @@ class VisNode():
         self.supportActors.append(supportActor3)
 
       # Restrained against rotation about the X-axis
-      if isclose(node.RX, 0.0):
+      if node.SupportRX == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -350,7 +350,7 @@ class VisNode():
         self.supportActors.append(supportActor3)
       
       # Restrained against rotation about the Y-axis
-      if isclose(node.RY, 0.0):
+      if node.SupportRY == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -392,7 +392,7 @@ class VisNode():
         self.supportActors.append(supportActor3)
       
       # Restrained against rotation about the Z-axis
-      if isclose(node.RZ, 0.0):
+      if node.SupportRZ == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction

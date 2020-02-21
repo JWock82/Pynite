@@ -203,31 +203,37 @@ class FEModel3D():
         # Set the node's support conditions
         if SupportDX == True:
             node.DX = 0.0
+            node.SupportDX = True
         elif SupportDX != False:
             node.DX = SupportDX
         
         if SupportDY == True:
             node.DY = 0.0
+            node.SupportDY = True
         elif SupportDY != False:
             node.DY = SupportDY
 
         if SupportDZ == True:
             node.DZ = 0.0
+            node.SupportDZ = True
         elif SupportDZ != False:
             node.DZ = SupportDZ
 
         if SupportRX == True:
             node.RX = 0.0
+            node.SupportRX = True
         elif SupportRX != False:
             node.RX = SupportRX
 
         if SupportRY == True:
             node.RY = 0.0
+            node.SupportRY = True
         elif SupportRY != False:
             node.RY = SupportRY
 
         if SupportRZ == True:
             node.RZ = 0.0
+            node.SupportRZ = True
         elif SupportRZ != False:
             node.RZ = SupportRZ
 
@@ -1099,7 +1105,7 @@ class FEModel3D():
 
             # Get the partitioned global matrices
             if iter_count == 1:
-
+                
                 K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices) # Initial stiffness matrix
                 FER1, FER2 = self.__FER_Partition()                                       # Fixed end reactions
                 P1, P2 = self.__P_Partition()                                             # Nodal forces

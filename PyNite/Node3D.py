@@ -39,3 +39,12 @@ class Node3D():
         self.RxnMX = 0
         self.RxnMY = 0
         self.RxnMZ = 0
+
+        # Initialize support conditions to 'False'
+        # The values below are only used for visualization purposes
+        self.SupportDX = False
+        self.SupportDY = False
+        self.SupportDZ = False
+        self.SupportRX = False
+        self.SupportRY = False
+        self.SupportRZ = False

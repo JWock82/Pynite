@@ -37,12 +37,11 @@ cantilever.AddNodeLoad(str(num_nodes), 'FY', -P)
 # Add a 5 kip lateral load to the top of the column
 cantilever.AddNodeLoad(str(num_nodes), 'FX', H)
 
-# Render the model for visualization
-Visualization.RenderModel(cantilever, 0.3)
-
 # Perform 2nd order analysis
 cantilever.Analyze_PDelta() 
-# cantilever.Analyze()
+
+# Render the deformed shape
+Visualization.DeformedShape(cantilever, 1, 0.3)
 
 # Print the moment at the base of the column
 print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001))
