@@ -687,15 +687,12 @@ class FEModel3D():
         return K
 
 #%%
-    def __K_Partition(self, K):  
+    def __K_Partition(self, K, D1_indices, D2_indices):  
         '''
         Partitions global stiffness matrix in preparation for analysis
         '''
         
         print('...Partitioning global stiffness matrix')
-
-        # Get the auxiliary table to help with partitioning the matrix by known & unknown DOFs
-        D1_indices, D2_indices, D2 = self.__AuxList()
 
         # Initialize each partitioned matrix  
         # K11 = zeros((K.shape[0] - len(D2), K.shape[0] - len(D2)))
@@ -987,25 +984,20 @@ class FEModel3D():
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
 
+        # Get the auxiliary list used to determine how the matrices will be partitioned
+        D1_indices, D2_indices, D2= self.__AuxList()
+
+        # Convert D2 from a list to a matrix
+        D2 = matrix(D2).T
+
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
-        K11, K12, K21, K22 = self.__K_Partition(self.K())
+        K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices)
         
         # Get the partitioned global fixed end reaction vector
         FER1, FER2 = self.__FER_Partition()
         
         # Get the partitioned global nodal force vector
-        P1, P2 = self.__P_Partition()
-        
-        # The global displacement vector is composed of two vectors, D1 and D2:
-
-        # D1: Unknown displacements
-        # D2: Known displacements
-        
-        # Get vector D2 wich contains known nodal displacements (D != None)
-        D1_indices, D2_indices, D2 = self.__AuxList()             
-
-        # Convert D2 from a list to a matrix
-        D2 = matrix(D2).T
+        P1, P2 = self.__P_Partition()          
 
         # Check for global stability by determining if 'K11' is singular
         print('...Checking global stability')
@@ -1088,6 +1080,12 @@ class FEModel3D():
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
 
+        # Get the auxiliary list used to determine how the matrices will be partitioned
+        D1_indices, D2_indices, D2= self.__AuxList()
+
+        # Convert D2 from a list to a matrix
+        D2 = matrix(D2).T    
+
         # Keep track of the number of iterations
         iter_count = 1
         convergence = False
@@ -1102,30 +1100,21 @@ class FEModel3D():
             # Get the partitioned global matrices
             if iter_count == 1:
 
-                K11, K12, K21, K22 = self.__K_Partition(self.K()) # Initial stiffness matrix
-                FER1, FER2 = self.__FER_Partition()               # Fixed end reactions
-                P1, P2 = self.__P_Partition()                     # Nodal forces
+                K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices) # Initial stiffness matrix
+                FER1, FER2 = self.__FER_Partition()                                       # Fixed end reactions
+                P1, P2 = self.__P_Partition()                                             # Nodal forces
 
             else:
-                
-                Kg11, Kg12, Kg21, Kg22 = self.__K_Partition(self.Kg())
 
-                # Adjust the stiffness matrix
+                # Calculate the global stiffness matrices (partitioned)
+                K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices)
+                Kg11, Kg12, Kg21, Kg22 = self.__K_Partition(self.Kg(), D1_indices, D2_indices)
+
+                # Combine the stiffness matrices
                 K11 = add(K11, Kg11)
                 K12 = add(K12, Kg12)
                 K21 = add(K21, Kg21)
-                K22 = add(K22, Kg22)            
-            
-            # The global displacement vector is composed of two vectors, D1 and D2:
-
-            # D1: Unknown displacements
-            # D2: Known displacements
-
-            # Get vector D2 wich contains known nodal displacements (D != None)
-            D1_indices, D2_indices, D2 = self.__AuxList()             
-
-            # Convert D2 from a list to a matrix
-            D2 = matrix(D2).T
+                K22 = add(K22, Kg22)                     
 
             # Determine if 'K' is singular
             print('...Checking global stability')
@@ -1138,6 +1127,52 @@ class FEModel3D():
                 print('...Calculating global displacement vector')
                 D1 = matmul(inv(K11), subtract(subtract(P1, FER1), matmul(K12, D2)))
             
+            D = zeros((len(self.Nodes)*6, 1))
+
+            for node in self.Nodes:
+                
+                if D2_indices.count(node.ID*6 + 0) == 1:
+                    D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+                else:
+                    D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
+
+                if D2_indices.count(node.ID*6 + 1) == 1:
+                    D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
+                else:
+                    D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
+
+                if D2_indices.count(node.ID*6 + 2) == 1:
+                    D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
+                else:
+                    D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
+
+                if D2_indices.count(node.ID*6 + 3) == 1:
+                    D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
+                else:
+                    D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
+
+                if D2_indices.count(node.ID*6 + 4) == 1:
+                    D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
+                else:
+                    D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+
+                if D2_indices.count(node.ID*6 + 5) == 1:
+                    D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
+                else:
+                    D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0])
+
+            # Save the global displacement vector
+            self.__D = D
+
+            # Store the calculated global nodal displacements into each node
+            for node in self.Nodes:
+                node.DX = D.item((node.ID*6 + 0, 0))
+                node.DY = D.item((node.ID*6 + 1, 0))
+                node.DZ = D.item((node.ID*6 + 2, 0))
+                node.RX = D.item((node.ID*6 + 3, 0))
+                node.RY = D.item((node.ID*6 + 4, 0))
+                node.RZ = D.item((node.ID*6 + 5, 0))
+
             if iter_count != 1:
                 
                 # Print a status update for the user
@@ -1165,53 +1200,6 @@ class FEModel3D():
             # Increment the iteration count
             iter_count += 1
         
-        # Form the global displacement vector, D, from D1 and D2
-        D = zeros((len(self.Nodes)*6, 1))
-
-        for node in self.Nodes:
-                
-            if D2_indices.count(node.ID*6 + 0) == 1:
-                D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
-            else:
-                D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
-
-            if D2_indices.count(node.ID*6 + 1) == 1:
-                D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
-            else:
-                D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
-
-            if D2_indices.count(node.ID*6 + 2) == 1:
-                D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
-            else:
-                D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
-
-            if D2_indices.count(node.ID*6 + 3) == 1:
-                D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
-            else:
-                D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
-
-            if D2_indices.count(node.ID*6 + 4) == 1:
-                D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
-            else:
-                D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
-
-            if D2_indices.count(node.ID*6 + 5) == 1:
-                D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
-            else:
-                D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0])
-
-        # Save the global displacement vector
-        self.__D = D
-
-        # Store the calculated global nodal displacements into each node
-        for node in self.Nodes:
-            node.DX = D.item((node.ID * 6 + 0, 0))
-            node.DY = D.item((node.ID * 6 + 1, 0))
-            node.DZ = D.item((node.ID * 6 + 2, 0))
-            node.RX = D.item((node.ID * 6 + 3, 0))
-            node.RY = D.item((node.ID * 6 + 4, 0))
-            node.RZ = D.item((node.ID * 6 + 5, 0))
-
         # Calculate reactions
         self.__CalcReactions()
                 
