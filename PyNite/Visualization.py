@@ -743,12 +743,11 @@ def DeformedShape(model, scale_factor, textHeight=5):
 
   visDeformedNodes = []
   for node in model.Nodes:
-    visDeformedNodes.append(VisDeformedNode(node,scale_factor, textHeight))
+    visDeformedNodes.append(VisDeformedNode(node, scale_factor, textHeight))
   
   visDeformedMembers = []
   for member in model.Members:
-    visDeformedMembers.append(VisDeformedMember(member, model.Nodes,scale_factor, textHeight))
-
+    visDeformedMembers.append(VisDeformedMember(member, model.Nodes, scale_factor, textHeight))
 
   # Create a window
   window = vtk.vtkRenderWindow()
@@ -793,6 +792,10 @@ def DeformedShape(model, scale_factor, textHeight=5):
     # This next line will require us to reset the camera when we're done (below)
     visNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
+    # Add the actors for the node supports
+    for support in visNode.supportActors:
+      renderer.AddActor(support)
+  
   # Add actors for each aux node
   for visAuxNode in visAuxNodes:
 
@@ -805,7 +808,6 @@ def DeformedShape(model, scale_factor, textHeight=5):
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
     visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
-
 
   # Add actors for each deformed member
   for visDeformedMember in visDeformedMembers:
