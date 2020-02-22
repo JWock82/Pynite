@@ -696,73 +696,24 @@ class FEModel3D():
     def __K_Partition(self, K, D1_indices, D2_indices):  
         '''
         Partitions global stiffness matrix in preparation for analysis
+
+        Parameters
+        ----------
+        K : matrix
+            The stiffness matrix to be partitioned.
+        D1_indices : list
+            A list of the indices of the DOF's for unknown displacements
+        D2_indices : list
+            A list of the indices of the DOF's for known displacements
         '''
         
         print('...Partitioning global stiffness matrix')
-
-        # Initialize each partitioned matrix  
-        # K11 = zeros((K.shape[0] - len(D2), K.shape[0] - len(D2)))
-        # K12 = zeros((K.shape[0] - len(D2), len(D2)))
-        # K21 = zeros((len(D2), K.shape[0] - len(D2)))
-        # K22 = zeros((len(D2), len(D2)))
-
-        # Initialize variables used to track rows and columns as the matrix is partitioned
-
-        # m = Row
-        # n = Column
-        # 1 = Unknown DOF
-        # 2 = Known DOF
-
-        # m11, n11 = 0, 0
-        # m12, n12 = 0, 0
-        # m21, n21 = 0, 0
-        # m22, n22 = 0, 0
 
         # Use slicers to partition the matrix
         K11 = K[D1_indices, :][:, D1_indices]
         K12 = K[D1_indices, :][:, D2_indices]
         K21 = K[D2_indices, :][:, D1_indices]
         K22 = K[D2_indices, :][:, D2_indices]
-        
-        # for m in range(K.shape[0]):
-
-        #     for n in range(K.shape[1]):
-
-        #         # K11 ---> DOF in row and column are both unknown
-        #         if D2_indices.count(m) == 0 and D2_indices.count(n) == 0:
-                    
-        #             K11.itemset((m11, n11), K[m, n])
-        #             n11 += 1
-        #             if n11 == K.shape[0] - len(D2):
-        #                 n11 = 0
-        #                 m11 += 1
-
-        #         # K12 ---> DOF in row is unknown, DOF in column is known
-        #         elif D2_indices.count(m) == 0 and D2_indices.count(n) == 1:
-                    
-        #             K12.itemset((m12, n12), K[m, n])
-        #             n12 += 1
-        #             if n12 == len(D2):
-        #                 n12 = 0
-        #                 m12 += 1
-
-        #         # K21 ---> DOF in row is known, DOF in column is unknown
-        #         elif D2_indices.count(m) == 1 and D2_indices.count(n) == 0:
-                    
-        #             K21.itemset((m21, n21), K[m, n])
-        #             n21 += 1
-        #             if n21 == K.shape[0] - len(D2):
-        #                 n21 = 0
-        #                 m21 += 1
-
-        #         # K22 --> DOF in row and column are both known 
-        #         elif D2_indices.count(m) == 1 and D2_indices.count(n) == 1:
-                    
-        #             K22.itemset((m22, n22), K[m, n])
-        #             n22 += 1
-        #             if n22 == len(D2):
-        #                 n22 = 0
-        #                 m22 += 1
 
         # Return the matrix partitioned into 4 submatrices
         return K11, K12, K21, K22       
@@ -859,38 +810,17 @@ class FEModel3D():
         return FER
 
 #%%    
-    def __FER_Partition(self):
+    def __FER_Partition(self, D1_indices, D2_indices):
         '''
         Partitions global fixed end reaction vector prior to analysis
         '''
-    
-        D1_indices, D2_indices, D2 = self.__AuxList()        
+        
+        # Get the unpartitioned matrix
         FER = self.FER()
 
-        # Initialize each partitioned matrix          
-        FER1 = zeros((FER.shape[0] - len(D2), 1))
-        FER2 = zeros((len(D2), 1))
-
-        # Variables used to track indexing during partitioning
-
-        # m = Row
-        # n = Column
-        # 1 = Unknown DOF
-        # 2 = Known DOF
-
-        m1 = 0
-        m2 = 0
-
-        for m in range(FER.shape[0]):
-            
-            #FER1 --> unknown dof
-            if D2_indices.count(m) == 0:
-                FER1.itemset((m1, 0), FER[m, 0])
-                m1 += 1
-            #FER2 --> known dof 
-            else:
-                FER2.itemset((m2, 0), FER[m, 0])
-                m2 += 1
+        # Use slicers to partition the matrix
+        FER1 = FER[D1_indices, :] # Known fixed end reactions
+        FER2 = FER[D2_indices, :] # Unknown fixed end reactions
 
         # Return the vector partitioned as 2 subvectors
         return FER1, FER2
@@ -902,7 +832,7 @@ class FEModel3D():
         '''
             
         # Initialize a zero vector to hold all the terms
-        Pvector = zeros((len(self.Nodes)*6, 1))
+        P = zeros((len(self.Nodes)*6, 1))
         
         # Add terms for each node in the model
         for node in self.Nodes:
@@ -914,58 +844,33 @@ class FEModel3D():
             for load in node.NodeLoads:
                 
                 if load[0] == 'FX':
-                    Pvector.itemset((ID*6 + 0, 0), Pvector[ID*6 + 0, 0] + load[1])
+                    P.itemset((ID*6 + 0, 0), P[ID*6 + 0, 0] + load[1])
                 elif load[0] == 'FY':
-                    Pvector.itemset((ID*6 + 1, 0), Pvector[ID*6 + 1, 0] + load[1])
+                    P.itemset((ID*6 + 1, 0), P[ID*6 + 1, 0] + load[1])
                 elif load[0] == 'FZ':
-                    Pvector.itemset((ID*6 + 2, 0), Pvector[ID*6 + 2, 0] + load[1])
+                    P.itemset((ID*6 + 2, 0), P[ID*6 + 2, 0] + load[1])
                 elif load[0] == 'MX':
-                    Pvector.itemset((ID*6 + 3, 0), Pvector[ID*6 + 3, 0] + load[1])
+                    P.itemset((ID*6 + 3, 0), P[ID*6 + 3, 0] + load[1])
                 elif load[0] == 'MY':
-                    Pvector.itemset((ID*6 + 4, 0), Pvector[ID*6 + 4, 0] + load[1])
+                    P.itemset((ID*6 + 4, 0), P[ID*6 + 4, 0] + load[1])
                 elif load[0] == 'MZ':
-                    Pvector.itemset((ID*6 + 5, 0), Pvector[ID*6 + 5, 0] + load[1])
+                    P.itemset((ID*6 + 5, 0), P[ID*6 + 5, 0] + load[1])
         
         # Return the global nodal force vector
-        return Pvector
+        return P
     
 #%%
-    def __P_Partition(self):
+    def __P_Partition(self, D1_indices, D2_indices):
         '''
         Partitions the global nodal force vector prior to analysis 
         '''
-        
-        D1_indices, D2_indices, D2= self.__AuxList()             
+
+        # Get the unpartitioned global force matrix
         P = self.P()
 
-        # Initialize each partitioned matrix         
-        P1 = zeros((P.shape[0] - len(D2), 1))
-        P2 = zeros((len(D2), 1))
-
-        # Variables used to track indexing during partitioning
-
-        # m = row
-        # n = column
-        
-        # 1 = unknown dof
-        # 2 = known dof
-
-        m1 = 0
-        m2 = 0
-
-        for m in range(P.shape[0]):
-
-                #P1 --> unknown dof 
-                if D2_indices.count(m) == 0:
-
-                    P1.itemset((m1, 0), P[m, 0])
-                    m1 += 1
-
-                #P2 --> known dof 
-                else:
-
-                    P2.itemset((m2, 0), P[m, 0])
-                    m2 += 1
+        # Use slicers to partition the matrix
+        P1 = P[D1_indices, :] # Known nodal forces
+        P2 = P[D2_indices, :] # Unknown nodal forces
 
         # Return the vector partitioned as 2 subvectors
         return P1, P2
@@ -1000,10 +905,10 @@ class FEModel3D():
         K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices)
         
         # Get the partitioned global fixed end reaction vector
-        FER1, FER2 = self.__FER_Partition()
+        FER1, FER2 = self.__FER_Partition(D1_indices, D2_indices)
         
         # Get the partitioned global nodal force vector
-        P1, P2 = self.__P_Partition()          
+        P1, P2 = self.__P_Partition(D1_indices, D2_indices)          
 
         # Check for global stability by determining if 'K11' is singular
         print('...Checking global stability')
@@ -1107,14 +1012,14 @@ class FEModel3D():
             if iter_count == 1:
                 
                 K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices) # Initial stiffness matrix
-                FER1, FER2 = self.__FER_Partition()                                       # Fixed end reactions
-                P1, P2 = self.__P_Partition()                                             # Nodal forces
+                FER1, FER2 = self.__FER_Partition(D1_indices, D2_indices)                 # Fixed end reactions
+                P1, P2 = self.__P_Partition(D1_indices, D2_indices)                       # Nodal forces
 
             else:
 
                 # Calculate the global stiffness matrices (partitioned)
-                K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices)
-                Kg11, Kg12, Kg21, Kg22 = self.__K_Partition(self.Kg(), D1_indices, D2_indices)
+                K11, K12, K21, K22 = self.__K_Partition(self.K(), D1_indices, D2_indices)       # Initial stiffness matrix
+                Kg11, Kg12, Kg21, Kg22 = self.__K_Partition(self.Kg(), D1_indices, D2_indices)  # Geometric stiffness matrix
 
                 # Combine the stiffness matrices
                 K11 = add(K11, Kg11)
