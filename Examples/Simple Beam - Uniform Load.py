@@ -17,10 +17,10 @@ SimpleBeam.AddMember("M1", "N1", "N2", 29000, 11400, 100, 150, 250, 20)
 
 # Provide simple supports
 SimpleBeam.DefineSupport("N1", True, True, True, False, False, False)
-SimpleBeam.DefineSupport("N2", False, True, True, True, False, False)
+SimpleBeam.DefineSupport("N2", True, True, True, True, False, False)
 
 # Add a uniform load of 200 lbs/ft to the beam
-SimpleBeam.AddMemberDistLoad("M1", "Fy", 200/1000/12, 200/1000/12, 0, 168)
+SimpleBeam.AddMemberDistLoad("M1", "Fy", -200/1000/12, -200/1000/12, 0, 168)
 
 # Alternatively the following line would do apply the load to the full length of the member as well
 # SimpleBeam.AddMemberDistLoad("M1", "Fy", 200/1000/12, 200/1000/12)
@@ -34,9 +34,9 @@ SimpleBeam.GetMember("M1").PlotMoment("Mz")
 SimpleBeam.GetMember("M1").PlotDeflection("dy")
 
 # Print reactions at each end of the beam
-print("Left Support Reaction: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N1").RxnFY))
-print("Right Support Reacton: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N2").RxnFY))
+print("Left Support Reaction: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N1").RxnFZ))
+print("Right Support Reacton: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N2").RxnFZ))
 
 # Render the beam for viewing with a text height of 5 inches
 from PyNite import Visualization
-Visualization.RenderModel(SimpleBeam, 5)
+Visualization.DeformedShape(SimpleBeam, 50, 5)
