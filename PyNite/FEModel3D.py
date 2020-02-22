@@ -1243,19 +1243,11 @@ class FEModel3D():
         # Print a status update to the console
         print('...Checking statics')
 
-        # Initialize force summations to zero
-        SumFX = 0
-        SumFY = 0
-        SumFZ = 0
-        SumMX = 0
-        SumMY = 0
-        SumMZ = 0
-        SumRFX = 0
-        SumRFY = 0
-        SumRFZ = 0
-        SumRMX = 0
-        SumRMY = 0
-        SumRMZ = 0
+        # Initialize force and moment summations to zero
+        SumFX, SumFY, SumFZ = 0, 0, 0
+        SumMX, SumMY, SumMZ = 0, 0, 0
+        SumRFX, SumRFY, SumRFZ = 0, 0, 0
+        SumRMX, SumRMY, SumRMZ = 0, 0, 0
 
         # Get the global force vector and the global fixed end reaction vector
         P = self.P()
