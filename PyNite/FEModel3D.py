@@ -238,7 +238,7 @@ class FEModel3D():
             node.RZ = SupportRZ
 
 #%%            
-    def AddNodalDisplacement (self, Node, Direction, Magnitude): 
+    def AddNodeDisplacement (self, Node, Direction, Magnitude): 
         '''
         Defines a nodal displacement at a node.
 
@@ -874,7 +874,7 @@ class FEModel3D():
 
         # Return the vector partitioned as 2 subvectors
         return P1, P2
-    
+
 #%%
     def D(self):
         '''
@@ -896,7 +896,7 @@ class FEModel3D():
         self.__Renumber()
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
-        D1_indices, D2_indices, D2= self.__AuxList()
+        D1_indices, D2_indices, D2 = self.__AuxList()
 
         # Convert D2 from a list to a matrix
         D2 = matrix(D2).T
@@ -992,7 +992,7 @@ class FEModel3D():
         self.__Renumber()
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
-        D1_indices, D2_indices, D2= self.__AuxList()
+        D1_indices, D2_indices, D2 = self.__AuxList()
 
         # Convert D2 from a list to a matrix
         D2 = matrix(D2).T    
@@ -1077,6 +1077,7 @@ class FEModel3D():
 
             # Store the calculated global nodal displacements into each node
             for node in self.Nodes:
+
                 node.DX = D.item((node.ID*6 + 0, 0))
                 node.DY = D.item((node.ID*6 + 1, 0))
                 node.DZ = D.item((node.ID*6 + 2, 0))
