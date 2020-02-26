@@ -13,7 +13,7 @@ def RenderModel(model, textHeight=5):
 
   visAuxNodes = []
   for auxnode in model.auxNodes:
-    visAuxNodes.append(VisAuxNode(auxnode, textHeight))
+    visAuxNodes.append(VisNode(auxnode, textHeight, color='red'))
 
   visMembers = []
   for member in model.Members:
@@ -112,7 +112,7 @@ def RenderModel(model, textHeight=5):
 class VisNode():
 
   # Constructor
-  def __init__(self, node, textHeight=5):
+  def __init__(self, node, textHeight=5, color=None):
     
     # Get the node's position
     X = node.X # Global X coordinate
@@ -130,6 +130,12 @@ class VisNode():
 
     # Set up an actor for the node
     self.actor = vtk.vtkActor()
+
+    if color == 'red':
+      self.actor.GetProperty().SetColor(255, 0, 0) # Red
+    elif color == 'yellow':
+      self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
+
     self.actor.SetMapper(mapper)
 
     # Create the text for the node label
@@ -145,6 +151,11 @@ class VisNode():
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition(X + 0.6*textHeight, Y + 0.6*textHeight, Z)
+
+    if color == 'red':
+      self.lblActor.GetProperty().SetColor(255, 0, 0) # Red
+    elif color == 'yellow':
+      self.lblActor.GetProperty().SetColor(255, 255, 0) # Yellow
 
     # Generate any supports that occur at the node
     supportMappers = []
@@ -432,46 +443,6 @@ class VisNode():
         self.supportActors.append(supportActor1)
         self.supportActors.append(supportActor2)
         self.supportActors.append(supportActor3)
-
-# Converts a auxNode object into a auxnode for the viewer
-class VisAuxNode():
- 
-  # Constructor
-  def __init__(self, auxnode, textHeight=5):
-    
-    # Get the node's position
-    X = auxnode.X          # Global X coordinate
-    Y = auxnode.Y          # Global Y coordinate
-    Z = auxnode.Z          # Global Z coordinate
-
-    # Generate a sphere for the node
-    sphere = vtk.vtkSphereSource()
-    sphere.SetCenter(X, Y, Z)
-    sphere.SetRadius(0.6*textHeight)
-
-    # Set up a mapper for the node
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(sphere.GetOutputPort())
-
-    # Set up an actor for the node
-    self.actor = vtk.vtkActor()
-    self.actor.GetProperty().SetColor(255,0,0) # Red
-    self.actor.SetMapper(mapper)
-
-    # Create the text for the node label
-    label = vtk.vtkVectorText()
-    label.SetText(auxnode.Name)
-    
-    # Set up a mapper for the node label
-    lblMapper = vtk.vtkPolyDataMapper()
-    lblMapper.SetInputConnection(label.GetOutputPort())
-
-    # Set up an actor for the node label
-    self.lblActor = vtk.vtkFollower()
-    self.lblActor.SetMapper(lblMapper)
-    self.lblActor.SetScale(textHeight, textHeight, textHeight)
-    self.lblActor.SetPosition(X+0.6*textHeight, Y+0.6*textHeight, Z)
-    self.lblActor.GetProperty().SetColor(255,0,0) #red
                
 # Converts a member object into a member for the viewer
 class VisMember():
@@ -625,7 +596,7 @@ class VisDeformedNode():
 
     # Set up an actor for the node
     self.actor = vtk.vtkActor()
-    self.actor.GetProperty().SetColor(255,255,0) # yellow
+    self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
     self.actor.SetMapper(mapper)
         
     # Create the text for the node label
@@ -641,7 +612,7 @@ class VisDeformedNode():
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition(newX + 0.6*textHeight, newY + 0.6*textHeight, newZ)
-    self.lblActor.GetProperty().SetColor(255,255,0)
+    self.lblActor.GetProperty().SetColor(255, 255, 0) # Yellow
 
 # Converts a member object into a member in its deformed position for the viewer
 class VisDeformedMember():
@@ -735,7 +706,7 @@ def DeformedShape(model, scale_factor, textHeight=5):
 
   visAuxNodes = []
   for auxnode in model.auxNodes:
-    visAuxNodes.append(VisAuxNode(auxnode, textHeight))
+    visAuxNodes.append(VisNode(auxnode, textHeight, color='red'))
 
   visMembers = []
   for member in model.Members:
