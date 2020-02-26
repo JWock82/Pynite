@@ -66,10 +66,6 @@ def RenderModel(model, textHeight=5):
     # This next line will require us to reset the camera when we're done (below)
     visNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
-    # Add the actors for the node supports
-    for support in visNode.supportActors:
-      renderer.AddActor(support)
-
   # Add actors for each plate
   for visPlate in visPlates:
 
@@ -114,6 +110,12 @@ class VisNode():
   # Constructor
   def __init__(self, node, textHeight=5):
     
+    # Create a 'vtkPolyData' object to represent the node
+    polyData = vtk.vtkPolyData()
+
+    # Create a 'vtkAppendPolyData' filter to append the node and it's supports together into a single dataset
+    appendFilter = vtk.vtkAppendPolyData()
+
     # Get the node's position
     X = node.X # Global X coordinate
     Y = node.Y # Global Y coordinate
@@ -123,14 +125,11 @@ class VisNode():
     sphere = vtk.vtkSphereSource()
     sphere.SetCenter(X, Y, Z)
     sphere.SetRadius(0.6*textHeight)
-
-    # Set up a mapper for the node
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(sphere.GetOutputPort())
-
-    # Set up an actor for the node
-    self.actor = vtk.vtkActor()
-    self.actor.SetMapper(mapper)
+    
+    # Copy and append the sphere to the append filter
+    sphere.Update()
+    polyData.ShallowCopy(sphere.GetOutput())
+    appendFilter.AddInputData(polyData)
 
     # Create the text for the node label
     label = vtk.vtkVectorText()
@@ -147,9 +146,6 @@ class VisNode():
     self.lblActor.SetPosition(X + 0.6*textHeight, Y + 0.6*textHeight, Z)
 
     # Generate any supports that occur at the node
-    supportMappers = []
-    self.supportActors = []
-
     # Check for a fixed suppport
     if node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
       and node.SupportRX == True and node.SupportRY == True and node.SupportRZ == True:
@@ -161,8 +157,11 @@ class VisNode():
       support.SetYLength(textHeight*1.2)
       support.SetZLength(textHeight*1.2)
 
-      # Change the node's mapper to the fixed support
-      mapper.SetInputConnection(support.GetOutputPort())
+      # Copy and append the support data to the append filter
+      support.Update()
+      polyData = vtk.vtkPolyData()
+      polyData.ShallowCopy(support.GetOutput())
+      appendFilter.AddInputData(polyData)
     
     # Check for a pinned support
     elif node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
@@ -175,8 +174,11 @@ class VisNode():
       support.SetHeight(textHeight*1.2)
       support.SetRadius(textHeight*1.2)
 
-      # Change the node's mapper to the pinned support
-      mapper.SetInputConnection(support.GetOutputPort())
+      # Copy and append the support data to the append filter
+      support.Update()
+      polyData = vtk.vtkPolyData()
+      polyData.ShallowCopy(support.GetOutput())
+      appendFilter.AddInputData(polyData)
     
     # Other support conditions
     else:
@@ -189,11 +191,23 @@ class VisNode():
         support1.SetPoint1(node.X-textHeight, node.Y, node.Z)
         support1.SetPoint2(node.X+textHeight, node.Y, node.Z)
 
+        # Copy and append the support data to the append filter
+        support1.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support1.GetOutput())
+        appendFilter.AddInputData(polyData)
+
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X-textHeight, node.Y, node.Z)
         support2.SetDirection((1, 0, 0))
         support2.SetHeight(textHeight*0.6)
         support2.SetRadius(textHeight*0.3)
+
+        # Copy and append the support data to the append filter
+        support2.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support2.GetOutput())
+        appendFilter.AddInputData(polyData)
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X+textHeight, node.Y, node.Z)
@@ -201,27 +215,11 @@ class VisNode():
         support3.SetHeight(textHeight*0.6)
         support3.SetRadius(textHeight*0.3)
 
-        # Set up mappers for the support
-        supportMapper1 = vtk.vtkPolyDataMapper()
-        supportMapper2 = vtk.vtkPolyDataMapper()
-        supportMapper3 = vtk.vtkPolyDataMapper()
-        supportMapper1.SetInputConnection(support1.GetOutputPort())
-        supportMapper2.SetInputConnection(support2.GetOutputPort())
-        supportMapper3.SetInputConnection(support3.GetOutputPort())
-        supportMappers.append(supportMapper1)
-        supportMappers.append(supportMapper2)
-        supportMappers.append(supportMapper3)
-
-        # Set up actors for the support
-        supportActor1 = vtk.vtkActor()
-        supportActor2 = vtk.vtkActor()
-        supportActor3 = vtk.vtkActor()
-        supportActor1.SetMapper(supportMapper1)
-        supportActor2.SetMapper(supportMapper2)
-        supportActor3.SetMapper(supportMapper3)
-        self.supportActors.append(supportActor1)
-        self.supportActors.append(supportActor2)
-        self.supportActors.append(supportActor3)
+        # Copy and append the support data to the append filter
+        support3.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support3.GetOutput())
+        appendFilter.AddInputData(polyData)
       
       # Restrained against Y translation
       if node.SupportDY == True:
@@ -231,11 +229,23 @@ class VisNode():
         support1.SetPoint1(node.X, node.Y-textHeight, node.Z)
         support1.SetPoint2(node.X, node.Y+textHeight, node.Z)
 
+        # Copy and append the support data to the append filter
+        support1.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support1.GetOutput())
+        appendFilter.AddInputData(polyData)
+
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X, node.Y-textHeight, node.Z)
         support2.SetDirection((0, 1, 0))
         support2.SetHeight(textHeight*0.6)
         support2.SetRadius(textHeight*0.3)
+
+        # Copy and append the support data to the append filter
+        support2.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support2.GetOutput())
+        appendFilter.AddInputData(polyData)
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X, node.Y+textHeight, node.Z)
@@ -243,27 +253,11 @@ class VisNode():
         support3.SetHeight(textHeight*0.6)
         support3.SetRadius(textHeight*0.3)
 
-        # Set up mappers for the support
-        supportMapper1 = vtk.vtkPolyDataMapper()
-        supportMapper2 = vtk.vtkPolyDataMapper()
-        supportMapper3 = vtk.vtkPolyDataMapper()
-        supportMapper1.SetInputConnection(support1.GetOutputPort())
-        supportMapper2.SetInputConnection(support2.GetOutputPort())
-        supportMapper3.SetInputConnection(support3.GetOutputPort())
-        supportMappers.append(supportMapper1)
-        supportMappers.append(supportMapper2)
-        supportMappers.append(supportMapper3)
-
-        # Set up actors for the support
-        supportActor1 = vtk.vtkActor()
-        supportActor2 = vtk.vtkActor()
-        supportActor3 = vtk.vtkActor()
-        supportActor1.SetMapper(supportMapper1)
-        supportActor2.SetMapper(supportMapper2)
-        supportActor3.SetMapper(supportMapper3)
-        self.supportActors.append(supportActor1)
-        self.supportActors.append(supportActor2)
-        self.supportActors.append(supportActor3)
+        # Copy and append the support data to the append filter
+        support3.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support3.GetOutput())
+        appendFilter.AddInputData(polyData)
       
       # Restrained against Z translation
       if node.SupportDZ == True:
@@ -273,11 +267,23 @@ class VisNode():
         support1.SetPoint1(node.X, node.Y, node.Z-textHeight)
         support1.SetPoint2(node.X, node.Y, node.Z+textHeight)
 
+        # Copy and append the support data to the append filter
+        support1.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support1.GetOutput())
+        appendFilter.AddInputData(polyData)
+
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X, node.Y, node.Z-textHeight)
         support2.SetDirection((0, 0, 1))
         support2.SetHeight(textHeight*0.6)
         support2.SetRadius(textHeight*0.3)
+
+        # Copy and append the support data to the append filter
+        support2.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support2.GetOutput())
+        appendFilter.AddInputData(polyData)
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X, node.Y, node.Z+textHeight)
@@ -285,27 +291,11 @@ class VisNode():
         support3.SetHeight(textHeight*0.6)
         support3.SetRadius(textHeight*0.3)
 
-        # Set up mappers for the support
-        supportMapper1 = vtk.vtkPolyDataMapper()
-        supportMapper2 = vtk.vtkPolyDataMapper()
-        supportMapper3 = vtk.vtkPolyDataMapper()
-        supportMapper1.SetInputConnection(support1.GetOutputPort())
-        supportMapper2.SetInputConnection(support2.GetOutputPort())
-        supportMapper3.SetInputConnection(support3.GetOutputPort())
-        supportMappers.append(supportMapper1)
-        supportMappers.append(supportMapper2)
-        supportMappers.append(supportMapper3)
-
-        # Set actors for the support
-        supportActor1 = vtk.vtkActor()
-        supportActor2 = vtk.vtkActor()
-        supportActor3 = vtk.vtkActor()
-        supportActor1.SetMapper(supportMapper1)
-        supportActor2.SetMapper(supportMapper2)
-        supportActor3.SetMapper(supportMapper3)
-        self.supportActors.append(supportActor1)
-        self.supportActors.append(supportActor2)
-        self.supportActors.append(supportActor3)
+        # Copy and append the support data to the append filter
+        support3.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support3.GetOutput())
+        appendFilter.AddInputData(polyData)
 
       # Restrained against rotation about the X-axis
       if node.SupportRX == True:
@@ -315,11 +305,23 @@ class VisNode():
         support1.SetPoint1(node.X-1.6*textHeight, node.Y, node.Z)
         support1.SetPoint2(node.X+1.6*textHeight, node.Y, node.Z)
 
+        # Copy and append the support data to the append filter
+        support1.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support1.GetOutput())
+        appendFilter.AddInputData(polyData)
+
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X-1.9*textHeight, node.Y, node.Z)
         support2.SetXLength(textHeight*0.6)
         support2.SetYLength(textHeight*0.6)
         support2.SetZLength(textHeight*0.6)
+
+        # Copy and append the support data to the append filter
+        support2.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support2.GetOutput())
+        appendFilter.AddInputData(polyData)
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X+1.9*textHeight, node.Y, node.Z)
@@ -327,27 +329,11 @@ class VisNode():
         support3.SetYLength(textHeight*0.6)
         support3.SetZLength(textHeight*0.6)
 
-        # Set up mappers for the support
-        supportMapper1 = vtk.vtkPolyDataMapper()
-        supportMapper2 = vtk.vtkPolyDataMapper()
-        supportMapper3 = vtk.vtkPolyDataMapper()
-        supportMapper1.SetInputConnection(support1.GetOutputPort())
-        supportMapper2.SetInputConnection(support2.GetOutputPort())
-        supportMapper3.SetInputConnection(support3.GetOutputPort())
-        supportMappers.append(supportMapper1)
-        supportMappers.append(supportMapper2)
-        supportMappers.append(supportMapper3)
-
-        # Set up actors for the support
-        supportActor1 = vtk.vtkActor()
-        supportActor2 = vtk.vtkActor()
-        supportActor3 = vtk.vtkActor()
-        supportActor1.SetMapper(supportMapper1)
-        supportActor2.SetMapper(supportMapper2)
-        supportActor3.SetMapper(supportMapper3)
-        self.supportActors.append(supportActor1)
-        self.supportActors.append(supportActor2)
-        self.supportActors.append(supportActor3)
+        # Copy and append the support data to the append filter
+        support3.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support3.GetOutput())
+        appendFilter.AddInputData(polyData)
       
       # Restrained against rotation about the Y-axis
       if node.SupportRY == True:
@@ -357,11 +343,23 @@ class VisNode():
         support1.SetPoint1(node.X, node.Y-1.6*textHeight, node.Z)
         support1.SetPoint2(node.X, node.Y+1.6*textHeight, node.Z)
 
+        # Copy and append the support data to the append filter
+        support1.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support1.GetOutput())
+        appendFilter.AddInputData(polyData)
+
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X, node.Y-1.9*textHeight, node.Z)
         support2.SetXLength(textHeight*0.6)
         support2.SetYLength(textHeight*0.6)
         support2.SetZLength(textHeight*0.6)
+
+        # Copy and append the support data to the append filter
+        support2.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support2.GetOutput())
+        appendFilter.AddInputData(polyData)
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X, node.Y+1.9*textHeight, node.Z)
@@ -369,27 +367,11 @@ class VisNode():
         support3.SetYLength(textHeight*0.6)
         support3.SetZLength(textHeight*0.6)
 
-        # Set up mappers for the support
-        supportMapper1 = vtk.vtkPolyDataMapper()
-        supportMapper2 = vtk.vtkPolyDataMapper()
-        supportMapper3 = vtk.vtkPolyDataMapper()
-        supportMapper1.SetInputConnection(support1.GetOutputPort())
-        supportMapper2.SetInputConnection(support2.GetOutputPort())
-        supportMapper3.SetInputConnection(support3.GetOutputPort())
-        supportMappers.append(supportMapper1)
-        supportMappers.append(supportMapper2)
-        supportMappers.append(supportMapper3)
-
-        # Set up actors for the support
-        supportActor1 = vtk.vtkActor()
-        supportActor2 = vtk.vtkActor()
-        supportActor3 = vtk.vtkActor()
-        supportActor1.SetMapper(supportMapper1)
-        supportActor2.SetMapper(supportMapper2)
-        supportActor3.SetMapper(supportMapper3)
-        self.supportActors.append(supportActor1)
-        self.supportActors.append(supportActor2)
-        self.supportActors.append(supportActor3)
+        # Copy and append the support data to the append filter
+        support3.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support3.GetOutput())
+        appendFilter.AddInputData(polyData)
       
       # Restrained against rotation about the Z-axis
       if node.SupportRZ == True:
@@ -399,11 +381,23 @@ class VisNode():
         support1.SetPoint1(node.X, node.Y, node.Z-1.6*textHeight)
         support1.SetPoint2(node.X, node.Y, node.Z+1.6*textHeight)
 
+        # Copy and append the support data to the append filter
+        support1.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support1.GetOutput())
+        appendFilter.AddInputData(polyData)
+
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X, node.Y, node.Z-1.9*textHeight)
         support2.SetXLength(textHeight*0.6)
         support2.SetYLength(textHeight*0.6)
         support2.SetZLength(textHeight*0.6)
+
+        # Copy and append the support data to the append filter
+        support2.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support2.GetOutput())
+        appendFilter.AddInputData(polyData)
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X, node.Y, node.Z+1.9*textHeight)
@@ -411,27 +405,26 @@ class VisNode():
         support3.SetYLength(textHeight*0.6)
         support3.SetZLength(textHeight*0.6)
 
-        # Set up mappers for the support
-        supportMapper1 = vtk.vtkPolyDataMapper()
-        supportMapper2 = vtk.vtkPolyDataMapper()
-        supportMapper3 = vtk.vtkPolyDataMapper()
-        supportMapper1.SetInputConnection(support1.GetOutputPort())
-        supportMapper2.SetInputConnection(support2.GetOutputPort())
-        supportMapper3.SetInputConnection(support3.GetOutputPort())
-        supportMappers.append(supportMapper1)
-        supportMappers.append(supportMapper2)
-        supportMappers.append(supportMapper3)
+        # Copy and append the support data to the append filter
+        support3.Update()
+        polyData = vtk.vtkPolyData()
+        polyData.ShallowCopy(support3.GetOutput())
+        appendFilter.AddInputData(polyData)
+    
+    # Update the append filter
+    appendFilter.Update()
 
-        # Set up actors for the support
-        supportActor1 = vtk.vtkActor()
-        supportActor2 = vtk.vtkActor()
-        supportActor3 = vtk.vtkActor()
-        supportActor1.SetMapper(supportMapper1)
-        supportActor2.SetMapper(supportMapper2)
-        supportActor3.SetMapper(supportMapper3)
-        self.supportActors.append(supportActor1)
-        self.supportActors.append(supportActor2)
-        self.supportActors.append(supportActor3)
+    # Remove any duplicate points
+    cleanFilter = vtk.vtkCleanPolyData()
+    cleanFilter.SetInputConnection(appendFilter.GetOutputPort())
+    cleanFilter.Update()
+
+    # Create a mapper and actor
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(cleanFilter.GetOutputPort())
+
+    self.actor = vtk.vtkActor()
+    self.actor.SetMapper(mapper)
 
 # Converts a auxNode object into a auxnode for the viewer
 class VisAuxNode():
@@ -791,10 +784,6 @@ def DeformedShape(model, scale_factor, textHeight=5):
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
     visNode.lblActor.SetCamera(renderer.GetActiveCamera())
-
-    # Add the actors for the node supports
-    for support in visNode.supportActors:
-      renderer.AddActor(support)
   
   # Add actors for each aux node
   for visAuxNode in visAuxNodes:
@@ -827,10 +816,6 @@ def DeformedShape(model, scale_factor, textHeight=5):
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
     visDeformedNode.lblActor.SetCamera(renderer.GetActiveCamera())
-
-    # Add the actors for the node supports
-    for support in visNode.supportActors:
-      renderer.AddActor(support)
 
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
