@@ -51,6 +51,8 @@ class Member3D():
         '''
         Builds lists of unreleased and released DOFs
 
+        Returns
+        -------
         R1_indices : list
             A list of the indices for the unreleased DOFs
         R2_indices : list
@@ -60,7 +62,7 @@ class Member3D():
         R1_indices = []
         R2_indices = []
         for i in range(12):
-            if self.Releases[i] == True:
+            if self.Releases[i] == False:
                 R1_indices.append(i)
             else:
                 R2_indices.append(i)
