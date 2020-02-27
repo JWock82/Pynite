@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-'''
-Created on Thu Nov  2 18:04:56 2017
-
-@author: D. Craig Brinck, SE
-'''
 # %%
 from numpy import zeros, matrix, transpose, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
@@ -51,6 +45,27 @@ class Member3D():
         iNode = self.iNode
         jNode = self.jNode
         return ((jNode.X-iNode.X)**2+(jNode.Y-iNode.Y)**2+(jNode.Z-iNode.Z)**2)**0.5
+
+#%%
+    def AuxList(self):
+        '''
+        Builds lists of unreleased and released DOFs
+
+        R1_indices : list
+            A list of the indices for the unreleased DOFs
+        R2_indices : list
+            A list of the indices for the released DOFs
+        '''
+
+        R1_indices = []
+        R2_indices = []
+        for i in range(12):
+            if self.Releases[i] == True:
+                R1_indices.append(i)
+            else:
+                R2_indices.append(i)
+        
+        return R1_indices, R2_indices
 
 #%%
     def k(self):
@@ -108,69 +123,14 @@ class Member3D():
                     [0,      0,             -6*E*Iy/L**2,  0,      2*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      4*E*Iy/L,     0],
                     [0,      6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            4*E*Iz/L]])
         
-        # Count the number of released degrees of freedom in the member
-        NumReleases = 0
-        for DOF in self.Releases:
-            if DOF == True:
-                NumReleases += 1
-                    
-        # Initialize each partitioned matrix
-        k11 = zeros((12 - NumReleases, 12 - NumReleases))
-        k12 = zeros((12 - NumReleases, NumReleases))
-        k21 = zeros((NumReleases, 12 - NumReleases))
-        k22 = zeros((NumReleases, NumReleases))
-        
-        # Initialize variables used to track rows and columns as the matrix is partitioned
-        m11 = 0
-        n11 = 0
-        m12 = 0
-        n12 = 0
-        m21 = 0
-        n21 = 0
-        m22 = 0
-        n22 = 0
-        
-        # Partition the stiffness matrix
-        # Step through each term in the local stiffness matrix (m = row, n = column)
-        for m in range(12):
-            for n in range(12):
-                
-                # Determine which partitioned matrix this term belongs in
-                if self.Releases[m] == False and self.Releases[n] == False:
-                    
-                    k11.itemset((m11, n11), k[m, n])
-                    
-                    n11 += 1
-                    if n11 == 12 - NumReleases:
-                        n11 = 0
-                        m11 += 1            
-                        
-                elif self.Releases[m] == False and self.Releases[n] == True:
-                    
-                    k12.itemset((m12, n12), k[m, n])
-                    
-                    n12 += 1
-                    if n12 == NumReleases:
-                        n12 = 0
-                        m12 += 1
-                    
-                elif self.Releases[m] == True and self.Releases[n] == False:
-                    
-                    k21.itemset((m21, n21), k[m, n])
-                    
-                    n21 += 1
-                    if n21 == 12 - NumReleases:
-                        n21 = 0
-                        m21 += 1
-                    
-                elif self.Releases[m] == True and self.Releases[n] == True:
-                    
-                    k22.itemset((m22, n22), k[m, n])
-                    
-                    n22 += 1
-                    if n22 == NumReleases:
-                        n22 = 0
-                        m22 += 1
+        # Create auxiliary lists of released/unreleased DOFs
+        R1_indices, R2_indices = self.AuxList()
+
+        # Partition the matrix by slicing
+        k11 = k[R1_indices, :][:, R1_indices]
+        k12 = k[R1_indices, :][:, R2_indices]
+        k21 = k[R2_indices, :][:, R1_indices]
+        k22 = k[R2_indices, :][:, R2_indices]
         
         # Return the matrix, partitioned into 4 submatrices
         return k11, k12, k21, k22
@@ -234,69 +194,14 @@ class Member3D():
         
         kg = kg*P/L
 
-        # Count the number of released degrees of freedom in the member
-        NumReleases = 0
-        for DOF in self.Releases:
-            if DOF == True:
-                NumReleases += 1
-                    
-        # Initialize each partitioned matrix
-        kg11 = zeros((12 - NumReleases, 12 - NumReleases))
-        kg12 = zeros((12 - NumReleases, NumReleases))
-        kg21 = zeros((NumReleases, 12 - NumReleases))
-        kg22 = zeros((NumReleases, NumReleases))
-        
-        # Initialize variables used to track rows and columns as the matrix is partitioned
-        m11 = 0
-        n11 = 0
-        m12 = 0
-        n12 = 0
-        m21 = 0
-        n21 = 0
-        m22 = 0
-        n22 = 0
-        
-        # Partition the geometric stiffness matrix
-        # Step through each term in the local geometric stiffness matrix (m = row, n = column)
-        for m in range(12):
-            for n in range(12):
-                
-                # Determine which partitioned matrix this term belongs in
-                if self.Releases[m] == False and self.Releases[n] == False:
-                    
-                    kg11.itemset((m11, n11), kg[m, n])
-                    
-                    n11 += 1
-                    if n11 == 12 - NumReleases:
-                        n11 = 0
-                        m11 += 1            
-                        
-                elif self.Releases[m] == False and self.Releases[n] == True:
-                    
-                    kg12.itemset((m12, n12), kg[m, n])
-                    
-                    n12 += 1
-                    if n12 == NumReleases:
-                        n12 = 0
-                        m12 += 1
-                    
-                elif self.Releases[m] == True and self.Releases[n] == False:
-                    
-                    kg21.itemset((m21, n21), kg[m, n])
-                    
-                    n21 += 1
-                    if n21 == 12 - NumReleases:
-                        n21 = 0
-                        m21 += 1
-                    
-                elif self.Releases[m] == True and self.Releases[n] == True:
-                    
-                    kg22.itemset((m22, n22), kg[m, n])
-                    
-                    n22 += 1
-                    if n22 == NumReleases:
-                        n22 = 0
-                        m22 += 1
+        # Create auxiliary lists of released/unreleased DOFs
+        R1_indices, R2_indices = self.AuxList()
+
+        # Partition the matrix by slicing
+        kg11 = kg[R1_indices, :][:, R1_indices]
+        kg12 = kg[R1_indices, :][:, R2_indices]
+        kg21 = kg[R2_indices, :][:, R1_indices]
+        kg22 = kg[R2_indices, :][:, R2_indices]
         
         # Return the matrix, partitioned into 4 submatrices
         return kg11, kg12, kg21, kg22
@@ -333,60 +238,15 @@ class Member3D():
         condensation. Used for applying end releases to the member.
         '''
         
-        # Initialize the fixed end reaction vector
-        fer = zeros((12,1))
-        
-        # Sum the fixed end reactions for the point loads & moments
-        for ptLoad in self.PtLoads:
+        # Get the uncondensed fixed end reaction vector
+        fer = self.__fer_Unc()
 
-            if ptLoad[0] == 'Fx':
-                fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(ptLoad[1], ptLoad[2], self.L()))
-            elif ptLoad[0] == 'Fy':
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), 'Fy'))
-            elif ptLoad[0] == 'Fz':
-                fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(ptLoad[1], ptLoad[2], self.L(), 'Fz'))
-            elif ptLoad[0] == 'Mx':
-                fer = add(fer, PyNite.FixedEndReactions.FER_Torque(ptLoad[1], ptLoad[2], self.L()))
-            elif ptLoad[0] == 'My':
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), 'My'))
-            elif ptLoad[0] == 'Mz':     
-                fer = add(fer, PyNite.FixedEndReactions.FER_Moment(ptLoad[1], ptLoad[2], self.L(), 'Mz'))
-                
-        # Sum the fixed end reactions for the distributed loads
-        for distLoad in self.DistLoads:
+        # Create auxiliary lists of released/unreleased DOFs
+        R1_indices, R2_indices = self.AuxList()
 
-            if distLoad[0] == 'Fx':
-                fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L()))
-            else:
-                fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(distLoad[1], distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))        
- 
-        # Count the number of released degrees of freedom
-        NumReleases = 0
-        for DOF in self.Releases:
-            if DOF == True:
-                NumReleases += 1
-        
-        # Partition the fixed end reaction vector
-        # Initialize each partitioned fixed end reaction vector
-        fer1 = zeros((12 - NumReleases, 1))
-        fer2 = zeros((NumReleases, 1))
-        
-        # Variables used to track indexing during partitioning
-        m1 = 0
-        m2 = 0
-        
-        # Partition the fixed end reaction vector
-        for m in range(12):
-            
-            if self.Releases[m] == False:
-                
-                fer1.itemset((m1, 0), fer.item(m, 0))
-                m1 += 1
-            
-            elif self.Releases[m] == True:
-                
-                fer2.itemset((m2, 0), fer.item(m, 0))
-                m2 += 1
+        # Partition the matrix by slicing
+        fer1 = fer[R1_indices, :]
+        fer2 = fer[R2_indices, :]
         
         # Return the vector partitioned as 2 subvectors
         return fer1, fer2

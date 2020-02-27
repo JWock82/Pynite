@@ -529,7 +529,7 @@ class FEModel3D():
 #%%
     def __AuxList(self):
         '''
-        Builds a table with known nodal displacements and with the positions in global stiffness matrix of known 
+        Builds a list with known nodal displacements and with the positions in global stiffness matrix of known 
         and unknown nodal displacements
 
         Returns
