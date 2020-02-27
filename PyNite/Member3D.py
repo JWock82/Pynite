@@ -72,34 +72,7 @@ class Member3D():
 #%%
     def k(self):
         '''
-        Returns the local condensed stiffness matrix
-        '''
-        
-        # Get the local stiffness matrix, partitioned as 4 submatrices in
-        # preparation for static condensation
-        k11, k12, k21, k22 = self.__k_Partition()
-               
-        # Calculate the condensed local stiffness matrix
-        k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
-        
-        # Expand the condensed local stiffness matrix
-        i=0
-        for DOF in self.Releases:
-            
-            if DOF == True:
-                k_Condensed = insert(k_Condensed, i, 0, axis = 0)
-                k_Condensed = insert(k_Condensed, i, 0, axis = 1)
-                
-            i += 1
-
-        # Return the local stiffness matrix, with end releases applied
-        return k_Condensed
-    
-#%%
-    def __k_Partition(self):
-        '''
-        Partitions the local stiffness matrix in preparation for static
-        condensation. Used for applying end releases to the member.
+        Returns the local condensed (expanded) stiffness matrix
         '''
         
         # Get the properties needed to form the local stiffness matrix
@@ -124,57 +97,38 @@ class Member3D():
                     [0,      0,             0,             -G*J/L, 0,            0,            0,      0,             0,             G*J/L,  0,            0],
                     [0,      0,             -6*E*Iy/L**2,  0,      2*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      4*E*Iy/L,     0],
                     [0,      6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            4*E*Iz/L]])
-        
-        # Create auxiliary lists of released/unreleased DOFs
-        R1_indices, R2_indices = self.AuxList()
-
-        # Partition the matrix by slicing
-        k11 = k[R1_indices, :][:, R1_indices]
-        k12 = k[R1_indices, :][:, R2_indices]
-        k21 = k[R2_indices, :][:, R1_indices]
-        k22 = k[R2_indices, :][:, R2_indices]
-        
-        # Return the matrix, partitioned into 4 submatrices
-        return k11, k12, k21, k22
-
-#%%
-    def kg(self, P=0):
-        '''
-        Returns the local condensed geometric stiffness matrix
-        '''
-        
-        # Get the local geometric stiffness matrix, partitioned as 4 submatrices in
+    
+        # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
-        kg11, kg12, kg21, kg22 = self.__kg_Partition(P)
+        k11, k12, k21, k22 = self.__Partition(k)
                
-        # Calculate the condensed local geometric stiffness matrix
-        kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
+        # Calculate the condensed local stiffness matrix
+        k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
         
-        # Expand the condensed local geometric stiffness matrix
+        # Expand the condensed local stiffness matrix
         i=0
         for DOF in self.Releases:
             
             if DOF == True:
-                kg_Condensed = insert(kg_Condensed, i, 0, axis = 0)
-                kg_Condensed = insert(kg_Condensed, i, 0, axis = 1)
+                k_Condensed = insert(k_Condensed, i, 0, axis = 0)
+                k_Condensed = insert(k_Condensed, i, 0, axis = 1)
                 
             i += 1
 
-        # Return the local geomtric stiffness matrix, with end releases applied
-        return kg_Condensed
+        # Return the local stiffness matrix, with end releases applied
+        return k_Condensed
 
 #%%
-    def __kg_Partition(self, P=0):
+    def kg(self, P=0):
         '''
-        Partitions the local geometric stiffness matrix in preparation for static
-        condensation. Used for applying end releases to the member.
+        Returns the local condensed (expanded) geometric stiffness matrix
 
         Parameters
         ----------
         P : number
             The axial force acting on the member (compression = +, tension = -)
         '''
-        
+
         # Get the properties needed to form the local geometric stiffness matrix
         Ip = self.Iy + self.Iz
         A = self.A
@@ -196,17 +150,25 @@ class Member3D():
         
         kg = kg*P/L
 
-        # Create auxiliary lists of released/unreleased DOFs
-        R1_indices, R2_indices = self.AuxList()
-
-        # Partition the matrix by slicing
-        kg11 = kg[R1_indices, :][:, R1_indices]
-        kg12 = kg[R1_indices, :][:, R2_indices]
-        kg21 = kg[R2_indices, :][:, R1_indices]
-        kg22 = kg[R2_indices, :][:, R2_indices]
+        # Partition the geometric stiffness matrix as 4 submatrices in
+        # preparation for static condensation
+        kg11, kg12, kg21, kg22 = self.__Partition(kg)
+               
+        # Calculate the condensed local geometric stiffness matrix
+        kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
         
-        # Return the matrix, partitioned into 4 submatrices
-        return kg11, kg12, kg21, kg22
+        # Expand the condensed local geometric stiffness matrix
+        i=0
+        for DOF in self.Releases:
+            
+            if DOF == True:
+                kg_Condensed = insert(kg_Condensed, i, 0, axis = 0)
+                kg_Condensed = insert(kg_Condensed, i, 0, axis = 1)
+                
+            i += 1
+
+        # Return the local geomtric stiffness matrix, with end releases applied
+        return kg_Condensed
     
 #%%
     def fer(self):
@@ -215,8 +177,8 @@ class Member3D():
         '''
         
         # Partition the local stiffness matrix and local fixed end reaction vector
-        k11, k12, k21, k22 = self.__k_Partition()
-        fer1, fer2 = self.__fer_Partition()
+        k11, k12, k21, k22 = self.__Partition(self.k())
+        fer1, fer2 = self.__Partition(self.__fer_Unc())
         
         # Calculate the condensed fixed end reaction vector
         ferCondensed = subtract(fer1, matmul(matmul(k12, inv(k22)), fer2))
@@ -289,6 +251,24 @@ class Member3D():
         
         # Return the fixed end reaction vector, uncondensed
         return fer
+
+#%%
+    def __Partition(self, unp_matrix, R1_indices, R2_indices):
+
+        # Create auxiliary lists of released/unreleased DOFs
+        R1_indices, R2_indices = self.AuxList()
+
+        # Partition the matrix by slicing
+        if unp_matrix.shape[1] == 1:
+            m1 = unp_matrix[R1_indices, :]
+            m2 = unp_matrix[R2_indices, :]
+            return m1, m2
+        else:
+            m11 = unp_matrix[R1_indices, :][:, R1_indices]
+            m12 = unp_matrix[R1_indices, :][:, R2_indices]
+            m21 = unp_matrix[R2_indices, :][:, R1_indices]
+            m22 = unp_matrix[R2_indices, :][:, R2_indices]
+            return  m11, m12, m21, m22
 
 #%%   
     def f(self):
