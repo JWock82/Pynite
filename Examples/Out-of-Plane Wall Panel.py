@@ -143,57 +143,42 @@ class RectWall():
         for node in self.fem.Nodes:
 
             # Plate elements don't have the following degrees of freedom, so they'll need to be supported
+            node.RZ = 0.0
             node.SupportRZ = True
 
             # Determine if the node falls on any of the boundaries
             # Left edge
             if np.isclose(node.X, 0.0):
                 if self.left_support == "Fixed":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
-                    node.SupportRX = True
-                    node.SupportRY = True
+                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.left_support == "Pinned":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
+                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Right edge
             elif np.isclose(node.X, self.width):
                 if self.right_support == "Fixed":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
-                    node.SupportRX = True
-                    node.SupportRY = True
+                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.right_support == "Pinned":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
+                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Bottom edge
             elif np.isclose(node.Y, 0.0):
                 if self.bot_support == "Fixed":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
-                    node.SupportRX = True
-                    node.SupportRY = True
+                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.bot_support == "Pinned":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
+                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Top edge
             elif np.isclose(node.Y, self.height):
                 if self.top_support == "Fixed":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
-                    node.SupportRX = True
-                    node.SupportRY = True
+                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.top_support == "Pinned":
-                    node.SupportDX = True
-                    node.SupportDY = True
-                    node.SupportDZ = True
+                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
+                    node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
 
     # Analyzes the wall
     def analyze(self):
