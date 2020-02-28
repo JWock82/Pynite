@@ -125,21 +125,10 @@ class VisNode():
     sphere = vtk.vtkSphereSource()
     sphere.SetCenter(X, Y, Z)
     sphere.SetRadius(0.6*textHeight)
-
-    # Set up a mapper for the node
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(sphere.GetOutputPort())
-
-    # Set up an actor for the node
-    self.actor = vtk.vtkActor()
-
-    if color == 'red':
-      self.actor.GetProperty().SetColor(255, 0, 0) # Red
-    elif color == 'yellow':
-      self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
-
-    self.actor.SetMapper(mapper)
-
+    sphere.Update()
+    polyData.ShallowCopy(sphere.GetOutput())
+    appendFilter.AddInputData(polyData)
+    
     # Create the text for the node label
     label = vtk.vtkVectorText()
     label.SetText(node.Name)
