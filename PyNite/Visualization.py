@@ -157,6 +157,7 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
+      polyData = vtk.vtkPolyData()
       polyData.ShallowCopy(support.GetOutput())
       appendFilter.AddInputData(polyData)
     
@@ -173,6 +174,7 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
+      polyData = vtk.vtkPolyData()
       polyData.ShallowCopy(support.GetOutput())
       appendFilter.AddInputData(polyData)
     
@@ -189,6 +191,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -200,6 +203,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -211,6 +215,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -224,6 +229,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -235,6 +241,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -246,6 +253,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -259,6 +267,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -270,6 +279,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -281,6 +291,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -294,6 +305,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -305,6 +317,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -316,6 +329,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -329,6 +343,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -340,6 +355,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -351,6 +367,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -364,6 +381,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -375,6 +393,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -386,6 +405,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
+        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
     
@@ -397,7 +417,7 @@ class VisNode():
     mapper.SetInputConnection(appendFilter.GetOutputPort())
     self.actor = vtk.vtkActor()
 
-    # Add color to the node's actor
+    # Add color to the actors
     if color == 'red':
       self.actor.GetProperty().SetColor(255, 0, 0) # Red
       self.lblActor.GetProperty().SetColor(255, 0, 0) # Red
