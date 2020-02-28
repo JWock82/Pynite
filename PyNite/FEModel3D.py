@@ -996,7 +996,10 @@ class FEModel3D():
 
             # Determine if 'K' is singular
             print('...Checking global stability')
-            if matrix_rank(K11) < min(K11.shape):
+            if K11.shape == (0, 0):
+                # All displacements are known, so D1 is an empty vector
+                D1 = []
+            elif matrix_rank(K11) < min(K11.shape):
                 # Return out of the method if 'K' is singular and provide an error message
                 print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
                 return
