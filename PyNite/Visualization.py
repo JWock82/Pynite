@@ -414,14 +414,9 @@ class VisNode():
     # Update the append filter
     appendFilter.Update()
 
-    # Remove any duplicate points
-    cleanFilter = vtk.vtkCleanPolyData()
-    cleanFilter.SetInputConnection(appendFilter.GetOutputPort())
-    cleanFilter.Update()
-
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(cleanFilter.GetOutputPort())
+    mapper.SetInputConnection(appendFilter.GetOutputPort())
 
     self.actor = vtk.vtkActor()
     self.actor.SetMapper(mapper)
