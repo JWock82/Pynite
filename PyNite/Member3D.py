@@ -42,14 +42,21 @@ class Member3D():
 
 #%%
     def L(self):
+        '''
+        Returns the length of the member.
+        '''
+
+        # Get the i-node and the j-node for the member
         iNode = self.iNode
         jNode = self.jNode
+
+        # Return the distance between the two nodes
         return ((jNode.X-iNode.X)**2+(jNode.Y-iNode.Y)**2+(jNode.Z-iNode.Z)**2)**0.5
 
 #%%
     def AuxList(self):
         '''
-        Builds lists of unreleased and released DOFs
+        Builds lists of unreleased and released degree of freedom indices for the member.
 
         Returns
         -------
@@ -72,18 +79,15 @@ class Member3D():
 #%%
     def k(self):
         '''
-        Returns the condensed (and expanded) local stiffness matrix for the member
+        Returns the condensed (and expanded) local stiffness matrix for the member.
         '''
-        
-        # Create the uncondensed local stiffness matrix
-        k = self.__k_Unc()
 
-        # Get the auxiliary lists of unreleased and released degrees of freedom
+        # Get the auxiliary lists of unreleased and released degree of freedom indices
         R1_indices, R2_indices = self.AuxList()
 
         # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
-        k11, k12, k21, k22 = self.__Partition(k, R1_indices, R2_indices)
+        k11, k12, k21, k22 = self.__Partition(self.__k_Unc(), R1_indices, R2_indices)
                
         # Calculate the condensed local stiffness matrix
         k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
@@ -188,9 +192,10 @@ class Member3D():
 #%%
     def fer(self):
         '''
-        Returns the condensed (and expanded) local fixed end reaction vector for the member
+        Returns the condensed (and expanded) local fixed end reaction vector for the member.
         '''
         
+        # Get the lists of unreleased and released degree of freedom indices
         R1_indices, R2_indices = self.AuxList()
 
         # Partition the local stiffness matrix and local fixed end reaction vector
@@ -251,6 +256,9 @@ class Member3D():
 
 #%%
     def __Partition(self, unp_matrix, R1_indices, R2_indices):
+        '''
+        Partitions a matrix into sub-matrices based on unreleased and released degree of freedom indices.
+        '''
 
         # Create auxiliary lists of released/unreleased DOFs
         R1_indices, R2_indices = self.AuxList()
@@ -270,7 +278,7 @@ class Member3D():
 #%%   
     def f(self):
         '''
-        Returns the member's local end force vector
+        Returns the member's local end force vector.
         '''
         
         # Calculate and return the member's local end force vector
@@ -279,7 +287,7 @@ class Member3D():
 #%%
     def d(self):
        '''
-       Returns the member's local displacement vector
+       Returns the member's local displacement vector.
        '''
 
        # Calculate and return the local displacement vector
@@ -288,7 +296,10 @@ class Member3D():
 #%%  
     # Transformation matrix
     def T(self):
-        
+        '''
+        Returns the transformation matrix for the member.
+        '''
+
         x1 = self.iNode.X
         x2 = self.jNode.X
         y1 = self.iNode.Y
@@ -414,7 +425,7 @@ class Member3D():
 #%%
     def D(self):
         '''
-        Returns the member's global displacement vector
+        Returns the member's global displacement vector.
         '''
         
         # Initialize the displacement vector
@@ -446,7 +457,7 @@ class Member3D():
 #%%
     def Shear(self, Direction, x):
         '''
-        Returns the shear at a point along the member's length
+        Returns the shear at a point along the member's length.
         
         Parameters
         ----------
