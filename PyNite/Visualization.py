@@ -125,7 +125,6 @@ class VisNode():
     sphere = vtk.vtkSphereSource()
     sphere.SetCenter(X, Y, Z)
     sphere.SetRadius(0.6*textHeight)
-<<<<<<< HEAD
 
     # Set up a mapper for the node
     mapper = vtk.vtkPolyDataMapper()
@@ -140,13 +139,6 @@ class VisNode():
       self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
 
     self.actor.SetMapper(mapper)
-=======
-    
-    # Copy and append the sphere to the append filter
-    sphere.Update()
-    polyData.ShallowCopy(sphere.GetOutput())
-    appendFilter.AddInputData(polyData)
->>>>>>> vtk-Simplification
 
     # Create the text for the node label
     label = vtk.vtkVectorText()
@@ -427,29 +419,6 @@ class VisNode():
         support3.SetYLength(textHeight*0.6)
         support3.SetZLength(textHeight*0.6)
 
-<<<<<<< HEAD
-        # Set up mappers for the support
-        supportMapper1 = vtk.vtkPolyDataMapper()
-        supportMapper2 = vtk.vtkPolyDataMapper()
-        supportMapper3 = vtk.vtkPolyDataMapper()
-        supportMapper1.SetInputConnection(support1.GetOutputPort())
-        supportMapper2.SetInputConnection(support2.GetOutputPort())
-        supportMapper3.SetInputConnection(support3.GetOutputPort())
-        supportMappers.append(supportMapper1)
-        supportMappers.append(supportMapper2)
-        supportMappers.append(supportMapper3)
-
-        # Set up actors for the support
-        supportActor1 = vtk.vtkActor()
-        supportActor2 = vtk.vtkActor()
-        supportActor3 = vtk.vtkActor()
-        supportActor1.SetMapper(supportMapper1)
-        supportActor2.SetMapper(supportMapper2)
-        supportActor3.SetMapper(supportMapper3)
-        self.supportActors.append(supportActor1)
-        self.supportActors.append(supportActor2)
-        self.supportActors.append(supportActor3)
-=======
         # Copy and append the support data to the append filter
         support3.Update()
         polyData = vtk.vtkPolyData()
@@ -505,7 +474,6 @@ class VisAuxNode():
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition(X+0.6*textHeight, Y+0.6*textHeight, Z)
     self.lblActor.GetProperty().SetColor(255,0,0) #red
->>>>>>> vtk-Simplification
                
 # Converts a member object into a member for the viewer
 class VisMember():
