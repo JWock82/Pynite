@@ -143,11 +143,6 @@ class VisNode():
     self.lblActor.SetScale(textHeight, textHeight, textHeight)
     self.lblActor.SetPosition(X + 0.6*textHeight, Y + 0.6*textHeight, Z)
 
-    if color == 'red':
-      self.lblActor.GetProperty().SetColor(255, 0, 0) # Red
-    elif color == 'yellow':
-      self.lblActor.GetProperty().SetColor(255, 255, 0) # Yellow
-
     # Generate any supports that occur at the node
     # Check for a fixed suppport
     if node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
@@ -162,7 +157,6 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
-      polyData = vtk.vtkPolyData()
       polyData.ShallowCopy(support.GetOutput())
       appendFilter.AddInputData(polyData)
     
@@ -179,7 +173,6 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
-      polyData = vtk.vtkPolyData()
       polyData.ShallowCopy(support.GetOutput())
       appendFilter.AddInputData(polyData)
     
@@ -196,7 +189,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -208,7 +200,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -220,7 +211,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -234,7 +224,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -246,7 +235,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -258,7 +246,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -272,7 +259,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -284,7 +270,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -296,7 +281,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -310,7 +294,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -322,7 +305,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -334,7 +316,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -348,7 +329,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -360,7 +340,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -372,7 +351,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
       
@@ -386,7 +364,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support1.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -398,7 +375,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support2.GetOutput())
         appendFilter.AddInputData(polyData)
 
@@ -410,7 +386,6 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polyData = vtk.vtkPolyData()
         polyData.ShallowCopy(support3.GetOutput())
         appendFilter.AddInputData(polyData)
     
@@ -425,8 +400,10 @@ class VisNode():
     # Add color to the node's actor
     if color == 'red':
       self.actor.GetProperty().SetColor(255, 0, 0) # Red
+      self.lblActor.GetProperty().SetColor(255, 0, 0) # Red
     elif color == 'yellow':
       self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
+      self.lblActor.GetProperty().SetColor(255, 255, 0) # Yellow
     
     # Set the mapper for the node's actor
     self.actor.SetMapper(mapper)
