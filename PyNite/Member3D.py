@@ -82,12 +82,9 @@ class Member3D():
         Returns the condensed (and expanded) local stiffness matrix for the member.
         '''
 
-        # Get the auxiliary lists of unreleased and released degree of freedom indices
-        R1_indices, R2_indices = self.AuxList()
-
         # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
-        k11, k12, k21, k22 = self.__Partition(self.__k_Unc(), R1_indices, R2_indices)
+        k11, k12, k21, k22 = self.__Partition(self.__k_Unc())
                
         # Calculate the condensed local stiffness matrix
         k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
@@ -199,8 +196,8 @@ class Member3D():
         R1_indices, R2_indices = self.AuxList()
 
         # Partition the local stiffness matrix and local fixed end reaction vector
-        k11, k12, k21, k22 = self.__Partition(self.__k_Unc(), R1_indices, R2_indices)
-        fer1, fer2 = self.__Partition(self.__fer_Unc(), R1_indices, R2_indices)
+        k11, k12, k21, k22 = self.__Partition(self.__k_Unc())
+        fer1, fer2 = self.__Partition(self.__fer_Unc())
         
         # Calculate the condensed fixed end reaction vector
         ferCondensed = subtract(fer1, matmul(matmul(k12, inv(k22)), fer2))
@@ -255,7 +252,7 @@ class Member3D():
         return fer
 
 #%%
-    def __Partition(self, unp_matrix, R1_indices, R2_indices):
+    def __Partition(self, unp_matrix):
         '''
         Partitions a matrix into sub-matrices based on unreleased and released degree of freedom indices.
         '''
