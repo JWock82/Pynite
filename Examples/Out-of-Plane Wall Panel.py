@@ -402,8 +402,8 @@ class RectWall():
 # ---------------------------------------------
 E = 57000*(4500)**0.5*144 # psf
 t = 1 # ft
-width = 20 # ft
-height = 20 # ft
+width = 10 # ft
+height = 10 # ft
 nu = 0.3
 meshsize = 1 # ft
 load = 250 # psf
