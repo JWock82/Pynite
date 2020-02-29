@@ -1,6 +1,6 @@
 # %%
 from numpy import matrix, zeros, delete, insert, matmul, divide, add, subtract, nanmax, seterr, shape
-from numpy.linalg import inv, matrix_rank
+from numpy.linalg import solve, matrix_rank
 from math import isclose
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
@@ -886,7 +886,7 @@ class FEModel3D():
         else:
             # Calculate the unknown displacements D1
             print('...Calculating global displacement vector')
-            D1 = matmul(inv(K11), subtract(subtract(P1, FER1), matmul(K12, D2)))
+            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
 
         # Form the global displacement vector, D, from D1 and D2
         D = zeros((len(self.Nodes)*6, 1))
@@ -1006,7 +1006,7 @@ class FEModel3D():
             else:
                 # Calculate the global displacement vector
                 print('...Calculating global displacement vector')
-                D1 = matmul(inv(K11), subtract(subtract(P1, FER1), matmul(K12, D2)))
+                D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
             
             D = zeros((len(self.Nodes)*6, 1))
 
