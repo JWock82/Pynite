@@ -8,35 +8,35 @@ from PyNite import FEModel3D
 SimpleBeam = FEModel3D()
 
 # Add nodes (14 ft = 168 in apart)
-SimpleBeam.AddNode("N1", 0, 0, 0)
-SimpleBeam.AddNode("N2", 168, 0, 0)
+SimpleBeam.AddNode('N1', 0, 0, 0)
+SimpleBeam.AddNode('N2', 168, 0, 0)
 
 # Add a beam with the following properties:
 # E = 29000 ksi, G = 11400 ksi, Iy = 100 in^4, Iz = 150 in^4, J = 250 in^4, A = 20 in^2
-SimpleBeam.AddMember("M1", "N1", "N2", 29000, 11400, 100, 150, 250, 20)
+SimpleBeam.AddMember('M1', 'N1', 'N2', 29000, 11400, 100, 150, 250, 20)
 
 # Provide simple supports
-SimpleBeam.DefineSupport("N1", True, True, True, False, False, False)
-SimpleBeam.DefineSupport("N2", True, True, True, True, False, False)
+SimpleBeam.DefineSupport('N1', True, True, True, False, False, False)
+SimpleBeam.DefineSupport('N2', True, True, True, True, False, False)
 
 # Add a uniform load of 200 lbs/ft to the beam
-SimpleBeam.AddMemberDistLoad("M1", "Fy", -200/1000/12, -200/1000/12, 0, 168)
+SimpleBeam.AddMemberDistLoad('M1', 'Fy', -200/1000/12, -200/1000/12, 0, 168)
 
 # Alternatively the following line would do apply the load to the full length of the member as well
-# SimpleBeam.AddMemberDistLoad("M1", "Fy", 200/1000/12, 200/1000/12)
+# SimpleBeam.AddMemberDistLoad('M1', 'Fy', 200/1000/12, 200/1000/12)
 
 # Analyze the beam
 SimpleBeam.Analyze()
 
 # Print the shear, moment, and deflection diagrams
-SimpleBeam.GetMember("M1").PlotShear("Fy")
-SimpleBeam.GetMember("M1").PlotMoment("Mz")
-SimpleBeam.GetMember("M1").PlotDeflection("dy")
+SimpleBeam.GetMember('M1').PlotShear('Fy')
+SimpleBeam.GetMember('M1').PlotMoment('Mz')
+SimpleBeam.GetMember('M1').PlotDeflection('dy')
 
 # Print reactions at each end of the beam
-print("Left Support Reaction: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N1").RxnFZ))
-print("Right Support Reacton: {Rxn:.2f} kip".format(Rxn = SimpleBeam.GetNode("N2").RxnFZ))
+print('Left Support Reaction:', round(SimpleBeam.GetNode('N1').RxnFY, 3), 'kip')
+print('Right Support Reacton:', round(SimpleBeam.GetNode('N2').RxnFY, 3), 'kip')
 
-# Render the beam for viewing with a text height of 5 inches
+# Render the deformed shape of the beam magnified 100 times, with a text height of 5 inches
 from PyNite import Visualization
-Visualization.DeformedShape(SimpleBeam, 50, 5)
+Visualization.DeformedShape(SimpleBeam, 100, 5)
