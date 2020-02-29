@@ -70,10 +70,7 @@ def RenderModel(model, textHeight=5):
   for visPlate in visPlates:
 
     # Add the actors for the plate
-    renderer.AddActor(visPlate.actor1)
-    renderer.AddActor(visPlate.actor2)
-    renderer.AddActor(visPlate.actor3)
-    renderer.AddActor(visPlate.actor4)
+    renderer.AddActor(visPlate.actor)
 
     # Add the actor for the plate label
     renderer.AddActor(visPlate.lblActor)
@@ -126,6 +123,7 @@ class VisNode():
     sphere.SetCenter(X, Y, Z)
     sphere.SetRadius(0.6*textHeight)
     sphere.Update()
+
     polyData.ShallowCopy(sphere.GetOutput())
     appendFilter.AddInputData(polyData)
     
@@ -523,27 +521,37 @@ class VisPlate():
         line3.SetPoint2(Xn, Yn, Zn)
         line4.SetPoint1(Xn, Yn, Zn)
 
-    # Set up mappers for the plate
-    mapper1 = vtk.vtkPolyDataMapper()
-    mapper2 = vtk.vtkPolyDataMapper()
-    mapper3 = vtk.vtkPolyDataMapper()
-    mapper4 = vtk.vtkPolyDataMapper()
+    # Create a 'vtkAppendPolyData' filter to add all the lines to
+    appendFilter = vtk.vtkAppendPolyData()
 
-    mapper1.SetInputConnection(line1.GetOutputPort())
-    mapper2.SetInputConnection(line2.GetOutputPort())
-    mapper3.SetInputConnection(line3.GetOutputPort())
-    mapper4.SetInputConnection(line4.GetOutputPort())
+    line1.Update()
+    polyData1 = vtk.vtkPolyData()
+    polyData1.ShallowCopy(line1.GetOutput())
+    appendFilter.AddInputData(polyData1)
 
-    # Set up actors for the plate
-    self.actor1 = vtk.vtkActor()
-    self.actor2 = vtk.vtkActor()
-    self.actor3 = vtk.vtkActor()
-    self.actor4 = vtk.vtkActor()
+    line2.Update()
+    polyData2 = vtk.vtkPolyData()
+    polyData2.ShallowCopy(line2.GetOutput())
+    appendFilter.AddInputData(polyData2)
 
-    self.actor1.SetMapper(mapper1)
-    self.actor2.SetMapper(mapper2)
-    self.actor3.SetMapper(mapper3)
-    self.actor4.SetMapper(mapper4)
+    line3.Update()
+    polyData3 = vtk.vtkPolyData()
+    polyData3.ShallowCopy(line3.GetOutput())
+    appendFilter.AddInputData(polyData3)
+
+    line4.Update()
+    polyData4 = vtk.vtkPolyData()
+    polyData4.ShallowCopy(line4.GetOutput())
+    appendFilter.AddInputData(polyData4)
+    
+    # Set up a mapper
+    mapper = vtk.vtkPolyDataMapper()
+    appendFilter.Update()
+    mapper.SetInputConnection(appendFilter.GetOutputPort())
+
+    # Set up an actor
+    self.actor = vtk.vtkActor()
+    self.actor.SetMapper(mapper)
 
     # Create the text for the plate label
     label = vtk.vtkVectorText()
