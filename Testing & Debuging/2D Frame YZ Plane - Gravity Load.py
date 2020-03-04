@@ -41,10 +41,10 @@ frame.AddNodeLoad('N3', 'FY', -30)
 frame.AddNodeLoad('N4', 'FY', -30)
 
 # Analyze the model
-frame.Analyze(check_statics=True)
+frame.Analyze()
 
 # Render the model for viewing
-Visualization.RenderModel(frame, 15)
+Visualization.DeformedShape(frame, 15)
 
 node1 = frame.GetNode('N1')
 node6 = frame.GetNode('N6')
