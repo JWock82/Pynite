@@ -580,9 +580,9 @@ class Member3D():
         V = []
         
         # Calculate the shear diagram
-        for i in range(20):
-            x.append(self.L() / 19 * i)
-            V.append(self.Shear(Direction, self.L() / 19 * i))
+        for i in range(21):
+            x.append(self.L() / 20 * i)
+            V.append(self.Shear(Direction, self.L() / 20 * i))
 
         Member3D.__plt.plot(x, V)
         Member3D.__plt.ylabel('Shear')
@@ -722,10 +722,10 @@ class Member3D():
         M = []
         
         # Calculate the moment diagram
-        for i in range(20):
+        for i in range(21):
             
-            x.append(self.L() / 19 * i)
-            M.append(self.Moment(Direction, self.L() / 19 * i))
+            x.append(self.L() / 20 * i)
+            M.append(self.Moment(Direction, self.L() / 20 * i))
 
         Member3D.__plt.plot(x, M)
         Member3D.__plt.ylabel('Moment')
@@ -806,9 +806,9 @@ class Member3D():
         T = []
         
         # Calculate the torsional moment diagram
-        for i in range(20):
-            x.append(self.L() / 19 * i)
-            T.append(self.Torsion(self.L() / 19 * i))
+        for i in range(21):
+            x.append(self.L() / 20 * i)
+            T.append(self.Torsion(self.L() / 20 * i))
 
         Member3D.__plt.plot(x, T)
         Member3D.__plt.ylabel('Torsional Moment (Warping Torsion Not Included)') # Torsion results are for pure torsion. Torsional warping has not been considered
@@ -886,9 +886,9 @@ class Member3D():
         P = []
         
         # Calculate the axial force diagram
-        for i in range(20):
-            x.append(self.L() / 19 * i)
-            P.append(self.Axial(self.L() / 19 * i))
+        for i in range(21):
+            x.append(self.L() / 20 * i)
+            P.append(self.Axial(self.L() / 20 * i))
 
         Member3D.__plt.plot(x, P)
         Member3D.__plt.ylabel('Axial Force')
@@ -1023,10 +1023,10 @@ class Member3D():
         d = []
         
         # Calculate the deflection diagram
-        for i in range(20):
+        for i in range(21):
             
-            x.append(self.L() / 19 * i)
-            d.append(self.Deflection(Direction, self.L() / 19 * i))
+            x.append(self.L() / 20 * i)
+            d.append(self.Deflection(Direction, self.L() / 20 * i))
 
         Member3D.__plt.plot(x, d)
         Member3D.__plt.ylabel('Deflection')
@@ -1108,10 +1108,10 @@ class Member3D():
         d_relative = []
         
         # Calculate the relative deflection diagram
-        for i in range(20):
+        for i in range(21):
             
-            x.append(self.L()/19*i)
-            d_relative.append(self.RelativeDeflection(Direction, self.L()/19*i))
+            x.append(self.L()/20*i)
+            d_relative.append(self.RelativeDeflection(Direction, self.L()/20*i))
 
         Member3D.__plt.plot(x, d_relative)
         Member3D.__plt.ylabel('Relative Deflection')
