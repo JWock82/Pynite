@@ -44,4 +44,4 @@ print('Calculated results: ', frame.GetNode('N2').DY, frame.GetNode('N3').DZ)
 print('Expected results: ', -0.063, 1.825)
 
 # Render the model for viewing
-Visualization.RenderModel(frame)
+Visualization.DeformedShape(frame, scale_factor=40, textHeight=5)
