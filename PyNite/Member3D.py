@@ -1036,18 +1036,18 @@ class Member3D():
     
 #%%   
     def RelativeDeflection(self, Direction, x):
-        """
+        '''
         Returns the relative deflection at a point along the member's length
         
         Parameters
         ----------
         Direction : string
             The direction in which to find the relative deflection. Must be one of the following:
-                "dy" = Deflection in the local y-axis
-                "dz" = Deflection in the local x-axis
+                'dy' = Deflection in the local y-axis
+                'dz' = Deflection in the local x-axis
         x : number
             The location at which to find the relative deflection
-        """
+        '''
         
         d = self.d()
         dyi = d[1,0]
@@ -1057,9 +1057,9 @@ class Member3D():
         L = self.L()
        
         # Check which axis is of interest
-        if Direction == "dy":
+        if Direction == 'dy':
             
-            # Check which segment "x" falls on
+            # Check which segment 'x' falls on
             for segment in self.SegmentsZ:
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
@@ -1071,7 +1071,7 @@ class Member3D():
                 lastIndex = len(self.SegmentsZ) - 1
                 return (self.SegmentsZ[lastIndex].Deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
                 
-        elif Direction == "dz":
+        elif Direction == 'dz':
             
             for segment in self.SegmentsY:
                 
@@ -1086,14 +1086,14 @@ class Member3D():
 
 #%%
     def PlotRelativeDeflection(self, Direction):
-        """
+        '''
         Plots the deflection diagram for the member
         
         Parameters
         ----------
-        Direction : {"dy", "dz"}
+        Direction : {'dy', 'dz'}
             The direction in which to plot the deflection.
-        """
+        '''
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1186,7 +1186,7 @@ class Member3D():
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used,
         #         so slope-deflection has been applied to solve for it.
         # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what PyNite uses for moments about
-        #         the local y-axis, so a negative value has been applied to those value specifically.
+        #         the local y-axis, so a negative value has been applied to those values specifically.
         m1z = f[5, 0]       # local z-axis moment at start of member
         m2z = f[11, 0]      # local z-axis moment at end of member
         m1y = -f[4, 0]      # local y-axis moment at start of member
