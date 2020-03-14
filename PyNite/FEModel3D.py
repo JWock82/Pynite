@@ -18,11 +18,12 @@ class FEModel3D():
         Initializes a new 3D finite element model.
         '''
         
-        self.Nodes = []    # A list of the structure's nodes
-        self.auxNodes = [] # A list of the structure's auxiliary nodes
-        self.Members = []  # A list of the structure's members
-        self.Plates = []   # A list of the structure's plates
-        self.__D = []      # A list of the structure's nodal displacements
+        self.Nodes = []      # A list of the structure's nodes
+        self.auxNodes = []   # A list of the structure's auxiliary nodes
+        self.Members = []    # A list of the structure's members
+        self.Plates = []     # A list of the structure's plates
+        self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
+        self.LoadCombos = {} # A dictionary of the structure's load combinations
 
 #%%
     def AddNode(self, Name, X, Y, Z):
@@ -177,24 +178,24 @@ class FEModel3D():
         '''
         Defines the support conditions at a node.
         
-        Nodes will default to fully unsupported unless specified otherwise.
+        Nodes will default to fully unsupported unless specified otherwise. This method will overide any nodal displacements previously defined at the node.
         
         Parameters
         ----------
         Node : string
             The name of the node where the support is being defined
         SupportDX : number
-            Indicates whether the node is supported against translation in the global X-direction or if there is a support's settlement.
+            Indicates whether the node is supported against translation in the global X-direction or if there is a support settlement.
         SupportDY : number
-            Indicates whether the node is supported against translation in the global Y-direction or if there is a support's settlement.
+            Indicates whether the node is supported against translation in the global Y-direction or if there is a support settlement.
         SupportDZ : number
-            Indicates whether the node is supported against translation in the global Z-direction or if there is a support's settlement.
+            Indicates whether the node is supported against translation in the global Z-direction or if there is a support settlement.
         SupportRX : number
-            Indicates whether the node is supported against rotation about the global X-axis or if there is a support's settlement.
+            Indicates whether the node is supported against rotation about the global X-axis or if there is a support settlement.
         SupportRY : number
-            Indicates whether the node is supported against rotation about the global Y-axis or if there is a support's settlement.
+            Indicates whether the node is supported against rotation about the global Y-axis or if there is a support settlement.
         SupportRZ : number
-            Indicates whether the node is supported against rotation about the global Z-axis or if there is a support's settlement.
+            Indicates whether the node is supported against rotation about the global Z-axis or if there is a support settlement.
         '''
         
         # Get the node to be supported
@@ -202,40 +203,34 @@ class FEModel3D():
                 
         # Set the node's support conditions
         if SupportDX == True:
-            node.DX = 0.0
-            node.SupportDX = True
-        elif SupportDX != False:
-            node.DX = SupportDX
+            node.SupportDX = 0.0
+        else:
+            node.SupportDX = None
         
         if SupportDY == True:
-            node.DY = 0.0
-            node.SupportDY = True
-        elif SupportDY != False:
-            node.DY = SupportDY
+            node.SupportDY = 0.0
+        else:
+            node.SupportDY = None
 
         if SupportDZ == True:
-            node.DZ = 0.0
-            node.SupportDZ = True
-        elif SupportDZ != False:
-            node.DZ = SupportDZ
+            node.SupportDZ = 0.0
+        else:
+            node.SupportDZ = None
 
         if SupportRX == True:
-            node.RX = 0.0
-            node.SupportRX = True
-        elif SupportRX != False:
-            node.RX = SupportRX
+            node.SupportRX = 0.0
+        else:
+            node.SupportRX = None
 
         if SupportRY == True:
-            node.RY = 0.0
-            node.SupportRY = True
-        elif SupportRY != False:
-            node.RY = SupportRY
+            node.SupportRY = 0.0
+        else:
+            node.SupportRY = None
 
         if SupportRZ == True:
-            node.RZ = 0.0
-            node.SupportRZ = True
-        elif SupportRZ != False:
-            node.RZ = SupportRZ
+            node.SupportRZ = 0.0
+        else:
+            node.SupportRZ = None
 
 #%%            
     def AddNodeDisplacement (self, Node, Direction, Magnitude): 
@@ -255,17 +250,17 @@ class FEModel3D():
         node = self.GetNode(Node)
 
         if Direction == 'DX':
-            node.DX = Magnitude
+            node.SupportDX = Magnitude
         if Direction == 'DY':
-            node.DY = Magnitude
+            node.SupportDY = Magnitude
         if Direction == 'DZ':
-            node.DZ = Magnitude
+            node.SupportDZ = Magnitude
         if Direction == 'RX':
-            node.RX = Magnitude
+            node.SupportRX = Magnitude
         if Direction == 'RY':
-            node.RY = Magnitude
+            node.SupportRY = Magnitude
         if Direction == 'RZ':
-            node.RZ = Magnitude
+            node.SupportRZ = Magnitude
 
 #%%
     def DefineReleases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
@@ -308,7 +303,7 @@ class FEModel3D():
         self.GetMember(Member).Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
             
 #%%
-    def AddNodeLoad(self, Node, Direction, P):
+    def AddNodeLoad(self, Node, Direction, P, case):
         '''
         Adds a nodal load to the model.
         
@@ -320,10 +315,12 @@ class FEModel3D():
             The global direction the load is being applied in. Forces are 'FX', 'FY', and 'FZ'. Moments are 'MX', 'MY', and 'MZ'.
         P : number
             The numeric value (magnitude) of the load.
+        case : string
+            The name of the load case the load belongs to.
         '''
         
         # Add the node load to the model
-        self.GetNode(Node).NodeLoads.append((Direction, P))
+        self.GetNode(Node).NodeLoads.append((Direction, P, case))
 
 #%%      
     def AddMemberPtLoad(self, Member, Direction, P, x):
@@ -549,53 +546,53 @@ class FEModel3D():
         # Create the auxiliary table
         for node in self.Nodes:
             
-            # Known displacement
-            if node.DX != None:
-                D2_indices.append((node.ID*6) + 0)
-                D2.append(node.DX)
-            # Unknown displacement
-            else:
+            # Unknown displacement DX
+            if node.SupportDX == None:
                 D1_indices.append((node.ID*6) + 0)
-
-            # Known displacement
-            if node.DY != None:
-                D2_indices.append((node.ID*6) + 1)
-                D2.append(node.DY)
-            # Unknown displacement
+            # Known displacement DX
             else:
+                D2_indices.append((node.ID*6) + 0)
+                D2.append(node.SupportDX)
+
+            # Unknown displacement DY
+            if node.SupportDY == None:
                 D1_indices.append((node.ID*6) + 1)
-
-            # Known displacement
-            if node.DZ != None:
-                D2_indices.append((node.ID*6) + 2)
-                D2.append(node.DZ)
-            # Unknown displacement
+            # Known displacement DY
             else:
+                D2_indices.append((node.ID*6) + 1)
+                D2.append(node.SupportDY)
+
+            # Unknown displacement DZ
+            if node.SupportDZ == None:
                 D1_indices.append((node.ID*6) + 2)
-
-            # Known displacement
-            if node.RX != None:
-                D2_indices.append((node.ID*6) + 3)
-                D2.append(node.RX)
-            # Unknown displacement
+            # Known displacement DZ
             else:
+                D2_indices.append((node.ID*6) + 2)
+                D2.append(node.SupportDZ)
+
+            # Unknown displacement RX
+            if node.SupportRX == None:
                 D1_indices.append((node.ID*6) + 3)
-
-            # Known displacement
-            if node.RY != None:
-                D2_indices.append((node.ID*6) + 4)
-                D2.append(node.RY)
-            # Unknown displacement
+            # Known displacement RX
             else:
+                D2_indices.append((node.ID*6) + 3)
+                D2.append(node.SupportRX)
+
+            # Unknown displacement RY
+            if node.SupportRY == None:
                 D1_indices.append((node.ID*6) + 4)
-
-            # Known displacement
-            if node.RZ != None:
-                D2_indices.append((node.ID*6) + 5)
-                D2.append(node.RZ)
-            # Unknown displacement
+            # Known displacement RY
             else:
+                D2_indices.append((node.ID*6) + 4)
+                D2.append(node.SupportRY)
+
+            # Unknown displacement RZ
+            if node.SupportRZ == None:
                 D1_indices.append((node.ID*6) + 5)
+            # Known displacement RZ
+            else:
+                D2_indices.append((node.ID*6) + 5)
+                D2.append(node.SupportRZ)
 
         # Return the indices and the known displacements
         return D1_indices, D2_indices, D2
@@ -749,9 +746,14 @@ class FEModel3D():
         return Kg
      
 #%%    
-    def FER(self):
+    def FER(self, combo):
         '''
         Assembles and returns the global fixed end reaction vector.
+
+        Parameters
+        ----------
+        combo : LoadCombo
+            The load combination to get the fixed end reaction vector for.
         '''
         
         # Initialize a zero vector to hold all the terms
@@ -762,7 +764,7 @@ class FEModel3D():
             
             # Get the member's global fixed end reaction vector
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            member_FER = member.FER()
+            member_FER = member.FER(combo)
 
             # Step through each term in the member's fixed end reaction vector
             # 'a' below is the row index in the member's fixed end reaction vector
@@ -784,9 +786,14 @@ class FEModel3D():
         return FER
     
 #%%
-    def P(self):
+    def P(self, combo):
         '''
         Assembles and returns the global nodal force vector.
+
+        Parameters
+        ----------
+        combo : LoadCombo
+            The load combination to get the force vector for.
         '''
             
         # Initialize a zero vector to hold all the terms
@@ -798,33 +805,42 @@ class FEModel3D():
             # Get the node's ID
             ID = node.ID
             
-            # Add the node's loads to the global nodal load vector
-            for load in node.NodeLoads:
-                
-                if load[0] == 'FX':
-                    P.itemset((ID*6 + 0, 0), P[ID*6 + 0, 0] + load[1])
-                elif load[0] == 'FY':
-                    P.itemset((ID*6 + 1, 0), P[ID*6 + 1, 0] + load[1])
-                elif load[0] == 'FZ':
-                    P.itemset((ID*6 + 2, 0), P[ID*6 + 2, 0] + load[1])
-                elif load[0] == 'MX':
-                    P.itemset((ID*6 + 3, 0), P[ID*6 + 3, 0] + load[1])
-                elif load[0] == 'MY':
-                    P.itemset((ID*6 + 4, 0), P[ID*6 + 4, 0] + load[1])
-                elif load[0] == 'MZ':
-                    P.itemset((ID*6 + 5, 0), P[ID*6 + 5, 0] + load[1])
+            for case, factor in combo:
+
+                # Add the node's loads to the global nodal load vector
+                for load in node.NodeLoads:
+
+                    if load[2] == case:
+
+                        if load[0] == 'FX':
+                            P.itemset((ID*6 + 0, 0), P[ID*6 + 0, 0] + factor*load[1])
+                        elif load[0] == 'FY':
+                            P.itemset((ID*6 + 1, 0), P[ID*6 + 1, 0] + factor*load[1])
+                        elif load[0] == 'FZ':
+                            P.itemset((ID*6 + 2, 0), P[ID*6 + 2, 0] + factor*load[1])
+                        elif load[0] == 'MX':
+                            P.itemset((ID*6 + 3, 0), P[ID*6 + 3, 0] + factor*load[1])
+                        elif load[0] == 'MY':
+                            P.itemset((ID*6 + 4, 0), P[ID*6 + 4, 0] + factor*load[1])
+                        elif load[0] == 'MZ':
+                            P.itemset((ID*6 + 5, 0), P[ID*6 + 5, 0] + factor*load[1])
         
         # Return the global nodal force vector
         return P
 
 #%%
-    def D(self):
+    def D(self, combo):
         '''
         Returns the global displacement vector for the model.
+
+        Parameters
+        ----------
+        combo : LoadCombo
+            The load combination to get the displacements for
         '''
-        
+ 
         # Return the global displacement vector
-        return self.__D
+        return self.__D{combo.name}
 
 #%%
     def __Partition(self, unp_matrix, D1_indices, D2_indices):
@@ -868,72 +884,75 @@ class FEModel3D():
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
         K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices)
 
-        # Get the partitioned global fixed end reaction vector
-        FER1, FER2 = self.__Partition(self.FER(), D1_indices, D2_indices)
+        # Step through each load combination
+        for combo in self.LoadCombos:
 
-        # Get the partitioned global nodal force vector       
-        P1, P2 = self.__Partition(self.P(), D1_indices, D2_indices)          
+            # Get the partitioned global fixed end reaction vector
+            FER1, FER2 = self.__Partition(self.FER(combo), D1_indices, D2_indices)
 
-        # Check for global stability by determining if 'K11' is singular
-        print('...Checking global stability')
-        if K11.shape == (0, 0):
-            # All displacements are known, so D1 is an empty vector
-            D1 = []
-        elif matrix_rank(K11) < min(K11.shape):
-            # Return out of the method if 'K' is singular and provide an error message
-            print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-            return
-        else:
-            # Calculate the unknown displacements D1
-            print('...Calculating global displacement vector')
-            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+            # Get the partitioned global nodal force vector       
+            P1, P2 = self.__Partition(self.P(combo), D1_indices, D2_indices)          
 
-        # Form the global displacement vector, D, from D1 and D2
-        D = zeros((len(self.Nodes)*6, 1))
-
-        for node in self.Nodes:
-
-            if D2_indices.count(node.ID*6 + 0) == 1:
-                D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+            # Check for global stability by determining if 'K11' is singular
+            print('...Checking global stability')
+            if K11.shape == (0, 0):
+                # All displacements are known, so D1 is an empty vector
+                D1 = []
+            elif matrix_rank(K11) < min(K11.shape):
+                # Return out of the method if 'K' is singular and provide an error message
+                print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+                return
             else:
-                D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
+                # Calculate the unknown displacements D1
+                print('...Calculating global displacement vector')
+                D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
 
-            if D2_indices.count(node.ID*6 + 1) == 1:
-                D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
-            else:
-                D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
+            # Form the global displacement vector, D, from D1 and D2
+            D = zeros((len(self.Nodes)*6, 1))
 
-            if D2_indices.count(node.ID*6 + 2) == 1:
-                D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
-            else:
-                D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
+            for node in self.Nodes:
 
-            if D2_indices.count(node.ID*6 + 3) == 1:
-                D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
-            else:
-                D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
+                if D2_indices.count(node.ID*6 + 0) == 1:
+                    D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+                else:
+                    D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
 
-            if D2_indices.count(node.ID*6 + 4) == 1:
-                D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
-            else:
-                D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+                if D2_indices.count(node.ID*6 + 1) == 1:
+                    D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
+                else:
+                    D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
 
-            if D2_indices.count(node.ID*6 + 5) == 1:
-                D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
-            else:
-                D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
+                if D2_indices.count(node.ID*6 + 2) == 1:
+                    D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
+                else:
+                    D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
 
-        # Save the global displacement vector
-        self.__D = D
+                if D2_indices.count(node.ID*6 + 3) == 1:
+                    D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
+                else:
+                    D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
 
-        # Store the calculated global nodal displacements into each node
-        for node in self.Nodes:
-            node.DX = D.item((node.ID*6 + 0, 0))
-            node.DY = D.item((node.ID*6 + 1, 0))
-            node.DZ = D.item((node.ID*6 + 2, 0))
-            node.RX = D.item((node.ID*6 + 3, 0))
-            node.RY = D.item((node.ID*6 + 4, 0))
-            node.RZ = D.item((node.ID*6 + 5, 0))
+                if D2_indices.count(node.ID*6 + 4) == 1:
+                    D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
+                else:
+                    D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+
+                if D2_indices.count(node.ID*6 + 5) == 1:
+                    D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
+                else:
+                    D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
+
+            # Save the global displacement vector
+            self.__D{combo.name} = D
+
+            # Store the calculated global nodal displacements into each node
+            for node in self.Nodes:
+                node.DX{combo.name} = D[node.ID*6 + 0, 0]
+                node.DY{combo.name} = D[node.ID*6 + 1, 0]
+                node.DZ{combo.name} = D[node.ID*6 + 2, 0]
+                node.RX{combo.name} = D[node.ID*6 + 3, 0]
+                node.RY{combo.name} = D[node.ID*6 + 4, 0]
+                node.RZ{combo.name} = D[node.ID*6 + 5, 0]
         
         # Segment all members in the model to make member results available
         print('...Calculating member internal forces')
@@ -1103,107 +1122,110 @@ class FEModel3D():
         for node in self.Nodes:
             
             # Determine if the node has any supports
-            if isclose(node.DX, 0.0) or isclose(node.DY, 0.0) or isclose(node.DZ, 0.0) or isclose(node.RX, 0.0) or isclose(node.RY, 0) or isclose(node.RZ, 0):
+            if isclose(node.SupportDX, 0.0) or isclose(node.SupportDY, 0.0) or isclose(node.SupportDZ, 0.0) or isclose(node.SupportRX, 0.0) or isclose(node.SupportRY, 0.0) or isclose(node.SupportRZ, 0.0):
 
-                # Sum the member end forces at the node
-                for member in self.Members:
+                # Step through each load combination
+                for combo in self.LoadCombos:
+
+                    # Sum the member end forces at the node
+                    for member in self.Members:
                     
-                    if member.iNode == node:
+                        if member.iNode == node:
                         
-                        # Get the member's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                        member_F = member.F()
+                            # Get the member's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            member_F = member.F(combo)
 
-                        node.RxnFX += member_F[0, 0]
-                        node.RxnFY += member_F[1, 0]
-                        node.RxnFZ += member_F[2, 0]
-                        node.RxnMX += member_F[3, 0]
-                        node.RxnMY += member_F[4, 0]
-                        node.RxnMZ += member_F[5, 0]
+                            node.RxnFX{combo.name} += member_F[0, 0]
+                            node.RxnFY{combo.name} += member_F[1, 0]
+                            node.RxnFZ{combo.name} += member_F[2, 0]
+                            node.RxnMX{combo.name} += member_F[3, 0]
+                            node.RxnMY{combo.name} += member_F[4, 0]
+                            node.RxnMZ{combo.name} += member_F[5, 0]
 
-                    elif member.jNode == node:
+                        elif member.jNode == node:
                         
-                        # Get the member's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                        member_F = member.F()
+                            # Get the member's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            member_F = member.F(combo)
                         
-                        node.RxnFX += member_F[6, 0]
-                        node.RxnFY += member_F[7, 0]
-                        node.RxnFZ += member_F[8, 0]
-                        node.RxnMX += member_F[9, 0]
-                        node.RxnMY += member_F[10, 0]
-                        node.RxnMZ += member_F[11, 0]
+                            node.RxnFX{combo.name} += member_F[6, 0]
+                            node.RxnFY{combo.name} += member_F[7, 0]
+                            node.RxnFZ{combo.name} += member_F[8, 0]
+                            node.RxnMX{combo.name} += member_F[9, 0]
+                            node.RxnMY{combo.name} += member_F[10, 0]
+                            node.RxnMZ{combo.name} += member_F[11, 0]
 
-                # Sum the plate forces at the node
-                for plate in self.Plates:
+                    # Sum the plate forces at the node
+                    for plate in self.Plates:
 
-                    if plate.iNode == node:
+                        if plate.iNode == node:
 
-                        # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                        plate_F = plate.F()
+                            # Get the plate's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            plate_F = plate.F(combo)
                     
-                        node.RxnFX += plate_F[0, 0]
-                        node.RxnFY += plate_F[1, 0]
-                        node.RxnFZ += plate_F[2, 0]
-                        node.RxnMX += plate_F[3, 0]
-                        node.RxnMY += plate_F[4, 0]
-                        node.RxnMZ += plate_F[5, 0]
+                            node.RxnFX{combo.name} += plate_F[0, 0]
+                            node.RxnFY{combo.name} += plate_F[1, 0]
+                            node.RxnFZ{combo.name} += plate_F[2, 0]
+                            node.RxnMX{combo.name} += plate_F[3, 0]
+                            node.RxnMY{combo.name} += plate_F[4, 0]
+                            node.RxnMZ{combo.name} += plate_F[5, 0]
 
-                    elif plate.jNode == node:
+                        elif plate.jNode == node:
 
-                        # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                        plate_F = plate.F()
+                            # Get the plate's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            plate_F = plate.F(combo)
                     
-                        node.RxnFX += plate_F[6, 0]
-                        node.RxnFY += plate_F[7, 0]
-                        node.RxnFZ += plate_F[8, 0]
-                        node.RxnMX += plate_F[9, 0]
-                        node.RxnMY += plate_F[10, 0]
-                        node.RxnMZ += plate_F[11, 0]
+                            node.RxnFX{combo.name} += plate_F[6, 0]
+                            node.RxnFY{combo.name} += plate_F[7, 0]
+                            node.RxnFZ{combo.name} += plate_F[8, 0]
+                            node.RxnMX{combo.name} += plate_F[9, 0]
+                            node.RxnMY{combo.name} += plate_F[10, 0]
+                            node.RxnMZ{combo.name} += plate_F[11, 0]
 
-                    elif plate.mNode == node:
+                        elif plate.mNode == node:
 
-                        # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                        plate_F = plate.F()
+                            # Get the plate's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            plate_F = plate.F(combo)
                     
-                        node.RxnFX += plate_F[12, 0]
-                        node.RxnFY += plate_F[13, 0]
-                        node.RxnFZ += plate_F[14, 0]
-                        node.RxnMX += plate_F[15, 0]
-                        node.RxnMY += plate_F[16, 0]
-                        node.RxnMZ += plate_F[17, 0]
+                            node.RxnFX{combo.name} += plate_F[12, 0]
+                            node.RxnFY{combo.name} += plate_F[13, 0]
+                            node.RxnFZ{combo.name} += plate_F[14, 0]
+                            node.RxnMX{combo.name} += plate_F[15, 0]
+                            node.RxnMY{combo.name} += plate_F[16, 0]
+                            node.RxnMZ{combo.name} += plate_F[17, 0]
 
-                    elif plate.nNode == node:
+                        elif plate.nNode == node:
 
-                        # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                        plate_F = plate.F()
+                            # Get the plate's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            plate_F = plate.F(combo)
                     
-                        node.RxnFX += plate_F[18, 0]
-                        node.RxnFY += plate_F[19, 0]
-                        node.RxnFZ += plate_F[20, 0]
-                        node.RxnMX += plate_F[21, 0]
-                        node.RxnMY += plate_F[22, 0]
-                        node.RxnMZ += plate_F[23, 0]
+                            node.RxnFX{combo.name} += plate_F[18, 0]
+                            node.RxnFY{combo.name} += plate_F[19, 0]
+                            node.RxnFZ{combo.name} += plate_F[20, 0]
+                            node.RxnMX{combo.name} += plate_F[21, 0]
+                            node.RxnMY{combo.name} += plate_F[22, 0]
+                            node.RxnMZ{combo.name} += plate_F[23, 0]
 
-                # Sum the joint forces at the node
-                for load in node.NodeLoads:
+                    # Sum the joint forces at the node
+                    for load in node.NodeLoads:
                     
-                    if load[0] == 'FX':
-                        node.RxnFX -= load[1]
-                    elif load[0] == 'FY':
-                        node.RxnFY -= load[1]
-                    elif load[0] == 'FZ':
-                        node.RxnFZ -= load[1]
-                    elif load[0] == 'MX':
-                        node.RxnMX -= load[1]
-                    elif load[0] == 'MY':
-                        node.RxnMY -= load[1]
-                    elif load[0] == 'MZ':
-                        node.RxnMZ -= load[1]
+                        if load[0] == 'FX':
+                            node.RxnFX{combo.name} -= load[1]
+                        elif load[0] == 'FY':
+                            node.RxnFY{combo.name} -= load[1]
+                        elif load[0] == 'FZ':
+                            node.RxnFZ{combo.name} -= load[1]
+                        elif load[0] == 'MX':
+                            node.RxnMX{combo.name} -= load[1]
+                        elif load[0] == 'MY':
+                            node.RxnMY{combo.name} -= load[1]
+                        elif load[0] == 'MZ':
+                            node.RxnMZ{combo.name} -= load[1]
 
 #%%
     def __CheckStatics(self):
