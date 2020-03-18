@@ -20,26 +20,31 @@ SimpleBeam.DefineSupport('N1', True, True, True, True, False, False)  # Constrai
 SimpleBeam.DefineSupport('N2', True, True, True, False, False, False) # Not constrained for torsion at 'N2'
 
 # Add a downward point load of 5 kips at the midspan of the beam
-SimpleBeam.AddMemberPtLoad('M1', 'Fy', -5, 7*12)
+SimpleBeam.AddMemberPtLoad('M1', 'Fy', -5, 7*12, 'D') # 5 kips Dead load
+SimpleBeam.AddMemberPtLoad('M1', 'Fy', -8, 7*12, 'L') # 8 kips Live load
+
+# Add a load combinations
+SimpleBeam.AddLoadCombo('1.4D', ['D'], [1.4])
+SimpleBeam.AddLoadCombo('1.2D+1.6L', ['D', 'L'], [1.2, 1.6])
 
 # Analyze the beam and perform a statics check
 SimpleBeam.Analyze(check_statics=True)
 
 # Print the shear, moment, and deflection diagrams
-SimpleBeam.GetMember('M1').PlotShear('Fy')
-SimpleBeam.GetMember('M1').PlotMoment('Mz')
-SimpleBeam.GetMember('M1').PlotDeflection('dy')
+SimpleBeam.GetMember('M1').PlotShear('Fy', '1.4D')
+SimpleBeam.GetMember('M1').PlotMoment('Mz', '1.2D+1.6L')
+SimpleBeam.GetMember('M1').PlotDeflection('dy', '1.2D+1.6L')
 
 # Print reactions at each end of the beam
-print('Left Support Reaction:', SimpleBeam.GetNode('N1').RxnFY, 'kip')
-print('Right Support Reacton:', SimpleBeam.GetNode('N2').RxnFY, 'kip')
+print('Left Support Reaction:', SimpleBeam.GetNode('N1').RxnFY['1.2D+1.6L'], 'kip')
+print('Right Support Reacton:', SimpleBeam.GetNode('N2').RxnFY['1.2D+1.6L'], 'kip')
 
 # Print the max/min shears and moments in the beam
-print('Maximum Shear:', SimpleBeam.GetMember('M1').MaxShear('Fy'), 'kip')
-print('Minimum Shear:', SimpleBeam.GetMember('M1').MinShear('Fy'), 'kip')
-print('Maximum Moment:', SimpleBeam.GetMember('M1').MaxMoment('Mz')/12, 'kip-ft')
-print('Minimum Moment:', SimpleBeam.GetMember('M1').MinMoment('Mz')/12, 'kip-ft')
+print('Maximum Shear:', SimpleBeam.GetMember('M1').MaxShear('Fy', '1.2D+1.6L'), 'kip')
+print('Minimum Shear:', SimpleBeam.GetMember('M1').MinShear('Fy', '1.2D+1.6L'), 'kip')
+print('Maximum Moment:', SimpleBeam.GetMember('M1').MaxMoment('Mz', '1.2D+1.6L')/12, 'kip-ft')
+print('Minimum Moment:', SimpleBeam.GetMember('M1').MinMoment('Mz', '1.2D+1.6L')/12, 'kip-ft')
 
 # Print the max/min deflections in the beam
-print('Maximum Deflection:', SimpleBeam.GetMember('M1').MaxDeflection('dy'), 'in')
-print('Minimum Deflection:', SimpleBeam.GetMember('M1').MinDeflection('dy'), 'in')
+print('Maximum Deflection:', SimpleBeam.GetMember('M1').MaxDeflection('dy', '1.2D+1.6L'), 'in')
+print('Minimum Deflection:', SimpleBeam.GetMember('M1').MinDeflection('dy', '1.2D+1.6L'), 'in')

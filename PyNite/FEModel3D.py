@@ -5,6 +5,7 @@ from math import isclose
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
 from PyNite.Plate3D import Plate3D
+from PyNite.LoadCombo import LoadCombo
 
 # %%
 class FEModel3D():
@@ -100,9 +101,9 @@ class FEModel3D():
         
         # Create a new member
         if auxNode == None:
-            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A)
+            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, LoadCombos=self.LoadCombos)
         else:
-            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode))
+            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode), self.LoadCombos)
         
         # Add the new member to the list
         self.Members.append(newMember)
@@ -301,9 +302,37 @@ class FEModel3D():
         
         # Apply the end releases to the member
         self.GetMember(Member).Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
-            
+
 #%%
-    def AddNodeLoad(self, Node, Direction, P, case):
+    def AddLoadCombo(self, name, cases, factors, combo_type='strength'):
+        '''
+        Adds a load combination to the model
+
+        Parameters
+        ----------
+        name : string
+            A descriptive name for the load combination (e.g. '1.2D+1.6L').
+        cases : string
+            A list or tuple containing the names of each load case in the load combination.
+        factors : number
+            A list or tuple of load factors corresponding to the load cases.
+        combo_type : string
+            A description of the type of load combination (e.g. 'strength', 'service'). Currently
+            this does nothing in the program, and is a placeholder for future features.
+        '''
+
+        # Create a new load combination object
+        new_combo = LoadCombo(name, combo_type)
+
+        # Add each case with its associated load factor
+        for i in range(len(cases)):
+            new_combo.AddLoadCase(cases[i], factors[i])
+
+        # Add the load combination to the dictionary of load combinations
+        self.LoadCombos[name] = new_combo
+
+#%%
+    def AddNodeLoad(self, Node, Direction, P, case='Default'):
         '''
         Adds a nodal load to the model.
         
@@ -323,7 +352,7 @@ class FEModel3D():
         self.GetNode(Node).NodeLoads.append((Direction, P, case))
 
 #%%      
-    def AddMemberPtLoad(self, Member, Direction, P, x):
+    def AddMemberPtLoad(self, Member, Direction, P, x, case='Default'):
         '''
         Adds a member point load to the model.
         
@@ -344,10 +373,10 @@ class FEModel3D():
         '''
         
         # Add the point load to the member
-        self.GetMember(Member).PtLoads.append((Direction, P, x))
+        self.GetMember(Member).PtLoads.append((Direction, P, x, case))
 
 #%%
-    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None):
+    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None, case='Default'):
         '''
         Adds a member distributed load to the model.
         
@@ -384,7 +413,7 @@ class FEModel3D():
             end = x2
 
         # Add the distributed load to the member
-        self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end))
+        self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end, case))
 
 #%%
     def ClearLoads(self):
@@ -400,21 +429,25 @@ class FEModel3D():
             member.SegmentsY = []
             member.SegmentsX = []
         
-        # Clear out the nodal loads and the nodal displacements
+        # Clear out the nodal loads, calculated displacements, and calculated reactions
         for node in self.Nodes:
+
             node.NodeLoads = []
-            if not isclose(node.DX, 0.0):
-                node.DX = None
-            if not isclose(node.DY, 0.0):
-                node.DY = None
-            if not isclose(node.DZ, 0.0):
-                node.DZ = None
-            if not isclose(node.RX, 0.0):
-                node.RX = None
-            if not isclose(node.RY, 0.0):
-                node.RY = None
-            if not isclose(node.RZ, 0.0):
-                node.RZ = None       
+
+            node.DX = {}
+            node.DY = {}
+            node.DZ = {}
+            node.RX = {}
+            node.RY = {}
+            node.RZ = {}
+
+            node.RxnFX = {}
+            node.RxnFY = {}
+            node.RxnFZ = {}
+            node.RxnMX = {}
+            node.RxnMY = {}
+            node.RxnMZ = {}
+
 
 #%%
     def GetNode(self, Name):
@@ -805,7 +838,7 @@ class FEModel3D():
             # Get the node's ID
             ID = node.ID
             
-            for case, factor in combo:
+            for case, factor in combo.factors.items():
 
                 # Add the node's loads to the global nodal load vector
                 for load in node.NodeLoads:
@@ -840,7 +873,7 @@ class FEModel3D():
         '''
  
         # Return the global displacement vector
-        return self.__D{combo.name}
+        return self.__D[combo.name]
 
 #%%
     def __Partition(self, unp_matrix, D1_indices, D2_indices):
@@ -884,8 +917,20 @@ class FEModel3D():
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
         K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices)
 
+        # Ensure there is at least 1 load combination to solve if the user didn't define any
+        if self.LoadCombos == {}:
+
+            # Create a default load combination
+            default = LoadCombo('Default')
+
+            # Add load factors to the default load combination
+            default.AddLoadCase('Default', 1.0)
+
+            # Add the default load combination to the dictionary of load combinations
+            self.LoadCombos['Default'] = default
+
         # Step through each load combination
-        for combo in self.LoadCombos:
+        for combo in self.LoadCombos.values():
 
             # Get the partitioned global fixed end reaction vector
             FER1, FER2 = self.__Partition(self.FER(combo), D1_indices, D2_indices)
@@ -943,21 +988,16 @@ class FEModel3D():
                     D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
 
             # Save the global displacement vector
-            self.__D{combo.name} = D
+            self.__D[combo.name] = D
 
             # Store the calculated global nodal displacements into each node
             for node in self.Nodes:
-                node.DX{combo.name} = D[node.ID*6 + 0, 0]
-                node.DY{combo.name} = D[node.ID*6 + 1, 0]
-                node.DZ{combo.name} = D[node.ID*6 + 2, 0]
-                node.RX{combo.name} = D[node.ID*6 + 3, 0]
-                node.RY{combo.name} = D[node.ID*6 + 4, 0]
-                node.RZ{combo.name} = D[node.ID*6 + 5, 0]
-        
-        # Segment all members in the model to make member results available
-        print('...Calculating member internal forces')
-        for member in self.Members:
-            member.SegmentMember()
+                node.DX[combo.name] = D[node.ID*6 + 0, 0]
+                node.DY[combo.name] = D[node.ID*6 + 1, 0]
+                node.DZ[combo.name] = D[node.ID*6 + 2, 0]
+                node.RX[combo.name] = D[node.ID*6 + 3, 0]
+                node.RY[combo.name] = D[node.ID*6 + 4, 0]
+                node.RZ[combo.name] = D[node.ID*6 + 5, 0]
         
         # Calculate reactions
         self.__CalcReactions()
@@ -1121,11 +1161,19 @@ class FEModel3D():
         # Calculate the reactions, node by node
         for node in self.Nodes:
             
-            # Determine if the node has any supports
-            if isclose(node.SupportDX, 0.0) or isclose(node.SupportDY, 0.0) or isclose(node.SupportDZ, 0.0) or isclose(node.SupportRX, 0.0) or isclose(node.SupportRY, 0.0) or isclose(node.SupportRZ, 0.0):
+            # Step through each load combination
+            for combo in self.LoadCombos.values():
+                
+                # Initialize reactions for this node and load combination
+                node.RxnFX[combo.name] = 0.0
+                node.RxnFY[combo.name] = 0.0
+                node.RxnFZ[combo.name] = 0.0
+                node.RxnMX[combo.name] = 0.0
+                node.RxnMY[combo.name] = 0.0
+                node.RxnMZ[combo.name] = 0.0
 
-                # Step through each load combination
-                for combo in self.LoadCombos:
+                # Determine if the node has any supports
+                if isclose(node.SupportDX, 0.0) or isclose(node.SupportDY, 0.0) or isclose(node.SupportDZ, 0.0) or isclose(node.SupportRX, 0.0) or isclose(node.SupportRY, 0.0) or isclose(node.SupportRZ, 0.0):
 
                     # Sum the member end forces at the node
                     for member in self.Members:
@@ -1136,12 +1184,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             member_F = member.F(combo)
 
-                            node.RxnFX{combo.name} += member_F[0, 0]
-                            node.RxnFY{combo.name} += member_F[1, 0]
-                            node.RxnFZ{combo.name} += member_F[2, 0]
-                            node.RxnMX{combo.name} += member_F[3, 0]
-                            node.RxnMY{combo.name} += member_F[4, 0]
-                            node.RxnMZ{combo.name} += member_F[5, 0]
+                            node.RxnFX[combo.name] += member_F[0, 0]
+                            node.RxnFY[combo.name] += member_F[1, 0]
+                            node.RxnFZ[combo.name] += member_F[2, 0]
+                            node.RxnMX[combo.name] += member_F[3, 0]
+                            node.RxnMY[combo.name] += member_F[4, 0]
+                            node.RxnMZ[combo.name] += member_F[5, 0]
 
                         elif member.jNode == node:
                         
@@ -1149,12 +1197,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             member_F = member.F(combo)
                         
-                            node.RxnFX{combo.name} += member_F[6, 0]
-                            node.RxnFY{combo.name} += member_F[7, 0]
-                            node.RxnFZ{combo.name} += member_F[8, 0]
-                            node.RxnMX{combo.name} += member_F[9, 0]
-                            node.RxnMY{combo.name} += member_F[10, 0]
-                            node.RxnMZ{combo.name} += member_F[11, 0]
+                            node.RxnFX[combo.name] += member_F[6, 0]
+                            node.RxnFY[combo.name] += member_F[7, 0]
+                            node.RxnFZ[combo.name] += member_F[8, 0]
+                            node.RxnMX[combo.name] += member_F[9, 0]
+                            node.RxnMY[combo.name] += member_F[10, 0]
+                            node.RxnMZ[combo.name] += member_F[11, 0]
 
                     # Sum the plate forces at the node
                     for plate in self.Plates:
@@ -1165,12 +1213,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo)
                     
-                            node.RxnFX{combo.name} += plate_F[0, 0]
-                            node.RxnFY{combo.name} += plate_F[1, 0]
-                            node.RxnFZ{combo.name} += plate_F[2, 0]
-                            node.RxnMX{combo.name} += plate_F[3, 0]
-                            node.RxnMY{combo.name} += plate_F[4, 0]
-                            node.RxnMZ{combo.name} += plate_F[5, 0]
+                            node.RxnFX[combo.name] += plate_F[0, 0]
+                            node.RxnFY[combo.name] += plate_F[1, 0]
+                            node.RxnFZ[combo.name] += plate_F[2, 0]
+                            node.RxnMX[combo.name] += plate_F[3, 0]
+                            node.RxnMY[combo.name] += plate_F[4, 0]
+                            node.RxnMZ[combo.name] += plate_F[5, 0]
 
                         elif plate.jNode == node:
 
@@ -1178,12 +1226,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo)
                     
-                            node.RxnFX{combo.name} += plate_F[6, 0]
-                            node.RxnFY{combo.name} += plate_F[7, 0]
-                            node.RxnFZ{combo.name} += plate_F[8, 0]
-                            node.RxnMX{combo.name} += plate_F[9, 0]
-                            node.RxnMY{combo.name} += plate_F[10, 0]
-                            node.RxnMZ{combo.name} += plate_F[11, 0]
+                            node.RxnFX[combo.name] += plate_F[6, 0]
+                            node.RxnFY[combo.name] += plate_F[7, 0]
+                            node.RxnFZ[combo.name] += plate_F[8, 0]
+                            node.RxnMX[combo.name] += plate_F[9, 0]
+                            node.RxnMY[combo.name] += plate_F[10, 0]
+                            node.RxnMZ[combo.name] += plate_F[11, 0]
 
                         elif plate.mNode == node:
 
@@ -1191,12 +1239,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo)
                     
-                            node.RxnFX{combo.name} += plate_F[12, 0]
-                            node.RxnFY{combo.name} += plate_F[13, 0]
-                            node.RxnFZ{combo.name} += plate_F[14, 0]
-                            node.RxnMX{combo.name} += plate_F[15, 0]
-                            node.RxnMY{combo.name} += plate_F[16, 0]
-                            node.RxnMZ{combo.name} += plate_F[17, 0]
+                            node.RxnFX[combo.name] += plate_F[12, 0]
+                            node.RxnFY[combo.name] += plate_F[13, 0]
+                            node.RxnFZ[combo.name] += plate_F[14, 0]
+                            node.RxnMX[combo.name] += plate_F[15, 0]
+                            node.RxnMY[combo.name] += plate_F[16, 0]
+                            node.RxnMZ[combo.name] += plate_F[17, 0]
 
                         elif plate.nNode == node:
 
@@ -1204,96 +1252,97 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo)
                     
-                            node.RxnFX{combo.name} += plate_F[18, 0]
-                            node.RxnFY{combo.name} += plate_F[19, 0]
-                            node.RxnFZ{combo.name} += plate_F[20, 0]
-                            node.RxnMX{combo.name} += plate_F[21, 0]
-                            node.RxnMY{combo.name} += plate_F[22, 0]
-                            node.RxnMZ{combo.name} += plate_F[23, 0]
+                            node.RxnFX[combo.name] += plate_F[18, 0]
+                            node.RxnFY[combo.name] += plate_F[19, 0]
+                            node.RxnFZ[combo.name] += plate_F[20, 0]
+                            node.RxnMX[combo.name] += plate_F[21, 0]
+                            node.RxnMY[combo.name] += plate_F[22, 0]
+                            node.RxnMZ[combo.name] += plate_F[23, 0]
 
                     # Sum the joint forces at the node
                     for load in node.NodeLoads:
                     
                         if load[0] == 'FX':
-                            node.RxnFX{combo.name} -= load[1]
+                            node.RxnFX[combo.name] -= load[1]
                         elif load[0] == 'FY':
-                            node.RxnFY{combo.name} -= load[1]
+                            node.RxnFY[combo.name] -= load[1]
                         elif load[0] == 'FZ':
-                            node.RxnFZ{combo.name} -= load[1]
+                            node.RxnFZ[combo.name] -= load[1]
                         elif load[0] == 'MX':
-                            node.RxnMX{combo.name} -= load[1]
+                            node.RxnMX[combo.name] -= load[1]
                         elif load[0] == 'MY':
-                            node.RxnMY{combo.name} -= load[1]
+                            node.RxnMY[combo.name] -= load[1]
                         elif load[0] == 'MZ':
-                            node.RxnMZ{combo.name} -= load[1]
+                            node.RxnMZ[combo.name] -= load[1]
 
 #%%
     def __CheckStatics(self):
         '''
         Sums global forces and reactions and prints them to the console.
+
+
         '''
         
         # Print a status update to the console
         print('...Checking statics')
 
-        # Initialize force and moment summations to zero
-        SumFX, SumFY, SumFZ = 0, 0, 0
-        SumMX, SumMY, SumMZ = 0, 0, 0
-        SumRFX, SumRFY, SumRFZ = 0, 0, 0
-        SumRMX, SumRMY, SumRMZ = 0, 0, 0
+        for combo in self.LoadCombos.values():
 
-        # Get the global force vector and the global fixed end reaction vector
-        P = self.P()
-        FER = self.FER()
+            # Initialize force and moment summations to zero
+            SumFX, SumFY, SumFZ = 0.0, 0.0, 0.0
+            SumMX, SumMY, SumMZ = 0.0, 0.0, 0.0
+            SumRFX, SumRFY, SumRFZ = 0.0, 0.0, 0.0
+            SumRMX, SumRMY, SumRMZ = 0.0, 0.0, 0.0
 
-        # Step through each node and sum its forces
-        for node in self.Nodes:
+            # Get the global force vector and the global fixed end reaction vector
+            P = self.P(combo)
+            FER = self.FER(combo)
 
-            # Get the node's coordinates
-            X = node.X
-            Y = node.Y
-            Z = node.Z
+            # Step through each node and sum its forces
+            for node in self.Nodes:
 
-            # Get the nodal forces
-            FX = P[node.ID*6+0][0] - FER[node.ID*6+0][0]
-            FY = P[node.ID*6+1][0] - FER[node.ID*6+1][0]
-            FZ = P[node.ID*6+2][0] - FER[node.ID*6+2][0]
-            MX = P[node.ID*6+3][0] - FER[node.ID*6+3][0]
-            MY = P[node.ID*6+4][0] - FER[node.ID*6+4][0]
-            MZ = P[node.ID*6+5][0] - FER[node.ID*6+5][0]
+                # Get the node's coordinates
+                X = node.X
+                Y = node.Y
+                Z = node.Z
 
-            # Get the nodal reactions
-            RFX = node.RxnFX
-            RFY = node.RxnFY
-            RFZ = node.RxnFZ
-            RMX = node.RxnMX
-            RMY = node.RxnMY
-            RMZ = node.RxnMZ
+                # Get the nodal forces
+                FX = P[node.ID*6+0][0] - FER[node.ID*6+0][0]
+                FY = P[node.ID*6+1][0] - FER[node.ID*6+1][0]
+                FZ = P[node.ID*6+2][0] - FER[node.ID*6+2][0]
+                MX = P[node.ID*6+3][0] - FER[node.ID*6+3][0]
+                MY = P[node.ID*6+4][0] - FER[node.ID*6+4][0]
+                MZ = P[node.ID*6+5][0] - FER[node.ID*6+5][0]
 
-            # Sum the global forces
-            SumFX += FX
-            SumFY += FY
-            SumFZ += FZ
-            SumMX += MX - FY*Z + FZ*Y
-            SumMY += MY + FX*Z - FZ*X
-            SumMZ += MZ - FX*Y + FY*X
+                # Get the nodal reactions
+                RFX = node.RxnFX[combo.name]
+                RFY = node.RxnFY[combo.name]
+                RFZ = node.RxnFZ[combo.name]
+                RMX = node.RxnMX[combo.name]
+                RMY = node.RxnMY[combo.name]
+                RMZ = node.RxnMZ[combo.name]
 
-            # Sum the global reactions
-            SumRFX += RFX
-            SumRFY += RFY
-            SumRFZ += RFZ
-            SumRMX += RMX - RFY*Z + RFZ*Y
-            SumRMY += RMY + RFX*Z - RFZ*X
-            SumRMZ += RMZ - RFX*Y + RFY*X   
+                # Sum the global forces
+                SumFX += FX
+                SumFY += FY
+                SumFZ += FZ
+                SumMX += MX - FY*Z + FZ*Y
+                SumMY += MY + FX*Z - FZ*X
+                SumMZ += MZ - FX*Y + FY*X
+
+                # Sum the global reactions
+                SumRFX += RFX
+                SumRFY += RFY
+                SumRFZ += RFZ
+                SumRMX += RMX - RFY*Z + RFZ*Y
+                SumRMY += RMY + RFX*Z - RFZ*X
+                SumRMZ += RMZ - RFX*Y + RFY*X   
         
-        # Print the load summation
-        print('**Applied Loads**')
-        print('Sum Forces X: ', SumFX, ', Sum Forces Y: ', SumFY, ', Sum Forces Z: ', SumFZ)
-        print('Sum Moments MX: ', SumMX, ', Sum Moments MY: ', SumMY, ', Sum Moments MZ: ', SumMZ)
+            # Print the load summation
+            print('**Load Combination:', combo.name + '**')
+            print('**Applied Loads**')
+            print('Sum Forces X:', SumFX, ', Sum Forces Y:', SumFY, ', Sum Forces Z:', SumFZ, ', Sum Moments MX:', SumMX, ', Sum Moments MY:', SumMY, ', Sum Moments MZ:', SumMZ)
 
-        # Print the reaction summation
-        print('**Reactions**')
-        print('Sum Forces X: ', SumRFX, ', Sum Forces Y: ', SumRFY, ', Sum Forces Z: ', SumRFZ)
-        print('Sum Moments MX: ', SumRMX, ', Sum Moments MY: ', SumRMY, ', Sum Moments MZ: ', SumRMZ)
-
-        return SumFX, SumFY, SumFZ, SumMX, SumMY, SumMZ
+            # Print the reaction summation
+            print('**Reactions**')
+            print('Sum Forces X:', SumRFX, ', Sum Forces Y:', SumRFY, ', Sum Forces Z:', SumRFZ, ', Sum Moments MX:', SumRMX, ', Sum Moments MY:', SumRMY, ', Sum Moments MZ:', SumRMZ)
