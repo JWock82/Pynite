@@ -570,12 +570,12 @@ class VisPlate():
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
   
-  def __init__(self, node, scale_factor, textHeight=5):
+  def __init__(self, node, scale_factor, textHeight=5, combo_name='Default'):
   
     # Calculate the node's deformed position
-    newX = node.X + scale_factor*(node.DX)
-    newY = node.Y + scale_factor*(node.DY)
-    newZ = node.Z + scale_factor*(node.DZ)
+    newX = node.X + scale_factor*(node.DX[combo_name])
+    newY = node.Y + scale_factor*(node.DY[combo_name])
+    newZ = node.Z + scale_factor*(node.DZ[combo_name])
 
     # Generate a sphere for the node
     sphere = vtk.vtkSphereSource()
@@ -609,7 +609,7 @@ class VisDeformedNode():
 # Converts a member object into a member in its deformed position for the viewer
 class VisDeformedMember():
 
-  def __init__(self, member, nodes, scale_factor, textHeight=5):
+  def __init__(self, member, nodes, scale_factor, textHeight=5, combo_name='Default'):
 
     L = member.L() # Member length
     T = member.T() # Member local transformation matrix
@@ -633,7 +633,7 @@ class VisDeformedMember():
     for i in range(20):
 
       # Displacements in local coordinates
-      dy_tot = member.Deflection('dy', L/19*i)
+      dy_tot = member.Deflection('dy', L/19*i, combo_name)
 
       # Magnified displacements in global coordinates
       DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
@@ -643,7 +643,7 @@ class VisDeformedMember():
     for i in range(20):
 
       # Displacements in local coordinates
-      dz_tot = member.Deflection('dz', L/19*i)
+      dz_tot = member.Deflection('dz', L/19*i, combo_name)
 
       # Magnified displacements in global coordinates
       DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
@@ -653,7 +653,7 @@ class VisDeformedMember():
     for i in range(20):
 
       # Displacements in local coordinates
-      dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i)*scale_factor)*cos_x
+      dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i, combo_name)*scale_factor)*cos_x
       
       # Magnified displacements in global coordinates
       DX_plot = append(DX_plot, dx_tot, axis=0)
@@ -690,7 +690,7 @@ class VisDeformedMember():
     self.polylineActor.SetMapper(polylineMapper)
     self.polylineActor.GetProperty().SetColor(255,255,0) # Yellow
 
-def DeformedShape(model, scale_factor, textHeight=5):
+def DeformedShape(model, scale_factor, textHeight=5, combo_name='Default'):
 
   visNodes = []
   for node in model.Nodes:
