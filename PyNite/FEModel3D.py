@@ -326,7 +326,7 @@ class FEModel3D():
         self.LoadCombos[name] = new_combo
 
 #%%
-    def AddNodeLoad(self, Node, Direction, P, case='Default'):
+    def AddNodeLoad(self, Node, Direction, P, case='Case 1'):
         '''
         Adds a nodal load to the model.
         
@@ -346,7 +346,7 @@ class FEModel3D():
         self.GetNode(Node).NodeLoads.append((Direction, P, case))
 
 #%%      
-    def AddMemberPtLoad(self, Member, Direction, P, x, case='Default'):
+    def AddMemberPtLoad(self, Member, Direction, P, x, case='Case 1'):
         '''
         Adds a member point load to the model.
         
@@ -370,7 +370,7 @@ class FEModel3D():
         self.GetMember(Member).PtLoads.append((Direction, P, x, case))
 
 #%%
-    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None, case='Default'):
+    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
         '''
         Adds a member distributed load to the model.
         
@@ -868,7 +868,7 @@ class FEModel3D():
         Parameters
         ----------
         combo : LoadCombo
-            The load combination to get the displacements for
+            The load combination to get the displacements for.
         '''
  
         # Return the global displacement vector
@@ -919,14 +919,8 @@ class FEModel3D():
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
 
-            # Create a default load combination
-            default = LoadCombo('Default')
-
-            # Add load factors to the default load combination
-            default.AddLoadCase('Default', 1.0)
-
-            # Add the default load combination to the dictionary of load combinations
-            self.LoadCombos['Default'] = default
+            # Create and add a default load combination to the dictionary of load combinations
+            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', {'Case 1':1.0})
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
@@ -1025,14 +1019,8 @@ class FEModel3D():
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
 
-            # Create a default load combination
-            default = LoadCombo('Default')
-
-            # Add load factors to the default load combination
-            default.AddLoadCase('Default', 1.0)
-
-            # Add the default load combination to the dictionary of load combinations
-            self.LoadCombos['Default'] = default
+            # Create and add a default load combination to the dictionary of load combinations
+            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
 
         # Step through each load combination
         for combo in self.LoadCombos.values():

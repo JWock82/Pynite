@@ -18,7 +18,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, LoadCombos={'Default':LoadCombo('Default', None, {'Default':1.0})}):
+    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
         '''
         Initializes a new member.
         '''
@@ -34,8 +34,8 @@ class Member3D():
         self.J = J  # The polar moment of inertia or torsional constant
         self.A = A  # The cross-sectional area
         self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
-        self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Default') or (Direction, M, x, case='Default')
-        self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Default')
+        self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
+        self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
         self.SegmentsZ = [] # A list of mathematically continuous beam segments for z-bending
         self.SegmentsY = [] # A list of mathematically continuous beam segments for y-bending
         self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
@@ -194,7 +194,7 @@ class Member3D():
         return kg_Condensed
     
 #%%
-    def fer(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def fer(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         '''
         Returns the condensed (and expanded) local fixed end reaction vector for the member for the given load combination.
 
@@ -227,7 +227,7 @@ class Member3D():
         return ferCondensed
     
 #%%
-    def __fer_Unc(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def __fer_Unc(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         '''
         Returns the member's local fixed end reaction vector, ignoring the effects of end releases.
         Needed to apply the slope-deflection equation properly.
@@ -293,7 +293,7 @@ class Member3D():
             return  m11, m12, m21, m22
 
 #%%   
-    def f(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def f(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         '''
         Returns the member's local end force vector for the given load combination.
 
@@ -307,7 +307,7 @@ class Member3D():
         return add(matmul(self.k(), self.d(combo)), self.fer(combo))
 
 #%%
-    def d(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def d(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         '''
         Returns the member's local displacement vector.
 
@@ -437,7 +437,7 @@ class Member3D():
         return matmul(matmul(transpose(self.T()), self.kg(P)), self.T())
 
 #%%
-    def F(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def F(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         '''
         Returns the member's global end force vector for the given load combination.
         '''
@@ -447,7 +447,7 @@ class Member3D():
     
 #%% 
     # Global fixed end reaction vector
-    def FER(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def FER(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         '''
         Returns the global fixed end reaction vector
 
@@ -461,7 +461,7 @@ class Member3D():
         return matmul(inv(self.T()), self.fer(combo))
 
 #%%
-    def D(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def D(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         '''
         Returns the member's global displacement vector.
 
@@ -492,7 +492,7 @@ class Member3D():
         return D
 
 #%%
-    def Shear(self, Direction, x, combo_name='Default'):
+    def Shear(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the shear at a point along the member's length.
         
@@ -539,7 +539,7 @@ class Member3D():
                 return self.SegmentsY[lastIndex].Shear(x - self.SegmentsY[lastIndex].x1)
             
 #%%
-    def MaxShear(self, Direction, combo_name='Default'):
+    def MaxShear(self, Direction, combo_name='Combo 1'):
         '''
         Returns the maximum shear in the member for the given direction
         
@@ -581,7 +581,7 @@ class Member3D():
         return Vmax
     
 #%%
-    def MinShear(self, Direction, combo_name='Default'):
+    def MinShear(self, Direction, combo_name='Combo 1'):
         '''
         Returns the minimum shear in the member for the given direction
         
@@ -623,7 +623,7 @@ class Member3D():
         return Vmin
     
 #%%
-    def PlotShear(self, Direction, combo_name='Default'):
+    def PlotShear(self, Direction, combo_name='Combo 1'):
         '''
         Plots the shear diagram for the member
         
@@ -664,7 +664,7 @@ class Member3D():
         Member3D.__plt.show()    
         
 #%%
-    def Moment(self, Direction, x, combo_name='Default'):
+    def Moment(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the moment at a point along the member's length
         
@@ -714,7 +714,7 @@ class Member3D():
                 return self.SegmentsZ[lastIndex].Moment(x - self.SegmentsZ[lastIndex].x1)
             
 #%%
-    def MaxMoment(self, Direction, combo_name='Default'):
+    def MaxMoment(self, Direction, combo_name='Combo 1'):
         '''
         Returns the maximum moment in the member for the given direction.
         
@@ -756,7 +756,7 @@ class Member3D():
         return Mmax
 
 #%%
-    def MinMoment(self, Direction, combo_name='Default'):
+    def MinMoment(self, Direction, combo_name='Combo 1'):
         '''
         Returns the minimum moment in the member for the given direction
         
@@ -798,7 +798,7 @@ class Member3D():
         return Mmin
 
 #%%
-    def PlotMoment(self, Direction, combo_name='Default'):
+    def PlotMoment(self, Direction, combo_name='Combo 1'):
         '''
         Plots the moment diagram for the member
         
@@ -842,7 +842,7 @@ class Member3D():
         
         
 #%%
-    def Torsion(self, x, combo_name='Default'):
+    def Torsion(self, x, combo_name='Combo 1'):
         '''
         Returns the torsional moment at a point along the member's length
         
@@ -869,7 +869,7 @@ class Member3D():
                 return self.SegmentsX[lastIndex].Torsion()
 
 #%%
-    def MaxTorsion(self, combo_name='Default'):
+    def MaxTorsion(self, combo_name='Combo 1'):
         '''
         Returns the maximum torsional moment in the member.
 
@@ -895,7 +895,7 @@ class Member3D():
         return Tmax
     
 #%%
-    def MinTorsion(self, combo_name='Default'):
+    def MinTorsion(self, combo_name='Combo 1'):
         '''
         Returns the minimum torsional moment in the member.
 
@@ -921,7 +921,7 @@ class Member3D():
         return Tmin
 
 #%%
-    def PlotTorsion(self, combo_name='Default'):
+    def PlotTorsion(self, combo_name='Combo 1'):
         '''
         Plots the axial force diagram for the member.
         
@@ -960,7 +960,7 @@ class Member3D():
         Member3D.__plt.show()   
         
 #%%
-    def Axial(self, x, combo_name='Default'):
+    def Axial(self, x, combo_name='Combo 1'):
         '''
         Returns the axial force at a point along the member's length.
         
@@ -987,7 +987,7 @@ class Member3D():
                 return self.SegmentsZ[lastIndex].Axial(x - self.SegmentsZ[lastIndex].x1)
 
 #%%
-    def MaxAxial(self, combo_name='Default'):
+    def MaxAxial(self, combo_name='Combo 1'):
         '''
         Returns the maximum axial force in the member
 
@@ -1013,7 +1013,7 @@ class Member3D():
         return Pmax
     
 #%%
-    def MinAxial(self, combo_name='Default'):
+    def MinAxial(self, combo_name='Combo 1'):
         '''
         Returns the minimum axial force in the member.
         
@@ -1039,7 +1039,7 @@ class Member3D():
         return Pmin
     
 #%%
-    def PlotAxial(self, combo_name='Default'):
+    def PlotAxial(self, combo_name='Combo 1'):
         '''
         Plots the axial force diagram for the member.
         
@@ -1078,7 +1078,7 @@ class Member3D():
         Member3D.__plt.show()    
                         
 #%%
-    def Deflection(self, Direction, x, combo_name='Default'):
+    def Deflection(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the deflection at a point along the member's length.
         
@@ -1142,7 +1142,7 @@ class Member3D():
                 return self.SegmentsY[lastIndex].Deflection(x - self.SegmentsY[lastIndex].x1) 
 
 #%%
-    def MaxDeflection(self, Direction, combo_name='Default'):
+    def MaxDeflection(self, Direction, combo_name='Combo 1'):
         '''
         Returns the maximum deflection in the member.
         
@@ -1172,7 +1172,7 @@ class Member3D():
         return dmax
     
 #%%
-    def MinDeflection(self, Direction, combo_name='Default'):
+    def MinDeflection(self, Direction, combo_name='Combo 1'):
         '''
         Returns the minimum deflection in the member.
         
@@ -1202,7 +1202,7 @@ class Member3D():
         return dmin
               
 #%%
-    def PlotDeflection(self, Direction, combo_name='Default'):
+    def PlotDeflection(self, Direction, combo_name='Combo 1'):
         '''
         Plots the deflection diagram for the member
         
@@ -1244,7 +1244,7 @@ class Member3D():
         Member3D.__plt.show()
     
 #%%   
-    def RelativeDeflection(self, Direction, x, combo_name='Default'):
+    def RelativeDeflection(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the relative deflection at a point along the member's length
         
@@ -1301,7 +1301,7 @@ class Member3D():
                 return (self.SegmentsY[lastIndex].Deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
 
 #%%
-    def PlotRelativeDeflection(self, Direction, combo_name='Default'):
+    def PlotRelativeDeflection(self, Direction, combo_name='Combo 1'):
         '''
         Plots the deflection diagram for the member
         
@@ -1344,7 +1344,7 @@ class Member3D():
         
 #%%    
     # Divides the element up into mathematically continuous segments along each axis
-    def SegmentMember(self, combo=LoadCombo('Default', 'strength', {'Default':1.0})):
+    def SegmentMember(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
         
         # Get the member's length and stiffness properties
         L = self.L()
