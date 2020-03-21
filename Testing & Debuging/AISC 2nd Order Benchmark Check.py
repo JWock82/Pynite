@@ -44,10 +44,10 @@ cantilever.Analyze_PDelta()
 Visualization.DeformedShape(cantilever, 1, 0.3)
 
 # Print the moment at the base of the column
-print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001))
+print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001, 'Default'))
 
 # Print the deflection at the top of the column
-print('PyNite Calculated Displacement: ', cantilever.GetNode(str(num_nodes)).DX*12)
+print('PyNite Calculated Displacement: ', cantilever.GetNode(str(num_nodes)).DX['Default']*12)
 
 # Print the AISC benchmark problem solution:
 alpha = (P*L**2/(E*I))**0.5

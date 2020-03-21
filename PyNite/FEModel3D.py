@@ -304,29 +304,23 @@ class FEModel3D():
         self.GetMember(Member).Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
 
 #%%
-    def AddLoadCombo(self, name, cases, factors, combo_type='strength'):
+    def AddLoadCombo(self, name, factors, combo_type='strength'):
         '''
         Adds a load combination to the model
 
         Parameters
         ----------
         name : string
-            A descriptive name for the load combination (e.g. '1.2D+1.6L').
-        cases : string
-            A list or tuple containing the names of each load case in the load combination.
-        factors : number
-            A list or tuple of load factors corresponding to the load cases.
+            A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
+        factors : dictionary
+            A dictionary containing load cases and their corresponding factors (e.g. {'D':1.2, 'L':1.6, 'S':0.5}).
         combo_type : string
             A description of the type of load combination (e.g. 'strength', 'service'). Currently
             this does nothing in the program, and is a placeholder for future features.
         '''
 
         # Create a new load combination object
-        new_combo = LoadCombo(name, combo_type)
-
-        # Add each case with its associated load factor
-        for i in range(len(cases)):
-            new_combo.AddLoadCase(cases[i], factors[i])
+        new_combo = LoadCombo(name, combo_type, factors)
 
         # Add the load combination to the dictionary of load combinations
         self.LoadCombos[name] = new_combo
@@ -723,12 +717,17 @@ class FEModel3D():
         return K      
 
 #%%    
-    def Kg(self):
+    def Kg(self, combo):
         '''
         Assembles and returns the global geometric stiffness matrix.
 
         The model must have a static solution prior to obtaining the geometric stiffness matrix.
         Geometric stiffness of plates is not included.
+
+        Parameters
+        ----------
+        combo : LoadCombo
+            The load combination to derive the matrix for.
         '''
         
         # Initialize a zero matrix to hold all the stiffness terms
@@ -742,7 +741,7 @@ class FEModel3D():
             E = member.E
             A = member.A
             L = member.L()
-            d = member.d()
+            d = member.d(combo)
             P = E*A/L*(d[6, 0] - d[0, 0])
 
             # Get the member's global stiffness matrix
@@ -1023,131 +1022,141 @@ class FEModel3D():
         # Convert D2 from a list to a matrix
         D2 = matrix(D2).T    
 
-        # Keep track of the number of iterations
-        iter_count = 1
-        convergence = False
-        divergence = False
+        # Ensure there is at least 1 load combination to solve if the user didn't define any
+        if self.LoadCombos == {}:
 
-        # Iterate until convergence or divergence occurs
-        while convergence == False and divergence == False:
+            # Create a default load combination
+            default = LoadCombo('Default')
+
+            # Add load factors to the default load combination
+            default.AddLoadCase('Default', 1.0)
+
+            # Add the default load combination to the dictionary of load combinations
+            self.LoadCombos['Default'] = default
+
+        # Step through each load combination
+        for combo in self.LoadCombos.values():
+
+            # Keep track of the number of iterations
+            iter_count = 1
+            convergence = False
+            divergence = False
+
+            # Iterate until convergence or divergence occurs
+            while convergence == False and divergence == False:
             
-            # Inform the user which iteration we're on
-            print('...Beginning P-Delta iteration #' + str(iter_count))
+                # Inform the user which iteration we're on
+                print('...Beginning P-Delta iteration #' + str(iter_count))
 
-            # Get the partitioned global matrices
-            if iter_count == 1:
-                
-                K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices) # Initial stiffness matrix
-                FER1, FER2 = self.__Partition(self.FER(), D1_indices, D2_indices)       # Fixed end reactions
-                P1, P2 = self.__Partition(self.P(), D1_indices, D2_indices)             # Nodal forces
+                # Get the partitioned global matrices
+                if iter_count == 1:
+                    
+                    K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices) # Initial stiffness matrix
+                    FER1, FER2 = self.__Partition(self.FER(combo), D1_indices, D2_indices)  # Fixed end reactions
+                    P1, P2 = self.__Partition(self.P(combo), D1_indices, D2_indices)        # Nodal forces
 
-            else:
+                else:
 
-                # Calculate the global stiffness matrices (partitioned)
-                K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices)      # Initial stiffness matrix
-                Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(), D1_indices, D2_indices) # Geometric stiffness matrix
+                    # Calculate the global stiffness matrices (partitioned)
+                    K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices)           # Initial stiffness matrix
+                    Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo), D1_indices, D2_indices) # Geometric stiffness matrix
 
-                # Combine the stiffness matrices
-                K11 = add(K11, Kg11)
-                K12 = add(K12, Kg12)
-                K21 = add(K21, Kg21)
-                K22 = add(K22, Kg22)                     
+                    # Combine the stiffness matrices
+                    K11 = add(K11, Kg11)
+                    K12 = add(K12, Kg12)
+                    K21 = add(K21, Kg21)
+                    K22 = add(K22, Kg22)                     
 
-            # Determine if 'K' is singular
-            print('...Checking global stability')
-            if K11.shape == (0, 0):
-                # All displacements are known, so D1 is an empty vector
-                D1 = []
-            elif matrix_rank(K11) < min(K11.shape):
-                # Return out of the method if 'K' is singular and provide an error message
-                print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-                return
-            else:
-                # Calculate the global displacement vector
-                print('...Calculating global displacement vector')
-                D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                # Determine if 'K' is singular
+                print('...Checking global stability')
+                if K11.shape == (0, 0):
+                    # All displacements are known, so D1 is an empty vector
+                    D1 = []
+                elif matrix_rank(K11) < min(K11.shape):
+                    # Return out of the method if 'K' is singular and provide an error message
+                    print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+                    return
+                else:
+                    # Calculate the global displacement vector
+                    print('...Calculating global displacement vector')
+                    D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
             
-            D = zeros((len(self.Nodes)*6, 1))
+                D = zeros((len(self.Nodes)*6, 1))
 
-            for node in self.Nodes:
+                for node in self.Nodes:
                 
-                if D2_indices.count(node.ID*6 + 0) == 1:
-                    D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
-                else:
-                    D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
+                    if D2_indices.count(node.ID*6 + 0) == 1:
+                        D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+                    else:
+                        D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
 
-                if D2_indices.count(node.ID*6 + 1) == 1:
-                    D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
-                else:
-                    D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
+                    if D2_indices.count(node.ID*6 + 1) == 1:
+                        D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
+                    else:
+                        D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
 
-                if D2_indices.count(node.ID*6 + 2) == 1:
-                    D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
-                else:
-                    D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
+                    if D2_indices.count(node.ID*6 + 2) == 1:
+                        D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
+                    else:
+                        D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
 
-                if D2_indices.count(node.ID*6 + 3) == 1:
-                    D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
-                else:
-                    D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
+                    if D2_indices.count(node.ID*6 + 3) == 1:
+                        D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
+                    else:
+                        D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
 
-                if D2_indices.count(node.ID*6 + 4) == 1:
-                    D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
-                else:
-                    D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+                    if D2_indices.count(node.ID*6 + 4) == 1:
+                        D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
+                    else:
+                        D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
 
-                if D2_indices.count(node.ID*6 + 5) == 1:
-                    D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
-                else:
-                    D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0])
+                    if D2_indices.count(node.ID*6 + 5) == 1:
+                        D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
+                    else:
+                        D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0])
 
-            # Save the global displacement vector
-            self.__D = D
+                # Save the global displacement vector
+                self.__D[combo.name] = D
 
-            # Store the calculated global nodal displacements into each node
-            for node in self.Nodes:
+                # Store the calculated global nodal displacements into each node
+                for node in self.Nodes:
 
-                node.DX = D.item((node.ID*6 + 0, 0))
-                node.DY = D.item((node.ID*6 + 1, 0))
-                node.DZ = D.item((node.ID*6 + 2, 0))
-                node.RX = D.item((node.ID*6 + 3, 0))
-                node.RY = D.item((node.ID*6 + 4, 0))
-                node.RZ = D.item((node.ID*6 + 5, 0))
+                    node.DX[combo.name] = D[node.ID*6 + 0, 0]
+                    node.DY[combo.name] = D[node.ID*6 + 1, 0]
+                    node.DZ[combo.name] = D[node.ID*6 + 2, 0]
+                    node.RX[combo.name] = D[node.ID*6 + 3, 0]
+                    node.RY[combo.name] = D[node.ID*6 + 4, 0]
+                    node.RZ[combo.name] = D[node.ID*6 + 5, 0]
 
-            if iter_count != 1:
+                if iter_count != 1:
                 
-                # Print a status update for the user
-                print('...Checking for convergence.')
+                    # Print a status update for the user
+                    print('...Checking for convergence.')
 
-                # Temporarily disable error messages for invalid values.
-                # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
-                seterr(invalid='ignore')
+                    # Temporarily disable error messages for invalid values.
+                    # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
+                    seterr(invalid='ignore')
 
-                # Check for convergence
-                if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
-                    convergence = True
-                    print('...P-Delta analysis converged after '+str(iter_count)+' iterations.')
-                # Check for divergence
-                elif iter_count > max_iter:
-                    divergence = True
-                    print('...P-Delta analysis failed to converge after 30 iterations.')
+                    # Check for convergence
+                    if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
+                        convergence = True
+                        print('...P-Delta analysis converged after ' + str(iter_count) + ' iterations.')
+                    # Check for divergence
+                    elif iter_count > max_iter:
+                        divergence = True
+                        print('...P-Delta analysis failed to converge after 30 iterations.')
 
-                # Turn invalid value warnings back on
-                seterr(invalid='warn') 
+                    # Turn invalid value warnings back on
+                    seterr(invalid='warn') 
 
-            # Save the results for the next iteration
-            prev_results = D1
+                # Save the results for the next iteration
+                prev_results = D1
 
-            # Increment the iteration count
-            iter_count += 1
+                # Increment the iteration count
+                iter_count += 1
         
         # Calculate reactions
         self.__CalcReactions()
-                
-        # Segment all members in the model to make member results available
-        print('...Calculating member internal forces')
-        for member in self.Members:
-            member.SegmentMember()
 
 #%%
     def __CalcReactions(self):
