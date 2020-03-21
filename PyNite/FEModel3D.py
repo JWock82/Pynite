@@ -717,7 +717,7 @@ class FEModel3D():
         return K      
 
 #%%    
-    def Kg(self, combo):
+    def Kg(self, combo_name='Combo 1'):
         '''
         Assembles and returns the global geometric stiffness matrix.
 
@@ -726,8 +726,8 @@ class FEModel3D():
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to derive the matrix for.
+        combo_name : string
+            The name of the load combination to derive the matrix for (not the load combination itself).
         '''
         
         # Initialize a zero matrix to hold all the stiffness terms
@@ -741,7 +741,7 @@ class FEModel3D():
             E = member.E
             A = member.A
             L = member.L()
-            d = member.d(combo)
+            d = member.d(combo_name)
             P = E*A/L*(d[6, 0] - d[0, 0])
 
             # Get the member's global stiffness matrix
@@ -778,14 +778,14 @@ class FEModel3D():
         return Kg
      
 #%%    
-    def FER(self, combo):
+    def FER(self, combo_name='Combo 1'):
         '''
         Assembles and returns the global fixed end reaction vector.
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to get the fixed end reaction vector for.
+        combo_name : string
+            The name of the load combination to get the fixed end reaction vector for (not the load combination itself).
         '''
         
         # Initialize a zero vector to hold all the terms
@@ -796,7 +796,7 @@ class FEModel3D():
             
             # Get the member's global fixed end reaction vector
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            member_FER = member.FER(combo)
+            member_FER = member.FER(combo_name)
 
             # Step through each term in the member's fixed end reaction vector
             # 'a' below is the row index in the member's fixed end reaction vector
@@ -818,14 +818,14 @@ class FEModel3D():
         return FER
     
 #%%
-    def P(self, combo):
+    def P(self, combo_name='Combo 1'):
         '''
         Assembles and returns the global nodal force vector.
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to get the force vector for.
+        combo_name : string
+            The name of the load combination to get the force vector for (not the load combination itself).
         '''
             
         # Initialize a zero vector to hold all the terms
@@ -837,6 +837,10 @@ class FEModel3D():
             # Get the node's ID
             ID = node.ID
             
+            # Get the load combination for the given 'combo_name'
+            combo = self.LoadCombos[combo_name]
+
+            # Step through each load factor in the load combination
             for case, factor in combo.factors.items():
 
                 # Add the node's loads to the global nodal load vector
@@ -861,18 +865,18 @@ class FEModel3D():
         return P
 
 #%%
-    def D(self, combo):
+    def D(self, combo_name='Combo 1'):
         '''
         Returns the global displacement vector for the model.
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to get the displacements for.
+        combo_name : string
+            The name of the load combination to get the displacements for (not the load combination itself).
         '''
  
         # Return the global displacement vector
-        return self.__D[combo.name]
+        return self.__D[combo_name]
 
 #%%
     def __Partition(self, unp_matrix, D1_indices, D2_indices):
@@ -918,7 +922,6 @@ class FEModel3D():
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
-
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', {'Case 1':1.0})
 
@@ -926,10 +929,10 @@ class FEModel3D():
         for combo in self.LoadCombos.values():
 
             # Get the partitioned global fixed end reaction vector
-            FER1, FER2 = self.__Partition(self.FER(combo), D1_indices, D2_indices)
+            FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)
 
             # Get the partitioned global nodal force vector       
-            P1, P2 = self.__Partition(self.P(combo), D1_indices, D2_indices)          
+            P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)          
 
             # Check for global stability by determining if 'K11' is singular
             print('...Checking global stability')
@@ -1003,6 +1006,15 @@ class FEModel3D():
     def Analyze_PDelta(self, max_iter=30, tol=0.01):
         '''
         Runs a second order (P-Delta) analysis on the structure.
+
+        Parameters
+        ----------
+        max_iter : number
+            The maximum number of iterations permitted. If this value is exceeded the program will
+            report divergence.
+        tol : number
+            The deflection tolerance (as a percentage) between iterations that will be used to define whether the model
+            has converged (e.g. 0.01 = deflections must converge within 1% between iterations).
         '''
         
         print('**Running P-Delta analysis**')
@@ -1018,7 +1030,6 @@ class FEModel3D():
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
-
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
 
@@ -1040,14 +1051,14 @@ class FEModel3D():
                 if iter_count == 1:
                     
                     K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices) # Initial stiffness matrix
-                    FER1, FER2 = self.__Partition(self.FER(combo), D1_indices, D2_indices)  # Fixed end reactions
-                    P1, P2 = self.__Partition(self.P(combo), D1_indices, D2_indices)        # Nodal forces
+                    FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
+                    P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
 
                 else:
 
                     # Calculate the global stiffness matrices (partitioned)
                     K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices)           # Initial stiffness matrix
-                    Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo), D1_indices, D2_indices) # Geometric stiffness matrix
+                    Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name), D1_indices, D2_indices) # Geometric stiffness matrix
 
                     # Combine the stiffness matrices
                     K11 = add(K11, Kg11)
@@ -1184,7 +1195,7 @@ class FEModel3D():
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            member_F = member.F(combo)
+                            member_F = member.F(combo.name)
 
                             node.RxnFX[combo.name] += member_F[0, 0]
                             node.RxnFY[combo.name] += member_F[1, 0]
@@ -1197,7 +1208,7 @@ class FEModel3D():
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            member_F = member.F(combo)
+                            member_F = member.F(combo.name)
                         
                             node.RxnFX[combo.name] += member_F[6, 0]
                             node.RxnFY[combo.name] += member_F[7, 0]
@@ -1213,7 +1224,7 @@ class FEModel3D():
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            plate_F = plate.F(combo)
+                            plate_F = plate.F(combo.name)
                     
                             node.RxnFX[combo.name] += plate_F[0, 0]
                             node.RxnFY[combo.name] += plate_F[1, 0]
@@ -1226,7 +1237,7 @@ class FEModel3D():
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            plate_F = plate.F(combo)
+                            plate_F = plate.F(combo.name)
                     
                             node.RxnFX[combo.name] += plate_F[6, 0]
                             node.RxnFY[combo.name] += plate_F[7, 0]
@@ -1239,7 +1250,7 @@ class FEModel3D():
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            plate_F = plate.F(combo)
+                            plate_F = plate.F(combo.name)
                     
                             node.RxnFX[combo.name] += plate_F[12, 0]
                             node.RxnFY[combo.name] += plate_F[13, 0]
@@ -1252,7 +1263,7 @@ class FEModel3D():
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            plate_F = plate.F(combo)
+                            plate_F = plate.F(combo.name)
                     
                             node.RxnFX[combo.name] += plate_F[18, 0]
                             node.RxnFY[combo.name] += plate_F[19, 0]
@@ -1297,8 +1308,8 @@ class FEModel3D():
             SumRMX, SumRMY, SumRMZ = 0.0, 0.0, 0.0
 
             # Get the global force vector and the global fixed end reaction vector
-            P = self.P(combo)
-            FER = self.FER(combo)
+            P = self.P(combo.name)
+            FER = self.FER(combo.name)
 
             # Step through each node and sum its forces
             for node in self.Nodes:

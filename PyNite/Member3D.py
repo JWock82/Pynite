@@ -194,7 +194,7 @@ class Member3D():
         return kg_Condensed
     
 #%%
-    def fer(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def fer(self, combo_name='Combo 1'):
         '''
         Returns the condensed (and expanded) local fixed end reaction vector for the member for the given load combination.
 
@@ -209,7 +209,7 @@ class Member3D():
 
         # Partition the local stiffness matrix and local fixed end reaction vector
         k11, k12, k21, k22 = self.__Partition(self.__k_Unc())
-        fer1, fer2 = self.__Partition(self.__fer_Unc(combo))
+        fer1, fer2 = self.__Partition(self.__fer_Unc(combo_name))
         
         # Calculate the condensed fixed end reaction vector
         ferCondensed = subtract(fer1, matmul(matmul(k12, inv(k22)), fer2))
@@ -227,7 +227,7 @@ class Member3D():
         return ferCondensed
     
 #%%
-    def __fer_Unc(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def __fer_Unc(self, combo_name='Combo 1'):
         '''
         Returns the member's local fixed end reaction vector, ignoring the effects of end releases.
         Needed to apply the slope-deflection equation properly.
@@ -235,6 +235,9 @@ class Member3D():
         
         # Initialize the fixed end reaction vector
         fer = zeros((12,1))
+
+        # Get the requested load combination
+        combo = self.LoadCombos[combo_name]
 
         # Loop through each load case and factor in the load combination
         for case, factor in combo.factors.items():
@@ -293,32 +296,32 @@ class Member3D():
             return  m11, m12, m21, m22
 
 #%%   
-    def f(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def f(self, combo_name='Combo 1'):
         '''
         Returns the member's local end force vector for the given load combination.
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to calculate the local end force vector for.
+        combo_name : string
+            The name of the load combination to calculate the local end force vector for (not the load combination itself).
         '''
         
         # Calculate and return the member's local end force vector
-        return add(matmul(self.k(), self.d(combo)), self.fer(combo))
+        return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
 #%%
-    def d(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def d(self, combo_name='Combo 1'):
         '''
         Returns the member's local displacement vector.
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to construct the displacement vector for.
+        combo_name : string
+            The name of the load combination to construct the displacement vector for (not the load combination itself).
         '''
         
         # Calculate and return the local displacement vector
-        return matmul(self.T(), self.D(combo))
+        return matmul(self.T(), self.D(combo_name))
         
 #%%  
     # Transformation matrix
@@ -437,56 +440,56 @@ class Member3D():
         return matmul(matmul(transpose(self.T()), self.kg(P)), self.T())
 
 #%%
-    def F(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def F(self, combo_name='Combo 1'):
         '''
         Returns the member's global end force vector for the given load combination.
         '''
         
         # Calculate and return the global force vector
-        return matmul(inv(self.T()), self.f(combo))
+        return matmul(inv(self.T()), self.f(combo_name))
     
 #%% 
     # Global fixed end reaction vector
-    def FER(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def FER(self, combo_name='Combo 1'):
         '''
         Returns the global fixed end reaction vector
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to calculate the fixed end reaction vector for.
+        combo_name : string
+            The name of the load combination to calculate the fixed end reaction vector for (not the load combination itself).
         '''
         
         # Calculate and return the fixed end reaction vector
-        return matmul(inv(self.T()), self.fer(combo))
+        return matmul(inv(self.T()), self.fer(combo_name))
 
 #%%
-    def D(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def D(self, combo_name='Combo 1'):
         '''
         Returns the member's global displacement vector.
 
         Parameters
         ----------
-        combo : LoadCombo
-            The load combination to construct the global displacement vector for.
+        combo_name : string
+            The name of the load combination to construct the global displacement vector for (not the load combination itelf).
         '''
         
         # Initialize the displacement vector
         D = zeros((12, 1))
         
         # Read in the global displacements from the nodes
-        D[0, 0] = self.iNode.DX[combo.name]
-        D[1, 0] = self.iNode.DY[combo.name]
-        D[2, 0] = self.iNode.DZ[combo.name]
-        D[3, 0] = self.iNode.RX[combo.name]
-        D[4, 0] = self.iNode.RY[combo.name]
-        D[5, 0] = self.iNode.RZ[combo.name]
-        D[6, 0] = self.jNode.DX[combo.name]
-        D[7, 0] = self.jNode.DY[combo.name]
-        D[8, 0] = self.jNode.DZ[combo.name]
-        D[9, 0] = self.jNode.RX[combo.name]
-        D[10, 0] = self.jNode.RY[combo.name]
-        D[11, 0] = self.jNode.RZ[combo.name]
+        D[0, 0] = self.iNode.DX[combo_name]
+        D[1, 0] = self.iNode.DY[combo_name]
+        D[2, 0] = self.iNode.DZ[combo_name]
+        D[3, 0] = self.iNode.RX[combo_name]
+        D[4, 0] = self.iNode.RY[combo_name]
+        D[5, 0] = self.iNode.RZ[combo_name]
+        D[6, 0] = self.jNode.DX[combo_name]
+        D[7, 0] = self.jNode.DY[combo_name]
+        D[8, 0] = self.jNode.DZ[combo_name]
+        D[9, 0] = self.jNode.RX[combo_name]
+        D[10, 0] = self.jNode.RY[combo_name]
+        D[11, 0] = self.jNode.RZ[combo_name]
         
         # Return the global displacement vector
         return D
@@ -510,7 +513,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
 
         # Check which direction is of interest
@@ -555,7 +558,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         if Direction == 'Fy':
@@ -597,7 +600,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]   
         
         if Direction == 'Fy':
@@ -637,7 +640,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
@@ -682,7 +685,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Check which axis is of interest
@@ -730,7 +733,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         if Direction == 'Mz':
@@ -772,7 +775,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])   
+            self.SegmentMember(combo_name)   
             self.__solved_combo = self.LoadCombos[combo_name]
         
         if Direction == 'Mz':
@@ -812,7 +815,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
@@ -856,7 +859,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
             
         # Check which segment 'x' falls on
@@ -881,7 +884,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]       
         
         Tmax = self.SegmentsX[0].Torsion()   
@@ -907,7 +910,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         Tmin = self.SegmentsX[0].Torsion()
@@ -933,7 +936,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
@@ -974,7 +977,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
             
         # Check which segment 'x' falls on
@@ -999,7 +1002,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         Pmax = self.SegmentsZ[0].Axial(0)   
@@ -1025,7 +1028,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         Pmin = self.SegmentsZ[0].Axial(0)
@@ -1051,7 +1054,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
@@ -1097,7 +1100,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Check which axis is of interest
@@ -1156,7 +1159,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Initialize the maximum deflection
@@ -1186,7 +1189,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Initialize the minimum deflection
@@ -1216,7 +1219,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
@@ -1262,7 +1265,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         d = self.d(self.LoadCombos[combo_name])
@@ -1315,7 +1318,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(self.LoadCombos[combo_name])
+            self.SegmentMember(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
@@ -1344,7 +1347,7 @@ class Member3D():
         
 #%%    
     # Divides the element up into mathematically continuous segments along each axis
-    def SegmentMember(self, combo=LoadCombo('Combo 1', factors={'Case 1':1.0})):
+    def SegmentMember(self, combo_name='Combo 1'):
         
         # Get the member's length and stiffness properties
         L = self.L()
@@ -1356,6 +1359,9 @@ class Member3D():
         SegmentsY = self.SegmentsY
         SegmentsX = self.SegmentsX
         
+        # Get the load combination to segment the member for
+        combo = self.LoadCombos[combo_name]
+
         # Create a list of discontinuity locations
         disconts = [0, L] # Member ends
         
@@ -1401,9 +1407,9 @@ class Member3D():
             SegmentsX.append(newSeg)      # Add the segment to the list
         
         # Get the member local end forces, local fixed end reactions, and local displacements
-        f = self.f(combo)           # Member local end force vector
-        fer = self.__fer_Unc(combo) # Member local fixed end reaction vector
-        d = self.d(combo)           # Member local displacement vector
+        f = self.f(combo_name)           # Member local end force vector
+        fer = self.__fer_Unc(combo_name) # Member local fixed end reaction vector
+        d = self.d(combo_name)           # Member local displacement vector
         
         # Get the local deflections and calculate the slope at the start of the member
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used,
@@ -1470,7 +1476,7 @@ class Member3D():
             
                 # Add effects of point loads occuring prior to this segment
                 for ptLoad in self.PtLoads:
-                
+                    
                     if round(ptLoad[2],10) <= round(x,10) and case == ptLoad[3]:
                     
                         if ptLoad[0] == 'Fx':
