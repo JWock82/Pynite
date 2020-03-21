@@ -570,7 +570,7 @@ class VisPlate():
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
   
-  def __init__(self, node, scale_factor, textHeight=5, combo_name='Default'):
+  def __init__(self, node, scale_factor, textHeight=5, combo_name='Combo 1'):
   
     # Calculate the node's deformed position
     newX = node.X + scale_factor*(node.DX[combo_name])
@@ -609,7 +609,7 @@ class VisDeformedNode():
 # Converts a member object into a member in its deformed position for the viewer
 class VisDeformedMember():
 
-  def __init__(self, member, nodes, scale_factor, textHeight=5, combo_name='Default'):
+  def __init__(self, member, nodes, scale_factor, textHeight=5, combo_name='Combo 1'):
 
     L = member.L() # Member length
     T = member.T() # Member local transformation matrix
@@ -690,7 +690,7 @@ class VisDeformedMember():
     self.polylineActor.SetMapper(polylineMapper)
     self.polylineActor.GetProperty().SetColor(255,255,0) # Yellow
 
-def DeformedShape(model, scale_factor, textHeight=5, combo_name='Default'):
+def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1'):
 
   visNodes = []
   for node in model.Nodes:
