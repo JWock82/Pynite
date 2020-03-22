@@ -663,7 +663,7 @@ class Member3D():
         Member3D.__plt.plot(x, V)
         Member3D.__plt.ylabel('Shear')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()    
         
 #%%
@@ -839,7 +839,7 @@ class Member3D():
         Member3D.__plt.plot(x, M)
         Member3D.__plt.ylabel('Moment')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()
 
         
@@ -959,7 +959,7 @@ class Member3D():
         Member3D.__plt.plot(x, T)
         Member3D.__plt.ylabel('Torsional Moment (Warping Torsion Not Included)') # Torsion results are for pure torsion. Torsional warping has not been considered
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()   
         
 #%%
@@ -1077,7 +1077,7 @@ class Member3D():
         Member3D.__plt.plot(x, P)
         Member3D.__plt.ylabel('Axial Force')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()    
                         
 #%%
@@ -1243,7 +1243,7 @@ class Member3D():
         Member3D.__plt.plot(x, d)
         Member3D.__plt.ylabel('Deflection')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()
     
 #%%   
@@ -1342,7 +1342,7 @@ class Member3D():
         Member3D.__plt.plot(x, d_relative)
         Member3D.__plt.ylabel('Relative Deflection')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name)
+        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()   
         
 #%%    
