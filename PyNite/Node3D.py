@@ -22,7 +22,7 @@ class Node3D():
         self.Y = Y          # Global Y coordinate
         self.Z = Z          # Global Z coordinate
         
-        self.NodeLoads = []     # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
+        self.NodeLoads = [] # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
         
         # Initialize the dictionaries of calculated node displacements
         self.DX = {}
@@ -40,10 +40,18 @@ class Node3D():
         self.RxnMY = {}
         self.RxnMZ = {}
 
-        # Initialize all support conditions to 'None'
-        self.SupportDX = None
-        self.SupportDY = None
-        self.SupportDZ = None
-        self.SupportRX = None
-        self.SupportRY = None
-        self.SupportRZ = None
+        # Initialize all support conditions to 'False'
+        self.SupportDX = False
+        self.SupportDY = False
+        self.SupportDZ = False
+        self.SupportRX = False
+        self.SupportRY = False
+        self.SupportRZ = False
+
+        # Initialize all enforced displacements to 'None'
+        self.EnforcedDX = None
+        self.EnforcedDY = None
+        self.EnforcedDZ = None
+        self.EnforcedRX = None
+        self.EnforcedRY = None
+        self.EnforcedRZ = None
