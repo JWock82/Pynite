@@ -144,7 +144,7 @@ class VisNode():
     # Generate any supports that occur at the node
     # Check for a fixed suppport
     if node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
-      and node.SupportRX == True and node.SupportRY == True and node.SupportRZ == True:
+    and node.SupportRX == True and node.SupportRY == True and node.SupportRZ == True:
 
       # Create the fixed support
       support = vtk.vtkCubeSource()
@@ -161,7 +161,7 @@ class VisNode():
     
     # Check for a pinned support
     elif node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
-      and node.SupportRX == False and node.SupportRY == False and node.SupportRZ == False:
+    and node.SupportRX == True and node.SupportRY == True and node.SupportRZ == True:
       
       # Create the pinned support
       support = vtk.vtkConeSource()

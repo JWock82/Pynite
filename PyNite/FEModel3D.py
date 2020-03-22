@@ -179,59 +179,36 @@ class FEModel3D():
         '''
         Defines the support conditions at a node.
         
-        Nodes will default to fully unsupported unless specified otherwise. This method will overide any nodal displacements previously defined at the node.
+        Nodes will default to fully unsupported unless specified otherwise.
         
         Parameters
         ----------
         Node : string
             The name of the node where the support is being defined
         SupportDX : number
-            Indicates whether the node is supported against translation in the global X-direction or if there is a support settlement.
+            Indicates whether the node is supported against translation in the global X-direction.
         SupportDY : number
-            Indicates whether the node is supported against translation in the global Y-direction or if there is a support settlement.
+            Indicates whether the node is supported against translation in the global Y-direction.
         SupportDZ : number
-            Indicates whether the node is supported against translation in the global Z-direction or if there is a support settlement.
+            Indicates whether the node is supported against translation in the global Z-direction.
         SupportRX : number
-            Indicates whether the node is supported against rotation about the global X-axis or if there is a support settlement.
+            Indicates whether the node is supported against rotation about the global X-axis.
         SupportRY : number
-            Indicates whether the node is supported against rotation about the global Y-axis or if there is a support settlement.
+            Indicates whether the node is supported against rotation about the global Y-axis.
         SupportRZ : number
-            Indicates whether the node is supported against rotation about the global Z-axis or if there is a support settlement.
+            Indicates whether the node is supported against rotation about the global Z-axis.
         '''
         
         # Get the node to be supported
         node = self.GetNode(Node)
                 
         # Set the node's support conditions
-        if SupportDX == True:
-            node.SupportDX = 0.0
-        else:
-            node.SupportDX = None
-        
-        if SupportDY == True:
-            node.SupportDY = 0.0
-        else:
-            node.SupportDY = None
-
-        if SupportDZ == True:
-            node.SupportDZ = 0.0
-        else:
-            node.SupportDZ = None
-
-        if SupportRX == True:
-            node.SupportRX = 0.0
-        else:
-            node.SupportRX = None
-
-        if SupportRY == True:
-            node.SupportRY = 0.0
-        else:
-            node.SupportRY = None
-
-        if SupportRZ == True:
-            node.SupportRZ = 0.0
-        else:
-            node.SupportRZ = None
+        node.SupportDX = SupportDX
+        node.SupportDY = SupportDY
+        node.SupportDZ = SupportDZ
+        node.SupportRX = SupportRX
+        node.SupportRY = SupportRY
+        node.SupportRZ = SupportRZ
 
 #%%            
     def AddNodeDisplacement (self, Node, Direction, Magnitude): 
@@ -251,17 +228,17 @@ class FEModel3D():
         node = self.GetNode(Node)
 
         if Direction == 'DX':
-            node.SupportDX = Magnitude
+            node.EnforceDX = Magnitude
         if Direction == 'DY':
-            node.SupportDY = Magnitude
+            node.EnforcedDY = Magnitude
         if Direction == 'DZ':
-            node.SupportDZ = Magnitude
+            node.EnforcedDZ = Magnitude
         if Direction == 'RX':
-            node.SupportRX = Magnitude
+            node.EnforcedRX = Magnitude
         if Direction == 'RY':
-            node.SupportRY = Magnitude
+            node.EnforcedRY = Magnitude
         if Direction == 'RZ':
-            node.SupportRZ = Magnitude
+            node.EnforcedRZ = Magnitude
 
 #%%
     def DefineReleases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
@@ -574,52 +551,76 @@ class FEModel3D():
         for node in self.Nodes:
             
             # Unknown displacement DX
-            if node.SupportDX == None:
+            if node.SupportDX == False and node.EnforcedDX == None:
                 D1_indices.append((node.ID*6) + 0)
             # Known displacement DX
+            elif node.EnforcedDX != None:
+                D2_indices.append((node.ID*6) + 0)
+                D2.append(node.EnforcedDX)
+            # Support at DX
             else:
                 D2_indices.append((node.ID*6) + 0)
-                D2.append(node.SupportDX)
+                D2.append(0.0)
 
             # Unknown displacement DY
-            if node.SupportDY == None:
+            if node.SupportDY == False and node.EnforcedDY == None:
                 D1_indices.append((node.ID*6) + 1)
             # Known displacement DY
+            elif node.EnforcedDY != None:
+                D2_indices.append((node.ID*6) + 1)
+                D2.append(node.EnforcedDY)
+            # Support at DY
             else:
                 D2_indices.append((node.ID*6) + 1)
-                D2.append(node.SupportDY)
+                D2.append(0.0)
 
             # Unknown displacement DZ
-            if node.SupportDZ == None:
+            if node.SupportDZ == False and node.EnforcedDZ == None:
                 D1_indices.append((node.ID*6) + 2)
             # Known displacement DZ
+            elif node.EnforcedDZ != None:
+                D2_indices.append((node.ID*6) + 2)
+                D2.append(node.EnforcedDZ)
+            # Support at DZ
             else:
                 D2_indices.append((node.ID*6) + 2)
-                D2.append(node.SupportDZ)
+                D2.append(0.0)
 
             # Unknown displacement RX
-            if node.SupportRX == None:
+            if node.SupportRX == False and node.EnforcedRX == None:
                 D1_indices.append((node.ID*6) + 3)
             # Known displacement RX
+            elif node.EnforcedRX != None:
+                D2_indices.append((node.ID*6) + 3)
+                D2.append(node.EnforcedRX)
+            # Support at RX
             else:
                 D2_indices.append((node.ID*6) + 3)
-                D2.append(node.SupportRX)
+                D2.append(0.0)
 
             # Unknown displacement RY
-            if node.SupportRY == None:
+            if node.SupportRY == False and node.EnforcedRY == None:
                 D1_indices.append((node.ID*6) + 4)
             # Known displacement RY
+            elif node.EnforcedRY != None:
+                D2_indices.append((node.ID*6) + 4)
+                D2.append(node.EnforcedRY)
+            # Support at RY
             else:
                 D2_indices.append((node.ID*6) + 4)
-                D2.append(node.SupportRY)
+                D2.append(0.0)
 
             # Unknown displacement RZ
-            if node.SupportRZ == None:
+            if node.SupportRZ == False and node.EnforcedRZ == None:
                 D1_indices.append((node.ID*6) + 5)
             # Known displacement RZ
+            elif node.EnforcedRZ != None:
+                D2_indices.append((node.ID*6) + 5)
+                D2.append(node.EnforcedRZ)
+            # Support at RZ
             else:
                 D2_indices.append((node.ID*6) + 5)
-                D2.append(node.SupportRZ)
+                D2.append(0.0)
 
         # Return the indices and the known displacements
         return D1_indices, D2_indices, D2
@@ -923,7 +924,7 @@ class FEModel3D():
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
             # Create and add a default load combination to the dictionary of load combinations
-            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', {'Case 1':1.0})
+            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
