@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 class RectWall():
 
     # Constructor
-    def __init__(self, width, height, thickness, E=3824, nu=0.3, mesh_size=1, bot_support = 'Pinned', top_support = 'Pinned', left_support = 'Free', right_support = 'Free'):
+    def __init__(self, width, height, thickness, E=3824, nu=0.3, mesh_size=1, bot_support='Pinned', top_support='Pinned', left_support='Free', right_support='Free'):
 
         self.width = width
         self.height = height
@@ -143,41 +143,32 @@ class RectWall():
         for node in self.fem.Nodes:
 
             # Plate elements don't have the following degrees of freedom, so they'll need to be supported
-            node.RZ = 0.0
             node.SupportRZ = True
 
             # Determine if the node falls on any of the boundaries
             # Left edge
             if np.isclose(node.X, 0.0):
                 if self.left_support == "Fixed":
-                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.left_support == "Pinned":
-                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Right edge
             elif np.isclose(node.X, self.width):
                 if self.right_support == "Fixed":
-                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.right_support == "Pinned":
-                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Bottom edge
             elif np.isclose(node.Y, 0.0):
                 if self.bot_support == "Fixed":
-                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.bot_support == "Pinned":
-                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Top edge
             elif np.isclose(node.Y, self.height):
                 if self.top_support == "Fixed":
-                    node.DX, node.DY, node.DZ, node.RX, node.RY = 0.0, 0.0, 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.top_support == "Pinned":
-                    node.DX, node.DY, node.DZ = 0.0, 0.0, 0.0
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
 
     # Analyzes the wall
@@ -213,25 +204,25 @@ class RectWall():
                 if avgY <= y2 and avgY >= y1:
 
                     # Calculate the pressure the plate
-                    pressure += (p2-p1)/(y2-y1)*(avgY-y1) + p1
+                    pressure += (p2 - p1)/(y2 - y1)*(avgY - y1) + p1
                     
                     # Calculate the surface area of the plate
-                    area = (j_node.Y - i_node.Y) * (n_node.X - i_node.X)
+                    area = (j_node.Y - i_node.Y)*(n_node.X - i_node.X)
 
                     # Add the plate's load to each of its four nodes
-                    i_node.NodeLoads.append(('FZ', pressure*area/4))
-                    j_node.NodeLoads.append(('FZ', pressure*area/4))
-                    m_node.NodeLoads.append(('FZ', pressure*area/4))
-                    n_node.NodeLoads.append(('FZ', pressure*area/4))
+                    i_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
+                    j_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
+                    m_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
+                    n_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
 
         # Analyze the model
         self.fem.Analyze()
 
         # Find the maximum displacement
-        DZ = self.fem.Nodes[0].DZ
+        DZ = self.fem.Nodes[0].DZ['Combo 1']
         for node in self.fem.Nodes:
-            if abs(node.DZ) > abs(DZ):
-                DZ = node.DZ
+            if abs(node.DZ['Combo 1']) > abs(DZ):
+                DZ = node.DZ['Combo 1']
 
         print('Max Displacement:', DZ)
 
@@ -294,27 +285,27 @@ class RectWall():
                 # Sum plate corner forces at the node
                 if plate.iNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(0, 0)[index][0]
+                        force += plate.Shear(0, 0, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(0, 0)[index][0]
+                        force += plate.Moment(0, 0, 'Combo 1')[index][0]
                     count += 1
                 elif plate.jNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(0, plate.height())[index][0]
+                        force += plate.Shear(0, plate.height(), 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(0, plate.height())[index][0]
+                        force += plate.Moment(0, plate.height(), 'Combo 1')[index][0]
                     count += 1
                 elif plate.mNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(plate.width(), plate.height())[index][0]
+                        force += plate.Shear(plate.width(), plate.height(), 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(plate.width(), plate.height())[index][0]
+                        force += plate.Moment(plate.width(), plate.height(), 'Combo 1')[index][0]
                     count += 1
                 elif plate.nNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(plate.width(), 0)[index][0]
+                        force += plate.Shear(plate.width(), 0, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(plate.width(), 0)[index][0]
+                        force += plate.Moment(plate.width(), 0, 'Combo 1')[index][0]
                     count += 1
 
             # Calculate the average force at the node
@@ -374,7 +365,7 @@ class RectWall():
                 y.append(node.Y)
                 y_prev = node.Y
 
-            disp = node.DZ
+            disp = node.DZ['Combo 1']
 
             # Add the total force at the node to the list of forces
             z.append(disp)
