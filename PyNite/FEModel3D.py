@@ -1182,12 +1182,12 @@ class FEModel3D():
                 node.RxnMZ[combo.name] = 0.0
 
                 # Determine if the node has any supports
-                if (node.SupportDX != None and isclose(node.SupportDX, 0.0)) \
-                or (node.SupportDY != None and isclose(node.SupportDY, 0.0)) \
-                or (node.SupportDZ != None and isclose(node.SupportDZ, 0.0)) \
-                or (node.SupportRX != None and isclose(node.SupportRX, 0.0)) \
-                or (node.SupportRY != None and isclose(node.SupportRY, 0.0)) \
-                or (node.SupportRZ != None and isclose(node.SupportRZ, 0.0)):
+                if (node.SupportDX == True) \
+                or (node.SupportDY == True) \
+                or (node.SupportDZ == True) \
+                or (node.SupportRX == True) \
+                or (node.SupportRY == True) \
+                or (node.SupportRZ == True):
 
                     # Sum the member end forces at the node
                     for member in self.Members:
