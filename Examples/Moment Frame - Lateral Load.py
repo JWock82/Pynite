@@ -32,7 +32,7 @@ MomentFrame.DefineSupport('N4', True, True, True, True, True, True)
 MomentFrame.AddNodeLoad('N2', 'FX', 50, 'Lateral')
 
 # Create a load combination with a factor of 1.0 applied to the 'Lateral' load case
-MomentFrame.AddLoadCombo('Combo 1', {'Lateral':1.0})
+MomentFrame.AddLoadCombo('Combo 1', factors={'Lateral':1.0})
 
 # Analyze the frame
 MomentFrame.Analyze(check_statics=True)
