@@ -706,11 +706,11 @@ def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1'):
 
   visDeformedNodes = []
   for node in model.Nodes:
-    visDeformedNodes.append(VisDeformedNode(node, scale_factor, textHeight))
+    visDeformedNodes.append(VisDeformedNode(node, scale_factor, textHeight, combo_name))
   
   visDeformedMembers = []
   for member in model.Members:
-    visDeformedMembers.append(VisDeformedMember(member, model.Nodes, scale_factor, textHeight))
+    visDeformedMembers.append(VisDeformedMember(member, model.Nodes, scale_factor, textHeight, combo_name))
 
   # Create a window
   window = vtk.vtkRenderWindow()
