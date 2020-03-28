@@ -5,6 +5,7 @@ A linear elastic 3D structural engineering finite element library for Python.
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
 * Member point loads, linearly varying distributed loads, and nodal loads are supported.
+* Classify loads by load case and create load combinations from load cases.
 * Produces shear, moment, and deflection results and diagrams for each member.
 * Rectangular plate elements.
 * Reports support reactions.
