@@ -1,9 +1,8 @@
-# Example of a moment frame with a lateral load
-# Units used in this example are inches, and kips
+# Example of a basic 2D moment frame with gravity and lateral loads
+# Units used for the model in this example are inches and kips
 
 # Import `FEModel3D` from `PyNite`
 from PyNite import FEModel3D
-from PyNite import Visualization
 
 # Create a new finite element model
 MomentFrame = FEModel3D()
@@ -14,43 +13,69 @@ MomentFrame.AddNode('N2', 0, 12*12, 0)
 MomentFrame.AddNode('N3', 15*12, 12*12, 0)
 MomentFrame.AddNode('N4', 15*12, 0*12, 0)
 
-# Add columns with the following properties:
-# E = 29000 ksi, G = 11400 ksi, Iy = 100 in^4, Iz = 150 in^4, J = 250 in^4, A = 10 in^2
-MomentFrame.AddMember('M1', 'N1', 'N2', 29000, 11400, 100, 150, 250, 10)
-MomentFrame.AddMember('M2', 'N4', 'N3', 29000, 11400, 100, 150, 250, 10)
+# Define column properties (use W10x33 from the AISC Manual):
+E = 29000 # ksi
+G = 11400 # ksi
+Iy = 36.6 # in^4
+Iz = 171 # in^4
+J = 0.58 # in^4
+A = 9.71 # in^2
 
-# Add a beam with the following properties:
-# E = 29000 ksi, G = 11400 ksi, Iy = 100 in^4, Iz = 250 in^4, J = 250 in^4, A = 15 in^2
-MomentFrame.AddMember('M3', 'N2', 'N3', 29000, 11400, 100, 250, 250, 15)
+# Define the columns
+MomentFrame.AddMember('Col1', 'N1', 'N2', E, G, Iy, Iz, J, A)
+MomentFrame.AddMember('Col2', 'N4', 'N3', E, G, Iy, Iz, J, A)
+
+# Define beam properties (Use W8x24)
+Iy = 18.3 # in^4
+Iz = 82.7 # in^4
+J = 0.346 # in^4
+A = 7.08 # in^2
+
+# Define the beams
+MomentFrame.AddMember('Beam', 'N2', 'N3', E, G, Iy, Iz, J, A)
 
 # Provide fixed supports at the bases of the columns
-MomentFrame.DefineSupport('N1', True, True, True, True, True, True)
-MomentFrame.DefineSupport('N4', True, True, True, True, True, True)
+MomentFrame.DefineSupport('N1', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRX=True, SupportRY=True, SupportRZ=True)
+MomentFrame.DefineSupport('N4', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRX=True, SupportRY=True, SupportRZ=True)
 
-# Add a nodal lateral load of 50 kips at the left side of the frame
-# The lateral load will be added to a load case called 'Lateral'
-MomentFrame.AddNodeLoad('N2', 'FX', 50, 'Lateral')
+# Add self weight dead loads to the frame
+# Note that we could leave 'x1' and 'x2' undefined below and it would default to the full member length
+# Note also that the direction uses lowercase notations to indicate member local coordinate systems
+MomentFrame.AddMemberDistLoad('Beam', Direction='Fy', w1=-0.024/12, w2=-0.024/12, x1=0, x2=15*12, case='D')
+MomentFrame.AddMemberDistLoad('Col1', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
+MomentFrame.AddMemberDistLoad('Col2', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
 
-# Create a load combination with a factor of 1.0 applied to the 'Lateral' load case
-MomentFrame.AddLoadCombo('Combo 1', factors={'Lateral':1.0})
+# Add a nodal wind load of 10 kips at the left side of the frame
+# Note that the direction uses uppercase notation to indicate model global coordinate system
+MomentFrame.AddNodeLoad('N2', Direction='FX', P=10, case='W')
 
-# Analyze the frame
-MomentFrame.Analyze(check_statics=True)
+# Create two load combinations
+MomentFrame.AddLoadCombo('1.2D+1.0W', factors={'D':1.2, 'W':1.0})
+MomentFrame.AddLoadCombo('0.9D+1.0W', factors={'D':0.9, 'W':1.0})
 
-# Display the deformed shape of the structure magnified 25 times with the text height 5 model units (inches) high
-Visualization.DeformedShape(MomentFrame, scale_factor=25, textHeight=5, combo_name='Combo 1')
+# Perform a P-Big Delta analysis on the frame
+# Note that to capture P-little delta effects the members should idealy be broken into three segments each
+MomentFrame.Analyze_PDelta()
 
-# Print the shear, moment, and deflection diagrams for member 'M3'
-MomentFrame.GetMember('M3').PlotShear('Fy', 'Combo 1')
-MomentFrame.GetMember('M3').PlotMoment('Mz', 'Combo 1')
-MomentFrame.GetMember('M3').PlotDeflection('dy', 'Combo 1')
+# A first-order analysis could be done with the following line instead
+# MomentFrame.Analyze()
 
-# Print reactions at the bottom of the frame
-# PyNite stores reactions in each node as a dictionary of reactions with the keys being the load combination names
-print('Left Support X Reaction:', MomentFrame.GetNode('N1').RxnFX['Combo 1'], 'kip')
-print('Left Support Y Reaction:', MomentFrame.GetNode('N1').RxnFY['Combo 1'], 'kip')
-print('Left Support Moment Reaction:', MomentFrame.GetNode('N1').RxnMZ['Combo 1'], 'kip-in')
+# Display the deformed shape of the structure magnified 50 times with the text height 5 model units (inches) high
+from PyNite import Visualization
+Visualization.DeformedShape(MomentFrame, scale_factor=50, textHeight=5, combo_name='1.2D+1.0W')
 
-print('Right Support X Reacton:', MomentFrame.GetNode('N4').RxnFX['Combo 1'], 'kip')
-print('Right Support Y Reacton:', MomentFrame.GetNode('N4').RxnFY['Combo 1'], 'kip')
-print('Right Support Moment Reacton:', MomentFrame.GetNode('N4').RxnMZ['Combo 1'], 'kip-in')
+# Plot the moment diagram for the beam
+MomentFrame.GetMember('Beam').PlotMoment('Mz', combo_name='1.2D+1.0W')
+
+# Plot the deflection of the column
+MomentFrame.GetMember('Col1').PlotDeflection('dy', combo_name='1.2D+1.0W')
+
+# Find the maximum shear in the first column
+print('Column Shear Force:', MomentFrame.GetMember('Col1').MaxShear('Fy', combo_name='1.2D+1.0W'), 'kip')
+
+# Find the frame lateral drift
+# Note that the deflections are stored as a dictionary in the node object by load combination, so [] are used instead of () below
+print('Frame Lateral Drift:', MomentFrame.GetNode('N2').DX['1.2D+1.0W'], 'in')
+
+# Find the maximum uplift reaction
+print('Left Support Y Reaction:', MomentFrame.GetNode('N1').RxnFY['0.9D+1.0W'], 'kip')
