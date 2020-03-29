@@ -29,9 +29,9 @@ class Plate3D():
         return add(self.k_b(), self.k_m())
     
     def k_b(self):
-        """
+        '''
         Returns the local stiffness matrix for bending
-        """
+        '''
 
         a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
         b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
@@ -42,7 +42,7 @@ class Plate3D():
         nu = self.nu
 
         # # Stiffness matrix for plate bending and out-of-plane displacement based on a 12-term polynomial
-        # # Based on "Finite Element Analysis Fundamentals" by Richard H. Gallagher
+        # # Based on 'Finite Element Analysis Fundamentals' by Richard H. Gallagher
         # # There seems to be an error in this formulation, so an alternate formulation will be used below
 
         # b = x2/y3
@@ -122,9 +122,9 @@ class Plate3D():
 
 #%%
     def k_m(self):
-        """
+        '''
         Returns the local stiffness matrix for membrane forces
-        """
+        '''
 
         a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
         b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
@@ -191,26 +191,26 @@ class Plate3D():
 
 #%%   
     def f(self, combo_name='Combo 1'):
-        """
+        '''
         Returns the plate's local end force vector
-        """
+        '''
         
         # Calculate and return the plate's local end force vector
         return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
 #%%
     def fer(self, combo_name='Combo 1'):
-        """
+        '''
         Returns the plate's local fixed end reaction vector (zero's for now until surface loads get added)
-        """
+        '''
 
         return zeros((24, 1))
 
 #%%
     def d(self, combo_name='Combo 1'):
-       """
+       '''
        Returns the plate's local displacement vector
-       """
+       '''
 
        # Calculate and return the local displacement vector
        return matmul(self.T(), self.D(combo_name))
@@ -223,9 +223,9 @@ class Plate3D():
 
 #%%
     def D(self, combo_name='Combo 1'):
-        """
+        '''
         Returns the plate's global displacement vector for the given load combination.
-        """
+        '''
         
         # Initialize the displacement vector
         D = zeros((24, 1))
@@ -368,9 +368,9 @@ class Plate3D():
 #%%
     # Returns the vector of constants for plate bending
     def __a(self, combo_name='Combo 1'):
-        """
+        '''
         Returns the vector of plate bending constants for the displacement function
-        """
+        '''
 
         # Get the plate's local displacement vector
         d = self.d(combo_name)
@@ -413,20 +413,20 @@ class Plate3D():
 
 #%%   
     def Moment(self, x, y, combo_name='Combo 1'):
-        """
+        '''
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
-        """
+        '''
         
         # Calculate and return internal moments
         return self.__D()*self.__Q(x, y)*self.__a(combo_name)
 
 #%%  
     def Shear(self, x, y, combo_name='Combo 1'):
-        """
+        '''
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
-        """
+        '''
 
         # Store matrices into local variables for quicker access
         D = self.__D()
