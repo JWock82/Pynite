@@ -27,6 +27,7 @@ As I've gotten into the structural engineering profession, I've found there's a 
 PyNite depends on the following packages:
 * numpy: used for matrix algebra
 * matplotlib: used for plotting member diagrams
+* tabulate : used to format tabular output
 * vtk: used for visualization - note that vtk requires a 64 bit installation of python. vtk does not need to be installed if you don't plan to use the visualization tools in PyNite.
 
 # What's New?
