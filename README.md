@@ -28,7 +28,7 @@ PyNite depends on the following packages:
 * numpy: used for matrix algebra
 * matplotlib: used for plotting member diagrams
 * tabulate : used to format tabular output
-* vtk: used for visualization - note that vtk requires a 64 bit installation of python. vtk does not need to be installed if you don't plan to use the visualization tools in PyNite.
+* vtk: used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. The latest version of Python 3.8+ is not supported by VTK yet. I recommend running a 64 bit version of Python 3.7+. VTK does not need to be installed if you don't plan to use the visualization tools built into PyNite.
 
 # What's New?
 Version 0.0.11:
