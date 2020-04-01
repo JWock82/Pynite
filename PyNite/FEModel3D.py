@@ -1307,7 +1307,6 @@ class FEModel3D():
         '''
         
         # Print a status update to the console
-        print('')
         print('Statics Check:')
         print('--------------')
 
@@ -1382,3 +1381,4 @@ class FEModel3D():
         # Print the static check table
         print('')
         print(formatted_table)
+        print('')
