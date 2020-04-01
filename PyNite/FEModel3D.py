@@ -913,7 +913,10 @@ class FEModel3D():
             Set to true to perform a static equilibrium check.
         '''
         
-        print('**Analyzing**')
+        print('-------------')
+        print('| Analyzing |')
+        print('-------------')
+        print('')
 
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
@@ -942,7 +945,7 @@ class FEModel3D():
             P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)          
 
             # Check for global stability by determining if 'K11' is singular
-            print('...Checking global stability')
+            print('...Checking global stability for load combination', combo.name)
             if K11.shape == (0, 0):
                 # All displacements are known, so D1 is an empty vector
                 D1 = []
@@ -952,7 +955,7 @@ class FEModel3D():
                 return
             else:
                 # Calculate the unknown displacements D1
-                print('...Calculating global displacement vector')
+                print('...Calculating global displacement vector for load combination', combo.name)
                 D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
 
             # Form the global displacement vector, D, from D1 and D2
@@ -1004,7 +1007,10 @@ class FEModel3D():
         
         # Calculate reactions
         self.__CalcReactions()
-    
+                
+        print('...Analysis complete.')
+        print('')
+
         # Check statics if requested
         if check_statics == True:
             self.__CheckStatics()
@@ -1024,7 +1030,10 @@ class FEModel3D():
             has converged (e.g. 0.01 = deflections must converge within 1% between iterations).
         '''
         
-        print('**Running P-Delta analysis**')
+        print('----------------------')
+        print('| Analyzing: P-Delta |')
+        print('----------------------')
+        print('')
 
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
@@ -1164,6 +1173,9 @@ class FEModel3D():
         # Calculate reactions
         self.__CalcReactions()
 
+        print('...Analysis complete.')
+        print('')
+
 #%%
     def __CalcReactions(self):
         '''
@@ -1296,7 +1308,7 @@ class FEModel3D():
                             node.RxnMZ[combo.name] -= load[1]
 
 #%%
-    def __CheckStatics(self, precision=2):
+    def __CheckStatics(self):
         '''
         Checks static equilibrium and prints results to the console.
 
@@ -1305,10 +1317,11 @@ class FEModel3D():
         precision : number
             The number of decimal places to carry the results to.
         '''
-        
-        # Print a status update to the console
-        print('Statics Check:')
-        print('--------------')
+
+        print('------------------')
+        print('| Statics Check: |')
+        print('------------------')
+        print('')
 
         # Start a blank table and create a header row
         statics_table = []
@@ -1368,17 +1381,16 @@ class FEModel3D():
                 SumRMZ += RMZ - RFX*Y + RFY*X   
 
             # Add the results to the table
-            statics_table.append([combo.name, round(SumFX, precision), round(SumRFX, precision), \
-                                              round(SumFY, precision), round(SumRFY, precision), \
-                                              round(SumFZ, precision), round(SumRFZ, precision), \
-                                              round(SumMX, precision), round(SumRMX, precision), \
-                                              round(SumMY, precision), round(SumRMY, precision), \
-                                              round(SumMZ, precision), round(SumRMZ, precision)])
+            statics_table.append([combo.name, SumFX, SumRFX, \
+                                              SumFY, SumRFY, \
+                                              SumFZ, SumRFZ, \
+                                              SumMX, SumRMX, \
+                                              SumMY, SumRMY, \
+                                              SumMZ, SumRMZ])
 
         # Format the table
         formatted_table = tabulate(statics_table, headers=table_header)
 
         # Print the static check table
-        print('')
         print(formatted_table)
         print('')
