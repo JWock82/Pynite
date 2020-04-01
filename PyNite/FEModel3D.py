@@ -1,11 +1,12 @@
 # %%
-from numpy import matrix, zeros, delete, insert, matmul, divide, add, subtract, nanmax, seterr, shape
+from numpy import matrix, zeros, empty, delete, insert, matmul, divide, add, subtract, nanmax, seterr, shape
 from numpy.linalg import solve, matrix_rank
 from math import isclose
 from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
+from tabulate import tabulate
 
 # %%
 class FEModel3D():
@@ -904,7 +905,12 @@ class FEModel3D():
 #%%  
     def Analyze(self, check_statics=True):
         '''
-        Analyzes the model.
+        Performs first-order static analysis.
+
+        Parameters
+        ----------
+        check_static : bool
+            Set to true to perform a static equilibrium check.
         '''
         
         print('**Analyzing**')
@@ -1006,7 +1012,7 @@ class FEModel3D():
 #%%
     def Analyze_PDelta(self, max_iter=30, tol=0.01):
         '''
-        Runs a second order (P-Delta) analysis on the structure.
+        Performs second order (P-Delta) analysis.
 
         Parameters
         ----------
@@ -1290,16 +1296,26 @@ class FEModel3D():
                             node.RxnMZ[combo.name] -= load[1]
 
 #%%
-    def __CheckStatics(self):
+    def __CheckStatics(self, precision=2):
         '''
-        Sums global forces and reactions and prints them to the console.
+        Checks static equilibrium and prints results to the console.
 
-
+        Parameters
+        ----------
+        precision : number
+            The number of decimal places to carry the results to.
         '''
         
         # Print a status update to the console
-        print('...Checking statics')
+        print('')
+        print('Statics Check:')
+        print('--------------')
 
+        # Start a blank table and create a header row
+        statics_table = []
+        table_header = ['Load Combination', 'Sum FX', 'Sum RX', 'Sum FY', 'Sum RY', 'Sum FZ', 'Sum RZ', 'Sum MX', 'Sum RMX', 'Sum MY', 'Sum RMY', 'Sum MZ', 'Sum RMZ']
+
+        # Step through each load combination
         for combo in self.LoadCombos.values():
 
             # Initialize force and moment summations to zero
@@ -1351,12 +1367,18 @@ class FEModel3D():
                 SumRMX += RMX - RFY*Z + RFZ*Y
                 SumRMY += RMY + RFX*Z - RFZ*X
                 SumRMZ += RMZ - RFX*Y + RFY*X   
-        
-            # Print the load summation
-            print('**Load Combination:', combo.name + '**')
-            print('**Applied Loads**')
-            print('Sum Forces X:', SumFX, ', Sum Forces Y:', SumFY, ', Sum Forces Z:', SumFZ, ', Sum Moments MX:', SumMX, ', Sum Moments MY:', SumMY, ', Sum Moments MZ:', SumMZ)
 
-            # Print the reaction summation
-            print('**Reactions**')
-            print('Sum Forces X:', SumRFX, ', Sum Forces Y:', SumRFY, ', Sum Forces Z:', SumRFZ, ', Sum Moments MX:', SumRMX, ', Sum Moments MY:', SumRMY, ', Sum Moments MZ:', SumRMZ)
+            # Add the results to the table
+            statics_table.append([combo.name, round(SumFX, precision), round(SumRFX, precision), \
+                                              round(SumFY, precision), round(SumRFY, precision), \
+                                              round(SumFZ, precision), round(SumRFZ, precision), \
+                                              round(SumMX, precision), round(SumRMX, precision), \
+                                              round(SumMY, precision), round(SumRMY, precision), \
+                                              round(SumMZ, precision), round(SumRMZ, precision)])
+
+        # Format the table
+        formatted_table = tabulate(statics_table, headers=table_header)
+
+        # Print the static check table
+        print('')
+        print(formatted_table)
