@@ -1,5 +1,5 @@
 # Example of a simply supported beam with a uniform distributed load.
-# Units used in this example are inches, and kips
+# Units used in this example are inches and kips
 
 # Import `FEModel3D` from `PyNite`
 from PyNite import FEModel3D
@@ -34,8 +34,8 @@ SimpleBeam.GetMember('M1').PlotMoment('Mz')
 SimpleBeam.GetMember('M1').PlotDeflection('dy')
 
 # Print reactions at each end of the beam
-print('Left Support Reaction:', round(SimpleBeam.GetNode('N1').RxnFY, 3), 'kip')
-print('Right Support Reacton:', round(SimpleBeam.GetNode('N2').RxnFY, 3), 'kip')
+print('Left Support Reaction:', SimpleBeam.GetNode('N1').RxnFY, 'kip')
+print('Right Support Reacton:', SimpleBeam.GetNode('N2').RxnFY, 'kip')
 
 # Render the deformed shape of the beam magnified 100 times, with a text height of 5 inches
 from PyNite import Visualization

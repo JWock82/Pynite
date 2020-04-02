@@ -1,5 +1,5 @@
 # Example of a simply supported beam with a point load.
-# Units used in this example are inches, and kips
+# Units used for the model in this example are inches and kips
 
 # Import `FEModel3D` from `PyNite`
 from PyNite import FEModel3D
