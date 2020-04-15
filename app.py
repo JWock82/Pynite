@@ -2,77 +2,200 @@
 """
 Created on Mon Apr  6 17:48:28 2020
 
-@author: Tarang J. AUS
+@author: Tarang J. AUS =)
 """
 
+# Required PyNite Module
 from PyNite import FEModel3D
-import tkinter as tk
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
-                                               NavigationToolbar2Tk)
-from matplotlib.backend_bases import key_press_handler
+# PyQt5 used for GUI interface - built in QT Designer Software
+from PyQt5 import QtCore, QtGui, QtWidgets
+# Get .ui file (converted to .py) for GUI
+from design import Ui_MainWindow
+# One use-case of 'lambda' does not work, so using partial
+from functools import partial
+# For general math functions
+from numpy import (empty, vstack, array, delete, squeeze, where, float)
+# For application
+from sys import argv
+# For plotting
+import matplotlib
+matplotlib.use('qt5agg')
+from matplotlib.backends.qt_compat import QtCore, QtWidgets
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg,
+                                                NavigationToolbar2QT as
+                                                NavigationToolbar)
 from matplotlib.figure import Figure
-import numpy as np
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
-import sys
+# For special functions as inputs
+func = '''(Abs, acos, acosh, acot, acoth, acsc, acsch, adjoint, airyai,
+            airyaiprime, airybi, airybiprime, appellf1, arg, asec, asech, asin,
+            asinh, assoc_laguerre, assoc_legendre, atan, atan2, atanh, bell,
+            bernoulli, besseli, besselj, besselk, bessely, beta, binomial,
+            bspline_basis, bspline_basis_set, carmichael, catalan, cbrt,
+            ceiling, chebyshevt, chebyshevt_root, chebyshevu, chebyshevu_root,
+            Chi, Ci, combinatorial, conjugate, cos, cosh, cot, coth, csc, csch,
+            digamma, DiracDelta, dirichlet_eta, E1, Ei, Eijk, elementary,
+            elliptic_e, elliptic_f, elliptic_k, elliptic_pi, erf, erf2,
+            erf2inv, erfc, erfcinv, erfi, erfinv, euler, exp, exp_polar,
+            expint, factorial, factorial2, FallingFactorial, ff, fibonacci,
+            floor, frac, fresnelc, fresnels, gamma, gegenbauer, genocchi,
+            hankel1, hankel2, harmonic, Heaviside, hermite, hn1, hn2, hyper,
+            Id, im, interpolating_spline, jacobi, jacobi_normalized, jn,
+            jn_zeros, KroneckerDelta, laguerre, LambertW, legendre, lerchphi,
+            LeviCivita, Li, li, ln, log, loggamma, lowergamma, lucas, marcumq,
+            mathieuc, mathieucprime, mathieus, mathieusprime, Max, meijerg,
+            Min, multigamma, partition, periodic_argument, Piecewise,
+            piecewise_fold, polar_lift, polarify, polygamma, polylog,
+            principal_branch, re, real_root, rf, RisingFactorial, root, sec,
+            sech, Shi, Si, sign, sin, sinc, SingularityFunction, sinh, special,
+            sqrt, stieltjes, subfactorial, tan, tanh, transpose, tribonacci,
+            trigamma, unbranched_argument, unpolarify, uppergamma, yn, Ynm,
+            Ynm_c, zeta, Znm)'''
+from sympy import E, pi, I
+exec("from sympy.functions import " + func)
 
 
-def window():
-    app = QApplication(sys.argv)
-    win = QMainWindow()
-    win.setGeometry(200, 200, 800, 400)
-    win.setWindowTitle("PyNite Structural Analysis")
+class ApplicationWindow(Ui_MainWindow):
+    def __init__(self, MainWindow, truss, *args, **kwargs):
 
-    win.show()
-    sys.exit(app.exec_())
-
-
-window()
-
-
-class Main:
-    def __init__(self, root, *args, **kwargs):
-
-    def frameNode(self):
-        self.nodeFrame = tk.Frame(master=root)
-        self.nodeFrame.grid(row=0, column=9, columnspan=9)
-
-
-class MainApplication:
-    def __init__(self, root, truss, *args, **kwargs):
-        self.root = root
+        # Variable used to communicate with FEModel3D PyNite Program.
         self.truss = truss
-        self.main = Main(self.root)
-        self.main.frameNode()
-        self.nodes()
-        self.members()
 
-        # Application Storage
-        self.appNodes = np.array(
-            [['0987654321qwertyuiopasdfghjklzxcvbnm', 'x', 'y', 'z']],
-            dtype="S")  # A list of the structure's nodes
-        self.appauxNodes = []  # A list of the structure's auxiliary nodes
-        self.appMembers = []  # A list of the structure's members
+        #---------------------------------------------------------------------#
+        #                        Initiate GUI Interface                       #
+        #---------------------------------------------------------------------#
+
+        self.MainWindow = MainWindow
+        self.design = Ui_MainWindow(
+        )  # use generated design file from PyQt Designer
+        self.design.setupUi(self.MainWindow)
+
+        # Member Plot
+        # memberFig = Figure(dpi=dpi)
+        # self.member_ax = memberFig.add_subplot(projection='3d')
+
+        #---------------------------------------------------------------------#
+        #                        Application Storage                          #
+        #---------------------------------------------------------------------#
+
+        self.appNodes = empty((1, 4))  # A list of the structure's nodes
+        self.appMembers = empty((1, 3))  # A list of the structure's members
         self.appPlates = []  # A list of the structure's plates
         self.app__D = {
         }  # A dictionary of the structure's nodal displacements by load combination
         self.appLoadCombos = {
         }  # A dictionary of the structure's load combinations
 
-    def nodeSubmit(self, name, x, y, z, oldname=None):
-        name = str(name.strip())
-        x = eval(x)
-        y = eval(y)
-        z = eval(z)
-        if (oldname == None):
+        # Variable to check if deleted empty row from 'self.appNodes'
+        self.alreadyDeletedn = False
+        self.alreadyDeletedm = False
+
+        #---------------------------------------------------------------------#
+        #                     Initiate Connect Functions                      #
+        #---------------------------------------------------------------------#
+
+        self.nodeStart()
+        self.memberStart()
+
+    def updateFEModel3D(self):
+        # Analyze the model
+        self.truss.Analyze()
+
+    #-------------------------------------------------------------------------#
+    #                                                                         #
+    #                        Button Connect Functions                         #
+    #                                                                         #
+    #-------------------------------------------------------------------------#
+
+    def nodeStart(self):
+        # Link node button to 'self.nodeSubmit'
+        # Inputs are taken after the button is pressed so that the latest values are used.
+        self.design.addNodeButton.clicked.connect(
+            lambda: self.nodeSubmit(self.design.defineNodeName.text().strip(
+            ), self.design.defineXnode.text(), self.design.defineYnode.text(),
+                                    self.design.defineZnode.text()))
+
+        # Initiate plot canvas to allow updating values
+        # self.nodePlot()
+
+    def memberStart(self):
+        # Link member button to 'self.memberSubmit'
+        # Inputs are taken after the button is pressed so that the latest values are used.
+        self.design.addMemberButton.clicked.connect(lambda: self.memberSubmit(
+            self.design.defineMemberName.text().strip(),
+            self.design.defineNodeI.text(), self.design.defineYnode.text(),
+            self.design.defineZnode.text()))
+
+        # Initiate plot canvas to allow updating values
+        # self.memberPlot()
+
+    #-------------------------------------------------------------------------#
+    #                                                                         #
+    #                             Common Functions                            #
+    #                                                                         #
+    #-------------------------------------------------------------------------#
+
+    def tableClear(self, table):
+        #---------------------------------------------------------------------#
+        #                        Delete table contents                        #
+        #---------------------------------------------------------------------#
+
+        # Delete all contents inside table
+        for i in reversed(range(table.count())):
+            layout.itemAt(i).widget().setParent(None)
+
+    #-------------------------------------------------------------------------#
+    #                                                                         #
+    #                             Node Functions                              #
+    #                                                                         #
+    #-------------------------------------------------------------------------#
+
+    def nodeSubmit(self, name, x, y, z, oldname=""):
+        # Check if input is valid
+        if name != "" and x != "" and y != "" and z != "":
+            try:
+                x = float(eval(x))
+                y = float(eval(y))
+                z = float(eval(z))
+            except NameError:
+                print("Coordinate input must contain valid real numbers.")
+                return
+            except TypeError:
+                print("Coordinate input must contain valid real numbers.")
+                return
+            except SyntaxError:
+                print("Syntax Error.")
+                return
+            except RecursionError:
+                print("Cannot contain recursive input.")
+                return
+            except (OverflowError, FloatingPointError):
+                print("Overflow Error")
+                return
+            except ZeroDivisionError:
+                print("Cannot divide by zero.")
+                return
+            else:
+                print("Node definition passed.")
+        else:
+            print("Please enter a value.")
+            return
+
+        # The following is for when user edits the displayed text (mistakes)
+        if (oldname == ""):
             oldname = name
         else:
             oldname.strip()
 
         self.nodeExists(oldname)
 
+        print("Node name:", name)
+        print("x:", x)
+        print("y:", y)
+        print("z:", z)
+
+        # If exists, delete and replace; else, create new.
         if (self.exists == True):
-            print("found")
+            print("Node already exists.")
             self.truss.RemoveNode(oldname)
             self.truss.AddNode(name, x, y, z)
             self.appNodes[self.check, 0] = name
@@ -80,19 +203,29 @@ class MainApplication:
             self.appNodes[self.check, 2] = str(y)
             self.appNodes[self.check, 3] = str(z)
         if (self.exists == False):
-            print("not found")
+            print("Node does not exist.")
             self.truss.AddNode(name, x, y, z)
-            self.appNodes = np.vstack(
-                (self.appNodes, np.array([[name, str(x),
-                                           str(y),
-                                           str(z)]])))
+            self.appNodes = vstack(
+                (self.appNodes, array([name, str(x),
+                                       str(y), str(z)])))
 
-        print(np.array([self.appNodes]))
+        print("-" * 80)
+
+        # Remove empty row in 'self.appNodes' (empty array)
+        if (self.alreadyDeletedn == False):
+            self.appNodes = delete(self.appNodes, 0, 0)
+            self.alreadyDeletedn = True
+
+        print(self.appNodes)
         self.nodeDisplay()
 
     def nodeExists(self, name):
+        #---------------------------------------------------------------------#
+        #                         Check if node exists                        #
+        #---------------------------------------------------------------------#
+
         exists = False
-        check = np.squeeze(np.where(self.appNodes == name)[0])
+        check = squeeze(where(self.appNodes == name)[0])
         try:
             int(check)
         except TypeError:
@@ -103,155 +236,223 @@ class MainApplication:
         self.exists = exists
         self.check = check
 
+    def nodeDisplay(self):
+        #---------------------------------------------------------------------#
+        #                            Display nodes                            #
+        #---------------------------------------------------------------------#
+
+        i = 0
+        for i in range(len(self.appNodes)):
+            # set variables
+            self.scrollAreaWidgetContents = self.design.scrollAreaWidgetContents
+            self.table2editNode = self.design.table2editNode
+
+            # node name column
+            exec("self.editNodeName_" + str(i) +
+                 " = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)")
+            exec("self.editNodeName_" + str(i) +
+                 ".setMinimumSize(QtCore.QSize(200, 0))")
+            exec("self.editNodeName_" + str(i) +
+                 ".setMaximumSize(QtCore.QSize(400, 16777215))")
+            exec("self.editNodeName_" + str(i) +
+                 ".setObjectName('editNodeName_" + str(i) + "')")
+            exec("self.editNodeName_" + str(i) + ".setText('" +
+                 self.appNodes[i, 0] + "')")
+            exec("self.table2editNode.addWidget(self.editNodeName_" + str(i) +
+                 ", " + str(i) + ", 0, 1, 1)")
+
+            # node x column
+            exec("self.editXnode_" + str(i) +
+                 " = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)")
+            exec("self.editXnode_" + str(i) +
+                 ".setMinimumSize(QtCore.QSize(10, 0))")
+            exec("self.editXnode_" + str(i) +
+                 ".setMaximumSize(QtCore.QSize(100, 16777215))")
+            exec("self.editXnode_" + str(i) + ".setObjectName('editXnode_" +
+                 str(i) + "')")
+            exec("self.editXnode_" + str(i) + ".setText('" +
+                 str(self.appNodes[i, 1]) + "')")
+            exec("self.table2editNode.addWidget(self.editXnode_" + str(i) +
+                 ", " + str(i) + ", 1, 1, 1)")
+
+            # node y column
+            exec("self.editYnode_" + str(i) +
+                 " = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)")
+            exec("self.editYnode_" + str(i) +
+                 ".setMinimumSize(QtCore.QSize(10, 0))")
+            exec("self.editYnode_" + str(i) +
+                 ".setMaximumSize(QtCore.QSize(100, 16777215))")
+            exec("self.editYnode_" + str(i) + ".setObjectName('editYnode_" +
+                 str(i) + "')")
+            exec("self.editYnode_" + str(i) + ".setText('" +
+                 self.appNodes[i, 2] + "')")
+            exec("self.table2editNode.addWidget(self.editYnode_" + str(i) +
+                 ", " + str(i) + ", 2, 1, 1)")
+
+            # node z column
+            exec("self.editZnode_" + str(i) +
+                 " = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)")
+            exec("self.editZnode_" + str(i) +
+                 ".setMinimumSize(QtCore.QSize(10, 0))")
+            exec("self.editZnode_" + str(i) +
+                 ".setMaximumSize(QtCore.QSize(100, 16777215))")
+            exec("self.editZnode_" + str(i) + ".setObjectName('editZnode_" +
+                 str(i) + "')")
+            exec("self.editZnode_" + str(i) + ".setText('" +
+                 self.appNodes[i, 3] + "')")
+            exec("self.table2editNode.addWidget(self.editZnode_" + str(i) +
+                 ", " + str(i) + ", 3, 1, 1)")
+
+            # node update button
+            exec("self.updateNodeButton_" + str(i) +
+                 " = QtWidgets.QPushButton(self.scrollAreaWidgetContents)")
+            exec("self.updateNodeButton_" + str(i) +
+                 ".setMaximumSize(QtCore.QSize(90, 16777215))")
+            exec("self.updateNodeButton_" + str(i) +
+                 ".setObjectName('updateNodeButton_" + str(i) + "')")
+            exec("self.table2editNode.addWidget(self.updateNodeButton_" +
+                 str(i) + ", " + str(i) + ", 4, 1, 1)")
+
+            # node delete button
+            exec("self.deleteNodeButton_" + str(i) +
+                 " = QtWidgets.QPushButton(self.scrollAreaWidgetContents)")
+            exec("self.deleteNodeButton_" + str(i) +
+                 ".setMaximumSize(QtCore.QSize(90, 16777215))")
+            exec("self.deleteNodeButton_" + str(i) +
+                 ".setObjectName('deleteNodeButton_" + str(i) + "')")
+            exec("self.table2editNode.addWidget(self.deleteNodeButton_" +
+                 str(i) + ", " + str(i) + ", 5, 1, 1)")
+
+            exec(
+                "self.updateNodeButton_" + str(i) +
+                ".setText(QtCore.QCoreApplication.translate('MainWindow','Update'))"
+            )
+            exec(
+                "self.deleteNodeButton_" + str(i) +
+                ".setText(QtCore.QCoreApplication.translate('MainWindow','Delete'))"
+            )
+
+            # For updating node - button commands
+
+            exec("self.updateNodeButton_" + str(i) +
+                 ".clicked.connect(partial(self.nodeUpdate," + str(i) + "))")
+
+            # For deleting node - button commands
+
+            exec("self.deleteNodeButton_" + str(i) +
+                 ".clicked.connect(partial(self.nodeDelete,'" +
+                 self.appNodes[i, 0] + "'))")
+
+        # Update plot with new points AFTER listing nodes to prevent user from intercepting plot update
+        self.nodePlotUpdate()
+
+    def nodeUpdate(self, rownum):
+        #---------------------------------------------------------------------#
+        #                       Update node coordinates                       #
+        #---------------------------------------------------------------------#
+        exec("self._name = self.editNodeName_" + str(rownum) +
+             ".text().strip()")
+        exec("self._x = self.editXnode_" + str(rownum) + ".text()")
+        exec("self._y = self.editYnode_" + str(rownum) + ".text()")
+        exec("self._z = self.editZnode_" + str(rownum) + ".text()")
+        self._oldname = self.appNodes[rownum, 0]
+        self.nodeSubmit(self._name, self._x, self._y, self._z, self._oldname)
+
     def nodeDelete(self, name):
-        print(name)
+        #---------------------------------------------------------------------#
+        #                             Delete nodes                            #
+        #---------------------------------------------------------------------#
+
         self.nodeExists(name)
-        print(self.check)
         self.truss.RemoveNode(name)
-        self.appNodes = np.delete(self.appNodes, self.check, 0)
-        print(f"deleted {name}")
+        self.appNodes = delete(self.appNodes, self.check, 0)
+        print(f"Deleted Node: {name}")
+
+        # Delete all rows and re-create table
+        self.tableClear(self.design.table2editNode)
         self.nodeDisplay()
 
-    def nodeDisplay(self):
-        nodeTitle = tk.Label(self.main.nodeFrame, text="Nodes")
-        nodeTitle.grid(row=0, column=9, columnspan=9)
+    def nodePlot(self):
+        #---------------------------------------------------------------------#
+        #                           Define node plot                          #
+        #---------------------------------------------------------------------#
+        # Grab necessary variables from design file
+        self.widget1plotAreaNode = self.design.widget1plotAreaNode
 
-        for i in range(len(self.appNodes) - 1):
-            print(i)
-            self.listnodeName = tk.Entry(self.main.nodeFrame)
-            self.listnodeName.insert("end", self.appNodes[i + 1, 0])
-            self.listnodeX = tk.Entry(self.main.nodeFrame)
-            self.listnodeX.insert(0, self.appNodes[i + 1, 1])
-            self.listnodeY = tk.Entry(self.main.nodeFrame)
-            self.listnodeY.insert(0, self.appNodes[i + 1, 2])
-            self.listnodeZ = tk.Entry(self.main.nodeFrame)
-            self.listnodeZ.insert(0, self.appNodes[i + 1, 3])
-            listnodeupdate = tk.Button(
-                self.main.nodeFrame,
-                text='Update',
-                command=lambda: self.nodeSubmit(
-                    self.listnodeName.get(),  # new name
-                    self.listnodeX.get(),  # x
-                    self.listnodeY.get(),  # y
-                    self.listnodeZ.get(),  # z
-                    self.appNodes[i + 1, 0]  # old name
-                ))
-            listnodedelete = tk.Button(
-                self.main.nodeFrame,
-                text='Delete',
-                command=lambda: self.nodeDelete(self.appNodes[i + 1, 0]
-                                                ))  # send name
+        # Layout -> Widget
+        self.plotAreaNodeLayout = QtWidgets.QVBoxLayout(
+            self.widget1plotAreaNode)
 
-            self.listnodeName.grid(row=i + 1, column=9)
-            self.listnodeX.grid(row=i + 1, column=10)
-            self.listnodeY.grid(row=i + 1, column=11)
-            self.listnodeZ.grid(row=i + 1, column=12)
-            listnodeupdate.grid(row=i + 1, column=13)
-            listnodedelete.grid(row=i + 1, column=14)
-        i = 0
+        # Plot Canvas
+        self.nodeCanvas = MplCanvas(self, dpi=100)
 
-    def updateFrame(self):
-        # Analyze the model
-        self.truss.Analyze()
+        nodeFig = Figure(dpi=100)
+        self.nodeCanvas.node_ax = nodeFig.add_subplot(projection='3d')
 
-    def nodes(self):
-        # Add Nodes
-        nodeLabel = tk.Label(root, text="Add Node:")
-        nodeLabel.grid(row=1, column=0)
+        # Plot Toolbar
+        self.nodeNavToolbar = NavigationToolbar(self.nodeCanvas,
+                                                self.MainWindow)
 
-        nodeName = tk.Entry(root)
-        nodeName.insert(0, "Node name")
-        nodeX = tk.Entry(root)
-        nodeX.insert(0, "x (m)")
-        nodeY = tk.Entry(root)
-        nodeY.insert(0, "y (m)")
-        nodeZ = tk.Entry(root)
-        nodeZ.insert(0, "z (m)")
+        # Place canvas and toolbar inside layout
+        self.plotAreaNodeLayout.addWidget(self.nodeCanvas)
+        self.plotAreaNodeLayout.addWidget(self.nodeNavToolbar)
 
-        nodeButton = tk.Button(
-            root,
-            text="Add Node",
-            command=lambda: self.nodeSubmit(nodeName.get(), nodeX.get(),
-                                            nodeY.get(), nodeZ.get()))
+        # Update which points to plot
+        self.nodePlotUpdate()
 
-        nodeName.grid(row=1, column=1)
-        nodeX.grid(row=1, column=2)
-        nodeY.grid(row=1, column=3)
-        nodeZ.grid(row=1, column=4)
-        nodeButton.grid(row=1, column=5)
+        # Rename axes
+        self.nodeCanvas.node_ax.set_xlabel('X axis')
+        self.nodeCanvas.node_ax.set_ylabel('Y axis')
+        self.nodeCanvas.node_ax.set_zlabel('Z axis')
 
-    # Add Supports
+        # Show Canvas
+        self.nodeCanvas.show()
 
-    def members(self):
-        # Add Members
+    def nodePlotUpdate(self):
+        #---------------------------------------------------------------------#
+        #                          Update Plot Points                         #
+        #---------------------------------------------------------------------#
 
-        memberLabel = tk.Label(self.root, text="Create Member:")
-        memberLabel.grid(row=2, column=0)
+        # Figure settings inside Canvas
+        xval = self.appNodes[:, 1].astype(float)
+        yval = self.appNodes[:, 2].astype(float)
+        zval = self.appNodes[:, 3].astype(float)
 
-        memberName = tk.Entry(self.root)
-        memberName.insert(0, "Member name")
+        # Clear figure 'node_ax'
+        self.nodeCanvas.node_ax.cla()
 
-        self.memberIVar = tk.StringVar(root)
-        self.memberIVar.set("Select I node")
-        self.memberJVar = tk.StringVar(root)
-        self.memberJVar.set("Select J node")
+        # Redefine figure 'node_ax'
+        self.nodeCanvas.node_ax.scatter(xval, yval, zval, alpha=0.5)
 
-        nodelist = [""]
-        self.memberI = tk.OptionMenu(self.root, self.memberIVar, *nodelist)
-        self.memberJ = tk.OptionMenu(self.root, self.memberJVar, *nodelist)
+        # Redraw figure on canvas
+        self.nodeCanvas.draw()
 
-        memberButton = tk.Button(root, text="Add Member")
+    #-------------------------------------------------------------------------#
+    #                                                                         #
+    #                            Member Functions                             #
+    #                                                                         #
+    #-------------------------------------------------------------------------#
 
-        memberName.grid(row=2, column=1)
-        self.memberI.grid(row=2, column=2)
-        self.memberJ.grid(row=2, column=3)
-        memberButton.grid(row=2, column=4)
 
-    def memberListUpdate(self):
-        nodelist = []
-
-        for i in range(len(self.appNodes) - 1):
-            nodelist.append(self.appNodes[i + 1, 0])
-        print(nodelist)
-        self.memberI = tk.OptionMenu(self.root, self.memberIVar, *nodelist)
-        self.memberJ = tk.OptionMenu(self.root, self.memberJVar, *nodelist)
-
+#-----------------------------------------------------------------------------#
+#                                                                             #
+#                               Initiate Program                              #
+#                                                                             #
+#-----------------------------------------------------------------------------#
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.geometry("1280x720")
+    # Initiate GUI interface
+    qapp = QtWidgets.QApplication(argv)
+    MainWindow = QtWidgets.QMainWindow()
+
+    # Create 3D Model
     truss = FEModel3D()
-    MainApplication(root, truss)
-    root.mainloop()
 
-# Add Forces
+    # Initiate program functionality
+    app = ApplicationWindow(MainWindow, truss)
 
-# Create members (all members will have the same properties in this example)
-J = 250
-Iy = 250
-Iz = 200
-E = 30000
-G = 250
-A = 12
+    # Show GUI interface
+    MainWindow.show()
 
-# frame.AddMember('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-# frame.AddMember('M2', 'N2', 'N3', E, G, Iy, Iz, J, A)
-# frame.AddMember('M3', 'N3', 'N4', E, G, Iy, Iz, J, A)
-# frame.AddMember('M4', 'N4', 'N5', E, G, Iy, Iz, J, A)
-# frame.AddMember('M5', 'N5', 'N6', E, G, Iy, Iz, J, A)
-
-# Add nodal loads
-# frame.AddNodeLoad('N3', 'FY', -30)
-# frame.AddNodeLoad('N4', 'FY', -30)
-
-# node1 = frame.GetNode('N1')
-# node6 = frame.GetNode('N6')
-
-# print('Calculated reactions: ', node1.RxnFX, node1.RxnFY, node1.RxnMZ,
-#       node6.RxnFX, node6.RxnFY, node6.RxnMZ)
-# print('Expected reactions: ', 11.69, 30, -1810, -11.69, 30, 1810)
-# print('Calculated displacements: ',
-#       frame.GetNode('N3').DY,
-#       frame.GetNode('N4').DY,
-#       frame.GetNode('N3').RZ,
-#       frame.GetNode('N4').RZ)
+    # Exit program
+    qapp.exec_()

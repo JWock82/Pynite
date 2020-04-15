@@ -5,3 +5,6 @@ build/*
 dist/*
 Derivations/*.ipynb_checkpoints
 setup.py
+app.old.py
+debug.py
+test.py
