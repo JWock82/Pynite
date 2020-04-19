@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1278</width>
-    <height>720</height>
+    <height>688</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -41,215 +41,26 @@
         <height>600</height>
        </size>
       </property>
-      <property name="currentIndex">
-       <number>1</number>
-      </property>
       <widget class="QWidget" name="tab1Node">
        <attribute name="title">
-        <string>Tab 1</string>
+        <string>Nodes</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
          <widget class="QFrame" name="frame1defineNode">
           <property name="maximumSize">
            <size>
-            <width>16777215</width>
-            <height>400</height>
+            <width>480</width>
+            <height>255</height>
            </size>
           </property>
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_9">
-           <item row="1" column="0">
-            <layout class="QGridLayout" name="table1defineNode">
-             <item row="0" column="0">
-              <widget class="QLabel" name="defineNodeNameLabel">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>20</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Node Name</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLineEdit" name="defineNodeName">
-               <property name="minimumSize">
-                <size>
-                 <width>200</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>400</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QLabel" name="defineNodeZLabel">
-               <property name="text">
-                <string>Global z (m)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QLineEdit" name="defineZnode">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>10</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="defineNodeYLabel">
-               <property name="text">
-                <string>Global y (m)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="defineNodeXLabel">
-               <property name="text">
-                <string>Global x (m)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLineEdit" name="defineXnode">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>10</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QLineEdit" name="defineYnode">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>10</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>100</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="4">
-              <widget class="QPushButton" name="addNodeButton">
-               <property name="maximumSize">
-                <size>
-                 <width>90</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="autoFillBackground">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Add Node</string>
-               </property>
-               <property name="checkable">
-                <bool>false</bool>
-               </property>
-               <property name="autoDefault">
-                <bool>false</bool>
-               </property>
-               <property name="default">
-                <bool>false</bool>
-               </property>
-               <property name="flat">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="5">
-              <widget class="QLabel" name="label">
-               <property name="layoutDirection">
-                <enum>Qt::LeftToRight</enum>
-               </property>
-               <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;All function operations are the same.&lt;/p&gt;&lt;p&gt;For multiplication use * and ** for exponentials.&lt;/p&gt;&lt;p&gt;Angles are in radians.&lt;/p&gt;&lt;p&gt;Visit &lt;a href=&quot;https://docs.sympy.org/latest/modules/functions/elementary.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#000000;&quot;&gt;SymPy Elementary Functions&lt;/span&gt;&lt;/a&gt; for a list of mathematical functions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-               <property name="textInteractionFlags">
-                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="2" column="0">
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
+          <layout class="QGridLayout" name="_2">
            <item row="0" column="0">
             <widget class="QLabel" name="defineNodeLabel">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>50</height>
+               <height>33</height>
               </size>
              </property>
              <property name="font">
@@ -262,55 +73,177 @@
              </property>
             </widget>
            </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="informationTextNode">
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Use * for multiplication and ** for exponentials.&lt;/p&gt;&lt;p&gt;Angles are in radians.&lt;/p&gt;&lt;p&gt;Visit &lt;a href=&quot;https://docs.sympy.org/latest/modules/functions/elementary.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#000000;&quot;&gt;SymPy Elementary Functions&lt;/span&gt;&lt;/a&gt; for a list of mathematical functions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="openExternalLinks">
+              <bool>true</bool>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <layout class="QGridLayout" name="defineNodeGrid">
+             <item row="3" column="0">
+              <widget class="QLabel" name="defineNodeZLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Global z (m)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLineEdit" name="defineNodeZ">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLineEdit" name="defineNodeY">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="defineNodeYLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Global y (m)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="defineNodeXLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Global x (m)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="defineNodeName">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="defineNodeX">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="defineNodeNameLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QPushButton" name="defineNodeButton">
+               <property name="autoFillBackground">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Add Node</string>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
           </layout>
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QFrame" name="frame2editNode">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+         <widget class="QFrame" name="frame2updateNode">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>400</height>
+            <height>255</height>
            </size>
           </property>
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
           <layout class="QGridLayout" name="gridLayout">
-           <item row="0" column="0">
-            <widget class="QLabel" name="editNodeLabel">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>50</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>20</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Edit Nodes</string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <layout class="QHBoxLayout" name="updateNodeHBox">
              <item>
-              <widget class="QScrollArea" name="scrollArea">
+              <widget class="QScrollArea" name="updateNodeSA">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="font">
                 <font>
                  <kerning>true</kerning>
@@ -319,43 +252,36 @@
                <property name="widgetResizable">
                 <bool>true</bool>
                </property>
-               <widget class="QWidget" name="scrollAreaWidgetContents">
+               <widget class="QWidget" name="updateNodeSAW">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>585</width>
-                  <height>268</height>
+                  <width>728</width>
+                  <height>194</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout">
                  <item>
-                  <layout class="QGridLayout" name="table2editNode">
-                   <item row="0" column="0">
-                    <widget class="QLineEdit" name="editNodeName">
+                  <layout class="QGridLayout" name="table2updateNode">
+                   <item row="1" column="4">
+                    <widget class="QPushButton" name="updateNodeButton">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="minimumSize">
                       <size>
-                       <width>200</width>
-                       <height>0</height>
+                       <width>0</width>
+                       <height>23</height>
                       </size>
                      </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>400</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>Add node to get started</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="4">
-                    <widget class="QPushButton" name="updateNodeButton">
                      <property name="maximumSize">
                       <size>
                        <width>90</width>
-                       <height>16777215</height>
+                       <height>23</height>
                       </size>
                      </property>
                      <property name="text">
@@ -363,39 +289,35 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="3">
-                    <widget class="QLineEdit" name="editZnode">
+                   <item row="1" column="5">
+                    <widget class="QPushButton" name="deleteNodeButton">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>10</width>
-                       <height>0</height>
+                       <width>0</width>
+                       <height>23</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>100</width>
-                       <height>16777215</height>
+                       <width>90</width>
+                       <height>23</height>
                       </size>
                      </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="5">
-                    <widget class="QPushButton" name="deleteNodeButton">
                      <property name="text">
                       <string>Delete</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="1">
-                    <widget class="QLineEdit" name="editXnode">
+                   <item row="1" column="2">
+                    <widget class="QLineEdit" name="updateNodeY">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -408,16 +330,16 @@
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>100</width>
-                       <height>16777215</height>
+                       <width>16777215</width>
+                       <height>20</height>
                       </size>
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="2">
-                    <widget class="QLineEdit" name="editYnode">
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="updateNodeX">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -430,23 +352,146 @@
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>100</width>
-                       <height>16777215</height>
+                       <width>16777215</width>
+                       <height>20</height>
                       </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QLineEdit" name="updateNodeZ">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>10</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLineEdit" name="updateNodeName">
+                     <property name="minimumSize">
+                      <size>
+                       <width>150</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Add Node to get started</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="updateNodeNameLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Name</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLabel" name="updateNodeXLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Global x (m)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="updateNodeYLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Global y (m)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QLabel" name="updateNodeZLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Global z (m)</string>
                      </property>
                     </widget>
                    </item>
                   </layout>
                  </item>
                  <item>
-                  <spacer name="verticalSpacer_2">
+                  <spacer name="updateNodeVSpacer">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="orientation">
                     <enum>Qt::Vertical</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>20</width>
-                     <height>40</height>
+                     <width>0</width>
+                     <height>0</height>
                     </size>
                    </property>
                   </spacer>
@@ -457,13 +502,31 @@
              </item>
             </layout>
            </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="updateNodeLabel">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>33</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>20</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Nodes</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
         <item row="1" column="0" colspan="2">
          <widget class="QWidget" name="widget1plotAreaNode" native="true">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -477,32 +540,42 @@
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>640</height>
+            <height>1000</height>
            </size>
           </property>
          </widget>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab2Member">
+      <widget class="QWidget" name="tab2Material">
        <attribute name="title">
-        <string>Page</string>
+        <string>Materials</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_5">
-        <item row="0" column="1">
-         <widget class="QFrame" name="frame2editMember">
-          <property name="autoFillBackground">
-           <bool>true</bool>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="QFrame" name="frame1defineMaterial">
+          <property name="maximumSize">
+           <size>
+            <width>480</width>
+            <height>16777215</height>
+           </size>
           </property>
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_2">
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="2" column="0">
+            <widget class="QLabel" name="informationTextMaterial">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>138</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;right&quot;&gt;E - Young's Modulus &lt;/p&gt;&lt;p align=&quot;right&quot;&gt;G - Shear Modulus &lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Iy - Area Moment of Inertia in y-direction&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Iz - Area Moment of Inertia in z-direction&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Ix/J - Polar Area Moment of Inertia&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;A - Cross-sectional Area&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="0">
-            <widget class="QLabel" name="editMemberLabel">
+            <widget class="QLabel" name="defineMaterialLabel">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -515,35 +588,311 @@
               </font>
              </property>
              <property name="text">
-              <string>Edit Members</string>
+              <string>Define Materials</string>
              </property>
             </widget>
            </item>
            <item row="1" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <layout class="QGridLayout" name="table1defineMaterial">
+             <item row="4" column="0">
+              <widget class="QLabel" name="defineMaterialIzLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Iz (m&lt;span style=&quot; vertical-align:super;&quot;&gt;4&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="defineMaterialNameLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="defineMaterialJLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ix/J (m&lt;span style=&quot; vertical-align:super;&quot;&gt;4&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="defineMaterialELabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>E (Pa)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="defineMaterialIyLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Iy (m&lt;span style=&quot; vertical-align:super;&quot;&gt;4&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="0">
+              <widget class="QLabel" name="defineMaterialALabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A (m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="defineMaterialGLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>G (Pa)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="defineMaterialE">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="0" colspan="2">
+              <widget class="QPushButton" name="defineMaterialButton">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>23</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Add Material</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="defineMaterialName">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLineEdit" name="defineMaterialG">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLineEdit" name="defineMaterialIy">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QLineEdit" name="defineMaterialIz">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QLineEdit" name="defineMaterialA">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QLineEdit" name="defineMaterialJ">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="4" column="0">
+            <spacer name="defineMaterialVSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QFrame" name="frame2updateMaterial">
+          <property name="minimumSize">
+           <size>
+            <width>750</width>
+            <height>0</height>
+           </size>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <item row="0" column="0">
+            <widget class="QLabel" name="updateMaterialLabel">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>33</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>20</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Materials</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="updateMaterialHBox">
              <item>
-              <widget class="QScrollArea" name="scrollArea_2">
+              <widget class="QScrollArea" name="updateMaterialSA">
                <property name="widgetResizable">
                 <bool>true</bool>
                </property>
-               <widget class="QWidget" name="scrollAreaWidgetContents_2">
+               <widget class="QWidget" name="updateMaterialSAW">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>591</width>
-                  <height>268</height>
+                  <width>728</width>
+                  <height>544</height>
                  </rect>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_2">
+                <layout class="QVBoxLayout" name="verticalLayout_3">
                  <item>
-                  <layout class="QGridLayout" name="table2editMember">
-                   <item row="0" column="3">
-                    <widget class="QPushButton" name="updateMemberButton">
+                  <layout class="QGridLayout" name="table2updateMaterial">
+                   <item row="0" column="4">
+                    <widget class="QLabel" name="updateMaterialIzLabel">
+                     <property name="text">
+                      <string>Iz</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="7">
+                    <widget class="QPushButton" name="updateMaterialButton">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>23</height>
+                      </size>
+                     </property>
                      <property name="maximumSize">
                       <size>
                        <width>90</width>
-                       <height>16777215</height>
+                       <height>23</height>
                       </size>
                      </property>
                      <property name="text">
@@ -551,33 +900,99 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="2">
-                    <widget class="QComboBox" name="editNodeJ"/>
+                   <item row="1" column="6">
+                    <widget class="QLineEdit" name="updateMaterialA"/>
                    </item>
-                   <item row="0" column="1">
-                    <widget class="QComboBox" name="editNodeI"/>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="updateMaterialE"/>
                    </item>
                    <item row="0" column="0">
-                    <widget class="QLineEdit" name="editMemberName">
+                    <widget class="QLabel" name="updateMaterialNameLabel">
+                     <property name="text">
+                      <string>Name</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLineEdit" name="updateMaterialName">
                      <property name="minimumSize">
                       <size>
-                       <width>200</width>
+                       <width>150</width>
                        <height>0</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>400</width>
-                       <height>16777215</height>
+                       <width>16777215</width>
+                       <height>20</height>
                       </size>
                      </property>
                      <property name="text">
-                      <string>Add member to get started</string>
+                      <string>Add Material to get started</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="4">
-                    <widget class="QPushButton" name="deleteMemberButton">
+                   <item row="1" column="2">
+                    <widget class="QLineEdit" name="updateMaterialG"/>
+                   </item>
+                   <item row="1" column="4">
+                    <widget class="QLineEdit" name="updateMaterialIz"/>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLabel" name="updateMaterialELabel">
+                     <property name="text">
+                      <string>E</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QLineEdit" name="updateMaterialIy"/>
+                   </item>
+                   <item row="1" column="5">
+                    <widget class="QLineEdit" name="updateMaterialJ"/>
+                   </item>
+                   <item row="0" column="6">
+                    <widget class="QLabel" name="updateMaterialALabel">
+                     <property name="text">
+                      <string>A</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QLabel" name="updateMaterialIyLabel">
+                     <property name="text">
+                      <string>Iy</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="updateMaterialGLabel">
+                     <property name="text">
+                      <string>G</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="5">
+                    <widget class="QLabel" name="updateMaterialJLabel">
+                     <property name="text">
+                      <string>Ix/J</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="8">
+                    <widget class="QPushButton" name="deleteMaterialButton">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>23</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>23</height>
+                      </size>
+                     </property>
                      <property name="text">
                       <string>Delete</string>
                      </property>
@@ -586,14 +1001,14 @@
                   </layout>
                  </item>
                  <item>
-                  <spacer name="verticalSpacer_4">
+                  <spacer name="updateMaterialVSpacer">
                    <property name="orientation">
                     <enum>Qt::Vertical</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>20</width>
-                     <height>40</height>
+                     <width>0</width>
+                     <height>0</height>
                     </size>
                    </property>
                   </spacer>
@@ -607,46 +1022,218 @@
           </layout>
          </widget>
         </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab3Member">
+       <attribute name="title">
+        <string>Members</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="1" column="0" colspan="2">
+         <widget class="QWidget" name="widget1plotAreaMember" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>300</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>1000</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <kerning>true</kerning>
+           </font>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QFrame" name="frame1defineMember">
-          <property name="autoFillBackground">
-           <bool>true</bool>
+          <property name="minimumSize">
+           <size>
+            <width>480</width>
+            <height>0</height>
+           </size>
           </property>
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
+          <property name="maximumSize">
+           <size>
+            <width>480</width>
+            <height>255</height>
+           </size>
           </property>
           <layout class="QGridLayout" name="gridLayout_10">
            <item row="1" column="0">
             <layout class="QGridLayout" name="table1defineMember">
-             <item row="0" column="0">
-              <widget class="QLabel" name="defineMemberNameLabel">
+             <item row="1" column="1">
+              <widget class="QComboBox" name="defineMemberINode">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>16777215</width>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="defineMemberNameLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
                  <height>20</height>
                 </size>
                </property>
                <property name="text">
-                <string>Member Name</string>
+                <string>Name</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="defineNodeJLabel">
+             <item row="3" column="1">
+              <widget class="QComboBox" name="defineMemberMaterial">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="defineMemberMaterialLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Material ID</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="defineMemberJNodeLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
                <property name="text">
                 <string>Node J</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="3">
-              <widget class="QPushButton" name="addMemberButton">
+             <item row="1" column="0">
+              <widget class="QLabel" name="defineMemberINodeLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>90</width>
-                 <height>16777215</height>
+                 <width>80</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Node I</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="defineMemberName">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="defineMemberJNode">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QPushButton" name="defineMemberButton">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>23</height>
                 </size>
                </property>
                <property name="text">
@@ -654,43 +1241,14 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QLineEdit" name="defineMemberName">
-               <property name="minimumSize">
-                <size>
-                 <width>200</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>400</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="defineNodeILabel">
-               <property name="text">
-                <string>Node I</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QComboBox" name="defineNodeI"/>
-             </item>
-             <item row="1" column="2">
-              <widget class="QComboBox" name="defineNodeJ"/>
-             </item>
             </layout>
            </item>
            <item row="0" column="0">
             <widget class="QLabel" name="defineMemberLabel">
              <property name="maximumSize">
               <size>
-               <width>16777215</width>
-               <height>50</height>
+               <width>1500</width>
+               <height>33</height>
               </size>
              </property>
              <property name="font">
@@ -704,14 +1262,14 @@
             </widget>
            </item>
            <item row="2" column="0">
-            <spacer name="verticalSpacer_3">
+            <spacer name="defineMemberVSpacer">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
-               <width>20</width>
-               <height>40</height>
+               <width>0</width>
+               <height>0</height>
               </size>
              </property>
             </spacer>
@@ -719,34 +1277,195 @@
           </layout>
          </widget>
         </item>
-        <item row="1" column="0" colspan="2">
-         <widget class="QWidget" name="widget1PlotAreaMember" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>300</height>
-           </size>
-          </property>
+        <item row="0" column="1">
+         <widget class="QFrame" name="frame2updateMember">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>640</height>
+            <height>255</height>
            </size>
           </property>
-          <property name="font">
-           <font>
-            <kerning>true</kerning>
-           </font>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <widget class="QLabel" name="updateMemberLabel">
+             <property name="maximumSize">
+              <size>
+               <width>1500</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>20</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Members</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="updateMemberHBox">
+             <item>
+              <widget class="QScrollArea" name="updateMemberSA">
+               <property name="horizontalScrollBarPolicy">
+                <enum>Qt::ScrollBarAlwaysOff</enum>
+               </property>
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="updateMemberSAW">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>728</width>
+                  <height>194</height>
+                 </rect>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_2">
+                 <item>
+                  <layout class="QGridLayout" name="table2updateMember">
+                   <item row="1" column="1">
+                    <widget class="QComboBox" name="updateMemberINode">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="updateMemberNameLabel">
+                     <property name="text">
+                      <string>Name</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLabel" name="updateMemberINodeLabel">
+                     <property name="text">
+                      <string>Node I</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QComboBox" name="updateMemberJNode">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLineEdit" name="updateMemberName">
+                     <property name="minimumSize">
+                      <size>
+                       <width>150</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Add Member to get started</string>
+                     </property>
+                     <property name="frame">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="updateMemberJNodeLabel">
+                     <property name="text">
+                      <string>Node J</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QComboBox" name="updateMemberMaterial">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="4">
+                    <widget class="QPushButton" name="updateMemberButton">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>23</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>23</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Update</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QLabel" name="updateMemberMaterialLabel">
+                     <property name="text">
+                      <string>Material ID</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="5">
+                    <widget class="QPushButton" name="deleteMemberButton">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>23</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>90</width>
+                       <height>23</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Delete</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <spacer name="updateMemberVSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </widget>
         </item>
        </layout>
@@ -808,29 +1527,51 @@
    <property name="text">
     <string>Quit</string>
    </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
+   </property>
   </action>
  </widget>
  <tabstops>
   <tabstop>defineNodeName</tabstop>
-  <tabstop>defineXnode</tabstop>
-  <tabstop>defineYnode</tabstop>
-  <tabstop>defineZnode</tabstop>
-  <tabstop>addNodeButton</tabstop>
-  <tabstop>scrollArea</tabstop>
-  <tabstop>editNodeName</tabstop>
-  <tabstop>editXnode</tabstop>
-  <tabstop>editYnode</tabstop>
-  <tabstop>editZnode</tabstop>
+  <tabstop>defineNodeX</tabstop>
+  <tabstop>defineNodeY</tabstop>
+  <tabstop>defineNodeZ</tabstop>
+  <tabstop>defineNodeButton</tabstop>
+  <tabstop>updateNodeSA</tabstop>
+  <tabstop>updateNodeName</tabstop>
+  <tabstop>updateNodeX</tabstop>
+  <tabstop>updateNodeY</tabstop>
+  <tabstop>updateNodeZ</tabstop>
   <tabstop>updateNodeButton</tabstop>
   <tabstop>deleteNodeButton</tabstop>
+  <tabstop>defineMaterialName</tabstop>
+  <tabstop>defineMaterialE</tabstop>
+  <tabstop>defineMaterialG</tabstop>
+  <tabstop>defineMaterialIy</tabstop>
+  <tabstop>defineMaterialIz</tabstop>
+  <tabstop>defineMaterialJ</tabstop>
+  <tabstop>defineMaterialA</tabstop>
+  <tabstop>defineMaterialButton</tabstop>
+  <tabstop>updateMaterialSA</tabstop>
+  <tabstop>updateMaterialName</tabstop>
+  <tabstop>updateMaterialE</tabstop>
+  <tabstop>updateMaterialG</tabstop>
+  <tabstop>updateMaterialIy</tabstop>
+  <tabstop>updateMaterialIz</tabstop>
+  <tabstop>updateMaterialA</tabstop>
+  <tabstop>updateMaterialButton</tabstop>
+  <tabstop>deleteMaterialButton</tabstop>
   <tabstop>defineMemberName</tabstop>
-  <tabstop>defineNodeI</tabstop>
-  <tabstop>defineNodeJ</tabstop>
-  <tabstop>addMemberButton</tabstop>
-  <tabstop>scrollArea_2</tabstop>
-  <tabstop>editMemberName</tabstop>
-  <tabstop>editNodeI</tabstop>
-  <tabstop>editNodeJ</tabstop>
+  <tabstop>defineMemberINode</tabstop>
+  <tabstop>defineMemberJNode</tabstop>
+  <tabstop>defineMemberMaterial</tabstop>
+  <tabstop>defineMemberButton</tabstop>
+  <tabstop>updateMemberSA</tabstop>
+  <tabstop>updateMemberName</tabstop>
+  <tabstop>updateMemberINode</tabstop>
+  <tabstop>updateMemberJNode</tabstop>
+  <tabstop>updateMemberMaterial</tabstop>
   <tabstop>updateMemberButton</tabstop>
   <tabstop>deleteMemberButton</tabstop>
   <tabstop>tabs</tabstop>

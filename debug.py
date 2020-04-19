@@ -1,50 +1,36 @@
-import numpy as np
-import tkinter as tk
+from numpy import where, append, array, empty, float, delete, squeeze, size
 
 
 class Debug():
-    def __init__(self):
-        self.truss = np.array([['dont show this row', 'a', 'a', 'a']],
-                              dtype="S")
-        self.truss = np.vstack(
-            (self.truss, np.array([['Node name', '1', '2', '3']])))
-        self.truss = np.vstack(
-            (self.truss, np.array([['Node name 1', '1', '2', '3']])))
-
     def debug(self):
-        print(self.truss)
-        # oldname = "Node name"
-        # newname = "Node name"
-        # x = str(41)
-        # y = str(43)
-        # z = str(4)
-        # exists = False
-        # check = np.squeeze(np.where(self.truss == oldname)[0])
-        # try:
-        #     int(check)
-        # except TypeError:
-        #     exists = False
-        # else:
-        #     exists = True
+        self.appNodes = array([['name', '1', '1', '1'],
+                               ['name2', '2', '1', '1'],
+                               ['name3', '3', '1', '1']])
+        self.appMembers = array([['a', '0', '1', '0'], ['ab', '0', '2', '0']])
+        self.appMaterials = array([['mat1', '1', '1']])
 
-        # if (exists == True):
-        #     print(check)
-        #     print("is true")
-        #     self.truss[check, 0] = newname
-        #     self.truss[check, 1] = x
-        #     self.truss[check, 2] = y
-        #     self.truss[check, 3] = z
+        mylist = array(['0', '2', '0'])
+        a = self.duplicate(self.appMembers, mylist)
+        print(a)
 
-        # else:
-        #     print("not found")
-        #     self.truss = np.vstack(
-        #         (self.truss, np.array([[newname,
-        #                                 str(x),
-        #                                 str(y),
-        #                                 str(z)]])))
-        self.truss = np.delete(self.truss, 1, 0)
-        print(self.truss)
+    def duplicate(self, array, find):
+        r = False
+        a = size(array, 1)
+        i = 0
+        while i <= len(array) - 1:
+            try:
+                j = 1
+                while j <= a:
+                    if (array[i, j] == find[j - 1]):
+                        j += 1
+                    else:
+                        break
+            except IndexError:
+                if j == a:
+                    r = True
+            i += 1
+            return r
 
 
-start = Debug()
-start.debug()
+ui = Debug()
+ui.debug()
