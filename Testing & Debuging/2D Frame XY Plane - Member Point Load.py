@@ -31,11 +31,11 @@ frame.AddMember('M3', 'N4', 'N3', E, G, Iy, Iz, J, A)
 frame.AddMemberPtLoad('M2', 'Fy', -5, 7.75/2) # 5 kips @ midspan
 frame.AddMemberDistLoad('M2', 'Fy', -0.024, -0.024) # W8x24 self-weight
 
-# Render the model
-RenderModel(frame, 0.2)
-
 # Analyze the frame
 frame.Analyze()
+
+# Render the model
+RenderModel(frame, 0.2)
 
 frame.GetMember('M2').PlotMoment('Mz')
 frame.GetMember('M3').PlotDeflection('dy')
