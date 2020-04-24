@@ -92,8 +92,9 @@ def RenderModel(model, textHeight=5, combo_name=None, case=None):
     # This next line will require us to reset the camera when we're done (below)
     visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
-  # Render the loads
-  RenderLoads(model, renderer, textHeight, combo_name, case)
+  # Render the loads if a load case or combination has been provided
+  if combo_name != None or case !=None:
+    RenderLoads(model, renderer, textHeight, combo_name, case)
 
   # Setting the background to blue.
   renderer.SetBackground(0.1, 0.1, 0.4)
@@ -105,7 +106,7 @@ def RenderModel(model, textHeight=5, combo_name=None, case=None):
   interactor.Start()
 
 #%%
-def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1'):
+def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1', case=None):
 
   visNodes = []
   for node in model.Nodes:
@@ -203,8 +204,8 @@ def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1'):
     visDeformedNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Render the loads on the model
-  if combo_name != None:
-    RenderLoads(model, renderer, textHeight, combo_name)
+  if combo_name != None or case !=None:
+    RenderLoads(model, renderer, textHeight, combo_name, case)
 
   # Setting the background to blue
   renderer.SetBackground(0.1, 0.1, 0.4)
