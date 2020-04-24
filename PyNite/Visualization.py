@@ -5,7 +5,7 @@ from numpy import array, empty, append
 from math import isclose, sqrt
 
 #%%
-def RenderModel(model, textHeight=5, combo_name=None, case=None):
+def RenderModel(model, textHeight=5, deformed_shape=False, deformed_scale=30, combo_name=None, case=None):
 
   visNodes = []
   for node in model.Nodes:
@@ -92,6 +92,10 @@ def RenderModel(model, textHeight=5, combo_name=None, case=None):
     # This next line will require us to reset the camera when we're done (below)
     visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
+  # Render the deformed shape if requested
+  if deformed_shape == True:
+    DeformedShape(model, renderer, deformed_scale, textHeight, combo_name, case)
+
   # Render the loads if a load case or combination has been provided
   if combo_name != None or case !=None:
     RenderLoads(model, renderer, textHeight, combo_name, case)
@@ -106,19 +110,7 @@ def RenderModel(model, textHeight=5, combo_name=None, case=None):
   interactor.Start()
 
 #%%
-def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1', case=None):
-
-  visNodes = []
-  for node in model.Nodes:
-    visNodes.append(VisNode(node, textHeight))
-
-  visAuxNodes = []
-  for auxnode in model.auxNodes:
-    visAuxNodes.append(VisNode(auxnode, textHeight, color='red'))
-
-  visMembers = []
-  for member in model.Members:
-    visMembers.append(VisMember(member, model.Nodes, textHeight))
+def DeformedShape(model, renderer, scale_factor, textHeight=5, combo_name='Combo 1', case=None):
 
   visDeformedNodes = []
   for node in model.Nodes:
@@ -127,62 +119,6 @@ def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1', case=
   visDeformedMembers = []
   for member in model.Members:
     visDeformedMembers.append(VisDeformedMember(member, model.Nodes, scale_factor, textHeight, combo_name))
-
-  # Create a window
-  window = vtk.vtkRenderWindow()
-
-  # Set the pixel width and length of the window
-  window.SetSize(500, 500)
-
-  # Set up the interactor
-  # The interactor style determines how user interactions affect the view
-  interactor = vtk.vtkRenderWindowInteractor()
-  style = vtk.vtkInteractorStyleTrackballCamera() # The trackball camera style behaves a lot like most CAD programs
-  interactor.SetInteractorStyle(style)
-  interactor.SetRenderWindow(window)
-
-  # Create a renderer
-  renderer = vtk.vtkRenderer()
-  window.AddRenderer(renderer)
-  
-  # Add actors for each member
-  for visMember in visMembers:
-
-    # Add the actor for the member
-    renderer.AddActor(visMember.actor)
-
-    # Add the actor for the member label
-    renderer.AddActor(visMember.lblActor)
-
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visMember.lblActor.SetCamera(renderer.GetActiveCamera())
-
-  # Add actors for each node
-  for visNode in visNodes:
-
-    # Add the actor for the node
-    renderer.AddActor(visNode.actor)
-
-    # Add the actor for the node label
-    renderer.AddActor(visNode.lblActor)
-
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visNode.lblActor.SetCamera(renderer.GetActiveCamera())
-  
-  # Add actors for each aux node
-  for visAuxNode in visAuxNodes:
-
-    # Add the actor for the node
-    renderer.AddActor(visAuxNode.actor)
-
-    # Add the actor for the node label
-    renderer.AddActor(visAuxNode.lblActor)
-
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Add actors for each deformed member
   for visDeformedMember in visDeformedMembers:
@@ -202,19 +138,6 @@ def DeformedShape(model, scale_factor, textHeight=5, combo_name='Combo 1', case=
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
     visDeformedNode.lblActor.SetCamera(renderer.GetActiveCamera())
-
-  # Render the loads on the model
-  if combo_name != None or case !=None:
-    RenderLoads(model, renderer, textHeight, combo_name, case)
-
-  # Setting the background to blue
-  renderer.SetBackground(0.1, 0.1, 0.4)
-
-  # Reset the camera
-  renderer.ResetCamera()
-
-  window.Render()
-  interactor.Start()
 
 #%%
 def RenderLoads(model, renderer, textHeight=5, combo_name=None, case=None):

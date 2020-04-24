@@ -62,7 +62,7 @@ MomentFrame.Analyze_PDelta()
 
 # Display the deformed shape of the structure magnified 50 times with the text height 5 model units (inches) high
 from PyNite import Visualization
-Visualization.DeformedShape(MomentFrame, scale_factor=50, textHeight=5, combo_name='1.2D+1.0W')
+Visualization.RenderModel(MomentFrame, textHeight=5, deformed_shape=True, deformed_scale=50, combo_name='1.2D+1.0W')
 
 # Plot the moment diagram for the beam
 MomentFrame.GetMember('Beam').PlotMoment('Mz', combo_name='1.2D+1.0W')
