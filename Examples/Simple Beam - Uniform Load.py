@@ -40,4 +40,4 @@ print('Right Support Reacton:', SimpleBeam.GetNode('N2').RxnFY, 'kip')
 
 # Render the deformed shape of the beam magnified 100 times, with a text height of 5 inches
 from PyNite import Visualization
-Visualization.DeformedShape(SimpleBeam, 100, 5)
+Visualization.DeformedShape(SimpleBeam, 100, 5, 'Combo 1')

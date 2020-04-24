@@ -4,6 +4,9 @@
 # Import `FEModel3D` from `PyNite`
 from PyNite import FEModel3D
 
+# Import 'Visualization' for rendering the model
+from PyNite import Visualization
+
 # Create a new finite element model
 SimpleBeam = FEModel3D()
 
@@ -29,6 +32,8 @@ SimpleBeam.AddLoadCombo('1.2D+1.6L', {'D':1.2, 'L':1.6})
 
 # Analyze the beam and perform a statics check
 SimpleBeam.Analyze(check_statics=True)
+
+Visualization.RenderModel(SimpleBeam, 10, '1.2D+1.6L')
 
 # Print the shear, moment, and deflection diagrams
 SimpleBeam.GetMember('M1').PlotShear('Fy', '1.2D+1.6L')
