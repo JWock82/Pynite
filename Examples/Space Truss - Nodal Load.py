@@ -62,4 +62,6 @@ print('Member BE calculated axial force: ' + str(truss.GetMember('BE').MaxAxial(
 print('Member BE expected axial force: 112.1 Compression')
 
 # Render the model for viewing. The text height will be set to 50 mm.
-Visualization.RenderModel(truss, 0.05)
+# Because the members in this example are nearly rigid, there will be virtually no deformation. The deformed shape won't be rendered.
+# The program has created a default load case 'Case 1' and a default load combo 'Combo 1' since we didn't specify any. We'll display 'Case 1'.
+Visualization.RenderModel(truss, text_height=0.05, render_loads=True, case='Case 1')

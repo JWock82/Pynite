@@ -26,14 +26,14 @@ SimpleBeam.DefineSupport('N2', True, True, True, False, False, False) # Not cons
 SimpleBeam.AddMemberPtLoad('M1', 'Fy', -5, 7*12, 'D') # 5 kips Dead load
 SimpleBeam.AddMemberPtLoad('M1', 'Fy', -8, 7*12, 'L') # 8 kips Live load
 
-# Add a load combinations
+# Add load combinations
 SimpleBeam.AddLoadCombo('1.4D', {'D':1.0})
 SimpleBeam.AddLoadCombo('1.2D+1.6L', {'D':1.2, 'L':1.6})
 
 # Analyze the beam and perform a statics check
 SimpleBeam.Analyze(check_statics=True)
 
-Visualization.RenderModel(SimpleBeam, 10, '1.2D+1.6L')
+Visualization.RenderModel(SimpleBeam, text_height=10, deformed_shape=True, deformed_scale=30, render_loads=True, combo_name='1.2D+1.6L',)
 
 # Print the shear, moment, and deflection diagrams
 SimpleBeam.GetMember('M1').PlotShear('Fy', '1.2D+1.6L')

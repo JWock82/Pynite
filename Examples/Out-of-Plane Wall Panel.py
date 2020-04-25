@@ -405,9 +405,9 @@ myWall.add_load(0, height, load, load)
 # Analyze the wall
 myWall.analyze()
 
-# Render the wall
+# Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
 from PyNite import Visualization
-Visualization.RenderModel(myWall.fem, meshsize/6)
+Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True)
 
 # Plot the displacement contour
 myWall.plot_disp()

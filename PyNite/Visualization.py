@@ -7,6 +7,11 @@ from math import isclose, sqrt
 #%%
 def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30, render_loads=True, combo_name='Combo 1', case=None):
 
+  # Input validation
+  if deformed_shape == True and case != None:
+    print('Error: Deformed shape is only available for load combinations, not load cases.')
+    return
+
   visNodes = []
   for node in model.Nodes:
     visNodes.append(VisNode(node, text_height))
