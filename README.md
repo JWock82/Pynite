@@ -9,8 +9,7 @@ A linear elastic 3D structural engineering finite element library for Python.
 * Produces shear, moment, and deflection results and diagrams for each member.
 * Rectangular plate elements.
 * Reports support reactions.
-* Basic rendering of model geometry.
-* Rendering of deformed shapes.
+* Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
 
 # Project Objectives
 As I've gotten into the structural engineering profession, I've found there's a need for an easy to use open-source finite element package. I hope to help fill that need by prioritizing the following:
@@ -31,5 +30,8 @@ PyNite depends on the following packages:
 * vtk: used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. The latest version of Python 3.8+ is not supported by VTK yet. I recommend running a 64 bit version of Python 3.7+. VTK does not need to be installed if you don't plan to use the visualization tools built into PyNite.
 
 # What's New?
+Version 0.0.12
+Load rendering has been added for load cases and combinations! It should be noted that the `Visualization.DeformedShape` function has been dapricated. All deformed shapes are now accessed through the `RenderModel` function by setting the `deformed_shape` variable to `True`. This was done to keep PyNite simple, as it allowed for a lot of redundant code to be removed.
+
 Version 0.0.11:
 Load cases and load combinations have been added! Each load can now be assigned a load case (e.g. 'D', 'L', 'S', or 'any string you want'), and you can specify multiple load combinations (e.g. '1.2D + 1.6L + 0.5S') with different load factors for each load case within the combination. You may notice slightly different behavior from PyNite now that load combinations have been added. Most results are now presented by load combination in a Python dictionary format. A few of the examples have been updated to demonstrate this feature. More examples will be updated soon. A full description of how to use this feature will also be posted shortly.
