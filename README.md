@@ -31,7 +31,7 @@ PyNite depends on the following packages:
 
 # What's New?
 Version 0.0.12:
-Load rendering has been added for load cases and combinations! It should be noted that the `Visualization.DeformedShape` function has been dapricated. All deformed shapes are now accessed through the `RenderModel` function by setting the `deformed_shape` variable to `True`. This was done to keep PyNite simple, as it allowed for a lot of redundant code to be removed.
+Load rendering has been added for load cases and combinations! It should be noted that the `Visualization.DeformedShape` function has been dapricated. All deformed shapes are now accessed through the `RenderModel` function by setting the `deformed_shape` variable to `True`. This was done to keep PyNite simple, as it allowed for a lot of redundant code to be removed. Check out the wiki for more clarification.
 
 Version 0.0.11:
 Load cases and load combinations have been added! Each load can now be assigned a load case (e.g. 'D', 'L', 'S', or 'any string you want'), and you can specify multiple load combinations (e.g. '1.2D + 1.6L + 0.5S') with different load factors for each load case within the combination. You may notice slightly different behavior from PyNite now that load combinations have been added. Most results are now presented by load combination in a Python dictionary format. A few of the examples have been updated to demonstrate this feature. More examples will be updated soon. A full description of how to use this feature will also be posted shortly.
