@@ -41,7 +41,7 @@ cantilever.AddNodeLoad(str(num_nodes), 'FX', H)
 cantilever.Analyze_PDelta() 
 
 # Render the deformed shape
-Visualization.DeformedShape(cantilever, 1, 0.3)
+Visualization.RenderModel(cantilever, text_height=0.3, deformed_shape=True, deformed_scale=2, render_loads=True)
 
 # Print the moment at the base of the column
 print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001, 'Combo 1'))

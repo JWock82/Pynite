@@ -44,7 +44,7 @@ frame.AddNodeLoad('N4', 'FY', -30)
 frame.Analyze()
 
 # Render the model for viewing
-Visualization.DeformedShape(frame, 15)
+Visualization.RenderModel(frame, text_height=15, deformed_shape=True, deformed_scale=10, render_loads=True)
 
 node1 = frame.GetNode('N1')
 node6 = frame.GetNode('N6')

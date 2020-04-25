@@ -51,11 +51,11 @@ truss.AddNodeLoad('a', 'FY', 600)
 truss.AddNodeLoad('a', 'FX', 200)
 truss.AddNodeLoad('a', 'FZ', -800)
 
-# Render the model
-Visualization.RenderModel(truss, 0.2)
-
 # Analyze the model
 truss.Analyze(False)
+
+# Render the model
+Visualization.RenderModel(truss, text_height=0.2, deformed_shape=True, deformed_scale=1000, render_loads=True)
 
 # Print results
 a = truss.GetNode('a')

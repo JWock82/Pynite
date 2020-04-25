@@ -35,7 +35,7 @@ frame.AddMemberDistLoad('M2', 'Fy', -0.024, -0.024) # W8x24 self-weight
 frame.Analyze()
 
 # Render the model
-RenderModel(frame, 0.2)
+RenderModel(frame, text_height=0.2, deformed_shape=True, deformed_scale=100, render_loads=True)
 
 frame.GetMember('M2').PlotMoment('Mz')
 frame.GetMember('M3').PlotDeflection('dy')

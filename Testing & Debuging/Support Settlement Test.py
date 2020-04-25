@@ -49,7 +49,7 @@ beam.AddNodeDisplacement('D', 'DY', -0.75)
 beam.Analyze()
 
 # Render the beam's deformed shape
-Visualization.DeformedShape(beam, 40, 12)
+Visualization.RenderModel(beam, text_height=12, deformed_shape=True, deformed_scale=40, render_loads=True)
 
 # Print reactions
 print('Calculated Reaction at A:', beam.GetNode('A').RxnFY, 'k')

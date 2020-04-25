@@ -20,9 +20,9 @@ myModel.DefineReleases('M1', False, False, False, False, False, True, \
 
 myModel.AddMemberDistLoad('M1', 'Fy', -0.5, -0.5)
 
-Visualization.RenderModel(myModel)
-
 myModel.Analyze()
+
+Visualization.RenderModel(myModel, text_height=3, deformed_shape=True, deformed_scale=100, render_loads=True)
 
 myModel.GetMember('M1').PlotShear('Fy')
 myModel.GetMember('M1').PlotMoment('Mz')
