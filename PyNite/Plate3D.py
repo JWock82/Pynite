@@ -1,4 +1,4 @@
-from numpy import zeros, delete, matrix, matmul, transpose, insert, cross, divide, add
+from numpy import zeros, delete, matrix, array, matmul, transpose, insert, cross, divide, add
 from numpy.linalg import inv
 
 # A rectangular plate bending element
@@ -397,11 +397,20 @@ class Plate3D():
 
 #%%  
     # Calculates and returns the constitutive matrix for isotropic materials [D]
-    def __D(self):
+    def __D(self, membrane=False):
+        '''
+        Paramters
+        ---------
+        membrane : boolean
+            Indicates whether the matrix is to be used for membrane forces or bending forces
+        '''
 
         # Calculate the coefficient for the constitutive matrix [D]
-        C = self.E*self.t**3/(12*(1-self.nu**2))
         nu = self.nu
+        if membrane == False:
+            C = self.E*self.t**3/(12*(1 - nu**2))
+        else:
+            C = self.E/(1 - nu**2)
 
         # Calculate the constitutive matrix [D]
         D = C*matrix([[1, nu, 0],
@@ -456,4 +465,41 @@ class Plate3D():
         # Return internal shears
         return matrix([[Qx], 
                        [Qy]])
+
+#%%
+    def Membrane(self, x, y, combo_name='Combo 1'):
+
+        # D = self.__D(membrane=True)
+
+        # Get the plate's local displacement vector
+        # Slice out terms not related to membrane forces
+        d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
+
+        # Calculate the half-width of the plate along the local x-axis
+        # b = self.width()/2
         
+        # Calculate the half-height of the plate along the local y-axis
+        # h = self.height()/2
+        
+        # B = (1/(4*b*h))*array([[-(h - y), 0, h - y, 0, h + y, 0, -(h + y), 0],
+        #                       [0, -(b - x), 0, -(b + x), 0, b + x, 0, b - x],
+        #                       [-(b - x), -(h - y), -(b + x), h - y, b + x, h + y, b - x, -(h + y)]])
+
+        # Return internal stresses
+        # return D*B*d
+        
+        a = self.width()
+        b = self.height()
+
+        eta = y/b
+        epsilon = x/a
+        nu = self.nu
+        E = self.E
+
+        return E/(1-nu**2)*matmul(array([[-(1-eta)/a, -nu*(1-epsilon)/b, -eta/a, nu*(1-epsilon)/b, eta/a, nu*epsilon/b, (1-eta)/a, -nu*epsilon/b],
+                                  [-nu*(1-eta)/a, -(1-epsilon)/b, -nu*eta/a, (1-epsilon)/b, nu*eta/a, epsilon/b, nu*(1-eta)/a, -epsilon/b],
+                                  [-(1-nu)*(1-epsilon)/(2*b), -(1-nu)*(1-eta)/(2*a), (1-nu)*(1-epsilon)/(2*b), -(1-nu)*eta/(2*a), (1-nu)*epsilon/(2*b), (1-nu)*eta/(2*a), -(1-nu)*epsilon/(2*b), (1-nu)*(1-eta)/(2*a)]]), d)
+
+
+
+# %%
