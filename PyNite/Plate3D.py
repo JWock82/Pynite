@@ -373,44 +373,21 @@ class Plate3D():
         '''
 
         # Get the plate's local displacement vector
-        d = self.d(combo_name)
-
-        # Remove degrees of freedom not related to plate bending
-        d = delete(d, 23, axis=0)
-        d = delete(d, 19, axis=0)
-        d = delete(d, 18, axis=0)
-
-        d = delete(d, 17, axis=0)
-        d = delete(d, 13, axis=0)
-        d = delete(d, 12, axis=0)
-
-        d = delete(d, 11, axis=0)
-        d = delete(d, 7, axis=0)
-        d = delete(d, 6, axis=0)
-        
-        d = delete(d, 5, axis=0)
-        d = delete(d, 1, axis=0)
-        d = delete(d, 0, axis=0)
+        # Slice out terms not related to plate bending
+        d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
         # Return the plate bending constants
         return inv(self.__C())*d
 
 #%%  
-    # Calculates and returns the constitutive matrix for isotropic materials [D]
-    def __D(self, membrane=False):
+        def __D(self):
         '''
-        Paramters
-        ---------
-        membrane : boolean
-            Indicates whether the matrix is to be used for membrane forces or bending forces
+        Calculates and returns the constitutive matrix for isotropic materials [D].
         '''
 
         # Calculate the coefficient for the constitutive matrix [D]
         nu = self.nu
-        if membrane == False:
-            C = self.E*self.t**3/(12*(1 - nu**2))
-        else:
-            C = self.E/(1 - nu**2)
+        C = self.E*self.t**3/(12*(1 - nu**2))
 
         # Calculate the constitutive matrix [D]
         D = C*matrix([[1, nu, 0],
@@ -469,24 +446,9 @@ class Plate3D():
 #%%
     def Membrane(self, x, y, combo_name='Combo 1'):
 
-        # D = self.__D(membrane=True)
-
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
-
-        # Calculate the half-width of the plate along the local x-axis
-        # b = self.width()/2
-        
-        # Calculate the half-height of the plate along the local y-axis
-        # h = self.height()/2
-        
-        # B = (1/(4*b*h))*array([[-(h - y), 0, h - y, 0, h + y, 0, -(h + y), 0],
-        #                       [0, -(b - x), 0, -(b + x), 0, b + x, 0, b - x],
-        #                       [-(b - x), -(h - y), -(b + x), h - y, b + x, h + y, b - x, -(h + y)]])
-
-        # Return internal stresses
-        # return D*B*d
         
         a = self.width()
         b = self.height()
@@ -496,9 +458,9 @@ class Plate3D():
         nu = self.nu
         E = self.E
 
-        return E/(1-nu**2)*matmul(array([[-(1-eta)/a, -nu*(1-epsilon)/b, -eta/a, nu*(1-epsilon)/b, eta/a, nu*epsilon/b, (1-eta)/a, -nu*epsilon/b],
-                                  [-nu*(1-eta)/a, -(1-epsilon)/b, -nu*eta/a, (1-epsilon)/b, nu*eta/a, epsilon/b, nu*(1-eta)/a, -epsilon/b],
-                                  [-(1-nu)*(1-epsilon)/(2*b), -(1-nu)*(1-eta)/(2*a), (1-nu)*(1-epsilon)/(2*b), -(1-nu)*eta/(2*a), (1-nu)*epsilon/(2*b), (1-nu)*eta/(2*a), -(1-nu)*epsilon/(2*b), (1-nu)*(1-eta)/(2*a)]]), d)
+        return E/(1-nu**2)*matmul(array([[-(1-eta)/a,                -nu*(1-epsilon)/b,     -eta/a,                   nu*(1-epsilon)/b,  eta/a,                nu*epsilon/b,     (1-eta)/a,             -nu*epsilon/b],
+                                         [-nu*(1-eta)/a,             -(1-epsilon)/b,        -nu*eta/a,                (1-epsilon)/b,     nu*eta/a,             epsilon/b,        nu*(1-eta)/a,          -epsilon/b],
+                                         [-(1-nu)*(1-epsilon)/(2*b), -(1-nu)*(1-eta)/(2*a), (1-nu)*(1-epsilon)/(2*b), -(1-nu)*eta/(2*a), (1-nu)*epsilon/(2*b), (1-nu)*eta/(2*a), -(1-nu)*epsilon/(2*b), (1-nu)*(1-eta)/(2*a)]]), d)
 
 
 
