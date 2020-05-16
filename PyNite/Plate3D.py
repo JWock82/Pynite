@@ -380,7 +380,7 @@ class Plate3D():
         return inv(self.__C())*d
 
 #%%  
-        def __D(self):
+    def __D(self):
         '''
         Calculates and returns the constitutive matrix for isotropic materials [D].
         '''
