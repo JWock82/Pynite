@@ -26,10 +26,15 @@ As I've gotten into the structural engineering profession, I've found there's a 
 PyNite depends on the following packages:
 * numpy: used for matrix algebra
 * matplotlib: used for plotting member diagrams
-* tabulate : used to format tabular output
+* PrettyTable : used to format tabular output
 * vtk: used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. The latest version of Python 3.8+ is not supported by VTK yet. I recommend running a 64 bit version of Python 3.7+. VTK does not need to be installed if you don't plan to use the visualization tools built into PyNite.
 
 # What's New?
+Version 0.0.13:
+Plate in-plane (membrane) stress results are now available. Before only out-of-plane stresses were reported. Documentation will be added to the wiki soon.
+
+PyNite now uses `PrettyTable` instead of `tabulate`. The switch was made because `tabulate` has stricter licensing (GPLv3). `PrettyTable` is BSD (3 clause) licensed. What this means is that `tabulate` could not be used in proprietary software, whereas `PrettyTable` can.
+
 Version 0.0.12:
 Load rendering has been added for load cases and combinations! It should be noted that the `Visualization.DeformedShape` function has been dapricated. All deformed shapes are now accessed through the `RenderModel` function by setting the `deformed_shape` variable to `True`. This was done to keep PyNite simple, as it allowed for a lot of redundant code to be removed. Check out the wiki for more clarification.
 
