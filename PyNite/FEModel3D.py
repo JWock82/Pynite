@@ -6,7 +6,6 @@ from PyNite.Node3D import Node3D
 from PyNite.Member3D import Member3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
-from tabulate import tabulate
 
 # %%
 class FEModel3D():
@@ -1323,9 +1322,11 @@ class FEModel3D():
         print('------------------')
         print('')
 
+        from prettytable import PrettyTable
+
         # Start a blank table and create a header row
-        statics_table = []
-        table_header = ['Load Combination', 'Sum FX', 'Sum RX', 'Sum FY', 'Sum RY', 'Sum FZ', 'Sum RZ', 'Sum MX', 'Sum RMX', 'Sum MY', 'Sum RMY', 'Sum MZ', 'Sum RMZ']
+        statics_table = PrettyTable()
+        statics_table.field_names = ['Load Combination', 'Sum FX', 'Sum RX', 'Sum FY', 'Sum RY', 'Sum FZ', 'Sum RZ', 'Sum MX', 'Sum RMX', 'Sum MY', 'Sum RMY', 'Sum MZ', 'Sum RMZ']
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
@@ -1381,16 +1382,13 @@ class FEModel3D():
                 SumRMZ += RMZ - RFX*Y + RFY*X   
 
             # Add the results to the table
-            statics_table.append([combo.name, SumFX, SumRFX, \
-                                              SumFY, SumRFY, \
-                                              SumFZ, SumRFZ, \
-                                              SumMX, SumRMX, \
-                                              SumMY, SumRMY, \
-                                              SumMZ, SumRMZ])
-
-        # Format the table
-        formatted_table = tabulate(statics_table, headers=table_header)
+            statics_table.add_row([combo.name, SumFX, SumRFX, \
+                                               SumFY, SumRFY, \
+                                               SumFZ, SumRFZ, \
+                                               SumMX, SumRMX, \
+                                               SumMY, SumRMY, \
+                                               SumMZ, SumRMZ])
 
         # Print the static check table
-        print(formatted_table)
+        print(statics_table)
         print('')
