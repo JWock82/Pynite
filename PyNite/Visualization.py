@@ -27,7 +27,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30, r
   visPlates = []
   for plate in model.Plates:
     visPlates.append(VisPlate(plate, model.Nodes, text_height))
-
+  
   # Create a window
   window = vtk.vtkRenderWindow()
 
