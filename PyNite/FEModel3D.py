@@ -228,7 +228,7 @@ class FEModel3D():
         node = self.GetNode(Node)
 
         if Direction == 'DX':
-            node.EnforceDX = Magnitude
+            node.EnforcedDX = Magnitude
         if Direction == 'DY':
             node.EnforcedDY = Magnitude
         if Direction == 'DZ':
