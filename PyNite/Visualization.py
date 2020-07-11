@@ -153,27 +153,14 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
   # Display the requested load combination, or 'Combo 1' if no load combo or case has been specified
   if case == None:
 
-    # Ensure a load combination name has been specified. If not the default of 'Combo 1' will be used.
-    # Note: this check was already done by RenderModel's default argument
-    # combo_name can only be None if RenderModel was explicitly called with 
-    # combo_name=None
-    if combo_name == None:
-      combo = 'Combo 1'
-    else:
-      combo = combo_name
-
     # Relabel model.LoadCombos[combo].factors as the more generic name used in 
     # the loops below
-    load_factors = model.LoadCombos[combo].factors
+    load_factors = model.LoadCombos[combo_name].factors
 
   else:
     # Create a load_factors dictionary that looks like LoadCombos[combo].factors
     # Give it the same generic name used in the loops below
     load_factors = {case: 1}
-
-  # All the loops below are raised out of the if-else block
-  # They will be executed regardless of input
-  # The dictionary load_factors responds the same way
 
   # Step through each node
   for node in model.Nodes:
