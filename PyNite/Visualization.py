@@ -312,13 +312,8 @@ def __MaxLoads(model, combo_name=None, case=None):
   maxMoment = 0
   maxDistLoad = 0
 
-  # Find the requested load combination, or use 'Combo 1' if no load combo or case has been specified
-  if (combo_name == None and case == None) or combo_name != None:
-
-    if combo_name == None:
-      combo = 'Combo 1'
-    else:
-      combo = combo_name
+  # Find the requested load combination or load case
+  if case == None:
 
     # Step through each node
     for node in model.Nodes:
@@ -327,13 +322,13 @@ def __MaxLoads(model, combo_name=None, case=None):
       for load in node.NodeLoads:
         
         # Find the largest loads in the load combination
-        if load[2] in model.LoadCombos[combo].factors:
+        if load[2] in model.LoadCombos[combo_name].factors:
           if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-            if abs(load[1]*model.LoadCombos[combo].factors[load[2]]) > maxPtLoad:
-              maxPtLoad = abs(load[1]*model.LoadCombos[combo].factors[load[2]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > maxPtLoad:
+              maxPtLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
           else:
-            if abs(load[1]*model.LoadCombos[combo].factors[load[2]]) > maxMoment:
-              maxMoment = abs(load[1]*model.LoadCombos[combo].factors[load[2]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > maxMoment:
+              maxMoment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
 
     # Step through each member
     for member in model.Members:
@@ -342,27 +337,27 @@ def __MaxLoads(model, combo_name=None, case=None):
       for load in member.PtLoads:
         
         # Find and store the largest point load and moment in the load combination
-        if load[3] in model.LoadCombos[combo].factors:
+        if load[3] in model.LoadCombos[combo_name].factors:
 
           if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
-            if abs(load[1]*model.LoadCombos[combo].factors[load[3]]) > maxPtLoad:
-              maxPtLoad = abs(load[1]*model.LoadCombos[combo].factors[load[3]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > maxPtLoad:
+              maxPtLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
           else:
-            if abs(load[1]*model.LoadCombos[combo].factors[load[3]]) > maxMoment:
-              maxMoment = abs(load[1]*model.LoadCombos[combo].factors[load[3]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > maxMoment:
+              maxMoment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
 
       # Step through each member distributed load
       for load in member.DistLoads:
 
         #Find and store the largest distributed load in the load combination
-        if load[5] in model.LoadCombos[combo].factors:
+        if load[5] in model.LoadCombos[combo_name].factors:
 
-          if abs(load[1]*model.LoadCombos[combo].factors[load[5]]) > maxDistLoad:
-            maxDistLoad = abs(load[1]*model.LoadCombos[combo].factors[load[5]])
-          if abs(load[2]*model.LoadCombos[combo].factors[load[5]]) > maxDistLoad:
-            maxDistLoad = abs(load[2]*model.LoadCombos[combo].factors[load[5]])
+          if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > maxDistLoad:
+            maxDistLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
+          if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > maxDistLoad:
+            maxDistLoad = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
 
-  # Behavior if case has been specified and combo has not been specified
+  # Behavior if case has been specified
   else:
     
     # Step through each node
@@ -371,7 +366,7 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each nodal load to find the largest one
       for load in node.NodeLoads:
         
-        # Find the largest loads in the load combination
+        # Find the largest loads in the load case
         if load[2] == case:
           if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
             if abs(load[1]) > maxPtLoad:
@@ -386,10 +381,10 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each member point load
       for load in member.PtLoads:
         
-        # Find and store the largest point load and moment in the load combination
+        # Find and store the largest point load and moment in the load case
         if load[3] == case:
 
-          if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
+          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
             if abs(load[1]) > maxPtLoad:
               maxPtLoad = abs(load[1])
           else:
@@ -399,7 +394,7 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each member distributed load
       for load in member.DistLoads:
 
-        #Find and store the largest distributed load in the load combination
+        # Find and store the largest distributed load in the load case
         if load[5] == case:
 
           if abs(load[1]) > maxDistLoad:
