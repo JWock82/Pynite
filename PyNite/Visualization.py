@@ -154,295 +154,168 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
   if case == None:
 
     # Ensure a load combination name has been specified. If not the default of 'Combo 1' will be used.
+    # Note: this check was already done by RenderModel's default argument
+    # combo_name can only be None if RenderModel was explicitly called with 
+    # combo_name=None
     if combo_name == None:
       combo = 'Combo 1'
     else:
       combo = combo_name
 
-    # Step through each node
-    for node in model.Nodes:
+    # Relabel model.LoadCombos[combo].factors as the more generic name used in 
+    # the loops below
+    load_factors = model.LoadCombos[combo].factors
 
-      # Step through and display each nodal load
-      for load in node.NodeLoads:
-        
-        # Determine if this load is part of the requested load combination
-        if load[2] in model.LoadCombos[combo].factors:
-          
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]*model.LoadCombos[combo].factors[load[2]]
-          sign = load_value/abs(load_value)
-          
-          # Display the load
-          if load[0] == 'FX':
-            ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FY':
-            ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FZ':
-            ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MX':
-            moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MY':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MZ':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-
-    # Step through each member
-    for member in model.Members:
-
-      # Get the direction cosines for the member's local axes
-      dir_cos = member.T()[0:3, 0:3]
-
-      # Get the starting point for the member
-      x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
-
-      # Step through each member point load
-      for load in member.PtLoads:
-
-        # Determine if this load is part of the requested load combination
-        if load[3] in model.LoadCombos[combo].factors:
-
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]*model.LoadCombos[combo].factors[load[3]]
-          sign = load_value/abs(load_value)
-
-          # Calculate the loads location in 3D space
-          x = load[2]
-          position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
-
-          # Display the load
-          if load[0] == 'Fx':
-            ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mx':
-            moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'My':
-            moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mz':
-            moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-      
-      # Step through each member distributed load
-      for load in member.DistLoads:
-
-        # Determine if this load is part of the requested load combination
-        if load[5] in model.LoadCombos[combo].factors:
-
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          w1 = load[1]*model.LoadCombos[combo].factors[load[5]]
-          w2 = load[2]*model.LoadCombos[combo].factors[load[5]]
-          sign1 = w1/abs(w1)
-          sign2 = w2/abs(w2)
-
-          # Calculate the loads location in 3D space
-          x1 = load[3]
-          x2 = load[4]
-          position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
-          position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
-          
-          # Display the load
-          if load[0] == 'Fx':
-            distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-
-  # Display the requested load case
   else:
+    # Create a load_factors dictionary that looks like LoadCombos[combo].factors
+    # Give it the same generic name used in the loops below
+    load_factors = {case: 1}
 
-    # Step through each node
-    for node in model.Nodes:
+  # All the loops below are raised out of the if-else block
+  # They will be executed regardless of input
+  # The dictionary load_factors responds the same way
 
-      # Step through and display each nodal load
-      for load in node.NodeLoads:
-        
-        # Determine if this load is part of the requested load case
-        if load[2] == case:
-          
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]
-          sign = load_value/abs(load_value)
-          
-          # Display the load
-          if load[0] == 'FX':
-            ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FY':
-            ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FZ':
-            ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MX':
-            moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MY':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MZ':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
+  # Step through each node
+  for node in model.Nodes:
 
-    # Step through each member
-    for member in model.Members:
-
-      # Get the direction cosines for the member's local axes
-      dir_cos = member.T()[0:3, 0:3]
-
-      # Get the starting point for the member
-      x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
-
-      # Step through each member point load
-      for load in member.PtLoads:
-
-        # Determine if this load is part of the requested load combination
-        if load[3] == case:
-
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]
-          sign = load_value/abs(load_value)
-
-          # Calculate the loads location in 3D space
-          x = load[2]
-          position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
-
-          # Display the load
-          if load[0] == 'Fx':
-            ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mx':
-            moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'My':
-            moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mz':
-            moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Step through and display each nodal load
+    for load in node.NodeLoads:
       
-      # Step through each member distributed load
-      for load in member.DistLoads:
+      # Determine if this load is part of the requested LoadCombo or case
+      if load[2] in load_factors:
+        
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        load_value = load[1]*load_factors[load[2]]
+        sign = load_value/abs(load_value)
+        
+        # Display the load
+        if load[0] == 'FX':
+          ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'FY':
+          ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'FZ':
+          ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'MX':
+          moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'MY':
+          moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'MZ':
+          moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
 
-        # Determine if this load is part of the requested load combination
-        if load[5] == case:
+  # Step through each member
+  for member in model.Members:
 
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          w1 = load[1]
-          w2 = load[2]
-          sign1 = w1/abs(w1)
-          sign2 = w2/abs(w2)
+    # Get the direction cosines for the member's local axes
+    dir_cos = member.T()[0:3, 0:3]
 
-          # Calculate the loads location in 3D space
-          x1 = load[3]
-          x2 = load[4]
-          position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
-          position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
-          
-          # Display the load
-          if load[0] == 'Fx':
-            distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+    # Get the starting point for the member
+    x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
+
+    # Step through each member point load
+    for load in member.PtLoads:
+
+      # Determine if this load is part of the requested load combination
+      if load[3] in load_factors:
+
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        load_value = load[1]*load_factors[load[3]]
+        sign = load_value/abs(load_value)
+
+        # Calculate the loads location in 3D space
+        x = load[2]
+        position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
+
+        # Display the load
+        if load[0] == 'Fx':
+          ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fy':
+          ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fz':
+          ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Mx':
+          moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'My':
+          moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Mz':
+          moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+    
+    # Step through each member distributed load
+    for load in member.DistLoads:
+
+      # Determine if this load is part of the requested load combination
+      if load[5] in load_factors:
+
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        w1 = load[1]*load_factors[load[5]]
+        w2 = load[2]*load_factors[load[5]]
+        sign1 = w1/abs(w1)
+        sign2 = w2/abs(w2)
+
+        # Calculate the loads location in 3D space
+        x1 = load[3]
+        x2 = load[4]
+        position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
+        position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
+        
+        # Display the load
+        if load[0] == 'Fx':
+          distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
+          renderer.AddActor(distLoad.actor)
+          renderer.AddActor(distLoad.lblActors[0])
+          renderer.AddActor(distLoad.lblActors[1])
+          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fy':
+          distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
+          renderer.AddActor(distLoad.actor)
+          renderer.AddActor(distLoad.lblActors[0])
+          renderer.AddActor(distLoad.lblActors[1])
+          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fz':
+          distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
+          renderer.AddActor(distLoad.actor)
+          renderer.AddActor(distLoad.lblActors[0])
+          renderer.AddActor(distLoad.lblActors[1])
+          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+
 
 
 #%%
