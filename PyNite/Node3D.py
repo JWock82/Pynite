@@ -22,20 +22,36 @@ class Node3D():
         self.Y = Y          # Global Y coordinate
         self.Z = Z          # Global Z coordinate
         
-        self.NodeLoads = []     # A list of loads applied to the node (Direction, P) or (Direction, M)
+        self.NodeLoads = [] # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
         
-        # Initialize nodal displacements to 'None'
-        self.DX = None
-        self.DY = None
-        self.DZ = None
-        self.RX = None
-        self.RY = None
-        self.RZ = None
+        # Initialize the dictionaries of calculated node displacements
+        self.DX = {}
+        self.DY = {}
+        self.DZ = {}
+        self.RX = {}
+        self.RY = {}
+        self.RZ = {}
         
-        # Initialize Reactions to zero
-        self.RxnFX = 0
-        self.RxnFY = 0
-        self.RxnFZ = 0
-        self.RxnMX = 0
-        self.RxnMY = 0
-        self.RxnMZ = 0
+        # Initialize the dictionaries of calculated node reactions
+        self.RxnFX = {}
+        self.RxnFY = {}
+        self.RxnFZ = {}
+        self.RxnMX = {}
+        self.RxnMY = {}
+        self.RxnMZ = {}
+
+        # Initialize all support conditions to 'False'
+        self.SupportDX = False
+        self.SupportDY = False
+        self.SupportDZ = False
+        self.SupportRX = False
+        self.SupportRY = False
+        self.SupportRZ = False
+
+        # Initialize all enforced displacements to 'None'
+        self.EnforcedDX = None
+        self.EnforcedDY = None
+        self.EnforcedDZ = None
+        self.EnforcedRX = None
+        self.EnforcedRY = None
+        self.EnforcedRZ = None

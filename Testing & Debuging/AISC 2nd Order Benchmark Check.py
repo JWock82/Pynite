@@ -37,18 +37,17 @@ cantilever.AddNodeLoad(str(num_nodes), 'FY', -P)
 # Add a 5 kip lateral load to the top of the column
 cantilever.AddNodeLoad(str(num_nodes), 'FX', H)
 
-# Render the model for visualization
-Visualization.RenderModel(cantilever, 0.3)
-
 # Perform 2nd order analysis
 cantilever.Analyze_PDelta() 
-# cantilever.Analyze()
+
+# Render the deformed shape
+Visualization.RenderModel(cantilever, text_height=0.3, deformed_shape=True, deformed_scale=2, render_loads=True)
 
 # Print the moment at the base of the column
-print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001))
+print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001, 'Combo 1'))
 
 # Print the deflection at the top of the column
-print('PyNite Calculated Displacement: ', cantilever.GetNode(str(num_nodes)).DX*12)
+print('PyNite Calculated Displacement: ', cantilever.GetNode(str(num_nodes)).DX['Combo 1']*12)
 
 # Print the AISC benchmark problem solution:
 alpha = (P*L**2/(E*I))**0.5

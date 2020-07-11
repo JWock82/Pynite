@@ -1,4 +1,4 @@
-from numpy import zeros, delete, matrix, matmul, transpose, insert, cross, divide, add
+from numpy import zeros, delete, matrix, array, matmul, transpose, insert, cross, divide, add
 from numpy.linalg import inv
 
 # A rectangular plate bending element
@@ -29,9 +29,9 @@ class Plate3D():
         return add(self.k_b(), self.k_m())
     
     def k_b(self):
-        """
+        '''
         Returns the local stiffness matrix for bending
-        """
+        '''
 
         a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
         b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
@@ -42,7 +42,7 @@ class Plate3D():
         nu = self.nu
 
         # # Stiffness matrix for plate bending and out-of-plane displacement based on a 12-term polynomial
-        # # Based on "Finite Element Analysis Fundamentals" by Richard H. Gallagher
+        # # Based on 'Finite Element Analysis Fundamentals' by Richard H. Gallagher
         # # There seems to be an error in this formulation, so an alternate formulation will be used below
 
         # b = x2/y3
@@ -122,9 +122,9 @@ class Plate3D():
 
 #%%
     def k_m(self):
-        """
+        '''
         Returns the local stiffness matrix for membrane forces
-        """
+        '''
 
         a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
         b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
@@ -190,77 +190,77 @@ class Plate3D():
         return k
 
 #%%   
-    def f(self):
-        """
+    def f(self, combo_name='Combo 1'):
+        '''
         Returns the plate's local end force vector
-        """
+        '''
         
         # Calculate and return the plate's local end force vector
-        return add(matmul(self.k(), self.d()), self.fer())
+        return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
 #%%
-    def fer(self):
-        """
+    def fer(self, combo_name='Combo 1'):
+        '''
         Returns the plate's local fixed end reaction vector (zero's for now until surface loads get added)
-        """
+        '''
 
         return zeros((24, 1))
 
 #%%
-    def d(self):
-       """
+    def d(self, combo_name='Combo 1'):
+       '''
        Returns the plate's local displacement vector
-       """
+       '''
 
        # Calculate and return the local displacement vector
-       return matmul(self.T(), self.D())
+       return matmul(self.T(), self.D(combo_name))
 
 #%%
-    def F(self):
+    def F(self, combo_name='Combo 1'):
         
         # Calculate and return the global force vector
-        return matmul(inv(self.T()), self.f())
+        return matmul(inv(self.T()), self.f(combo_name))
 
 #%%
-    def D(self):
-        """
-        Returns the plate's global displacement vector
-        """
+    def D(self, combo_name='Combo 1'):
+        '''
+        Returns the plate's global displacement vector for the given load combination.
+        '''
         
         # Initialize the displacement vector
-        Dvector = zeros((24, 1))
+        D = zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        Dvector.itemset((0, 0), self.iNode.DX)
-        Dvector.itemset((1, 0), self.iNode.DY)
-        Dvector.itemset((2, 0), self.iNode.DZ)
-        Dvector.itemset((3, 0), self.iNode.RX)
-        Dvector.itemset((4, 0), self.iNode.RY)
-        Dvector.itemset((5, 0), self.iNode.RZ)
+        D.itemset((0, 0), self.iNode.DX[combo_name])
+        D.itemset((1, 0), self.iNode.DY[combo_name])
+        D.itemset((2, 0), self.iNode.DZ[combo_name])
+        D.itemset((3, 0), self.iNode.RX[combo_name])
+        D.itemset((4, 0), self.iNode.RY[combo_name])
+        D.itemset((5, 0), self.iNode.RZ[combo_name])
 
-        Dvector.itemset((6, 0), self.jNode.DX)
-        Dvector.itemset((7, 0), self.jNode.DY)
-        Dvector.itemset((8, 0), self.jNode.DZ)
-        Dvector.itemset((9, 0), self.jNode.RX)
-        Dvector.itemset((10, 0), self.jNode.RY)
-        Dvector.itemset((11, 0), self.jNode.RZ)
+        D.itemset((6, 0), self.jNode.DX[combo_name])
+        D.itemset((7, 0), self.jNode.DY[combo_name])
+        D.itemset((8, 0), self.jNode.DZ[combo_name])
+        D.itemset((9, 0), self.jNode.RX[combo_name])
+        D.itemset((10, 0), self.jNode.RY[combo_name])
+        D.itemset((11, 0), self.jNode.RZ[combo_name])
 
-        Dvector.itemset((12, 0), self.mNode.DX)
-        Dvector.itemset((13, 0), self.mNode.DY)
-        Dvector.itemset((14, 0), self.mNode.DZ)
-        Dvector.itemset((15, 0), self.mNode.RX)
-        Dvector.itemset((16, 0), self.mNode.RY)
-        Dvector.itemset((17, 0), self.mNode.RZ)
+        D.itemset((12, 0), self.mNode.DX[combo_name])
+        D.itemset((13, 0), self.mNode.DY[combo_name])
+        D.itemset((14, 0), self.mNode.DZ[combo_name])
+        D.itemset((15, 0), self.mNode.RX[combo_name])
+        D.itemset((16, 0), self.mNode.RY[combo_name])
+        D.itemset((17, 0), self.mNode.RZ[combo_name])
 
-        Dvector.itemset((18, 0), self.nNode.DX)
-        Dvector.itemset((19, 0), self.nNode.DY)
-        Dvector.itemset((20, 0), self.nNode.DZ)
-        Dvector.itemset((21, 0), self.nNode.RX)
-        Dvector.itemset((22, 0), self.nNode.RY)
-        Dvector.itemset((23, 0), self.nNode.RZ)
+        D.itemset((18, 0), self.nNode.DX[combo_name])
+        D.itemset((19, 0), self.nNode.DY[combo_name])
+        D.itemset((20, 0), self.nNode.DZ[combo_name])
+        D.itemset((21, 0), self.nNode.RX[combo_name])
+        D.itemset((22, 0), self.nNode.RY[combo_name])
+        D.itemset((23, 0), self.nNode.RZ[combo_name])
         
         # Return the global displacement vector
-        return Dvector
+        return D
 
 #%%  
     # Transformation matrix
@@ -367,41 +367,27 @@ class Plate3D():
 
 #%%
     # Returns the vector of constants for plate bending
-    def __a(self):
-        """
+    def __a(self, combo_name='Combo 1'):
+        '''
         Returns the vector of plate bending constants for the displacement function
-        """
+        '''
 
         # Get the plate's local displacement vector
-        d = self.d()
-
-        # Remove degrees of freedom not related to plate bending
-        d = delete(d, 23, axis=0)
-        d = delete(d, 19, axis=0)
-        d = delete(d, 18, axis=0)
-
-        d = delete(d, 17, axis=0)
-        d = delete(d, 13, axis=0)
-        d = delete(d, 12, axis=0)
-
-        d = delete(d, 11, axis=0)
-        d = delete(d, 7, axis=0)
-        d = delete(d, 6, axis=0)
-        
-        d = delete(d, 5, axis=0)
-        d = delete(d, 1, axis=0)
-        d = delete(d, 0, axis=0)
+        # Slice out terms not related to plate bending
+        d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
         # Return the plate bending constants
         return inv(self.__C())*d
 
 #%%  
-    # Calculates and returns the constitutive matrix for isotropic materials [D]
     def __D(self):
+        '''
+        Calculates and returns the constitutive matrix for isotropic materials [D].
+        '''
 
         # Calculate the coefficient for the constitutive matrix [D]
-        C = self.E*self.t**3/(12*(1-self.nu**2))
         nu = self.nu
+        C = self.E*self.t**3/(12*(1 - nu**2))
 
         # Calculate the constitutive matrix [D]
         D = C*matrix([[1, nu, 0],
@@ -412,25 +398,25 @@ class Plate3D():
         return D
 
 #%%   
-    def Moment(self, x, y):
-        """
+    def Moment(self, x, y, combo_name='Combo 1'):
+        '''
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
-        """
+        '''
         
         # Calculate and return internal moments
-        return self.__D()*self.__Q(x, y)*self.__a()
+        return self.__D()*self.__Q(x, y)*self.__a(combo_name)
 
 #%%  
-    def Shear(self, x, y):
-        """
+    def Shear(self, x, y, combo_name='Combo 1'):
+        '''
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
-        """
+        '''
 
         # Store matrices into local variables for quicker access
         D = self.__D()
-        a = self.__a()
+        a = self.__a(combo_name)
 
         # Calculate the derivatives of the plate moments needed to compute shears
         dMx_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
@@ -442,8 +428,8 @@ class Plate3D():
                              [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[2]
         
         dMy_dy = (D*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
-                             [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
-                             [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[1]
+                            [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
+                            [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[1]
 
         dMxy_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
                              [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
@@ -456,4 +442,26 @@ class Plate3D():
         # Return internal shears
         return matrix([[Qx], 
                        [Qy]])
+
+#%%
+    def Membrane(self, x, y, combo_name='Combo 1'):
+
+        # Get the plate's local displacement vector
+        # Slice out terms not related to membrane forces
+        d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
         
+        a = self.width()
+        b = self.height()
+
+        eta = y/b
+        epsilon = x/a
+        nu = self.nu
+        E = self.E
+
+        return E/(1-nu**2)*matmul(array([[-(1-eta)/a,                -nu*(1-epsilon)/b,     -eta/a,                   nu*(1-epsilon)/b,  eta/a,                nu*epsilon/b,     (1-eta)/a,             -nu*epsilon/b],
+                                         [-nu*(1-eta)/a,             -(1-epsilon)/b,        -nu*eta/a,                (1-epsilon)/b,     nu*eta/a,             epsilon/b,        nu*(1-eta)/a,          -epsilon/b],
+                                         [-(1-nu)*(1-epsilon)/(2*b), -(1-nu)*(1-eta)/(2*a), (1-nu)*(1-epsilon)/(2*b), -(1-nu)*eta/(2*a), (1-nu)*epsilon/(2*b), (1-nu)*eta/(2*a), -(1-nu)*epsilon/(2*b), (1-nu)*(1-eta)/(2*a)]]), d)
+
+
+
+# %%

@@ -50,4 +50,4 @@ print('Expected reactions: ', 11.69, 30, -1810, -11.69, 30, 1810)
 print('Calculated displacements: ', frame.GetNode('N3').DY, frame.GetNode('N4').DY, frame.GetNode('N3').RZ, frame.GetNode('N4').RZ)
 
 # Render the model for viewing
-Visualization.RenderModel(frame, 15)
+Visualization.RenderModel(frame, text_height=15, deformed_shape=True, deformed_scale=10, render_loads=True)

@@ -25,7 +25,6 @@ Beam.AddMember("M1", "N1", "N2", E, G, Iy, Iz, J, A)
 ###Supports
 Beam.DefineSupport("N1", True, True, True, True, True, True)
 Beam.DefineSupport("N2", True, True, True, False, True, True)
-# Visualization.RenderModel(Beam,0.5)
 
 ###Load
 Beam.AddMemberDistLoad("M1", "Fx", 10, 10, 0, 5)

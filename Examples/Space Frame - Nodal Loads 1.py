@@ -41,7 +41,7 @@ frame.AddNodeLoad('N1', 'MX', -1000)
 frame.Analyze(check_statics=False)
 
 # Render the deformed shape
-Visualization.DeformedShape(frame, 100, 5)
+Visualization.RenderModel(frame, text_height=5, deformed_shape=True, deformed_scale=100, render_loads=True)
 
 # Print the node 1 displacements
 print('Node 1 deformations:')
