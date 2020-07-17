@@ -951,7 +951,7 @@ class FEModel3D():
             elif matrix_rank(K11) < min(K11.shape):
                 # Return out of the method if 'K' is singular and provide an error message
                 print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-                return
+                raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
             else:
                 # Calculate the unknown displacements D1
                 print('...Calculating global displacement vector for load combination', combo.name)
@@ -1089,7 +1089,7 @@ class FEModel3D():
                 elif matrix_rank(K11) < min(K11.shape):
                     # Return out of the method if 'K' is singular and provide an error message
                     print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-                    return
+                    raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
                 else:
                     # Calculate the global displacement vector
                     print('...Calculating global displacement vector')
