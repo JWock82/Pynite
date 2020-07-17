@@ -439,6 +439,8 @@ class FEModel3D():
                 
                 # Return the node of interest
                 return node
+        # if the node name is not found and loop finishes
+        raise ValueError(f"Node '{Name}' was not found in the model")
 
             
     def GetAuxNode(self, Name):
@@ -459,6 +461,8 @@ class FEModel3D():
                 
                 # Return the node of interest
                 return node            
+        # if the node name is not found and loop finishes
+        raise ValueError(f"AuxNode '{Name}' was not found in the model")
             
 #%%
     def GetMember(self, Name):
@@ -479,6 +483,8 @@ class FEModel3D():
                 
                 # Return the member of interest
                 return member
+        # if the node name is not found and loop finishes
+        raise ValueError(f"Member '{Name}' was not found in the model")
 
 #%%
     def GetPlate(self, Name):
@@ -499,6 +505,8 @@ class FEModel3D():
                 
                 # Return the plate of interest
                 return plate
+        # if the node name is not found and loop finishes
+        raise ValueError(f"Plate '{Name}' was not found in the model")
 
 #%%
     def __Renumber(self):
