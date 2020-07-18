@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+    <head></head>
+
+    <body>
+
+        <h3>Nodes & Supports</h3>     
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Node</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>Z</th>
+                    <th>Supt X</th>
+                    <th>Supt Y</th>
+                    <th>Supt Z</th>
+                    <th>Supt RX</th>
+                    <th>Supt RY</th>
+                    <th>Supt RZ</th>
+            </thead>
+
+            <tbody>
+            {% for node in nodes %}
+                <tr>
+                    <td>{{ node.Name }}</td>
+                    <td>{{ node.X }}</td>
+                    <td>{{ node.Y }}</td>
+                    <td>{{ node.Z }}</td>
+                    <td>{{ node.SupportDX }}</td>
+                    <td>{{ node.SupportDY }}</td>
+                    <td>{{ node.SupportDZ }}</td>
+                    <td>{{ node.SupportRX }}</td>
+                    <td>{{ node.SupportRY }}</td>
+                    <td>{{ node.SupportRZ }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+
+        <h3>Members</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>i-Node</th>
+                    <th>j-Node</th>
+                    <th>A</th>
+                    <th>Iy</th>
+                    <th>Iz</th>
+                    <th>J</th>
+                    <th>E</th>
+                    <th>G</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.Name }}</td>
+                    <td>{{ member.iNode.Name }}</td>
+                    <td>{{ member.jNode.Name }}</td>
+                    <td>{{ member.A }}</td>
+                    <td>{{ member.Iy }}</td>
+                    <td>{{ member.Iz }}</td>
+                    <td>{{ member.J }}</td>
+                    <td>{{ member.E }}</td>
+                    <td>{{ member.G }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    </body>
+
+</html>

@@ -1,0 +1,344 @@
+* {
+	box-sizing: border-box;
+}
+
+html, body {
+	width: 100vw;
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: white;
+	margin: 0;
+	font-family: Arial, Helvetica, sans-serif;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	grid-template-columns: auto 1fr auto;
+}
+
+canvas {
+	border: 1px solid black;
+}
+
+header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-content: center;
+	background-color: #314C53;
+	padding: 0;
+	grid-column: 1 / 4;
+}
+
+header img {
+	width: 300px;
+	border: none;
+}
+
+header h1 {
+	width: auto;
+	height: auto;
+	right: 20px;
+	margin: auto 20px auto 0;
+}
+
+@media screen and (max-width: 500px) {
+	header a {
+	  float: none;
+	  display: block;
+	  text-align: left;
+	}
+
+	header .right {
+		float: none;
+	}
+}
+
+nav {
+	grid-row: 2 / span 2;
+	background-color: #206575;
+	/*overflow: scroll;*/
+}
+
+nav a,
+aside a {
+	display: block;
+	color: #DAE9EE;
+	line-height: auto;
+	padding: 12px;
+	text-decoration: none;
+	text-align: center;
+	font-size: 18px;
+	min-width: 200px;
+}
+img
+nav a.active {
+	background-color: #94BBC5;
+	color: #314C53;
+}
+
+nav a:hover,
+aside input:hover {
+	background-color: #4B9EB0;
+	color: #DAE9EE;
+}
+
+aside {
+	grid-column: 3;
+	grid-row: 2 / span 2;
+	background-color: #206575;
+}
+
+aside input {
+	display: block;
+	color: #DAE9EE;
+	background-color: #206575;
+	width: 100%;
+	padding: 12px;
+	margin: 0;
+	border: none;
+	text-decoration: none;
+	text-align: center;
+	font-size: 18px;
+}
+
+.file-input-wrapper {
+	width: auto;
+	height: auto;
+	width: 200px;
+	overflow: hidden;
+}
+
+.file-input-wrapper input[type=file] {
+	position: absolute;
+	width: 200px;
+	height: 46px;
+	font-size: 18px;
+	opacity: 0;
+	z-index: 2;
+}
+
+.file-input-wrapper .anchor-file-input {
+	position: absolute;
+	width: 200px;
+	font-size: 18px;
+	padding: 12px;
+	text-align: center;
+	z-index: 1;
+}
+
+main {
+	overflow: scroll;
+	padding: 12px;
+}
+
+/* Use the "graph-paper" class to create a graph-paper-like background (not used currently) */
+.graph-paper {
+	background-size: 25px 25px;
+	background-image: linear-gradient(to right, grey 1px, transparent 1px), linear-gradient(to bottom, grey 1px, transparent 1px);
+}
+
+footer {
+	padding: 12px;
+	background-color: #314C53;
+	color: #DAE9EE;
+}
+
+h1 {
+	color: #DAE9EE;
+	margin: 0;
+	width: 100%;
+}
+
+h2 {
+	width: 100%;
+	margin: 0;
+	padding: 3px;
+	font-size: 16px;
+}
+
+label {
+	width: auto;
+	text-align: left;
+}
+
+img {
+	margin: 6px 0px;
+	border: 1px solid black;
+}
+
+input[type=button] {
+	height: 24px;
+	background-color: #206575;
+	border: 1px solid black;
+	border-radius: 4px;
+	margin: 12px 0;
+	color: #DAE9EE;
+}
+
+input[type=text] {
+	padding: 3px 6px;
+}
+
+/*Firefox adds some annoying spin buttons to number inputs.
+  Get rid of them.*/
+input[type=number] {
+	-moz-appearance: textfield;
+}
+
+.input-group {
+	display: inline-grid;
+	grid-template-columns: auto auto auto;
+	align-items: center;
+	width: auto;
+}
+
+.input-group label {
+	grid-column: 1;
+	margin: 3px 3px 3px 0px;
+	padding: 3px 3px 3px 0px;
+}
+
+.input-group input {
+	grid-column: 2;
+	text-align: center;
+	width: auto;
+	max-width: 75px;
+	margin: 3px;
+	padding: 3px;
+}
+
+.input-group select {
+	grid-column: 2;
+	text-align: center;
+	width: auto;
+	margin: 3px;
+	padding: 3px;
+}
+
+.input-group .units {
+	grid-column: 3;
+	width: auto;
+	margin: 3px;
+	padding: 3px;
+}
+
+.radio-group {
+	display: inline-grid;
+	grid-template-columns: auto auto auto auto auto;
+	align-items: center;
+	width: auto;
+}
+
+.radio-group label {
+	margin: 3px;
+	padding: 3px;
+}
+
+.radio-group input[type=radio] {
+	margin: 3px;
+	padding: 3px;
+}
+
+.toggle {
+	width: auto;
+	height: auto;
+	padding: 4px;
+	font-size: 18px;
+	background-color: #94BBC5;
+    display:flex;
+    align-items: center;
+}
+
+.toggle:hover {
+	background-color: #4B9EB0;
+}
+
+.toggle img {
+	border: none;
+	width: 20px;	
+	height: 20px;
+	margin: 0;
+	padding: 0;
+}
+
+footer p {
+	margin: 0;
+}
+
+/* Table Formatting */
+table {
+	padding: 6px 0;
+	border: 1px solid black;
+	border-collapse: collapse;
+	overflow: scroll;
+}
+
+/* Table headers will be dark with light text */
+th {
+	background-color: #314C53;
+	color: #DAE9EE;
+}
+
+/* For 2-row table headers, apply a light line to separate the two rows */
+tr:last-child th {
+	border-top: 1px solid #DAE9EE;
+}
+
+/* Table data borders will match the table header background */
+td {
+	border-bottom: 1px solid #314C53
+}
+
+th, td {
+	margin: 0px;
+	padding: 5px;
+	text-align: center;
+	vertical-align: center;
+	font-size: 14px;
+}
+
+/* Every odd row of table data will have a white background */
+tr {
+	background-color: white;
+}
+
+/* Every even row of table data will be off-white */
+tr:nth-child(even) {
+	background-color: #f2f2f2;
+}
+
+/* Shade the row when the user hovers over it */
+tr:hover {
+	background-color: #4B9EB0;
+}
+
+/* Make the upper border of the first data row blend in with the table header */
+tr:first-child td {
+	border-top: 1px solid #314C53;
+}
+
+table input[type=number],
+table input[type=text] {
+	width: 100%;
+	max-width: 75px;
+	margin: 0px;
+	text-align: center;
+}
+
+table input[type=button] {
+	height: 20px;
+	margin: 0;
+}
+
+table select {
+	text-align: center;
+}
+
+.splashscreen {
+	background-image: url("./jordan-opel-581591-unsplash.jpg");
+	background-size: 100% auto;
+	background-repeat: no-repeat;
+}
