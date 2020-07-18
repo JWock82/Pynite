@@ -223,7 +223,9 @@ class FEModel3D():
         Magnitude : number
             The magnitude of the displacement.
         '''
-
+        # Validate the value of Direction
+        if Direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
+            raise ValueError(f"Direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {Direction} was given.")
         # Get the node
         node = self.GetNode(Node)
 
@@ -318,7 +320,9 @@ class FEModel3D():
         case : string
             The name of the load case the load belongs to.
         '''
-        
+        # Validate the value of Direction
+        if Direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
+            raise ValueError(f"Direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {Direction} was given.")
         # Add the node load to the model
         self.GetNode(Node).NodeLoads.append((Direction, P, case))
 
@@ -342,7 +346,9 @@ class FEModel3D():
         x : number
             The load's location along the member's local x-axis.
         '''
-        
+        # Validate the value of Direction
+        if Direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
+            raise ValueError(f"Direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {Direction} was given.")
         # Add the point load to the member
         self.GetMember(Member).PtLoads.append((Direction, P, x, case))
 
@@ -370,7 +376,9 @@ class FEModel3D():
             The load's end location along the member's local x-axis. If this argument
             is not specified, the end of the member will be used.
         '''
-        
+        # Validate the value of Direction
+        if Direction not in ('Fx', 'Fy', 'Fz'):
+            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz'. {Direction} was given.")
         # Determine if a starting and ending points for the load have been specified.
         # If not, use the member start and end as defaults
         if x1 == None:
@@ -439,6 +447,8 @@ class FEModel3D():
                 
                 # Return the node of interest
                 return node
+        # if the node name is not found and loop finishes
+        raise ValueError(f"Node '{Name}' was not found in the model")
 
             
     def GetAuxNode(self, Name):
@@ -459,6 +469,8 @@ class FEModel3D():
                 
                 # Return the node of interest
                 return node            
+        # if the node name is not found and loop finishes
+        raise ValueError(f"AuxNode '{Name}' was not found in the model")
             
 #%%
     def GetMember(self, Name):
@@ -479,6 +491,8 @@ class FEModel3D():
                 
                 # Return the member of interest
                 return member
+        # if the node name is not found and loop finishes
+        raise ValueError(f"Member '{Name}' was not found in the model")
 
 #%%
     def GetPlate(self, Name):
@@ -499,6 +513,8 @@ class FEModel3D():
                 
                 # Return the plate of interest
                 return plate
+        # if the node name is not found and loop finishes
+        raise ValueError(f"Plate '{Name}' was not found in the model")
 
 #%%
     def __Renumber(self):
@@ -951,7 +967,7 @@ class FEModel3D():
             elif matrix_rank(K11) < min(K11.shape):
                 # Return out of the method if 'K' is singular and provide an error message
                 print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-                return
+                raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
             else:
                 # Calculate the unknown displacements D1
                 print('...Calculating global displacement vector for load combination', combo.name)
@@ -1089,7 +1105,7 @@ class FEModel3D():
                 elif matrix_rank(K11) < min(K11.shape):
                     # Return out of the method if 'K' is singular and provide an error message
                     print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-                    return
+                    raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
                 else:
                     # Calculate the global displacement vector
                     print('...Calculating global displacement vector')
