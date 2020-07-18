@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 
-    <head></head>
+    <head>
+        <h1>PyNite Analysis Report</h1>
+    </head>
 
     <body>
 
@@ -14,12 +16,12 @@
                     <th>X</th>
                     <th>Y</th>
                     <th>Z</th>
-                    <th>Supt X</th>
-                    <th>Supt Y</th>
-                    <th>Supt Z</th>
-                    <th>Supt RX</th>
-                    <th>Supt RY</th>
-                    <th>Supt RZ</th>
+                    <th>Support X</th>
+                    <th>Support Y</th>
+                    <th>Support Z</th>
+                    <th>Support RX</th>
+                    <th>Support RY</th>
+                    <th>Support RZ</th>
             </thead>
 
             <tbody>
@@ -49,8 +51,8 @@
                     <th>i-Node</th>
                     <th>j-Node</th>
                     <th>A</th>
-                    <th>Iy</th>
-                    <th>Iz</th>
+                    <th>I<sub>y</sub></th>
+                    <th>I<sub>z</sub></th>
                     <th>J</th>
                     <th>E</th>
                     <th>G</th>
@@ -68,6 +70,76 @@
                     <td>{{ member.J }}</td>
                     <td>{{ member.E }}</td>
                     <td>{{ member.G }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Member End Releases</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>&Delta;<sub>xi</sub></th>
+                    <th>&Delta;<sub>yi</sub></th>
+                    <th>&Delta;<sub>zi</sub></th>
+                    <th>&theta;<sub>xi</sub></th>
+                    <th>&theta;<sub>yi</sub></th>
+                    <th>&theta;<sub>zi</sub></th>
+                    <th>&Delta;<sub>xj</sub></th>
+                    <th>&Delta;<sub>yj</sub></th>
+                    <th>&Delta;<sub>zj</sub></th>
+                    <th>&theta;<sub>xj</sub></th>
+                    <th>&theta;<sub>yj</sub></th>
+                    <th>&theta;<sub>zj</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.Name }}</td>
+                    <td>{{ member.Releases[0] }}</td>
+                    <td>{{ member.Releases[1] }}</td>
+                    <td>{{ member.Releases[2] }}</td>
+                    <td>{{ member.Releases[3] }}</td>
+                    <td>{{ member.Releases[4] }}</td>
+                    <td>{{ member.Releases[5] }}</td>
+                    <td>{{ member.Releases[6] }}</td>
+                    <td>{{ member.Releases[7] }}</td>
+                    <td>{{ member.Releases[8] }}</td>
+                    <td>{{ member.Releases[9] }}</td>
+                    <td>{{ member.Releases[10] }}</td>
+                    <td>{{ member.Releases[11] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Plates</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Plate</th>
+                    <th>i-Node</th>
+                    <th>j-Node</th>
+                    <th>m-Node</th>
+                    <th>n-Node</th>
+                    <th>t</th>
+                    <th>E</th>
+                    <th>&nu;</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for plate in plates %}
+                <tr>
+                    <td>{{ plate.Name }}</td>
+                    <td>{{ plate.iNode.Name }}</td>
+                    <td>{{ plate.jNode.Name }}</td>
+                    <td>{{ plate.mNode.Name }}</td>
+                    <td>{{ plate.nNode.Name }}</td>
+                    <td>{{ plate.t }}</td>
+                    <td>{{ plate.E }}</td>
+                    <td>{{ plate.nu }}</td>
                 </tr>
             {% endfor %}
             </tbody>
