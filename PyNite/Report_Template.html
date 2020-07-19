@@ -64,12 +64,12 @@
                     <td>{{ member.Name }}</td>
                     <td>{{ member.iNode.Name }}</td>
                     <td>{{ member.jNode.Name }}</td>
-                    <td>{{ member.A }}</td>
-                    <td>{{ member.Iy }}</td>
-                    <td>{{ member.Iz }}</td>
-                    <td>{{ member.J }}</td>
-                    <td>{{ member.E }}</td>
-                    <td>{{ member.G }}</td>
+                    <td>{{ "%.4g" | format(member.A) }}</td>
+                    <td>{{ "%.4g" | format(member.Iy) }}</td>
+                    <td>{{ "%.4g" | format(member.Iz) }}</td>
+                    <td>{{ "%.4g" | format(member.J) }}</td>
+                    <td>{{ "%.4g" | format(member.E) }}</td>
+                    <td>{{ "%.4g" | format(member.G) }}</td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -137,10 +137,42 @@
                     <td>{{ plate.jNode.Name }}</td>
                     <td>{{ plate.mNode.Name }}</td>
                     <td>{{ plate.nNode.Name }}</td>
-                    <td>{{ plate.t }}</td>
-                    <td>{{ plate.E }}</td>
-                    <td>{{ plate.nu }}</td>
+                    <td>{{ "%.4g" | format(plate.t) }}</td>
+                    <td>{{ "%.4g" | format(plate.E) }}</td>
+                    <td>{{ "%.4g" | format(plate.nu) }}</td>
                 </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Node Displacements</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Node</th>
+                    <th>LC</th>
+                    <th>&Delta;<sub>X</sub></th>
+                    <th>&Delta;<sub>Y</sub></th>
+                    <th>&Delta;<sub>Z</sub></th>
+                    <th>&theta;<sub>X</sub></th>
+                    <th>&theta;<sub>Y</sub></th>
+                    <th>&theta;<sub>Z</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for combo in load_combos %}
+                {% for node in nodes %}
+                <tr>
+                    <td>{{ node.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.4g" | format(node.DX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.DY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.DZ[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RZ[combo]) }}</td>
+                </tr>
+                {% endfor %}
             {% endfor %}
             </tbody>
         </table>

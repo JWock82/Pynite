@@ -23,7 +23,7 @@ def CreateReport(model, output_filepath='.//PyNite Report.pdf'):
     '''
 
     # Create the report HTML using jinja2
-    HTML = template.render(nodes=model.Nodes, members=model.Members, plates=model.Plates)
+    HTML = template.render(nodes=model.Nodes, members=model.Members, plates=model.Plates, load_combos=model.LoadCombos.keys())
 
     # Convert the HTML to pdf format using PDFKit
     # Note that wkhtmltopdf must be installed on the system, and included on the system's PATH environment variable for PDFKit to work
