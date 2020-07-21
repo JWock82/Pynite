@@ -177,6 +177,50 @@
             </tbody>
         </table>
 
+        <h3>Member End Forces</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>LC</th>
+                    <th>P<sub>i</sub></th>
+                    <th>P<sub>j</sub></th>
+                    <th>V<sub>yi</sub></th>
+                    <th>V<sub>zi</sub></th>
+                    <th>V<sub>yj</sub></th>
+                    <th>V<sub>zj</sub></th>
+                    <th>M<sub>yi</sub></th>
+                    <th>M<sub>zi</sub></th>
+                    <th>M<sub>yj</sub></th>
+                    <th>M<sub>zj</sub></th>
+                    <th>T<sub>i</sub></th>
+                    <th>T<sub>j</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for combo in load_combos %}
+                {% for member in members %}
+                <tr>
+                    <td>{{ member.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.4g" | format(member.Axial(0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Axial(member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Shear("Fy", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Shear("Fz", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Shear("Fy", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Shear("Fz", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Moment("My", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Moment("Mz", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Moment("My", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Moment("Mz", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Torsion(0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.Torsion(member.L(), combo)) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+
     </body>
 
 </html>
