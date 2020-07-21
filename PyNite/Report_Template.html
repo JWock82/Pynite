@@ -221,6 +221,51 @@
             </tbody>
         </table>
 
+        <h3>Member Max/Min Internal Forces</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>LC</th>
+                    <th>P<sub>max</sub></th>
+                    <th>P<sub>min</sub></th>
+                    <th>V<sub>y,max</sub></th>
+                    <th>V<sub>y,min</sub></th>
+                    <th>V<sub>z,max</sub></th>
+                    <th>V<sub>z,min</sub></th>
+                    <th>M<sub>y,max</sub></th>
+                    <th>M<sub>y,min</sub></th>
+                    <th>M<sub>z,max</sub></th>
+                    <th>M<sub>z,min</sub></th>
+                    <th>T<sub>max</sub></th>
+                    <th>T<sub>min</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for combo in load_combos %}
+                {% for member in members %}
+                <tr>
+                    <td>{{ member.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.4g" | format(member.MaxAxial(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MinAxial(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MaxShear("Fy", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MinShear("Fy", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MaxShear("Fz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MinShear("Fz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MaxMoment("My", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MinMoment("My", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MaxMoment("Mz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MinMoment("Mz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MaxTorsion(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.MinTorsion(combo)) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+
+
     </body>
 
 </html>
