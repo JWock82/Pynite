@@ -265,29 +265,41 @@
             </tbody>
         </table>
 
-        <h3>Plate Out-of-Plane Corner Shear Forces</h3>
-        <table>
+        <h3>Plate Out-of-Plane Corner Forces</h3>
+        <table class="tight-fit">
             <thead>
                 <tr>
                     <th rowspan="2">Plate</th>
                     <th rowspan="2">LC</th>
-                    <th colspan="2">i-Node</th>
-                    <th colspan="2">j-Node</th>
-                    <th colspan="2">m-Node</th>
-                    <th colspan="2">n-Node</th>
+                    <th colspan="5">i-Node</th>
+                    <th colspan="5">j-Node</th>
+                    <th colspan="5">m-Node</th>
+                    <th colspan="5">n-Node</th>
                 </tr>
                 <tr>
                     <th>Q<sub>x</sub></th>
                     <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
 
                     <th>Q<sub>x</sub></th>
                     <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
 
                     <th>Q<sub>x</sub></th>
                     <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
 
                     <th>Q<sub>x</sub></th>
                     <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
                 </tr>
             </thead>
             <tbody>
@@ -298,23 +310,69 @@
                     <td>{{ combo }}</td>
                     <td>{{ "%.3g" | format(plate.Shear(0, 0, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(plate.Shear(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[2][0]) }}</td>
 
                     <td>{{ "%.3g" | format(plate.Shear(0, plate.height(), combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(plate.Shear(0, plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[2][0]) }}</td>
 
                     <td>{{ "%.3g" | format(plate.Shear(plate.width(), plate.height(), combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(plate.Shear(plate.width(), plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[2][0]) }}</td>
 
                     <td>{{ "%.3g" | format(plate.Shear(plate.width(), 0, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(plate.Shear(plate.width(), 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
             {% endfor %}
             </tbody>
         </table>
 
-        <h3>Plate Out-of-Plane Corner Moments</h3>
+        <h3>Plate Out-of-Plane Center Forces</h3>
         <table>
+
+            <thead>
+                <tr>
+                    <th>Plate</th>
+                    <th>LC</th>
+                    <th>Q<sub>x</sub></th>
+                    <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for plate in plates %}
+                {% for combo in load_combos %}
+                <tr>
+                    <td>{{ plate.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(plate.Shear(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Shear(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+
+        </table>
+
+        <h3>In-Plane (Membrane) Corner Stresses</h3>
+        <table>
+
             <thead>
                 <tr>
                     <th rowspan="2">Plate</th>
@@ -325,61 +383,62 @@
                     <th colspan="3">n-Node</th>
                 </tr>
                 <tr>
-                    <th>M<sub>x</sub></th>
-                    <th>M<sub>y</sub></th>
-                    <th>M<sub>xy</sub></th>
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
 
-                    <th>M<sub>x</sub></th>
-                    <th>M<sub>y</sub></th>
-                    <th>M<sub>xy</sub></th>
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
 
-                    <th>M<sub>x</sub></th>
-                    <th>M<sub>y</sub></th>
-                    <th>M<sub>xy</sub></th>
-
-                    <th>M<sub>x</sub></th>
-                    <th>M<sub>y</sub></th>
-                    <th>M<sub>xy</sub></th>
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
+                    
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
                 </tr>
             </thead>
+
             <tbody>
-            {% for plate in plates %}
-                {% for combo in load_combos %}
+            {% for combo in load_combos %}
+                {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(0, 0, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(0, 0, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(0, 0, combo)[2]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(0, plate.height(), combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(0, plate.height(), combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(0, plate.height(), combo)[2]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), plate.height(), combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), plate.height(), combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), plate.height(), combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), 0, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), 0, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), 0, combo)[2]) }}</td>
                 </tr>
                 {% endfor %}
             {% endfor %}
             </tbody>
+
         </table>
 
-        <h3>Plate Out-of-Plane Center Shear Forces</h3>
+        <h3>In-Plane (Membrane) Center Stresses</h3>
         <table>
             <thead>
                 <tr>
-                    <th rowspan="2">Plate</th>
-                    <th rowspan="2">LC</th>
-                    <th colspan="2">i-Node</th>
-                </tr>
-                <tr>
-                    <th>Q<sub>x</sub></th>
-                    <th>Q<sub>y</sub></th>
+                    <th>Plate</th>
+                    <th>LC</th>
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
                 </tr>
             </thead>
             <tbody>
@@ -388,39 +447,9 @@
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
-
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
-                </tr>
-                {% endfor %}
-            {% endfor %}
-            </tbody>
-        </table>
-
-        <h3>Plate Out-of-Plane Center Moments</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th rowspan="2">Plate</th>
-                    <th rowspan="2">LC</th>
-                    <th colspan="3">Moment</th>
-                </tr>
-                <tr>
-                    <th>M<sub>x</sub></th>
-                    <th>M<sub>y</sub></th>
-                    <th>M<sub>xy</sub></th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for plate in plates %}
-                {% for combo in load_combos %}
-                <tr>
-                    <td>{{ plate.Name }}</td>
-                    <td>{{ combo }}</td>
-
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.Membrane(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
             {% endfor %}
