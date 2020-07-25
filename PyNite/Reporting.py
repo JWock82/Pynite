@@ -10,7 +10,10 @@ env = Environment(
 # Get the report template
 template = env.get_template('Report_Template.html')
 
-def CreateReport(model, output_filepath='.//PyNite Report.pdf'):
+def CreateReport(model, output_filepath='.//PyNite Report.pdf', \
+                 nodes=True, members=True, plates=True, member_releases=True, \
+                 node_reactions=True, node_displacements=True, member_end_forces=True, member_internal_forces=True, \
+                 plate_corner_forces=True, plate_center_forces=True, plate_corner_membrane=True, plate_center_membrane=True):
     '''
     Creates a pdf report for a given finite element model.
 
@@ -23,7 +26,10 @@ def CreateReport(model, output_filepath='.//PyNite Report.pdf'):
     '''
 
     # Create the report HTML using jinja2
-    HTML = template.render(nodes=model.Nodes, members=model.Members, plates=model.Plates, load_combos=model.LoadCombos.keys())
+    HTML = template.render(nodes=model.Nodes, members=model.Members, plates=model.Plates, load_combos=model.LoadCombos.keys(), \
+                           node_table=nodes, member_table=members, plate_table=plates, member_releases=member_releases, \
+                           node_reactions=node_reactions, node_displacements=node_displacements, member_end_forces=member_end_forces, member_internal_forces=member_internal_forces, \
+                           plate_corner_forces=plate_corner_forces, plate_center_forces=plate_center_forces, plate_corner_membrane=plate_corner_membrane, plate_center_membrane=plate_center_membrane)
 
     # Convert the HTML to pdf format using PDFKit
     # Note that wkhtmltopdf must be installed on the system, and included on the system's PATH environment variable for PDFKit to work
