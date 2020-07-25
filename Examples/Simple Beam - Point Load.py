@@ -53,3 +53,9 @@ print('Minimum Moment:', SimpleBeam.GetMember('M1').MinMoment('Mz', '1.2D+1.6L')
 # Print the max/min deflections in the beam
 print('Maximum Deflection:', SimpleBeam.GetMember('M1').MaxDeflection('dy', '1.2D+1.6L'), 'in')
 print('Minimum Deflection:', SimpleBeam.GetMember('M1').MinDeflection('dy', '1.2D+1.6L'), 'in')
+
+# Create a PDF report
+# It will be output to the PyNite folder unless the 'output_path' variable below is modified
+from PyNite import Reporting
+Reporting.CreateReport(SimpleBeam, output_filepath='.//PyNite Report.pdf', plates=False, plate_corner_forces=False, \
+                       plate_center_forces=False, plate_corner_membrane=False, plate_center_membrane=False)
