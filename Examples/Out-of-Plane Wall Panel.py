@@ -394,7 +394,7 @@ class RectWall():
 E = 57000*(4500)**0.5*144 # psf
 t = 1 # ft
 width = 10 # ft
-height = 10 # ft
+height = width
 nu = 0.3
 meshsize = 1 # ft
 load = 250 # psf
@@ -421,6 +421,12 @@ myWall.plot_forces('Mx')
 myWall.plot_forces('My')
 myWall.plot_forces('Mxy')
 
-# Results from Timoshenko's "Theory of Plates and Shells"
+# Results from Timoshenko's "Theory of Plates and Shells" textbook
 D = E*t**3/(12*(1-nu**2))
 print('Expected displacement from Timoshenko: ', 0.00126*load*width**4/D)
+
+# Create a PDF report
+# It will be output to the PyNite folder unless the 'output_path' variable below is modified
+from PyNite import Reporting
+Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
+                       member_end_forces=False, member_internal_forces=False)
