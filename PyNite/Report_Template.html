@@ -7,6 +7,7 @@
 
     <body>
 
+        {% if node_table == True %}
         <h3>Nodes & Supports</h3>     
         <table>
 
@@ -42,7 +43,9 @@
             </tbody>
 
         </table>
+        {% endif %}
 
+        {% if member_table == True %}
         <h3>Members</h3>
         <table>
             <thead>
@@ -74,7 +77,9 @@
             {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if member_releases == True %}
         <h3>Member End Releases</h3>
         <table>
             <thead>
@@ -114,7 +119,9 @@
             {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if plate_table == True %}
         <h3>Plates</h3>
         <table>
             <thead>
@@ -144,7 +151,9 @@
             {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if node_displacement == True %}
         <h3>Node Displacements</h3>
         <table>
             <thead>
@@ -176,7 +185,9 @@
             {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if member_end_forces == True %}
         <h3>Member End Forces</h3>
         <table>
             <thead>
@@ -220,7 +231,9 @@
             {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if member_internal_forces == True %}
         <h3>Member Max/Min Internal Forces</h3>
         <table>
             <thead>
@@ -264,9 +277,12 @@
             {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if plate_corner_forces == True %}
         <h3>Plate Out-of-Plane Corner Forces</h3>
-        <table class="tight-fit">
+        <table
+        >
             <thead>
                 <tr>
                     <th rowspan="2">Plate</th>
@@ -302,9 +318,10 @@
                     <th>M<sub>xy</sub></th>
                 </tr>
             </thead>
+
             <tbody>
-            {% for plate in plates %}
-                {% for combo in load_combos %}
+            {% for combo in load_combos %}
+                {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
@@ -335,8 +352,11 @@
                 {% endfor %}
             {% endfor %}
             </tbody>
-        </table>
 
+        </table>
+        {% endif %}
+
+        {% if plate_center_forces == True %}
         <h3>Plate Out-of-Plane Center Forces</h3>
         <table>
 
@@ -353,8 +373,8 @@
             </thead>
 
             <tbody>
-            {% for plate in plates %}
-                {% for combo in load_combos %}
+            {% for combo in load_combos %}
+                {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
@@ -369,7 +389,9 @@
             </tbody>
 
         </table>
+        {% endif %}
 
+        {% if plate_corner_membrane == True %}
         <h3>In-Plane (Membrane) Corner Stresses</h3>
         <table>
 
@@ -394,7 +416,7 @@
                     <th>&sigma;<sub>x</sub></th>
                     <th>&sigma;<sub>y</sub></th>
                     <th>&tau;<sub>xy</sub></th>
-                    
+
                     <th>&sigma;<sub>x</sub></th>
                     <th>&sigma;<sub>y</sub></th>
                     <th>&tau;<sub>xy</sub></th>
@@ -429,7 +451,9 @@
             </tbody>
 
         </table>
+        {% endif %}
 
+        {% if plate_center_membrane == True %}
         <h3>In-Plane (Membrane) Center Stresses</h3>
         <table>
             <thead>
@@ -442,8 +466,8 @@
                 </tr>
             </thead>
             <tbody>
-            {% for plate in plates %}
-                {% for combo in load_combos %}
+            {% for combo in load_combos %}
+                {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
@@ -455,8 +479,7 @@
             {% endfor %}
             </tbody>
         </table>
-
-
+        {% endif %}
 
     </body>
 
