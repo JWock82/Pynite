@@ -5,3 +5,4 @@ build/*
 dist/*
 Derivations/*.ipynb_checkpoints
 setup.py
+PyNite Report.pdf
