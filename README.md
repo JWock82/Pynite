@@ -10,7 +10,7 @@ A linear elastic 3D structural engineering finite element library for Python.
 * Rectangular plate elements.
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
-* Generates PDF reports of model and results.
+* Generates PDF reports for models and model results.
 
 # Project Objectives
 As I've gotten into the structural engineering profession, I've found there's a need for an easy to use open-source finite element package. I hope to help fill that need by prioritizing the following:
