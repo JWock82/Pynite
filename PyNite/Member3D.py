@@ -841,9 +841,7 @@ class Member3D():
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()
-
-        
-        
+       
 #%%
     def Torsion(self, x, combo_name='Combo 1'):
         '''
