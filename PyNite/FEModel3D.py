@@ -1398,12 +1398,12 @@ class FEModel3D():
                 SumRMZ += RMZ - RFX*Y + RFY*X   
 
             # Add the results to the table
-            statics_table.add_row([combo.name, SumFX, SumRFX, \
-                                               SumFY, SumRFY, \
-                                               SumFZ, SumRFZ, \
-                                               SumMX, SumRMX, \
-                                               SumMY, SumRMY, \
-                                               SumMZ, SumRMZ])
+            statics_table.add_row([combo.name, '{:.3g}'.format(SumFX), '{:.3g}'.format(SumRFX),
+                                               '{:.3g}'.format(SumFY), '{:.3g}'.format(SumRFY),
+                                               '{:.3g}'.format(SumFZ), '{:.3g}'.format(SumRFZ),
+                                               '{:.3g}'.format(SumMX), '{:.3g}'.format(SumRMX),
+                                               '{:.3g}'.format(SumMY), '{:.3g}'.format(SumRMY),
+                                               '{:.3g}'.format(SumMZ), '{:.3g}'.format(SumRMZ)])
 
         # Print the static check table
         print(statics_table)
