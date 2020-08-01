@@ -41,14 +41,15 @@ Iz = 10
 J = 0.3
 A = 5
 BracedFrame.AddMember('Brace1', 'N1', 'N3', E, G, Iy, Iz, J, A, tension_only=True)
-BracedFrame.AddMember('Brace1', 'N4', 'N2', E, G, Iy, Iz, J, A, tension_only=True)
-BracedFrame.DefineReleases('Brace1', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
-BracedFrame.DefineReleases('Brace1', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+BracedFrame.AddMember('Brace2', 'N4', 'N2', E, G, Iy, Iz, J, A, tension_only=True)
 
+# Release the brace ends to form an axial member
+BracedFrame.DefineReleases('Brace1', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+BracedFrame.DefineReleases('Brace2', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
 
-# Provide pinned supports at the bases of the columns
-BracedFrame.DefineSupport('N1', SupportDX=True, SupportDY=True, SupportDZ=True)
-BracedFrame.DefineSupport('N4', SupportDX=True, SupportDY=True, SupportDZ=True)
+# Provide pinned supports at the bases of the columns (also restrained about the Y-axis for stability)
+BracedFrame.DefineSupport('N1', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRY=True)
+BracedFrame.DefineSupport('N4', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRY=True)
 
 # Stabilize the frame in the global Z-direction
 BracedFrame.DefineSupport('N2', SupportDZ=True)
@@ -57,37 +58,40 @@ BracedFrame.DefineSupport('N3', SupportDZ=True)
 # Add self weight dead loads to the frame
 # Note that we could leave 'x1' and 'x2' undefined below and it would default to the full member length
 # Note also that the direction uses lowercase notations to indicate member local coordinate systems
-BracedFrame.AddMemberDistLoad('Beam', Direction='Fy', w1=-0.024/12, w2=-0.024/12, x1=0, x2=15*12, case='D')
-BracedFrame.AddMemberDistLoad('Col1', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
-BracedFrame.AddMemberDistLoad('Col2', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
+# BracedFrame.AddMemberDistLoad('Beam', Direction='Fy', w1=-0.024/12, w2=-0.024/12, x1=0, x2=15*12, case='D')
+# BracedFrame.AddMemberDistLoad('Col1', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
+# BracedFrame.AddMemberDistLoad('Col2', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
 
 # Add a nodal wind load of 10 kips at the left side of the frame
 # Note that the direction uses uppercase notation to indicate model global coordinate system
-BracedFrame.AddNodeLoad('N2', Direction='FX', P=50, case='W')
+BracedFrame.AddNodeLoad('N2', Direction='FX', P=25, case='W')
+BracedFrame.AddNodeLoad('N3', Direction='FX', P=25, case='W')
 
 # Create two load combinations
 BracedFrame.AddLoadCombo('1.2D+1.0W', factors={'D':1.2, 'W':1.0})
 BracedFrame.AddLoadCombo('0.9D+1.0W', factors={'D':0.9, 'W':1.0})
 
+# Display the deformed shape of the structure magnified 50 times with the text height 5 model units (inches) high
+from PyNite import Visualization
+Visualization.RenderModel(BracedFrame, text_height=5, combo_name='1.2D+1.0W')
+
 # Analyze the braced frame
-BracedFrame.Analyze()
+BracedFrame.Analyze_PDelta()
 
 # Display the deformed shape of the structure magnified 50 times with the text height 5 model units (inches) high
 from PyNite import Visualization
 Visualization.RenderModel(BracedFrame, text_height=5, deformed_shape=True, deformed_scale=50, combo_name='1.2D+1.0W')
 
-# Plot the moment diagram for the beam
-BracedFrame.GetMember('Beam').PlotMoment('Mz', combo_name='1.2D+1.0W')
+# Plot the axial load diagrams for the braces
+BracedFrame.GetMember('Brace1').PlotAxial(combo_name='1.2D+1.0W')
+BracedFrame.GetMember('Brace2').PlotAxial(combo_name='1.2D+1.0W')
 
-# Plot the deflection of the column
-BracedFrame.GetMember('Col1').PlotDeflection('dy', combo_name='1.2D+1.0W')
+# Report the frame reactions
+print('1.2D+1.0W: N1 reaction FY = ', BracedFrame.GetNode('N1').RxnFY['1.2D+1.0W'])
+print('1.2D+1.0W: N4 reaction FY = ', BracedFrame.GetNode('N4').RxnFY['1.2D+1.0W'])
+print('0.9D+1.0W: N1 reaction FY = ', BracedFrame.GetNode('N1').RxnFY['0.9D+1.0W'])
+print('0.9D+1.0W: N4 reaction FY = ', BracedFrame.GetNode('N4').RxnFY['0.9D+1.0W'])
 
-# Find the maximum shear in the first column
-print('Column Shear Force:', BracedFrame.GetMember('Col1').MaxShear('Fy', combo_name='1.2D+1.0W'), 'kip')
-
-# Find the frame lateral drift
-# Note that the deflections are stored as a dictionary in the node object by load combination, so [] are used instead of () below
-print('Frame Lateral Drift:', BracedFrame.GetNode('N2').DX['1.2D+1.0W'], 'in')
-
-# Find the maximum uplift reaction
-print('Left Support Y Reaction:', BracedFrame.GetNode('N1').RxnFY['0.9D+1.0W'], 'kip')
+# Report the frame deflection at Node 3
+print('1.2D+1.0W: Frame drift = ', BracedFrame.GetNode('N3').DX['1.2D+1.0W'])
+print('0.9D+1.0W: Frame drift = ', BracedFrame.GetNode('N3').DX['0.9D+1.0W'])

@@ -128,7 +128,8 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
   # Add actors for each deformed member
   for visDeformedMember in visDeformedMembers:
 
-    if visDeformedMember.active == True:
+    # Only show the deformed member if it's active
+    if visDeformedMember.active[combo_name] == True:
       # Add the actor for the deformed member
       renderer.AddActor(visDeformedMember.polylineActor)
 
@@ -918,11 +919,8 @@ class VisDeformedMember():
 
   def __init__(self, member, nodes, scale_factor, text_height=5, combo_name='Combo 1'):
 
-    # Determine if this member is active
-    if member.active == False:
-      self.active = False
-    else:
-      self.active = True
+    # Determine if this member is active for each load combination
+    self.active = member.active
 
     L = member.L() # Member length
     T = member.T() # Member local transformation matrix

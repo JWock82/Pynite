@@ -43,9 +43,13 @@ class Member3D():
         self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.LoadCombos = LoadCombos # The dictionary of load combinations in the model this member belongs to
-        self.active = True # All members start out active
         self.tension_only = tension_only # Indicates whether the member is tension-only
         self.comp_only = comp_only # Indicates whether the member is compression-only
+
+        # Members need to track whether they are active or not for any given load combination.
+        # They may become inactive for a load combination during a tension/compression-only
+        # analysis. This dictionary will be used when the model is solved.
+        self.active = {} # Key = load combo name, Value = True or False
         
         # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations
         # the '__solved_combo' variable will be used to track whether the member needs to be resegmented before running
@@ -153,7 +157,7 @@ class Member3D():
 
         Parameters
         ----------
-        P : number
+        P : number, optional
             The axial force acting on the member (compression = +, tension = -)
         '''
 
@@ -183,7 +187,11 @@ class Member3D():
         kg11, kg12, kg21, kg22 = self.__Partition(kg)
                
         # Calculate the condensed local geometric stiffness matrix
-        kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
+        # Note that a matrix of zeros cannot be inverted, so if P is 0 an error will occur
+        if isclose(P, 0.0):
+            kg_Condensed = zeros(kg11.shape)
+        else:
+            kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
         
         # Expand the condensed local geometric stiffness matrix
         i=0
@@ -483,19 +491,21 @@ class Member3D():
         D = zeros((12, 1))
         
         # Read in the global displacements from the nodes
-        D[0, 0] = self.iNode.DX[combo_name]
-        D[1, 0] = self.iNode.DY[combo_name]
-        D[2, 0] = self.iNode.DZ[combo_name]
-        D[3, 0] = self.iNode.RX[combo_name]
-        D[4, 0] = self.iNode.RY[combo_name]
-        D[5, 0] = self.iNode.RZ[combo_name]
-        D[6, 0] = self.jNode.DX[combo_name]
-        D[7, 0] = self.jNode.DY[combo_name]
-        D[8, 0] = self.jNode.DZ[combo_name]
-        D[9, 0] = self.jNode.RX[combo_name]
-        D[10, 0] = self.jNode.RY[combo_name]
-        D[11, 0] = self.jNode.RZ[combo_name]
-        
+        # The member will have no end-displacements if it's inactive
+        if self.active[combo_name] == True:
+            D[0, 0] = self.iNode.DX[combo_name]
+            D[1, 0] = self.iNode.DY[combo_name]
+            D[2, 0] = self.iNode.DZ[combo_name]
+            D[3, 0] = self.iNode.RX[combo_name]
+            D[4, 0] = self.iNode.RY[combo_name]
+            D[5, 0] = self.iNode.RZ[combo_name]
+            D[6, 0] = self.jNode.DX[combo_name]
+            D[7, 0] = self.jNode.DY[combo_name]
+            D[8, 0] = self.jNode.DZ[combo_name]
+            D[9, 0] = self.jNode.RX[combo_name]
+            D[10, 0] = self.jNode.RY[combo_name]
+            D[11, 0] = self.jNode.RZ[combo_name]
+
         # Return the global displacement vector
         return D
 

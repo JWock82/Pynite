@@ -73,7 +73,8 @@ class FEModel3D():
         self.auxNodes.append(newNode)
   
 #%%
-    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, tension_only=False, comp_only=False):
+    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
+                  tension_only=False, comp_only=False):
         '''
         Adds a new member to the model.
         
@@ -654,7 +655,7 @@ class FEModel3D():
         return D1_indices, D2_indices, D2
             
 #%%    
-    def K(self):
+    def K(self, combo_name='Combo_1'):
         '''
         Assembles and returns the global stiffness matrix.
         '''
@@ -666,7 +667,7 @@ class FEModel3D():
         print('...Adding member stiffness terms to global stiffness matrix')
         for member in self.Members:
             
-            if member.active == True:
+            if member.active[combo_name] == True:
 
                 # Get the member's global stiffness matrix
                 # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -762,13 +763,13 @@ class FEModel3D():
         '''
         
         # Initialize a zero matrix to hold all the stiffness terms
-        Kg = zeros((len(self.Nodes) * 6, len(self.Nodes) * 6))
+        Kg = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
         
         # Add stiffness terms for each member in the model
         print('...Adding member geometric stiffness terms to global geometric stiffness matrix')
         for member in self.Members:
             
-            if member.active == True:
+            if member.active[combo_name] == True:
 
                 # Calculate the axial force in the member
                 E = member.E
@@ -952,19 +953,20 @@ class FEModel3D():
         print('+-----------+')
         print('| Analyzing |')
         print('+-----------+')
-        print('')
 
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
+
+        # Activate all members for all load combinations
+        for member in self.Members:
+            for combo_name in self.LoadCombos.keys():
+                member.active[combo_name] = True 
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self.__AuxList()
 
         # Convert D2 from a list to a matrix
         D2 = matrix(D2).T
-
-        # Get the partitioned global stiffness matrix K11, K12, K21, K22
-        K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices)
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
@@ -974,6 +976,9 @@ class FEModel3D():
         # Step through each load combination
         for combo in self.LoadCombos.values():
 
+            print('')
+            print('...Analyzing load combination ', combo.name)
+
             # Keep track of the number of iterations
             iter_count = 1
             convergence = False
@@ -981,6 +986,9 @@ class FEModel3D():
 
             # Iterate until convergence or divergence occurs
             while convergence == False and divergence == False:
+
+                # Get the partitioned global stiffness matrix K11, K12, K21, K22
+                K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices)
 
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)
@@ -1052,30 +1060,32 @@ class FEModel3D():
                 # Check for divergence
                 if iter_count > max_iter:
                     divergence = True
-                    raise Exception('...Model diverged during tension/compression-only analysis.')
+                    raise Exception('...Model diverged during tension/compression-only analysis')
 
                 # Check tension-only and compression-only members
-                print('...Checking for tension/compression only member convergence')
+                print('...Checking for tension/compression-only member convergence')
                 for member in self.Members:
 
                     # Assume the model has converged (to be checked below)
                     convergence = True
 
                     # Only run the tension/compression only check if the member is still active
-                    if member.active == True:
+                    if member.active[combo.name] == True:
 
                         # Check if tension-only conditions exist
                         if member.tension_only == True and member.MaxAxial(combo.name) > 0:
-                            member.active = False
+                            member.active[combo.name] = False
                             convergence = False
 
                         # Check if compression-only conditions exist
                         elif member.comp_only == True and member.MinAxial(combo.name) < 0:
-                            member.active = False
+                            member.active[combo.name] = False
                             convergence = False
                 
-                    if convergence == False:
-                        print('...Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
+                if convergence == False:
+                    print('...Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
+                else:
+                    print('...Tension/compression-only analysis coverged after', str(iter_count), ' iterations')
 
                 # Keep track of the number of tension/compression only iterations
                 iter_count += 1
@@ -1108,10 +1118,15 @@ class FEModel3D():
         print('+--------------------+')
         print('| Analyzing: P-Delta |')
         print('+--------------------+')
-        print('')
 
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
+
+        # Activate all members for all load combinations
+        # (Used for tension/compression-only analysis)
+        for member in self.Members:
+            for combo_name in self.LoadCombos.keys():
+                member.active[combo_name] = True
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self.__AuxList()
@@ -1127,28 +1142,35 @@ class FEModel3D():
         # Step through each load combination
         for combo in self.LoadCombos.values():
 
+            print('')
+            print('...Analyzing load combination ', combo.name)
+
             # Keep track of the number of iterations
-            iter_count = 1
-            convergence = False
-            divergence = False
+            iter_count_TC = 1 # Tension/compression-only iterations
+            iter_count_PD = 1 # P-Delta iterations
+            convergence_TC = False
+            convergence_PD = False
+            divergence_TC = False
+            divergence_PD = False
 
             # Iterate until convergence or divergence occurs
-            while convergence == False and divergence == False:
+            while (convergence_TC == False and convergence_PD == False and
+                   divergence_TC == False and divergence_PD == False):
             
                 # Inform the user which iteration we're on
-                print('...Beginning P-Delta iteration #' + str(iter_count))
+                print('...Beginning P-Delta iteration #' + str(iter_count_PD))
 
                 # Get the partitioned global matrices
-                if iter_count == 1:
+                if iter_count_PD == 1:
                     
-                    K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices) # Initial stiffness matrix
+                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices) # Initial stiffness matrix
                     FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
                     P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
 
                 else:
 
                     # Calculate the global stiffness matrices (partitioned)
-                    K11, K12, K21, K22 = self.__Partition(self.K(), D1_indices, D2_indices)           # Initial stiffness matrix
+                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices)           # Initial stiffness matrix
                     Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name), D1_indices, D2_indices) # Geometric stiffness matrix
 
                     # Combine the stiffness matrices
@@ -1217,8 +1239,55 @@ class FEModel3D():
                     node.RX[combo.name] = D[node.ID*6 + 3, 0]
                     node.RY[combo.name] = D[node.ID*6 + 4, 0]
                     node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+                
+                # Check for divergence on tension/compression-only members
+                if iter_count_TC > max_iter:
+                    divergence_TC = True
+                    raise Exception('...Model diverged during tension/compression-only analysis')
 
-                if iter_count != 1:
+                # Check for tension/compression-only members that need to be deactivated
+                print('...Checking for tension/compression-only member convergence')
+                
+                # Assume the model has converged (to be checked below)
+                convergence_TC = True
+                for member in self.Members:
+
+                    # Only run the tension/compression only check if the member is still active
+                    if member.active[combo.name] == True:
+
+                        # Check if tension-only conditions exist
+                        if member.tension_only == True and member.MaxAxial(combo.name) > 0:
+                            
+                            member.active[combo.name] = False
+                            convergence_TC = False
+
+                            # Reset the P-Delta analysis for the new geometry
+                            iter_count_PD = 0
+                            convergence_PD = False
+
+                        # Check if compression-only conditions exist
+                        elif member.comp_only == True and member.MinAxial(combo.name) < 0:
+                            
+                            member.active[combo.name] = False
+                            convergence_TC = False
+
+                            # Reset the P-Delta analysis for the new geometry
+                            iter_count_PD = 0
+                            convergence_PD = False
+                
+                # Report on convergence of tension/compression only analysis
+                if convergence_TC == False:
+                    print('...Tension/compression-only analysis did not converge')
+                    print('...Stiffness matrix will be adjusted for deactivated members')
+                    print('...P-Delta analysis will be reset for updated geometry')
+                else:
+                    print('...Tension/compression-only analysis converged after', str(iter_count_TC), ' iterations')
+                
+                # Increment the tension/compression-only iteration count
+                iter_count_TC += 1
+
+                # Check for P-Delta convergence
+                if iter_count_PD > 1:
                 
                     # Print a status update for the user
                     print('...Checking for convergence')
@@ -1229,12 +1298,12 @@ class FEModel3D():
 
                     # Check for convergence
                     if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
-                        convergence = True
-                        print('...P-Delta analysis converged after ' + str(iter_count) + ' iterations')
+                        convergence_PD = True
+                        print('...P-Delta analysis converged after' + str(iter_count) + ' iterations')
                     # Check for divergence
-                    elif iter_count > max_iter:
-                        divergence = True
-                        print('...P-Delta analysis failed to converge after 30 iterations')
+                    elif iter_count_PD > max_iter:
+                        divergence_PD = True
+                        print('...P-Delta analysis failed to converge after' + str(max_iter) + ' iterations')
 
                     # Turn invalid value warnings back on
                     seterr(invalid='warn') 
@@ -1242,13 +1311,13 @@ class FEModel3D():
                 # Save the results for the next iteration
                 prev_results = D1
 
-                # Increment the iteration count
-                iter_count += 1
+                # Increment the P-Delta iteration count
+                iter_count_PD += 1
         
         # Calculate reactions
         self.__CalcReactions()
 
-        print('...Analysis complete.')
+        print('...Analysis complete')
         print('')
 
 #%%
@@ -1285,7 +1354,7 @@ class FEModel3D():
                     # Sum the member end forces at the node
                     for member in self.Members:
                     
-                        if member.iNode == node:
+                        if member.iNode == node and member.active[combo.name] == True:
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -1298,7 +1367,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += member_F[4, 0]
                             node.RxnMZ[combo.name] += member_F[5, 0]
 
-                        elif member.jNode == node:
+                        elif member.jNode == node and member.active[combo.name] == True:
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
