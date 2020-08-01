@@ -928,9 +928,9 @@ class FEModel3D():
             Set to true to perform a static equilibrium check.
         '''
         
-        print('-------------')
+        print('+-----------+')
         print('| Analyzing |')
-        print('-------------')
+        print('+-----------+')
         print('')
 
         # Assign an ID to all nodes and elements in the model
@@ -1023,7 +1023,7 @@ class FEModel3D():
         # Calculate reactions
         self.__CalcReactions()
                 
-        print('...Analysis complete.')
+        print('...Analysis complete')
         print('')
 
         # Check statics if requested
@@ -1045,9 +1045,9 @@ class FEModel3D():
             has converged (e.g. 0.01 = deflections must converge within 1% between iterations).
         '''
         
-        print('----------------------')
+        print('+--------------------+')
         print('| Analyzing: P-Delta |')
-        print('----------------------')
+        print('+--------------------+')
         print('')
 
         # Assign an ID to all nodes and elements in the model
@@ -1161,7 +1161,7 @@ class FEModel3D():
                 if iter_count != 1:
                 
                     # Print a status update for the user
-                    print('...Checking for convergence.')
+                    print('...Checking for convergence')
 
                     # Temporarily disable error messages for invalid values.
                     # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
@@ -1170,11 +1170,11 @@ class FEModel3D():
                     # Check for convergence
                     if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
                         convergence = True
-                        print('...P-Delta analysis converged after ' + str(iter_count) + ' iterations.')
+                        print('...P-Delta analysis converged after ' + str(iter_count) + ' iterations')
                     # Check for divergence
                     elif iter_count > max_iter:
                         divergence = True
-                        print('...P-Delta analysis failed to converge after 30 iterations.')
+                        print('...P-Delta analysis failed to converge after 30 iterations')
 
                     # Turn invalid value warnings back on
                     seterr(invalid='warn') 
@@ -1333,9 +1333,9 @@ class FEModel3D():
             The number of decimal places to carry the results to.
         '''
 
-        print('------------------')
+        print('+----------------+')
         print('| Statics Check: |')
-        print('------------------')
+        print('+----------------+')
         print('')
 
         from prettytable import PrettyTable
