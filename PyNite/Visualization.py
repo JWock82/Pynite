@@ -303,8 +303,6 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
           distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
           distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
 
-
-
 #%%
 def __MaxLoads(model, combo_name=None, case=None):
 
@@ -1058,6 +1056,7 @@ class VisPtLoad():
     poly_data = vtk.vtkPolyData()
     poly_data.ShallowCopy(shaft.GetOutput())
     self.append_filter.AddInputData(poly_data)
+    self.append_filter.Update()
 
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
