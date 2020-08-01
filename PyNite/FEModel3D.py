@@ -73,7 +73,7 @@ class FEModel3D():
         self.auxNodes.append(newNode)
   
 #%%
-    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None):
+    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, tension_only=False, comp_only=False):
         '''
         Adds a new member to the model.
         
@@ -97,13 +97,25 @@ class FEModel3D():
             The polar moment of inertia of the member.
         A : number
             The cross-sectional area of the member.
+        auxNode : string, optional
+            The name of the auxialary node used to define the local z-axis.
+            The default is for the program to define the axis instead of
+            using an auxiliary node.
+        tension_only : bool, optional
+            Indicates if the member is tension-only. Default is False.
+        comp_only : bool, optional
+            Indicates if the member is compression-only. Default is False.
         '''
         
         # Create a new member
         if auxNode == None:
-            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, LoadCombos=self.LoadCombos)
+            newMember = Member3D(Name, self.GetNode(iNode),
+            self.GetNode(jNode), E, G, Iy, Iz, J, A,
+            LoadCombos=self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         else:
-            newMember = Member3D(Name, self.GetNode(iNode), self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode), self.LoadCombos)
+            newMember = Member3D(Name, self.GetNode(iNode),
+            self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
+            self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
         self.Members.append(newMember)
@@ -654,35 +666,37 @@ class FEModel3D():
         print('...Adding member stiffness terms to global stiffness matrix')
         for member in self.Members:
             
-            # Get the member's global stiffness matrix
-            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            member_K = member.K()
+            if member.active == True:
 
-            # Step through each term in the member's stiffness matrix
-            # 'a' & 'b' below are row/column indices in the member's stiffness matrix
-            # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-            for a in range(12):
+                # Get the member's global stiffness matrix
+                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                member_K = member.K()
+
+                # Step through each term in the member's stiffness matrix
+                # 'a' & 'b' below are row/column indices in the member's stiffness matrix
+                # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+                for a in range(12):
                 
-                # Determine if index 'a' is related to the i-node or j-node
-                if a < 6:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = member.iNode.ID*6 + a
-                else:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = member.jNode.ID*6 + (a-6)
-                    
-                for b in range(12):
-                    
-                    # Determine if index 'b' is related to the i-node or j-node
-                    if b < 6:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = member.iNode.ID*6 + b
+                    # Determine if index 'a' is related to the i-node or j-node
+                    if a < 6:
+                        # Find the corresponding index 'm' in the global stiffness matrix
+                        m = member.iNode.ID*6 + a
                     else:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = member.jNode.ID*6 + (b-6)
+                        # Find the corresponding index 'm' in the global stiffness matrix
+                        m = member.jNode.ID*6 + (a-6)
                     
-                    # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K.itemset((m, n), K.item((m, n)) + member_K.item((a, b)))
+                    for b in range(12):
+                    
+                        # Determine if index 'b' is related to the i-node or j-node
+                        if b < 6:
+                            # Find the corresponding index 'n' in the global stiffness matrix
+                            n = member.iNode.ID*6 + b
+                        else:
+                            # Find the corresponding index 'n' in the global stiffness matrix
+                            n = member.jNode.ID*6 + (b-6)
+                    
+                        # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                        K.itemset((m, n), K.item((m, n)) + member_K.item((a, b)))
         
         # Add stiffness terms for each plate in the model
         print('...Adding plate stiffness terms to global stiffness matrix')
@@ -739,7 +753,7 @@ class FEModel3D():
         Assembles and returns the global geometric stiffness matrix.
 
         The model must have a static solution prior to obtaining the geometric stiffness matrix.
-        Geometric stiffness of plates is not included.
+        Stiffness of plates is not included.
 
         Parameters
         ----------
@@ -754,42 +768,44 @@ class FEModel3D():
         print('...Adding member geometric stiffness terms to global geometric stiffness matrix')
         for member in self.Members:
             
-            # Calculate the axial force in the member
-            E = member.E
-            A = member.A
-            L = member.L()
-            d = member.d(combo_name)
-            P = E*A/L*(d[6, 0] - d[0, 0])
+            if member.active == True:
 
-            # Get the member's global stiffness matrix
-            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            member_Kg = member.Kg(P)
+                # Calculate the axial force in the member
+                E = member.E
+                A = member.A
+                L = member.L()
+                d = member.d(combo_name)
+                P = E*A/L*(d[6, 0] - d[0, 0])
 
-            # Step through each term in the member's stiffness matrix
-            # 'a' & 'b' below are row/column indices in the member's stiffness matrix
-            # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-            for a in range(12):
+                # Get the member's global stiffness matrix
+                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                member_Kg = member.Kg(P)
+
+                # Step through each term in the member's stiffness matrix
+                # 'a' & 'b' below are row/column indices in the member's stiffness matrix
+                # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+                for a in range(12):
                 
-                # Determine if index 'a' is related to the i-node or j-node
-                if a < 6:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = member.iNode.ID*6 + a
-                else:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = member.jNode.ID*6 + (a-6)
-                    
-                for b in range(12):
-                    
-                    # Determine if index 'b' is related to the i-node or j-node
-                    if b < 6:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = member.iNode.ID*6 + b
+                    # Determine if index 'a' is related to the i-node or j-node
+                    if a < 6:
+                        # Find the corresponding index 'm' in the global stiffness matrix
+                        m = member.iNode.ID*6 + a
                     else:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = member.jNode.ID*6 + (b-6)
+                        # Find the corresponding index 'm' in the global stiffness matrix
+                        m = member.jNode.ID*6 + (a-6)
                     
-                    # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    Kg.itemset((m, n), Kg.item((m, n)) + member_Kg.item((a, b)))
+                    for b in range(12):
+                    
+                        # Determine if index 'b' is related to the i-node or j-node
+                        if b < 6:
+                            # Find the corresponding index 'n' in the global stiffness matrix
+                            n = member.iNode.ID*6 + b
+                        else:
+                            # Find the corresponding index 'n' in the global stiffness matrix
+                            n = member.jNode.ID*6 + (b-6)
+                    
+                        # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                        Kg.itemset((m, n), Kg.item((m, n)) + member_Kg.item((a, b)))
 
         # Return the global geometric stiffness matrix
         return Kg
@@ -918,14 +934,19 @@ class FEModel3D():
             return m11, m12, m21, m22
 
 #%%  
-    def Analyze(self, check_statics=True):
+    def Analyze(self, check_statics=True, max_iter=30):
         '''
         Performs first-order static analysis.
+        
+        Iterations are performed if tension-only members or
+        compression-only members are present.
 
         Parameters
         ----------
-        check_static : bool
+        check_statics : bool, optional
             Set to true to perform a static equilibrium check.
+        max_iter : number, optional
+
         '''
         
         print('+-----------+')
@@ -953,73 +974,112 @@ class FEModel3D():
         # Step through each load combination
         for combo in self.LoadCombos.values():
 
-            # Get the partitioned global fixed end reaction vector
-            FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)
+            # Keep track of the number of iterations
+            iter_count = 1
+            convergence = False
+            divergence = False
 
-            # Get the partitioned global nodal force vector       
-            P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)          
+            # Iterate until convergence or divergence occurs
+            while convergence == False and divergence == False:
 
-            # Check for global stability by determining if 'K11' is singular
-            print('...Checking global stability for load combination', combo.name)
-            if K11.shape == (0, 0):
-                # All displacements are known, so D1 is an empty vector
-                D1 = []
-            elif matrix_rank(K11) < min(K11.shape):
-                # Return out of the method if 'K' is singular and provide an error message
-                print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-                raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-            else:
-                # Calculate the unknown displacements D1
-                print('...Calculating global displacement vector for load combination', combo.name)
-                D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                # Get the partitioned global fixed end reaction vector
+                FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)
 
-            # Form the global displacement vector, D, from D1 and D2
-            D = zeros((len(self.Nodes)*6, 1))
+                # Get the partitioned global nodal force vector       
+                P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)          
 
-            for node in self.Nodes:
-
-                if D2_indices.count(node.ID*6 + 0) == 1:
-                    D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+                # Check for global stability by determining if 'K11' is singular
+                print('...Checking global stability for load combination', combo.name)
+                if K11.shape == (0, 0):
+                    # All displacements are known, so D1 is an empty vector
+                    D1 = []
+                elif matrix_rank(K11) < min(K11.shape):
+                    # Return out of the method if 'K' is singular and provide an error message
+                    print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+                    raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
                 else:
-                    D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
+                    # Calculate the unknown displacements D1
+                    print('...Calculating global displacement vector for load combination', combo.name)
+                    D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
 
-                if D2_indices.count(node.ID*6 + 1) == 1:
-                    D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
-                else:
-                    D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
+                # Form the global displacement vector, D, from D1 and D2
+                D = zeros((len(self.Nodes)*6, 1))
 
-                if D2_indices.count(node.ID*6 + 2) == 1:
-                    D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
-                else:
-                    D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
+                for node in self.Nodes:
 
-                if D2_indices.count(node.ID*6 + 3) == 1:
-                    D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
-                else:
-                    D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
+                    if D2_indices.count(node.ID*6 + 0) == 1:
+                        D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+                    else:
+                        D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
 
-                if D2_indices.count(node.ID*6 + 4) == 1:
-                    D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
-                else:
-                    D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+                    if D2_indices.count(node.ID*6 + 1) == 1:
+                        D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
+                    else:
+                        D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
 
-                if D2_indices.count(node.ID*6 + 5) == 1:
-                    D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
-                else:
-                    D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
+                    if D2_indices.count(node.ID*6 + 2) == 1:
+                        D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
+                    else:
+                        D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
 
-            # Save the global displacement vector
-            self.__D[combo.name] = D
+                    if D2_indices.count(node.ID*6 + 3) == 1:
+                        D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
+                    else:
+                        D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
 
-            # Store the calculated global nodal displacements into each node
-            for node in self.Nodes:
-                node.DX[combo.name] = D[node.ID*6 + 0, 0]
-                node.DY[combo.name] = D[node.ID*6 + 1, 0]
-                node.DZ[combo.name] = D[node.ID*6 + 2, 0]
-                node.RX[combo.name] = D[node.ID*6 + 3, 0]
-                node.RY[combo.name] = D[node.ID*6 + 4, 0]
-                node.RZ[combo.name] = D[node.ID*6 + 5, 0]
-        
+                    if D2_indices.count(node.ID*6 + 4) == 1:
+                        D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
+                    else:
+                        D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+
+                    if D2_indices.count(node.ID*6 + 5) == 1:
+                        D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
+                    else:
+                        D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
+
+                # Save the global displacement vector
+                self.__D[combo.name] = D
+
+                # Store the calculated global nodal displacements into each node
+                for node in self.Nodes:
+                    node.DX[combo.name] = D[node.ID*6 + 0, 0]
+                    node.DY[combo.name] = D[node.ID*6 + 1, 0]
+                    node.DZ[combo.name] = D[node.ID*6 + 2, 0]
+                    node.RX[combo.name] = D[node.ID*6 + 3, 0]
+                    node.RY[combo.name] = D[node.ID*6 + 4, 0]
+                    node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+                
+                # Check for divergence
+                if iter_count > max_iter:
+                    divergence = True
+                    raise Exception('...Model diverged during tension/compression-only analysis.')
+
+                # Check tension-only and compression-only members
+                print('...Checking for tension/compression only member convergence')
+                for member in self.Members:
+
+                    # Assume the model has converged (to be checked below)
+                    convergence = True
+
+                    # Only run the tension/compression only check if the member is still active
+                    if member.active == True:
+
+                        # Check if tension-only conditions exist
+                        if member.tension_only == True and member.MaxAxial(combo.name) > 0:
+                            member.active = False
+                            convergence = False
+
+                        # Check if compression-only conditions exist
+                        elif member.comp_only == True and member.MinAxial(combo.name) < 0:
+                            member.active = False
+                            convergence = False
+                
+                    if convergence == False:
+                        print('...Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
+
+                # Keep track of the number of tension/compression only iterations
+                iter_count += 1
+
         # Calculate reactions
         self.__CalcReactions()
                 

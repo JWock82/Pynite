@@ -18,11 +18,13 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
+    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, 
+                 LoadCombos={'Combo 1':LoadCombo('Combo 1', 
+                             factors={'Case 1':1.0})},
+                 tension_only=False, comp_only=False):
         '''
         Initializes a new member.
         '''
-        
         self.Name = Name    # A unique name for the member given by the user
         self.ID = None      # Unique index number for the member assigned by the program
         self.iNode = iNode  # The element's i-node
@@ -41,6 +43,9 @@ class Member3D():
         self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.LoadCombos = LoadCombos # The dictionary of load combinations in the model this member belongs to
+        self.active = True # All members start out active
+        self.tension_only = tension_only # Indicates whether the member is tension-only
+        self.comp_only = comp_only # Indicates whether the member is compression-only
         
         # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations
         # the '__solved_combo' variable will be used to track whether the member needs to be resegmented before running
