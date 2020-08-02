@@ -484,27 +484,30 @@ class Member3D():
         Parameters
         ----------
         combo_name : string
-            The name of the load combination to construct the global displacement vector for (not the load combination itelf).
+            The name of the load combination to construct the global
+            displacement vector for (not the load combination itelf).
         '''
         
         # Initialize the displacement vector
         D = zeros((12, 1))
         
         # Read in the global displacements from the nodes
-        # The member will have no end-displacements if it's inactive
+        # Apply axial displacements only if the member is active
         if self.active[combo_name] == True:
             D[0, 0] = self.iNode.DX[combo_name]
-            D[1, 0] = self.iNode.DY[combo_name]
-            D[2, 0] = self.iNode.DZ[combo_name]
-            D[3, 0] = self.iNode.RX[combo_name]
-            D[4, 0] = self.iNode.RY[combo_name]
-            D[5, 0] = self.iNode.RZ[combo_name]
             D[6, 0] = self.jNode.DX[combo_name]
-            D[7, 0] = self.jNode.DY[combo_name]
-            D[8, 0] = self.jNode.DZ[combo_name]
-            D[9, 0] = self.jNode.RX[combo_name]
-            D[10, 0] = self.jNode.RY[combo_name]
-            D[11, 0] = self.jNode.RZ[combo_name]
+
+        # Apply the remaining displacements
+        D[1, 0] = self.iNode.DY[combo_name]
+        D[2, 0] = self.iNode.DZ[combo_name]
+        D[3, 0] = self.iNode.RX[combo_name]
+        D[4, 0] = self.iNode.RY[combo_name]
+        D[5, 0] = self.iNode.RZ[combo_name]
+        D[7, 0] = self.jNode.DY[combo_name]
+        D[8, 0] = self.jNode.DZ[combo_name]
+        D[9, 0] = self.jNode.RX[combo_name]
+        D[10, 0] = self.jNode.RY[combo_name]
+        D[11, 0] = self.jNode.RZ[combo_name]      
 
         # Return the global displacement vector
         return D

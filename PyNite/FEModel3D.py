@@ -935,19 +935,21 @@ class FEModel3D():
             return m11, m12, m21, m22
 
 #%%  
-    def Analyze(self, check_statics=True, max_iter=30):
+    def Analyze(self, check_statics=False, max_iter=30):
         '''
         Performs first-order static analysis.
         
         Iterations are performed if tension-only members or
         compression-only members are present.
 
+
         Parameters
         ----------
         check_statics : bool, optional
-            Set to true to perform a static equilibrium check.
+            When set to True, causes a statics check to be performed
         max_iter : number, optional
-
+            The maximum number of iterations to try to get convergence
+            for tension/compression-only analysis.
         '''
         
         print('+-----------+')
