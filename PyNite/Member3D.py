@@ -31,9 +31,9 @@ class Member3D():
         self.jNode = jNode  # The element's j-node
         self.E = E  # The modulus of elasticity of the element
         self.G = G  # The shear modulus of the element
-        self.Iy = Iy    # The y-axis moment of inertia
-        self.Iz = Iz    # The z-axis moment of inertia
-        self.J = J  # The polar moment of inertia or torsional constant
+        self.Iy = Iy  # The y-axis moment of inertia
+        self.Iz = Iz  # The z-axis moment of inertia
+        self.J = J  # The torsional constant
         self.A = A  # The cross-sectional area
         self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
