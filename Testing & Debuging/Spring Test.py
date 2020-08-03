@@ -13,9 +13,9 @@ system.AddNode('2', 30, 0, 0)
 system.AddNode('3', 10, 0, 0)
 system.AddNode('4', 20, 0, 0)
 
-system.AddSpring('S1', '1', '3', 1000, False, False)
-system.AddSpring('S2', '3', '4', 2000, False, False)
-system.AddSpring('S3', '4', '2', 3000, False, False)
+system.AddSpring('S1', '1', '3', 1000)
+system.AddSpring('S2', '3', '4', 2000)
+system.AddSpring('S3', '4', '2', 3000)
 
 system.DefineSupport('1', True, True, True, True, True, True)
 system.DefineSupport('2', True, True, True, True, True, True)
