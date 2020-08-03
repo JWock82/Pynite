@@ -986,7 +986,7 @@ class Member3D():
         Parameters
         ----------
         x : number
-            The location at which to find the shear.
+            The location at which to find the axial force.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         '''
