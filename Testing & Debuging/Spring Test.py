@@ -1,5 +1,7 @@
-# Example of a spring assembly
-# Units used in this example are inches and pounds
+# A First Course in the Finite Element Method, 4th Edition
+# Daryl L. Logan
+# Example 2.1
+# Units for this model are pounds and inches
 
 # Import `FEModel3D` from `PyNite`
 from PyNite import FEModel3D
@@ -27,3 +29,6 @@ system.Analyze(True)
 
 print(system.GetNode('3').DX['Combo 1'])
 print(system.GetNode('4').DX['Combo 1'])
+print('')
+print(system.GetNode('1').RxnFX['Combo 1'])
+print(system.GetNode('2').RxnFX['Combo 1'])
