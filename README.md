@@ -7,7 +7,8 @@ A linear elastic 3D structural engineering finite element library for Python.
 * Member point loads, linearly varying distributed loads, and nodal loads are supported.
 * Classify loads by load case and create load combinations from load cases.
 * Produces shear, moment, and deflection results and diagrams for each member.
-* Tension-only and compression-only elements
+* Tension-only and compression-only elements.
+* Springs: two-way, tension-only, and compression-only.
 * Rectangular plate elements.
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
