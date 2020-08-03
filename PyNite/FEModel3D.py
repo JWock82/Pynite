@@ -1508,6 +1508,35 @@ class FEModel3D():
                 or (node.SupportRY == True) \
                 or (node.SupportRZ == True):
 
+                    # Sum the spring end forces at the node
+                    for spring in self.Springs:
+
+                        if spring.iNode == node and spring.active[combo.name] == True:
+                            
+                            # Get the spring's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            spring_F = spring.F(combo.name)
+
+                            node.RxnFX[combo.name] += spring_F[0, 0]
+                            node.RxnFY[combo.name] += spring_F[1, 0]
+                            node.RxnFZ[combo.name] += spring_F[2, 0]
+                            node.RxnMX[combo.name] += spring_F[3, 0]
+                            node.RxnMY[combo.name] += spring_F[4, 0]
+                            node.RxnMZ[combo.name] += spring_F[5, 0]
+
+                        elif spring.jNode == node and spring.active[combo.name] == True:
+                        
+                            # Get the spring's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            spring_F = spring.F(combo.name)
+                        
+                            node.RxnFX[combo.name] += spring_F[6, 0]
+                            node.RxnFY[combo.name] += spring_F[7, 0]
+                            node.RxnFZ[combo.name] += spring_F[8, 0]
+                            node.RxnMX[combo.name] += spring_F[9, 0]
+                            node.RxnMY[combo.name] += spring_F[10, 0]
+                            node.RxnMZ[combo.name] += spring_F[11, 0]
+
                     # Sum the member end forces at the node
                     for member in self.Members:
                     
