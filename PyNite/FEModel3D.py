@@ -3,6 +3,7 @@ from numpy import matrix, zeros, empty, delete, insert, matmul, divide, add, sub
 from numpy.linalg import solve, matrix_rank
 from math import isclose
 from PyNite.Node3D import Node3D
+from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
@@ -21,6 +22,7 @@ class FEModel3D():
         
         self.Nodes = []      # A list of the structure's nodes
         self.auxNodes = []   # A list of the structure's auxiliary nodes
+        self.Springs = []    # A list of the structure's springs
         self.Members = []    # A list of the structure's members
         self.Plates = []     # A list of the structure's plates
         self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
@@ -72,6 +74,34 @@ class FEModel3D():
         # Add the new node to the list
         self.auxNodes.append(newNode)
   
+#%%
+    def AddSpring(self, Name, iNode, jNode, ks, tension_only=False, comp_only=False):
+        '''
+        Adds a new spring to the model.
+        
+        Parameters
+        ----------
+        Name : string
+            A unique user-defined name for the member.
+        iNode : string
+            The name of the i-node (start node).
+        jNode : string
+            The name of the j-node (end node).
+        ks : number
+            The spring constant (force/displacement).
+        tension_only : bool, optional
+            Indicates if the member is tension-only. Default is False.
+        comp_only : bool, optional
+            Indicates if the member is compression-only. Default is False.
+        '''
+        
+        # Create a new spring
+        newSpring = Spring3D(Name, self.GetNode(iNode), self.GetNode(jNode), ks,
+                             self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
+        
+        # Add the new member to the list
+        self.Springs.append(newSpring)
+
 #%%
     def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
                   tension_only=False, comp_only=False):
@@ -170,7 +200,21 @@ class FEModel3D():
         
         # Find any members attached to the node and remove them
         self.Members = [member for member in self.Members if member.iNode.Name != Node and member.jNode.Name != Node]
+
+#%%
+    def RemoveSpring(self, Spring):
+        '''
+        Removes a spring from the model.
         
+        Parameters
+        ----------
+        Spring : string
+            The name of the spring to be removed.
+        '''
+        
+        # Remove the spring.
+        self.Springs.remove(self.GetSpring(Spring))
+
 #%%
     def RemoveMember(self, Member):
         '''
@@ -481,10 +525,34 @@ class FEModel3D():
             if node.Name == Name:
                 
                 # Return the node of interest
-                return node            
-        # if the node name is not found and loop finishes
+                return node
+        
+        # If the node name is not found and loop finishes
         raise ValueError(f"AuxNode '{Name}' was not found in the model")
+
+#%%
+    def GetSpring(self, Name):
+        '''
+        Returns the spring with the given name.
+        
+        Parameters
+        ----------
+        Name : string
+            The name of the spring to be returned.
+        '''
+        
+        # Step through each spring in the 'Springs' list
+        for spring in self.Springs:
             
+            # Check the name of the member
+            if spring.Name == Name:
+                
+                # Return the spring of interest
+                return spring
+        
+        # If the spring name is not found and loop finishes
+        raise ValueError(f"Spring '{Name}' was not found in the model")
+
 #%%
     def GetMember(self, Name):
         '''
@@ -504,7 +572,8 @@ class FEModel3D():
                 
                 # Return the member of interest
                 return member
-        # if the node name is not found and loop finishes
+        
+        # If the member name is not found and loop finishes
         raise ValueError(f"Member '{Name}' was not found in the model")
 
 #%%
@@ -663,6 +732,42 @@ class FEModel3D():
         # Initialize a zero matrix to hold all the stiffness terms
         K = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
         
+        # Add stiffness terms for each spring in the model
+        print('...Adding spring stiffness terms to global stiffness matrix')
+        for spring in self.Springs:
+            
+            if spring.active[combo_name] == True:
+
+                # Get the spring's global stiffness matrix
+                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                spring_K = spring.K()
+
+                # Step through each term in the spring's stiffness matrix
+                # 'a' & 'b' below are row/column indices in the spring's stiffness matrix
+                # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+                for a in range(12):
+                
+                    # Determine if index 'a' is related to the i-node or j-node
+                    if a < 6:
+                        # Find the corresponding index 'm' in the global stiffness matrix
+                        m = spring.iNode.ID*6 + a
+                    else:
+                        # Find the corresponding index 'm' in the global stiffness matrix
+                        m = spring.jNode.ID*6 + (a-6)
+                    
+                    for b in range(12):
+                    
+                        # Determine if index 'b' is related to the i-node or j-node
+                        if b < 6:
+                            # Find the corresponding index 'n' in the global stiffness matrix
+                            n = spring.iNode.ID*6 + b
+                        else:
+                            # Find the corresponding index 'n' in the global stiffness matrix
+                            n = spring.jNode.ID*6 + (b-6)
+                    
+                        # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                        K.itemset((m, n), K.item((m, n)) + spring_K.item((a, b)))
+
         # Add stiffness terms for each member in the model
         print('...Adding member stiffness terms to global stiffness matrix')
         for member in self.Members:
@@ -959,7 +1064,11 @@ class FEModel3D():
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
 
-        # Activate all members for all load combinations
+        # Activate all springs and members for all load combinations
+        for spring in self.Springs:
+            for combo_name in self.LoadCombos.keys():
+                spring.active[combo_name] = True
+
         for member in self.Members:
             for combo_name in self.LoadCombos.keys():
                 member.active[combo_name] = True 
@@ -1063,13 +1172,29 @@ class FEModel3D():
                 if iter_count > max_iter:
                     divergence = True
                     raise Exception('...Model diverged during tension/compression-only analysis')
+                
+                # Assume the model has converged (to be checked below)
+                convergence = True
+
+                # Check tension-only and compression-only springs
+                print('...Checking for tension/compression-only spring convergence')
+                for spring in self.Springs:
+
+                    if spring.active[combo.name] == True:
+
+                        # Check if tension-only conditions exist
+                        if spring.tension_only == True and spring.Axial(combo.name) > 0:
+                            spring.active[combo.name] = False
+                            convergence = False
+                        
+                        # Check if compression-only conditions exist
+                        elif spring.comp_only == True and spring.Axial(combo.name) < 0:
+                            spring.active[combo.name] = False
+                            convergence = False
 
                 # Check tension-only and compression-only members
                 print('...Checking for tension/compression-only member convergence')
                 for member in self.Members:
-
-                    # Assume the model has converged (to be checked below)
-                    convergence = True
 
                     # Only run the tension/compression only check if the member is still active
                     if member.active[combo.name] == True:
@@ -1166,13 +1291,13 @@ class FEModel3D():
                 if iter_count_PD == 1:
                     
                     K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices) # Initial stiffness matrix
-                    FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
-                    P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
+                    FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)       # Fixed end reactions
+                    P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)             # Nodal forces
 
                 else:
 
                     # Calculate the global stiffness matrices (partitioned)
-                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices)           # Initial stiffness matrix
+                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices)      # Initial stiffness matrix
                     Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name), D1_indices, D2_indices) # Geometric stiffness matrix
 
                     # Combine the stiffness matrices
@@ -1246,12 +1371,39 @@ class FEModel3D():
                 if iter_count_TC > max_iter:
                     divergence_TC = True
                     raise Exception('...Model diverged during tension/compression-only analysis')
-
-                # Check for tension/compression-only members that need to be deactivated
-                print('...Checking for tension/compression-only member convergence')
                 
                 # Assume the model has converged (to be checked below)
                 convergence_TC = True
+
+                # Check for tension/compression-only springs that need to be deactivated
+                print('...Checking for tension/compression-only spring convergence')
+                for spring in self.Springs:
+
+                    # Only run the tension/compression only check if the spring is still active
+                    if spring.active[combo.name] == True:
+
+                        # Check if tension-only conditions exist
+                        if spring.tension_only == True and spring.Axial(combo.name) > 0:
+                            
+                            spring.active[combo.name] = False
+                            convergence_TC = False
+
+                            # Reset the P-Delta analysis for the new geometry
+                            iter_count_PD = 0
+                            convergence_PD = False
+
+                        # Check if compression-only conditions exist
+                        elif spring.comp_only == True and spring.Axial(combo.name) < 0:
+                            
+                            spring.active[combo.name] = False
+                            convergence_TC = False
+
+                            # Reset the P-Delta analysis for the new geometry
+                            iter_count_PD = 0
+                            convergence_PD = False
+                
+                # Check for tension/compression-only members that need to be deactivated
+                print('...Checking for tension/compression-only member convergence')
                 for member in self.Members:
 
                     # Only run the tension/compression only check if the member is still active
