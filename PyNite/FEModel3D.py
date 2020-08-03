@@ -1064,6 +1064,11 @@ class FEModel3D():
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
 
+        # Ensure there is at least 1 load combination to solve if the user didn't define any
+        if self.LoadCombos == {}:
+            # Create and add a default load combination to the dictionary of load combinations
+            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
+        
         # Activate all springs and members for all load combinations
         for spring in self.Springs:
             for combo_name in self.LoadCombos.keys():
@@ -1078,11 +1083,6 @@ class FEModel3D():
 
         # Convert D2 from a list to a matrix
         D2 = matrix(D2).T
-
-        # Ensure there is at least 1 load combination to solve if the user didn't define any
-        if self.LoadCombos == {}:
-            # Create and add a default load combination to the dictionary of load combinations
-            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
@@ -1249,22 +1249,25 @@ class FEModel3D():
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
 
-        # Activate all members for all load combinations
-        # (Used for tension/compression-only analysis)
+        # Ensure there is at least 1 load combination to solve if the user didn't define any
+        if self.LoadCombos == {}:
+            # Create and add a default load combination to the dictionary of load combinations
+            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
+    
+        # Activate all springs and members for all load combinations
+        for spring in self.Springs:
+            for combo_name in self.LoadCombos.keys():
+                spring.active[combo_name] = True
+
         for member in self.Members:
             for combo_name in self.LoadCombos.keys():
-                member.active[combo_name] = True
-
+                member.active[combo_name] = True 
+        
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self.__AuxList()
 
         # Convert D2 from a list to a matrix
         D2 = matrix(D2).T    
-
-        # Ensure there is at least 1 load combination to solve if the user didn't define any
-        if self.LoadCombos == {}:
-            # Create and add a default load combination to the dictionary of load combinations
-            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
