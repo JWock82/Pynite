@@ -1,5 +1,6 @@
 # %%
-from numpy import matrix, zeros, empty, delete, insert, matmul, divide, add, subtract, nanmax, seterr, shape
+from numpy import array, matrix, zeros, empty, delete, insert, matmul, divide, add, subtract
+from numpy import nanmax, seterr, shape
 from numpy.linalg import solve, matrix_rank
 from math import isclose
 from PyNite.Node3D import Node3D
@@ -601,10 +602,9 @@ class FEModel3D():
 #%%
     def __Renumber(self):
         '''
-        Assigns node, plate, and member ID numbers to be used internally by the
-        program. Numbers are assigned according to the order nodes, members, and plates
+        Assigns node, spring, member, and plate member ID numbers to be used internally by the
+        program. Numbers are assigned according to the order nodes, springs, members, and plates
         were added to the model.
-        
         '''
         
         # Number each node in the model
@@ -613,6 +613,12 @@ class FEModel3D():
             node.ID = i
             i += 1
         
+        # Number each spring in the model
+        i = 0
+        for spring in self.Springs:
+            spring.ID = i
+            i += 1
+
         # Number each member in the model
         i = 0
         for member in self.Members:
@@ -1238,8 +1244,9 @@ class FEModel3D():
             The maximum number of iterations permitted. If this value is exceeded the program will
             report divergence.
         tol : number
-            The deflection tolerance (as a percentage) between iterations that will be used to define whether the model
-            has converged (e.g. 0.01 = deflections must converge within 1% between iterations).
+            The deflection tolerance (as a percentage) between iterations that will be used to
+            define whether the model has converged (e.g. 0.01 = deflections must converge within 1%
+            between iterations).
         '''
         
         print('+--------------------+')
@@ -1251,10 +1258,12 @@ class FEModel3D():
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
+
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
     
-        # Activate all springs and members for all load combinations
+        # Activate all springs and members for all load combinations. They can be turned inactive
+        # during the course of the tension/compression-only analysis
         for spring in self.Springs:
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
@@ -1267,7 +1276,7 @@ class FEModel3D():
         D1_indices, D2_indices, D2 = self.__AuxList()
 
         # Convert D2 from a list to a matrix
-        D2 = matrix(D2).T    
+        D2 = array(D2, ndmin=2).T
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
@@ -1275,20 +1284,22 @@ class FEModel3D():
             print('')
             print('...Analyzing load combination ', combo.name)
 
-            # Keep track of the number of iterations
-            iter_count_TC = 1 # Tension/compression-only iterations
-            iter_count_PD = 1 # P-Delta iterations
-            convergence_TC = False
-            convergence_PD = False
-            divergence_TC = False
-            divergence_PD = False
+            iter_count_TC = 1 # Tracks tension/compression-only iterations
+            iter_count_PD = 1 # Tracks P-Delta iterations
+
+            convergence_TC = False # Tracks tension/compression-only convergence
+            convergence_PD = False # Tracks P-Delta convergence
+
+            divergence_TC = False  # Tracks tension/compression-only divergence
+            divergence_PD = False  # Tracks P-Delta divergence
 
             # Iterate until convergence or divergence occurs
-            while (convergence_TC == False and convergence_PD == False and
-                   divergence_TC == False and divergence_PD == False):
-            
+            while ((convergence_TC == False or convergence_PD == False) 
+                  and (divergence_TC == False and divergence_PD == False)):
+
                 # Inform the user which iteration we're on
-                print('...Beginning P-Delta iteration #' + str(iter_count_PD))
+                print('...Beginning tension/compression-only iteration #', str(iter_count_TC))
+                print('...Beginning P-Delta iteration #', str(iter_count_PD))
 
                 # Get the partitioned global matrices
                 if iter_count_PD == 1:
@@ -1370,11 +1381,6 @@ class FEModel3D():
                     node.RY[combo.name] = D[node.ID*6 + 4, 0]
                     node.RZ[combo.name] = D[node.ID*6 + 5, 0]
                 
-                # Check for divergence on tension/compression-only members
-                if iter_count_TC > max_iter:
-                    divergence_TC = True
-                    raise Exception('...Model diverged during tension/compression-only analysis')
-                
                 # Assume the model has converged (to be checked below)
                 convergence_TC = True
 
@@ -1434,12 +1440,17 @@ class FEModel3D():
                 
                 # Report on convergence of tension/compression only analysis
                 if convergence_TC == False:
-                    print('...Tension/compression-only analysis did not converge')
-                    print('...Stiffness matrix will be adjusted for deactivated members')
-                    print('...P-Delta analysis will be reset for updated geometry')
+                    print('...Tension/compression-only analysis did not converge on this iteration')
+                    print('...Stiffness matrix will be adjusted for newly deactivated elements')
+                    print('...P-Delta analysis will be restarted')
                 else:
                     print('...Tension/compression-only analysis converged after', str(iter_count_TC), ' iterations')
                 
+                # Check for divergence in the tension/compression-only analysis
+                if iter_count_TC > max_iter:
+                    divergence_TC = True
+                    raise Exception('...Model diverged during tension/compression-only analysis')
+
                 # Increment the tension/compression-only iteration count
                 iter_count_TC += 1
 
@@ -1456,7 +1467,7 @@ class FEModel3D():
                     # Check for convergence
                     if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
                         convergence_PD = True
-                        print('...P-Delta analysis converged after' + str(iter_count) + ' iterations')
+                        print('...P-Delta analysis converged after' + str(iter_count_PD) + ' iterations')
                     # Check for divergence
                     elif iter_count_PD > max_iter:
                         divergence_PD = True
