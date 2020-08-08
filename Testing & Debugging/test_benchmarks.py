@@ -74,8 +74,8 @@ class Test_AISC_Benchmark(unittest.TestCase):
         ymax = H*L**3/(3*E*I)*(3*(math.tan(alpha)-alpha)/alpha**3)
         
         # Compare the calculation results
-        self.assertAlmostEqual(calculated_moment, Mmax, 4)
-        self.assertAlmostEqual(calculated_displacement, ymax*12, 4)
+        self.assertAlmostEqual(calculated_moment/Mmax, 1.0, 1)
+        self.assertAlmostEqual(calculated_displacement/(ymax*12), 1.0, 1)
 
 class Test_2D_Frame(unittest.TestCase):
     ''' Subclass of TestCase, which is executed by unittest.main
