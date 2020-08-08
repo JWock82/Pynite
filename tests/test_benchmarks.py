@@ -63,7 +63,7 @@ class Test_AISC_Benchmark(unittest.TestCase):
         cantilever.Analyze_PDelta()
 
         # The moment at the base of the column
-        calculated_moment = -cantilever.GetMember('1').Moment('Mz', 0.001, 'Combo 1')
+        calculated_moment = cantilever.GetNode('1').RxnMZ['Combo 1']
 
         # the deflection at the top of the column
         calculated_displacement = cantilever.GetNode(str(num_nodes)).DX['Combo 1']*12
@@ -74,8 +74,8 @@ class Test_AISC_Benchmark(unittest.TestCase):
         ymax = H*L**3/(3*E*I)*(3*(math.tan(alpha)-alpha)/alpha**3)
         
         # Compare the calculation results
-        self.assertEqual(calculated_moment, Mmax)
-        self.assertEqual(calculated_displacement, ymax*12)
+        self.assertAlmostEqual(calculated_moment, Mmax, 4)
+        self.assertAlmostEqual(calculated_displacement, ymax*12, 4)
 
 class Test_2D_Frame(unittest.TestCase):
     ''' Subclass of TestCase, which is executed by unittest.main
