@@ -42,6 +42,8 @@ I am a structural engineer first and foremost. If you're looking for help unders
 I get more feature requests than I have time to handle. I chip away at them as I find time, but it's a slow process. However, if there is a feature you really want expedited, especially a complex one that takes considerable effort, I'm generally willing to devolop it on a consulting basis. I'd prefer to keep any new features I develop free for all users under the MIT License however. You are still welcome to use it for your proprietary software. That promotes expansion of PyNite's capabilities and more opportunities for me to improve PyNite for everyone. Again, you can contact me at <Building.Code@outlook.com> to discuss options.
 
 # What's New?
+Version 0.0.16: Bug fix for P-Delta analysis. P-Delta was no longer iterating after adding tension/compression-only analysis. Fixed the problem.
+
 Version 0.0.15:
 Added springs to PyNite. Springs can be two-way, tension-only, or compression-only. Also, fixed numerous bugs relating to tension-only/compression-only analysis features in version 0.0.14.
 
