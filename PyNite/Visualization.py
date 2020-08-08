@@ -1,101 +1,161 @@
-# Import the Visualization Toolkit if it's not alread imported
-# You must be running a 64 bit version of Python for this to work
+# Import the Visualization Toolkit (VTK). VTK requires a 64 bit version of 
+# Python.
 import vtk
 from numpy import array, empty, append
-from math import isclose, sqrt
 
 #%%
-def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30, render_loads=True, combo_name='Combo 1', case=None):
+def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
+                render_loads=True, combo_name='Combo 1', case=None):
+  '''
+  Renders a finite element model using VTK.
+
+  Parameters
+  ----------
+  model : FEModel3D
+    Finite element model to be rendered.
+  text_height : number, optional
+    Controls the height of text displayed with the model. The units used for
+    `text_height` are the same as those used for lengths in the model. Sizes
+    of other objects (such as nodes) are related to this value. The default is
+    5.
+  deformed_shape : boolean, optional
+    Determines whether the deformed shape will be rendered or not. The model
+    must be solved to use this feature. Deformed shapes are not available for
+    load cases, only load combinations. The default is False.
+  deformed_scale : boolean, optional
+    Determines what magnification factor will be applied to the deformed
+    shape. The default is 30.
+  render_loads : boolean, optional
+    Determines if loads will be rendered with the deformed shape. The default
+    is True.
+  combo_name : string, optional
+    The load combination used for rendering the deformed shape and the loads.
+    The default is 'Combo 1'.
+  case : string, optional
+    The load case used for rendering loads. The default is None.
+    
+  Raises
+  ------
+  Exception
+    A deformed shape is requested and a load case has been specified.
+
+  Returns
+  -------
+  None.
+  '''
 
   # Input validation
   if deformed_shape == True and case != None:
-    print('Error: Deformed shape is only available for load combinations, not load cases.')
-    return
-
-  visNodes = []
+    raise Exception('Deformed shape is only available for load combinations,'
+                    ' not load cases.')
+  
+  # Create a visual node for each node in the model
+  vis_nodes = []
   for node in model.Nodes:
-    visNodes.append(VisNode(node, text_height))
-
-  visAuxNodes = []
-  for auxnode in model.auxNodes:
-    visAuxNodes.append(VisNode(auxnode, text_height, color='red'))
-
-  visMembers = []
+    vis_nodes.append(VisNode(node, text_height))
+  
+  # Create a visual auxiliary node for each auxiliary node in the model
+  vis_aux_nodes = []
+  for aux_node in model.auxNodes:
+    vis_aux_nodes.append(VisNode(aux_node, text_height, color='red'))
+  
+  # Create a visual spring for each spring in the model
+  vis_springs = []
+  for spring in model.Springs:
+    vis_springs.append(VisSpring(spring, model.Nodes, text_height))    
+  
+  # Create a visual member for each member in the model
+  vis_members = []
   for member in model.Members:
-    visMembers.append(VisMember(member, model.Nodes, text_height))
-
-  visPlates = []
+    vis_members.append(VisMember(member, model.Nodes, text_height))
+  
+  # Create a visual plate for each plate in the model
+  vis_plates = []
   for plate in model.Plates:
-    visPlates.append(VisPlate(plate, model.Nodes, text_height))
+    vis_plates.append(VisPlate(plate, model.Nodes, text_height))
   
   # Create a window
   window = vtk.vtkRenderWindow()
 
   # Set the pixel width and length of the window
-  window.SetSize(500, 500)
+  window.SetSize(750, 750)
 
-  # Set up the interactor
-  # The interactor style determines how user interactions affect the view
+  # Set up the interactor. The interactor style determines how user
+  # interactions affect the view. The trackball camera style behaves much
+  # like popular commercial CAD programs.
   interactor = vtk.vtkRenderWindowInteractor()
-  style = vtk.vtkInteractorStyleTrackballCamera() # The trackball camera style behaves a lot like most CAD programs
+  style = vtk.vtkInteractorStyleTrackballCamera()
   interactor.SetInteractorStyle(style)
   interactor.SetRenderWindow(window)
 
-  # Create a renderer
+  # Create a renderer object and add it to the window
   renderer = vtk.vtkRenderer()
   window.AddRenderer(renderer)
-  
+
+  # Add actors for each spring
+  for vis_spring in vis_springs:
+
+    # Add the actor for the spring
+    renderer.AddActor(vis_spring.actor)
+
+    # Add the actor for the spring label
+    renderer.AddActor(vis_spring.lblActor)
+
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())    
+
   # Add actors for each member
-  for visMember in visMembers:
+  for vis_member in vis_members:
 
     # Add the actor for the member
-    renderer.AddActor(visMember.actor)
+    renderer.AddActor(vis_member.actor)
 
     # Add the actor for the member label
-    renderer.AddActor(visMember.lblActor)
+    renderer.AddActor(vis_member.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visMember.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Add actors for each node
-  for visNode in visNodes:
-
+  for vis_node in vis_nodes:
+        
     # Add the actor for the node
-    renderer.AddActor(visNode.actor)
+    renderer.AddActor(vis_node.actor)
 
     # Add the actor for the node label
-    renderer.AddActor(visNode.lblActor)
+    renderer.AddActor(vis_node.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visNode.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Add actors for each plate
-  for visPlate in visPlates:
+  for vis_plate in vis_plates:
 
     # Add the actors for the plate
-    renderer.AddActor(visPlate.actor)
+    renderer.AddActor(vis_plate.actor)
 
     # Add the actor for the plate label
-    renderer.AddActor(visPlate.lblActor)
+    renderer.AddActor(vis_plate.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visPlate.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_plate.lblActor.SetCamera(renderer.GetActiveCamera())
 
-  # Add actors for each auxnode
-  for visAuxNode in visAuxNodes:
+  # Add actors for each auxiliary node
+  for vis_aux_node in vis_aux_nodes:
 
-    # Add the actor for the node
-    renderer.AddActor(visAuxNode.actor)
+    # Add the actor for the auxiliary node
+    renderer.AddActor(vis_aux_node.actor)
 
-    # Add the actor for the node label
-    renderer.AddActor(visAuxNode.lblActor)
+    # Add the actor for the auxiliary node label
+    renderer.AddActor(vis_aux_node.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Render the deformed shape if requested
   if deformed_shape == True:
@@ -105,31 +165,66 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30, r
   if combo_name != None or case !=None:
     __RenderLoads(model, renderer, text_height, combo_name, case)
 
-  # Setting the background to blue.
+  # Set the window's background to blue
   renderer.SetBackground(0.1, 0.1, 0.4)
 
   # Reset the camera
   renderer.ResetCamera()
-
+    
+  # Render the window and start the interactor
   window.Render()
   interactor.Start()
 
 #%%
 def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
+  '''
+  Renders the deformed shape of a structure.
+
+  Parameters
+  ----------
+  model : FEModel3D
+    Finite element model to be rendered.
+  renderer : vtk.vtkRenderer
+    The VTK renderer object that will render the model.
+  scale_factor : number
+    The scale factor to apply to the model deformations.
+  text_height : number
+    Controls the height of text displayed with the model. The units used
+    for `text_height` are the same as those used for lengths in the model.
+    Sizes of other objects (such as nodes) are related to this value.
+  combo_name : string
+    The load case used for rendering the deflected shape.
+
+  Returns
+  -------
+  None.
+  '''
 
   visDeformedNodes = []
   for node in model.Nodes:
     visDeformedNodes.append(VisDeformedNode(node, scale_factor, text_height, combo_name))
   
+  visDeformedSprings = []
+  for spring in model.Springs:
+    visDeformedSprings.append(VisDeformedSpring(spring, model.Nodes, scale_factor, text_height, combo_name))
+  
   visDeformedMembers = []
   for member in model.Members:
     visDeformedMembers.append(VisDeformedMember(member, model.Nodes, scale_factor, text_height, combo_name))
+  
+  # Add actors for each deformed spring
+  for visDeformedSpring in visDeformedSprings:
 
+    # Only show the deformed member if it's active
+    if visDeformedSpring.active[combo_name] == True:
+      # Add the actor for the deformed spring
+      renderer.AddActor(visDeformedSpring.actor)
+  
   # Add actors for each deformed member
   for visDeformedMember in visDeformedMembers:
 
     # Only show the deformed member if it's active
-    if visDeformedMember.active[combo_name] == True:
+    if visDeformedMember.active[combo_name] == True:  
       # Add the actor for the deformed member
       renderer.AddActor(visDeformedMember.polylineActor)
 
@@ -730,6 +825,55 @@ class VisNode():
     # Set the mapper for the node's actor
     self.actor.SetMapper(mapper)
 
+#%%
+class VisSpring():
+    
+    def __init__(self, spring, nodes, text_height=5):
+    
+        # Generate a line source for the spring
+        line = vtk.vtkLineSource()
+
+        # Step through each node in the model and find the position of the
+        # i-node and j-node
+        for node in nodes:
+
+            # Check to see if the current node is the i-node
+            if node.Name == spring.iNode.Name:
+                Xi = node.X
+                Yi = node.Y
+                Zi = node.Z
+                line.SetPoint1(Xi, Yi, Zi)
+
+            # Check to see if the current node is the j-node
+            elif node.Name == spring.jNode.Name:
+                Xj = node.X
+                Yj = node.Y
+                Zj = node.Z
+                line.SetPoint2(Xj, Yj, Zj)
+    
+        # Set up a mapper for the spring
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(line.GetOutputPort())
+
+        # Set up an actor for the spring
+        self.actor = vtk.vtkActor()
+        self.actor.GetProperty().SetColor(255, 0, 255) # Magenta
+        self.actor.SetMapper(mapper)
+
+        # Create the text for the spring label
+        label = vtk.vtkVectorText()
+        label.SetText(spring.Name)
+
+        # Set up a mapper for the spring label
+        lblMapper = vtk.vtkPolyDataMapper()
+        lblMapper.SetInputConnection(label.GetOutputPort())
+
+        # Set up an actor for the spring label
+        self.lblActor = vtk.vtkFollower()
+        self.lblActor.SetMapper(lblMapper)
+        self.lblActor.SetScale(text_height, text_height, text_height)
+        self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
+
 #%%        
 # Converts a member object into a member for the viewer
 class VisMember():
@@ -871,135 +1015,198 @@ class VisPlate():
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(text_height, text_height, text_height)
-    self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, (Yi+Yj+Ym+Yn)/4, (Zi+Zj+Zm+Zn)/4)
+    self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, 
+                              (Yi+Yj+Ym+Yn)/4,
+                              (Zi+Zj+Zm+Zn)/4)
 
 #%%
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
-  
-  def __init__(self, node, scale_factor, text_height=5, combo_name='Combo 1'):
-  
-    # Calculate the node's deformed position
-    newX = node.X + scale_factor*(node.DX[combo_name])
-    newY = node.Y + scale_factor*(node.DY[combo_name])
-    newZ = node.Z + scale_factor*(node.DZ[combo_name])
-
-    # Generate a sphere for the node
-    sphere = vtk.vtkSphereSource()
-    sphere.SetCenter(newX, newY, newZ)
-    sphere.SetRadius(0.6*text_height)
-
-    # Set up a mapper for the node
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(sphere.GetOutputPort())
-
-    # Set up an actor for the node
-    self.actor = vtk.vtkActor()
-    self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
-    self.actor.SetMapper(mapper)
+    
+    def __init__(self, node, scale_factor, text_height=5,
+                 combo_name='Combo 1'):
         
-    # Create the text for the node label
-    label = vtk.vtkVectorText()
-    label.SetText(node.Name)
+        # Calculate the node's deformed position
+        newX = node.X + scale_factor*(node.DX[combo_name])
+        newY = node.Y + scale_factor*(node.DY[combo_name])
+        newZ = node.Z + scale_factor*(node.DZ[combo_name])
 
-    # Set up a mapper for the node label
-    lblMapper = vtk.vtkPolyDataMapper()
-    lblMapper.SetInputConnection(label.GetOutputPort())
+        # Generate a sphere source for the node
+        self.source = vtk.vtkSphereSource()
+        self.source.SetCenter(newX, newY, newZ)
+        self.source.SetRadius(0.6*text_height)
 
-    # Set up an actor for the node label
-    self.lblActor = vtk.vtkFollower()
-    self.lblActor.SetMapper(lblMapper)
-    self.lblActor.SetScale(text_height, text_height, text_height)
-    self.lblActor.SetPosition(newX + 0.6*text_height, newY + 0.6*text_height, newZ)
-    self.lblActor.GetProperty().SetColor(255, 255, 0) # Yellow
+        # Set up a mapper for the node
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(self.source.GetOutputPort())
+
+        # Set up an actor for the node
+        self.actor = vtk.vtkActor()
+        self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
+        self.actor.SetMapper(mapper)
+        
+        # Create the text for the node label
+        self.lbl_source = vtk.vtkVectorText()
+        self.lbl_source.SetText(node.Name)
+
+        # Set up a mapper for the node label
+        lblMapper = vtk.vtkPolyDataMapper()
+        lblMapper.SetInputConnection(self.lbl_source.GetOutputPort())
+
+        # Set up an actor for the node label
+        self.lblActor = vtk.vtkFollower()
+        self.lblActor.SetMapper(lblMapper)
+        self.lblActor.SetScale(text_height, text_height, text_height)
+        self.lblActor.SetPosition(newX + 0.6*text_height, 
+                                  newY + 0.6*text_height, newZ)
+        self.lblActor.GetProperty().SetColor(255, 255, 0) # Yellow
 
 #%%
-# Converts a member object into a member in its deformed position for the viewer
 class VisDeformedMember():
-
-  def __init__(self, member, nodes, scale_factor, text_height=5, combo_name='Combo 1'):
-
-    # Determine if this member is active for each load combination
-    self.active = member.active
-
-    L = member.L() # Member length
-    T = member.T() # Member local transformation matrix
-
-    cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
-    cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
-    cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
-
-    # Find the initial position of the local i-node
-    # Step through each node
-    for node in nodes:
-      
-      # Check to see if the current node is the i-node
-      if node.Name == member.iNode.Name:
-        Xi = node.X
-        Yi = node.Y
-        Zi = node.Z
-
-    # Calculate the local y-axis displacements at 20 points along the member's length
-    DY_plot = empty((0,3))
-    for i in range(20):
-
-      # Displacements in local coordinates
-      dy_tot = member.Deflection('dy', L/19*i, combo_name)
-
-      # Magnified displacements in global coordinates
-      DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
-
-    # Calculate the local z-axis displacements at 20 points along the member's length
-    DZ_plot = empty((0,3)) 
-    for i in range(20):
-
-      # Displacements in local coordinates
-      dz_tot = member.Deflection('dz', L/19*i, combo_name)
-
-      # Magnified displacements in global coordinates
-      DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
-
-    # Calculate the local x-axis displacements at 20 points along the member's length
-    DX_plot = empty((0,3)) 
-    for i in range(20):
-
-      # Displacements in local coordinates
-      dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i, combo_name)*scale_factor)*cos_x
-      
-      # Magnified displacements in global coordinates
-      DX_plot = append(DX_plot, dx_tot, axis=0)
     
-    # Sum the component displacements to obtain overall displacement
-    D_plot = (DY_plot + DZ_plot + DX_plot)
+    def __init__(self, member, nodes, scale_factor, text_height=5, 
+                 combo_name='Combo 1'):
+        
+        # Determine if this member is active for each load combination
+        self.active = member.active
 
-    # Generate vtk points
-    points = vtk.vtkPoints()
-    points.SetNumberOfPoints(len(D_plot))
+        L = member.L() # Member length
+        T = member.T() # Member local transformation matrix
 
-    for i in range(len(D_plot)):
-      points.SetPoint(i, D_plot[i, 0], D_plot[i, 1], D_plot[i, 2])
+        cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
+        cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
+        cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
 
-    # Generate vtk lines
-    lines = vtk.vtkCellArray()
-    lines.InsertNextCell(len(D_plot))
+        # Find the initial position of the local i-node
+        # Step through each node
+        for node in nodes:
+      
+            # Check to see if the current node is the i-node
+            if node.Name == member.iNode.Name:
+                Xi = node.X
+                Yi = node.Y
+                Zi = node.Z
 
-    for i in range(len(D_plot)):
-      lines.InsertCellPoint(i)
+        # Calculate the local y-axis displacements at 20 points along the
+        # member's length
+        DY_plot = empty((0,3))
+        for i in range(20):
+            
+            # Displacements in local coordinates
+            dy_tot = member.Deflection('dy', L/19*i, combo_name)
 
-    # Create a polyline from the defined points and lines
-    polyline = vtk.vtkPolyData()
-    polyline.SetPoints(points)
-    polyline.SetLines(lines)
+            # Magnified displacements in global coordinates
+            DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
 
-    # Set up a mapper
-    polylineMapper = vtk.vtkPolyDataMapper()
-    polylineMapper.SetInputData(polyline)
-    polylineMapper.Update()
+        # Calculate the local z-axis displacements at 20 points along the
+        # member's length
+        DZ_plot = empty((0,3)) 
+        for i in range(20):
+            
+            # Displacements in local coordinates
+            dz_tot = member.Deflection('dz', L/19*i, combo_name)
 
-    # Set up an actor for the polyline
-    self.polylineActor = vtk.vtkActor()
-    self.polylineActor.SetMapper(polylineMapper)
-    self.polylineActor.GetProperty().SetColor(255,255,0) # Yellow
+            # Magnified displacements in global coordinates
+            DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
+
+        # Calculate the local x-axis displacements at 20 points along the
+        # member's length
+        DX_plot = empty((0,3)) 
+        for i in range(20):
+            
+            # Displacements in local coordinates
+            dx_tot = ([[Xi, Yi, Zi]] 
+                      + (L/19*i 
+                         + member.Deflection('dx', L/19*i, combo_name)
+                         *scale_factor)*cos_x)
+            
+            # Magnified displacements in global coordinates
+            DX_plot = append(DX_plot, dx_tot, axis=0)
+    
+        # Sum the component displacements to obtain overall displacement
+        D_plot = (DY_plot + DZ_plot + DX_plot)
+
+        # Generate vtk points
+        points = vtk.vtkPoints()
+        points.SetNumberOfPoints(len(D_plot))
+
+        for i in range(len(D_plot)):
+            points.SetPoint(i, D_plot[i, 0], D_plot[i, 1], D_plot[i, 2])
+
+        # Generate vtk lines
+        lines = vtk.vtkCellArray()
+        lines.InsertNextCell(len(D_plot))
+
+        for i in range(len(D_plot)):
+            lines.InsertCellPoint(i)
+
+        # Create a polyline source from the defined points and lines
+        self.source = vtk.vtkPolyData()
+        self.source.SetPoints(points)
+        self.source.SetLines(lines)
+
+        # Set up a mapper
+        polylineMapper = vtk.vtkPolyDataMapper()
+        polylineMapper.SetInputData(self.source)
+        polylineMapper.Update()
+
+        # Set up an actor for the polyline
+        self.polylineActor = vtk.vtkActor()
+        self.polylineActor.SetMapper(polylineMapper)
+        self.polylineActor.GetProperty().SetColor(255,255,0) # Yellow
+    
+#%%
+class VisDeformedSpring():
+    
+    def __init__(self, spring, nodes, scale_factor, text_height=5, 
+                 combo_name='Combo 1'):
+
+        # Determine if this spring is active for each load combination
+        self.active = spring.active
+        
+        # Generate a line source for the spring
+        self.source = vtk.vtkLineSource()
+        
+        # Find the deformed position of the local i-node
+        # Step through each node
+        for node in nodes:
+      
+            # Check to see if the current node is the i-node
+            if node.Name == spring.iNode.Name:
+                Xi = node.X + node.DX[combo_name]*scale_factor
+                Yi = node.Y + node.DY[combo_name]*scale_factor
+                Zi = node.Z + node.DZ[combo_name]*scale_factor
+                self.source.SetPoint1(Xi, Yi, Zi)
+        
+            # Check to see if the current node is the i-node
+            if node.Name == spring.jNode.Name:
+                Xj = node.X + node.DX[combo_name]*scale_factor
+                Yj = node.Y + node.DY[combo_name]*scale_factor
+                Zj = node.Z + node.DZ[combo_name]*scale_factor
+                self.source.SetPoint2(Xj, Yj, Zj)
+        
+        # Set up a mapper for the spring
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(self.source.GetOutputPort())
+
+        # Set up an actor for the spring
+        self.actor = vtk.vtkActor()
+        self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
+        self.actor.SetMapper(mapper)
+
+        # Create the text for the spring label
+        self.label_source = vtk.vtkVectorText()
+        self.label_source.SetText(spring.Name)
+
+        # Set up a mapper for the spring label
+        lblMapper = vtk.vtkPolyDataMapper()
+        lblMapper.SetInputConnection(self.label_source.GetOutputPort())
+
+        # Set up an actor for the spring label
+        self.lblActor = vtk.vtkFollower()
+        self.lblActor.SetMapper(lblMapper)
+        self.lblActor.SetScale(text_height, text_height, text_height)
+        self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
     
 #%%
 class VisPtLoad():
