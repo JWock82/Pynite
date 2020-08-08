@@ -32,3 +32,7 @@ print(system.GetNode('4').DX['Combo 1'])
 print('')
 print(system.GetNode('1').RxnFX['Combo 1'])
 print(system.GetNode('2').RxnFX['Combo 1'])
+
+from PyNite import Visualization
+Visualization.RenderModel(system, text_height=0.5, deformed_shape=True,
+                          deformed_scale=1)
