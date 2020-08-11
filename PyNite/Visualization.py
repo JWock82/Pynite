@@ -1,7 +1,7 @@
 # Import the Visualization Toolkit (VTK). VTK requires a 64 bit version of 
 # Python.
 import vtk
-from numpy import array, empty, append
+from numpy import array, empty, append, cross
 
 #%%
 def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
@@ -1394,7 +1394,7 @@ class VisMoment():
     # Find a vector perpendicular to the directional unit vector
     v1 = UnitVector(direction) # The direction of the moment
     v2 = PerpVector(v1) # A vector perpendicular to the direction
-    v3 = UnitVector(CrossProduct(v1, v2))
+    v3 = UnitVector(cross(v1, v2))
 
     # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
     self.append_filter = vtk.vtkAppendPolyData()
@@ -1418,7 +1418,7 @@ class VisMoment():
     cone_radius = radius/8
     tip = vtk.vtkConeSource()
     tip.SetCenter(arc.GetPoint1()[0], arc.GetPoint1()[1], arc.GetPoint1()[2])
-    tip.SetDirection(CrossProduct(v1, v2))
+    tip.SetDirection(cross(v1, v2))
     tip.SetHeight(tip_length)
     tip.SetRadius(cone_radius)
 
@@ -1466,13 +1466,6 @@ def UnitVector(v):
 
   # Divide the vector by its magnitude to get a unit vector
   return [i/mag, j/mag, k/mag]
-
-def CrossProduct(v1, v2):
-
-  i1, j1, k1 = v1[0], v1[1], v1[2]
-  i2, j2, k2 = v2[0], v2[1], v2[2]
-
-  return [j1*k2 - j2*k1, -i1*k2 + i2*k1, i1*j2 - i2*j1]
 
 def PerpVector(v):
   '''
