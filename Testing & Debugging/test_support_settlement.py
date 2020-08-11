@@ -1,0 +1,81 @@
+# -*- coding: utf-8 -*-
+"""
+MIT License
+
+Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
+
+From:
+Structural Analysis, 3rd Edition
+Aslam Kassimali
+Example 13.14
+"""
+
+import unittest
+from PyNite import FEModel3D
+import math
+import sys
+from io import StringIO
+
+class Test_Support_Settlement(unittest.TestCase):
+    ''' Test for support settlements. '''
+
+    def setUp(self):
+        # Suppress printed output temporarily
+        sys.stdout = StringIO()
+
+    def tearDown(self):
+        # Reset the print function to normal
+        sys.stdout = sys.__stdout__
+
+    def test_support_settlement(self):
+        beam = FEModel3D()
+        # Add nodes
+        beam.AddNode('A', 0, 0, 0)
+        beam.AddNode('B', 20*12, 0, 0)
+        beam.AddNode('C', 40*12, 0, 0)
+        beam.AddNode('D', 60*12, 0, 0)
+        # Add members
+        A = 20
+        E = 29000
+        G = 11400
+        Iy = 1000
+        Iz = 7800
+        J = 8800
+        beam.AddMember('AB', 'A', 'B', E, G, Iy, Iz, J, A)
+        beam.AddMember('BC', 'B', 'C', E, G, Iy, Iz, J, A)
+        beam.AddMember('CD', 'C', 'D', E, G, Iy, Iz, J, A)
+        # Provide supports
+        beam.DefineSupport('A', True, True, True, True, False, False)
+        beam.DefineSupport('B', False, True, True, False, False, False)
+        beam.DefineSupport('C', False, True, True, False, False, False)
+        beam.DefineSupport('D', False, True, True, False, False, False)
+        # Add a uniform load to the beam
+        beam.AddMemberDistLoad('AB', 'Fy', -2/12, -2/12)
+        beam.AddMemberDistLoad('BC', 'Fy', -2/12, -2/12)
+        beam.AddMemberDistLoad('CD', 'Fy', -2/12, -2/12)
+        # Add support settlements
+        beam.AddNodeDisplacement('B', 'DY', -5/8)
+        beam.AddNodeDisplacement('C', 'DY', -1.5)
+        beam.AddNodeDisplacement('D', 'DY', -0.75)
+        # Analyze the beam
+        beam.Analyze()
+        # subTest context manager prints which portion fails, if any
+        with self.subTest(node='A'):
+            calculated_Rxn_A = beam.GetNode('A').RxnFY['Combo 1']
+            expected_Rxn_A = -1.098
+            self.assertAlmostEqual(calculated_Rxn_A/expected_Rxn_A, 1.0, 2)
+
+        with self.subTest(node='B'):
+            calculated_Rxn_B = beam.GetNode('B').RxnFY['Combo 1']
+            expected_Rxn_B = 122.373
+            self.assertAlmostEqual(calculated_Rxn_B/expected_Rxn_B, 1.0, 2)
+
+        with self.subTest(node='C'):
+            calculated_Rxn_C = beam.GetNode('C').RxnFY['Combo 1']
+            expected_Rxn_C = -61.451
+            self.assertAlmostEqual(calculated_Rxn_C/expected_Rxn_C, 1.0, 2)
+
+        with self.subTest(node='D'):
+            calculated_Rxn_D = beam.GetNode('D').RxnFY['Combo 1']
+            expected_Rxn_D = 60.176
+            self.assertAlmostEqual(calculated_Rxn_D/expected_Rxn_D, 1.0, 2)
