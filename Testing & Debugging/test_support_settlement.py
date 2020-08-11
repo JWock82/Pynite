@@ -60,22 +60,13 @@ class Test_Support_Settlement(unittest.TestCase):
         # Analyze the beam
         beam.Analyze()
         # subTest context manager prints which portion fails, if any
-        with self.subTest(node='A'):
-            calculated_Rxn_A = beam.GetNode('A').RxnFY['Combo 1']
-            expected_Rxn_A = -1.098
-            self.assertAlmostEqual(calculated_Rxn_A/expected_Rxn_A, 1.0, 2)
-
-        with self.subTest(node='B'):
-            calculated_Rxn_B = beam.GetNode('B').RxnFY['Combo 1']
-            expected_Rxn_B = 122.373
-            self.assertAlmostEqual(calculated_Rxn_B/expected_Rxn_B, 1.0, 2)
-
-        with self.subTest(node='C'):
-            calculated_Rxn_C = beam.GetNode('C').RxnFY['Combo 1']
-            expected_Rxn_C = -61.451
-            self.assertAlmostEqual(calculated_Rxn_C/expected_Rxn_C, 1.0, 2)
-
-        with self.subTest(node='D'):
-            calculated_Rxn_D = beam.GetNode('D').RxnFY['Combo 1']
-            expected_Rxn_D = 60.176
-            self.assertAlmostEqual(calculated_Rxn_D/expected_Rxn_D, 1.0, 2)
+        correct_values = [('A', -1.098),
+                          ('B',  122.373),
+                          ('C', -61.451),
+                          ('D',  60.176)]
+        for name, value in correct_values:
+            with self.subTest(node=name):
+                calculated_Rxn = beam.GetNode(name).RxnFY['Combo 1']
+                # Two decimal place accuracy requires +/-0.5% accuracy
+                # one decimal place requires +/-5%
+                self.assertAlmostEqual(calculated_Rxn/value, 1.0, 2)
