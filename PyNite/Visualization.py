@@ -199,7 +199,7 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
   -------
   None.
   '''
-
+  
   visDeformedNodes = []
   for node in model.Nodes:
     visDeformedNodes.append(VisDeformedNode(node, scale_factor, text_height, combo_name))
