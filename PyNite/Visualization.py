@@ -208,7 +208,6 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
 
     vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
     poly_data = vtk.vtkPolyData()
-    vis_node.source.Update()
     poly_data.ShallowCopy(vis_node.source.GetOutput())
     append_filter.AddInputData(poly_data)
 
