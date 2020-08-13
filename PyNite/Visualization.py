@@ -1121,7 +1121,7 @@ class VisDeformedMember():
       DX_plot = append(DX_plot, dx_tot, axis=0)
     
     # Sum the component displacements to obtain overall displacement
-    D_plot = (DY_plot + DZ_plot + DX_plot)
+    D_plot = DY_plot + DZ_plot + DX_plot
 
     # Generate vtk points
     points = vtk.vtkPoints()
