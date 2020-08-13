@@ -505,6 +505,7 @@ class FEModel3D():
                 
                 # Return the node of interest
                 return node
+        
         # if the node name is not found and loop finishes
         raise ValueError(f"Node '{Name}' was not found in the model")
 
