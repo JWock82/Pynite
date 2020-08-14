@@ -163,3 +163,36 @@ class Test_2D_Frame(unittest.TestCase):
                 # one decimal place requires +/-5%
                 self.assertAlmostEqual(node.DY['Combo 1']/values['DY'], 1.0, 2)
                 self.assertAlmostEqual(node.RX['Combo 1']/values['RX'], 1.0, 2)
+
+    def test_XZ_ptload(self):
+        # A simply supported beam with a point load.
+        # Units used in this example are inches, and kips
+        SimpleBeam = FEModel3D()
+        # Add nodes (14 ft = 168 in apart)
+        SimpleBeam.AddNode("N1", 0, 0, 0)
+        SimpleBeam.AddNode("N2", 0, 0, 168)
+        # Add a beam with the following properties:
+        A = 20
+        E = 29000
+        G = 11400
+        Iy = 100
+        Iz = 150
+        J = 250
+        SimpleBeam.AddMember("M1", "N1", "N2", E, G, Iy, Iz, J, A)
+        # Provide simple supports
+        SimpleBeam.DefineSupport("N1", True, True, True, False, False, True)
+        SimpleBeam.DefineSupport("N2", True, True, True, False, False, False)
+        # Add a point load of 5 kips at the midspan of the beam
+        SimpleBeam.AddMemberPtLoad("M1", "Fy", 5, 7 * 12)
+        # Analyze the beam
+        SimpleBeam.Analyze(False)
+        # Print reactions at each end of the beam
+        correct_reactions = [('N1', -2.5),
+                             ('N2', -2.5)]
+        for node_name, rxn in correct_reactions:
+            with self.subTest(node=node_name):
+                calculated_reaction = SimpleBeam.GetNode(node_name).RxnFY['Combo 1']
+                # Two decimal place accuracy requires +/-0.5% accuracy
+                # one decimal place requires +/-5%
+                self.assertAlmostEqual(calculated_reaction/rxn, 1.0, 2)
+                
