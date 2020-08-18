@@ -1441,9 +1441,14 @@ class FEModel3D():
                 
                 # Report on convergence of tension/compression only analysis
                 if convergence_TC == False:
+                    
                     print('...Tension/compression-only analysis did not converge on this iteration')
                     print('...Stiffness matrix will be adjusted for newly deactivated elements')
                     print('...P-Delta analysis will be restarted')
+                    
+                    # Increment the tension/compression-only iteration count
+                    iter_count_TC += 1
+                    
                 else:
                     print('...Tension/compression-only analysis converged after', str(iter_count_TC), ' iterations')
                 
@@ -1451,9 +1456,6 @@ class FEModel3D():
                 if iter_count_TC > max_iter:
                     divergence_TC = True
                     raise Exception('...Model diverged during tension/compression-only analysis')
-
-                # Increment the tension/compression-only iteration count
-                iter_count_TC += 1
 
                 # Check for P-Delta convergence
                 if iter_count_PD > 1:
