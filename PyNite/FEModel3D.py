@@ -1299,8 +1299,8 @@ class FEModel3D():
                   and (divergence_TC == False and divergence_PD == False)):
 
                 # Inform the user which iteration we're on
-                print('...Beginning tension/compression-only iteration #', str(iter_count_TC))
-                print('...Beginning P-Delta iteration #', str(iter_count_PD))
+                print('...Beginning tension/compression-only iteration #' + str(iter_count_TC))
+                print('...Beginning P-Delta iteration #' + str(iter_count_PD))
 
                 # Get the partitioned global matrices
                 if iter_count_PD == 1:
@@ -1448,9 +1448,9 @@ class FEModel3D():
                     
                     # Increment the tension/compression-only iteration count
                     iter_count_TC += 1
-                    
+
                 else:
-                    print('...Tension/compression-only analysis converged after', str(iter_count_TC), ' iterations')
+                    print('...Tension/compression-only analysis converged after', str(iter_count_TC), 'iteration(s)')
                 
                 # Check for divergence in the tension/compression-only analysis
                 if iter_count_TC > max_iter:
@@ -1470,11 +1470,11 @@ class FEModel3D():
                     # Check for convergence
                     if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
                         convergence_PD = True
-                        print('...P-Delta analysis converged after' + str(iter_count_PD) + ' iterations')
+                        print('...P-Delta analysis converged after' + str(iter_count_PD) + 'iteration(s)')
                     # Check for divergence
                     elif iter_count_PD > max_iter:
                         divergence_PD = True
-                        print('...P-Delta analysis failed to converge after' + str(max_iter) + ' iterations')
+                        print('...P-Delta analysis failed to converge after' + str(max_iter) + 'iteration(s)')
 
                     # Turn invalid value warnings back on
                     seterr(invalid='warn') 
