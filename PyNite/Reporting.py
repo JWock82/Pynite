@@ -2,6 +2,10 @@
 from jinja2 import Environment, PackageLoader
 import pdfkit
 
+# Determine the filepath to the local PyNite installation
+from pathlib import Path
+path = Path(__file__).parent
+
 # Set up the jinja2 template environment
 env = Environment(
     loader=PackageLoader('PyNite', '.'),
@@ -10,7 +14,7 @@ env = Environment(
 # Get the report template
 template = env.get_template('Report_Template.html')
 
-def CreateReport(model, output_filepath='.//PyNite Report.pdf', \
+def CreateReport(model, output_filepath=path / './PyNite Report.pdf', \
                  nodes=True, members=True, plates=True, member_releases=True, \
                  node_reactions=True, node_displacements=True, member_end_forces=True, member_internal_forces=True, \
                  plate_corner_forces=True, plate_center_forces=True, plate_corner_membrane=True, plate_center_membrane=True):
@@ -33,6 +37,6 @@ def CreateReport(model, output_filepath='.//PyNite Report.pdf', \
 
     # Convert the HTML to pdf format using PDFKit
     # Note that wkhtmltopdf must be installed on the system, and included on the system's PATH environment variable for PDFKit to work
-    pdfkit.from_string(HTML, output_filepath, css='.//PyNite//MainStyleSheet.css')
+    pdfkit.from_string(HTML, output_filepath, css=path / './MainStyleSheet.css')
     
     return
