@@ -44,6 +44,8 @@ I am a structural engineer first and foremost. If you're looking for help unders
 I get more feature requests than I have time to handle. I chip away at them as I find time, but it's a slow process. However, if there is a feature you really want expedited, especially a complex one that takes considerable effort, I'm generally willing to devolop it on a consulting basis. I'd prefer to keep any new features I develop free for all users under the MIT License however. You are still welcome to use it for your proprietary software. That promotes expansion of PyNite's capabilities and more opportunities for me to improve PyNite for everyone. Again, you can contact me at <Building.Code@outlook.com> to discuss options.
 
 # What's New?
+Version 0.0.19: Fixed relative filepath references in the reporting feature. Reporting should work now... I think.
+
 Version 0.0.18: Similar to version 0.0.17. The report styling sheet is now included in the distribution. Reports should be working now
 
 Version 0.0.17: Corrected iteration count for tension/compression-only anlysis when combined with P-Delta analysis. The program was conservatively reporting solution divergence in some cases. Also cleaned up analysis output formatting.
