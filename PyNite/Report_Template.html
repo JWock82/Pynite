@@ -152,6 +152,42 @@
             </tbody>
         </table>
         {% endif %}
+        
+        {% if node_reactions == True %}
+        <h3>Node Reactions</h3>     
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Node</th>
+                    <th>LC</th>
+                    <th>FX</th>
+                    <th>FY</th>
+                    <th>FZ</th>
+                    <th>MX</th>
+                    <th>MY</th>
+                    <th>MZ</th>
+            </thead>
+
+            <tbody>
+            {% for combo in load_combos %}
+                {% for node in nodes %}
+                <tr>
+                    <td>{{ node.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ node.RxnFX[combo] }}</td>
+                    <td>{{ node.RxnFY[combo] }}</td>
+                    <td>{{ node.RxnFZ[combo] }}</td>
+                    <td>{{ node.RxnMX[combo] }}</td>
+                    <td>{{ node.RxnMY[combo] }}</td>
+                    <td>{{ node.RxnMZ[combo] }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {% endif %}
 
         {% if node_displacement == True %}
         <h3>Node Displacements</h3>
