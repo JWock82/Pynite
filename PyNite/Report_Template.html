@@ -29,9 +29,9 @@
             {% for node in nodes %}
                 <tr>
                     <td>{{ node.Name }}</td>
-                    <td>{{ node.X }}</td>
-                    <td>{{ node.Y }}</td>
-                    <td>{{ node.Z }}</td>
+                    <td>{{ "%.4g" | format(node.X) }}</td>
+                    <td>{{ "%.4g" | format(node.Y) }}</td>
+                    <td>{{ "%.4g" | format(node.Z) }}</td>
                     <td>{{ node.SupportDX }}</td>
                     <td>{{ node.SupportDY }}</td>
                     <td>{{ node.SupportDZ }}</td>
