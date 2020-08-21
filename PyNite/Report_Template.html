@@ -175,12 +175,12 @@
                 <tr>
                     <td>{{ node.Name }}</td>
                     <td>{{ combo }}</td>
-                    <td>{{ node.RxnFX[combo] }}</td>
-                    <td>{{ node.RxnFY[combo] }}</td>
-                    <td>{{ node.RxnFZ[combo] }}</td>
-                    <td>{{ node.RxnMX[combo] }}</td>
-                    <td>{{ node.RxnMY[combo] }}</td>
-                    <td>{{ node.RxnMZ[combo] }}</td>
+                    <td>{{ "%.4g" | format(node.RxnFX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnFY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnFZ[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnMX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnMY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnMZ[combo]) }}</td>
                 </tr>
                 {% endfor %}
             {% endfor %}
