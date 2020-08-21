@@ -1095,7 +1095,7 @@ class FEModel3D():
         for combo in self.LoadCombos.values():
 
             print('')
-            print('...Analyzing load combination ', combo.name)
+            print('...Analyzing load combination ' + combo.name)
 
             # Keep track of the number of iterations
             iter_count = 1
@@ -1219,7 +1219,7 @@ class FEModel3D():
                 if convergence == False:
                     print('...Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
                 else:
-                    print('...Tension/compression-only analysis coverged after', str(iter_count), ' iterations')
+                    print('...Tension/compression-only analysis coverged after ' + str(iter_count) + ' iteration(s)')
 
                 # Keep track of the number of tension/compression only iterations
                 iter_count += 1
@@ -1283,7 +1283,7 @@ class FEModel3D():
         for combo in self.LoadCombos.values():
 
             print('')
-            print('...Analyzing load combination ', combo.name)
+            print('...Analyzing load combination ' + combo.name)
 
             iter_count_TC = 1 # Tracks tension/compression-only iterations
             iter_count_PD = 1 # Tracks P-Delta iterations
@@ -1450,7 +1450,7 @@ class FEModel3D():
                     iter_count_TC += 1
 
                 else:
-                    print('...Tension/compression-only analysis converged after', str(iter_count_TC), 'iteration(s)')
+                    print('...Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
                 
                 # Check for divergence in the tension/compression-only analysis
                 if iter_count_TC > max_iter:
@@ -1470,11 +1470,11 @@ class FEModel3D():
                     # Check for convergence
                     if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
                         convergence_PD = True
-                        print('...P-Delta analysis converged after' + str(iter_count_PD) + 'iteration(s)')
+                        print('...P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')
                     # Check for divergence
                     elif iter_count_PD > max_iter:
                         divergence_PD = True
-                        print('...P-Delta analysis failed to converge after' + str(max_iter) + 'iteration(s)')
+                        print('...P-Delta analysis failed to converge after ' + str(max_iter) + ' iteration(s)')
 
                     # Turn invalid value warnings back on
                     seterr(invalid='warn') 
