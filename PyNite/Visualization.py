@@ -162,7 +162,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     __DeformedShape(model, renderer, deformed_scale, text_height, combo_name)
 
   # Render the loads if requested
-  if combo_name != None or case !=None:
+  if (combo_name != None or case != None) and render_loads != False:
     __RenderLoads(model, renderer, text_height, combo_name, case)
 
   # Set the window's background to blue
