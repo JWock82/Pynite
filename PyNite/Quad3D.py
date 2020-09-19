@@ -1,11 +1,18 @@
-from numpy import array, arccos, dot, cross, matmul, add, zeros, insert
-from numpy.linalg import inv, det, norm
-from math import atan, sin, cos
+# This is an isoparametric general quad element based on the MITC4
+# formulation. This element performs well for most basic structural and
+# mechanical engineering problems, even when distorted, and eliminates
+# the "shear locking" problems that can occur with some other plate bending
+# elements.
 
 # References used to derive this element:
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 2. "A First Course in the Finite Element Method, 4th Edition",
 #    Daryl L. Logan
+
+
+from numpy import array, arccos, dot, cross, matmul, add, zeros, insert
+from numpy.linalg import inv, det, norm
+from math import atan, sin, cos
 
 class Quad3D():
 
@@ -41,35 +48,12 @@ class Quad3D():
 #%%
     def B_kappa(self, r, s):
 
-        # Using a procedure similar to that shown for the rectangular plate in
-        # reference 1, Example 5.29, page 424.
-        # Row 1 = interpolation functions differentiated with respect to r
-        # Row 2 = interpolation functions differentiated with respect to s
-        dH = 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
-                        [r + 1, -r + 1, r - 1, -r - 1]])
-
-        # Row 1 = d(beta_x)/dr divided by the local displacement vector 'u'
-        # Row 2 = d(beta_y)/ds divided by the local displacement vector 'u'
-        # Row 3 = d(beta_x)/ds + d(beta_y)/dr divided by the local displacement vector 'u'
-        # Note that beta_x is a function of -theta_y and beta_y is a function of +theta_x (Equations 5.99, p. 423)
-        B_kappa = array([[0,    0,     -dH[0, 0], 0,    0,     -dH[0, 1], 0,    0,     -dH[0, 2], 0,    0,     -dH[0, 3]],
-                         [0, dH[1, 0],     0,     0, dH[1, 1],     0,     0, dH[1, 2],     0,     0, dH[1, 3],     0   ],
-                         [0, dH[0, 0], -dH[1, 0], 0, dH[0, 1], -dH[1, 1], 0, dH[0, 2], -dH[1, 2], 0, dH[0, 3], -dH[1, 3]]])
+        # See 
+        B_kappa = matmul(inv(self.J(r,s)), 1/4*array([[0,   0,   -s - 1, 0,    0,   s + 1, 0,   0,   s + 1, 0,    0,   s - 1],
+                                                      [0, r + 1,    0,   0,  1 - r,   0,   0, r - 1,   0,   0, -r - 1,   0  ],
+                                                      [0, s + 1, -r - 1, 0, -s - 1, r - 1, 0, s - 1, 1 - r, 0,  1 - s, r + 1]]))
 
         return B_kappa
-
-#%%
-    def B_gamma(self, r, s):
-
-        H = 1/4*array([[(r + 1)*(s + 1), (1 - r)*(s + 1), (1 - r)*(1 - s), (1 - s)*(r + 1)]])
-
-        dH = 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],
-                        [r + 1, -r + 1, r - 1, -r - 1]])
-
-        B_gamma = array([[dH[0, 0],     0,    H[0, 0], dH[0, 1],     0,    H[0, 1], dH[0, 2],     0,    H[0, 2], dH[0, 3],     0,    H[0, 3]],
-                         [dH[1, 0], -H[0, 0],    0,    dH[1, 1], -H[0, 1],    0,    dH[1, 2], -H[0, 2],    0,    dH[1, 3], -H[0, 3],    0   ]])
-
-        return B_gamma
     
 #%%
     def B_gamma_MITC4(self, r, s):
@@ -80,7 +64,7 @@ class Quad3D():
         X3, Y3, Z3 = self.iNode.X, self.iNode.Y, self.iNode.Z
         X4, Y4, Z4 = self.jNode.X, self.jNode.Y, self.jNode.Z
 
-        # Following reference [1] Figure 5.26, node 3 will be used as the
+        # Following Reference 1, Figure 5.26, node 3 will be used as the
         # origin of the plate's local (x, y) coordinate system. Find the
         # vector from the origin to each node.
         vector_32 = array([X2 - X3, Y2 - Y3, Z2 - Z3]).T
@@ -107,7 +91,7 @@ class Quad3D():
         y3 = 0
         y4 = dot(vector_34, y_axis)
 
-        # Reference [1] equations 5.105
+        # Reference 1, Equations 5.105
         Ax = x1 - x2 - x3 + x4
         Bx = x1 - x2 + x3 - x4
         Cx = x1 + x2 - x3 - x4
@@ -126,16 +110,17 @@ class Quad3D():
         alpha = arccos(dot(r_axis, x_axis))
         beta = arccos(dot(s_axis, x_axis))
         
-        # Reference [1] equations 5.103 and 5.104
+        # Reference 1, Equations 5.103 and 5.104 (p. 426)
         J = self.J(r, s)
 
         gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det(J)**2)
         gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det(J)**2)
 
+        # See Jupyter Notebook derivation for this next part
         gamma_rz = gr/4*array([[2*(s + 1), -s*y1 + s*y2 - y1 + y2, s*x1 - s*x2 + x1 - x2, 2*(-s - 1), -s*y1 + s*y2 - y1 + y2,  s*x1 - s*x2 + x1 - x2, 2*(s - 1), -s*y3 + s*y4 + y3 - y4,  s*x3 - s*x4 - x3 + x4, 2*(1 - s),  -s*y3 + s*y4 + y3 - y4, s*x3 - s*x4 - x3 + x4]])
         gamma_sz = gs/4*array([[2*(r + 1), -r*y1 + r*y4 - y1 + y4, r*x1 - r*x4 + x1 - x4, 2*(1 - r),   r*y2 - r*y3 - y2 + y3, -r*x2 + r*x3 + x2 - x3, 2*(r - 1),  r*y2 - r*y3 - y2 + y3, -r*x2 + r*x3 + x2 - x3, 2*(-r - 1), -r*y1 + r*y4 - y1 + y4, r*x1 - r*x4 + x1 - x4]])
 
-        # Reference [1] equations 5.102
+        # Reference 1, Equations 5.102
         B_gamma_MITC4 = zeros((2, 12))
         B_gamma_MITC4[0, :] = gamma_rz*sin(beta) - gamma_sz*sin(alpha)
         B_gamma_MITC4[1, :] = -gamma_rz*cos(beta) + gamma_sz*cos(alpha)
@@ -146,10 +131,10 @@ class Quad3D():
 #%%
     def B_m(self, r, s):
 
-        # Reference [1], Example 5.5, page 353
-        B_m = array([[1 + s,   0,   -(1 + s),     0,    -(1 - s),     0,      1 - s,      0   ],
-                     [  0,   1 + r,     0,      1 - r,      0,    -(1 - r),     0,    -(1 + r)],
-                     [1 + r, 1 + s,   1 - r,  -(1 + s), -(1 - r), -(1 - s), -(1 + r),   1 - s]])
+        # Reference 1, Example 5.5 (page 353)
+        B_m = matmul(inv(self.J(r, s)), 1/4*array([[s + 1,   0,   -s - 1,    0,   s - 1,   0,    1 - s,    0  ],
+                                                   [  0,   r + 1,    0,    1 - r,   0,   r - 1,    0,   -r - 1],
+                                                   [r + 1, s + 1,  1 - r, -s - 1, r - 1, s - 1, -r - 1,  1 - s]]))
 
         return B_m
 
@@ -211,7 +196,7 @@ class Quad3D():
         Cb = self.Cb()
         Cs = self.Cs()
 
-        # See reference 1, Equation 5.94
+        # See Reference 1, Equation 5.94
         k = (matmul(self.B_kappa(-0.5773, -0.5773).T, matmul(Cb, self.B_kappa(-0.5773, -0.5773)))*det(self.J(-0.5773, -0.5773)) +
              matmul(self.B_kappa(-0.5773, 0.5773).T, matmul(Cb, self.B_kappa(-0.5773, 0.5773)))*det(self.J(-0.5773, 0.5773)) +
              matmul(self.B_kappa(0.5773, 0.5773).T, matmul(Cb, self.B_kappa(0.5773, 0.5773)))*det(self.J(0.5773, 0.5773)) +
@@ -458,11 +443,3 @@ class Quad3D():
 
         # Calculate and return internal moments
         return self.Cb()*self.B_kappa(r, s)*self.d(combo_name)
-
-from Node3D import Node3D
-i = Node3D('i', 1, 0, 0)
-j = Node3D('j', 2, 2, 0)
-m = Node3D('m', 4, 2, 0)
-n = Node3D('n', 3, 0, 0)
-plate = Quad3D('P1', i, i, m, n, .5, 29000, 0.30)
-print(plate.k())
