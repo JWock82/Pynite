@@ -249,15 +249,17 @@ class Quad3D():
 #%%
     def k_m(self):
         '''
-        Returns the local stiffness matrix for membrane stresses
+        Returns the local stiffness matrix for plane stress
         '''
 
+        t = self.t
         C = self.C()
 
-        k = (matmul(self.B_m(-0.5773, -0.5773).T, matmul(C, self.B_m(-0.5773, -0.5773))) +
-             matmul(self.B_m(-0.5773, 0.5773).T, matmul(C, self.B_m(-0.5773, 0.5773))) +
-             matmul(self.B_m(0.5773, 0.5773).T, matmul(C, self.B_m(0.5773, 0.5773))) +
-             matmul(self.B_m(0.5773, -0.5773).T, matmul(C, self.B_m(0.5773, -0.5773))))
+        # Reference 1, page 353
+        k = t*(matmul(self.B_m(-0.5773, -0.5773).T, matmul(C, self.B_m(-0.5773, -0.5773)))*det(self.J(-0.5773, -0.5773)) +
+               matmul(self.B_m(-0.5773, 0.5773).T, matmul(C, self.B_m(-0.5773, 0.5773)))*det(self.J(-0.5773, 0.5773)) +
+               matmul(self.B_m(0.5773, 0.5773).T, matmul(C, self.B_m(0.5773, 0.5773)))*det(self.J(0.5773, 0.5773)) +
+               matmul(self.B_m(0.5773, -0.5773).T, matmul(C, self.B_m(0.5773, -0.5773)))*det(self.J(0.5773, -0.5773)))
         
         # Insert rows of zeros for degrees of freedom not included in the matrix above
         k = insert(k, 8, 0, axis=0)
