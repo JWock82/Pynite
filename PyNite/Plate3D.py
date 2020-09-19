@@ -205,6 +205,7 @@ class Plate3D():
         '''
 
         return zeros((24, 1))
+        
 
 #%%
     def d(self, combo_name='Combo 1'):
