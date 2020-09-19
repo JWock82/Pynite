@@ -28,7 +28,7 @@ def CreateReport(model, output_filepath=path / './PyNite Report.pdf', \
     output_filepath : string
         The filepath with filename to save the pdf report to.
     '''
-
+    
     # Create the report HTML using jinja2
     HTML = template.render(nodes=model.Nodes, members=model.Members, plates=model.Plates, load_combos=model.LoadCombos.keys(), \
                            node_table=nodes, member_table=members, plate_table=plates, member_releases=member_releases, \
