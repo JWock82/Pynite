@@ -2,8 +2,10 @@ from numpy import array, arccos, dot, cross, matmul, add, zeros, insert
 from numpy.linalg import inv, det, norm
 from math import atan, sin, cos
 
-# References:
+# References used to derive this element:
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
+# 2. "A First Course in the Finite Element Method, 4th Edition",
+#    Daryl L. Logan
 
 class Quad3D():
 
@@ -39,25 +41,29 @@ class Quad3D():
 #%%
     def B_kappa(self, r, s):
 
-        dN = matmul(self.J(r, s), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
-                                             [r + 1, -r + 1, r - 1, -r - 1]]))
+        # Using a procedure similar to that shown for the rectangular plate in
+        # reference 1, Example 5.29, page 424.
+        # The first row is the interpolation functions differentiated with respect to r
+        # The second row is the interpolation functions differentiated with respect to s
+        dH = 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
+                        [r + 1, -r + 1, r - 1, -r - 1]])
 
-        B_kappa = array([[0,    0,     -dN[0, 0], 0,    0,     -dN[0, 1], 0,    0,     -dN[0, 2], 0,    0,     -dN[0, 3]],
-                         [0, dN[1, 0],     0,     0, dN[1, 1],     0,     0, dN[1, 2],     0,     0, dN[1, 3],     0   ],
-                         [0, dN[0, 0], -dN[1, 0], 0, dN[0, 1], -dN[1, 1], 0, dN[0, 2], -dN[1, 2], 0, dN[0, 3], -dN[1, 3]]])
+        B_kappa = array([[0,    0,     -dH[0, 0], 0,    0,     -dH[0, 1], 0,    0,     -dH[0, 2], 0,    0,     -dH[0, 3]],
+                         [0, dH[1, 0],     0,     0, dH[1, 1],     0,     0, dH[1, 2],     0,     0, dH[1, 3],     0   ],
+                         [0, dH[0, 0], -dH[1, 0], 0, dH[0, 1], -dH[1, 1], 0, dH[0, 2], -dH[1, 2], 0, dH[0, 3], -dH[1, 3]]])
 
         return B_kappa
 
 #%%
     def B_gamma(self, r, s):
 
-        N = 1/4*array([[(r + 1)*(s + 1), (1 - r)*(s + 1), (1 - r)*(1 - s), (1 - s)*(r + 1)]])
+        H = 1/4*array([[(r + 1)*(s + 1), (1 - r)*(s + 1), (1 - r)*(1 - s), (1 - s)*(r + 1)]])
 
-        dN = matmul(self.J(r, s), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],
+        dH = matmul(self.J(r, s), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],
                                              [r + 1, -r + 1, r - 1, -r - 1]]))
 
-        B_gamma = array([[dN[0, 0],  0,       N[0, 0], dN[0, 1],  0,       N[0, 1], dN[0, 2],  0,       N[0, 2],  dN[0, 3],  0,       N[0, 3]],
-                         [dN[1, 0], -N[0, 0], 0,       dN[1, 1], -N[0, 1], 0,       dN[1, 2], -N[0, 2], 0,        dN[1, 3], -N[0, 3], 0     ]])
+        B_gamma = array([[dH[0, 0],  0,       H[0, 0], dH[0, 1],  0,       H[0, 1], dH[0, 2],  0,       H[0, 2],  dH[0, 3],  0,       H[0, 3]],
+                         [dH[1, 0], -H[0, 0], 0,       dH[1, 1], -H[0, 1], 0,       dH[1, 2], -H[0, 2], 0,        dH[1, 3], -H[0, 3], 0     ]])
 
         return B_gamma
     
@@ -201,15 +207,16 @@ class Quad3D():
         Cb = self.Cb()
         Cs = self.Cs()
 
-        k = (matmul(self.B_kappa(-0.5773, -0.5773).T, matmul(Cb, self.B_kappa(-0.5773, -0.5773))) +
-             matmul(self.B_kappa(-0.5773, 0.5773).T, matmul(Cb, self.B_kappa(-0.5773, 0.5773))) +
-             matmul(self.B_kappa(0.5773, 0.5773).T, matmul(Cb, self.B_kappa(0.5773, 0.5773))) +
-             matmul(self.B_kappa(0.5773, -0.5773).T, matmul(Cb, self.B_kappa(0.5773, -0.5773))))
+        # See reference 1, Equation 5.94
+        k = (matmul(self.B_kappa(-0.5773, -0.5773).T, matmul(Cb, self.B_kappa(-0.5773, -0.5773)))*det(self.J(-0.5773, -0.5773)) +
+             matmul(self.B_kappa(-0.5773, 0.5773).T, matmul(Cb, self.B_kappa(-0.5773, 0.5773)))*det(self.J(-0.5773, 0.5773)) +
+             matmul(self.B_kappa(0.5773, 0.5773).T, matmul(Cb, self.B_kappa(0.5773, 0.5773)))*det(self.J(0.5773, 0.5773)) +
+             matmul(self.B_kappa(0.5773, -0.5773).T, matmul(Cb, self.B_kappa(0.5773, -0.5773)))*det(self.J(0.5773, -0.5773)))
         
-        k += (matmul(self.B_gamma_MITC4(-0.5773, -0.5773).T, matmul(Cs, self.B_gamma_MITC4(-0.5773, -0.5773))) +
-              matmul(self.B_gamma_MITC4(-0.5773, 0.5773).T, matmul(Cs, self.B_gamma_MITC4(-0.5773, 0.5773))) +
-              matmul(self.B_gamma_MITC4(0.5773, 0.5773).T, matmul(Cs, self.B_gamma_MITC4(0.5773, 0.5773))) +
-              matmul(self.B_gamma_MITC4(0.5773, -0.5773).T, matmul(Cs, self.B_gamma_MITC4(0.5773, -0.5773))))
+        k += (matmul(self.B_gamma_MITC4(-0.5773, -0.5773).T, matmul(Cs, self.B_gamma_MITC4(-0.5773, -0.5773)))*det(self.J(-0.5773, -0.5773)) +
+              matmul(self.B_gamma_MITC4(-0.5773, 0.5773).T, matmul(Cs, self.B_gamma_MITC4(-0.5773, 0.5773)))*det(self.J(-0.5773, 0.5773)) +
+              matmul(self.B_gamma_MITC4(0.5773, 0.5773).T, matmul(Cs, self.B_gamma_MITC4(0.5773, 0.5773)))*det(self.J(0.5773, 0.5773)) +
+              matmul(self.B_gamma_MITC4(0.5773, -0.5773).T, matmul(Cs, self.B_gamma_MITC4(0.5773, -0.5773)))*det(self.J(0.5773, -0.5773)))
         
         # Insert rows of zeros for degrees of freedom not included in the matrix above
         k = insert(k, 12, 0, axis=0)
@@ -249,13 +256,15 @@ class Quad3D():
 #%%
     def k_m(self):
         '''
-        Returns the local stiffness matrix for plane stress
+        Returns the local stiffness matrix for membrane (in-plane) stresses.
+
+        Plane stress is assumed
         '''
 
         t = self.t
         C = self.C()
 
-        # Reference 1, page 353
+        # See reference 1 at the bottom of page 353, and reference 2 page 466
         k = t*(matmul(self.B_m(-0.5773, -0.5773).T, matmul(C, self.B_m(-0.5773, -0.5773)))*det(self.J(-0.5773, -0.5773)) +
                matmul(self.B_m(-0.5773, 0.5773).T, matmul(C, self.B_m(-0.5773, 0.5773)))*det(self.J(-0.5773, 0.5773)) +
                matmul(self.B_m(0.5773, 0.5773).T, matmul(C, self.B_m(0.5773, 0.5773)))*det(self.J(0.5773, 0.5773)) +
@@ -302,6 +311,9 @@ class Quad3D():
 
 #%%
     def k(self):
+        '''
+        Returns the quad element's local stiffness matrix.
+        '''
 
         return self.k_b() + self.k_m()
 
