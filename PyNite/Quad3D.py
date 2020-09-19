@@ -43,11 +43,15 @@ class Quad3D():
 
         # Using a procedure similar to that shown for the rectangular plate in
         # reference 1, Example 5.29, page 424.
-        # The first row is the interpolation functions differentiated with respect to r
-        # The second row is the interpolation functions differentiated with respect to s
+        # Row 1 = interpolation functions differentiated with respect to r
+        # Row 2 = interpolation functions differentiated with respect to s
         dH = 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
                         [r + 1, -r + 1, r - 1, -r - 1]])
 
+        # Row 1 = d(beta_x)/dr divided by the local displacement vector 'u'
+        # Row 2 = d(beta_y)/ds divided by the local displacement vector 'u'
+        # Row 3 = d(beta_x)/ds + d(beta_y)/dr divided by the local displacement vector 'u'
+        # Note that beta_x is a function of -theta_y and beta_y is a function of +theta_x (Equations 5.99, p. 423)
         B_kappa = array([[0,    0,     -dH[0, 0], 0,    0,     -dH[0, 1], 0,    0,     -dH[0, 2], 0,    0,     -dH[0, 3]],
                          [0, dH[1, 0],     0,     0, dH[1, 1],     0,     0, dH[1, 2],     0,     0, dH[1, 3],     0   ],
                          [0, dH[0, 0], -dH[1, 0], 0, dH[0, 1], -dH[1, 1], 0, dH[0, 2], -dH[1, 2], 0, dH[0, 3], -dH[1, 3]]])
@@ -59,11 +63,11 @@ class Quad3D():
 
         H = 1/4*array([[(r + 1)*(s + 1), (1 - r)*(s + 1), (1 - r)*(1 - s), (1 - s)*(r + 1)]])
 
-        dH = matmul(self.J(r, s), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],
-                                             [r + 1, -r + 1, r - 1, -r - 1]]))
+        dH = 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],
+                        [r + 1, -r + 1, r - 1, -r - 1]])
 
-        B_gamma = array([[dH[0, 0],  0,       H[0, 0], dH[0, 1],  0,       H[0, 1], dH[0, 2],  0,       H[0, 2],  dH[0, 3],  0,       H[0, 3]],
-                         [dH[1, 0], -H[0, 0], 0,       dH[1, 1], -H[0, 1], 0,       dH[1, 2], -H[0, 2], 0,        dH[1, 3], -H[0, 3], 0     ]])
+        B_gamma = array([[dH[0, 0],     0,    H[0, 0], dH[0, 1],     0,    H[0, 1], dH[0, 2],     0,    H[0, 2], dH[0, 3],     0,    H[0, 3]],
+                         [dH[1, 0], -H[0, 0],    0,    dH[1, 1], -H[0, 1],    0,    dH[1, 2], -H[0, 2],    0,    dH[1, 3], -H[0, 3],    0   ]])
 
         return B_gamma
     
