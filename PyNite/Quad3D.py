@@ -48,10 +48,21 @@ class Quad3D():
 #%%
     def B_kappa(self, r, s):
 
-        # See 
-        B_kappa = matmul(inv(self.J(r,s)), 1/4*array([[0,   0,   -s - 1, 0,    0,   s + 1, 0,   0,   s + 1, 0,    0,   s - 1],
-                                                      [0, r + 1,    0,   0,  1 - r,   0,   0, r - 1,   0,   0, -r - 1,   0  ],
-                                                      [0, s + 1, -r - 1, 0, -s - 1, r - 1, 0, s - 1, 1 - r, 0,  1 - s, r + 1]]))
+        # Differentiate the interpolation functions
+        # Row 1 = interpolation functions differentiated with respect to x
+        # Row 2 = interpolation functions differentiated with respect to y
+        # Note that the inverse of the Jacobian coverts from derivatives with
+        # respect to r and s to derivatives with respect to x and y
+        dH = matmul(inv(self.J(r, s)), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
+                                                  [r + 1, -r + 1, r - 1, -r - 1]]))
+        
+        # Row 1 = d(beta_x)/dx divided by the local displacement vector 'u'
+        # Row 2 = d(beta_y)/dy divided by the local displacement vector 'u'
+        # Row 3 = d(beta_x)/dy + d(beta_y)/dx divided by the local displacement vector 'u'
+        # Note that beta_x is a function of -theta_y and beta_y is a function of +theta_x (Equations 5.99, p. 423)
+        B_kappa = array([[0,    0,     -dH[0, 0], 0,    0,     -dH[0, 1], 0,    0,     -dH[0, 2], 0,    0,     -dH[0, 3]],
+                         [0, dH[1, 0],     0,     0, dH[1, 1],     0,     0, dH[1, 2],     0,     0, dH[1, 3],     0   ],
+                         [0, dH[0, 0], -dH[1, 0], 0, dH[0, 1], -dH[1, 1], 0, dH[0, 2], -dH[1, 2], 0, dH[0, 3], -dH[1, 3]]])
 
         return B_kappa
     
@@ -131,10 +142,18 @@ class Quad3D():
 #%%
     def B_m(self, r, s):
 
+        # Differentiate the interpolation functions
+        # Row 1 = interpolation functions differentiated with respect to x
+        # Row 2 = interpolation functions differentiated with respect to y
+        # Note that the inverse of the Jacobian coverts from derivatives with
+        # respect to r and s to derivatives with respect to x and y
+        dH = matmul(inv(self.J(r, s)), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
+                                                  [r + 1, -r + 1, r - 1, -r - 1]]))
+
         # Reference 1, Example 5.5 (page 353)
-        B_m = matmul(inv(self.J(r, s)), 1/4*array([[s + 1,   0,   -s - 1,    0,   s - 1,   0,    1 - s,    0  ],
-                                                   [  0,   r + 1,    0,    1 - r,   0,   r - 1,    0,   -r - 1],
-                                                   [r + 1, s + 1,  1 - r, -s - 1, r - 1, s - 1, -r - 1,  1 - s]]))
+        B_m = 1/4*array([[dH[0, 0],    0,     dH[0, 1],    0,     dH[0, 2],    0,     dH[0, 3],    0    ],
+                         [   0,     dH[1, 0],    0,     dH[1, 1],    0,     dH[1, 2],    0,     dH[1, 3]],
+                         [dH[1, 0], dH[0, 0], dH[1, 1], dH[0, 1], dH[1, 2], dH[0, 2], dH[1, 3], dH[0, 3]]])
 
         return B_m
 
@@ -434,12 +453,56 @@ class Quad3D():
         # Return the transformation matrix.
         return T
 
+#%%
+    def Shear(self, r=0, s=0, combo_name='Combo 1'):
+        '''
+        Returns the interal shears at any point in the quad element.
+
+        Internal shears are reported as a 2D array [[Qx], [Qy]] at the
+        specified location in the (r, s) natural coordinate system.
+
+        Parameters
+        ----------
+        r : number
+            The r-coordinate. Default is 0.
+        s : number
+            The s-coordinate. Default is 0.
+        
+        Returns
+        -------
+        Internal shear force per unit length of the quad element.
+        '''
+
+        # Calculate and return internal shears
+        return matmul(self.Cs(), matmul(self.B_gamma_MITC4(r, s), self.d(combo_name)))
+
 #%%   
     def Moment(self, r=0, s=0, combo_name='Combo 1'):
         '''
-        Returns the internal moments (Mx, My, and Mxy) at any point (r, s) in the plate's natural
-        coordinate system.
+        Returns the interal moments at any point in the quad element.
+
+        Internal moments are reported as a 2D array [[Mx], [My], [Mxy]] at the
+        specified location in the (r, s) natural coordinate system.
+
+        Parameters
+        ----------
+        r : number
+            The r-coordinate. Default is 0.
+        s : number
+            The s-coordinate. Default is 0.
+        
+        Returns
+        -------
+        Internal moment per unit length of the quad element.
         '''
 
         # Calculate and return internal moments
-        return self.Cb()*self.B_kappa(r, s)*self.d(combo_name)
+        return matmul(self.Cb(), matmul(self.B_kappa(r, s), self.d(combo_name)))
+
+from Node3D import Node3D
+i = Node3D('i', 0, 0, 0)
+j = Node3D('j', 2, 2, 0)
+m = Node3D('m', 3, 5, 0)
+n = Node3D('n', 1, 3, 0)
+pl = Quad3D('pl', i, j, m, n, 0.25, 29000, 0.3)
+print(pl.k())
