@@ -9,7 +9,6 @@
 # 2. "A First Course in the Finite Element Method, 4th Edition",
 #    Daryl L. Logan
 
-
 from numpy import array, arccos, dot, cross, matmul, add, zeros, insert
 from numpy.linalg import inv, det, norm
 from math import atan, sin, cos
@@ -51,7 +50,7 @@ class Quad3D():
         # Differentiate the interpolation functions
         # Row 1 = interpolation functions differentiated with respect to x
         # Row 2 = interpolation functions differentiated with respect to y
-        # Note that the inverse of the Jacobian coverts from derivatives with
+        # Note that the inverse of the Jacobian converts from derivatives with
         # respect to r and s to derivatives with respect to x and y
         dH = matmul(inv(self.J(r, s)), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
                                                   [r + 1, -r + 1, r - 1, -r - 1]]))
@@ -145,7 +144,7 @@ class Quad3D():
         # Differentiate the interpolation functions
         # Row 1 = interpolation functions differentiated with respect to x
         # Row 2 = interpolation functions differentiated with respect to y
-        # Note that the inverse of the Jacobian coverts from derivatives with
+        # Note that the inverse of the Jacobian converts from derivatives with
         # respect to r and s to derivatives with respect to x and y
         dH = matmul(inv(self.J(r, s)), 1/4*array([[s + 1, -s - 1, s - 1, -s + 1],                 
                                                   [r + 1, -r + 1, r - 1, -r - 1]]))
@@ -325,6 +324,15 @@ class Quad3D():
 
         return self.k_b() + self.k_m()
 
+#%%   
+    def f(self, combo_name='Combo 1'):
+        '''
+        Returns the quad element's local end force vector
+        '''
+        
+        # Calculate and return the plate's local end force vector
+        return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
+
 #%%
     def fer(self, combo_name='Combo 1'):
         '''
@@ -342,6 +350,15 @@ class Quad3D():
 
        # Calculate and return the local displacement vector
        return matmul(self.T(), self.D(combo_name))
+
+#%%
+    def F(self, combo_name='Combo 1'):
+        '''
+        Returns the quad element's global force vector
+        '''
+        
+        # Calculate and return the global force vector
+        return matmul(inv(self.T()), self.f(combo_name))
 
 #%%
     def D(self, combo_name='Combo 1'):
@@ -390,7 +407,16 @@ class Quad3D():
         
         # Return the global displacement vector
         return D
-    
+
+#%%
+    def K(self):
+        '''
+        Returns the quad element's global stiffness matrix
+        '''
+        
+        # Calculate and return the stiffness matrix in global coordinates
+        return matmul(matmul(transpose(self.T()), self.k()), self.T())
+
 #%%  
     def T(self):
         '''
@@ -454,7 +480,7 @@ class Quad3D():
         return T
 
 #%%
-    def Shear(self, r=0, s=0, combo_name='Combo 1'):
+    def shear(self, r=0, s=0, combo_name='Combo 1'):
         '''
         Returns the interal shears at any point in the quad element.
 
@@ -473,11 +499,15 @@ class Quad3D():
         Internal shear force per unit length of the quad element.
         '''
 
+        # Get the plate's local displacement vector
+        # Slice out terms not related to plate bending
+        d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
+
         # Calculate and return internal shears
-        return matmul(self.Cs(), matmul(self.B_gamma_MITC4(r, s), self.d(combo_name)))
+        return matmul(self.Cs(), matmul(self.B_gamma_MITC4(r, s), d))
 
 #%%   
-    def Moment(self, r=0, s=0, combo_name='Combo 1'):
+    def moment(self, r=0, s=0, combo_name='Combo 1'):
         '''
         Returns the interal moments at any point in the quad element.
 
@@ -496,8 +526,19 @@ class Quad3D():
         Internal moment per unit length of the quad element.
         '''
 
+        # Get the plate's local displacement vector
+        # Slice out terms not related to plate bending
+        d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
+
         # Calculate and return internal moments
-        return matmul(self.Cb(), matmul(self.B_kappa(r, s), self.d(combo_name)))
+        return matmul(self.Cb(), matmul(self.B_kappa(r, s), d))
+
+#%%
+    def membrane(self, r=0, s=0, combo_name='Combo 1'):
+        
+        # Get the plate's local displacement vector
+        # Slice out terms not related to membrane forces
+        d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
 
 from Node3D import Node3D
 i = Node3D('i', 0, 0, 0)
