@@ -9,7 +9,7 @@
 # 2. "A First Course in the Finite Element Method, 4th Edition",
 #    Daryl L. Logan
 
-from numpy import array, arccos, dot, cross, matmul, add, zeros, insert
+from numpy import array, arccos, dot, cross, matmul, add, zeros, insert, transpose
 from numpy.linalg import inv, det, norm
 from math import atan, sin, cos
 
@@ -111,8 +111,8 @@ class Quad3D():
 
         # Find the angles between the axes of the natural coordinate system and
         # the local x-axis.
-        r_axis = array([(x1 + x4)/2 - (x2 + x3)/2, (y1 + y4)/2 - (y2 + y3)/2, 0]).T
-        s_axis = array([(x2 + x1)/2 - (x3 + x4)/2, (y2 + y1)/2 - (y3 + y4)/2, 0]).T
+        r_axis = array([(x2 + x3)/2 - (x1 + x4)/2, (y2 + y3)/2 - (y1 + y4)/2, 0]).T
+        s_axis = array([(x3 + x4)/2 - (x1 + x2)/2, (y3 + y4)/2 - (y1 + y2)/2, 0]).T
 
         r_axis = r_axis/norm(r_axis)
         s_axis = s_axis/norm(s_axis)
@@ -123,8 +123,8 @@ class Quad3D():
         # Reference 1, Equations 5.103 and 5.104 (p. 426)
         J = self.J(r, s)
 
-        gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det(J)**2)
-        gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det(J)**2)
+        gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det(J))
+        gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det(J))
 
         # See Jupyter Notebook derivation for this next part
         gamma_rz = gr/4*array([[2*(s + 1), -s*y1 + s*y2 - y1 + y2, s*x1 - s*x2 + x1 - x2, 2*(-s - 1), -s*y1 + s*y2 - y1 + y2,  s*x1 - s*x2 + x1 - x2, 2*(s - 1), -s*y3 + s*y4 + y3 - y4,  s*x3 - s*x4 - x3 + x4, 2*(1 - s),  -s*y3 + s*y4 + y3 - y4, s*x3 - s*x4 - x3 + x4]])
@@ -539,11 +539,3 @@ class Quad3D():
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
-
-from Node3D import Node3D
-i = Node3D('i', 0, 0, 0)
-j = Node3D('j', 2, 2, 0)
-m = Node3D('m', 3, 5, 0)
-n = Node3D('n', 1, 3, 0)
-pl = Quad3D('pl', i, j, m, n, 0.25, 29000, 0.3)
-print(pl.k())
