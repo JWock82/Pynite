@@ -84,6 +84,7 @@ class Quad3D():
         # Return the Jacobian matrix
         return 1/4*array([[x1*(s + 1) - x2*(s + 1) + x3*(s - 1) - x4*(s - 1), y1*(s + 1) - y2*(s + 1) + y3*(s - 1) - y4*(s - 1)],
                           [x1*(r + 1) - x2*(r - 1) + x3*(r - 1) - x4*(r + 1), y1*(r + 1) - y2*(r - 1) + y3*(r - 1) - y4*(r + 1)]])
+
 #%%
     def B_kappa(self, r, s):
 
@@ -117,7 +118,7 @@ class Quad3D():
         # respect to r and s to derivatives with respect to x and y
         dH = matmul(inv(self.J(r, s)), 1/4*array([[1 + s, -1 - s, -1 + s,  1 - s],                 
                                                   [1 + r,  1 - r, -1 + r, -1 - r]]))
-        
+
         # Row 1 = d(beta_x)/dx divided by the local displacement vector 'u'
         # Row 2 = d(beta_y)/dy divided by the local displacement vector 'u'
         # Row 3 = d(beta_x)/dy + d(beta_y)/dx divided by the local displacement vector 'u'
@@ -183,13 +184,12 @@ class Quad3D():
         beta = arccos(dot(s_axis, x_axis))
         
         # Reference 1, Equations 5.103 and 5.104 (p. 426)
-        J = self.J(r, s)
+        det_J = det(self.J(r, s))
 
-        gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det(J))
-        gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det(J))
+        gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det_J)
+        gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det_J)
 
         # See Jupyter Notebook derivation for this next part
-        gamma_rz = gr/4*array([[2*(s + 1), -s*y1 + s*y2 - y1 + y2, s*x1 - s*x2 + x1 - x2, 2*(-s - 1), -s*y1 + s*y2 - y1 + y2,  s*x1 - s*x2 + x1 - x2, 2*(s - 1), -s*y3 + s*y4 + y3 - y4,  s*x3 - s*x4 - x3 + x4, 2*(1 - s),  -s*y3 + s*y4 + y3 - y4, s*x3 - s*x4 - x3 + x4]])
         gamma_rz = gr/4*array([[2*(s + 1), -s*y1 + s*y2 - y1 + y2, s*x1 - s*x2 + x1 - x2, 2*(-s - 1), -s*y1 + s*y2 - y1 + y2,  s*x1 - s*x2 + x1 - x2, 2*(s - 1), -s*y3 + s*y4 + y3 - y4,  s*x3 - s*x4 - x3 + x4, 2*(1 - s),  -s*y3 + s*y4 + y3 - y4, s*x3 - s*x4 - x3 + x4]])
         gamma_sz = gs/4*array([[2*(r + 1), -r*y1 + r*y4 - y1 + y4, r*x1 - r*x4 + x1 - x4, 2*(1 - r),   r*y2 - r*y3 - y2 + y3, -r*x2 + r*x3 + x2 - x3, 2*(r - 1),  r*y2 - r*y3 - y2 + y3, -r*x2 + r*x3 + x2 - x3, 2*(-r - 1), -r*y1 + r*y4 - y1 + y4, r*x1 - r*x4 + x1 - x4]])
 
@@ -280,16 +280,23 @@ class Quad3D():
         # Define the gauss point for numerical integration
         gp = 1/3**0.5
 
+        # Get the determinant of the Jacobian matrix for each gauss pointing 
+        # Doing this now will save us from doing it twice below
+        J1 = det(self.J(gp, gp))
+        J2 = det(self.J(-gp, gp))
+        J3 = det(self.J(-gp, -gp))
+        J4 = det(self.J(gp, -gp))
+
         # See Reference 1, Equation 5.94
-        k = (matmul(self.B_kappa(-gp, -gp).T, matmul(Cb, self.B_kappa(-gp, -gp)))*det(self.J(-gp, -gp)) +
-             matmul(self.B_kappa(-gp, gp).T, matmul(Cb, self.B_kappa(-gp, gp)))*det(self.J(-gp, gp)) +
-             matmul(self.B_kappa(gp, gp).T, matmul(Cb, self.B_kappa(gp, gp)))*det(self.J(gp, gp)) +
-             matmul(self.B_kappa(gp, -gp).T, matmul(Cb, self.B_kappa(gp, -gp)))*det(self.J(gp, -gp)))
+        k = (matmul(self.B_kappa(-gp, -gp).T, matmul(Cb, self.B_kappa(-gp, -gp)))*J3 +
+             matmul(self.B_kappa(-gp, gp).T, matmul(Cb, self.B_kappa(-gp, gp)))*J2 +
+             matmul(self.B_kappa(gp, gp).T, matmul(Cb, self.B_kappa(gp, gp)))*J1 +
+             matmul(self.B_kappa(gp, -gp).T, matmul(Cb, self.B_kappa(gp, -gp)))*J4)
         
-        k += (matmul(self.B_gamma_MITC4(-gp, -gp).T, matmul(Cs, self.B_gamma_MITC4(-gp, -gp)))*det(self.J(-gp, -gp)) +
-              matmul(self.B_gamma_MITC4(-gp, gp).T, matmul(Cs, self.B_gamma_MITC4(-gp, gp)))*det(self.J(-gp, gp)) +
-              matmul(self.B_gamma_MITC4(gp, gp).T, matmul(Cs, self.B_gamma_MITC4(gp, gp)))*det(self.J(gp, gp)) +
-              matmul(self.B_gamma_MITC4(gp, -gp).T, matmul(Cs, self.B_gamma_MITC4(gp, -gp)))*det(self.J(gp, -gp)))
+        k += (matmul(self.B_gamma_MITC4(-gp, -gp).T, matmul(Cs, self.B_gamma_MITC4(-gp, -gp)))*J3 +
+              matmul(self.B_gamma_MITC4(-gp, gp).T, matmul(Cs, self.B_gamma_MITC4(-gp, gp)))*J2 +
+              matmul(self.B_gamma_MITC4(gp, gp).T, matmul(Cs, self.B_gamma_MITC4(gp, gp)))*J1 +
+              matmul(self.B_gamma_MITC4(gp, -gp).T, matmul(Cs, self.B_gamma_MITC4(gp, -gp)))*J4)
         
         # Calculate the stiffness of a weak spring for the drilling degree of freedom (rotation about local z)
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
@@ -394,8 +401,6 @@ class Quad3D():
         k = insert(k, 2, 0, axis=1)
         k = insert(k, 2, 0, axis=0)
         k = insert(k, 2, 0, axis=1)
-
-
         
         return k
 
@@ -657,8 +662,31 @@ class Quad3D():
         # Slice out terms not related to plate bending
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
-        # Calculate and return internal shears
-        return matmul(self.Cs(), matmul(self.B_gamma_MITC4(r, s), d))
+        # Define the gauss point used for numerical integration
+        gp = 1/3**0.5
+
+        # Define extrapolated r and s points
+        r_ex = r/gp
+        s_ex = s/gp
+
+        # Define the interpolation functions
+        H = 1/4*array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
+
+        # Get the stress-strain matrix
+        Cs = self.Cs()
+
+        # Calculate the internal moments [Mx, My, Mxy] at each gauss point
+        q1 = matmul(Cs, matmul(self.B_gamma_MITC4(gp, gp), d))
+        q2 = matmul(Cs, matmul(self.B_gamma_MITC4(-gp, gp), d))
+        q3 = matmul(Cs, matmul(self.B_gamma_MITC4(-gp, -gp), d))
+        q4 = matmul(Cs, matmul(self.B_gamma_MITC4(gp, -gp), d))
+
+        # Extrapolate to get the value at the requested location
+        Qx = H[0]*q1[0] + H[1]*q2[0] + H[2]*q3[0] + H[3]*q4[0]
+        Qy = H[0]*q1[1] + H[1]*q2[1] + H[2]*q3[1] + H[3]*q4[1]
+
+        return array([[Qx],
+                      [Qy]])
 
 #%%   
     def moment(self, r=0, s=0, combo_name='Combo 1'):
@@ -684,15 +712,15 @@ class Quad3D():
         # Slice out terms not related to plate bending
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
+        # Define the gauss point used for numerical integration
+        gp = 1/3**0.5
+
         # Define extrapolated r and s points
-        r_ex = r*3**0.5
-        s_ex = s*3**0.5 
+        r_ex = r/gp
+        s_ex = s/gp
 
         # Define the interpolation functions
         H = 1/4*array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
-
-        # Define the gauss point
-        gp = 1/3**0.5
 
         # Get the stress-strain matrix
         Cb = self.Cb()
