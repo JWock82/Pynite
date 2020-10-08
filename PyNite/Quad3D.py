@@ -144,8 +144,8 @@ class Quad3D():
         Returns the [B] matrix for shear.
 
         MITC stands for mixed interpolation tensoral components. MITC elements
-        are used in many commercial programs and are known to perform well for
-        thick and thin plates, and for distorted plate geometries.
+        are used in many programs and are known to perform well for thick and
+        thin plates, and for distorted plate geometries.
         '''
 
         # Get the node global coordinates
