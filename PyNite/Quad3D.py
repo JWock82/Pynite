@@ -108,6 +108,16 @@ class Quad3D():
 
 #%%
     def B_gamma(self, r, s):
+        '''
+        Returns the [B] matrix for shear.
+
+        This is provided for reference only and is not actually used by
+        PyNite. This is the theoretical solution, but it is known to
+        produce spurious shear forces. It is prone to a phenomenon called
+        shear locking. Instead of this matrix, the MITC4 [B] matrix is used,
+        which eliminates shear-locking and can be used for thick and thin
+        plates.
+        '''
 
         H = 1/4*array([(1 + r)*(1 + s), (1 - r)*(1 + s), (1 - r)*(1 - s), (1 + r)*(1 - s)])
 
@@ -130,8 +140,15 @@ class Quad3D():
 
 #%%
     def B_gamma_MITC4(self, r, s):
+        '''
+        Returns the [B] matrix for shear.
 
-        # The derivation of this matrix is adapted from "Finite Element Procedures"
+        MITC stands for mixed interpolation tensoral components. MITC elements
+        are used in many commercial programs and are known to perform well for
+        thick and thin plates, and for distorted plate geometries.
+        '''
+
+        # Get the node global coordinates
         X1, Y1, Z1 = self.mNode.X, self.mNode.Y, self.mNode.Z
         X2, Y2, Z2 = self.nNode.X, self.nNode.Y, self.nNode.Z
         X3, Y3, Z3 = self.iNode.X, self.iNode.Y, self.iNode.Z
@@ -451,7 +468,7 @@ class Quad3D():
             # Sum the pressures
             for pressure in self.pressures:
 
-                # Check if the current point load corresponds to the current load case
+                # Check if the current pressure corresponds to the current load case
                 if pressure[1] == case:
 
                     # Sum the pressures
