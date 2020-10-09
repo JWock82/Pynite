@@ -1,4 +1,6 @@
 #%%
+# This example works, but visualization and reporting for quads is not complete yet.
+
 # This is an example of a how quads can be used to create a wall panel for out-of-plane bending problems.
 # A 'RectWall' class has been defined to automate the process of meshing, loading, and plotting results for a wall
 # panel of any geometry and edge support conditions. Below the class definition is a brief script showing how the
@@ -409,30 +411,31 @@ print('Mx at Edges:', -0.0829*load*width**2)
 print('My at Center:', 0.0158*load*width**2)
 print('My at Top & Bottom:', -0.0571*load*width**2)
 
-# print('')
-# print('Max Mx', max([max(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Min Mx', min([min(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Max My', max([max(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
-# print('Min My', min([min(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
+print('')
+print('Max Mx', max([max(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Min Mx', min([min(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Max My', max([max(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
+print('Min My', min([min(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
+print('Max Mxy', max([max(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
+print('Min Mxy', min([min(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
 
-# print('Max Qx', max([max(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Min Qx', min([min(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Max Qy', max([max(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
-# print('Max Qy', min([min(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
 
-print('Mx =', myWall.fem.GetQuad('P380').moment(-1, 1))
+print('Max Qx', max([max(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Min Qx', min([min(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Max Qy', max([max(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
+print('Max Qy', min([min(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
 
-# # Plot the displacement contour
-# myWall.plot_disp()
+# Plot the displacement contour
+myWall.plot_disp()
 
-# # Plot the moment contours
-# myWall.plot_forces('Mx')
-# myWall.plot_forces('My')
-# myWall.plot_forces('Mxy')
+# Plot the moment contours
+myWall.plot_forces('Mx')
+myWall.plot_forces('My')
+myWall.plot_forces('Mxy')
 
-# # Plot the shear force contours
-# myWall.plot_forces('Qx')
-# myWall.plot_forces('Qy')
+# Plot the shear force contours
+myWall.plot_forces('Qx')
+myWall.plot_forces('Qy')
 
 # Create a PDF report
 # It will be output to the PyNite folder unless the 'output_path' variable below is modified

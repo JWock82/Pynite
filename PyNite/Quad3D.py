@@ -319,48 +319,98 @@ class Quad3D():
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
                    )/1000
+           
+        # At this point `k` only contains terms for the degrees of freedom
+        # associated with bending action. Expand `k` to include zero terms for
+        # the degrees of freedom related to membrane forces. This will allow
+        # the bending and membrane stiffness matrices to be summed directly
+        # later on. `numpy` has an `insert` function that can be used to
+        # insert rows and columns of zeros one at a time, but it is very slow
+        # as it makes a temporary copy of the matrix term by term each time
+        # it's called. The algorithm used here accomplishes the same thing
+        # much faster. Terms are copied only once.
+        
+        # Initialize the expanded stiffness matrix to all zeros
+        k_exp = zeros((24, 24))
 
-        # Insert rows of zeros for degrees of freedom not included in the matrix above
-        k = insert(k, 12, 0, axis=0)
-        k = insert(k, 12, 0, axis=1)
+        # Step through each term in the unexpanded stiffness matrix
 
-        k = insert(k, 9, 0, axis=0)
-        k = insert(k, 9, 0, axis=1)
-        k = insert(k, 9, 0, axis=0)
-        k = insert(k, 9, 0, axis=1)
+        # i = Unexpanded matrix row
+        for i in range(12):
 
-        k = insert(k, 9, 0, axis=0)
-        k = insert(k, 9, 0, axis=1)
+            # j = Unexpanded matrix column
+            for j in range(12):
+                
+                # Find the corresponding term in the expanded stiffness
+                # matrix
 
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
+                # m = Expanded matrix row
+                if i in [0, 3, 6, 9]:  # indices associated with deflection in z
+                    m = 2 + 6*(i/3)
+                if i in [1, 4, 7, 10]:  # indices associated with rotation about x
+                    m = 3 + 6*((i - 1)/3)
+                if i in [2, 5, 8, 11]:  # indices associated with rotation about y
+                    m = 4 + 6*((i - 2)/3)
 
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
+                # n = Expanded matrix column
+                if j in [0, 3, 6, 9]:  # indices associated with deflection in z
+                    n = 2 + 6*(j/3)
+                if j in [1, 4, 7, 10]:  # indices associated with rotation about x
+                    n = 3 + 6*((j - 1)/3)
+                if j in [2, 5, 8, 11]:  # indices associated with rotation about y
+                    n = 4 + 6*((j - 2)/3)
+                
+                # Ensure the indices are integers rather than floats
+                m, n = round(m), round(n)
+
+                # Add the term from the unexpanded matrix into the expanded
+                # matrix
+                k_exp[m, n] = k[i, j]
+
+        # Instead of the nested loops above, the rows of zeros could have been
+        # inserted directly into `k` as shown in these next lines, but it
+        # would be a slower process.
+
+        # k = insert(k, 12, 0, axis=0)
+        # k = insert(k, 12, 0, axis=1)
+
+        # k = insert(k, 9, 0, axis=0)
+        # k = insert(k, 9, 0, axis=1)
+        # k = insert(k, 9, 0, axis=0)
+        # k = insert(k, 9, 0, axis=1)
+
+        # k = insert(k, 9, 0, axis=0)
+        # k = insert(k, 9, 0, axis=1)
+
+        # k = insert(k, 6, 0, axis=0)
+        # k = insert(k, 6, 0, axis=1)
+        # k = insert(k, 6, 0, axis=0)
+        # k = insert(k, 6, 0, axis=1)
+
+        # k = insert(k, 6, 0, axis=0)
+        # k = insert(k, 6, 0, axis=1)
 
 
-        k = insert(k, 3, 0, axis=0)
-        k = insert(k, 3, 0, axis=1)
-        k = insert(k, 3, 0, axis=0)
-        k = insert(k, 3, 0, axis=1)
+        # k = insert(k, 3, 0, axis=0)
+        # k = insert(k, 3, 0, axis=1)
+        # k = insert(k, 3, 0, axis=0)
+        # k = insert(k, 3, 0, axis=1)
 
-        k = insert(k, 3, 0, axis=0)
-        k = insert(k, 3, 0, axis=1)
+        # k = insert(k, 3, 0, axis=0)
+        # k = insert(k, 3, 0, axis=1)
 
-        k = insert(k, 0, 0, axis=0)
-        k = insert(k, 0, 0, axis=1)
-        k = insert(k, 0, 0, axis=0)
-        k = insert(k, 0, 0, axis=1)
+        # k = insert(k, 0, 0, axis=0)
+        # k = insert(k, 0, 0, axis=1)
+        # k = insert(k, 0, 0, axis=0)
+        # k = insert(k, 0, 0, axis=1)
 
         # Add the drilling degree of freedom's weak spring
-        k[5, 5] = k_rz
-        k[11, 11] = k_rz
-        k[17, 17] = k_rz
-        k[23, 23] = k_rz
+        k_exp[5, 5] = k_rz
+        k_exp[11, 11] = k_rz
+        k_exp[17, 17] = k_rz
+        k_exp[23, 23] = k_rz
 
-        return k
+        return k_exp
 
 #%%
     def k_m(self):
