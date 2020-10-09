@@ -6,6 +6,7 @@ from math import isclose
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
+from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
 
@@ -25,7 +26,8 @@ class FEModel3D():
         self.auxNodes = []   # A list of the structure's auxiliary nodes
         self.Springs = []    # A list of the structure's springs
         self.Members = []    # A list of the structure's members
-        self.Plates = []     # A list of the structure's plates
+        self.Quads = []      # A list of the structura's quadiralterals
+        self.Plates = []     # A list of the structure's rectangular plates
         self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
         self.LoadCombos = {} # A dictionary of the structure's load combinations
 
@@ -156,19 +158,22 @@ class FEModel3D():
     def AddPlate(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
         '''
         Adds a new plate to the model.
+
+        Plates will be dapricated in a future version. Quadrilaterals are more
+        verstile and will replace them.
         
         Parameters
         ----------
         Name : string
             A unique user-defined name for the plate.
         iNode : string
-            The name of the i-node (1st node definded in counter-clockwise order).
+            The name of the i-node (1st node definded in clockwise order).
         jNode : string
-            The name of the j-node (2nd node defined in counter-clockwise order).
+            The name of the j-node (2nd node defined in clockwise order).
         mNode : string
-            The name of the m-node (3rd node defined in counter-clockwise order).
+            The name of the m-node (3rd node defined in clockwise order).
         nNode : string
-            The name of the n-node (4th node defined in counter-clockwise order).
+            The name of the n-node (4th node defined in clockwise order).
         t : number
             The thickness of the plate.
         E : number
@@ -182,6 +187,42 @@ class FEModel3D():
         
         # Add the new member to the list
         self.Plates.append(newPlate)
+
+#%%
+    def AddQuad(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
+        '''
+        Adds a new quadrilateral to the model.
+
+        Quadrilaterals are similar to plates, except they do not have to be
+        rectangular. Plates will be dapricated in a future version. Note that
+        quadrilateral nodes are defined in counter-clockwise order instead of
+        the clockwise order that plates have used up to this point.
+        
+        Parameters
+        ----------
+        Name : string
+            A unique user-defined name for the quadrilateral.
+        iNode : string
+            The name of the i-node (1st node definded in counter-clockwise order).
+        jNode : string
+            The name of the j-node (2nd node defined in counter-clockwise order).
+        mNode : string
+            The name of the m-node (3rd node defined in counter-clockwise order).
+        nNode : string
+            The name of the n-node (4th node defined in counter-clockwise order).
+        t : number
+            The thickness of the quadrilateral.
+        E : number
+            The modulus of elasticity of the quadrilateral.
+        mew : number
+            Posson's ratio for the quadrilateral.
+        '''
+        
+        # Create a new member
+        newQuad = Quad3D(Name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
+        
+        # Add the new member to the list
+        self.Quads.append(newQuad)
 
 #%%
     def RemoveNode(self, Node):
@@ -453,6 +494,15 @@ class FEModel3D():
         self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end, case))
 
 #%%
+    def AddQuadSurfacePressure(self, quad_ID, pressure, case='Case 1'):
+        '''
+        Adds a surface pressure to the quadrilateral element.
+        '''
+
+        # Add the surface pressure to the quadrilateral
+        self.GetQuad(quad_ID).p.append(p, case)
+
+#%%
     def ClearLoads(self):
         '''
         Clears all loads from the model along with any results based on the loads.
@@ -597,8 +647,33 @@ class FEModel3D():
                 
                 # Return the plate of interest
                 return plate
-        # if the node name is not found and loop finishes
+        
+        # Raise an exception if the plate name is not found and loop finishes
         raise ValueError(f"Plate '{Name}' was not found in the model")
+
+#%%
+    def GetQuad(self, Name):
+        '''
+        Returns the quadrilateral with the given name.
+        
+        Parameters
+        ----------
+        Name : string
+            The name of the quadrilateral to be returned.
+        '''
+        
+        # Step through each quadrilateral in the 'Quads' list
+        for quad in self.Quads:
+            
+            # Check the name of the quadrilateral
+            if quad.Name == Name:
+                
+                # Return the quadrilateral of interest
+                return quad
+        
+        # Raise an excption if the quadrilateral name is not found and loop
+        # finishes
+        raise ValueError(f"Quadrilateral '{Name}' was not found in the model")
 
 #%%
     def __Renumber(self):
@@ -630,6 +705,12 @@ class FEModel3D():
         i = 0
         for plate in self.Plates:
             plate.ID = i
+            i += 1
+        
+        # Number each quadrilateral in the model
+        i = 0
+        for quad in self.Quads:
+            quad.ID = i
             i += 1
 
 #%%
@@ -810,6 +891,52 @@ class FEModel3D():
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                         K.itemset((m, n), K.item((m, n)) + member_K.item((a, b)))
+                
+        # Add stiffness terms for each quadrilateral in the model
+        print('...Adding quadrilateral stiffness terms to global stiffness matrix')
+        for quad in self.Quads:
+            
+            # Get the quadrilateral's global stiffness matrix
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            quad_K = quad.K()
+
+            # Step through each term in the quadrilateral's stiffness matrix
+            # 'a' & 'b' below are row/column indices in the quadrilateral's stiffness matrix
+            # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+            for a in range(24):
+
+                # Determine which node the index 'a' is related to
+                if a < 6:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = quad.mNode.ID*6 + a
+                elif a < 12:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = quad.nNode.ID*6 + (a-6)
+                elif a < 18:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = quad.iNode.ID*6 + (a-12)
+                else:
+                    # Find the corresponding index 'm' in the global stiffness matrix
+                    m = quad.jNode.ID*6 + (a-18)
+
+                for b in range(24):
+
+                    # Determine which node the index 'b' is related to
+                    if b < 6:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = quad.mNode.ID*6 + b
+                    elif b < 12:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = quad.nNode.ID*6 + (b-6)
+                    elif b < 18:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = quad.iNode.ID*6 + (b-12)
+                    else:
+                        # Find the corresponding index 'n' in the global stiffness matrix
+                        n = quad.jNode.ID*6 + (b-18)
+                    
+                    # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                    K.itemset((m, n), K.item((m, n)) + quad_K.item((a, b)))
         
         # Add stiffness terms for each plate in the model
         print('...Adding plate stiffness terms to global stiffness matrix')
@@ -960,6 +1087,35 @@ class FEModel3D():
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER.itemset((m, 0), FER[m, 0] + member_FER[a, 0])
         
+        # Add terms for each quadrilateral in the model
+        for quad in self.Quads:
+            
+            # Get the quadrilateral's global fixed end reaction vector
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            quad_FER = quad.FER(combo_name)
+
+            # Step through each term in the quadrilateral's fixed end reaction vector
+            # 'a' below is the row index in the quadrilateral's fixed end reaction vector
+            # 'm' below is the corresponding row index in the global fixed end reaction vector
+            for a in range(24):
+                
+                # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
+                if a < 6:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = quad.mNode.ID*6 + a
+                elif a < 12:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = quad.nNode.ID*6 + (a - 6)
+                elif a < 18:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = quad.iNode.ID*6 + (a - 12)
+                else:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = quad.jNode.ID*6 + (a - 18)
+                
+                # Now that 'm' is known, place the term in the global fixed end reaction vector
+                FER.itemset((m, 0), FER[m, 0] + quad_FER[a, 0])
+
         # Return the global fixed end reaction vector
         return FER
     
