@@ -74,6 +74,9 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
   for plate in model.Plates:
     vis_plates.append(VisPlate(plate, model.Nodes, text_height))
   
+  for quad in model.Quads:
+    vis_plates.append(VisPlate(quad, model.Nodes, text_height))
+  
   # Create a window
   window = vtk.vtkRenderWindow()
 
