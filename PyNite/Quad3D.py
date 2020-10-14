@@ -813,3 +813,31 @@ class Quad3D():
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
+
+        # Define the gauss point used for numerical integration
+        gp = 1/3**0.5
+
+        # Define extrapolated r and s points
+        r_ex = r/gp
+        s_ex = s/gp
+
+        # Define the interpolation functions
+        H = 1/4*array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
+
+        # Get the stress-strain matrix
+        C = self.C()
+        
+        # Calculate the internal moments [Sx, Sy, Txy] at each gauss point
+        s1 = matmul(C, matmul(self.B_m(gp, gp), d))
+        s2 = matmul(C, matmul(self.B_m(-gp, gp), d))
+        s3 = matmul(C, matmul(self.B_m(-gp, -gp), d))
+        s4 = matmul(C, matmul(self.B_m(gp, -gp), d))
+
+        # Extrapolate to get the value at the requested location
+        Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]
+        Sy = H[0]*s1[1] + H[1]*s2[1] + H[2]*s3[1] + H[3]*s4[1]
+        Txy = H[0]*s1[2] + H[1]*s2[2] + H[2]*s3[2] + H[3]*s4[2]
+
+        return array([[Sx],
+                      [Sy],
+                      [Txy]])
