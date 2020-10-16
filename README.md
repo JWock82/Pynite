@@ -38,11 +38,6 @@ PyNite depends on the following packages:
 * jupyterlab: Only needed if you want to view the derivations used to build PyNite.
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
-# Support and Feature Requests
-I am a structural engineer first and foremost. If you're looking for help understanding, applying, interpreting, or extending the engineering behind PyNite, I'd be happy to help you on a private consulting basis. I have almost 14 years experience designing steel, concrete, aluminum, and masonry structures for many large scale multi-disciplinary projects. I have a strong background in U.S. building code requirements. You can contact me directly at <Building.Code@outlook.com> to discuss options.
-
-I get more feature requests than I have time to handle. I chip away at them as I find time, but it's a slow process. However, if there is a feature you really want expedited, especially a complex one that takes considerable effort, I'm generally willing to devolop it on a consulting basis. I'd prefer to keep any new features I develop free for all users under the MIT License however. You are still welcome to use it for your proprietary software. That promotes expansion of PyNite's capabilities and more opportunities for me to improve PyNite for everyone. Again, you can contact me at <Building.Code@outlook.com> to discuss options.
-
 # What's New?
 Version 0.0.19: Fixed relative filepath references in the reporting feature. Reporting should work now... I think.
 
