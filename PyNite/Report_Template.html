@@ -152,6 +152,38 @@
             </tbody>
         </table>
         {% endif %}
+
+        {% if plate_table == True %}
+        <h3>Quads</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Quad</th>
+                    <th>i-Node</th>
+                    <th>j-Node</th>
+                    <th>m-Node</th>
+                    <th>n-Node</th>
+                    <th>t</th>
+                    <th>E</th>
+                    <th>&nu;</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.Name }}</td>
+                    <td>{{ quad.iNode.Name }}</td>
+                    <td>{{ quad.jNode.Name }}</td>
+                    <td>{{ quad.mNode.Name }}</td>
+                    <td>{{ quad.nNode.Name }}</td>
+                    <td>{{ "%.4g" | format(quad.t) }}</td>
+                    <td>{{ "%.4g" | format(quad.E) }}</td>
+                    <td>{{ "%.4g" | format(quad.nu) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
         
         {% if node_reactions == True %}
         <h3>Node Reactions</h3>     
@@ -386,6 +418,36 @@
                     <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
             {% endfor %}
             </tbody>
 
@@ -410,6 +472,7 @@
 
             <tbody>
             {% for combo in load_combos %}
+
                 {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
@@ -421,6 +484,19 @@
                     <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+
             {% endfor %}
             </tbody>
 
@@ -461,6 +537,7 @@
 
             <tbody>
             {% for combo in load_combos %}
+
                 {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
@@ -483,6 +560,29 @@
                     <td>{{ "%.3g" | format(plate.Membrane(plate.width(), 0, combo)[2]) }}</td>
                 </tr>
                 {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.Name }}</td>
+                    <td>{{ combo }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo)[2]) }}</td>
+                </tr>
+                {% endfor %}
             {% endfor %}
             </tbody>
 
@@ -503,6 +603,7 @@
             </thead>
             <tbody>
             {% for combo in load_combos %}
+
                 {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
@@ -512,6 +613,17 @@
                     <td>{{ "%.3g" | format(plate.Membrane(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.Name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+
             {% endfor %}
             </tbody>
         </table>
