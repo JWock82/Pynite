@@ -35,20 +35,17 @@ class Quad3D():
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
         self.LoadCombos = LoadCombos
 
-#%%
-    def Hw(self, r, s):
-
-        Hw = 1/4*array([[(1+r)*(1+s), 0, 0, (1-r)*(1+s), 0, 0, (1-r)*(1-s), 0, 0, (1+r)*(1-s), 0, 0]])
-
-        return Hw
+        # Calculate the local coordinate system
+        self.__local_coords()
 
 #%%
-    def J(self, r, s):
+    def __local_coords(self):
         '''
-        Returns the Jacobian matrix for the element
+        Calculates or recalculates and stores the local (x, y) coordinates for each node of the
+        quadrilateral.
         '''
-        
-        # The derivation of this matrix is adapted from "Finite Element Procedures"
+
+        # Get the global coordinates for each node
         X1, Y1, Z1 = self.mNode.X, self.mNode.Y, self.mNode.Z
         X2, Y2, Z2 = self.nNode.X, self.nNode.Y, self.nNode.Z
         X3, Y3, Z3 = self.iNode.X, self.iNode.Y, self.iNode.Z
@@ -67,19 +64,35 @@ class Quad3D():
         y_axis = cross(z_axis, x_axis)
 
         # Convert the axes into unit vectors
-        x_axis = x_axis/norm(x_axis)
-        y_axis = y_axis/norm(y_axis)
-        z_axis = z_axis/norm(z_axis)
+        self.x_axis = x_axis/norm(x_axis)
+        self.y_axis = y_axis/norm(y_axis)
+        self.z_axis = z_axis/norm(z_axis)
 
         # Calculate the local (x, y) coordinates for each node
-        x1 = dot(vector_31, x_axis)
-        x2 = dot(vector_32, x_axis)
-        x3 = 0
-        x4 = dot(vector_34, x_axis)
-        y1 = dot(vector_31, y_axis)
-        y2 = dot(vector_32, y_axis)
-        y3 = 0
-        y4 = dot(vector_34, y_axis)
+        self.x1 = dot(vector_31, x_axis)
+        self.x2 = dot(vector_32, x_axis)
+        self.x3 = 0
+        self.x4 = dot(vector_34, x_axis)
+        self.y1 = dot(vector_31, y_axis)
+        self.y2 = dot(vector_32, y_axis)
+        self.y3 = 0
+        self.y4 = dot(vector_34, y_axis)
+
+#%%
+    def Hw(self, r, s):
+
+        Hw = 1/4*array([[(1+r)*(1+s), 0, 0, (1-r)*(1+s), 0, 0, (1-r)*(1-s), 0, 0, (1+r)*(1-s), 0, 0]])
+
+        return Hw
+
+#%%
+    def J(self, r, s):
+        '''
+        Returns the Jacobian matrix for the element
+        '''
+        
+        # Get the local coordinates for the element
+        x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
 
         # Return the Jacobian matrix
         return 1/4*array([[x1*(s + 1) - x2*(s + 1) + x3*(s - 1) - x4*(s - 1), y1*(s + 1) - y2*(s + 1) + y3*(s - 1) - y4*(s - 1)],
@@ -148,38 +161,9 @@ class Quad3D():
         thin plates, and for distorted plate geometries.
         '''
 
-        # Get the node global coordinates
-        X1, Y1, Z1 = self.mNode.X, self.mNode.Y, self.mNode.Z
-        X2, Y2, Z2 = self.nNode.X, self.nNode.Y, self.nNode.Z
-        X3, Y3, Z3 = self.iNode.X, self.iNode.Y, self.iNode.Z
-        X4, Y4, Z4 = self.jNode.X, self.jNode.Y, self.jNode.Z
-
-        # Following Reference 1, Figure 5.26, node 3 will be used as the
-        # origin of the plate's local (x, y) coordinate system. Find the
-        # vector from the origin to each node.
-        vector_32 = array([X2 - X3, Y2 - Y3, Z2 - Z3]).T
-        vector_31 = array([X1 - X3, Y1 - Y3, Z1 - Z3]).T
-        vector_34 = array([X4 - X3, Y4 - Y3, Z4 - Z3]).T
-
-        # Define the plate's local x, y, and z axes
-        x_axis = vector_34
-        z_axis = cross(x_axis, vector_32)
-        y_axis = cross(z_axis, x_axis)
-
-        # Convert the axes into unit vectors
-        x_axis = x_axis/norm(x_axis)
-        y_axis = y_axis/norm(y_axis)
-        z_axis = z_axis/norm(z_axis)
-
-        # Calculate the local (x, y) coordinates for each node
-        x1 = dot(vector_31, x_axis)
-        x2 = dot(vector_32, x_axis)
-        x3 = 0
-        x4 = dot(vector_34, x_axis)
-        y1 = dot(vector_31, y_axis)
-        y2 = dot(vector_32, y_axis)
-        y3 = 0
-        y4 = dot(vector_34, y_axis)
+        # Get the local coordinates for the element
+        x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
+        x_axis, y_axis = self.x_axis, self.y_axis
 
         # Reference 1, Equations 5.105
         Ax = x1 - x2 - x3 + x4
@@ -481,6 +465,7 @@ class Quad3D():
         Returns the quad element's local stiffness matrix.
         '''
 
+        # Sum the bending and membrane stiffness matrices
         return self.k_b() + self.k_m()
 
 #%%   
@@ -627,9 +612,11 @@ class Quad3D():
         '''
         Returns the quad element's global stiffness matrix
         '''
-        
+        # Get the transpose matrix
+        T = self.T()
+
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(transpose(self.T()), self.k()), self.T())
+        return matmul(matmul(transpose(T), self.k()), T)
 
 #%% 
     # Global fixed end reaction vector
