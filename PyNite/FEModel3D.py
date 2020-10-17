@@ -1270,18 +1270,18 @@ class FEModel3D():
                 # Get the partitioned global nodal force vector       
                 P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)          
 
-                # Check for global stability by determining if 'K11' is singular
-                print('...Checking global stability for load combination', combo.name)
+                # Calculate the global displacement vector
+                print('...Calculating global displacement vector for load combination', combo.name)
                 if K11.shape == (0, 0):
                     # All displacements are known, so D1 is an empty vector
                     D1 = []
-                elif matrix_rank(K11) < min(K11.shape):
-                    # Return out of the method if 'K' is singular and provide an error message
-                    raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
                 else:
-                    # Calculate the unknown displacements D1
-                    print('...Calculating global displacement vector for load combination', combo.name)
-                    D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                    try:
+                        # Calculate the unknown displacements D1
+                        D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                    except:
+                        # Return out of the method if 'K' is singular and provide an error message
+                        raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
 
                 # Form the global displacement vector, D, from D1 and D2
                 D = zeros((len(self.Nodes)*6, 1))
@@ -1476,19 +1476,18 @@ class FEModel3D():
                     K21 = add(K21, Kg21)
                     K22 = add(K22, Kg22)                     
 
-                # Determine if 'K' is singular
-                print('...Checking global stability')
+                # Calculate the global displacement vector
+                print('...Calculating the global displacement vector')
                 if K11.shape == (0, 0):
                     # All displacements are known, so D1 is an empty vector
                     D1 = []
-                elif matrix_rank(K11) < min(K11.shape):
-                    # Return out of the method if 'K' is singular and provide an error message
-                    print('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-                    raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
                 else:
-                    # Calculate the global displacement vector
-                    print('...Calculating global displacement vector')
-                    D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                    try:
+                        # Calculate the global displacement vector
+                        D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                    except:
+                        # Return out of the method if 'K' is singular and provide an error message
+                        raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
             
                 D = zeros((len(self.Nodes)*6, 1))
 
