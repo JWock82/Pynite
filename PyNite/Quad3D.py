@@ -432,7 +432,15 @@ class Quad3D():
                matmul(self.B_m(gp, gp).T, matmul(C, self.B_m(gp, gp)))*det(self.J(gp, gp)) +
                matmul(self.B_m(gp, -gp).T, matmul(C, self.B_m(gp, -gp)))*det(self.J(gp, -gp)))
         
-        # Initialize the expanded stiffness matrix to all zeros
+        # At this point `k` only contains terms for the degrees of freedom
+        # associated with membrane action. Expand `k` to include zero terms for
+        # the degrees of freedom related to bending forces. This will allow
+        # the bending and membrane stiffness matrices to be summed directly
+        # later on. `numpy` has an `insert` function that can be used to
+        # insert rows and columns of zeros one at a time, but it is very slow
+        # as it makes a temporary copy of the matrix term by term each time
+        # it's called. The algorithm used here accomplishes the same thing
+        # much faster. Terms are copied only once.
         k_exp = zeros((24, 24))
 
         # Step through each term in the unexpanded stiffness matrix
