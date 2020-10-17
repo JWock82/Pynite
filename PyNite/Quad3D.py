@@ -432,44 +432,40 @@ class Quad3D():
                matmul(self.B_m(gp, gp).T, matmul(C, self.B_m(gp, gp)))*det(self.J(gp, gp)) +
                matmul(self.B_m(gp, -gp).T, matmul(C, self.B_m(gp, -gp)))*det(self.J(gp, -gp)))
         
-        # Insert rows of zeros for degrees of freedom not included in the matrix above
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
+        # Initialize the expanded stiffness matrix to all zeros
+        k_exp = zeros((24, 24))
 
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
+        # Step through each term in the unexpanded stiffness matrix
 
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
+        # i = Unexpanded matrix row
+        for i in range(8):
+
+            # j = Unexpanded matrix column
+            for j in range(8):
+                
+                # Find the corresponding term in the expanded stiffness
+                # matrix
+
+                # m = Expanded matrix row
+                if i in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    m = i*3
+                if i in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    m = 1 + 6*((i - 1)/2)
+
+                # n = Expanded matrix column
+                if j in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    n = j*3
+                if j in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    n = 1 + 6*((j - 1)/2)
+                
+                # Ensure the indices are integers rather than floats
+                m, n = round(m), round(n)
+
+                # Add the term from the unexpanded matrix into the expanded
+                # matrix
+                k_exp[m, n] = k[i, j]
         
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-        
-        return k
+        return k_exp
 
 #%%
     def k(self):
