@@ -424,11 +424,18 @@ class Quad3D():
         # Define the gauss point for numerical integration
         gp = 1/3**0.5
 
+        # Get the membrane B matrices for each gauss point
+        # Doing this now will save us from doing it twice below
+        B1 = self.B_m(gp, gp)
+        B2 = self.B_m(-gp, gp)
+        B3 = self.B_m(-gp, -gp)
+        B4 = self.B_m(gp, -gp)
+
         # See reference 1 at the bottom of page 353, and reference 2 page 466
-        k = t*(matmul(self.B_m(-gp, -gp).T, matmul(C, self.B_m(-gp, -gp)))*det(self.J(-gp, -gp)) +
-               matmul(self.B_m(-gp, gp).T, matmul(C, self.B_m(-gp, gp)))*det(self.J(-gp, gp)) +
-               matmul(self.B_m(gp, gp).T, matmul(C, self.B_m(gp, gp)))*det(self.J(gp, gp)) +
-               matmul(self.B_m(gp, -gp).T, matmul(C, self.B_m(gp, -gp)))*det(self.J(gp, -gp)))
+        k = t*(matmul(B1.T, matmul(C, B1))*det(self.J(gp, gp)) +
+               matmul(B2.T, matmul(C, B2))*det(self.J(-gp, gp)) +
+               matmul(B3.T, matmul(C, B3))*det(self.J(-gp, -gp)) +
+               matmul(B4.T, matmul(C, B4))*det(self.J(gp, -gp)))
         
         # At this point `k` only contains terms for the degrees of freedom
         # associated with membrane action. Expand `k` to include zero terms for
