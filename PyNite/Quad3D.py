@@ -288,16 +288,30 @@ class Quad3D():
         J3 = det(self.J(-gp, -gp))
         J4 = det(self.J(gp, -gp))
 
+        # Get the bending B matrices for each gauss point
+        B1 = self.B_kappa(gp, gp)
+        B2 = self.B_kappa(-gp, gp)
+        B3 = self.B_kappa(-gp, -gp)
+        B4 = self.B_kappa(gp, -gp)
+
+        # Create the stiffness matrix with bending stiffness terms
         # See Reference 1, Equation 5.94
-        k = (matmul(self.B_kappa(-gp, -gp).T, matmul(Cb, self.B_kappa(-gp, -gp)))*J3 +
-             matmul(self.B_kappa(-gp, gp).T, matmul(Cb, self.B_kappa(-gp, gp)))*J2 +
-             matmul(self.B_kappa(gp, gp).T, matmul(Cb, self.B_kappa(gp, gp)))*J1 +
-             matmul(self.B_kappa(gp, -gp).T, matmul(Cb, self.B_kappa(gp, -gp)))*J4)
-        
-        k += (matmul(self.B_gamma_MITC4(-gp, -gp).T, matmul(Cs, self.B_gamma_MITC4(-gp, -gp)))*J3 +
-              matmul(self.B_gamma_MITC4(-gp, gp).T, matmul(Cs, self.B_gamma_MITC4(-gp, gp)))*J2 +
-              matmul(self.B_gamma_MITC4(gp, gp).T, matmul(Cs, self.B_gamma_MITC4(gp, gp)))*J1 +
-              matmul(self.B_gamma_MITC4(gp, -gp).T, matmul(Cs, self.B_gamma_MITC4(gp, -gp)))*J4)
+        k = (matmul(B1.T, matmul(Cb, B1))*J1 +
+             matmul(B2.T, matmul(Cb, B2))*J2 +
+             matmul(B3.T, matmul(Cb, B3))*J3 +
+             matmul(B4.T, matmul(Cb, B4))*J4)
+
+        # Get the shear B matrices for each gauss point
+        B1 = self.B_gamma_MITC4(gp, gp)
+        B2 = self.B_gamma_MITC4(-gp, gp)
+        B3 = self.B_gamma_MITC4(-gp, -gp)
+        B4 = self.B_gamma_MITC4(gp, -gp)
+
+        # Add shear stiffness terms to the stiffness matrix
+        k += (matmul(B1.T, matmul(Cs, B1))*J1 +
+              matmul(B2.T, matmul(Cs, B2))*J2 +
+              matmul(B3.T, matmul(Cs, B3))*J3 +
+              matmul(B4.T, matmul(Cs, B4))*J4)
         
         # Calculate the stiffness of a weak spring for the drilling degree of freedom (rotation about local z)
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
