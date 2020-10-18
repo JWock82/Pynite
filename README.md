@@ -28,9 +28,11 @@ As I've gotten into the structural engineering profession, I've found there's a 
 # Dependencies
 PyNite depends on the following packages:
 ## Required Dependencies
-* numpy: used for matrix algebra
+* numpy: used for matrix algebra and dense matrix solver
+* scipy: used for sparse matrix solver to improve solution speed
 * matplotlib: used for plotting member diagrams
 * PrettyTable : used to format tabular output
+
 ## Optional Dependencies
 * VTK: used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. VTK does not need to be installed if you don't plan to use the visualization tools built into PyNite.
 * PDFKit: Used for generating pdf reports. In order to generate pdf reports, PDFKit requires you to have wkhtmltopdf installed on your computer. This is a free program available for download at https://wkhtmltopdf.org/downloads.html. Once installed, you'll need to help PyNite find it. On Windows, this can be done by setting your PATH environment variable to include the path to "wkhtmltopdf.exe" after installation. For example, mine is installed at "C:\Program Files\wkhtmltopdf\bin"
