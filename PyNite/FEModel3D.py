@@ -1,7 +1,8 @@
 # %%
 from numpy import array, matrix, zeros, empty, delete, insert, matmul, divide, add, subtract
 from numpy import nanmax, seterr, shape
-from numpy.linalg import solve, matrix_rank
+from numpy.linalg import solve
+from scipy.sparse.linalg import spsolve
 from math import isclose
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
@@ -500,7 +501,7 @@ class FEModel3D():
         '''
 
         # Add the surface pressure to the quadrilateral
-        self.GetQuad(quad_ID).p.append(p, case)
+        self.GetQuad(quad_ID).p.append(pressure, case)
 
 #%%
     def ClearLoads(self):
@@ -1203,7 +1204,7 @@ class FEModel3D():
             return m11, m12, m21, m22
 
 #%%  
-    def Analyze(self, check_statics=False, max_iter=30):
+    def Analyze(self, check_statics=False, max_iter=30, sparse=True):
         '''
         Performs first-order static analysis.
         
@@ -1218,6 +1219,12 @@ class FEModel3D():
         max_iter : number, optional
             The maximum number of iterations to try to get convergence
             for tension/compression-only analysis.
+        sparse : bool, optional
+            Indicates whether the sparse matrix solver should be used. A matrix can be considered
+            sparse or dense depening on how many zero terms there are. Structural stiffness
+            matrices often contain many zero terms. The sparse solver can offer faster solutions
+            for such matrices. Using the sparse solver on dense matrices may lead to slower
+            solution times.
         '''
         
         print('+-----------+')
@@ -1278,7 +1285,11 @@ class FEModel3D():
                 else:
                     try:
                         # Calculate the unknown displacements D1
-                        D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                        if sparse == True:
+                            D1 = spsolve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = D1.reshape(len(D1), 1)
+                        else:
+                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
                         raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
@@ -1390,7 +1401,7 @@ class FEModel3D():
             self.__CheckStatics()
 
 #%%
-    def Analyze_PDelta(self, max_iter=30, tol=0.01):
+    def Analyze_PDelta(self, max_iter=30, tol=0.01, sparse=True):
         '''
         Performs second order (P-Delta) analysis.
 
@@ -1403,6 +1414,12 @@ class FEModel3D():
             The deflection tolerance (as a percentage) between iterations that will be used to
             define whether the model has converged (e.g. 0.01 = deflections must converge within 1%
             between iterations).
+        sparse : bool, optional
+            Indicates whether the sparse matrix solver should be used. A matrix can be considered
+            sparse or dense depening on how many zero terms there are. Structural stiffness
+            matrices often contain many zero terms. The sparse solver can offer faster solutions
+            for such matrices. Using the sparse solver on dense matrices may lead to slower
+            solution times.
         '''
         
         print('+--------------------+')
@@ -1484,7 +1501,11 @@ class FEModel3D():
                 else:
                     try:
                         # Calculate the global displacement vector
-                        D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                        if sparse == True:
+                            D1 = spsolve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = D1.reshape(len(D1), 1)
+                        else:
+                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
                         raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
