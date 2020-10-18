@@ -3,6 +3,7 @@ from numpy import array, matrix, zeros, empty, delete, insert, matmul, divide, a
 from numpy import nanmax, seterr, shape
 from numpy.linalg import solve
 from scipy.sparse.linalg import spsolve
+from scipy.sparse import csc_matrix
 from math import isclose
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
@@ -1286,7 +1287,7 @@ class FEModel3D():
                     try:
                         # Calculate the unknown displacements D1
                         if sparse == True:
-                            D1 = spsolve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = spsolve(csc_matrix(K11), subtract(subtract(P1, FER1), matmul(K12, D2)))
                             D1 = D1.reshape(len(D1), 1)
                         else:
                             D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
@@ -1502,7 +1503,7 @@ class FEModel3D():
                     try:
                         # Calculate the global displacement vector
                         if sparse == True:
-                            D1 = spsolve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = spsolve(csc_matrix(K11), subtract(subtract(P1, FER1), matmul(K12, D2)))
                             D1 = D1.reshape(len(D1), 1)
                         else:
                             D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
