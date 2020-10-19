@@ -502,7 +502,7 @@ class FEModel3D():
         '''
 
         # Add the surface pressure to the quadrilateral
-        self.GetQuad(quad_ID).p.append(pressure, case)
+        self.GetQuad(quad_ID).pressures.append([pressure, case])
 
 #%%
     def ClearLoads(self):
