@@ -69,14 +69,14 @@ class Quad3D():
         self.z_axis = z_axis/norm(z_axis)
 
         # Calculate the local (x, y) coordinates for each node
-        self.x1 = dot(vector_31, x_axis)
-        self.x2 = dot(vector_32, x_axis)
+        self.x1 = dot(vector_31, self.x_axis)
+        self.x2 = dot(vector_32, self.x_axis)
         self.x3 = 0
-        self.x4 = dot(vector_34, x_axis)
-        self.y1 = dot(vector_31, y_axis)
-        self.y2 = dot(vector_32, y_axis)
+        self.x4 = dot(vector_34, self.x_axis)
+        self.y1 = dot(vector_31, self.y_axis)
+        self.y2 = dot(vector_32, self.y_axis)
         self.y3 = 0
-        self.y4 = dot(vector_34, y_axis)
+        self.y4 = dot(vector_34, self.y_axis)
 
 #%%
     def Hw(self, r, s):
@@ -344,19 +344,19 @@ class Quad3D():
 
                 # m = Expanded matrix row
                 if i in [0, 3, 6, 9]:  # indices associated with deflection in z
-                    m = 2 + 6*(i/3)
+                    m = 2*i + 2
                 if i in [1, 4, 7, 10]:  # indices associated with rotation about x
-                    m = 3 + 6*((i - 1)/3)
+                    m = 2*i + 1
                 if i in [2, 5, 8, 11]:  # indices associated with rotation about y
-                    m = 4 + 6*((i - 2)/3)
+                    m = 2*i
 
                 # n = Expanded matrix column
                 if j in [0, 3, 6, 9]:  # indices associated with deflection in z
-                    n = 2 + 6*(j/3)
+                    n = 2*j + 2
                 if j in [1, 4, 7, 10]:  # indices associated with rotation about x
-                    n = 3 + 6*((j - 1)/3)
+                    n = 2*j + 1
                 if j in [2, 5, 8, 11]:  # indices associated with rotation about y
-                    n = 4 + 6*((j - 2)/3)
+                    n = 2*j
                 
                 # Ensure the indices are integers rather than floats
                 m, n = round(m), round(n)
@@ -463,13 +463,13 @@ class Quad3D():
                 if i in [0, 2, 4, 6]:  # indices associated with displacement in x
                     m = i*3
                 if i in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    m = 1 + 6*((i - 1)/2)
+                    m = i*3 - 2
 
                 # n = Expanded matrix column
                 if j in [0, 2, 4, 6]:  # indices associated with displacement in x
                     n = j*3
                 if j in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    n = 1 + 6*((j - 1)/2)
+                    n = i*3 - 2
                 
                 # Ensure the indices are integers rather than floats
                 m, n = round(m), round(n)
