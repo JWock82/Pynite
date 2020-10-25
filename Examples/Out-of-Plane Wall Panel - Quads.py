@@ -1,11 +1,13 @@
 #%%
-# This is an example of a how plates can be used to create a wall panel for out-of-plane bending problems.
+# This example works, but visualization and reporting for quads is not complete yet.
+
+# This is an example of a how quads can be used to create a wall panel for out-of-plane bending problems.
 # A 'RectWall' class has been defined to automate the process of meshing, loading, and plotting results for a wall
 # panel of any geometry and edge support conditions. Below the class definition is a brief script showing how the
 # 'RectWall' class can be been implemented.
 
 #%%
-from PyNite import FEModel3D, Node3D, Plate3D
+from PyNite import FEModel3D, Node3D, Quad3D
 
 # Packages used for plotting contours
 import numpy as np
@@ -30,7 +32,7 @@ class RectWall():
 
         self.loads = []   # A list of surface loads applied to the wall panel
         self.nodes = []   # A list of nodes that make up the wall panel
-        self.plates = []  # A list of plates that make up the wall panel
+        self.quads = []   # A list of quadrilaterals that make up the wall panel
 
         self.bot_support = bot_support
         self.top_support = top_support
@@ -57,10 +59,10 @@ class RectWall():
     # Descritizes the wall
     def __descritize(self):
 
-        # Determine how many columns of plates are necessary
+        # Determine how many columns of quads are necessary
         num_cols = round(self.width/self.mesh_size)
 
-        # Determine the plate width
+        # Determine the quad width
         pl_width = self.width/num_cols
 
         # Create a list to store mesh control points along the height of the wall
@@ -85,7 +87,7 @@ class RectWall():
         next(iter_y)
         y_prev = 0.0
 
-        # Initialize the plate and node ID's to 1
+        # Initialize the quad and node ID's to 1
         pl_id = 1
         node_id = 1
 
@@ -94,16 +96,16 @@ class RectWall():
             self.fem.AddNode('N'+str(node_id), i*pl_width, 0.0, 0.0)
             node_id += 1
 
-        # Add plates and nodes between each control point
+        # Add quads and nodes between each control point
         for control_point in iter_y:
 
             # Determine the height between control points ("lift" height)
             h = control_point - y_prev
 
-            # Determine how many rows of plates are needed in the lift
+            # Determine how many rows of quads are needed in the lift
             num_rows = max(1, round(h/self.mesh_size))
 
-            # Determine the plate height
+            # Determine the quad height
             pl_height = h/num_rows
 
             # Generate nodes
@@ -117,18 +119,18 @@ class RectWall():
                         self.fem.AddNode('N'+str(node_id), i*pl_width, j*pl_height + y_prev, 0.0)
                         node_id += 1
             
-            # Generate plates
+            # Generate quadrilaterals
             for j in range(num_rows):
                 for i in range(num_cols):
 
-                    # Determine which nodes the plate will be attached to
+                    # Determine which nodes the quadrilateral will be attached to
                     ni = pl_id + max(0, int((pl_id-1)/num_cols))
-                    nn = ni + 1
-                    nm = nn + (num_cols + 1)
-                    nj = nm - 1
+                    nj = ni + 1
+                    nm = nj + (num_cols + 1)
+                    nn = nm - 1
 
-                    # Add the plate to the list of plates
-                    self.fem.AddPlate('P'+str(pl_id), 'N'+str(ni), 'N'+str(nj), 'N'+str(nm), 'N'+str(nn), self.thickness, self.E, self.nu) 
+                    # Add the quadrilateral to the list of quadrilaterals
+                    self.fem.AddQuad('P'+str(pl_id), 'N'+str(ni), 'N'+str(nj), 'N'+str(nm), 'N'+str(nn), self.thickness, self.E, self.nu) 
 
                     # Prepare to move to the next iteration
                     pl_id += 1
@@ -141,9 +143,6 @@ class RectWall():
 
         # Step through each node in the model
         for node in self.fem.Nodes:
-
-            # Plate elements don't have the following degrees of freedom, so they'll need to be supported
-            node.SupportRZ = True
 
             # Determine if the node falls on any of the boundaries
             # Left edge
@@ -180,19 +179,19 @@ class RectWall():
         # Add supports to the wall
         self.__define_supports()
 
-        # Add plate loads to the model
-        for plate in self.fem.Plates:
+        # Add quad loads to the model
+        for quad in self.fem.Quads:
 
-            i_node = plate.iNode
-            j_node = plate.jNode
-            m_node = plate.mNode
-            n_node = plate.nNode
+            i_node = quad.iNode
+            j_node = quad.jNode
+            m_node = quad.mNode
+            n_node = quad.nNode
 
             # Calculate the average Y coordinate of the four nodes
             avgY = (i_node.Y + j_node.Y + m_node.Y + n_node.Y)/4
 
-            # Add plate surface loads to the model
-            pressure = 0.0
+            # Add quad surface loads to the model
+            pressure = 0
             for load in self.loads:
                 
                 y1 = load[0]
@@ -200,20 +199,14 @@ class RectWall():
                 p1 = load[2]
                 p2 = load[3]
 
-                # Calculate the pressure on the plate and the load it applied to each of its nodes
+                # Calculate the pressure on the quad and the load it applied to each of its nodes
                 if avgY <= y2 and avgY >= y1:
 
-                    # Calculate the pressure the plate
+                    # Calculate the pressure the quadrilateral
                     pressure += (p2 - p1)/(y2 - y1)*(avgY - y1) + p1
                     
-                    # Calculate the surface area of the plate
-                    area = (j_node.Y - i_node.Y)*(n_node.X - i_node.X)
-
-                    # Add the plate's load to each of its four nodes
-                    i_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    j_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    m_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    n_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
+                    # Add the surface pressure to the quadrilateral
+                    quad.pressures.append([pressure, 'Case 1'])
 
         # Analyze the model
         self.fem.Analyze()
@@ -279,33 +272,33 @@ class RectWall():
             force = 0
             count = 0
 
-            # Find the plates that attach to the node
-            for plate in self.fem.Plates:
+            # Find the quadrilaterals that attach to the node
+            for quad in self.fem.Quads:
 
-                # Sum plate corner forces at the node
-                if plate.iNode.ID == node.ID:
+                # Sum quad corner forces at the node
+                if quad.iNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(0, 0, 'Combo 1')[index][0]
+                        force += quad.shear(-1, -1, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(0, 0, 'Combo 1')[index][0]
+                        force += quad.moment(-1, -1, 'Combo 1')[index][0]
                     count += 1
-                elif plate.jNode.ID == node.ID:
+                elif quad.jNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(0, plate.height(), 'Combo 1')[index][0]
+                        force += quad.shear(1, -1, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(0, plate.height(), 'Combo 1')[index][0]
+                        force += quad.moment(1, -1, 'Combo 1')[index][0]
                     count += 1
-                elif plate.mNode.ID == node.ID:
+                elif quad.mNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(plate.width(), plate.height(), 'Combo 1')[index][0]
+                        force += quad.shear(1, 1, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(plate.width(), plate.height(), 'Combo 1')[index][0]
+                        force += quad.moment(1, 1, 'Combo 1')[index][0]
                     count += 1
-                elif plate.nNode.ID == node.ID:
+                elif quad.nNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(plate.width(), 0, 'Combo 1')[index][0]
+                        force += quad.shear(-1, 1, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(plate.width(), 0, 'Combo 1')[index][0]
+                        force += quad.moment(-1, 1, 'Combo 1')[index][0]
                     count += 1
 
             # Calculate the average force at the node
@@ -391,13 +384,13 @@ class RectWall():
 #%%
 # Rectangular wall panel implementation example
 # ---------------------------------------------
-E = 57000*(4500)**0.5*144 # psf
-t = 1 # ft
-width = 10 # ft
-height = width
-nu = 0.3
-meshsize = 1 # ft
-load = 250 # psf
+E = 57*(4500)**0.5 # ksi
+t = 12 # in
+width = 10*12 # in
+height = 20*12 #in
+nu = 0.17
+meshsize = 6 # in
+load = 0.250/144 # ksi
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
 myWall.add_load(0, height, load, load)
@@ -406,27 +399,46 @@ myWall.add_load(0, height, load, load)
 myWall.analyze()
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
-from PyNite import Visualization
-Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True)
+# from PyNite import Visualization
+# Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True)
+
+# Results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202
+D = E*t**3/(12*(1-nu**2))
+print('Solution from Timoshenko Table 35 for b/a = 2.0:')
+print('Expected displacement: ', 0.00254*load*width**4/D)
+print('Mx at Center:', 0.0412*load*width**2)
+print('Mx at Edges:', -0.0829*load*width**2)
+print('My at Center:', 0.0158*load*width**2)
+print('My at Top & Bottom:', -0.0571*load*width**2)
+
+print('')
+print('Max Mx', max([max(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Min Mx', min([min(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Max My', max([max(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
+print('Min My', min([min(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
+print('Max Mxy', max([max(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
+print('Min Mxy', min([min(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
+
+
+print('Max Qx', max([max(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Min Qx', min([min(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
+print('Max Qy', max([max(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
+print('Max Qy', min([min(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
 
 # Plot the displacement contour
 myWall.plot_disp()
-
-# Plot the shear force contours
-myWall.plot_forces('Qx')
-myWall.plot_forces('Qy')
 
 # Plot the moment contours
 myWall.plot_forces('Mx')
 myWall.plot_forces('My')
 myWall.plot_forces('Mxy')
 
-# Results from Timoshenko's "Theory of Plates and Shells" textbook
-D = E*t**3/(12*(1-nu**2))
-print('Expected displacement from Timoshenko: ', 0.00126*load*width**4/D)
+# Plot the shear force contours
+myWall.plot_forces('Qx')
+myWall.plot_forces('Qy')
 
 # Create a PDF report
 # It will be output to the PyNite folder unless the 'output_path' variable below is modified
-from PyNite import Reporting
-Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
-                       member_end_forces=False, member_internal_forces=False)
+# from PyNite import Reporting
+# Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
+#                        member_end_forces=False, member_internal_forces=False)

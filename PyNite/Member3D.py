@@ -18,20 +18,22 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
+    def __init__(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None, 
+                 LoadCombos={'Combo 1':LoadCombo('Combo 1', 
+                             factors={'Case 1':1.0})},
+                 tension_only=False, comp_only=False):
         '''
         Initializes a new member.
         '''
-        
         self.Name = Name    # A unique name for the member given by the user
         self.ID = None      # Unique index number for the member assigned by the program
         self.iNode = iNode  # The element's i-node
         self.jNode = jNode  # The element's j-node
         self.E = E  # The modulus of elasticity of the element
         self.G = G  # The shear modulus of the element
-        self.Iy = Iy    # The y-axis moment of inertia
-        self.Iz = Iz    # The z-axis moment of inertia
-        self.J = J  # The polar moment of inertia or torsional constant
+        self.Iy = Iy  # The y-axis moment of inertia
+        self.Iz = Iz  # The z-axis moment of inertia
+        self.J = J  # The torsional constant
         self.A = A  # The cross-sectional area
         self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
@@ -41,6 +43,13 @@ class Member3D():
         self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.LoadCombos = LoadCombos # The dictionary of load combinations in the model this member belongs to
+        self.tension_only = tension_only # Indicates whether the member is tension-only
+        self.comp_only = comp_only # Indicates whether the member is compression-only
+
+        # Members need to track whether they are active or not for any given load combination.
+        # They may become inactive for a load combination during a tension/compression-only
+        # analysis. This dictionary will be used when the model is solved.
+        self.active = {} # Key = load combo name, Value = True or False
         
         # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations
         # the '__solved_combo' variable will be used to track whether the member needs to be resegmented before running
@@ -148,7 +157,7 @@ class Member3D():
 
         Parameters
         ----------
-        P : number
+        P : number, optional
             The axial force acting on the member (compression = +, tension = -)
         '''
 
@@ -178,7 +187,11 @@ class Member3D():
         kg11, kg12, kg21, kg22 = self.__Partition(kg)
                
         # Calculate the condensed local geometric stiffness matrix
-        kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
+        # Note that a matrix of zeros cannot be inverted, so if P is 0 an error will occur
+        if isclose(P, 0.0):
+            kg_Condensed = zeros(kg11.shape)
+        else:
+            kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
         
         # Expand the condensed local geometric stiffness matrix
         i=0
@@ -471,26 +484,31 @@ class Member3D():
         Parameters
         ----------
         combo_name : string
-            The name of the load combination to construct the global displacement vector for (not the load combination itelf).
+            The name of the load combination to construct the global
+            displacement vector for (not the load combination itelf).
         '''
         
         # Initialize the displacement vector
         D = zeros((12, 1))
         
         # Read in the global displacements from the nodes
-        D[0, 0] = self.iNode.DX[combo_name]
+        # Apply axial displacements only if the member is active
+        if self.active[combo_name] == True:
+            D[0, 0] = self.iNode.DX[combo_name]
+            D[6, 0] = self.jNode.DX[combo_name]
+
+        # Apply the remaining displacements
         D[1, 0] = self.iNode.DY[combo_name]
         D[2, 0] = self.iNode.DZ[combo_name]
         D[3, 0] = self.iNode.RX[combo_name]
         D[4, 0] = self.iNode.RY[combo_name]
         D[5, 0] = self.iNode.RZ[combo_name]
-        D[6, 0] = self.jNode.DX[combo_name]
         D[7, 0] = self.jNode.DY[combo_name]
         D[8, 0] = self.jNode.DZ[combo_name]
         D[9, 0] = self.jNode.RX[combo_name]
         D[10, 0] = self.jNode.RY[combo_name]
-        D[11, 0] = self.jNode.RZ[combo_name]
-        
+        D[11, 0] = self.jNode.RZ[combo_name]      
+
         # Return the global displacement vector
         return D
 
@@ -841,9 +859,7 @@ class Member3D():
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()
-
-        
-        
+       
 #%%
     def Torsion(self, x, combo_name='Combo 1'):
         '''
@@ -970,7 +986,7 @@ class Member3D():
         Parameters
         ----------
         x : number
-            The location at which to find the shear.
+            The location at which to find the axial force.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         '''

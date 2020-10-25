@@ -27,13 +27,13 @@ SimpleBeam.AddMemberPtLoad('M1', 'Fy', -5, 7*12, 'D') # 5 kips Dead load
 SimpleBeam.AddMemberPtLoad('M1', 'Fy', -8, 7*12, 'L') # 8 kips Live load
 
 # Add load combinations
-SimpleBeam.AddLoadCombo('1.4D', {'D':1.0})
+SimpleBeam.AddLoadCombo('1.4D', {'D':1.4})
 SimpleBeam.AddLoadCombo('1.2D+1.6L', {'D':1.2, 'L':1.6})
 
 # Analyze the beam and perform a statics check
 SimpleBeam.Analyze(check_statics=True)
 
-Visualization.RenderModel(SimpleBeam, text_height=10, deformed_shape=True, deformed_scale=30, render_loads=True, combo_name='1.2D+1.6L',)
+Visualization.RenderModel(SimpleBeam, text_height=10, deformed_shape=True, deformed_scale=30, render_loads=True, combo_name='1.2D+1.6L')
 
 # Print the shear, moment, and deflection diagrams
 SimpleBeam.GetMember('M1').PlotShear('Fy', '1.2D+1.6L')
@@ -53,3 +53,10 @@ print('Minimum Moment:', SimpleBeam.GetMember('M1').MinMoment('Mz', '1.2D+1.6L')
 # Print the max/min deflections in the beam
 print('Maximum Deflection:', SimpleBeam.GetMember('M1').MaxDeflection('dy', '1.2D+1.6L'), 'in')
 print('Minimum Deflection:', SimpleBeam.GetMember('M1').MinDeflection('dy', '1.2D+1.6L'), 'in')
+
+# The following lines can be uncommented to create a PDF report. Follow the
+# instructions on the wiki under "Generating PDF Reports" to prevent errors.
+# The report will be output to the PyNite folder unless the 'output_path'
+# variable below is modified from PyNite import Reporting
+# Reporting.CreateReport(SimpleBeam, output_filepath='.//PyNite Report.pdf', plates=False, plate_corner_forces=False, \
+#                        plate_center_forces=False, plate_corner_membrane=False, plate_center_membrane=False)

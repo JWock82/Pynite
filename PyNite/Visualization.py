@@ -1,148 +1,257 @@
-# Import the Visualization Toolkit if it's not alread imported
-# You must be running a 64 bit version of Python for this to work
+# Import the Visualization Toolkit (VTK). VTK requires a 64 bit version of 
+# Python.
 import vtk
-from numpy import array, empty, append
-from math import isclose, sqrt
+from numpy import array, empty, append, cross
 
 #%%
-def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30, render_loads=True, combo_name='Combo 1', case=None):
+def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
+                render_loads=True, combo_name='Combo 1', case=None):
+  '''
+  Renders a finite element model using VTK.
+
+  Parameters
+  ----------
+  model : FEModel3D
+    Finite element model to be rendered.
+  text_height : number, optional
+    Controls the height of text displayed with the model. The units used for
+    `text_height` are the same as those used for lengths in the model. Sizes
+    of other objects (such as nodes) are related to this value. The default is
+    5.
+  deformed_shape : boolean, optional
+    Determines whether the deformed shape will be rendered or not. The model
+    must be solved to use this feature. Deformed shapes are not available for
+    load cases, only load combinations. The default is False.
+  deformed_scale : boolean, optional
+    Determines what magnification factor will be applied to the deformed
+    shape. The default is 30.
+  render_loads : boolean, optional
+    Determines if loads will be rendered with the deformed shape. The default
+    is True.
+  combo_name : string, optional
+    The load combination used for rendering the deformed shape and the loads.
+    The default is 'Combo 1'.
+  case : string, optional
+    The load case used for rendering loads. The default is None.
+    
+  Raises
+  ------
+  Exception
+    A deformed shape is requested and a load case has been specified.
+
+  Returns
+  -------
+  None.
+  '''
 
   # Input validation
   if deformed_shape == True and case != None:
-    print('Error: Deformed shape is only available for load combinations, not load cases.')
-    return
-
-  visNodes = []
+    raise Exception('Deformed shape is only available for load combinations,'
+                    ' not load cases.')
+  
+  # Create a visual node for each node in the model
+  vis_nodes = []
   for node in model.Nodes:
-    visNodes.append(VisNode(node, text_height))
-
-  visAuxNodes = []
-  for auxnode in model.auxNodes:
-    visAuxNodes.append(VisNode(auxnode, text_height, color='red'))
-
-  visMembers = []
+    vis_nodes.append(VisNode(node, text_height))
+  
+  # Create a visual auxiliary node for each auxiliary node in the model
+  vis_aux_nodes = []
+  for aux_node in model.auxNodes:
+    vis_aux_nodes.append(VisNode(aux_node, text_height, color='red'))
+  
+  # Create a visual spring for each spring in the model
+  vis_springs = []
+  for spring in model.Springs:
+    vis_springs.append(VisSpring(spring, model.Nodes, text_height))    
+  
+  # Create a visual member for each member in the model
+  vis_members = []
   for member in model.Members:
-    visMembers.append(VisMember(member, model.Nodes, text_height))
-
-  visPlates = []
+    vis_members.append(VisMember(member, model.Nodes, text_height))
+  
+  # Create a visual plate for each plate in the model
+  vis_plates = []
   for plate in model.Plates:
-    visPlates.append(VisPlate(plate, model.Nodes, text_height))
+    vis_plates.append(VisPlate(plate, model.Nodes, text_height))
+  
+  for quad in model.Quads:
+    vis_plates.append(VisPlate(quad, model.Nodes, text_height))
   
   # Create a window
   window = vtk.vtkRenderWindow()
 
   # Set the pixel width and length of the window
-  window.SetSize(500, 500)
+  window.SetSize(750, 750)
 
-  # Set up the interactor
-  # The interactor style determines how user interactions affect the view
+  # Set up the interactor. The interactor style determines how user
+  # interactions affect the view. The trackball camera style behaves much
+  # like popular commercial CAD programs.
   interactor = vtk.vtkRenderWindowInteractor()
-  style = vtk.vtkInteractorStyleTrackballCamera() # The trackball camera style behaves a lot like most CAD programs
+  style = vtk.vtkInteractorStyleTrackballCamera()
   interactor.SetInteractorStyle(style)
   interactor.SetRenderWindow(window)
 
-  # Create a renderer
+  # Create a renderer object and add it to the window
   renderer = vtk.vtkRenderer()
   window.AddRenderer(renderer)
-  
+
+  # Add actors for each spring
+  for vis_spring in vis_springs:
+
+    # Add the actor for the spring
+    renderer.AddActor(vis_spring.actor)
+
+    # Add the actor for the spring label
+    renderer.AddActor(vis_spring.lblActor)
+
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())    
+
   # Add actors for each member
-  for visMember in visMembers:
+  for vis_member in vis_members:
 
     # Add the actor for the member
-    renderer.AddActor(visMember.actor)
+    renderer.AddActor(vis_member.actor)
 
     # Add the actor for the member label
-    renderer.AddActor(visMember.lblActor)
+    renderer.AddActor(vis_member.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visMember.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Add actors for each node
-  for visNode in visNodes:
-
+  for vis_node in vis_nodes:
+        
     # Add the actor for the node
-    renderer.AddActor(visNode.actor)
+    renderer.AddActor(vis_node.actor)
 
     # Add the actor for the node label
-    renderer.AddActor(visNode.lblActor)
+    renderer.AddActor(vis_node.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visNode.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Add actors for each plate
-  for visPlate in visPlates:
+  for vis_plate in vis_plates:
 
     # Add the actors for the plate
-    renderer.AddActor(visPlate.actor)
+    renderer.AddActor(vis_plate.actor)
 
     # Add the actor for the plate label
-    renderer.AddActor(visPlate.lblActor)
+    renderer.AddActor(vis_plate.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visPlate.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_plate.lblActor.SetCamera(renderer.GetActiveCamera())
 
-  # Add actors for each auxnode
-  for visAuxNode in visAuxNodes:
+  # Add actors for each auxiliary node
+  for vis_aux_node in vis_aux_nodes:
 
-    # Add the actor for the node
-    renderer.AddActor(visAuxNode.actor)
+    # Add the actor for the auxiliary node
+    renderer.AddActor(vis_aux_node.actor)
 
-    # Add the actor for the node label
-    renderer.AddActor(visAuxNode.lblActor)
+    # Add the actor for the auxiliary node label
+    renderer.AddActor(vis_aux_node.lblActor)
 
-    # Set the text to follow the camera as the user interacts
-    # This next line will require us to reset the camera when we're done (below)
-    visAuxNode.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Set the text to follow the camera as the user interacts. This will
+    # require a reset of the camera (see below)
+    vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Render the deformed shape if requested
   if deformed_shape == True:
     __DeformedShape(model, renderer, deformed_scale, text_height, combo_name)
 
   # Render the loads if requested
-  if combo_name != None or case !=None:
+  if (combo_name != None or case != None) and render_loads != False:
     __RenderLoads(model, renderer, text_height, combo_name, case)
 
-  # Setting the background to blue.
+  # Set the window's background to blue
   renderer.SetBackground(0.1, 0.1, 0.4)
 
   # Reset the camera
   renderer.ResetCamera()
-
+    
+  # Render the window and start the interactor
   window.Render()
   interactor.Start()
 
 #%%
 def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
+  '''
+  Renders the deformed shape of a structure.
 
-  visDeformedNodes = []
-  for node in model.Nodes:
-    visDeformedNodes.append(VisDeformedNode(node, scale_factor, text_height, combo_name))
+  Parameters
+  ----------
+  model : FEModel3D
+    Finite element model to be rendered.
+  renderer : vtk.vtkRenderer
+    The VTK renderer object that will render the model.
+  scale_factor : number
+    The scale factor to apply to the model deformations.
+  text_height : number
+    Controls the height of text displayed with the model. The units used
+    for `text_height` are the same as those used for lengths in the model.
+    Sizes of other objects (such as nodes) are related to this value.
+  combo_name : string
+    The load case used for rendering the deflected shape.
+
+  Returns
+  -------
+  None.
+  '''
   
-  visDeformedMembers = []
-  for member in model.Members:
-    visDeformedMembers.append(VisDeformedMember(member, model.Nodes, scale_factor, text_height, combo_name))
+  # Create a 'vtkAppendPolyData' filter to add all the shapes to
+  append_filter = vtk.vtkAppendPolyData()
+  
+  # Add the nodes to the filter and the node labels to the renderer
+  for node in model.Nodes:
 
-  # Add actors for each deformed member
-  for visDeformedMember in visDeformedMembers:
-
-    # Add the actor for the deformed member
-    renderer.AddActor(visDeformedMember.polylineActor)
-
-  # Add actors for each deformed node
-  for visDeformedNode in visDeformedNodes:
-
-    # Add the actor for the node
-    renderer.AddActor(visDeformedNode.actor)
+    vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
+    poly_data = vtk.vtkPolyData()
+    poly_data.ShallowCopy(vis_node.source.GetOutput())
+    append_filter.AddInputData(poly_data)
 
     # Add the actor for the node label
-    renderer.AddActor(visDeformedNode.lblActor)
+    renderer.AddActor(vis_node.lblActor)
 
     # Set the text to follow the camera as the user interacts
     # This next line will require us to reset the camera when we're done (below)
-    visDeformedNode.lblActor.SetCamera(renderer.GetActiveCamera())
+    vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+  
+  # Add the springs to the filter
+  for spring in model.Springs:
+    
+    # Only add the spring if it is active for the given load combination
+    if spring.active[combo_name] == True:
+
+      vis_spring = VisDeformedSpring(spring, model.Nodes, scale_factor, text_height, combo_name)
+      poly_data = vtk.vtkPolyData()
+      poly_data.ShallowCopy(vis_spring.source.GetOutput())
+      append_filter.AddInputData(poly_data)
+  
+  # Add the members to the filter
+  for member in model.Members:
+
+    # Only add the member if it is active for the given load combination.
+    if member.active[combo_name] == True:
+
+      vis_member = VisDeformedMember(member, model.Nodes, scale_factor, text_height, combo_name)
+      poly_data = vtk.vtkPolyData()
+      poly_data.ShallowCopy(vis_member.source)
+      append_filter.AddInputData(poly_data)
+  
+  # Create a mapper and actor for the filter
+  mapper = vtk.vtkPolyDataMapper()
+  mapper.SetInputConnection(append_filter.GetOutputPort())
+  actor = vtk.vtkActor()
+  actor.SetMapper(mapper)
+  actor.GetProperty().SetColor(255,255,0) # Yellow
+
+  # Add the actor to the renderer
+  renderer.AddActor(actor)
 
 #%%
 def __RenderLoads(model, renderer, text_height, combo_name, case):
@@ -153,297 +262,155 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
   # Display the requested load combination, or 'Combo 1' if no load combo or case has been specified
   if case == None:
 
-    # Ensure a load combination name has been specified. If not the default of 'Combo 1' will be used.
-    if combo_name == None:
-      combo = 'Combo 1'
-    else:
-      combo = combo_name
+    # Relabel model.LoadCombos[combo].factors as the more generic name used in 
+    # the loops below
+    load_factors = model.LoadCombos[combo_name].factors
 
-    # Step through each node
-    for node in model.Nodes:
-
-      # Step through and display each nodal load
-      for load in node.NodeLoads:
-        
-        # Determine if this load is part of the requested load combination
-        if load[2] in model.LoadCombos[combo].factors:
-          
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]*model.LoadCombos[combo].factors[load[2]]
-          sign = load_value/abs(load_value)
-          
-          # Display the load
-          if load[0] == 'FX':
-            ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FY':
-            ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FZ':
-            ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MX':
-            moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MY':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MZ':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-
-    # Step through each member
-    for member in model.Members:
-
-      # Get the direction cosines for the member's local axes
-      dir_cos = member.T()[0:3, 0:3]
-
-      # Get the starting point for the member
-      x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
-
-      # Step through each member point load
-      for load in member.PtLoads:
-
-        # Determine if this load is part of the requested load combination
-        if load[3] in model.LoadCombos[combo].factors:
-
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]*model.LoadCombos[combo].factors[load[3]]
-          sign = load_value/abs(load_value)
-
-          # Calculate the loads location in 3D space
-          x = load[2]
-          position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
-
-          # Display the load
-          if load[0] == 'Fx':
-            ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mx':
-            moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'My':
-            moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mz':
-            moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-      
-      # Step through each member distributed load
-      for load in member.DistLoads:
-
-        # Determine if this load is part of the requested load combination
-        if load[5] in model.LoadCombos[combo].factors:
-
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          w1 = load[1]*model.LoadCombos[combo].factors[load[5]]
-          w2 = load[2]*model.LoadCombos[combo].factors[load[5]]
-          sign1 = w1/abs(w1)
-          sign2 = w2/abs(w2)
-
-          # Calculate the loads location in 3D space
-          x1 = load[3]
-          x2 = load[4]
-          position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
-          position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
-          
-          # Display the load
-          if load[0] == 'Fx':
-            distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-
-  # Display the requested load case
   else:
+    # Create a load_factors dictionary that looks like LoadCombos[combo].factors
+    # Give it the same generic name used in the loops below
+    load_factors = {case: 1}
 
-    # Step through each node
-    for node in model.Nodes:
+  # Step through each node
+  for node in model.Nodes:
 
-      # Step through and display each nodal load
-      for load in node.NodeLoads:
-        
-        # Determine if this load is part of the requested load case
-        if load[2] == case:
-          
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]
-          sign = load_value/abs(load_value)
-          
-          # Display the load
-          if load[0] == 'FX':
-            ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FY':
-            ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'FZ':
-            ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MX':
-            moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MY':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'MZ':
-            moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-
-    # Step through each member
-    for member in model.Members:
-
-      # Get the direction cosines for the member's local axes
-      dir_cos = member.T()[0:3, 0:3]
-
-      # Get the starting point for the member
-      x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
-
-      # Step through each member point load
-      for load in member.PtLoads:
-
-        # Determine if this load is part of the requested load combination
-        if load[3] == case:
-
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          load_value = load[1]
-          sign = load_value/abs(load_value)
-
-          # Calculate the loads location in 3D space
-          x = load[2]
-          position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
-
-          # Display the load
-          if load[0] == 'Fx':
-            ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/maxPtLoad*5*text_height, str(load_value), text_height)
-            renderer.AddActor(ptLoad.actor)
-            renderer.AddActor(ptLoad.lblActor)
-            ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mx':
-            moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'My':
-            moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Mz':
-            moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/maxMoment*2.5*text_height, str(load_value), text_height)
-            renderer.AddActor(moment.actor)
-            renderer.AddActor(moment.lblActor)
-            moment.lblActor.SetCamera(renderer.GetActiveCamera())
+    # Step through and display each nodal load
+    for load in node.NodeLoads:
       
-      # Step through each member distributed load
-      for load in member.DistLoads:
+      # Determine if this load is part of the requested LoadCombo or case
+      if load[2] in load_factors:
+        
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        load_value = load[1]*load_factors[load[2]]
+        sign = load_value/abs(load_value)
+        
+        # Display the load
+        if load[0] == 'FX':
+          ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'FY':
+          ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'FZ':
+          ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'MX':
+          moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'MY':
+          moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'MZ':
+          moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
 
-        # Determine if this load is part of the requested load combination
-        if load[5] == case:
+  # Step through each member
+  for member in model.Members:
 
-          # Calculate the factored value for this load and it's sign (positive or negative)
-          w1 = load[1]
-          w2 = load[2]
-          sign1 = w1/abs(w1)
-          sign2 = w2/abs(w2)
+    # Get the direction cosines for the member's local axes
+    dir_cos = member.T()[0:3, 0:3]
 
-          # Calculate the loads location in 3D space
-          x1 = load[3]
-          x2 = load[4]
-          position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
-          position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
-          
-          # Display the load
-          if load[0] == 'Fx':
-            distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fy':
-            distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-          elif load[0] == 'Fz':
-            distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, str(w1), str(w2), text_height)
-            renderer.AddActor(distLoad.actor)
-            renderer.AddActor(distLoad.lblActors[0])
-            renderer.AddActor(distLoad.lblActors[1])
-            distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-            distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+    # Get the starting point for the member
+    x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
 
+    # Step through each member point load
+    for load in member.PtLoads:
+
+      # Determine if this load is part of the requested load combination
+      if load[3] in load_factors:
+
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        load_value = load[1]*load_factors[load[3]]
+        sign = load_value/abs(load_value)
+
+        # Calculate the loads location in 3D space
+        x = load[2]
+        position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
+
+        # Display the load
+        if load[0] == 'Fx':
+          ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fy':
+          ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fz':
+          ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(ptLoad.actor)
+          renderer.AddActor(ptLoad.lblActor)
+          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Mx':
+          moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'My':
+          moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Mz':
+          moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          renderer.AddActor(moment.actor)
+          renderer.AddActor(moment.lblActor)
+          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+    
+    # Step through each member distributed load
+    for load in member.DistLoads:
+
+      # Determine if this load is part of the requested load combination
+      if load[5] in load_factors:
+
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        w1 = load[1]*load_factors[load[5]]
+        w2 = load[2]*load_factors[load[5]]
+        sign1 = w1/abs(w1)
+        sign2 = w2/abs(w2)
+
+        # Calculate the loads location in 3D space
+        x1 = load[3]
+        x2 = load[4]
+        position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
+        position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
+        
+        # Display the load
+        if load[0] == 'Fx':
+          distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+          renderer.AddActor(distLoad.actor)
+          renderer.AddActor(distLoad.lblActors[0])
+          renderer.AddActor(distLoad.lblActors[1])
+          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fy':
+          distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+          renderer.AddActor(distLoad.actor)
+          renderer.AddActor(distLoad.lblActors[0])
+          renderer.AddActor(distLoad.lblActors[1])
+          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+        elif load[0] == 'Fz':
+          distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+          renderer.AddActor(distLoad.actor)
+          renderer.AddActor(distLoad.lblActors[0])
+          renderer.AddActor(distLoad.lblActors[1])
+          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
 
 #%%
 def __MaxLoads(model, combo_name=None, case=None):
@@ -452,13 +419,8 @@ def __MaxLoads(model, combo_name=None, case=None):
   maxMoment = 0
   maxDistLoad = 0
 
-  # Find the requested load combination, or use 'Combo 1' if no load combo or case has been specified
-  if (combo_name == None and case == None) or combo_name != None:
-
-    if combo_name == None:
-      combo = 'Combo 1'
-    else:
-      combo = combo_name
+  # Find the requested load combination or load case
+  if case == None:
 
     # Step through each node
     for node in model.Nodes:
@@ -467,13 +429,13 @@ def __MaxLoads(model, combo_name=None, case=None):
       for load in node.NodeLoads:
         
         # Find the largest loads in the load combination
-        if load[2] in model.LoadCombos[combo].factors:
+        if load[2] in model.LoadCombos[combo_name].factors:
           if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-            if abs(load[1]*model.LoadCombos[combo].factors[load[2]]) > maxPtLoad:
-              maxPtLoad = abs(load[1]*model.LoadCombos[combo].factors[load[2]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > maxPtLoad:
+              maxPtLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
           else:
-            if abs(load[1]*model.LoadCombos[combo].factors[load[2]]) > maxMoment:
-              maxMoment = abs(load[1]*model.LoadCombos[combo].factors[load[2]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > maxMoment:
+              maxMoment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
 
     # Step through each member
     for member in model.Members:
@@ -482,27 +444,27 @@ def __MaxLoads(model, combo_name=None, case=None):
       for load in member.PtLoads:
         
         # Find and store the largest point load and moment in the load combination
-        if load[3] in model.LoadCombos[combo].factors:
+        if load[3] in model.LoadCombos[combo_name].factors:
 
           if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
-            if abs(load[1]*model.LoadCombos[combo].factors[load[3]]) > maxPtLoad:
-              maxPtLoad = abs(load[1]*model.LoadCombos[combo].factors[load[3]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > maxPtLoad:
+              maxPtLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
           else:
-            if abs(load[1]*model.LoadCombos[combo].factors[load[3]]) > maxMoment:
-              maxMoment = abs(load[1]*model.LoadCombos[combo].factors[load[3]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > maxMoment:
+              maxMoment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
 
       # Step through each member distributed load
       for load in member.DistLoads:
 
         #Find and store the largest distributed load in the load combination
-        if load[5] in model.LoadCombos[combo].factors:
+        if load[5] in model.LoadCombos[combo_name].factors:
 
-          if abs(load[1]*model.LoadCombos[combo].factors[load[5]]) > maxDistLoad:
-            maxDistLoad = abs(load[1]*model.LoadCombos[combo].factors[load[5]])
-          if abs(load[2]*model.LoadCombos[combo].factors[load[5]]) > maxDistLoad:
-            maxDistLoad = abs(load[2]*model.LoadCombos[combo].factors[load[5]])
+          if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > maxDistLoad:
+            maxDistLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
+          if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > maxDistLoad:
+            maxDistLoad = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
 
-  # Behavior if case has been specified and combo has not been specified
+  # Behavior if case has been specified
   else:
     
     # Step through each node
@@ -511,7 +473,7 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each nodal load to find the largest one
       for load in node.NodeLoads:
         
-        # Find the largest loads in the load combination
+        # Find the largest loads in the load case
         if load[2] == case:
           if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
             if abs(load[1]) > maxPtLoad:
@@ -526,10 +488,10 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each member point load
       for load in member.PtLoads:
         
-        # Find and store the largest point load and moment in the load combination
+        # Find and store the largest point load and moment in the load case
         if load[3] == case:
 
-          if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
+          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
             if abs(load[1]) > maxPtLoad:
               maxPtLoad = abs(load[1])
           else:
@@ -539,7 +501,7 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each member distributed load
       for load in member.DistLoads:
 
-        #Find and store the largest distributed load in the load combination
+        # Find and store the largest distributed load in the load case
         if load[5] == case:
 
           if abs(load[1]) > maxDistLoad:
@@ -875,6 +837,55 @@ class VisNode():
     # Set the mapper for the node's actor
     self.actor.SetMapper(mapper)
 
+#%%
+class VisSpring():
+    
+    def __init__(self, spring, nodes, text_height=5):
+    
+        # Generate a line source for the spring
+        line = vtk.vtkLineSource()
+
+        # Step through each node in the model and find the position of the
+        # i-node and j-node
+        for node in nodes:
+
+            # Check to see if the current node is the i-node
+            if node.Name == spring.iNode.Name:
+                Xi = node.X
+                Yi = node.Y
+                Zi = node.Z
+                line.SetPoint1(Xi, Yi, Zi)
+
+            # Check to see if the current node is the j-node
+            elif node.Name == spring.jNode.Name:
+                Xj = node.X
+                Yj = node.Y
+                Zj = node.Z
+                line.SetPoint2(Xj, Yj, Zj)
+    
+        # Set up a mapper for the spring
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(line.GetOutputPort())
+
+        # Set up an actor for the spring
+        self.actor = vtk.vtkActor()
+        self.actor.GetProperty().SetColor(255, 0, 255) # Magenta
+        self.actor.SetMapper(mapper)
+
+        # Create the text for the spring label
+        label = vtk.vtkVectorText()
+        label.SetText(spring.Name)
+
+        # Set up a mapper for the spring label
+        lblMapper = vtk.vtkPolyDataMapper()
+        lblMapper.SetInputConnection(label.GetOutputPort())
+
+        # Set up an actor for the spring label
+        self.lblActor = vtk.vtkFollower()
+        self.lblActor.SetMapper(lblMapper)
+        self.lblActor.SetScale(text_height, text_height, text_height)
+        self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
+
 #%%        
 # Converts a member object into a member for the viewer
 class VisMember():
@@ -1016,53 +1027,51 @@ class VisPlate():
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(text_height, text_height, text_height)
-    self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, (Yi+Yj+Ym+Yn)/4, (Zi+Zj+Zm+Zn)/4)
+    self.lblActor.SetPosition((Xi+Xj+Xm+Xn)/4, 
+                              (Yi+Yj+Ym+Yn)/4,
+                              (Zi+Zj+Zm+Zn)/4)
 
 #%%
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
-  
+    
   def __init__(self, node, scale_factor, text_height=5, combo_name='Combo 1'):
-  
+        
     # Calculate the node's deformed position
     newX = node.X + scale_factor*(node.DX[combo_name])
     newY = node.Y + scale_factor*(node.DY[combo_name])
     newZ = node.Z + scale_factor*(node.DZ[combo_name])
 
-    # Generate a sphere for the node
-    sphere = vtk.vtkSphereSource()
-    sphere.SetCenter(newX, newY, newZ)
-    sphere.SetRadius(0.6*text_height)
-
-    # Set up a mapper for the node
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(sphere.GetOutputPort())
-
-    # Set up an actor for the node
-    self.actor = vtk.vtkActor()
-    self.actor.GetProperty().SetColor(255, 255, 0) # Yellow
-    self.actor.SetMapper(mapper)
+    # Generate a sphere source for the node
+    self.source = vtk.vtkSphereSource()
+    self.source.SetCenter(newX, newY, newZ)
+    self.source.SetRadius(0.6*text_height)
+    self.source.Update()
         
     # Create the text for the node label
-    label = vtk.vtkVectorText()
-    label.SetText(node.Name)
+    self.lbl_source = vtk.vtkVectorText()
+    self.lbl_source.SetText(node.Name)
 
     # Set up a mapper for the node label
     lblMapper = vtk.vtkPolyDataMapper()
-    lblMapper.SetInputConnection(label.GetOutputPort())
+    lblMapper.SetInputConnection(self.lbl_source.GetOutputPort())
 
     # Set up an actor for the node label
     self.lblActor = vtk.vtkFollower()
     self.lblActor.SetMapper(lblMapper)
     self.lblActor.SetScale(text_height, text_height, text_height)
-    self.lblActor.SetPosition(newX + 0.6*text_height, newY + 0.6*text_height, newZ)
+    self.lblActor.SetPosition(newX + 0.6*text_height, newY + 0.6*text_height,
+                              newZ)
     self.lblActor.GetProperty().SetColor(255, 255, 0) # Yellow
 
 #%%
-# Converts a member object into a member in its deformed position for the viewer
 class VisDeformedMember():
-
-  def __init__(self, member, nodes, scale_factor, text_height=5, combo_name='Combo 1'):
+    
+  def __init__(self, member, nodes, scale_factor, text_height=5,
+               combo_name='Combo 1'):
+        
+    # Determine if this member is active for each load combination
+    self.active = member.active
 
     L = member.L() # Member length
     T = member.T() # Member local transformation matrix
@@ -1081,38 +1090,41 @@ class VisDeformedMember():
         Yi = node.Y
         Zi = node.Z
 
-    # Calculate the local y-axis displacements at 20 points along the member's length
-    DY_plot = empty((0,3))
+    # Calculate the local y-axis displacements at 20 points along the member's
+    # length
+    DY_plot = empty((0, 3))
     for i in range(20):
-
-      # Displacements in local coordinates
+            
+      # Calculate the local y-direction displacement
       dy_tot = member.Deflection('dy', L/19*i, combo_name)
 
-      # Magnified displacements in global coordinates
+      # Calculate the scaled displacement in global coordinates
       DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
 
-    # Calculate the local z-axis displacements at 20 points along the member's length
-    DZ_plot = empty((0,3)) 
+    # Calculate the local z-axis displacements at 20 points along the member's
+    # length
+    DZ_plot = empty((0, 3)) 
     for i in range(20):
-
-      # Displacements in local coordinates
+            
+      # Calculate the local z-direction displacement
       dz_tot = member.Deflection('dz', L/19*i, combo_name)
 
-      # Magnified displacements in global coordinates
+      # Calculate the scaled displacement in global coordinates
       DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
 
-    # Calculate the local x-axis displacements at 20 points along the member's length
-    DX_plot = empty((0,3)) 
+    # Calculate the local x-axis displacements at 20 points along the member's
+    # length
+    DX_plot = empty((0, 3)) 
     for i in range(20):
-
+            
       # Displacements in local coordinates
       dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i, combo_name)*scale_factor)*cos_x
-      
+            
       # Magnified displacements in global coordinates
       DX_plot = append(DX_plot, dx_tot, axis=0)
     
     # Sum the component displacements to obtain overall displacement
-    D_plot = (DY_plot + DZ_plot + DX_plot)
+    D_plot = DY_plot + DZ_plot + DX_plot
 
     # Generate vtk points
     points = vtk.vtkPoints()
@@ -1128,20 +1140,42 @@ class VisDeformedMember():
     for i in range(len(D_plot)):
       lines.InsertCellPoint(i)
 
-    # Create a polyline from the defined points and lines
-    polyline = vtk.vtkPolyData()
-    polyline.SetPoints(points)
-    polyline.SetLines(lines)
+    # Create a polyline source from the defined points and lines
+    self.source = vtk.vtkPolyData()
+    self.source.SetPoints(points)
+    self.source.SetLines(lines)
+    
+#%%
+class VisDeformedSpring():
+    
+    def __init__(self, spring, nodes, scale_factor, text_height=5, 
+                 combo_name='Combo 1'):
 
-    # Set up a mapper
-    polylineMapper = vtk.vtkPolyDataMapper()
-    polylineMapper.SetInputData(polyline)
-    polylineMapper.Update()
-
-    # Set up an actor for the polyline
-    self.polylineActor = vtk.vtkActor()
-    self.polylineActor.SetMapper(polylineMapper)
-    self.polylineActor.GetProperty().SetColor(255,255,0) # Yellow
+        # Determine if this spring is active for each load combination
+        self.active = spring.active
+        
+        # Generate a line source for the spring
+        self.source = vtk.vtkLineSource()
+        
+        # Find the deformed position of the local i-node
+        # Step through each node
+        for node in nodes:
+      
+            # Check to see if the current node is the i-node
+            if node.Name == spring.iNode.Name:
+                Xi = node.X + node.DX[combo_name]*scale_factor
+                Yi = node.Y + node.DY[combo_name]*scale_factor
+                Zi = node.Z + node.DZ[combo_name]*scale_factor
+                self.source.SetPoint1(Xi, Yi, Zi)
+        
+            # Check to see if the current node is the i-node
+            if node.Name == spring.jNode.Name:
+                Xj = node.X + node.DX[combo_name]*scale_factor
+                Yj = node.Y + node.DY[combo_name]*scale_factor
+                Zj = node.Z + node.DZ[combo_name]*scale_factor
+                self.source.SetPoint2(Xj, Yj, Zj)
+        
+        self.source.Update()
     
 #%%
 class VisPtLoad():
@@ -1203,6 +1237,7 @@ class VisPtLoad():
     poly_data = vtk.vtkPolyData()
     poly_data.ShallowCopy(shaft.GetOutput())
     self.append_filter.AddInputData(poly_data)
+    self.append_filter.Update()
 
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
@@ -1328,7 +1363,7 @@ class VisMoment():
     # Find a vector perpendicular to the directional unit vector
     v1 = UnitVector(direction) # The direction of the moment
     v2 = PerpVector(v1) # A vector perpendicular to the direction
-    v3 = UnitVector(CrossProduct(v1, v2))
+    v3 = UnitVector(cross(v1, v2))
 
     # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
     self.append_filter = vtk.vtkAppendPolyData()
@@ -1352,7 +1387,7 @@ class VisMoment():
     cone_radius = radius/8
     tip = vtk.vtkConeSource()
     tip.SetCenter(arc.GetPoint1()[0], arc.GetPoint1()[1], arc.GetPoint1()[2])
-    tip.SetDirection(CrossProduct(v1, v2))
+    tip.SetDirection(cross(v1, v2))
     tip.SetHeight(tip_length)
     tip.SetRadius(cone_radius)
 
@@ -1400,13 +1435,6 @@ def UnitVector(v):
 
   # Divide the vector by its magnitude to get a unit vector
   return [i/mag, j/mag, k/mag]
-
-def CrossProduct(v1, v2):
-
-  i1, j1, k1 = v1[0], v1[1], v1[2]
-  i2, j2, k2 = v2[0], v2[1], v2[2]
-
-  return [j1*k2 - j2*k1, -i1*k2 + i2*k1, i1*j2 - i2*j1]
 
 def PerpVector(v):
   '''

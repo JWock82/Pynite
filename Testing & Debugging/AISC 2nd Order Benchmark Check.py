@@ -44,7 +44,8 @@ cantilever.Analyze_PDelta()
 Visualization.RenderModel(cantilever, text_height=0.3, deformed_shape=True, deformed_scale=2, render_loads=True)
 
 # Print the moment at the base of the column
-print('PyNite Calculated Moment: ', -cantilever.GetMember('1').Moment('Mz', 0.001, 'Combo 1'))
+print('PyNite Calculated Member Moment: ', cantilever.GetMember('1').Moment('Mz', 0.0, 'Combo 1'))
+print('PyNite Calculated Reaction Moment: ', cantilever.GetNode('1').RxnMZ['Combo 1'])
 
 # Print the deflection at the top of the column
 print('PyNite Calculated Displacement: ', cantilever.GetNode(str(num_nodes)).DX['Combo 1']*12)
