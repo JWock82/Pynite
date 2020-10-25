@@ -393,29 +393,29 @@
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(0, 0, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(0, 0, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, 0, combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Shear(0, plate.height(), combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(0, plate.height(), combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(0, plate.height(), combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width(), plate.height(), combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width(), plate.height(), combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), plate.height(), combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width(), 0, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width(), 0, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width(), 0, combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -477,11 +477,11 @@
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Shear(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Moment(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -543,21 +543,21 @@
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Membrane(0, 0, combo)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(0, 0, combo)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(0, 0, combo)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo)[2]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Membrane(0, plate.height(), combo)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(0, plate.height(), combo)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(0, plate.height(), combo)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo)[2]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), plate.height(), combo)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), plate.height(), combo)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), plate.height(), combo)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo)[2]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), 0, combo)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), 0, combo)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width(), 0, combo)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo)[2]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -608,9 +608,9 @@
                 <tr>
                     <td>{{ plate.Name }}</td>
                     <td>{{ combo }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.Membrane(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
