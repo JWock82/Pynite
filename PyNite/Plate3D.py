@@ -399,7 +399,7 @@ class Plate3D():
         return D
 
 #%%   
-    def Moment(self, x, y, combo_name='Combo 1'):
+    def moment(self, x, y, combo_name='Combo 1'):
         '''
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
@@ -409,7 +409,7 @@ class Plate3D():
         return self.__D()*self.__Q(x, y)*self.__a(combo_name)
 
 #%%  
-    def Shear(self, x, y, combo_name='Combo 1'):
+    def shear(self, x, y, combo_name='Combo 1'):
         '''
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
@@ -445,7 +445,7 @@ class Plate3D():
                        [Qy]])
 
 #%%
-    def Membrane(self, x, y, combo_name='Combo 1'):
+    def membrane(self, x, y, combo_name='Combo 1'):
 
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
