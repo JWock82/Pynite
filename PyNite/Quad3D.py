@@ -805,15 +805,15 @@ class Quad3D():
         Cb = self.Cb()
 
         # Calculate the internal moments [Mx, My, Mxy] at each gauss point
-        mi = matmul(Cb, matmul(self.B_kappa(-gp, -gp), d))
-        mj = matmul(Cb, matmul(self.B_kappa(gp, -gp), d))
-        mm = matmul(Cb, matmul(self.B_kappa(gp, gp), d))
-        mn = matmul(Cb, matmul(self.B_kappa(-gp, gp), d))
+        m1 = matmul(Cb, matmul(self.B_kappa(gp, gp), d))
+        m2 = matmul(Cb, matmul(self.B_kappa(-gp, gp), d))
+        m3 = matmul(Cb, matmul(self.B_kappa(-gp, -gp), d))
+        m4 = matmul(Cb, matmul(self.B_kappa(gp, -gp), d))
 
         # Extrapolate to get the value at the requested location
-        Mx = H[2]*mi[0] + H[3]*mj[0] + H[0]*mm[0] + H[1]*mn[0]
-        My = H[2]*mi[1] + H[3]*mj[1] + H[0]*mm[1] + H[1]*mn[1]
-        Mxy = H[2]*mi[2] + H[3]*mj[2] + H[0]*mm[2] + H[1]*mn[2]
+        Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
+        My = H[0]*m1[1] + H[1]*m2[1] + H[2]*m3[1] + H[3]*m4[1]
+        Mxy = H[0]*m1[2] + H[1]*m2[2] + H[2]*m3[2] + H[3]*m4[2]
 
         return array([[Mx],
                       [My],
