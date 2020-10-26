@@ -98,9 +98,9 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
 
     # Create a point for each corner (must be in counter clockwise order)
     p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
-    p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
+    p1 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
     p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
-    p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
+    p3 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
 
     # Add the points to the `vtkPoints` object we created earlier
     plate_points.InsertNextPoint(p0)
