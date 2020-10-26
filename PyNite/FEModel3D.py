@@ -1386,7 +1386,7 @@ class FEModel3D():
                 if convergence == False:
                     print('...Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
                 else:
-                    print('...Tension/compression-only analysis coverged after ' + str(iter_count) + ' iteration(s)')
+                    print('...Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
 
                 # Keep track of the number of tension/compression only iterations
                 iter_count += 1
