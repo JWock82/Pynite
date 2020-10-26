@@ -402,6 +402,7 @@ myWall.analyze()
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
 # The quad mesh will be set to show 'dz' results.
+# There is a known issue with the stress results for quads, where the results are correct, but they are mapped to the wrong nodes. I'm currently working to resolve this issue.
 from PyNite import Visualization
 Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='dz', render_loads=True)
 
