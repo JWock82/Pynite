@@ -394,7 +394,7 @@ class RectWall():
 E = 57000*(4500)**0.5*144 # psf
 t = 1 # ft
 width = 10 # ft
-height = 20  # ft
+height = 10  # ft
 nu = 0.3
 meshsize = 0.5 # ft
 load = 250 # psf
@@ -406,6 +406,7 @@ myWall.add_load(0, height, load, load)
 myWall.analyze()
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
+# The plates will be set to show the 'Mx' results
 from PyNite import Visualization
 Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True, color_map='Mx')
 
