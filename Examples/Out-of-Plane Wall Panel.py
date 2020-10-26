@@ -285,27 +285,27 @@ class RectWall():
                 # Sum plate corner forces at the node
                 if plate.iNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(0, 0, 'Combo 1')[index][0]
+                        force += plate.shear(0, 0, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(0, 0, 'Combo 1')[index][0]
+                        force += plate.moment(0, 0, 'Combo 1')[index][0]
                     count += 1
                 elif plate.jNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(0, plate.height(), 'Combo 1')[index][0]
+                        force += plate.shear(0, plate.height(), 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(0, plate.height(), 'Combo 1')[index][0]
+                        force += plate.moment(0, plate.height(), 'Combo 1')[index][0]
                     count += 1
                 elif plate.mNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(plate.width(), plate.height(), 'Combo 1')[index][0]
+                        force += plate.shear(plate.width(), plate.height(), 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(plate.width(), plate.height(), 'Combo 1')[index][0]
+                        force += plate.moment(plate.width(), plate.height(), 'Combo 1')[index][0]
                     count += 1
                 elif plate.nNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
-                        force += plate.Shear(plate.width(), 0, 'Combo 1')[index][0]
+                        force += plate.shear(plate.width(), 0, 'Combo 1')[index][0]
                     else:
-                        force += plate.Moment(plate.width(), 0, 'Combo 1')[index][0]
+                        force += plate.moment(plate.width(), 0, 'Combo 1')[index][0]
                     count += 1
 
             # Calculate the average force at the node
@@ -394,9 +394,9 @@ class RectWall():
 E = 57000*(4500)**0.5*144 # psf
 t = 1 # ft
 width = 10 # ft
-height = width
+height = 20  # ft
 nu = 0.3
-meshsize = 1 # ft
+meshsize = 0.5 # ft
 load = 250 # psf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
@@ -407,7 +407,7 @@ myWall.analyze()
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
 from PyNite import Visualization
-Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True)
+Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True, color_map='Mx')
 
 # Plot the displacement contour
 myWall.plot_disp()

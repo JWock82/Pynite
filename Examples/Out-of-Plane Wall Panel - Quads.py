@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 class RectWall():
 
     # Constructor
-    def __init__(self, width, height, thickness, E=3824, nu=0.3, mesh_size=1, bot_support='Pinned', top_support='Pinned', left_support='Free', right_support='Free'):
+    def __init__(self, width, height, thickness, E=3824, nu=0.17, mesh_size=1, bot_support='Pinned', top_support='Pinned', left_support='Free', right_support='Free'):
 
         self.width = width
         self.height = height
@@ -130,7 +130,7 @@ class RectWall():
                     nn = nm - 1
 
                     # Add the quadrilateral to the list of quadrilaterals
-                    self.fem.AddQuad('P'+str(pl_id), 'N'+str(ni), 'N'+str(nj), 'N'+str(nm), 'N'+str(nn), self.thickness, self.E, self.nu) 
+                    self.fem.AddQuad('Q'+str(pl_id), 'N'+str(ni), 'N'+str(nj), 'N'+str(nm), 'N'+str(nn), self.thickness, self.E, self.nu) 
 
                     # Prepare to move to the next iteration
                     pl_id += 1
@@ -209,7 +209,7 @@ class RectWall():
                     quad.pressures.append([pressure, 'Case 1'])
 
         # Analyze the model
-        self.fem.Analyze()
+        self.fem.Analyze(sparse=True)
 
         # Find the maximum displacement
         DZ = self.fem.Nodes[0].DZ['Combo 1']
@@ -384,61 +384,68 @@ class RectWall():
 #%%
 # Rectangular wall panel implementation example
 # ---------------------------------------------
-E = 57*(4500)**0.5 # ksi
-t = 12 # in
-width = 10*12 # in
-height = 20*12 #in
+E = 57*(4000)**0.5*12**2 # ksf
+t = 1 # ft
+width = 10 # ft
+height = 20 # ft
 nu = 0.17
-meshsize = 6 # in
-load = 0.250/144 # ksi
+meshsize = 0.5 # ft
+load = 0.25 # ksf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
 myWall.add_load(0, height, load, load)
 
 # Analyze the wall
+# import cProfile
+# cProfile.run('myWall.analyze()', sort='cumtime')
 myWall.analyze()
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
-# from PyNite import Visualization
-# Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True)
+from PyNite import Visualization
+Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='dz', render_loads=True)
 
-# Results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202
-D = E*t**3/(12*(1-nu**2))
-print('Solution from Timoshenko Table 35 for b/a = 2.0:')
-print('Expected displacement: ', 0.00254*load*width**4/D)
-print('Mx at Center:', 0.0412*load*width**2)
-print('Mx at Edges:', -0.0829*load*width**2)
-print('My at Center:', 0.0158*load*width**2)
-print('My at Top & Bottom:', -0.0571*load*width**2)
+# # Results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202
+# D = E*t**3/(12*(1-nu**2))
+# print('Solution from Timoshenko Table 35 for b/a = 2.0:')
+# print('Expected displacement: ', 0.00254*load*width**4/D)
+# print('Expected Mx at Center:', 0.0412*load*width**2)
+# print('Expected Mx at Edges:', -0.0829*load*width**2)
+# print('Expected My at Center:', 0.0158*load*width**2)
+# print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 
-print('')
-print('Max Mx', max([max(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
-print('Min Mx', min([min(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
-print('Max My', max([max(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
-print('Min My', min([min(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
-print('Max Mxy', max([max(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
-print('Min Mxy', min([min(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
+# print('')
+# print('Max Mx', max([max(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
+# print('Min Mx', min([min(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
+# print('Max My', max([max(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
+# print('Min My', min([min(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
+# print('Max Mxy', max([max(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
+# print('Min Mxy', min([min(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
 
 
-print('Max Qx', max([max(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
-print('Min Qx', min([min(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
-print('Max Qy', max([max(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
-print('Max Qy', min([min(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
+# print('Max Qx', max([max(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
+# print('Min Qx', min([min(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
+# print('Max Qy', max([max(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
+# print('Max Qy', min([min(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
 
-# Plot the displacement contour
-myWall.plot_disp()
+# # Plot the displacement contour
+# myWall.plot_disp()
 
-# Plot the moment contours
-myWall.plot_forces('Mx')
-myWall.plot_forces('My')
-myWall.plot_forces('Mxy')
+# # Plot the moment contours
+# myWall.plot_forces('Mx')
+# myWall.plot_forces('My')
+# myWall.plot_forces('Mxy')
 
-# Plot the shear force contours
-myWall.plot_forces('Qx')
-myWall.plot_forces('Qy')
+# # Plot the shear force contours
+# myWall.plot_forces('Qx')
+# myWall.plot_forces('Qy')
 
-# Create a PDF report
-# It will be output to the PyNite folder unless the 'output_path' variable below is modified
-# from PyNite import Reporting
-# Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
-#                        member_end_forces=False, member_internal_forces=False)
+# # Create a PDF report
+# # It will be output to the PyNite folder unless the 'output_path' variable below is modified
+# # from PyNite import Reporting
+# # Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
+# #                        member_end_forces=False, member_internal_forces=False)
+
+# print(myWall.fem.GetQuad('Q100').moment(-1, -1)[0, 0])
+# print(myWall.fem.GetQuad('Q100').moment(1, -1)[0, 0])
+# print(myWall.fem.GetQuad('Q100').moment(1, 1)[0, 0])
+# print(myWall.fem.GetQuad('Q100').moment(-1, 1)[0, 0])
