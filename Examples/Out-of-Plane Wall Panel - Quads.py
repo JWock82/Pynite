@@ -401,6 +401,7 @@ myWall.add_load(0, height, load, load)
 myWall.analyze()
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
+# The quad mesh will be set to show 'dz' results.
 from PyNite import Visualization
 Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='dz', render_loads=True)
 
@@ -413,29 +414,15 @@ Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=Fal
 # print('Expected My at Center:', 0.0158*load*width**2)
 # print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 
-# print('')
-# print('Max Mx', max([max(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Min Mx', min([min(quad.moment(-1, -1)[0], quad.moment(1, -1)[0], quad.moment(1, 1)[0], quad.moment(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Max My', max([max(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
-# print('Min My', min([min(quad.moment(-1, -1)[1], quad.moment(1, -1)[1], quad.moment(1, 1)[1], quad.moment(-1, 1)[1]) for quad in myWall.fem.Quads]))
-# print('Max Mxy', max([max(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
-# print('Min Mxy', min([min(quad.moment(-1, -1)[2], quad.moment(1, -1)[2], quad.moment(1, 1)[2], quad.moment(-1, 1)[2]) for quad in myWall.fem.Quads]))
-
-
-# print('Max Qx', max([max(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Min Qx', min([min(quad.shear(-1, -1)[0], quad.shear(1, -1)[0], quad.shear(1, 1)[0], quad.shear(-1, 1)[0]) for quad in myWall.fem.Quads]))
-# print('Max Qy', max([max(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
-# print('Max Qy', min([min(quad.shear(-1, -1)[1], quad.shear(1, -1)[1], quad.shear(1, 1)[1], quad.shear(-1, 1)[1]) for quad in myWall.fem.Quads]))
-
-# # Plot the displacement contour
+# # Plot a smoothed displacement contour
 # myWall.plot_disp()
 
-# # Plot the moment contours
+# # Plot smoothed moment contours
 # myWall.plot_forces('Mx')
 # myWall.plot_forces('My')
 # myWall.plot_forces('Mxy')
 
-# # Plot the shear force contours
+# # Plot smoothed shear force contours
 # myWall.plot_forces('Qx')
 # myWall.plot_forces('Qy')
 
@@ -445,7 +432,8 @@ Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=Fal
 # # Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
 # #                        member_end_forces=False, member_internal_forces=False)
 
-# print(myWall.fem.GetQuad('Q100').moment(-1, -1)[0, 0])
-# print(myWall.fem.GetQuad('Q100').moment(1, -1)[0, 0])
-# print(myWall.fem.GetQuad('Q100').moment(1, 1)[0, 0])
-# print(myWall.fem.GetQuad('Q100').moment(-1, 1)[0, 0])
+# Get `Mx` results for quad 400
+# print(myWall.fem.GetQuad('Q400').moment(-1, -1)[0, 0])
+# print(myWall.fem.GetQuad('Q400').moment(1, -1)[0, 0])
+# print(myWall.fem.GetQuad('Q400').moment(1, 1)[0, 0])
+# print(myWall.fem.GetQuad('Q400').moment(-1, 1)[0, 0])
