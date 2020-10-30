@@ -195,30 +195,30 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     if color_map == 'dz':
       r0, r1, r2, r3 = item.d()[[14, 20, 2, 8], :]
     elif color_map == 'Mx':
-      r0 = item.moment(-1, -1, combo_name)[0, 0][0]
-      r1 = item.moment(1, -1, combo_name)[0, 0][0]
-      r2 = item.moment(1, 1, combo_name)[0, 0][0]
-      r3 = item.moment(-1, 1, combo_name)[0, 0][0]
+      r0 = item.moment(-1, -1, combo_name)[0, 0]
+      r1 = item.moment(1, -1, combo_name)[0, 0]
+      r2 = item.moment(1, 1, combo_name)[0, 0]
+      r3 = item.moment(-1, 1, combo_name)[0, 0]
     elif color_map == 'My':
-      r0 = item.moment(-1, -1, combo_name)[1, 0][0]
-      r1 = item.moment(1, -1, combo_name)[1, 0][0]
-      r2 = item.moment(1, 1, combo_name)[1, 0][0]
-      r3 = item.moment(-1, 1, combo_name)[1, 0][0]
+      r0 = item.moment(-1, -1, combo_name)[1, 0]
+      r1 = item.moment(1, -1, combo_name)[1, 0]
+      r2 = item.moment(1, 1, combo_name)[1, 0]
+      r3 = item.moment(-1, 1, combo_name)[1, 0]
     elif color_map == 'Mxy':
-      r0 = item.moment(-1, -1, combo_name)[2, 0][0]
-      r1 = item.moment(1, -1, combo_name)[2, 0][0]
-      r2 = item.moment(1, 1, combo_name)[2, 0][0]
-      r3 = item.moment(-1, 1, combo_name)[2, 0][0]
+      r0 = item.moment(-1, -1, combo_name)[2, 0]
+      r1 = item.moment(1, -1, combo_name)[2, 0]
+      r2 = item.moment(1, 1, combo_name)[2, 0]
+      r3 = item.moment(-1, 1, combo_name)[2, 0]
     elif color_map == 'Qx':
-      r0 = item.shear(-1, -1, combo_name)[0, 0][0]
-      r1 = item.shear(1, -1, combo_name)[0, 0][0]
-      r2 = item.shear(1, 1, combo_name)[0, 0][0]
-      r3 = item.shear(-1, 1, combo_name)[0, 0][0]
+      r0 = item.shear(-1, -1, combo_name)[0, 0]
+      r1 = item.shear(1, -1, combo_name)[0, 0]
+      r2 = item.shear(1, 1, combo_name)[0, 0]
+      r3 = item.shear(-1, 1, combo_name)[0, 0]
     elif color_map == 'Qy':
-      r0 = item.shear(-1, -1, combo_name)[1, 0][0]
-      r1 = item.shear(1, -1, combo_name)[1, 0][0]
-      r2 = item.shear(1, 1, combo_name)[1, 0][0]
-      r3 = item.shear(-1, 1, combo_name)[1, 0][0]
+      r0 = item.shear(-1, -1, combo_name)[1, 0]
+      r1 = item.shear(1, -1, combo_name)[1, 0]
+      r2 = item.shear(1, 1, combo_name)[1, 0]
+      r3 = item.shear(-1, 1, combo_name)[1, 0]
     
     if color_map != None:
     
