@@ -142,9 +142,6 @@ class RectWall():
         # Step through each node in the model
         for node in self.fem.Nodes:
 
-            # Plate elements don't have the following degrees of freedom, so they'll need to be supported
-            node.SupportRZ = True
-
             # Determine if the node falls on any of the boundaries
             # Left edge
             if np.isclose(node.X, 0.0):
@@ -396,14 +393,15 @@ t = 1 # ft
 width = 10 # ft
 height = 10  # ft
 nu = 0.3
-meshsize = 0.5 # ft
+meshsize = 1 # ft
 load = 250 # psf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
 myWall.add_load(0, height, load, load)
 
 # Analyze the wall
-myWall.analyze()
+import cProfile
+cProfile.run('myWall.analyze()', sort='cumtime')
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
 # The plates will be set to show the 'Mx' results
