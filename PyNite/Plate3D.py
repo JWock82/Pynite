@@ -84,41 +84,62 @@ class Plate3D():
             for j in range(i, 12):
                 k[i, j] = k[j, i]
         
-        # Insert rows of zeros for degrees of freedom not included in the matrix above
-        k = insert(k, 12, 0, axis=0)
-        k = insert(k, 12, 0, axis=1)
+        # Calculate the stiffness of a weak spring for the drilling degree of freedom (rotation
+        # about local z). We'll set the weak spring to be 1000 times weaker than any of the other
+        # rotational stiffnesses in the matrix.
+        k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
+                   abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
+                   )/1000
 
-        k = insert(k, 9, 0, axis=0)
-        k = insert(k, 9, 0, axis=1)
-        k = insert(k, 9, 0, axis=0)
-        k = insert(k, 9, 0, axis=1)
+        # The matrix currently only holds terms related to bending action. We need to expand it to
+        # with placeholders for all the degrees of freedom so it can be directly added to the
+        # membrane stiffness matrix later on.
 
-        k = insert(k, 9, 0, axis=0)
-        k = insert(k, 9, 0, axis=1)
+        # Initialize the expanded stiffness matrix to all zeros
+        k_exp = zeros((24, 24))
 
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
+        # Step through each term in the unexpanded stiffness matrix
 
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
+        # i = Unexpanded matrix row
+        for i in range(12):
 
-        k = insert(k, 3, 0, axis=0)
-        k = insert(k, 3, 0, axis=1)
-        k = insert(k, 3, 0, axis=0)
-        k = insert(k, 3, 0, axis=1)
+            # j = Unexpanded matrix column
+            for j in range(12):
+                
+                # Find the corresponding term in the expanded stiffness
+                # matrix
 
-        k = insert(k, 3, 0, axis=0)
-        k = insert(k, 3, 0, axis=1)
+                # m = Expanded matrix row
+                if i in [0, 3, 6, 9]:  # indices associated with deflection in z
+                    m = 2*i + 2
+                if i in [1, 4, 7, 10]:  # indices associated with rotation about x
+                    m = 2*i + 1
+                if i in [2, 5, 8, 11]:  # indices associated with rotation about y
+                    m = 2*i
 
-        k = insert(k, 0, 0, axis=0)
-        k = insert(k, 0, 0, axis=1)
-        k = insert(k, 0, 0, axis=0)
-        k = insert(k, 0, 0, axis=1)
+                # n = Expanded matrix column
+                if j in [0, 3, 6, 9]:  # indices associated with deflection in z
+                    n = 2*j + 2
+                if j in [1, 4, 7, 10]:  # indices associated with rotation about x
+                    n = 2*j + 1
+                if j in [2, 5, 8, 11]:  # indices associated with rotation about y
+                    n = 2*j
+                
+                # Ensure the indices are integers rather than floats
+                m, n = round(m), round(n)
 
+                # Add the term from the unexpanded matrix into the expanded
+                # matrix
+                k_exp[m, n] = k[i, j]
+        
+        # Add the drilling degree of freedom's weak spring
+        k_exp[5, 5] = k_rz
+        k_exp[11, 11] = k_rz
+        k_exp[17, 17] = k_rz
+        k_exp[23, 23] = k_rz
+        
         # Return the local stiffness matrix
-        return k
+        return k_exp
 
 #%%
     def k_m(self):
