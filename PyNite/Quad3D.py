@@ -35,9 +35,6 @@ class Quad3D():
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
         self.LoadCombos = LoadCombos
 
-        # Calculate the local coordinate system
-        self.__local_coords()
-
 #%%
     def __local_coords(self):
         '''
@@ -486,6 +483,9 @@ class Quad3D():
         Returns the quad element's local stiffness matrix.
         '''
 
+        # Recalculate the local coordinate system
+        self.__local_coords()
+
         # Sum the bending and membrane stiffness matrices
         return self.k_b() + self.k_m()
 
@@ -633,6 +633,7 @@ class Quad3D():
         '''
         Returns the quad element's global stiffness matrix
         '''
+
         # Get the transpose matrix
         T = self.T()
 
