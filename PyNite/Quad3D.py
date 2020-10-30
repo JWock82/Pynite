@@ -764,8 +764,8 @@ class Quad3D():
         Qx = H[0]*q1[0] + H[1]*q2[0] + H[2]*q3[0] + H[3]*q4[0]
         Qy = H[0]*q1[1] + H[1]*q2[1] + H[2]*q3[1] + H[3]*q4[1]
 
-        return array([[Qx],
-                      [Qy]])
+        return array([Qx,
+                      Qy])
 
 #%%   
     def moment(self, r=0, s=0, combo_name='Combo 1'):
@@ -790,11 +790,11 @@ class Quad3D():
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
-        
+
         # Define the gauss point used for numerical integration
         gp = 1/3**0.5
 
-        # Define extrapolated r and s points
+        # # Define extrapolated r and s points
         r_ex = r/gp
         s_ex = s/gp
 
@@ -814,10 +814,10 @@ class Quad3D():
         Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
         My = H[0]*m1[1] + H[1]*m2[1] + H[2]*m3[1] + H[3]*m4[1]
         Mxy = H[0]*m1[2] + H[1]*m2[2] + H[2]*m3[2] + H[3]*m4[2]
-
-        return array([[Mx],
-                      [My],
-                      [Mxy]])
+        
+        return array([Mx,
+                      My,
+                      Mxy])
 
 #%%
     def membrane(self, r=0, s=0, combo_name='Combo 1'):
@@ -850,6 +850,6 @@ class Quad3D():
         Sy = H[0]*s1[1] + H[1]*s2[1] + H[2]*s3[1] + H[3]*s4[1]
         Txy = H[0]*s1[2] + H[1]*s2[2] + H[2]*s3[2] + H[3]*s4[2]
 
-        return array([[Sx],
-                      [Sy],
-                      [Txy]])
+        return array([Sx,
+                      Sy,
+                      Txy])
