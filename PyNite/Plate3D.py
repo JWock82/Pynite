@@ -1,5 +1,5 @@
 from numpy import zeros, delete, matrix, array, matmul, transpose, insert, cross, divide, add
-from numpy.linalg import inv
+from numpy.linalg import inv, norm
 
 # A rectangular plate bending element
 class Plate3D():
@@ -19,10 +19,10 @@ class Plate3D():
         self.nu = nu
     
     def width(self):
-        return ((self.nNode.X - self.iNode.X)**2 + (self.nNode.Y - self.iNode.Y)**2 + (self.nNode.Z - self.iNode.Z)**2)**0.5
+        return ((self.jNode.X - self.iNode.X)**2 + (self.jNode.Y - self.iNode.Y)**2 + (self.jNode.Z - self.iNode.Z)**2)**0.5
 
     def height(self):
-        return ((self.jNode.X - self.iNode.X)**2 + (self.jNode.Y - self.iNode.Y)**2 + (self.jNode.Z - self.iNode.Z)**2)**0.5
+        return ((self.nNode.X - self.iNode.X)**2 + (self.nNode.Y - self.iNode.Y)**2 + (self.nNode.Z - self.iNode.Z)**2)**0.5
 
     # Creates the local stiffness matrix
     def k(self):
@@ -33,8 +33,8 @@ class Plate3D():
         Returns the local stiffness matrix for bending
         '''
 
-        a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
-        b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
+        a = self.width()
+        b = self.height()
         beta = b/a
 
         E = self.E
@@ -146,9 +146,8 @@ class Plate3D():
         '''
         Returns the local stiffness matrix for membrane forces
         '''
-
-        a = ((self.nNode.X-self.iNode.X)**2 + (self.nNode.Y-self.iNode.Y)**2 + (self.nNode.Z-self.iNode.Z)**2)**0.5
-        b = ((self.jNode.X-self.iNode.X)**2 + (self.jNode.Y-self.iNode.Y)**2 + (self.jNode.Z-self.iNode.Z)**2)**0.5
+        a = self.width()
+        b = self.height()
         beta = b/a
         
         E = self.E
@@ -171,44 +170,48 @@ class Plate3D():
             for j in range(i, 8):
                 k[i, j] = k[j, i]
         
-        # Insert rows of zeros for degrees of freedom not included in the matrix above
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
-        k = insert(k, 8, 0, axis=0)
-        k = insert(k, 8, 0, axis=1)
+        # At this point `k` only contains terms for the degrees of freedom
+        # associated with membrane action. Expand `k` to include zero terms for
+        # the degrees of freedom related to bending forces. This will allow
+        # the bending and membrane stiffness matrices to be summed directly
+        # later on. `numpy` has an `insert` function that can be used to
+        # insert rows and columns of zeros one at a time, but it is very slow
+        # as it makes a temporary copy of the matrix term by term each time
+        # it's called. The algorithm used here accomplishes the same thing
+        # much faster. Terms are copied only once.
+        k_exp = zeros((24, 24))
 
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
-        k = insert(k, 6, 0, axis=0)
-        k = insert(k, 6, 0, axis=1)
+        # Step through each term in the unexpanded stiffness matrix
 
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
-        k = insert(k, 4, 0, axis=0)
-        k = insert(k, 4, 0, axis=1)
+        # i = Unexpanded matrix row
+        for i in range(8):
+
+            # j = Unexpanded matrix column
+            for j in range(8):
+                
+                # Find the corresponding term in the expanded stiffness
+                # matrix
+
+                # m = Expanded matrix row
+                if i in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    m = i*3
+                if i in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    m = i*3 - 2
+
+                # n = Expanded matrix column
+                if j in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    n = j*3
+                if j in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    n = i*3 - 2
+                
+                # Ensure the indices are integers rather than floats
+                m, n = round(m), round(n)
+
+                # Add the term from the unexpanded matrix into the expanded
+                # matrix
+                k_exp[m, n] = k[i, j]
         
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-        k = insert(k, 2, 0, axis=0)
-        k = insert(k, 2, 0, axis=1)
-
-        return k
+        return k_exp
 
 #%%   
     def f(self, combo_name='Combo 1'):
@@ -260,12 +263,12 @@ class Plate3D():
         D.itemset((4, 0), self.iNode.RY[combo_name])
         D.itemset((5, 0), self.iNode.RZ[combo_name])
 
-        D.itemset((6, 0), self.jNode.DX[combo_name])
-        D.itemset((7, 0), self.jNode.DY[combo_name])
-        D.itemset((8, 0), self.jNode.DZ[combo_name])
-        D.itemset((9, 0), self.jNode.RX[combo_name])
-        D.itemset((10, 0), self.jNode.RY[combo_name])
-        D.itemset((11, 0), self.jNode.RZ[combo_name])
+        D.itemset((6, 0), self.nNode.DX[combo_name])
+        D.itemset((7, 0), self.nNode.DY[combo_name])
+        D.itemset((8, 0), self.nNode.DZ[combo_name])
+        D.itemset((9, 0), self.nNode.RX[combo_name])
+        D.itemset((10, 0), self.nNode.RY[combo_name])
+        D.itemset((11, 0), self.nNode.RZ[combo_name])
 
         D.itemset((12, 0), self.mNode.DX[combo_name])
         D.itemset((13, 0), self.mNode.DY[combo_name])
@@ -274,12 +277,12 @@ class Plate3D():
         D.itemset((16, 0), self.mNode.RY[combo_name])
         D.itemset((17, 0), self.mNode.RZ[combo_name])
 
-        D.itemset((18, 0), self.nNode.DX[combo_name])
-        D.itemset((19, 0), self.nNode.DY[combo_name])
-        D.itemset((20, 0), self.nNode.DZ[combo_name])
-        D.itemset((21, 0), self.nNode.RX[combo_name])
-        D.itemset((22, 0), self.nNode.RY[combo_name])
-        D.itemset((23, 0), self.nNode.RZ[combo_name])
+        D.itemset((18, 0), self.jNode.DX[combo_name])
+        D.itemset((19, 0), self.jNode.DY[combo_name])
+        D.itemset((20, 0), self.jNode.DZ[combo_name])
+        D.itemset((21, 0), self.jNode.RX[combo_name])
+        D.itemset((22, 0), self.jNode.RY[combo_name])
+        D.itemset((23, 0), self.jNode.RZ[combo_name])
         
         # Return the global displacement vector
         return D
@@ -289,37 +292,37 @@ class Plate3D():
     def T(self):
 
         # Calculate the direction cosines for the local x-axis
-        # The local x-axis will run from the i-node to the n-node
+        # The local x-axis will run from the i-node to the j-node
         xi = self.iNode.X
-        xn = self.nNode.X
+        xj = self.jNode.X
         yi = self.iNode.Y
-        yn = self.nNode.Y
+        yj = self.jNode.Y
         zi = self.iNode.Z
-        zn = self.nNode.Z
-        Lx = ((xn-xi)**2 + (yn-yi)**2 + (zn-zi)**2)**0.5
-        x = [(xn-xi)/Lx, (yn-yi)/Lx, (zn-zi)/Lx]
+        zj = self.jNode.Z
+        x = [(xj - xi), (yj - yi), (zj - zi)]
+        x = x/norm(x)
         
         # The local y-axis will be in the plane of the plate
         # Find a vector in the plate's local xy plane
-        xj = self.jNode.X
-        yj = self.jNode.Y
-        zj = self.jNode.Z
-        xy = [xj-xi, yj-yi, zj-zi]
+        xn = self.nNode.X
+        yn = self.nNode.Y
+        zn = self.nNode.Z
+        xy = [xn - xi, yn - yi, zn - zi]
 
         # Find a vector perpendicular to the plate surface to get the orientation of the local z-axis
         z = cross(x, xy)
         
         # Divide the vector by its magnitude to produce a unit z-vector of direction cosines
-        z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+        z = z/norm(z)
 
         # Calculate the local y-axis as a vector perpendicular to the local z and x-axes
         y = cross(z, x)
         
         # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
-        y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
+        y = y/norm(y)
 
         # Create the direction cosines matrix
-        dirCos = matrix([x, y, z])
+        dirCos = array([x, y, z])
         
         # Build the transformation matrix
         transMatrix = zeros((24, 24))
@@ -345,32 +348,32 @@ class Plate3D():
     # Calculates and returns the displacement coefficient matrix [C]
     def __C(self):
 
-        # Find the x and y coordinates at each node
+        # Find the local x and y coordinates at each node
         xi = 0
         yi = 0
-        xj = 0
-        yj = ((self.jNode.X - self.iNode.X)**2 + (self.jNode.Y - self.iNode.Y)**2 + (self.jNode.Z - self.iNode.Z)**2)**0.5
-        xm = ((self.mNode.X - self.jNode.X)**2 + (self.mNode.Y - self.jNode.Y)**2 + (self.mNode.Z - self.jNode.Z)**2)**0.5
-        ym = yj
-        xn = xm
-        yn = 0
+        xj = self.width()
+        yj = 0
+        xm = xj
+        ym = self.height()
+        xn = 0
+        yn = ym
 
         # Calculate the [C] coefficient matrix
         C = matrix([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
                     [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
                     [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
-
-                    [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
-                    [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
-                    [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3],
+                    
+                    [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
+                    [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
+                    [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3],
 
                     [1, xm, ym, xm**2, xm*ym, ym**2, xm**3, xm**2*ym, xm*ym**2, ym**3, xm**3*ym, xm*ym**3],
                     [0, 0, 1, 0, xm, 2*ym, 0, xm**2, 2*xm*ym, 3*ym**2, xm**3, 3*xm*ym**2],
                     [0, -1, 0, -2*xm, -ym, 0, -3*xm**2, -2*xm*ym, -ym**2, 0, -3*xm**2*ym, -ym**3],
-                    
-                    [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
-                    [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
-                    [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3]])
+
+                    [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
+                    [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
+                    [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3]])
 
         # Return the coefficient matrix
         return C

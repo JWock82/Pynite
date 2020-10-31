@@ -98,9 +98,9 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
 
     # Create a point for each corner (must be in counter clockwise order)
     p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
-    p1 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
+    p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
     p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
-    p3 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
+    p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
 
     # Add the points to the `vtkPoints` object we created earlier
     plate_points.InsertNextPoint(p0)
@@ -119,7 +119,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
 
     # Calculate the results for each corner of the quad
     if color_map == 'dz':
-      r0, r3, r2, r1 = item.d()[[2, 8, 14, 20], :]
+      r0, r1, r2, r3 = item.d()[[2, 8, 14, 20], :]
     elif color_map == 'Mx':
       r0 = item.moment(0, 0, combo_name)[0, 0]
       r1 = item.moment(item.width(), 0, combo_name)[0, 0]
