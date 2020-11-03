@@ -239,7 +239,7 @@ class Plate3D():
         b = self.width()/2
         c = self.height()/2
 
-        fer = 4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [-c/12], [-b/12], [1/4], [-c/12], [b/12], [1/4], [c/12], [b/12]])
+        fer = -4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [-c/12], [-b/12], [1/4], [-c/12], [b/12], [1/4], [c/12], [b/12]])
 
         # Insert rows of zeros for degrees of freedom not included in the matrix above
         fer = insert(fer, 12, 0, axis=0)
