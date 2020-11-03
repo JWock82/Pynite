@@ -76,13 +76,6 @@ class Quad3D():
         self.y4 = dot(vector_34, self.y_axis)
 
 #%%
-    def Hw(self, r, s):
-
-        Hw = 1/4*array([[(1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0, (1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0]])
-
-        return Hw
-
-#%%
     def J(self, r, s):
         '''
         Returns the Jacobian matrix for the element
@@ -511,6 +504,8 @@ class Quad3D():
             for.
         '''
         
+        Hw = lambda r, s : 1/4*array([[(1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0, (1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0]])
+
         # Initialize the fixed end reaction vector
         fer = zeros((12,1))
 
@@ -534,10 +529,10 @@ class Quad3D():
                     # Sum the pressures
                     p -= factor*pressure[0]
         
-        fer = (self.Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
-               + self.Hw(-gp, gp).T*p*det(self.J(-gp, gp))
-               + self.Hw(gp, gp).T*p*det(self.J(gp, gp))
-               + self.Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
+        fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
+               + Hw(-gp, gp).T*p*det(self.J(-gp, gp))
+               + Hw(gp, gp).T*p*det(self.J(gp, gp))
+               + Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
 
         # Insert rows of zeros for degrees of freedom not included in the matrix above
         fer = insert(fer, 12, 0, axis=0)
