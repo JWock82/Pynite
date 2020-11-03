@@ -1089,6 +1089,35 @@ class FEModel3D():
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER.itemset((m, 0), FER[m, 0] + member_FER[a, 0])
         
+        # Add terms for each rectangle in the model
+        for plate in self.Plates:
+            
+            # Get the quadrilateral's global fixed end reaction vector
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            plate_FER = plate.FER(combo_name)
+
+            # Step through each term in the quadrilateral's fixed end reaction vector
+            # 'a' below is the row index in the quadrilateral's fixed end reaction vector
+            # 'm' below is the corresponding row index in the global fixed end reaction vector
+            for a in range(24):
+                
+                # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
+                if a < 6:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.iNode.ID*6 + a
+                elif a < 12:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.nNode.ID*6 + (a - 6)
+                elif a < 18:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.mNode.ID*6 + (a - 12)
+                else:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.jNode.ID*6 + (a - 18)
+                
+                # Now that 'm' is known, place the term in the global fixed end reaction vector
+                FER.itemset((m, 0), FER[m, 0] + plate_FER[a, 0])
+
         # Add terms for each quadrilateral in the model
         for quad in self.Quads:
             

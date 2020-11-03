@@ -197,20 +197,14 @@ class RectWall():
                 p1 = load[2]
                 p2 = load[3]
 
-                # Calculate the pressure on the plate and the load it applied to each of its nodes
+                # Calculate the pressure on the plate apply it to the plate
                 if avgY <= y2 and avgY >= y1:
 
                     # Calculate the pressure the plate
                     pressure += (p2 - p1)/(y2 - y1)*(avgY - y1) + p1
-                    
-                    # Calculate the surface area of the plate
-                    area = (n_node.Y - i_node.Y)*(j_node.X - i_node.X)
 
-                    # Add the plate's load to each of its four nodes
-                    i_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    j_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    m_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    n_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
+            # Add the surface pressure to the plate
+            plate.pressures.append([pressure, 'Case 1'])
 
         # Analyze the model. The stiffness matrix will usually be sparse so some speed can usually
         # be gained by using the sparse solver.
@@ -392,7 +386,7 @@ class RectWall():
 E = 57000*(4500)**0.5*144 # psf
 t = 1 # ft
 width = 10 # ft
-height = 20  # ft
+height = 10 # ft
 nu = 0.17
 meshsize = 0.5 # ft
 load = 250 # psf

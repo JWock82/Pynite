@@ -1,10 +1,12 @@
 from numpy import zeros, delete, matrix, array, matmul, transpose, insert, cross, divide, add
 from numpy.linalg import inv, norm
+from PyNite.LoadCombo import LoadCombo
 
 # A rectangular plate bending element
 class Plate3D():
 
-    def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
+    def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu,
+                 LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
 
         self.Name = Name
         self.ID = None
@@ -17,6 +19,9 @@ class Plate3D():
         self.t = t
         self.E = E
         self.nu = nu
+
+        self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
+        self.LoadCombos = LoadCombos
     
     def width(self):
         return ((self.jNode.X - self.iNode.X)**2 + (self.jNode.Y - self.iNode.Y)**2 + (self.jNode.Z - self.iNode.Z)**2)**0.5
@@ -203,10 +208,61 @@ class Plate3D():
 #%%
     def fer(self, combo_name='Combo 1'):
         '''
-        Returns the plate's local fixed end reaction vector (zero's for now until surface loads get added)
-        '''
+        Returns the rectangle's local fixed end reaction vector.
 
-        return zeros((24, 1))
+        Parameters
+        ----------
+        combo_name : string
+            The name of the load combination to get the load vector for.
+        '''
+        
+        # Initialize the fixed end reaction vector
+        fer = zeros((12,1))
+
+        # Get the requested load combination
+        combo = self.LoadCombos[combo_name]
+
+        # Loop through each load case and factor in the load combination
+        for case, factor in combo.factors.items():
+            
+            p = 0
+
+            # Sum the pressures
+            for pressure in self.pressures:
+
+                # Check if the current pressure corresponds to the current load case
+                if pressure[1] == case:
+
+                    # Sum the pressures
+                    p -= factor*pressure[0]
+        
+        b = self.width()/2
+        c = self.height()/2
+
+        fer = 4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [-c/12], [-b/12], [1/4], [-c/12], [b/12], [1/4], [c/12], [b/12]])
+
+        # Insert rows of zeros for degrees of freedom not included in the matrix above
+        fer = insert(fer, 12, 0, axis=0)
+
+        fer = insert(fer, 9, 0, axis=0)
+        fer = insert(fer, 9, 0, axis=0)
+
+        fer = insert(fer, 9, 0, axis=0)
+
+        fer = insert(fer, 6, 0, axis=0)
+        fer = insert(fer, 6, 0, axis=0)
+
+        fer = insert(fer, 6, 0, axis=0)
+
+        fer = insert(fer, 3, 0, axis=0)
+        fer = insert(fer, 3, 0, axis=0)
+
+        fer = insert(fer, 3, 0, axis=0)
+
+        fer = insert(fer, 0, 0, axis=0)
+        fer = insert(fer, 0, 0, axis=0)
+
+        return fer
         
 
 #%%
@@ -321,6 +377,22 @@ class Plate3D():
         
         # Calculate and return the stiffness matrix in global coordinates
         return matmul(matmul(transpose(self.T()), self.k()), self.T())
+
+#%% 
+    # Global fixed end reaction vector
+    def FER(self, combo_name='Combo 1'):
+        '''
+        Returns the global fixed end reaction vector.
+
+        Parameters
+        ----------
+        combo_name : string
+            The name of the load combination to calculate the fixed end
+            reaction vector for (not the load combination itself).
+        '''
+        
+        # Calculate and return the fixed end reaction vector
+        return matmul(inv(self.T()), self.fer(combo_name))
 
 #%%
     # Calculates and returns the displacement coefficient matrix [C]
