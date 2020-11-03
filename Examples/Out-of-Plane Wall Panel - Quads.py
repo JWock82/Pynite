@@ -204,8 +204,8 @@ class RectWall():
                     # Calculate the pressure the quadrilateral
                     pressure += (p2 - p1)/(y2 - y1)*(avgY - y1) + p1
                     
-                    # Add the surface pressure to the quadrilateral
-                    quad.pressures.append([pressure, 'Case 1'])
+            # Add the surface pressure to the quadrilateral
+            quad.pressures.append([pressure, 'Case 1'])
 
         # Analyze the model
         self.fem.Analyze(sparse=True)
