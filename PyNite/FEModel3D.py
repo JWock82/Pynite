@@ -494,6 +494,15 @@ class FEModel3D():
 
         # Add the distributed load to the member
         self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end, case))
+        
+#%%
+    def AddPlateSurfacePressure(self, plate_ID, pressure, case='Case 1'):
+        '''
+        Adds a surface pressure to the rectangular plate element.
+        '''
+
+        # Add the surface pressure to the rectangle
+        self.GetPlate(plate_ID).pressures.append([pressure, case])
 
 #%%
     def AddQuadSurfacePressure(self, quad_ID, pressure, case='Case 1'):
