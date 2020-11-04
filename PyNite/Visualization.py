@@ -320,18 +320,33 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     # require a reset of the camera (see below)
     vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
 
-  # Add actors for each node
-  for vis_node in vis_nodes:
-        
-    # Add the actor for the node
-    renderer.AddActor(vis_node.actor)
+  # Create an append filter for combining node polydata
+  node_polydata = vtk.vtkAppendPolyData()
 
+  # Combine the polydata from each node
+  for vis_node in vis_nodes:
+
+    # Add the node's polydata
+    node_polydata.AddInputData(vis_node.polydata.GetOutput())
+    
     # Add the actor for the node label
     renderer.AddActor(vis_node.lblActor)
-
+    
     # Set the text to follow the camera as the user interacts. This will
     # require a reset of the camera (see below)
     vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+    
+  # Update the node polydata in the append filter
+  node_polydata.Update()
+  
+  # Create a mapper and actor for the nodes
+  node_mapper = vtk.vtkPolyDataMapper()
+  node_mapper.SetInputConnection(node_polydata.GetOutputPort())
+  node_actor = vtk.vtkActor()
+  node_actor.SetMapper(node_mapper)
+
+  # Add the node actor to the renderer
+  renderer.AddActor(node_actor)
 
   # Add actors for each auxiliary node
   for vis_aux_node in vis_aux_nodes:
@@ -421,9 +436,9 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
   for node in model.Nodes:
 
     vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
-    poly_data = vtk.vtkPolyData()
-    poly_data.ShallowCopy(vis_node.source.GetOutput())
-    append_filter.AddInputData(poly_data)
+    polydata = vtk.vtkPolyData()
+    polydata.ShallowCopy(vis_node.source.GetOutput())
+    append_filter.AddInputData(polydata)
 
     # Add the actor for the node label
     renderer.AddActor(vis_node.lblActor)
@@ -439,9 +454,9 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     if spring.active[combo_name] == True:
 
       vis_spring = VisDeformedSpring(spring, model.Nodes, scale_factor, text_height, combo_name)
-      poly_data = vtk.vtkPolyData()
-      poly_data.ShallowCopy(vis_spring.source.GetOutput())
-      append_filter.AddInputData(poly_data)
+      polydata = vtk.vtkPolyData()
+      polydata.ShallowCopy(vis_spring.source.GetOutput())
+      append_filter.AddInputData(polydata)
   
   # Add the members to the filter
   for member in model.Members:
@@ -450,9 +465,9 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     if member.active[combo_name] == True:
 
       vis_member = VisDeformedMember(member, model.Nodes, scale_factor, text_height, combo_name)
-      poly_data = vtk.vtkPolyData()
-      poly_data.ShallowCopy(vis_member.source)
-      append_filter.AddInputData(poly_data)
+      polydata = vtk.vtkPolyData()
+      polydata.ShallowCopy(vis_member.source)
+      append_filter.AddInputData(polydata)
   
   # Create a mapper and actor for the filter
   mapper = vtk.vtkPolyDataMapper()
@@ -731,7 +746,7 @@ class VisNode():
   def __init__(self, node, text_height=5, color=None):
 
     # Create an append filter to append all the sources related to the node into a single 'PolyData' object
-    append_filter = vtk.vtkAppendPolyData()
+    self.polydata = vtk.vtkAppendPolyData()
 
     # Get the node's position
     X = node.X # Global X coordinate
@@ -745,9 +760,9 @@ class VisNode():
     sphere.Update()
 
     # Append the sphere to the append filter
-    poly_data = vtk.vtkPolyData()
-    poly_data.ShallowCopy(sphere.GetOutput())
-    append_filter.AddInputData(poly_data)
+    polydata = vtk.vtkPolyData()
+    polydata.ShallowCopy(sphere.GetOutput())
+    self.polydata.AddInputData(polydata)
 
     # Create the text for the node label
     label = vtk.vtkVectorText()
@@ -777,9 +792,9 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
-      poly_data = vtk.vtkPolyData()
-      poly_data.ShallowCopy(support.GetOutput())
-      append_filter.AddInputData(poly_data)
+      polydata = vtk.vtkPolyData()
+      polydata.ShallowCopy(support.GetOutput())
+      self.polydata.AddInputData(polydata)
     
     # Check for a pinned support
     elif node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
@@ -794,9 +809,9 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
-      poly_data = vtk.vtkPolyData()
-      poly_data.ShallowCopy(support.GetOutput())
-      append_filter.AddInputData(poly_data)
+      polydata = vtk.vtkPolyData()
+      polydata.ShallowCopy(support.GetOutput())
+      self.polydata.AddInputData(polydata)
     
     # Other support conditions
     else:
@@ -811,9 +826,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support1.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support1.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X-text_height, node.Y, node.Z)
@@ -823,9 +838,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support2.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support2.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X+text_height, node.Y, node.Z)
@@ -835,9 +850,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support3.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support3.GetOutput())
+        self.polydata.AddInputData(polydata)
       
       # Restrained against Y translation
       if node.SupportDY == True:
@@ -849,9 +864,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support1.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support1.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X, node.Y-text_height, node.Z)
@@ -861,9 +876,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support2.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support2.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X, node.Y+text_height, node.Z)
@@ -873,9 +888,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support3.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support3.GetOutput())
+        self.polydata.AddInputData(polydata)
       
       # Restrained against Z translation
       if node.SupportDZ == True:
@@ -887,9 +902,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support1.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support1.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X, node.Y, node.Z-text_height)
@@ -899,9 +914,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support2.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support2.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X, node.Y, node.Z+text_height)
@@ -911,9 +926,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support3.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support3.GetOutput())
+        self.polydata.AddInputData(polydata)
 
       # Restrained against rotation about the X-axis
       if node.SupportRX == True:
@@ -925,9 +940,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support1.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support1.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X-1.9*text_height, node.Y, node.Z)
@@ -937,9 +952,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support2.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support2.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X+1.9*text_height, node.Y, node.Z)
@@ -949,9 +964,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support3.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support3.GetOutput())
+        self.polydata.AddInputData(polydata)
       
       # Restrained against rotation about the Y-axis
       if node.SupportRY == True:
@@ -963,9 +978,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support1.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support1.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X, node.Y-1.9*text_height, node.Z)
@@ -975,9 +990,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support2.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support2.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X, node.Y+1.9*text_height, node.Z)
@@ -987,9 +1002,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support3.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support3.GetOutput())
+        self.polydata.AddInputData(polydata)
       
       # Restrained against rotation about the Z-axis
       if node.SupportRZ == True:
@@ -1001,9 +1016,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support1.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support1.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X, node.Y, node.Z-1.9*text_height)
@@ -1013,9 +1028,9 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support2.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support2.GetOutput())
+        self.polydata.AddInputData(polydata)
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X, node.Y, node.Z+1.9*text_height)
@@ -1025,16 +1040,16 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        poly_data = vtk.vtkPolyData()
-        poly_data.ShallowCopy(support3.GetOutput())
-        append_filter.AddInputData(poly_data)
+        polydata = vtk.vtkPolyData()
+        polydata.ShallowCopy(support3.GetOutput())
+        self.polydata.AddInputData(polydata)
     
     # Update the append filter
-    append_filter.Update()
+    self.polydata.Update()
 
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(append_filter.GetOutputPort())
+    mapper.SetInputConnection(self.polydata.GetOutputPort())
     self.actor = vtk.vtkActor()
 
     # Add color to the actors
@@ -1198,24 +1213,24 @@ class VisPlate():
     append_filter = vtk.vtkAppendPolyData()
 
     line1.Update()
-    poly_data1 = vtk.vtkPolyData()
-    poly_data1.ShallowCopy(line1.GetOutput())
-    append_filter.AddInputData(poly_data1)
+    polydata1 = vtk.vtkPolyData()
+    polydata1.ShallowCopy(line1.GetOutput())
+    append_filter.AddInputData(polydata1)
 
     line2.Update()
-    poly_data2 = vtk.vtkPolyData()
-    poly_data2.ShallowCopy(line2.GetOutput())
-    append_filter.AddInputData(poly_data2)
+    polydata2 = vtk.vtkPolyData()
+    polydata2.ShallowCopy(line2.GetOutput())
+    append_filter.AddInputData(polydata2)
 
     line3.Update()
-    poly_data3 = vtk.vtkPolyData()
-    poly_data3.ShallowCopy(line3.GetOutput())
-    append_filter.AddInputData(poly_data3)
+    polydata3 = vtk.vtkPolyData()
+    polydata3.ShallowCopy(line3.GetOutput())
+    append_filter.AddInputData(polydata3)
 
     line4.Update()
-    poly_data4 = vtk.vtkPolyData()
-    poly_data4.ShallowCopy(line4.GetOutput())
-    append_filter.AddInputData(poly_data4)
+    polydata4 = vtk.vtkPolyData()
+    polydata4.ShallowCopy(line4.GetOutput())
+    append_filter.AddInputData(polydata4)
     
     # Set up a mapper
     mapper = vtk.vtkPolyDataMapper()
@@ -1434,9 +1449,9 @@ class VisPtLoad():
     tip.Update()
 
     # Add the arrow tip to the append filter
-    poly_data = vtk.vtkPolyData()
-    poly_data.ShallowCopy(tip.GetOutput())
-    self.append_filter.AddInputData(poly_data)
+    polydata = vtk.vtkPolyData()
+    polydata.ShallowCopy(tip.GetOutput())
+    self.append_filter.AddInputData(polydata)
     
     # Create the shaft
     shaft = vtk.vtkLineSource()
@@ -1445,9 +1460,9 @@ class VisPtLoad():
     shaft.Update()
 
     # Copy and append the shaft data to the append filter
-    poly_data = vtk.vtkPolyData()
-    poly_data.ShallowCopy(shaft.GetOutput())
-    self.append_filter.AddInputData(poly_data)
+    polydata = vtk.vtkPolyData()
+    polydata.ShallowCopy(shaft.GetOutput())
+    self.append_filter.AddInputData(polydata)
     self.append_filter.Update()
 
     # Create a mapper and actor
@@ -1529,14 +1544,14 @@ class VisDistLoad():
     append_filter = vtk.vtkAppendPolyData()
     for arrow in ptLoads:
       arrow.append_filter.Update()
-      poly_data = vtk.vtkPolyData()
-      poly_data.ShallowCopy(arrow.append_filter.GetOutput())
-      append_filter.AddInputData(poly_data)
+      polydata = vtk.vtkPolyData()
+      polydata.ShallowCopy(arrow.append_filter.GetOutput())
+      append_filter.AddInputData(polydata)
     
     tail_line.Update()
-    poly_data = vtk.vtkPolyData()
-    poly_data.ShallowCopy(tail_line.GetOutput())
-    append_filter.AddInputData(poly_data)
+    polydata = vtk.vtkPolyData()
+    polydata.ShallowCopy(tail_line.GetOutput())
+    append_filter.AddInputData(polydata)
 
     # Create a mapper and actor for the geometry
     mapper = vtk.vtkPolyDataMapper()
@@ -1589,9 +1604,9 @@ class VisMoment():
 
     # Copy and append the shaft data to the append filter
     arc.Update()
-    poly_data = vtk.vtkPolyData()
-    poly_data.ShallowCopy(arc.GetOutput())
-    self.append_filter.AddInputData(poly_data)
+    polydata = vtk.vtkPolyData()
+    polydata.ShallowCopy(arc.GetOutput())
+    self.append_filter.AddInputData(polydata)
 
     # Generate the arrow head
     tip_length = radius/2
@@ -1604,9 +1619,9 @@ class VisMoment():
 
     # Copy and append the tip data to the append filter
     tip.Update()
-    poly_data = vtk.vtkPolyData()
-    poly_data.ShallowCopy(tip.GetOutput())
-    self.append_filter.AddInputData(poly_data)
+    polydata = vtk.vtkPolyData()
+    polydata.ShallowCopy(tip.GetOutput())
+    self.append_filter.AddInputData(polydata)
 
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
