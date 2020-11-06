@@ -328,7 +328,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
 
     # Add the node's polydata
     node_polydata.AddInputData(vis_node.polydata.GetOutput())
-    
+
     # Add the actor for the node label
     renderer.AddActor(vis_node.lblActor)
     
@@ -771,6 +771,12 @@ class VisNode():
     # Set up a mapper for the node label
     lblMapper = vtk.vtkPolyDataMapper()
     lblMapper.SetInputConnection(label.GetOutputPort())
+
+    # These next 2 lines greatly improve performance when interacting with the model. Setting the
+    # mapper to static keeps it from updating the rendering pipeline every time the model is
+    # rotated.
+    lblMapper.Update()    # The labels won't render without this line
+    lblMapper.StaticOn()  # This line provides a major performance boost when interacting
 
     # Set up an actor for the node label
     self.lblActor = vtk.vtkFollower()
