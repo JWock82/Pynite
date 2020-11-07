@@ -2,6 +2,7 @@
 # Python.
 import vtk
 from numpy import array, empty, append, cross
+from numpy.linalg import norm
 
 #%%
 def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
@@ -487,14 +488,10 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
 
   # Display the requested load combination, or 'Combo 1' if no load combo or case has been specified
   if case == None:
-
-    # Relabel model.LoadCombos[combo].factors as the more generic name used in 
-    # the loops below
+    # Store model.LoadCombos[combo].factors under a simpler name for use below
     load_factors = model.LoadCombos[combo_name].factors
-
   else:
-    # Create a load_factors dictionary that looks like LoadCombos[combo].factors
-    # Give it the same generic name used in the loops below
+    # Set up a load combination dictionary that represents the load case
     load_factors = {case: 1}
 
   # Step through each node
@@ -1469,7 +1466,7 @@ class VisPtLoad():
     '''
 
     # Create a unit vector in the direction of the 'direction' vector
-    unitVector = UnitVector(direction)
+    unitVector = direction/norm(direction)
 
     # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
     self.append_filter = vtk.vtkAppendPolyData()
@@ -1628,9 +1625,10 @@ class VisMoment():
     '''
 
     # Find a vector perpendicular to the directional unit vector
-    v1 = UnitVector(direction) # The direction of the moment
+    v1 = direction/norm(direction) # The direction of the moment
     v2 = PerpVector(v1) # A vector perpendicular to the direction
-    v3 = UnitVector(cross(v1, v2))
+    v3 = cross(v1, v2)
+    v3 = v3/norm(v3)
 
     # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
     self.append_filter = vtk.vtkAppendPolyData()
@@ -1688,21 +1686,6 @@ class VisMoment():
                               arc.GetPoint2()[2] + 0.6*text_height)
     self.lblActor.GetProperty().SetColor(0, 255, 0) # Green
 
-def UnitVector(v):
-  '''
-  Returns a unit vector in the direction of v=[i, j, k]
-  '''
-
-  i = v[0]
-  j = v[1]
-  k = v[2]
-
-  # Calculate the magnitude of the vector
-  mag = (i**2 + j**2 + k**2)**0.5
-
-  # Divide the vector by its magnitude to get a unit vector
-  return [i/mag, j/mag, k/mag]
-
 def PerpVector(v):
   '''
   Returns a unit vector perpendicular to v=[i, j, k]
@@ -1731,7 +1714,7 @@ def PerpVector(v):
     k2 = -(i*i2+j*j2)/k
   
   # Return the unit vector
-  return UnitVector([i2, j2, k2])
+  return [i2, j2, k2]/norm([i2, j2, k2])
 
 
 
