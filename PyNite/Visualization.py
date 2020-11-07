@@ -483,7 +483,7 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
 def __RenderLoads(model, renderer, text_height, combo_name, case):
 
   # Get the maximum load magnitudes that will be used to normalize the display scale
-  maxPtLoad, maxMoment, maxDistLoad = __MaxLoads(model, combo_name, case)
+  max_pt_load, max_moment, max_dist_load, max_area_load = __MaxLoads(model, combo_name, case)
 
   # Display the requested load combination, or 'Combo 1' if no load combo or case has been specified
   if case == None:
@@ -512,32 +512,32 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
         
         # Display the load
         if load[0] == 'FX':
-          ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(ptLoad.actor)
           renderer.AddActor(ptLoad.lblActor)
           ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'FY':
-          ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(ptLoad.actor)
           renderer.AddActor(ptLoad.lblActor)
           ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'FZ':
-          ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(ptLoad.actor)
           renderer.AddActor(ptLoad.lblActor)
           ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'MX':
-          moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(moment.actor)
           renderer.AddActor(moment.lblActor)
           moment.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'MY':
-          moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(moment.actor)
           renderer.AddActor(moment.lblActor)
           moment.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'MZ':
-          moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(moment.actor)
           renderer.AddActor(moment.lblActor)
           moment.lblActor.SetCamera(renderer.GetActiveCamera())
@@ -567,32 +567,32 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
 
         # Display the load
         if load[0] == 'Fx':
-          ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(ptLoad.actor)
           renderer.AddActor(ptLoad.lblActor)
           ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fy':
-          ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(ptLoad.actor)
           renderer.AddActor(ptLoad.lblActor)
           ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fz':
-          ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/maxPtLoad*5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(ptLoad.actor)
           renderer.AddActor(ptLoad.lblActor)
           ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Mx':
-          moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(moment.actor)
           renderer.AddActor(moment.lblActor)
           moment.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'My':
-          moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(moment.actor)
           renderer.AddActor(moment.lblActor)
           moment.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Mz':
-          moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/maxMoment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
           renderer.AddActor(moment.actor)
           renderer.AddActor(moment.lblActor)
           moment.lblActor.SetCamera(renderer.GetActiveCamera())
@@ -617,21 +617,21 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
         
         # Display the load
         if load[0] == 'Fx':
-          distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+          distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
           renderer.AddActor(distLoad.actor)
           renderer.AddActor(distLoad.lblActors[0])
           renderer.AddActor(distLoad.lblActors[1])
           distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
           distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fy':
-          distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+          distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
           renderer.AddActor(distLoad.actor)
           renderer.AddActor(distLoad.lblActors[0])
           renderer.AddActor(distLoad.lblActors[1])
           distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
           distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fz':
-          distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/maxDistLoad*5*text_height, w2/maxDistLoad*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+          distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
           renderer.AddActor(distLoad.actor)
           renderer.AddActor(distLoad.lblActors[0])
           renderer.AddActor(distLoad.lblActors[1])
@@ -641,9 +641,10 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
 #%%
 def __MaxLoads(model, combo_name=None, case=None):
 
-  maxPtLoad = 0
-  maxMoment = 0
-  maxDistLoad = 0
+  max_pt_load = 0
+  max_moment = 0
+  max_dist_load = 0
+  max_area_load = 0
 
   # Find the requested load combination or load case
   if case == None:
@@ -657,11 +658,11 @@ def __MaxLoads(model, combo_name=None, case=None):
         # Find the largest loads in the load combination
         if load[2] in model.LoadCombos[combo_name].factors:
           if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > maxPtLoad:
-              maxPtLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_pt_load:
+              max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
           else:
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > maxMoment:
-              maxMoment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_moment:
+              max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
 
     # Step through each member
     for member in model.Members:
@@ -673,11 +674,11 @@ def __MaxLoads(model, combo_name=None, case=None):
         if load[3] in model.LoadCombos[combo_name].factors:
 
           if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > maxPtLoad:
-              maxPtLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_pt_load:
+              max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
           else:
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > maxMoment:
-              maxMoment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_moment:
+              max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
 
       # Step through each member distributed load
       for load in member.DistLoads:
@@ -685,10 +686,28 @@ def __MaxLoads(model, combo_name=None, case=None):
         #Find and store the largest distributed load in the load combination
         if load[5] in model.LoadCombos[combo_name].factors:
 
-          if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > maxDistLoad:
-            maxDistLoad = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
-          if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > maxDistLoad:
-            maxDistLoad = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
+          if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
+            max_dist_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
+          if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
+            max_dist_load = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
+
+    # Step through each plate
+    for plate in model.Plates:
+
+      # Step through each plate load
+      for load in plate.pressures:
+
+        if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
+          max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
+
+    # Step through each quad
+    for quad in model.Quads:
+
+      # Step through each plate load
+      for load in quad.pressures:
+
+        if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
+          max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
 
   # Behavior if case has been specified
   else:
@@ -702,11 +721,11 @@ def __MaxLoads(model, combo_name=None, case=None):
         # Find the largest loads in the load case
         if load[2] == case:
           if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-            if abs(load[1]) > maxPtLoad:
-              maxPtLoad = abs(load[1])
+            if abs(load[1]) > max_pt_load:
+              max_pt_load = abs(load[1])
           else:
-            if abs(load[1]) > maxMoment:
-              maxMoment = abs(load[1])
+            if abs(load[1]) > max_moment:
+              max_moment = abs(load[1])
 
     # Step through each member
     for member in model.Members:
@@ -718,11 +737,11 @@ def __MaxLoads(model, combo_name=None, case=None):
         if load[3] == case:
 
           if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
-            if abs(load[1]) > maxPtLoad:
-              maxPtLoad = abs(load[1])
+            if abs(load[1]) > max_pt_load:
+              max_pt_load = abs(load[1])
           else:
-            if abs(load[1]) > maxMoment:
-              maxMoment = abs(load[1])
+            if abs(load[1]) > max_moment:
+              max_moment = abs(load[1])
 
       # Step through each member distributed load
       for load in member.DistLoads:
@@ -730,13 +749,35 @@ def __MaxLoads(model, combo_name=None, case=None):
         # Find and store the largest distributed load in the load case
         if load[5] == case:
 
-          if abs(load[1]) > maxDistLoad:
-            maxDistLoad = abs(load[1])
-          if abs(load[2]) > maxDistLoad:
-            maxDistLoad = abs(load[2])
+          if abs(load[1]) > max_dist_load:
+            max_dist_load = abs(load[1])
+          if abs(load[2]) > max_dist_load:
+            max_dist_load = abs(load[2])
+      
+      # Step through each plate
+      for plate in model.Plates:
+
+        # Step through each plate load
+        for load in plate.pressures:
+
+          if load[1] == case:
+
+            if abs(load[0]) > max_area_load:
+              max_area_load = abs(load[0])
+
+    # Step through each quad
+    for quad in model.Quads:
+
+      # Step through each plate load
+      for load in quad.pressures:
+
+        if load[1] == case:
+
+          if abs(load[0]) > max_area_load:
+            max_area_load = abs(load[0])
 
   # Return the maximum loads in the load combination or load case
-  return maxPtLoad, maxMoment, maxDistLoad
+  return max_pt_load, max_moment, max_dist_load, max_area_load
 
 #%%
 # Converts a node object into a node for the viewer
@@ -771,12 +812,6 @@ class VisNode():
     # Set up a mapper for the node label
     lblMapper = vtk.vtkPolyDataMapper()
     lblMapper.SetInputConnection(label.GetOutputPort())
-
-    # These next 2 lines greatly improve performance when interacting with the model. Setting the
-    # mapper to static keeps it from updating the rendering pipeline every time the model is
-    # rotated.
-    lblMapper.Update()    # The labels won't render without this line
-    lblMapper.StaticOn()  # This line provides a major performance boost when interacting
 
     # Set up an actor for the node label
     self.lblActor = vtk.vtkFollower()
