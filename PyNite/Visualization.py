@@ -483,10 +483,23 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
 #%%
 def __RenderLoads(model, renderer, text_height, combo_name, case):
 
+  # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
+  # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
+  # becomes very slow when a large number of actors are used.
+  polydata = vtk.vtkAppendPolyData()
+
+  # Polygons are treated as cells in VTK. Create a cell array to store all the area load polygons
+  # in. We'll also create a list of points to store the polygon points in. The polydata for these
+  # polygons will be stored separately from the other load data.
+  polygons = vtk.vtkCellArray()
+  polygon_points = vtk.vtkPoints()
+  polygon_polydata = vtk.vtkPolyData()
+
   # Get the maximum load magnitudes that will be used to normalize the display scale
   max_pt_load, max_moment, max_dist_load, max_area_load = __MaxLoads(model, combo_name, case)
 
-  # Display the requested load combination, or 'Combo 1' if no load combo or case has been specified
+  # Display the requested load combination, or 'Combo 1' if no load combo or case has been
+  # specified
   if case == None:
     # Store model.LoadCombos[combo].factors under a simpler name for use below
     load_factors = model.LoadCombos[combo_name].factors
@@ -510,34 +523,20 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
         # Display the load
         if load[0] == 'FX':
           ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(ptLoad.actor)
-          renderer.AddActor(ptLoad.lblActor)
-          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'FY':
           ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(ptLoad.actor)
-          renderer.AddActor(ptLoad.lblActor)
-          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'FZ':
           ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(ptLoad.actor)
-          renderer.AddActor(ptLoad.lblActor)
-          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'MX':
-          moment = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(moment.actor)
-          renderer.AddActor(moment.lblActor)
-          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+          ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'MY':
-          moment = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(moment.actor)
-          renderer.AddActor(moment.lblActor)
-          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+          ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'MZ':
-          moment = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(moment.actor)
-          renderer.AddActor(moment.lblActor)
-          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+          ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        
+        polydata.AddInputData(ptLoad.polydata.GetOutput())
+        renderer.AddActor(ptLoad.lblActor)
+        ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Step through each member
   for member in model.Members:
@@ -558,42 +557,28 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
         load_value = load[1]*load_factors[load[3]]
         sign = load_value/abs(load_value)
 
-        # Calculate the loads location in 3D space
+        # Calculate the load's location in 3D space
         x = load[2]
         position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
 
         # Display the load
         if load[0] == 'Fx':
           ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(ptLoad.actor)
-          renderer.AddActor(ptLoad.lblActor)
-          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fy':
           ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(ptLoad.actor)
-          renderer.AddActor(ptLoad.lblActor)
-          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fz':
           ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(ptLoad.actor)
-          renderer.AddActor(ptLoad.lblActor)
-          ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Mx':
-          moment = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(moment.actor)
-          renderer.AddActor(moment.lblActor)
-          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+          ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'My':
-          moment = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(moment.actor)
-          renderer.AddActor(moment.lblActor)
-          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+          ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'Mz':
-          moment = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-          renderer.AddActor(moment.actor)
-          renderer.AddActor(moment.lblActor)
-          moment.lblActor.SetCamera(renderer.GetActiveCamera())
+          ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
     
+        polydata.AddInputData(ptLoad.polydata.GetOutput())
+        renderer.AddActor(ptLoad.lblActor)
+        ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+
     # Step through each member distributed load
     for load in member.DistLoads:
 
@@ -615,25 +600,97 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
         # Display the load
         if load[0] == 'Fx':
           distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
-          renderer.AddActor(distLoad.actor)
-          renderer.AddActor(distLoad.lblActors[0])
-          renderer.AddActor(distLoad.lblActors[1])
-          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fy':
           distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
-          renderer.AddActor(distLoad.actor)
-          renderer.AddActor(distLoad.lblActors[0])
-          renderer.AddActor(distLoad.lblActors[1])
-          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
         elif load[0] == 'Fz':
           distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
-          renderer.AddActor(distLoad.actor)
-          renderer.AddActor(distLoad.lblActors[0])
-          renderer.AddActor(distLoad.lblActors[1])
-          distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-          distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+       
+        polydata.AddInputData(distLoad.polydata.GetOutput())
+        renderer.AddActor(distLoad.lblActors[0])
+        renderer.AddActor(distLoad.lblActors[1])
+        distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+        distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+
+  # Step through each plate
+  i = 0
+  for plate in model.Plates + model.Quads:
+
+    # Get the direction cosines for the plate's local z-axis
+    dir_cos = plate.T()[0:3, 0:3]
+    dir_cos = dir_cos[2]
+
+    # Step through each plate load
+    for load in plate.pressures:
+
+      # Determine if this load is part of the requested load combination
+      if load[1] in load_factors:
+
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        load_value = load[0]*load_factors[load[1]]
+        sign = abs(load[0])/load[0]
+
+        # Find the position of the load's 4 corners
+        position0 = [plate.iNode.X, plate.iNode.Y, plate.iNode.Z]
+        position1 = [plate.jNode.X, plate.jNode.Y, plate.jNode.Z]
+        position2 = [plate.mNode.X, plate.mNode.Y, plate.mNode.Z]
+        position3 = [plate.nNode.X, plate.nNode.Y, plate.nNode.Z]
+
+        # Create an area load and get its data
+        area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*text_height, str(load_value), text_height)
+        
+        # Add the area load's arrows to the overall load polydata
+        polydata.AddInputData(area_load.polydata.GetOutput())
+
+        # Add the 4 points at the corners of this area load to the list of points
+        polygon_points.InsertNextPoint(area_load.p0[0], area_load.p0[1], area_load.p0[2])
+        polygon_points.InsertNextPoint(area_load.p1[0], area_load.p1[1], area_load.p1[2])
+        polygon_points.InsertNextPoint(area_load.p2[0], area_load.p2[1], area_load.p2[2])
+        polygon_points.InsertNextPoint(area_load.p3[0], area_load.p3[1], area_load.p3[2])
+
+        # Create a polygon based on the four points we just defined.
+        # The 1st number in `SetId()` is the local point id
+        # The 2nd number in `SetId()` is the global point id
+        polygon = vtk.vtkPolygon()
+        polygon.GetPointIds().SetNumberOfIds(4)
+        polygon.GetPointIds().SetId(0, i*4)
+        polygon.GetPointIds().SetId(1, i*4 + 1)
+        polygon.GetPointIds().SetId(2, i*4 + 2)
+        polygon.GetPointIds().SetId(3, i*4 + 3)
+
+        # Add the polygon to the list of polygons
+        polygons.InsertNextCell(polygon)
+        
+        # Add the load label
+        renderer.AddActor(area_load.label_actor)
+
+        # Set the text to follow the camera as the user interacts
+        area_load.label_actor.SetCamera(renderer.GetActiveCamera())
+
+        # `i` keeps track of the next polygon's ID. We've just added a polygon, so `i` needs to
+        # go up 1.
+        i += 1
+    
+    # Create polygon polydata from all the points and polygons we just defined
+    polygon_polydata.SetPoints(polygon_points)
+    polygon_polydata.SetPolys(polygons)
+
+  # Set up an actor and mapper for the area loads
+  load_mapper = vtk.vtkPolyDataMapper()
+  load_mapper.SetInputConnection(polydata.GetOutputPort())
+  load_actor = vtk.vtkActor()
+  load_actor.GetProperty().SetColor(0, 255, 0)  # Green
+  load_actor.SetMapper(load_mapper)
+  renderer.AddActor(load_actor)
+
+  # Set up an actor and a mapper for the area load polygons
+  polygon_mapper = vtk.vtkPolyDataMapper()
+  polygon_mapper.SetInputData(polygon_polydata)
+  polygon_actor = vtk.vtkActor()
+  polygon_actor.GetProperty().SetColor(0, 255, 0)  # Green
+  # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
+  polygon_actor.SetMapper(polygon_mapper)
+  renderer.AddActor(polygon_actor)
+
 
 #%%
 def __MaxLoads(model, combo_name=None, case=None):
@@ -1469,7 +1526,7 @@ class VisPtLoad():
     unitVector = direction/norm(direction)
 
     # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
-    self.append_filter = vtk.vtkAppendPolyData()
+    self.polydata = vtk.vtkAppendPolyData()
 
     # Determine if the load is positive or negative
     sign = abs(length)/length
@@ -1489,7 +1546,7 @@ class VisPtLoad():
     # Add the arrow tip to the append filter
     polydata = vtk.vtkPolyData()
     polydata.ShallowCopy(tip.GetOutput())
-    self.append_filter.AddInputData(polydata)
+    self.polydata.AddInputData(polydata)
     
     # Create the shaft
     shaft = vtk.vtkLineSource()
@@ -1500,12 +1557,12 @@ class VisPtLoad():
     # Copy and append the shaft data to the append filter
     polydata = vtk.vtkPolyData()
     polydata.ShallowCopy(shaft.GetOutput())
-    self.append_filter.AddInputData(polydata)
-    self.append_filter.Update()
+    self.polydata.AddInputData(polydata)
+    self.polydata.Update()
 
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(self.append_filter.GetOutputPort())
+    mapper.SetInputConnection(self.polydata.GetOutputPort())
     self.actor = vtk.vtkActor()
     self.actor.GetProperty().SetColor(0, 255, 0) # Green
     self.actor.SetMapper(mapper)
@@ -1547,8 +1604,7 @@ class VisDistLoad():
     lineDirCos = [(position2[0]-position1[0])/loadLength, (position2[1]-position1[1])/loadLength, (position2[2]-position1[2])/loadLength]
 
     # Find the direction cosines for the direction the load acts in
-    magnitude = (direction[0]**2 + direction[1]**2 + direction[2]**2)**0.5
-    dirDirCos = [direction[0]/magnitude, direction[1]/magnitude, direction[2]/magnitude]
+    dirDirCos = direction/norm(direction)
 
     # Create point loads at intervals roughly equal to 75% of the load's largest length (magnitude)
     # Add text labels to the first and last load arrow
@@ -1579,21 +1635,22 @@ class VisDistLoad():
     tail_line.SetPoint2((position2[0] - length2*dirDirCos[0], position2[1] - length2*dirDirCos[1], position2[2] - length2*dirDirCos[2]))
 
     # Combine all the geometry into one 'vtkPolyData' object
-    append_filter = vtk.vtkAppendPolyData()
+    self.polydata = vtk.vtkAppendPolyData()
     for arrow in ptLoads:
-      arrow.append_filter.Update()
+      arrow.polydata.Update()
       polydata = vtk.vtkPolyData()
-      polydata.ShallowCopy(arrow.append_filter.GetOutput())
-      append_filter.AddInputData(polydata)
+      polydata.ShallowCopy(arrow.polydata.GetOutput())
+      self.polydata.AddInputData(polydata)
     
     tail_line.Update()
     polydata = vtk.vtkPolyData()
     polydata.ShallowCopy(tail_line.GetOutput())
-    append_filter.AddInputData(polydata)
+    self.polydata.AddInputData(polydata)
+    self.polydata.Update()
 
     # Create a mapper and actor for the geometry
     mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(append_filter.GetOutputPort())
+    mapper.SetInputConnection(self.polydata.GetOutputPort())
     self.actor = vtk.vtkActor()
     self.actor.GetProperty().SetColor(0, 255, 0) # Green
     self.actor.SetMapper(mapper)
@@ -1631,7 +1688,7 @@ class VisMoment():
     v3 = v3/norm(v3)
 
     # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
-    self.append_filter = vtk.vtkAppendPolyData()
+    self.polydata = vtk.vtkAppendPolyData()
 
     # Generate an arc for the moment
     arc = vtk.vtkArcSource()
@@ -1645,7 +1702,7 @@ class VisMoment():
     arc.Update()
     polydata = vtk.vtkPolyData()
     polydata.ShallowCopy(arc.GetOutput())
-    self.append_filter.AddInputData(polydata)
+    self.polydata.AddInputData(polydata)
 
     # Generate the arrow head
     tip_length = radius/2
@@ -1660,11 +1717,11 @@ class VisMoment():
     tip.Update()
     polydata = vtk.vtkPolyData()
     polydata.ShallowCopy(tip.GetOutput())
-    self.append_filter.AddInputData(polydata)
+    self.polydata.AddInputData(polydata)
 
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(self.append_filter.GetOutputPort())
+    mapper.SetInputConnection(self.polydata.GetOutputPort())
     self.actor = vtk.vtkActor()
     self.actor.GetProperty().SetColor(0, 255, 0) # Green
     self.actor.SetMapper(mapper)
@@ -1685,6 +1742,42 @@ class VisMoment():
                               arc.GetPoint2()[1] + 0.6*text_height, \
                               arc.GetPoint2()[2] + 0.6*text_height)
     self.lblActor.GetProperty().SetColor(0, 255, 0) # Green
+
+class VisAreaLoad():
+  '''
+  Creates an area load for the viewer
+  '''
+
+  def __init__(self, position0, position1, position2, position3, direction, length, label_text, text_height=5):
+    '''
+    Constructor
+    '''
+
+    # Create a point load for each corner of the area load
+    ptLoads = []
+    ptLoads.append(VisPtLoad(position0, direction, length, label_text, text_height=text_height))
+    ptLoads.append(VisPtLoad(position1, direction, length, label_text, text_height=text_height))
+    ptLoads.append(VisPtLoad(position2, direction, length, label_text, text_height=text_height))
+    ptLoads.append(VisPtLoad(position3, direction, length, label_text, text_height=text_height))
+
+    # Find the direction cosines for the direction the load acts in
+    dirDirCos = direction/norm(direction)
+
+    # Find the positions of the tails of all the arrows at the corners of the area load. This is
+    # where we will place the polygon.
+    self.p0 = position0 - dirDirCos*length
+    self.p1 = position1 - dirDirCos*length
+    self.p2 = position2 - dirDirCos*length
+    self.p3 = position3 - dirDirCos*length
+
+    # Combine all geometry into one 'vtkPolyData' object
+    self.polydata = vtk.vtkAppendPolyData()
+    for arrow in ptLoads:
+      self.polydata.AddInputData(arrow.polydata.GetOutput())
+    self.polydata.Update()
+
+    # Add a label
+    self.label_actor = ptLoads[0].lblActor
 
 def PerpVector(v):
   '''
