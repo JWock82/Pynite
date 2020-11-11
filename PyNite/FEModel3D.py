@@ -1816,12 +1816,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo.name)
                     
-                            node.RxnFX[combo.name] += plate_F[6, 0]
-                            node.RxnFY[combo.name] += plate_F[7, 0]
-                            node.RxnFZ[combo.name] += plate_F[8, 0]
-                            node.RxnMX[combo.name] += plate_F[9, 0]
-                            node.RxnMY[combo.name] += plate_F[10, 0]
-                            node.RxnMZ[combo.name] += plate_F[11, 0]
+                            node.RxnFX[combo.name] += plate_F[18, 0]
+                            node.RxnFY[combo.name] += plate_F[19, 0]
+                            node.RxnFZ[combo.name] += plate_F[20, 0]
+                            node.RxnMX[combo.name] += plate_F[21, 0]
+                            node.RxnMY[combo.name] += plate_F[22, 0]
+                            node.RxnMZ[combo.name] += plate_F[23, 0]
 
                         elif plate.mNode == node:
 
@@ -1842,12 +1842,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo.name)
                     
-                            node.RxnFX[combo.name] += plate_F[18, 0]
-                            node.RxnFY[combo.name] += plate_F[19, 0]
-                            node.RxnFZ[combo.name] += plate_F[20, 0]
-                            node.RxnMX[combo.name] += plate_F[21, 0]
-                            node.RxnMY[combo.name] += plate_F[22, 0]
-                            node.RxnMZ[combo.name] += plate_F[23, 0]
+                            node.RxnFX[combo.name] += plate_F[6, 0]
+                            node.RxnFY[combo.name] += plate_F[7, 0]
+                            node.RxnFZ[combo.name] += plate_F[8, 0]
+                            node.RxnMX[combo.name] += plate_F[9, 0]
+                            node.RxnMY[combo.name] += plate_F[10, 0]
+                            node.RxnMZ[combo.name] += plate_F[11, 0]
 
                     # Sum the joint forces at the node
                     for load in node.NodeLoads:
