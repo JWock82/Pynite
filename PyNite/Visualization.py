@@ -1702,6 +1702,7 @@ class VisMoment():
     polydata = vtk.vtkPolyData()
     polydata.ShallowCopy(tip.GetOutput())
     self.polydata.AddInputData(polydata)
+    self.polydata.Update()
 
     # Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()
