@@ -1849,6 +1849,61 @@ class FEModel3D():
                             node.RxnMY[combo.name] += plate_F[10, 0]
                             node.RxnMZ[combo.name] += plate_F[11, 0]
 
+                    # Sum the quad forces at the node
+                    for quad in self.Quads:
+
+                        if quad.iNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[12, 0]
+                            node.RxnFY[combo.name] += quad_F[13, 0]
+                            node.RxnFZ[combo.name] += quad_F[14, 0]
+                            node.RxnMX[combo.name] += quad_F[15, 0]
+                            node.RxnMY[combo.name] += quad_F[16, 0]
+                            node.RxnMZ[combo.name] += quad_F[17, 0]
+
+                        elif quad.jNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[18, 0]
+                            node.RxnFY[combo.name] += quad_F[19, 0]
+                            node.RxnFZ[combo.name] += quad_F[20, 0]
+                            node.RxnMX[combo.name] += quad_F[21, 0]
+                            node.RxnMY[combo.name] += quad_F[22, 0]
+                            node.RxnMZ[combo.name] += quad_F[23, 0]
+
+                        elif quad.mNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[0, 0]
+                            node.RxnFY[combo.name] += quad_F[1, 0]
+                            node.RxnFZ[combo.name] += quad_F[2, 0]
+                            node.RxnMX[combo.name] += quad_F[3, 0]
+                            node.RxnMY[combo.name] += quad_F[4, 0]
+                            node.RxnMZ[combo.name] += quad_F[5, 0]
+
+                        elif quad.nNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[6, 0]
+                            node.RxnFY[combo.name] += quad_F[7, 0]
+                            node.RxnFZ[combo.name] += quad_F[8, 0]
+                            node.RxnMX[combo.name] += quad_F[9, 0]
+                            node.RxnMY[combo.name] += quad_F[10, 0]
+                            node.RxnMZ[combo.name] += quad_F[11, 0]
+                    
                     # Sum the joint forces at the node
                     for load in node.NodeLoads:
                     
