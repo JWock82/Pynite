@@ -41,6 +41,8 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+Version 0.0.23: Bug fix for concentrated moments. Fixed end reactions on one side of the Member3D element were being calculated incorrectly for concentrated moments.
+
 Version 0.0.22: This version makes some significant changes. Major improvements include:
 * Solution speed has been greatly improved for large models. The code has been profiled and many slow spots in the solution process have been isolated and removed.
 * A sparse matrix solver has been added as the default solver to improve solution speed. The sparse solver may be slower on smaller models, but those models usually solve faster anyway. The dense matrix solver can be used if this is a problem.
