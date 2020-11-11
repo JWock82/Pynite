@@ -361,22 +361,6 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     # Set the text to follow the camera as the user interacts. This will
     # require a reset of the camera (see below)
     vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
-  
-  # The next few commented lines are soon to be depricated
-  # **********************************************************************
-  # # Add actors for each plate
-  # for vis_plate in vis_plates:
-
-  #   # Add the actors for the plate
-  #   renderer.AddActor(vis_plate.actor)
-
-  #   # Add the actor for the plate label
-  #   renderer.AddActor(vis_plate.lblActor)
-
-  #   # Set the text to follow the camera as the user interacts. This will
-  #   # require a reset of the camera (see below)
-  #   vis_plate.lblActor.SetCamera(renderer.GetActiveCamera())
-  # **********************************************************************
 
   # Add the actor for the plates
   renderer.AddActor(plate_actor)
