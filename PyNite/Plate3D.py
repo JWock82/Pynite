@@ -217,7 +217,7 @@ class Plate3D():
         '''
         
         # Initialize the fixed end reaction vector
-        fer = zeros((12,1))
+        fer = zeros((12, 1))
 
         # Get the requested load combination
         combo = self.LoadCombos[combo_name]
@@ -241,28 +241,40 @@ class Plate3D():
 
         fer = -4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [-c/12], [-b/12], [1/4], [-c/12], [b/12], [1/4], [c/12], [b/12]])
 
-        # Insert rows of zeros for degrees of freedom not included in the matrix above
-        fer = insert(fer, 12, 0, axis=0)
+        # At this point `fer` only contains terms for the degrees of freedom
+        # associated with membrane action. Expand `fer` to include zero terms for
+        # the degrees of freedom related to bending action. This will allow
+        # the bending and membrane vectors to be summed directly
+        # later on. `numpy` has an `insert` function that can be used to
+        # insert rows and columns of zeros one at a time, but it is very slow
+        # as it makes a temporary copy of the vector term by term each time
+        # it's called. The algorithm used here accomplishes the same thing
+        # much faster. Terms are copied only once.
 
-        fer = insert(fer, 9, 0, axis=0)
-        fer = insert(fer, 9, 0, axis=0)
+        # Initialize the expanded vector to all zeros
+        fer_exp = zeros((24, 1))
 
-        fer = insert(fer, 9, 0, axis=0)
+        # Step through each term in the unexpanded vector
+        # i = Unexpanded vector row
+        for i in range(12):
+                
+            # Find the corresponding term in the expanded vector
 
-        fer = insert(fer, 6, 0, axis=0)
-        fer = insert(fer, 6, 0, axis=0)
+            # m = Expanded vector row
+            if i in [0, 3, 6, 9]:   # indices associated with deflection in z
+                m = 2*i + 2
+            if i in [1, 4, 7, 10]:  # indices associated with rotation about x
+                m = 2*i + 1
+            if i in [2, 5, 8, 11]:  # indices associated with rotation about y
+                m = 2*i
+                
+            # Ensure the index is an integer rather than a float
+            m = round(m)
 
-        fer = insert(fer, 6, 0, axis=0)
+            # Add the term from the unexpanded vector into the expanded vector
+            fer_exp[m, 0] = fer[i, 0]
 
-        fer = insert(fer, 3, 0, axis=0)
-        fer = insert(fer, 3, 0, axis=0)
-
-        fer = insert(fer, 3, 0, axis=0)
-
-        fer = insert(fer, 0, 0, axis=0)
-        fer = insert(fer, 0, 0, axis=0)
-
-        return fer
+        return fer_exp
         
 
 #%%
