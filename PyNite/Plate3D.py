@@ -10,6 +10,7 @@ class Plate3D():
 
         self.Name = Name
         self.ID = None
+        self.type = 'Rect'
 
         self.iNode = iNode
         self.jNode = jNode

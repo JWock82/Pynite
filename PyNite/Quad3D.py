@@ -22,6 +22,7 @@ class Quad3D():
 
         self.Name = Name
         self.ID = None
+        self.type = 'Quad'
 
         self.iNode = iNode
         self.jNode = jNode
