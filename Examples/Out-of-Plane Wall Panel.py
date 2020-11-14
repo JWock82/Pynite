@@ -123,9 +123,9 @@ class RectWall():
 
                     # Determine which nodes the plate will be attached to
                     ni = pl_id + max(0, int((pl_id-1)/num_cols))
-                    nn = ni + 1
-                    nm = nn + (num_cols + 1)
-                    nj = nm - 1
+                    nj = ni + 1
+                    nm = nj + (num_cols + 1)
+                    nn = nm - 1
 
                     # Add the plate to the list of plates
                     self.fem.AddPlate('P'+str(pl_id), 'N'+str(ni), 'N'+str(nj), 'N'+str(nm), 'N'+str(nn), self.thickness, self.E, self.nu) 
@@ -141,9 +141,6 @@ class RectWall():
 
         # Step through each node in the model
         for node in self.fem.Nodes:
-
-            # Plate elements don't have the following degrees of freedom, so they'll need to be supported
-            node.SupportRZ = True
 
             # Determine if the node falls on any of the boundaries
             # Left edge
@@ -200,23 +197,18 @@ class RectWall():
                 p1 = load[2]
                 p2 = load[3]
 
-                # Calculate the pressure on the plate and the load it applied to each of its nodes
+                # Calculate the pressure on the plate apply it to the plate
                 if avgY <= y2 and avgY >= y1:
 
                     # Calculate the pressure the plate
                     pressure += (p2 - p1)/(y2 - y1)*(avgY - y1) + p1
-                    
-                    # Calculate the surface area of the plate
-                    area = (j_node.Y - i_node.Y)*(n_node.X - i_node.X)
 
-                    # Add the plate's load to each of its four nodes
-                    i_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    j_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    m_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
-                    n_node.NodeLoads.append(('FZ', pressure*area/4, 'Case 1'))
+            # Add the surface pressure to the plate
+            plate.pressures.append([pressure, 'Case 1'])
 
-        # Analyze the model
-        self.fem.Analyze()
+        # Analyze the model. The stiffness matrix will usually be sparse so some speed can usually
+        # be gained by using the sparse solver.
+        self.fem.Analyze(sparse=True)
 
         # Find the maximum displacement
         DZ = self.fem.Nodes[0].DZ['Combo 1']
@@ -289,7 +281,7 @@ class RectWall():
                     else:
                         force += plate.moment(0, 0, 'Combo 1')[index][0]
                     count += 1
-                elif plate.jNode.ID == node.ID:
+                elif plate.nNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
                         force += plate.shear(0, plate.height(), 'Combo 1')[index][0]
                     else:
@@ -301,7 +293,7 @@ class RectWall():
                     else:
                         force += plate.moment(plate.width(), plate.height(), 'Combo 1')[index][0]
                     count += 1
-                elif plate.nNode.ID == node.ID:
+                elif plate.jNode.ID == node.ID:
                     if force_type == 'Qx' or force_type == 'Qy':
                         force += plate.shear(plate.width(), 0, 'Combo 1')[index][0]
                     else:
@@ -394,8 +386,8 @@ class RectWall():
 E = 57000*(4500)**0.5*144 # psf
 t = 1 # ft
 width = 10 # ft
-height = 10  # ft
-nu = 0.3
+height = 10 # ft
+nu = 0.17
 meshsize = 0.5 # ft
 load = 250 # psf
 
@@ -403,7 +395,8 @@ myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 
 myWall.add_load(0, height, load, load)
 
 # Analyze the wall
-myWall.analyze()
+import cProfile
+cProfile.run('myWall.analyze()', sort='cumtime')
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
 # The plates will be set to show the 'Mx' results

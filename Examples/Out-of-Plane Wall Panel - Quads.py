@@ -1,10 +1,9 @@
 #%%
-# This example works, but visualization and reporting for quads is not complete yet.
-
 # This is an example of a how quads can be used to create a wall panel for out-of-plane bending problems.
 # A 'RectWall' class has been defined to automate the process of meshing, loading, and plotting results for a wall
-# panel of any geometry and edge support conditions. Below the class definition is a brief script showing how the
-# 'RectWall' class can be been implemented.
+# panel of any geometry and edge support conditions. At the bottom of this file (below the class
+# definition) is a brief script showing how the 'RectWall' class can be been implemented, as well
+# as a discussion of the nuances of quad elements the user should be aware of.
 
 #%%
 from PyNite import FEModel3D, Node3D, Quad3D
@@ -205,8 +204,8 @@ class RectWall():
                     # Calculate the pressure the quadrilateral
                     pressure += (p2 - p1)/(y2 - y1)*(avgY - y1) + p1
                     
-                    # Add the surface pressure to the quadrilateral
-                    quad.pressures.append([pressure, 'Case 1'])
+            # Add the surface pressure to the quadrilateral
+            quad.pressures.append([pressure, 'Case 1'])
 
         # Analyze the model
         self.fem.Analyze(sparse=True)
@@ -301,7 +300,7 @@ class RectWall():
                         force += quad.moment(-1, 1, 'Combo 1')[index][0]
                     count += 1
 
-            # Calculate the average force at the node
+            # Calculate the average force at the node to smooth the results
             force = force/count
 
             # Add the total force at the node to the list of forces
@@ -382,59 +381,109 @@ class RectWall():
         plt.show()
 
 #%%
-# Rectangular wall panel implementation example
-# ---------------------------------------------
-E = 57*(4000)**0.5*12**2 # ksf
-t = 1 # ft
-width = 10 # ft
-height = 20 # ft
+# +-----------------------------------------------+
+# | Rectangular Wall Panel Implementation Example |
+# +-----------------------------------------------+
+
+E = 57000*(4000)**0.5*12**2  # psf
+t = 1  # ft 
+width = 10  # ft
+height = 20  # ft 
 nu = 0.17
-meshsize = 0.5 # ft
-load = 0.25 # ksf
+meshsize = 1  # ft
+load = 250  # psf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
 myWall.add_load(0, height, load, load)
 
-# Analyze the wall
+# Analyze the wall. Ignore the profiling code commented out below. That's for my use in speeding up
+# the program.
 # import cProfile
 # cProfile.run('myWall.analyze()', sort='cumtime')
 myWall.analyze()
 
-# Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
-# The quad mesh will be set to show 'dz' results.
-# There is a known issue with the stress results for quads, where the results are correct, but they are mapped to the wrong nodes. I'm currently working to resolve this issue.
+# +-----------------------+
+# | Discussion of Results |
+# +-----------------------+
+
+# MITC4 elements are very accurate, but there are some nuances to be aware of. They are described
+# below.
+
+# Render the wall. The default load combination 'Combo 1' will be displayed since we're not
+# specifying otherwise. The quad mesh will be set to show 'Mx' results. It will be noted that the
+# results are `unsmoothed` making the contour plot look "striped" like a step function. This will
+# be discussed below in more detail.
 from PyNite import Visualization
-Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='dz', render_loads=True)
+Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='Mx', render_loads=True)
 
-# # Results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202
-# D = E*t**3/(12*(1-nu**2))
-# print('Solution from Timoshenko Table 35 for b/a = 2.0:')
-# print('Expected displacement: ', 0.00254*load*width**4/D)
-# print('Expected Mx at Center:', 0.0412*load*width**2)
-# print('Expected Mx at Edges:', -0.0829*load*width**2)
-# print('Expected My at Center:', 0.0158*load*width**2)
-# print('Expected My at Top & Bottom:', -0.0571*load*width**2)
+# The `RectWall` class has a smoothing algorithm built into it. Let's plot a smoothed contour for
+# Mx for comparison.
+myWall.plot_forces('Mx')
 
-# # Plot a smoothed displacement contour
-# myWall.plot_disp()
+# Essentially, smoothing averages the corner stresses from every quad framing into each node. This
+# leads to a much more accurate solution. The unsmoothed plot is essentially showing quad center
+# stresses at the quad element corners.
 
-# # Plot smoothed moment contours
-# myWall.plot_forces('Mx')
-# myWall.plot_forces('My')
-# myWall.plot_forces('Mxy')
+# Here are the expected results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202.
+# Note that the deflection values for the PyNite solution are slightly larger, due to transverse
+# shear deformations being accounted for.
+D = E*t**3/(12*(1-nu**2))
+print('Solution from Timoshenko Table 35 for b/a = 2.0:')
+print('Expected displacement: ', 0.00254*load*width**4/D)
+print('Expected Mx at Center:', 0.0412*load*width**2)
+print('Expected Mx at Edges:', -0.0829*load*width**2)
+print('Expected My at Center:', 0.0158*load*width**2)
+print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 
-# # Plot smoothed shear force contours
-# myWall.plot_forces('Qx')
-# myWall.plot_forces('Qy')
+# It should be noted that even the smoothed Mx contours are off by nearly 30% from the theoretical
+# solution at the wall boundaries. Because there are no adjacent quads at the boundaries, PyNite
+# cannot smooth the results there, and center stresses are being reported at the boundaries
+# instead of corner stresses. So what's really going on here? Read on!
 
-# # Create a PDF report
-# # It will be output to the PyNite folder unless the 'output_path' variable below is modified
-# # from PyNite import Reporting
-# # Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
-# #                        member_end_forces=False, member_internal_forces=False)
+# MITC4 elements are very accurate, but the internal bending stress results at the corners are not.
+# They are secondary values extrapolated from the derivatives of primary values. The corner bending
+# stresses appear to more accurately represent the bending stresses at the center of the element.
+# While corner STRESSES have this problem, the corner FORCES do not. To find the bending stresses
+# at the quad nodes we'll get the moment at the corner and divide it by 1/2 of the plate width to
+# convert it to a stress result. Note that when we talk about quad "stresses" we're really talking
+# about forces per unit length of the element.
 
-# Get `Mx` results for quad 400
-# print(myWall.fem.GetQuad('Q400').moment(-1, -1)[0, 0])
-# print(myWall.fem.GetQuad('Q400').moment(1, -1)[0, 0])
-# print(myWall.fem.GetQuad('Q400').moment(1, 1)[0, 0])
-# print(myWall.fem.GetQuad('Q400').moment(-1, 1)[0, 0])
+# With 200 quads in the model, quad 101 is on the left edge of the wall at mid-height, and carries
+# the maximum moment.
+
+# Get the force vector for quad 101
+f_vector = myWall.fem.GetQuad('Q101').f()
+
+# Although the MITC4 element nodes are defined by the user in the order [i, j, m, n], internally
+# PyNite formulates the plate in the order [m, n, i, j] to be consistent with the literature used
+# to derive this element. Therefore the MITC4 element's force vector is arranged as follows:
+# ************************************************************************************************************************************************************
+# f vector: [[fx_m, fy_m, fz_m, mx_m, my_m, mz_m, fx_n, fy_n, fz_n, mx_n, my_n, mz_n, fx_i, fy_i, fz_i, mx_i, my_i, mz_i, fx_j, fy_j, fz_j, mx_j, my_j, mz_j]]
+# indices:  [[  0 ,   1 ,   2 ,   3 ,   4 ,   5 ,   6 ,   7 ,   8 ,   9 ,  10 ,  11 ,  12 ,  13 ,  14 ,  15 ,  16 ,  17 ,  18 ,  19 ,  20 ,  21 ,  22 ,  23 ]]
+# ************************************************************************************************************************************************************
+# nomenclature: fx_n = force in the local x-direction at the n-node
+#               my_j = moment about the local y-axis at the j-node
+
+# We are interested in the moment applied to the i-node about the quad's local y-axis (my_i). This
+# is at index 16 in the f vector. Note that here Mx is the moment about the local y-axis, rather
+# than about it's local x-axis. This can be confusing, but is a commonly used plate nomenclature.
+Mx = f_vector[16, 0]
+
+# We can find the max My moment similarly from quad 6
+f_vector_11 = myWall.fem.GetQuad('Q6').f()
+My = f_vector_11[15, 0]
+
+# Now we'll convert these values to a force per unit length. The height and width of the plate is
+# `meshsize`.
+Mx = Mx/(meshsize/2)
+My = My/(meshsize/2)
+
+# Print the correct maximum bending moment:
+print('Calculated maximum Mx (back-calculated from qaud nodal forces): ', Mx)
+print('Calculated maximum My (back-calculated from qaud nodal forces): ', My)
+
+# These values are much closer to the Timoshenko solution than the direct stress results. The Mx
+# solution is within 1%, and the My solution is within about 6%. That is very good convergence for
+# the 1'x1' mesh size. If the mesh size is reduced to 0.5' the My solution is within about 4% of
+# the Timoshenko solution. It should also be remembered that even the Timoshenko solution is an
+# estimate.

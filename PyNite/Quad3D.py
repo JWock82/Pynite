@@ -35,9 +35,6 @@ class Quad3D():
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
         self.LoadCombos = LoadCombos
 
-        # Calculate the local coordinate system
-        self.__local_coords()
-
 #%%
     def __local_coords(self):
         '''
@@ -77,13 +74,6 @@ class Quad3D():
         self.y2 = dot(vector_32, self.y_axis)
         self.y3 = 0
         self.y4 = dot(vector_34, self.y_axis)
-
-#%%
-    def Hw(self, r, s):
-
-        Hw = 1/4*array([[(1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0, (1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0]])
-
-        return Hw
 
 #%%
     def J(self, r, s):
@@ -486,6 +476,9 @@ class Quad3D():
         Returns the quad element's local stiffness matrix.
         '''
 
+        # Recalculate the local coordinate system
+        self.__local_coords()
+
         # Sum the bending and membrane stiffness matrices
         return self.k_b() + self.k_m()
 
@@ -511,6 +504,8 @@ class Quad3D():
             for.
         '''
         
+        Hw = lambda r, s : 1/4*array([[(1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0, (1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0]])
+
         # Initialize the fixed end reaction vector
         fer = zeros((12,1))
 
@@ -534,33 +529,45 @@ class Quad3D():
                     # Sum the pressures
                     p -= factor*pressure[0]
         
-        fer = (self.Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
-               + self.Hw(-gp, gp).T*p*det(self.J(-gp, gp))
-               + self.Hw(gp, gp).T*p*det(self.J(gp, gp))
-               + self.Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
+        fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
+               + Hw(-gp, gp).T*p*det(self.J(-gp, gp))
+               + Hw(gp, gp).T*p*det(self.J(gp, gp))
+               + Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
 
-        # Insert rows of zeros for degrees of freedom not included in the matrix above
-        fer = insert(fer, 12, 0, axis=0)
+        # At this point `fer` only contains terms for the degrees of freedom
+        # associated with membrane action. Expand `fer` to include zero terms for
+        # the degrees of freedom related to bending action. This will allow
+        # the bending and membrane vectors to be summed directly
+        # later on. `numpy` has an `insert` function that can be used to
+        # insert rows and columns of zeros one at a time, but it is very slow
+        # as it makes a temporary copy of the vector term by term each time
+        # it's called. The algorithm used here accomplishes the same thing
+        # much faster. Terms are copied only once.
 
-        fer = insert(fer, 9, 0, axis=0)
-        fer = insert(fer, 9, 0, axis=0)
+        # Initialize the expanded vector to all zeros
+        fer_exp = zeros((24, 1))
 
-        fer = insert(fer, 9, 0, axis=0)
+        # Step through each term in the unexpanded vector
+        # i = Unexpanded vector row
+        for i in range(12):
+                
+            # Find the corresponding term in the expanded vector
 
-        fer = insert(fer, 6, 0, axis=0)
-        fer = insert(fer, 6, 0, axis=0)
+            # m = Expanded vector row
+            if i in [0, 3, 6, 9]:   # indices associated with deflection in z
+                m = 2*i + 2
+            if i in [1, 4, 7, 10]:  # indices associated with rotation about x
+                m = 2*i + 1
+            if i in [2, 5, 8, 11]:  # indices associated with rotation about y
+                m = 2*i
+                
+            # Ensure the index is an integer rather than a float
+            m = round(m)
 
-        fer = insert(fer, 6, 0, axis=0)
+            # Add the term from the unexpanded vector into the expanded vector
+            fer_exp[m, 0] = fer[i, 0]
 
-        fer = insert(fer, 3, 0, axis=0)
-        fer = insert(fer, 3, 0, axis=0)
-
-        fer = insert(fer, 3, 0, axis=0)
-
-        fer = insert(fer, 0, 0, axis=0)
-        fer = insert(fer, 0, 0, axis=0)
-
-        return fer
+        return fer_exp
 
 #%%
     def d(self, combo_name='Combo 1'):
@@ -633,6 +640,7 @@ class Quad3D():
         '''
         Returns the quad element's global stiffness matrix
         '''
+
         # Get the transpose matrix
         T = self.T()
 
@@ -764,8 +772,8 @@ class Quad3D():
         Qx = H[0]*q1[0] + H[1]*q2[0] + H[2]*q3[0] + H[3]*q4[0]
         Qy = H[0]*q1[1] + H[1]*q2[1] + H[2]*q3[1] + H[3]*q4[1]
 
-        return array([[Qx],
-                      [Qy]])
+        return array([Qx,
+                      Qy])
 
 #%%   
     def moment(self, r=0, s=0, combo_name='Combo 1'):
@@ -790,11 +798,11 @@ class Quad3D():
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
-        
+
         # Define the gauss point used for numerical integration
         gp = 1/3**0.5
 
-        # Define extrapolated r and s points
+        # # Define extrapolated r and s points
         r_ex = r/gp
         s_ex = s/gp
 
@@ -814,10 +822,10 @@ class Quad3D():
         Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
         My = H[0]*m1[1] + H[1]*m2[1] + H[2]*m3[1] + H[3]*m4[1]
         Mxy = H[0]*m1[2] + H[1]*m2[2] + H[2]*m3[2] + H[3]*m4[2]
-
-        return array([[Mx],
-                      [My],
-                      [Mxy]])
+        
+        return array([Mx,
+                      My,
+                      Mxy])
 
 #%%
     def membrane(self, r=0, s=0, combo_name='Combo 1'):
@@ -850,6 +858,6 @@ class Quad3D():
         Sy = H[0]*s1[1] + H[1]*s2[1] + H[2]*s3[1] + H[3]*s4[1]
         Txy = H[0]*s1[2] + H[1]*s2[2] + H[2]*s3[2] + H[3]*s4[2]
 
-        return array([[Sx],
-                      [Sy],
-                      [Txy]])
+        return array([Sx,
+                      Sy,
+                      Txy])

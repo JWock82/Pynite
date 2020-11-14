@@ -494,6 +494,15 @@ class FEModel3D():
 
         # Add the distributed load to the member
         self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end, case))
+        
+#%%
+    def AddPlateSurfacePressure(self, plate_ID, pressure, case='Case 1'):
+        '''
+        Adds a surface pressure to the rectangular plate element.
+        '''
+
+        # Add the surface pressure to the rectangle
+        self.GetPlate(plate_ID).pressures.append([pressure, case])
 
 #%%
     def AddQuadSurfacePressure(self, quad_ID, pressure, case='Case 1'):
@@ -959,13 +968,13 @@ class FEModel3D():
                     m = plate.iNode.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.jNode.ID*6 + (a-6)
+                    m = plate.nNode.ID*6 + (a-6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
                     m = plate.mNode.ID*6 + (a-12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.nNode.ID*6 + (a-18)
+                    m = plate.jNode.ID*6 + (a-18)
 
                 for b in range(24):
 
@@ -975,13 +984,13 @@ class FEModel3D():
                         n = plate.iNode.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.jNode.ID*6 + (b-6)
+                        n = plate.nNode.ID*6 + (b-6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
                         n = plate.mNode.ID*6 + (b-12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.nNode.ID*6 + (b-18)
+                        n = plate.jNode.ID*6 + (b-18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     K.itemset((m, n), K.item((m, n)) + plate_K.item((a, b)))
@@ -1089,6 +1098,35 @@ class FEModel3D():
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER.itemset((m, 0), FER[m, 0] + member_FER[a, 0])
         
+        # Add terms for each rectangle in the model
+        for plate in self.Plates:
+            
+            # Get the quadrilateral's global fixed end reaction vector
+            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+            plate_FER = plate.FER(combo_name)
+
+            # Step through each term in the quadrilateral's fixed end reaction vector
+            # 'a' below is the row index in the quadrilateral's fixed end reaction vector
+            # 'm' below is the corresponding row index in the global fixed end reaction vector
+            for a in range(24):
+                
+                # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
+                if a < 6:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.iNode.ID*6 + a
+                elif a < 12:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.nNode.ID*6 + (a - 6)
+                elif a < 18:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.mNode.ID*6 + (a - 12)
+                else:
+                    # Find the corresponding index 'm' in the global fixed end reaction vector
+                    m = plate.jNode.ID*6 + (a - 18)
+                
+                # Now that 'm' is known, place the term in the global fixed end reaction vector
+                FER.itemset((m, 0), FER[m, 0] + plate_FER[a, 0])
+
         # Add terms for each quadrilateral in the model
         for quad in self.Quads:
             
@@ -1778,12 +1816,12 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo.name)
                     
-                            node.RxnFX[combo.name] += plate_F[6, 0]
-                            node.RxnFY[combo.name] += plate_F[7, 0]
-                            node.RxnFZ[combo.name] += plate_F[8, 0]
-                            node.RxnMX[combo.name] += plate_F[9, 0]
-                            node.RxnMY[combo.name] += plate_F[10, 0]
-                            node.RxnMZ[combo.name] += plate_F[11, 0]
+                            node.RxnFX[combo.name] += plate_F[18, 0]
+                            node.RxnFY[combo.name] += plate_F[19, 0]
+                            node.RxnFZ[combo.name] += plate_F[20, 0]
+                            node.RxnMX[combo.name] += plate_F[21, 0]
+                            node.RxnMY[combo.name] += plate_F[22, 0]
+                            node.RxnMZ[combo.name] += plate_F[23, 0]
 
                         elif plate.mNode == node:
 
@@ -1804,13 +1842,68 @@ class FEModel3D():
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             plate_F = plate.F(combo.name)
                     
-                            node.RxnFX[combo.name] += plate_F[18, 0]
-                            node.RxnFY[combo.name] += plate_F[19, 0]
-                            node.RxnFZ[combo.name] += plate_F[20, 0]
-                            node.RxnMX[combo.name] += plate_F[21, 0]
-                            node.RxnMY[combo.name] += plate_F[22, 0]
-                            node.RxnMZ[combo.name] += plate_F[23, 0]
+                            node.RxnFX[combo.name] += plate_F[6, 0]
+                            node.RxnFY[combo.name] += plate_F[7, 0]
+                            node.RxnFZ[combo.name] += plate_F[8, 0]
+                            node.RxnMX[combo.name] += plate_F[9, 0]
+                            node.RxnMY[combo.name] += plate_F[10, 0]
+                            node.RxnMZ[combo.name] += plate_F[11, 0]
 
+                    # Sum the quad forces at the node
+                    for quad in self.Quads:
+
+                        if quad.iNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[12, 0]
+                            node.RxnFY[combo.name] += quad_F[13, 0]
+                            node.RxnFZ[combo.name] += quad_F[14, 0]
+                            node.RxnMX[combo.name] += quad_F[15, 0]
+                            node.RxnMY[combo.name] += quad_F[16, 0]
+                            node.RxnMZ[combo.name] += quad_F[17, 0]
+
+                        elif quad.jNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[18, 0]
+                            node.RxnFY[combo.name] += quad_F[19, 0]
+                            node.RxnFZ[combo.name] += quad_F[20, 0]
+                            node.RxnMX[combo.name] += quad_F[21, 0]
+                            node.RxnMY[combo.name] += quad_F[22, 0]
+                            node.RxnMZ[combo.name] += quad_F[23, 0]
+
+                        elif quad.mNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[0, 0]
+                            node.RxnFY[combo.name] += quad_F[1, 0]
+                            node.RxnFZ[combo.name] += quad_F[2, 0]
+                            node.RxnMX[combo.name] += quad_F[3, 0]
+                            node.RxnMY[combo.name] += quad_F[4, 0]
+                            node.RxnMZ[combo.name] += quad_F[5, 0]
+
+                        elif quad.nNode == node:
+
+                            # Get the quad's global force matrix
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            quad_F = quad.F(combo.name)
+                    
+                            node.RxnFX[combo.name] += quad_F[6, 0]
+                            node.RxnFY[combo.name] += quad_F[7, 0]
+                            node.RxnFZ[combo.name] += quad_F[8, 0]
+                            node.RxnMX[combo.name] += quad_F[9, 0]
+                            node.RxnMY[combo.name] += quad_F[10, 0]
+                            node.RxnMZ[combo.name] += quad_F[11, 0]
+                    
                     # Sum the joint forces at the node
                     for load in node.NodeLoads:
                     
