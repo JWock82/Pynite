@@ -792,11 +792,7 @@ class VisNode():
     sphere.SetCenter(X, Y, Z)
     sphere.SetRadius(0.6*text_height)
     sphere.Update()
-
-    # Append the sphere to the append filter
-    polydata = vtk.vtkPolyData()
-    polydata.ShallowCopy(sphere.GetOutput())
-    self.polydata.AddInputData(polydata)
+    self.polydata.AddInputData(sphere.GetOutput())
 
     # Create the text for the node label
     label = vtk.vtkVectorText()
@@ -826,9 +822,7 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
-      polydata = vtk.vtkPolyData()
-      polydata.ShallowCopy(support.GetOutput())
-      self.polydata.AddInputData(polydata)
+      self.polydata.AddInputData(support.GetOutput())
     
     # Check for a pinned support
     elif node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
@@ -843,9 +837,7 @@ class VisNode():
 
       # Copy and append the support data to the append filter
       support.Update()
-      polydata = vtk.vtkPolyData()
-      polydata.ShallowCopy(support.GetOutput())
-      self.polydata.AddInputData(polydata)
+      self.polydata.AddInputData(support.GetOutput())
     
     # Other support conditions
     else:
@@ -860,9 +852,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support1.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support1.GetOutput())
 
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X-text_height, node.Y, node.Z)
@@ -872,9 +862,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support2.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support2.GetOutput())
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X+text_height, node.Y, node.Z)
@@ -884,9 +872,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support3.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against Y translation
       if node.SupportDY == True:
@@ -898,9 +884,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support1.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support1.GetOutput())
 
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X, node.Y-text_height, node.Z)
@@ -910,9 +894,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support2.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support2.GetOutput())
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X, node.Y+text_height, node.Z)
@@ -922,9 +904,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support3.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against Z translation
       if node.SupportDZ == True:
@@ -936,9 +916,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support1.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support1.GetOutput())
 
         support2 = vtk.vtkConeSource()
         support2.SetCenter(node.X, node.Y, node.Z-text_height)
@@ -948,9 +926,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support2.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support2.GetOutput())
 
         support3 = vtk.vtkConeSource()
         support3.SetCenter(node.X, node.Y, node.Z+text_height)
@@ -960,9 +936,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support3.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support3.GetOutput())
 
       # Restrained against rotation about the X-axis
       if node.SupportRX == True:
@@ -974,9 +948,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support1.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support1.GetOutput())
 
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X-1.9*text_height, node.Y, node.Z)
@@ -986,9 +958,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support2.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support2.GetOutput())
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X+1.9*text_height, node.Y, node.Z)
@@ -998,9 +968,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support3.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against rotation about the Y-axis
       if node.SupportRY == True:
@@ -1012,9 +980,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support1.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support1.GetOutput())
 
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X, node.Y-1.9*text_height, node.Z)
@@ -1024,9 +990,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support2.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support2.GetOutput())
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X, node.Y+1.9*text_height, node.Z)
@@ -1036,9 +1000,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support3.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against rotation about the Z-axis
       if node.SupportRZ == True:
@@ -1050,9 +1012,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support1.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support1.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support1.GetOutput())
 
         support2 = vtk.vtkCubeSource()
         support2.SetCenter(node.X, node.Y, node.Z-1.9*text_height)
@@ -1062,9 +1022,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support2.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support2.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support2.GetOutput())
 
         support3 = vtk.vtkCubeSource()
         support3.SetCenter(node.X, node.Y, node.Z+1.9*text_height)
@@ -1074,9 +1032,7 @@ class VisNode():
 
         # Copy and append the support data to the append filter
         support3.Update()
-        polydata = vtk.vtkPolyData()
-        polydata.ShallowCopy(support3.GetOutput())
-        self.polydata.AddInputData(polydata)
+        self.polydata.AddInputData(support3.GetOutput())
     
     # Update the append filter
     self.polydata.Update()
@@ -1386,9 +1342,7 @@ class VisPtLoad():
     tip.Update()
 
     # Add the arrow tip to the append filter
-    polydata = vtk.vtkPolyData()
-    polydata.ShallowCopy(tip.GetOutput())
-    self.polydata.AddInputData(polydata)
+    self.polydata.AddInputData(tip.GetOutput())
     
     # Create the shaft
     shaft = vtk.vtkLineSource()
@@ -1397,9 +1351,7 @@ class VisPtLoad():
     shaft.Update()
 
     # Copy and append the shaft data to the append filter
-    polydata = vtk.vtkPolyData()
-    polydata.ShallowCopy(shaft.GetOutput())
-    self.polydata.AddInputData(polydata)
+    self.polydata.AddInputData(shaft.GetOutput())
     self.polydata.Update()
 
     # Create a mapper and actor
@@ -1480,14 +1432,10 @@ class VisDistLoad():
     self.polydata = vtk.vtkAppendPolyData()
     for arrow in ptLoads:
       arrow.polydata.Update()
-      polydata = vtk.vtkPolyData()
-      polydata.ShallowCopy(arrow.polydata.GetOutput())
-      self.polydata.AddInputData(polydata)
+      self.polydata.AddInputData(arrow.polydata.GetOutput())
     
     tail_line.Update()
-    polydata = vtk.vtkPolyData()
-    polydata.ShallowCopy(tail_line.GetOutput())
-    self.polydata.AddInputData(polydata)
+    self.polydata.AddInputData(tail_line.GetOutput())
     self.polydata.Update()
 
     # Create a mapper and actor for the geometry
@@ -1635,7 +1583,3 @@ def PerpVector(v):
   
   # Return the unit vector
   return [i2, j2, k2]/norm([i2, j2, k2])
-
-
-
-  
