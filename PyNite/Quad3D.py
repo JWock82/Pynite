@@ -154,7 +154,9 @@ class Quad3D():
 
         # Get the local coordinates for the element
         x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
-        x_axis, y_axis = self.x_axis, self.y_axis
+        x_axis = array([1, 0, 0])
+        y_axis = array([0, 1, 0])
+        # x_axis, y_axis = self.x_axis, self.y_axis
 
         # Reference 1, Equations 5.105
         Ax = x1 - x2 - x3 + x4
