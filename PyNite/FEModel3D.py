@@ -695,34 +695,24 @@ class FEModel3D():
         '''
         
         # Number each node in the model
-        i = 0
-        for node in self.Nodes:
-            node.ID = i
-            i += 1
+        for id, node in enumerate(self.Nodes):
+            node.ID = id
         
         # Number each spring in the model
-        i = 0
-        for spring in self.Springs:
-            spring.ID = i
-            i += 1
+        for id, spring in enumerate(self.Springs):
+            spring.ID = id
 
         # Number each member in the model
-        i = 0
-        for member in self.Members:
-            member.ID = i
-            i += 1
+        for id, member in enumerate(self.Members):
+            member.ID = id
         
         # Number each plate in the model
-        i = 0
-        for plate in self.Plates:
-            plate.ID = i
-            i += 1
+        for id, plate in enumerate(self.Plates):
+            plate.ID = id
         
         # Number each quadrilateral in the model
-        i = 0
-        for quad in self.Quads:
-            quad.ID = i
-            i += 1
+        for id, quad in enumerate(self.Quads):
+            quad.ID = id
 
 #%%
     def __AuxList(self):
