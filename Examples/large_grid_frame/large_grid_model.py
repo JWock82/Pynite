@@ -1,8 +1,7 @@
 from PyNite import FEModel3D, Visualization
 import itertools
 import os, csv
-import inputfiles
-import testing_io
+from Examples.large_grid_frame import inputfiles
 
 # Constants for the member properties
 E, G, Iy, Iz, J, A = 30*10**6, 12*10**6, 0.00100, 0.00100, 50, 0.010
@@ -39,7 +38,7 @@ for node in ('N50','N54','N270','N274'):
 model.Analyze(check_statics=True)
 
 # Render the model
-Visualization.RenderModel(model,
-                          deformed_shape=True,
-                          text_height=0.25,
-                          render_loads=True)
+# Visualization.RenderModel(model,
+#                           deformed_shape=True,
+#                           text_height=0.25,
+#                           render_loads=True)
