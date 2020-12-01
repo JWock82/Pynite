@@ -30,15 +30,19 @@ for member in member_list:
 for node in ('N0', 'N4', 'N220', 'N224'):
     model.DefineSupport(node, True, True, True, True, True, True)
 
-# Add node loads
-for node in ('N50','N54','N270','N274'):
-    model.AddNodeLoad(node, 'FY', -10)
+# Import node loads from file
+path = os.path.join(os.path.dirname(__file__), 'gridnodesloads.csv')
+node_loads = inputfiles.read_csv(path)
+for load in node_loads:
+    Node, Direction, P = load
+    # Add node loads
+    model.AddNodeLoad(Node, Direction, float(P))
 
 # Analyze the model
 model.Analyze(check_statics=True)
 
 # Render the model
-# Visualization.RenderModel(model,
-#                           deformed_shape=True,
-#                           text_height=0.25,
-#                           render_loads=True)
+Visualization.RenderModel(model,
+                          deformed_shape=True,
+                          text_height=0.25,
+                          render_loads=True)
