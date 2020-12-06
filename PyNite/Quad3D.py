@@ -11,7 +11,7 @@
 
 from numpy import array, arccos, dot, cross, matmul, add, zeros, insert, transpose
 from numpy.linalg import inv, det, norm
-from math import atan, sin, cos
+from math import atan, sin, cos, pi
 from PyNite.LoadCombo import LoadCombo
 
 class Quad3D():
@@ -73,7 +73,7 @@ class Quad3D():
         self.y1 = dot(vector_31, y_axis)
         self.y2 = dot(vector_32, y_axis)
         self.y3 = 0
-        self.y4 = dot(vector_34, y_axis)
+        self.y4 = 0
 
 #%%
     def J(self, r, s):
@@ -292,11 +292,18 @@ class Quad3D():
              matmul(B3.T, matmul(Cb, B3))*J3 +
              matmul(B4.T, matmul(Cb, B4))*J4)
 
-        # Get the shear B matrices for each gauss point
+        # Get the MITC4 shear B matrices for each gauss point
         B1 = self.B_gamma_MITC4(gp, gp)
         B2 = self.B_gamma_MITC4(-gp, gp)
         B3 = self.B_gamma_MITC4(-gp, -gp)
         B4 = self.B_gamma_MITC4(gp, -gp)
+        
+        # Alternatively the shear B matrix below could be used. However, this matrix is prone to
+        # shear locking
+        # B1 = self.B_gamma(gp, gp)
+        # B2 = self.B_gamma(-gp, gp)
+        # B3 = self.B_gamma(-gp, -gp)
+        # B4 = self.B_gamma(gp, -gp)
 
         # Add shear stiffness terms to the stiffness matrix
         k += (matmul(B1.T, matmul(Cs, B1))*J1 +
