@@ -233,7 +233,7 @@ class Quad3D():
         '''
         Returns the stress-strain matrix for shear.
         '''
-
+        # Reference 1, Equations (5.97), page 422
         k = 5/6
         E = self.E
         h = self.t
