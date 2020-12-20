@@ -73,7 +73,7 @@ class Quad3D():
         self.y1 = dot(vector_31, y_axis)
         self.y2 = dot(vector_32, y_axis)
         self.y3 = 0
-        self.y4 = 0
+        self.y4 = dot(vector_34, y_axis)
 
 #%%
     def J(self, r, s):
@@ -174,6 +174,11 @@ class Quad3D():
 
         alpha = arccos(dot(r_axis, x_axis))
         beta = arccos(dot(s_axis, x_axis))
+
+        if r_axis[1] < 0:
+            alpha = 2*pi - alpha
+        if s_axis[0] < 0:
+            beta = pi - beta
         
         # Reference 1, Equations 5.103 and 5.104 (p. 426)
         det_J = det(self.J(r, s))
@@ -181,14 +186,14 @@ class Quad3D():
         gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det_J)
         gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det_J)
 
-        # See Jupyter Notebook derivation for this next part
-        gamma_rz = gr/4*array([[2*(s + 1), -s*y1 + s*y2 - y1 + y2, s*x1 - s*x2 + x1 - x2, 2*(-s - 1), -s*y1 + s*y2 - y1 + y2,  s*x1 - s*x2 + x1 - x2, 2*(s - 1), -s*y3 + s*y4 + y3 - y4,  s*x3 - s*x4 - x3 + x4, 2*(1 - s),  -s*y3 + s*y4 + y3 - y4, s*x3 - s*x4 - x3 + x4]])
-        gamma_sz = gs/4*array([[2*(r + 1), -r*y1 + r*y4 - y1 + y4, r*x1 - r*x4 + x1 - x4, 2*(1 - r),   r*y2 - r*y3 - y2 + y3, -r*x2 + r*x3 + x2 - x3, 2*(r - 1),  r*y2 - r*y3 - y2 + y3, -r*x2 + r*x3 + x2 - x3, 2*(-r - 1), -r*y1 + r*y4 - y1 + y4, r*x1 - r*x4 + x1 - x4]])
-
+        # d        =           [    w1           theta_x1             theta_y1              w2         theta_x2              theta_y2            w3             theta_x3             theta_y3         w4             theta_x4             theta_y4       ]
+        B_gamma_rz = gr*array([[(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 - s)/2, -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s), (1 - s)/2,  -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s)]])
+        B_gamma_sz = gs*array([[(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r), (1 - r)/2,  -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 - r)/2, -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r)]])
+        
         # Reference 1, Equations 5.102
         B_gamma_MITC4 = zeros((2, 12))
-        B_gamma_MITC4[0, :] = gamma_rz*sin(beta) - gamma_sz*sin(alpha)
-        B_gamma_MITC4[1, :] = -gamma_rz*cos(beta) + gamma_sz*cos(alpha)
+        B_gamma_MITC4[0, :] = B_gamma_rz*sin(beta) - B_gamma_sz*sin(alpha)
+        B_gamma_MITC4[1, :] = -B_gamma_rz*cos(beta) + B_gamma_sz*cos(alpha)
         
         # Return the [B] matrix for shear
         return B_gamma_MITC4
@@ -298,8 +303,8 @@ class Quad3D():
         B3 = self.B_gamma_MITC4(-gp, -gp)
         B4 = self.B_gamma_MITC4(gp, -gp)
         
-        # Alternatively the shear B matrix below could be used. However, this matrix is prone to
-        # shear locking
+        # # Alternatively the shear B matrix below could be used. However, this matrix is prone to
+        # # shear locking and will overestimate the stiffness.
         # B1 = self.B_gamma(gp, gp)
         # B2 = self.B_gamma(-gp, gp)
         # B3 = self.B_gamma(-gp, -gp)
@@ -502,8 +507,7 @@ class Quad3D():
 #%%
     def fer(self, combo_name='Combo 1'):
         '''
-        Returns the quadrilateral's local fixed end reaction vector (zero's for
-        now until surface loads get added).
+        Returns the quadrilateral's local fixed end reaction vector.
 
         Parameters
         ----------
