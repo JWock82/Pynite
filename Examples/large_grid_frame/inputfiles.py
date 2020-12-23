@@ -1,3 +1,9 @@
+## -*- coding: utf-8 -*-
+"""
+MIT License
+
+Copyright (c) 2020 tamalone1
+"""
 import os, csv
 
 def read_csv(filename):
@@ -18,3 +24,15 @@ def nodes_from_csv(filename):
         # default for csv is strings
         row[1:] = [float(elem) for elem in row[1:]]
     return csv_node_list
+
+def read_dict_from_csv(filename):
+    with open(filename, mode='r', newline='') as f:
+        csv_reader = csv.DictReader(f)
+        rows = [row for row in csv_reader]
+        for row in rows:
+            for key, value in row.items():
+                if value == 'True':
+                    row[key] = True
+                elif value == 'False':
+                    row[key] = False
+    return rows

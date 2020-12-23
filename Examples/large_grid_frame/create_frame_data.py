@@ -1,3 +1,9 @@
+## -*- coding: utf-8 -*-
+"""
+MIT License
+
+Copyright (c) 2020 tamalone1
+"""
 import numpy as np
 import itertools, csv, os
 
@@ -79,14 +85,47 @@ with open(filename, mode='w', newline='') as f:
     # Write the member list to the file
     csv_writer.writerows(member_list)
 
+
+def filter_node_coordinates(nodes, coordinate, value):
+    """ Return the nodes with coordinate == value. 
+    
+    node: Node3D, or object with coordinates
+    coordinate: str, coordinate name
+    value: value with appropriate type
+    """
+    # # Create list of matching results
+    # matches = []
+    # # Unpack nodes (iterable) and check each element
+    # for node in nodes:
+    #     if getattr(node, coordinate) == value:
+    #         match.append(node)
+    # return matches
+    return getattr(node, coordinate) == value
+
+
 # Create a file of supports
 filename = os.path.join(os.path.dirname(__file__), 'gridsupports.csv')
 with open(filename, mode='w', newline='') as f:
-    support_types = ['Name', 'SupportDX', 'SupportDY', 'SupportDZ', 'SupportRX', 'SupportRY', 'SupportRZ']
+    support_types = ['Node', 'SupportDX', 'SupportDY', 'SupportDZ', 'SupportRX',
+                     'SupportRY', 'SupportRZ']
     csv_writer = csv.DictWriter(f, fieldnames=support_types, restval=False)
     csv_writer.writeheader()
-    # Write the supports to the file
-    csv_writer.writerow({'Name': 'N1', 'SupportDX': True})
+
+    # Take each x-coordinate
+    for i in grid:
+        # i = grid[i]
+        for j in i:
+            # j = grid[i][j]
+            for k in j:
+                # k = grid[i][j][k] = node tuple(name, X, Y, Z)
+                if k[2] == 0:
+                    # node is at Y=0, add base supports
+                    name = k[0]
+                    # Write the supports to the file
+                    csv_writer.writerow({'Node': name,
+                                         'SupportDX': True,
+                                         'SupportDY': True,
+                                         'SupportDZ': True})
 
 # Create a file of loads
 # Find all nodes at top level

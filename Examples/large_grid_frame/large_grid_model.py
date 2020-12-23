@@ -1,3 +1,9 @@
+## -*- coding: utf-8 -*-
+"""
+MIT License
+
+Copyright (c) 2020 tamalone1
+"""
 from PyNite import FEModel3D, Visualization
 import itertools
 import os, csv
@@ -26,9 +32,11 @@ for member in member_list:
     Name, iNode, jNode = member
     model.AddMember(Name, iNode, jNode, E, G, Iy, Iz, J, A)
 
-# Add supports
-for node in ('N0', 'N4', 'N220', 'N224'):
-    model.DefineSupport(node, True, True, True, True, True, True)
+# Import supports from file
+path = os.path.join(os.path.dirname(__file__), 'gridsupports.csv')
+support_list = inputfiles.read_dict_from_csv(path)
+for row in support_list:
+    model.DefineSupport(**row)
 
 # Import node loads from file
 path = os.path.join(os.path.dirname(__file__), 'gridnodesloads.csv')
