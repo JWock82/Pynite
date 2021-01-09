@@ -17,7 +17,7 @@ class LoadCombo():
 
         self.factors[case_name] = factor
     
-    def DeleteLoadCase(self, case_name, factor):
+    def DeleteLoadCase(self, case_name):
         '''
         Deletes a load case with its associated load factor
         '''
