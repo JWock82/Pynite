@@ -2,6 +2,7 @@
 from numpy import array, matrix, zeros, empty, delete, insert, matmul, divide, add, subtract
 from numpy import nanmax, seterr, shape
 from numpy.linalg import solve
+
 from scipy.sparse.linalg import spsolve
 from scipy.sparse import csc_matrix
 from math import isclose
@@ -1713,7 +1714,7 @@ class FEModel3D():
         # Print a status update to the console
         print('...Calculating reactions')
 
-        # Calculate the reactions, node by node
+        # Calculate the reactions node by node
         for node in self.Nodes:
             
             # Step through each load combination
@@ -1903,21 +1904,25 @@ class FEModel3D():
                             node.RxnMY[combo.name] += quad_F[22, 0]
                             node.RxnMZ[combo.name] += quad_F[23, 0]
                     
-                    # Sum the joint forces at the node
+                    # Sum the joint loads applied to the node
                     for load in node.NodeLoads:
-                    
-                        if load[0] == 'FX':
-                            node.RxnFX[combo.name] -= load[1]
-                        elif load[0] == 'FY':
-                            node.RxnFY[combo.name] -= load[1]
-                        elif load[0] == 'FZ':
-                            node.RxnFZ[combo.name] -= load[1]
-                        elif load[0] == 'MX':
-                            node.RxnMX[combo.name] -= load[1]
-                        elif load[0] == 'MY':
-                            node.RxnMY[combo.name] -= load[1]
-                        elif load[0] == 'MZ':
-                            node.RxnMZ[combo.name] -= load[1]
+
+                        for case, factor in combo.factors.items():
+                            
+                            if load[2] == case:
+
+                                if load[0] == 'FX':
+                                    node.RxnFX[combo.name] -= load[1]*factor
+                                elif load[0] == 'FY':
+                                    node.RxnFY[combo.name] -= load[1]*factor
+                                elif load[0] == 'FZ':
+                                    node.RxnFZ[combo.name] -= load[1]*factor
+                                elif load[0] == 'MX':
+                                    node.RxnMX[combo.name] -= load[1]*factor
+                                elif load[0] == 'MY':
+                                    node.RxnMY[combo.name] -= load[1]*factor
+                                elif load[0] == 'MZ':
+                                    node.RxnMZ[combo.name] -= load[1]*factor
 
 #%%
     def __CheckStatics(self):
