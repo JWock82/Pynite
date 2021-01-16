@@ -41,9 +41,15 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
-Version 0.0.24: Corrections to reactions for plate and quad elements. Fixed member concentrated loads that were not rendering with the rest of the model.
+Version 0.0.25:
+* Bug fix for quad local axes calculations. Prior to this fix quads only calculated correctly if their local x-axis was parallel to the global X-axis.
+* Bug fix for reactions. Load combination load factors were not being applied to point loads when calculating reactions.
 
-Version 0.0.23: Bug fix for concentrated moments. Fixed end reactions on one side of the Member3D element were being calculated incorrectly for concentrated moments.
+Version 0.0.24:
+* Corrections to reactions for plate and quad elements. Fixed member concentrated loads that were not rendering with the rest of the model.
+
+Version 0.0.23:
+* Bug fix for member concentrated moments. Fixed end reactions on one side of the Member3D element were being calculated incorrectly for concentrated moments.
 
 Version 0.0.22: This version makes some significant changes. Major improvements include:
 * Solution speed has been greatly improved for large models. The code has been profiled and many slow spots in the solution process have been isolated and removed.
