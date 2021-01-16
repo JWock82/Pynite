@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="PyNiteFEA",
-    version="0.0.24",
+    version="0.0.25",
     author="D. Craig Brinck, PE, SE",
     author_email="Building.Code@outlook.com",
     description="An elastic 3D structural finite element library for Python.",
