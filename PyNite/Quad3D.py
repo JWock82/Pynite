@@ -194,7 +194,6 @@ class Quad3D():
         B_gamma_MITC4[0, :] = B_gamma_rz*sin(beta) - B_gamma_sz*sin(alpha)
         B_gamma_MITC4[1, :] = -B_gamma_rz*cos(beta) + B_gamma_sz*cos(alpha)
         
-        
         # Return the [B] matrix for shear
         return B_gamma_MITC4
 
