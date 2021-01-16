@@ -153,8 +153,7 @@ class Quad3D():
 
         # Get the local coordinates for the element
         x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
-        x_axis = array([1, 0, 0])
-        y_axis = array([0, 1, 0])
+        x_axis = array([1, 0, 0]).T
 
         # Reference 1, Equations 5.105
         Ax = x1 - x2 - x3 + x4
@@ -194,6 +193,7 @@ class Quad3D():
         B_gamma_MITC4 = zeros((2, 12))
         B_gamma_MITC4[0, :] = B_gamma_rz*sin(beta) - B_gamma_sz*sin(alpha)
         B_gamma_MITC4[1, :] = -B_gamma_rz*cos(beta) + B_gamma_sz*cos(alpha)
+        
         
         # Return the [B] matrix for shear
         return B_gamma_MITC4
@@ -303,8 +303,8 @@ class Quad3D():
         B3 = self.B_gamma_MITC4(-gp, -gp)
         B4 = self.B_gamma_MITC4(gp, -gp)
         
-        # # Alternatively the shear B matrix below could be used. However, this matrix is prone to
-        # # shear locking and will overestimate the stiffness.
+        # Alternatively the shear B matrix below could be used. However, this matrix is prone to
+        # shear locking and will overestimate the stiffness.
         # B1 = self.B_gamma(gp, gp)
         # B2 = self.B_gamma(-gp, gp)
         # B3 = self.B_gamma(-gp, -gp)
