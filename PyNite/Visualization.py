@@ -826,7 +826,7 @@ class VisNode():
     
     # Check for a pinned support
     elif node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
-    and node.SupportRX == True and node.SupportRY == True and node.SupportRZ == True:
+    and node.SupportRX == False and node.SupportRY == False and node.SupportRZ == False:
       
       # Create the pinned support
       support = vtk.vtkConeSource()
