@@ -739,74 +739,74 @@ class FEModel3D():
             
             # Unknown displacement DX
             if node.SupportDX == False and node.EnforcedDX == None:
-                D1_indices.append((node.ID*6) + 0)
+                D1_indices.append(node.ID*6 + 0)
             # Known displacement DX
             elif node.EnforcedDX != None:
-                D2_indices.append((node.ID*6) + 0)
+                D2_indices.append(node.ID*6 + 0)
                 D2.append(node.EnforcedDX)
             # Support at DX
             else:
-                D2_indices.append((node.ID*6) + 0)
+                D2_indices.append(node.ID*6 + 0)
                 D2.append(0.0)
 
             # Unknown displacement DY
             if node.SupportDY == False and node.EnforcedDY == None:
-                D1_indices.append((node.ID*6) + 1)
+                D1_indices.append(node.ID*6 + 1)
             # Known displacement DY
             elif node.EnforcedDY != None:
-                D2_indices.append((node.ID*6) + 1)
+                D2_indices.append(node.ID*6 + 1)
                 D2.append(node.EnforcedDY)
             # Support at DY
             else:
-                D2_indices.append((node.ID*6) + 1)
+                D2_indices.append(node.ID*6 + 1)
                 D2.append(0.0)
 
             # Unknown displacement DZ
             if node.SupportDZ == False and node.EnforcedDZ == None:
-                D1_indices.append((node.ID*6) + 2)
+                D1_indices.append(node.ID*6 + 2)
             # Known displacement DZ
             elif node.EnforcedDZ != None:
-                D2_indices.append((node.ID*6) + 2)
+                D2_indices.append(node.ID*6 + 2)
                 D2.append(node.EnforcedDZ)
             # Support at DZ
             else:
-                D2_indices.append((node.ID*6) + 2)
+                D2_indices.append(node.ID*6 + 2)
                 D2.append(0.0)
 
             # Unknown displacement RX
             if node.SupportRX == False and node.EnforcedRX == None:
-                D1_indices.append((node.ID*6) + 3)
+                D1_indices.append(node.ID*6 + 3)
             # Known displacement RX
             elif node.EnforcedRX != None:
-                D2_indices.append((node.ID*6) + 3)
+                D2_indices.append(node.ID*6 + 3)
                 D2.append(node.EnforcedRX)
             # Support at RX
             else:
-                D2_indices.append((node.ID*6) + 3)
+                D2_indices.append(node.ID*6 + 3)
                 D2.append(0.0)
 
             # Unknown displacement RY
             if node.SupportRY == False and node.EnforcedRY == None:
-                D1_indices.append((node.ID*6) + 4)
+                D1_indices.append(node.ID*6 + 4)
             # Known displacement RY
             elif node.EnforcedRY != None:
-                D2_indices.append((node.ID*6) + 4)
+                D2_indices.append(node.ID*6 + 4)
                 D2.append(node.EnforcedRY)
             # Support at RY
             else:
-                D2_indices.append((node.ID*6) + 4)
+                D2_indices.append(node.ID*6 + 4)
                 D2.append(0.0)
 
             # Unknown displacement RZ
             if node.SupportRZ == False and node.EnforcedRZ == None:
-                D1_indices.append((node.ID*6) + 5)
+                D1_indices.append(node.ID*6 + 5)
             # Known displacement RZ
             elif node.EnforcedRZ != None:
-                D2_indices.append((node.ID*6) + 5)
+                D2_indices.append(node.ID*6 + 5)
                 D2.append(node.EnforcedRZ)
             # Support at RZ
             else:
-                D2_indices.append((node.ID*6) + 5)
+                D2_indices.append(node.ID*6 + 5)
                 D2.append(0.0)
 
         # Return the indices and the known displacements
@@ -1787,7 +1787,7 @@ class FEModel3D():
                     # Sum the plate forces at the node
                     for plate in self.Plates:
 
-                        if plate.mNode == node:
+                        if plate.iNode == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -1813,7 +1813,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += plate_F[10, 0]
                             node.RxnMZ[combo.name] += plate_F[11, 0]
 
-                        elif plate.iNode == node:
+                        elif plate.mNode == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
