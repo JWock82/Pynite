@@ -122,7 +122,7 @@ class BeamSegZ():
         p2 = self.p2
         L = self.Length()
         
-        return P1+(p2-p1)/(2*L)*x**2+p1*x
+        return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
 
     
 #%%

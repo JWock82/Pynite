@@ -937,7 +937,7 @@ class FEModel3D():
                         n = quad.jNode.ID*6 + (b-18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K.itemset((m, n), K.item((m, n)) + quad_K.item((a, b)))
+                    K[m, n] += quad_K[a, b]
         
         # Add stiffness terms for each plate in the model
         print('...Adding plate stiffness terms to global stiffness matrix')
@@ -1086,7 +1086,7 @@ class FEModel3D():
                     m = member.jNode.ID * 6 + (a - 6)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER.itemset((m, 0), FER[m, 0] + member_FER[a, 0])
+                FER[m, 0] += member_FER[a, 0]
         
         # Add terms for each rectangle in the model
         for plate in self.Plates:
@@ -1115,7 +1115,7 @@ class FEModel3D():
                     m = plate.jNode.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER.itemset((m, 0), FER[m, 0] + plate_FER[a, 0])
+                FER[m, 0] += plate_FER[a, 0]
 
         # Add terms for each quadrilateral in the model
         for quad in self.Quads:
@@ -1144,7 +1144,7 @@ class FEModel3D():
                     m = quad.jNode.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER.itemset((m, 0), FER[m, 0] + quad_FER[a, 0])
+                FER[m, 0] += quad_FER[a, 0]
 
         # Return the global fixed end reaction vector
         return FER

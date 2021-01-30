@@ -367,43 +367,6 @@ class Quad3D():
                 # matrix
                 k_exp[m, n] = k[i, j]
 
-        # Instead of the nested loops above, the rows of zeros could have been
-        # inserted directly into `k` as shown in these next lines, but it
-        # would be a slower process.
-
-        # k = insert(k, 12, 0, axis=0)
-        # k = insert(k, 12, 0, axis=1)
-
-        # k = insert(k, 9, 0, axis=0)
-        # k = insert(k, 9, 0, axis=1)
-        # k = insert(k, 9, 0, axis=0)
-        # k = insert(k, 9, 0, axis=1)
-
-        # k = insert(k, 9, 0, axis=0)
-        # k = insert(k, 9, 0, axis=1)
-
-        # k = insert(k, 6, 0, axis=0)
-        # k = insert(k, 6, 0, axis=1)
-        # k = insert(k, 6, 0, axis=0)
-        # k = insert(k, 6, 0, axis=1)
-
-        # k = insert(k, 6, 0, axis=0)
-        # k = insert(k, 6, 0, axis=1)
-
-
-        # k = insert(k, 3, 0, axis=0)
-        # k = insert(k, 3, 0, axis=1)
-        # k = insert(k, 3, 0, axis=0)
-        # k = insert(k, 3, 0, axis=1)
-
-        # k = insert(k, 3, 0, axis=0)
-        # k = insert(k, 3, 0, axis=1)
-
-        # k = insert(k, 0, 0, axis=0)
-        # k = insert(k, 0, 0, axis=1)
-        # k = insert(k, 0, 0, axis=0)
-        # k = insert(k, 0, 0, axis=1)
-
         # Add the drilling degree of freedom's weak spring
         k_exp[5, 5] = k_rz
         k_exp[11, 11] = k_rz
@@ -699,7 +662,7 @@ class Quad3D():
         xn = self.nNode.X
         yn = self.nNode.Y
         zn = self.nNode.Z
-        xy = [xn-xi, yn-yi, zn-zi]
+        xy = [xn - xi, yn - yi, zn - zi]
 
         # Find a vector perpendicular to the plate surface to get the
         # orientation of the local z-axis.

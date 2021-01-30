@@ -276,7 +276,8 @@ class Member3D():
                 
             # Sum the fixed end reactions for the distributed loads
             for distLoad in self.DistLoads:
-
+                
+                # Check if the current distributed load corresponds to the current load case
                 if distLoad[5] == case:
 
                     if distLoad[0] == 'Fx':
@@ -1422,7 +1423,7 @@ class Member3D():
             newSeg.EA = E*A               # Segment axial stiffness
             SegmentsX.append(newSeg)      # Add the segment to the list
         
-        # Get the member local end forces, local fixed end reactions, and local displacements
+        # Get the element local end forces, local fixed end reactions, and local displacements
         f = self.f(combo_name)           # Member local end force vector
         fer = self.__fer_Unc(combo_name) # Member local fixed end reaction vector
         d = self.d(combo_name)           # Member local displacement vector
@@ -1488,12 +1489,13 @@ class Member3D():
             SegmentsY[i].M1 = f[4, 0] + f[2, 0]*x
             SegmentsX[i].T1 = f[3, 0]
             
+            # Step through each load case in the specified load combination
             for case, factor in combo.factors.items():
             
                 # Add effects of point loads occuring prior to this segment
                 for ptLoad in self.PtLoads:
                     
-                    if round(ptLoad[2],10) <= round(x,10) and case == ptLoad[3]:
+                    if round(ptLoad[2], 10) <= round(x, 10) and case == ptLoad[3]:
                     
                         if ptLoad[0] == 'Fx':
                             SegmentsZ[i].P1 += factor*ptLoad[1]
@@ -1523,7 +1525,7 @@ class Member3D():
                         x2 = distLoad[4]
             
                         # Determine if the load affects the segment
-                        if round(x1,10) <= round(x,10):
+                        if round(x1, 10) <= round(x, 10):
                     
                             if Direction == 'Fx':
                         
@@ -1531,7 +1533,7 @@ class Member3D():
                                 if round(x2,10) > round(x,10):
                                                 
                                     # Break up the load and place it on the segment
-                                    # Note that 'w1' and 'w2' are really 'p1' and 'p2' here
+                                    # Note that 'w1' and 'w2' are really the axial loads 'p1' and 'p2' here
                                     SegmentsZ[i].p1 += (w2 - w1)/(x2 - x1)*(x - x1) + w1
                                     SegmentsZ[i].p2 += (w2 - w1)/(x2 - x1)*(SegmentsZ[i].x2 - x1) + w1
                                     SegmentsY[i].p1 += (w2 - w1)/(x2 - x1)*(x - x1) + w1
@@ -1542,8 +1544,8 @@ class Member3D():
                                     x2 = x
                         
                                 # Calculate the axial force at the start of the segment
-                                SegmentsZ[i].P1 -= (w1 + w2)/2*(x2 - x1)
-                                SegmentsY[i].P1 -= (w1 + w2)/2*(x2 - x1)
+                                SegmentsZ[i].P1 += (w1 + w2)/2*(x2 - x1)
+                                SegmentsY[i].P1 += (w1 + w2)/2*(x2 - x1)
                     
                             elif Direction == 'Fy':
                         
