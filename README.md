@@ -41,6 +41,9 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+Version 0.0.26
+* Bug fix for member distributed axial loads. Member internal axial forces were being calculated by subtracting distributed axial forces from the member end forces instead of adding them. 
+
 Version 0.0.25:
 * Bug fix for quad local axes calculations. Prior to this fix quads only calculated correctly if their local x-axis was parallel to the global X-axis.
 * Bug fix for reactions. Load combination load factors were not being applied to point loads when calculating reactions.
