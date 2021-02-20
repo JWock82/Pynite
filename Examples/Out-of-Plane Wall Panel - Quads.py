@@ -1,4 +1,18 @@
 #%%
+# +---------+
+# | Warning |
+# +---------+
+
+# Quadrilateral elements have been pulled from the list of completed features. They are still
+# available for use, but there is a known issue with them. They only seem to work properly when
+# they are rectangular, or with nodes defined in a particular order and skewed in certain ways.
+# After reviewing the derivation of the quad element multiple times, I can't seem to find the
+# issue. I may resolve this issue in the future, but for now it's slowing down production of the
+# rest of PyNite, so the feature is being sidelined to allow time for development of other
+# features. Rectangular plates still work as expected to the best of my knowledge. Only
+# quadrilaterals are affected.
+
+#%%
 # This is an example of a how quads can be used to create a wall panel for out-of-plane bending problems.
 # A 'RectWall' class has been defined to automate the process of meshing, loading, and plotting results for a wall
 # panel of any geometry and edge support conditions. At the bottom of this file (below the class
@@ -123,7 +137,7 @@ class RectWall():
                 for i in range(num_cols):
 
                     # Determine which nodes the quadrilateral will be attached to
-                    ni = pl_id + max(0, int((pl_id-1)/num_cols))
+                    ni = pl_id + max(0, int((pl_id - 1)/num_cols))
                     nj = ni + 1
                     nm = nj + (num_cols + 1)
                     nn = nm - 1
@@ -168,6 +182,9 @@ class RectWall():
                     node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
                 elif self.top_support == "Pinned":
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
+            
+            # Skew the grid if desired
+            node.X = node.X - node.Y*0.1
 
     # Analyzes the wall
     def analyze(self):
@@ -208,7 +225,7 @@ class RectWall():
             quad.pressures.append([pressure, 'Case 1'])
 
         # Analyze the model
-        self.fem.Analyze(sparse=True)
+        self.fem.Analyze(check_statics=True, sparse=True)
 
         # Find the maximum displacement
         DZ = self.fem.Nodes[0].DZ['Combo 1']
@@ -390,7 +407,7 @@ t = 1  # ft
 width = 10  # ft
 height = 20  # ft 
 nu = 0.17
-meshsize = 1  # ft
+meshsize = 0.5  # ft
 load = 250  # psf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
@@ -414,7 +431,7 @@ myWall.analyze()
 # results are `unsmoothed` making the contour plot look "striped" like a step function. This will
 # be discussed below in more detail.
 from PyNite import Visualization
-Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='Mx', render_loads=True)
+Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='dz', render_loads=True)
 
 # The `RectWall` class has a smoothing algorithm built into it. Let's plot a smoothed contour for
 # Mx for comparison.
