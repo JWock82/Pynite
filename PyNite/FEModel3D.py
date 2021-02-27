@@ -25,7 +25,7 @@ class FEModel3D():
         Initializes a new 3D finite element model.
         '''
         
-        self.Nodes = []      # A list of the structure's nodes
+        self.Nodes = {}      # A list of the structure's nodes
         self.auxNodes = []   # A list of the structure's auxiliary nodes
         self.Springs = []    # A list of the structure's springs
         self.Members = []    # A list of the structure's members
@@ -35,13 +35,13 @@ class FEModel3D():
         self.LoadCombos = {} # A dictionary of the structure's load combinations
 
 #%%
-    def AddNode(self, Name, X, Y, Z):
+    def AddNode(self, name, X, Y, Z):
         '''
         Adds a new node to the model.
         
         Parameters
         ----------
-        Name : string
+        name : string
             A unique user-defined name for the node.
         X : number
             The global X-coordinate of the node.
@@ -52,16 +52,20 @@ class FEModel3D():
         '''
         
         # Create a new node
-        newNode = Node3D(Name, X, Y, Z)
+        new_node = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
-        self.Nodes.append(newNode)
+        self.Nodes[name] = new_node
 
 #%%
     def AddAuxNode(self, Name, X, Y, Z):
         '''
         Adds a new auxiliary node to the model.
         
+        Together with a member's `i` and `j` nodes, an auxiliary node defines the plane in which
+        the member's local z-axis lies, and the side of the member the z-axis point towards. If no
+        auxiliary node is specified for a member, PyNite uses its own defaut configuration.
+
         Parameters
         ----------
         Name : string
@@ -529,7 +533,7 @@ class FEModel3D():
             member.SegmentsX = []
         
         # Clear out the nodal loads, calculated displacements, and calculated reactions
-        for node in self.Nodes:
+        for node in self.Nodes.values():
 
             node.NodeLoads = []
 
@@ -547,30 +551,22 @@ class FEModel3D():
             node.RxnMY = {}
             node.RxnMZ = {}
 
-
 #%%
-    def GetNode(self, Name):
+    def GetNode(self, name):
         '''
         Returns the node with the given name.
         
         Parameters
         ----------
-        Name : string
+        name : string
             The name of the node to be returned.
         '''
         
-        # Step through each node in the 'Nodes' list
-        for node in self.Nodes:
-            
-            # Check the name of the node
-            if node.Name == Name:
-                
-                # Return the node of interest
-                return node
-        
-        # if the node name is not found and loop finishes
-        raise ValueError(f"Node '{Name}' was not found in the model")
-
+        try:
+            return self.Nodes[name]
+        except:
+            # if the node name is not found
+            raise ValueError(f"Node '{name}' was not found in the model.global")
             
     def GetAuxNode(self, Name):
         '''
@@ -695,7 +691,7 @@ class FEModel3D():
         '''
         
         # Number each node in the model
-        for id, node in enumerate(self.Nodes):
+        for id, node in enumerate(self.Nodes.values()):
             node.ID = id
         
         # Number each spring in the model
@@ -735,7 +731,7 @@ class FEModel3D():
         D2 = []         # A list of the values of the known nodal displacements (D != None)
 
         # Create the auxiliary table
-        for node in self.Nodes:
+        for node in self.Nodes.values():
             
             # Unknown displacement DX
             if node.SupportDX == False and node.EnforcedDX == None:
@@ -1167,7 +1163,7 @@ class FEModel3D():
         combo = self.LoadCombos[combo_name]
 
         # Add terms for each node in the model
-        for node in self.Nodes:
+        for node in self.Nodes.values():
             
             # Get the node's ID
             ID = node.ID
@@ -1326,7 +1322,7 @@ class FEModel3D():
                 # Form the global displacement vector, D, from D1 and D2
                 D = zeros((len(self.Nodes)*6, 1))
 
-                for node in self.Nodes:
+                for node in self.Nodes.values():
 
                     if D2_indices.count(node.ID*6 + 0) == 1:
                         D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
@@ -1362,7 +1358,7 @@ class FEModel3D():
                 self.__D[combo.name] = D
 
                 # Store the calculated global nodal displacements into each node
-                for node in self.Nodes:
+                for node in self.Nodes.values():
                     node.DX[combo.name] = D[node.ID*6 + 0, 0]
                     node.DY[combo.name] = D[node.ID*6 + 1, 0]
                     node.DZ[combo.name] = D[node.ID*6 + 2, 0]
@@ -1541,7 +1537,7 @@ class FEModel3D():
             
                 D = zeros((len(self.Nodes)*6, 1))
 
-                for node in self.Nodes:
+                for node in self.Nodes.values():
                 
                     if D2_indices.count(node.ID*6 + 0) == 1:
                         D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
@@ -1577,7 +1573,7 @@ class FEModel3D():
                 self.__D[combo.name] = D
 
                 # Store the calculated global nodal displacements into each node
-                for node in self.Nodes:
+                for node in self.Nodes.values():
 
                     node.DX[combo.name] = D[node.ID*6 + 0, 0]
                     node.DY[combo.name] = D[node.ID*6 + 1, 0]
@@ -1705,7 +1701,7 @@ class FEModel3D():
         print('...Calculating reactions')
 
         # Calculate the reactions node by node
-        for node in self.Nodes:
+        for node in self.Nodes.values():
             
             # Step through each load combination
             for combo in self.LoadCombos.values():
@@ -1950,7 +1946,7 @@ class FEModel3D():
             FER = self.FER(combo.name)
 
             # Step through each node and sum its forces
-            for node in self.Nodes:
+            for node in self.Nodes.values():
 
                 # Get the node's coordinates
                 X = node.X

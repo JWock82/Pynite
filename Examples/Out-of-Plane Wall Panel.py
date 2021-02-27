@@ -140,31 +140,31 @@ class RectWall():
     def __define_supports(self):
 
         # Step through each node in the model
-        for node in self.fem.Nodes:
+        for node in self.fem.Nodes.values():
 
             # Determine if the node falls on any of the boundaries
             # Left edge
             if np.isclose(node.X, 0.0):
                 if self.left_support == "Fixed":
-                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY, node.SupportRZ = True, True, True, True, True, True
                 elif self.left_support == "Pinned":
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Right edge
             elif np.isclose(node.X, self.width):
                 if self.right_support == "Fixed":
-                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY, node.SupportRZ = True, True, True, True, True, True
                 elif self.right_support == "Pinned":
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Bottom edge
             elif np.isclose(node.Y, 0.0):
                 if self.bot_support == "Fixed":
-                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY, node.SupportRZ = True, True, True, True, True, True
                 elif self.bot_support == "Pinned":
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             # Top edge
             elif np.isclose(node.Y, self.height):
                 if self.top_support == "Fixed":
-                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY = True, True, True, True, True
+                    node.SupportDX, node.SupportDY, node.SupportDZ, node.SupportRX, node.SupportRY, node.SupportRZ = True, True, True, True, True, True
                 elif self.top_support == "Pinned":
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
 
@@ -208,11 +208,11 @@ class RectWall():
 
         # Analyze the model. The stiffness matrix will usually be sparse so some speed can usually
         # be gained by using the sparse solver.
-        self.fem.Analyze(sparse=True)
+        self.fem.Analyze(check_statics=True, sparse=True)
 
         # Find the maximum displacement
-        DZ = self.fem.Nodes[0].DZ['Combo 1']
-        for node in self.fem.Nodes:
+        DZ = self.fem.Nodes['N1'].DZ['Combo 1']
+        for node in self.fem.Nodes.values():
             if abs(node.DZ['Combo 1']) > abs(DZ):
                 DZ = node.DZ['Combo 1']
 
@@ -229,9 +229,9 @@ class RectWall():
 
         # Create a list of unique node X-coordinates
         x = []
-        for i in range(num_nodes):
-            x.append(self.fem.Nodes[i].X)
-            if self.fem.Nodes[i+1].X < self.fem.Nodes[i].X:
+        for i, node in enumerate(self.fem.Nodes.values()):
+            x.append(self.fem.Nodes['N' + str(i + 1)].X)
+            if self.fem.Nodes['N' + str(i + 2)].X < self.fem.Nodes['N' + str(i + 1)].X:
                 break
         
         # Get the number of columns of nodes
@@ -241,8 +241,8 @@ class RectWall():
         num_rows = int(round(num_nodes/num_cols, 0))
 
         # Initialize a list of unique Y-coordinates
-        y = [self.fem.Nodes[0].Y]
-        y_prev = self.fem.Nodes[0].Y
+        y = [self.fem.Nodes['N1'].Y]
+        y_prev = self.fem.Nodes['N1'].Y
 
         # Initialize the list of node force results
         z = []
@@ -260,7 +260,7 @@ class RectWall():
             index = 1
 
         # Step through each node
-        for node in self.fem.Nodes:
+        for node in self.fem.Nodes.values():
 
             # Add unique node Y-coordinates as we go
             if node.Y > y_prev:
@@ -332,8 +332,8 @@ class RectWall():
         # Create a list of unique node X-coordinates
         x = []
         for i in range(num_nodes):
-            x.append(self.fem.Nodes[i].X)
-            if self.fem.Nodes[i+1].X < self.fem.Nodes[i].X:
+            x.append(self.fem.Nodes['N' + str(i + 1)].X)
+            if self.fem.Nodes['N' + str(i + 2)].X < self.fem.Nodes['N' + str(i + 1)].X:
                 break
         
         # Get the number of columns of nodes
@@ -343,14 +343,14 @@ class RectWall():
         num_rows = int(round(num_nodes/num_cols, 0))
 
         # Initialize a list of unique Y-coordinates
-        y = [self.fem.Nodes[0].Y]
-        y_prev = self.fem.Nodes[0].Y
+        y = [self.fem.Nodes['N1'].Y]
+        y_prev = self.fem.Nodes['N1'].Y
 
         # Initialize the list of node displacement results
         z = []
 
         # Step through each node
-        for node in self.fem.Nodes:
+        for node in self.fem.Nodes.values():
 
             # Add unique node Y-coordinates as we go
             if node.Y > y_prev:
@@ -388,20 +388,31 @@ t = 1 # ft
 width = 10 # ft
 height = 10 # ft
 nu = 0.17
-meshsize = 0.5 # ft
+meshsize = 1 # ft
 load = 250 # psf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
 myWall.add_load(0, height, load, load)
 
 # Analyze the wall
-import cProfile
-cProfile.run('myWall.analyze()', sort='cumtime')
+# import cProfile
+# cProfile.run('myWall.analyze()', sort='cumtime')
+myWall.analyze()
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not specifying otherwise.
 # The plates will be set to show the 'Mx' results
 from PyNite import Visualization
-Visualization.RenderModel(myWall.fem, text_height=meshsize/6, render_loads=True, color_map='Mx')
+Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, deformed_scale=30, render_loads=True, color_map='Mx', combo_name='Combo 1', case=None)
+
+F = myWall.fem.P('Combo 1')
+
+FY = []
+
+for i in range(len(F)):
+    if i % 6 == 1:
+        FY.append(F[i, 0])
+
+print(max(FY))
 
 # Plot the displacement contour
 myWall.plot_disp()
@@ -421,6 +432,6 @@ print('Expected displacement from Timoshenko: ', 0.00126*load*width**4/D)
 
 # Create a PDF report
 # It will be output to the PyNite folder unless the 'output_path' variable below is modified
-from PyNite import Reporting
-Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
-                       member_end_forces=False, member_internal_forces=False)
+# from PyNite import Reporting
+# Reporting.CreateReport(myWall.fem, output_filepath='.//PyNite Report.pdf', members=False, member_releases=False, \
+#                        member_end_forces=False, member_internal_forces=False)

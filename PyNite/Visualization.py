@@ -51,7 +51,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     
     # Create a visual node for each node in the model
     vis_nodes = []
-    for node in model.Nodes:
+    for node in model.Nodes.values():
         vis_nodes.append(VisNode(node, text_height))
     
     # Create a visual auxiliary node for each auxiliary node in the model
@@ -381,7 +381,7 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     append_filter = vtk.vtkAppendPolyData()
     
     # Add the nodes to the append filter and add the node labels to the renderer
-    for node in model.Nodes:
+    for node in model.Nodes.values():
         
         vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
         append_filter.AddInputData(vis_node.source.GetOutput())
@@ -447,7 +447,7 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
     load_factors = {case: 1}
 
   # Step through each node
-  for node in model.Nodes:
+  for node in model.Nodes.values():
 
     # Step through and display each nodal load
     for load in node.NodeLoads:
@@ -643,7 +643,7 @@ def __MaxLoads(model, combo_name=None, case=None):
   if case == None:
 
     # Step through each node
-    for node in model.Nodes:
+    for node in model.Nodes.values():
 
       # Step through each nodal load to find the largest one
       for load in node.NodeLoads:
@@ -706,7 +706,7 @@ def __MaxLoads(model, combo_name=None, case=None):
   else:
     
     # Step through each node
-    for node in model.Nodes:
+    for node in model.Nodes.values():
 
       # Step through each nodal load to find the largest one
       for load in node.NodeLoads:
@@ -1063,7 +1063,7 @@ class VisSpring():
 
         # Step through each node in the model and find the position of the
         # i-node and j-node
-        for node in nodes:
+        for node in nodes.values():
 
             # Check to see if the current node is the i-node
             if node.Name == spring.iNode.Name:
@@ -1113,7 +1113,7 @@ class VisMember():
     line = vtk.vtkLineSource()
 
     # Step through each node in the model and find the position of the i-node and j-node
-    for node in nodes:
+    for node in nodes.values():
 
       # Check to see if the current node is the i-node
       if node.Name == member.iNode.Name:
@@ -1201,7 +1201,7 @@ class VisDeformedMember():
 
     # Find the initial position of the local i-node
     # Step through each node
-    for node in nodes:
+    for node in nodes.values():
       
       # Check to see if the current node is the i-node
       if node.Name == member.iNode.Name:
@@ -1278,7 +1278,7 @@ class VisDeformedSpring():
         
         # Find the deformed position of the local i-node
         # Step through each node
-        for node in nodes:
+        for node in nodes.values():
       
             # Check to see if the current node is the i-node
             if node.Name == spring.iNode.Name:
