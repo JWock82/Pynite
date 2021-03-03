@@ -155,7 +155,7 @@ class RectWall():
     def __define_supports(self):
 
         # Step through each node in the model
-        for node in self.fem.Nodes:
+        for node in self.fem.Nodes.values():
 
             # Determine if the node falls on any of the boundaries
             # Left edge
@@ -184,7 +184,7 @@ class RectWall():
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             
             # Skew the grid if desired
-            node.X = node.X - node.Y*0.1
+            node.X = node.X + node.Y*0.0
 
     # Analyzes the wall
     def analyze(self):
@@ -225,11 +225,11 @@ class RectWall():
             quad.pressures.append([pressure, 'Case 1'])
 
         # Analyze the model
-        self.fem.Analyze(check_statics=True, sparse=True)
+        self.fem.Analyze(sparse=True)
 
         # Find the maximum displacement
-        DZ = self.fem.Nodes[0].DZ['Combo 1']
-        for node in self.fem.Nodes:
+        DZ = self.fem.Nodes['N1'].DZ['Combo 1']
+        for node in self.fem.Nodes.values():
             if abs(node.DZ['Combo 1']) > abs(DZ):
                 DZ = node.DZ['Combo 1']
 
@@ -247,8 +247,8 @@ class RectWall():
         # Create a list of unique node X-coordinates
         x = []
         for i in range(num_nodes):
-            x.append(self.fem.Nodes[i].X)
-            if self.fem.Nodes[i+1].X < self.fem.Nodes[i].X:
+            x.append(self.fem.Nodes['N' + str(i + 1)].X)
+            if self.fem.Nodes['N' + str(i + 2)].X < self.fem.Nodes['N' + str(i + 1)].X:
                 break
         
         # Get the number of columns of nodes
@@ -258,8 +258,8 @@ class RectWall():
         num_rows = int(round(num_nodes/num_cols, 0))
 
         # Initialize a list of unique Y-coordinates
-        y = [self.fem.Nodes[0].Y]
-        y_prev = self.fem.Nodes[0].Y
+        y = [self.fem.Nodes['N1'].Y]
+        y_prev = self.fem.Nodes['N1'].Y
 
         # Initialize the list of node force results
         z = []
@@ -277,7 +277,7 @@ class RectWall():
             index = 1
 
         # Step through each node
-        for node in self.fem.Nodes:
+        for node in self.fem.Nodes.values():
 
             # Add unique node Y-coordinates as we go
             if node.Y > y_prev:
@@ -349,8 +349,8 @@ class RectWall():
         # Create a list of unique node X-coordinates
         x = []
         for i in range(num_nodes):
-            x.append(self.fem.Nodes[i].X)
-            if self.fem.Nodes[i+1].X < self.fem.Nodes[i].X:
+            x.append(self.fem.Nodes['N' + str(i + 1)].X)
+            if self.fem.Nodes['N' + str(i + 2)].X < self.fem.Nodes['N' + str(i + 1)].X:
                 break
         
         # Get the number of columns of nodes
@@ -360,14 +360,14 @@ class RectWall():
         num_rows = int(round(num_nodes/num_cols, 0))
 
         # Initialize a list of unique Y-coordinates
-        y = [self.fem.Nodes[0].Y]
-        y_prev = self.fem.Nodes[0].Y
+        y = [self.fem.Nodes['N1'].Y]
+        y_prev = self.fem.Nodes['N1'].Y
 
         # Initialize the list of node displacement results
         z = []
 
         # Step through each node
-        for node in self.fem.Nodes:
+        for node in self.fem.Nodes.values():
 
             # Add unique node Y-coordinates as we go
             if node.Y > y_prev:
@@ -407,7 +407,7 @@ t = 1  # ft
 width = 10  # ft
 height = 20  # ft 
 nu = 0.17
-meshsize = 0.5  # ft
+meshsize = 1  # ft
 load = 250  # psf
 
 myWall = RectWall(width, height, t, E, nu, meshsize, 'Fixed', 'Fixed', 'Fixed', 'Fixed')
@@ -431,7 +431,7 @@ myWall.analyze()
 # results are `unsmoothed` making the contour plot look "striped" like a step function. This will
 # be discussed below in more detail.
 from PyNite import Visualization
-Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='dz', render_loads=True)
+Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='Mx', render_loads=True)
 
 # The `RectWall` class has a smoothing algorithm built into it. Let's plot a smoothed contour for
 # Mx for comparison.
