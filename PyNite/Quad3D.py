@@ -106,6 +106,12 @@ class Quad3D():
         B_kappa = array([[0,    0,     -dH[0, 0], 0,    0,     -dH[0, 1], 0,    0,     -dH[0, 2], 0,    0,     -dH[0, 3]],
                          [0, dH[1, 0],     0,     0, dH[1, 1],     0,     0, dH[1, 2],     0,     0, dH[1, 3],     0    ],
                          [0, dH[0, 0], -dH[1, 0], 0, dH[0, 1], -dH[1, 1], 0, dH[0, 2], -dH[1, 2], 0, dH[0, 3], -dH[1, 3]]])
+        
+        # Below is the matrix derived from the 1984 version of the MITC4 element. It appears to be
+        # the same, but with a different sign convention for the section curvatures.
+        # B_kappa = array([[0,     0,     dH[0, 0],  0,     0,     dH[0, 1],  0,     0,     dH[0, 2],  0,     0,     dH[0, 3]],
+        #                  [0,  dH[1, 0],     0,     0,  dH[1, 1],     0,     0,  dH[1, 2],     0,     0,  dH[1, 3],     0   ],
+        #                  [0, -dH[0, 0], dH[1, 0],  0, -dH[0, 1], dH[1, 1],  0, -dH[0, 2], dH[1, 2],  0, -dH[0, 3], dH[1, 3]]])
 
         return B_kappa
 
@@ -173,11 +179,6 @@ class Quad3D():
 
         alpha = arccos(dot(r_axis, x_axis))
         beta = arccos(dot(s_axis, x_axis))
-
-        if r_axis[1] < 0:
-            alpha = 2*pi - alpha
-        if s_axis[0] < 0:
-            beta = pi - beta
         
         # Reference 1, Equations 5.103 and 5.104 (p. 426)
         det_J = det(self.J(r, s))
@@ -185,9 +186,9 @@ class Quad3D():
         gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det_J)
         gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det_J)
 
-        # d        =           [    w1           theta_x1             theta_y1              w2         theta_x2              theta_y2            w3             theta_x3             theta_y3         w4             theta_x4             theta_y4       ]
-        B_gamma_rz = gr*array([[(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 - s)/2, -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s), (1 - s)/2,  -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s)]])
-        B_gamma_sz = gs*array([[(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r), (1 - r)/2,  -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 - r)/2, -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r)]])
+        # d        =           [    w1           theta_x1             theta_y1             w2            theta_x2              theta_y2            w3             theta_x3             theta_y3         w4             theta_x4             theta_y4       ]
+        B_gamma_rz = gr*array([[(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 + s)/2,  -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 - s)/2, -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s), (1 - s)/2,  -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s)]])
+        B_gamma_sz = gs*array([[(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r),  (1 - r)/2,  -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 - r)/2, -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r)]])
         
         # Reference 1, Equations 5.102
         B_gamma_MITC4 = zeros((2, 12))
@@ -319,22 +320,11 @@ class Quad3D():
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
                    )/1000
-           
-        # At this point `k` only contains terms for the degrees of freedom
-        # associated with bending action. Expand `k` to include zero terms for
-        # the degrees of freedom related to membrane forces. This will allow
-        # the bending and membrane stiffness matrices to be summed directly
-        # later on. `numpy` has an `insert` function that can be used to
-        # insert rows and columns of zeros one at a time, but it is very slow
-        # as it makes a temporary copy of the matrix term by term each time
-        # it's called. The algorithm used here accomplishes the same thing
-        # much faster. Terms are copied only once.
         
         # Initialize the expanded stiffness matrix to all zeros
         k_exp = zeros((24, 24))
 
         # Step through each term in the unexpanded stiffness matrix
-
         # i = Unexpanded matrix row
         for i in range(12):
 
@@ -402,19 +392,9 @@ class Quad3D():
                matmul(B3.T, matmul(C, B3))*det(self.J(-gp, -gp)) +
                matmul(B4.T, matmul(C, B4))*det(self.J(gp, -gp)))
         
-        # At this point `k` only contains terms for the degrees of freedom
-        # associated with membrane action. Expand `k` to include zero terms for
-        # the degrees of freedom related to bending forces. This will allow
-        # the bending and membrane stiffness matrices to be summed directly
-        # later on. `numpy` has an `insert` function that can be used to
-        # insert rows and columns of zeros one at a time, but it is very slow
-        # as it makes a temporary copy of the matrix term by term each time
-        # it's called. The algorithm used here accomplishes the same thing
-        # much faster. Terms are copied only once.
         k_exp = zeros((24, 24))
 
         # Step through each term in the unexpanded stiffness matrix
-
         # i = Unexpanded matrix row
         for i in range(8):
 
@@ -507,16 +487,6 @@ class Quad3D():
                + Hw(-gp, gp).T*p*det(self.J(-gp, gp))
                + Hw(gp, gp).T*p*det(self.J(gp, gp))
                + Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
-
-        # At this point `fer` only contains terms for the degrees of freedom
-        # associated with membrane action. Expand `fer` to include zero terms for
-        # the degrees of freedom related to bending action. This will allow
-        # the bending and membrane vectors to be summed directly
-        # later on. `numpy` has an `insert` function that can be used to
-        # insert rows and columns of zeros one at a time, but it is very slow
-        # as it makes a temporary copy of the vector term by term each time
-        # it's called. The algorithm used here accomplishes the same thing
-        # much faster. Terms are copied only once.
 
         # Initialize the expanded vector to all zeros
         fer_exp = zeros((24, 1))
@@ -668,7 +638,7 @@ class Quad3D():
         # orientation of the local z-axis.
         z = cross(x, xy)
         
-        # Divide the vector by its magnitude to produce a unit z-vector of
+        # Divide the z-vector by its magnitude to produce a unit z-vector of
         # direction cosines.
         z = z/norm(z)
 
@@ -676,7 +646,7 @@ class Quad3D():
         # and x-axes.
         y = cross(z, x)
         
-        # Divide the z-vector by its magnitude to produce a unit vector of
+        # Divide the y-vector by its magnitude to produce a unit vector of
         # direction cosines.
         y = y/norm(y)
 
