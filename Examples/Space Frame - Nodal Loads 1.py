@@ -38,7 +38,7 @@ frame.AddNodeLoad('N1', 'FY', -50)
 frame.AddNodeLoad('N1', 'MX', -1000)
 
 # Analyze the model
-frame.Analyze(check_statics=False)
+frame.Analyze(check_statics=True)
 
 # Render the deformed shape
 Visualization.RenderModel(frame, text_height=5, deformed_shape=True, deformed_scale=100, render_loads=True)
