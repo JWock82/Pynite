@@ -25,6 +25,11 @@ As I've gotten into the structural engineering profession, I've found there's a 
 
 5. Collaboration: The intent is to keep PyNite free and open source. This will encourage future development and contributions. Keeping it open source will allow anyone to inspect and improve the code it runs on. If you see an area you think you can help PyNite improve in you are encouraged to contribute. I'd like to get PyNite doing a lot more. Don't be offended if I'm a little slow to accept your contributions. FEA is a very technical subject and accuracy is extremely important to me. Sometimes I'm a little slow understanding both FEA and Python and it takes some time for me to comprehend what's being proposed. I also have a young family to take care of that takes first priority.
 
+# Example Projects
+Here's a list of projects that run on PyNite:
+
+* https://building-code.herokuapp.com/
+
 # Dependencies
 PyNite depends on the following packages:
 ## Required Dependencies
