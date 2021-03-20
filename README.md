@@ -40,6 +40,12 @@ PyNite depends on the following packages:
 * jupyterlab: Only needed if you want to view the derivations used to build PyNite.
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
+# Example Projects
+Here's a list of projects that run on PyNite:
+
+* Building Code (https://building-code.herokuapp.com/) - This one is my personal side project.
+* Standard Solver (https://www.standardsolver.com/)
+
 # What's New?
 Version 0.0.28
 * Nodes are now stored as a dictionary for faster computing and easier user access. Instead of using the `FEModel3D.GetNode('my_node_name')` method you can now alternatively access a node from the dictionary using the syntax `FEModel3D.Nodes['my_node_name']`.
