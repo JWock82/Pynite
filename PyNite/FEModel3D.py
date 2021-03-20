@@ -29,8 +29,8 @@ class FEModel3D():
         self.auxNodes = []   # A list of the structure's auxiliary nodes
         self.Springs = []    # A list of the structure's springs
         self.Members = {}    # A dictionary of the structure's members
-        self.Quads = []      # A list of the structura's quadiralterals
-        self.Plates = []     # A list of the structure's rectangular plates
+        self.Quads = []      # A list of the structure's quadiralterals
+        self.Plates = {}     # A ditionary of the structure's rectangular plates
         self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
         self.LoadCombos = {} # A dictionary of the structure's load combinations
 
@@ -162,16 +162,13 @@ class FEModel3D():
         self.Members[Name] = newMember
 
 #%%
-    def AddPlate(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
+    def AddPlate(self, name, iNode, jNode, mNode, nNode, t, E, nu):
         '''
         Adds a new plate to the model.
-
-        Plates will be dapricated in a future version. Quadrilaterals are more
-        verstile and will replace them.
         
         Parameters
         ----------
-        Name : string
+        name : string
             A unique user-defined name for the plate.
         iNode : string
             The name of the i-node (1st node definded in clockwise order).
@@ -190,10 +187,10 @@ class FEModel3D():
         '''
         
         # Create a new member
-        newPlate = Plate3D(Name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
+        newPlate = Plate3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
         
         # Add the new member to the list
-        self.Plates.append(newPlate)
+        self.Plates[name] = newPlate
 
 #%%
     def AddQuad(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
@@ -201,9 +198,7 @@ class FEModel3D():
         Adds a new quadrilateral to the model.
 
         Quadrilaterals are similar to plates, except they do not have to be
-        rectangular. Plates will be dapricated in a future version. Note that
-        quadrilateral nodes are defined in counter-clockwise order instead of
-        the clockwise order that plates have used up to this point.
+        rectangular.
         
         Parameters
         ----------
@@ -627,31 +622,25 @@ class FEModel3D():
         try:
             return self.Members[name]
         except:
-            # if the node name is not found
+            # If the member name is not found
             raise ValueError(f"Member '{name}' was not found in the model")
 
 #%%
-    def GetPlate(self, Name):
+    def GetPlate(self, name):
         '''
         Returns the plate with the given name.
         
         Parameters
         ----------
-        Name : string
+        name : string
             The name of the plate to be returned.
         '''
         
-        # Step through each plate in the 'Plates' list
-        for plate in self.Plates:
-            
-            # Check the name of the plate
-            if plate.Name == Name:
-                
-                # Return the plate of interest
-                return plate
-        
-        # Raise an exception if the plate name is not found and loop finishes
-        raise ValueError(f"Plate '{Name}' was not found in the model")
+        try:
+            return self.Plates[name]
+        except:
+            # If the plate name is not found
+            raise ValueError(f"Plate '{name}' was not found in the model")
 
 #%%
     def GetQuad(self, Name):
@@ -697,7 +686,7 @@ class FEModel3D():
             member.ID = id
         
         # Number each plate in the model
-        for id, plate in enumerate(self.Plates):
+        for id, plate in enumerate(self.Plates.values()):
             plate.ID = id
         
         # Number each quadrilateral in the model
@@ -931,7 +920,7 @@ class FEModel3D():
         
         # Add stiffness terms for each plate in the model
         print('...Adding plate stiffness terms to global stiffness matrix')
-        for plate in self.Plates:
+        for plate in self.Plates.values():
             
             # Get the plate's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1079,7 +1068,7 @@ class FEModel3D():
                 FER[m, 0] += member_FER[a, 0]
         
         # Add terms for each rectangle in the model
-        for plate in self.Plates:
+        for plate in self.Plates.values():
             
             # Get the quadrilateral's global fixed end reaction vector
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1775,7 +1764,7 @@ class FEModel3D():
                             node.RxnMZ[combo.name] += member_F[11, 0]
 
                     # Sum the plate forces at the node
-                    for plate in self.Plates:
+                    for plate in self.Plates.values():
 
                         if plate.iNode == node:
 
