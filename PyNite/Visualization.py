@@ -86,7 +86,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     i = 0
 
     # Add each plate in the model to the cell array we just created
-    for item in model.Plates.values() + model.Quads:
+    for item in model.Plates.values() + model.Quads.values():
 
         # Create a point for each corner (must be in counter clockwise order)
         # if deformed_shape == True:
@@ -552,7 +552,7 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
 
   # Step through each plate
   i = 0
-  for plate in model.Plates.values() + model.Quads:
+  for plate in model.Plates.values() + model.Quads.values():
 
     # Get the direction cosines for the plate's local z-axis
     dir_cos = plate.T()[0:3, 0:3]
@@ -694,7 +694,7 @@ def __MaxLoads(model, combo_name=None, case=None):
           max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
 
     # Step through each quad
-    for quad in model.Quads:
+    for quad in model.Quads.values():
 
       # Step through each plate load
       for load in quad.pressures:
@@ -759,7 +759,7 @@ def __MaxLoads(model, combo_name=None, case=None):
               max_area_load = abs(load[0])
 
     # Step through each quad
-    for quad in model.Quads:
+    for quad in model.Quads.values():
 
       # Step through each plate load
       for load in quad.pressures:

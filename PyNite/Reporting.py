@@ -30,7 +30,7 @@ def CreateReport(model, output_filepath=path / './PyNite Report.pdf', \
     '''
     
     # Create the report HTML using jinja2
-    HTML = template.render(nodes=model.Nodes.values(), members=model.Members.values(), plates=model.Plates.values(), quads=model.Quads, load_combos=model.LoadCombos.keys(), \
+    HTML = template.render(nodes=model.Nodes.values(), members=model.Members.values(), plates=model.Plates.values(), quads=model.Quads.values(), load_combos=model.LoadCombos.keys(), \
                            node_table=nodes, member_table=members, plate_table=plates, member_releases=member_releases, \
                            node_reactions=node_reactions, node_displacements=node_displacements, member_end_forces=member_end_forces, member_internal_forces=member_internal_forces, \
                            plate_corner_forces=plate_corner_forces, plate_center_forces=plate_center_forces, plate_corner_membrane=plate_corner_membrane, plate_center_membrane=plate_center_membrane)

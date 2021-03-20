@@ -29,7 +29,7 @@ class FEModel3D():
         self.auxNodes = []   # A list of the structure's auxiliary nodes
         self.Springs = []    # A list of the structure's springs
         self.Members = {}    # A dictionary of the structure's members
-        self.Quads = []      # A list of the structure's quadiralterals
+        self.Quads = {}      # A dictionary of the structure's quadiralterals
         self.Plates = {}     # A ditionary of the structure's rectangular plates
         self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
         self.LoadCombos = {} # A dictionary of the structure's load combinations
@@ -193,7 +193,7 @@ class FEModel3D():
         self.Plates[name] = newPlate
 
 #%%
-    def AddQuad(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
+    def AddQuad(self, name, iNode, jNode, mNode, nNode, t, E, nu):
         '''
         Adds a new quadrilateral to the model.
 
@@ -202,7 +202,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        Name : string
+        name : string
             A unique user-defined name for the quadrilateral.
         iNode : string
             The name of the i-node (1st node definded in counter-clockwise order).
@@ -221,10 +221,10 @@ class FEModel3D():
         '''
         
         # Create a new member
-        newQuad = Quad3D(Name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
+        newQuad = Quad3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
         
         # Add the new member to the list
-        self.Quads.append(newQuad)
+        self.Quads[name] = newQuad
 
 #%%
     def RemoveNode(self, Node):
@@ -643,27 +643,21 @@ class FEModel3D():
             raise ValueError(f"Plate '{name}' was not found in the model")
 
 #%%
-    def GetQuad(self, Name):
+    def GetQuad(self, name):
         '''
         Returns the quadrilateral with the given name.
         
         Parameters
         ----------
-        Name : string
+        name : string
             The name of the quadrilateral to be returned.
         '''
         
-        # Step through each quadrilateral in the 'Quads' list
-        for quad in self.Quads:
-            
-            # Check the name of the quadrilateral
-            if quad.Name == Name:
-                
-                # Return the quadrilateral of interest
-                return quad
-        
-        # Raise an excption if the quadrilateral name is not found and loop finishes
-        raise ValueError(f"Quadrilateral '{Name}' was not found in the model")
+        try:
+            return self.Quads[name]
+        except:
+            # If the quad name is not found
+            raise ValueError(f"Quad '{name}' was not found in the model")
 
 #%%
     def __Renumber(self):
@@ -690,7 +684,7 @@ class FEModel3D():
             plate.ID = id
         
         # Number each quadrilateral in the model
-        for id, quad in enumerate(self.Quads):
+        for id, quad in enumerate(self.Quads.values()):
             quad.ID = id
 
 #%%
@@ -874,7 +868,7 @@ class FEModel3D():
                 
         # Add stiffness terms for each quadrilateral in the model
         print('...Adding quadrilateral stiffness terms to global stiffness matrix')
-        for quad in self.Quads:
+        for quad in self.Quads.values():
             
             # Get the quadrilateral's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1097,7 +1091,7 @@ class FEModel3D():
                 FER[m, 0] += plate_FER[a, 0]
 
         # Add terms for each quadrilateral in the model
-        for quad in self.Quads:
+        for quad in self.Quads.values():
             
             # Get the quadrilateral's global fixed end reaction vector
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1819,7 +1813,7 @@ class FEModel3D():
                             node.RxnMZ[combo.name] += plate_F[23, 0]
 
                     # Sum the quad forces at the node
-                    for quad in self.Quads:
+                    for quad in self.Quads.values():
 
                         if quad.mNode == node:
 
