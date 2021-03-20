@@ -66,7 +66,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
   
     # Create a visual member for each member in the model
     vis_members = []
-    for member in model.Members:
+    for member in model.Members.values():
         vis_members.append(VisMember(member, model.Nodes, text_height))
   
     # Create a cell array to store the plate elements
@@ -403,7 +403,7 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
             append_filter.AddInputData(vis_spring.source.GetOutput())
             
     # Add the members to the append filter
-    for member in model.Members:
+    for member in model.Members.values():
         
         # Only add the member if it is active for the given load combination.
         if member.active[combo_name] == True:
@@ -478,7 +478,7 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
         ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
 
   # Step through each member
-  for member in model.Members:
+  for member in model.Members.values():
 
     # Get the direction cosines for the member's local axes
     dir_cos = member.T()[0:3, 0:3]
@@ -658,7 +658,7 @@ def __MaxLoads(model, combo_name=None, case=None):
               max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
 
     # Step through each member
-    for member in model.Members:
+    for member in model.Members.values():
 
       # Step through each member point load
       for load in member.PtLoads:
@@ -721,7 +721,7 @@ def __MaxLoads(model, combo_name=None, case=None):
               max_moment = abs(load[1])
 
     # Step through each member
-    for member in model.Members:
+    for member in model.Members.values():
 
       # Step through each member point load
       for load in member.PtLoads:

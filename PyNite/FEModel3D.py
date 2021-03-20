@@ -25,10 +25,10 @@ class FEModel3D():
         Initializes a new 3D finite element model.
         '''
         
-        self.Nodes = {}      # A list of the structure's nodes
+        self.Nodes = {}      # A dictionary of the structure's nodes
         self.auxNodes = []   # A list of the structure's auxiliary nodes
         self.Springs = []    # A list of the structure's springs
-        self.Members = []    # A list of the structure's members
+        self.Members = {}    # A dictionary of the structure's members
         self.Quads = []      # A list of the structura's quadiralterals
         self.Plates = []     # A list of the structure's rectangular plates
         self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
@@ -159,7 +159,7 @@ class FEModel3D():
             self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
-        self.Members.append(newMember)
+        self.Members[Name] = newMember
 
 #%%
     def AddPlate(self, Name, iNode, jNode, mNode, nNode, t, E, nu):
@@ -248,7 +248,7 @@ class FEModel3D():
         self.Nodes.remove(self.GetNode(Node))
         
         # Find any members attached to the node and remove them
-        self.Members = [member for member in self.Members if member.iNode.Name != Node and member.jNode.Name != Node]
+        self.Members = {name: member for name, member in self.Members.items() if member.iNode.Name != Node and member.jNode.Name != Node}
 
 #%%
     def RemoveSpring(self, Spring):
@@ -525,7 +525,7 @@ class FEModel3D():
         '''
 
         # Clear out the member loads and the calculated internal forces
-        for member in self.Members:
+        for member in self.Members.values():
             member.DistLoads = []
             member.PtLoads = []
             member.SegmentsZ = []
@@ -614,27 +614,21 @@ class FEModel3D():
         raise ValueError(f"Spring '{Name}' was not found in the model")
 
 #%%
-    def GetMember(self, Name):
+    def GetMember(self, name):
         '''
         Returns the member with the given name.
         
         Parameters
         ----------
-        Name : string
+        name : string
             The name of the member to be returned.
         '''
-        
-        # Step through each member in the 'Members' list
-        for member in self.Members:
-            
-            # Check the name of the member
-            if member.Name == Name:
-                
-                # Return the member of interest
-                return member
-        
-        # If the member name is not found and loop finishes
-        raise ValueError(f"Member '{Name}' was not found in the model")
+
+        try:
+            return self.Members[name]
+        except:
+            # if the node name is not found
+            raise ValueError(f"Member '{name}' was not found in the model")
 
 #%%
     def GetPlate(self, Name):
@@ -699,7 +693,7 @@ class FEModel3D():
             spring.ID = id
 
         # Number each member in the model
-        for id, member in enumerate(self.Members):
+        for id, member in enumerate(self.Members.values()):
             member.ID = id
         
         # Number each plate in the model
@@ -855,7 +849,7 @@ class FEModel3D():
 
         # Add stiffness terms for each member in the model
         print('...Adding member stiffness terms to global stiffness matrix')
-        for member in self.Members:
+        for member in self.Members.values():
             
             if member.active[combo_name] == True:
 
@@ -1003,7 +997,7 @@ class FEModel3D():
         
         # Add stiffness terms for each member in the model
         print('...Adding member geometric stiffness terms to global geometric stiffness matrix')
-        for member in self.Members:
+        for member in self.Members.values():
             
             if member.active[combo_name] == True:
 
@@ -1062,7 +1056,7 @@ class FEModel3D():
         FER = zeros((len(self.Nodes) * 6, 1))
         
         # Add terms for each member in the model
-        for member in self.Members:
+        for member in self.Members.values():
             
             # Get the member's global fixed end reaction vector
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1269,7 +1263,7 @@ class FEModel3D():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
 
-        for member in self.Members:
+        for member in self.Members.values():
             for combo_name in self.LoadCombos.keys():
                 member.active[combo_name] = True 
 
@@ -1392,7 +1386,7 @@ class FEModel3D():
 
                 # Check tension-only and compression-only members
                 print('...Checking for tension/compression-only member convergence')
-                for member in self.Members:
+                for member in self.Members.values():
 
                     # Only run the tension/compression only check if the member is still active
                     if member.active[combo.name] == True:
@@ -1466,7 +1460,7 @@ class FEModel3D():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
 
-        for member in self.Members:
+        for member in self.Members.values():
             for combo_name in self.LoadCombos.keys():
                 member.active[combo_name] = True 
         
@@ -1614,7 +1608,7 @@ class FEModel3D():
                 
                 # Check for tension/compression-only members that need to be deactivated
                 print('...Checking for tension/compression-only member convergence')
-                for member in self.Members:
+                for member in self.Members.values():
 
                     # Only run the tension/compression only check if the member is still active
                     if member.active[combo.name] == True:
@@ -1752,7 +1746,7 @@ class FEModel3D():
                             node.RxnMZ[combo.name] += spring_F[11, 0]
 
                     # Sum the member end forces at the node
-                    for member in self.Members:
+                    for member in self.Members.values():
                     
                         if member.iNode == node and member.active[combo.name] == True:
                         
