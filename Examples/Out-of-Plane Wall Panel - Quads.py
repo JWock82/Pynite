@@ -196,7 +196,7 @@ class RectWall():
         self.__define_supports()
 
         # Add quad loads to the model
-        for quad in self.fem.Quads:
+        for quad in self.fem.Quads.values():
 
             i_node = quad.iNode
             j_node = quad.jNode
@@ -289,7 +289,7 @@ class RectWall():
             count = 0
 
             # Find the quadrilaterals that attach to the node
-            for quad in self.fem.Quads:
+            for quad in self.fem.Quads.values():
 
                 # Sum quad corner forces at the node
                 if quad.iNode.ID == node.ID:
