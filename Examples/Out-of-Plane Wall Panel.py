@@ -178,7 +178,7 @@ class RectWall():
         self.__define_supports()
 
         # Add plate loads to the model
-        for plate in self.fem.Plates:
+        for plate in self.fem.Plates.values():
 
             i_node = plate.iNode
             j_node = plate.jNode
@@ -272,7 +272,7 @@ class RectWall():
             count = 0
 
             # Find the plates that attach to the node
-            for plate in self.fem.Plates:
+            for plate in self.fem.Plates.values():
 
                 # Sum plate corner forces at the node
                 if plate.iNode.ID == node.ID:
