@@ -56,12 +56,12 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     
     # Create a visual auxiliary node for each auxiliary node in the model
     vis_aux_nodes = []
-    for aux_node in model.auxNodes:
+    for aux_node in model.auxNodes.values():
         vis_aux_nodes.append(VisNode(aux_node, text_height, color='red'))
     
     # Create a visual spring for each spring in the model
     vis_springs = []
-    for spring in model.Springs:
+    for spring in model.Springs.values():
         vis_springs.append(VisSpring(spring, model.Nodes, text_height))    
   
     # Create a visual member for each member in the model

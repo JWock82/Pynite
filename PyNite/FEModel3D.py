@@ -26,8 +26,8 @@ class FEModel3D():
         '''
         
         self.Nodes = {}      # A dictionary of the structure's nodes
-        self.auxNodes = []   # A list of the structure's auxiliary nodes
-        self.Springs = []    # A list of the structure's springs
+        self.auxNodes = {}   # A dictionary of the structure's auxiliary nodes
+        self.Springs = {}    # A dictionary of the structure's springs
         self.Members = {}    # A dictionary of the structure's members
         self.Quads = {}      # A dictionary of the structure's quadiralterals
         self.Plates = {}     # A ditionary of the structure's rectangular plates
@@ -58,7 +58,7 @@ class FEModel3D():
         self.Nodes[name] = new_node
 
 #%%
-    def AddAuxNode(self, Name, X, Y, Z):
+    def AddAuxNode(self, name, X, Y, Z):
         '''
         Adds a new auxiliary node to the model.
         
@@ -68,7 +68,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        Name : string
+        name : string
             A unique user-defined name for the node.
         X : number
             The global X-coordinate of the node.
@@ -79,19 +79,19 @@ class FEModel3D():
         '''
         
         # Create a new node
-        newNode = Node3D(Name, X, Y, Z)
+        newNode = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
-        self.auxNodes.append(newNode)
+        self.auxNodes[name] = newNode
   
 #%%
-    def AddSpring(self, Name, iNode, jNode, ks, tension_only=False, comp_only=False):
+    def AddSpring(self, name, iNode, jNode, ks, tension_only=False, comp_only=False):
         '''
         Adds a new spring to the model.
         
         Parameters
         ----------
-        Name : string
+        name : string
             A unique user-defined name for the member.
         iNode : string
             The name of the i-node (start node).
@@ -106,21 +106,21 @@ class FEModel3D():
         '''
         
         # Create a new spring
-        newSpring = Spring3D(Name, self.GetNode(iNode), self.GetNode(jNode), ks,
+        newSpring = Spring3D(name, self.GetNode(iNode), self.GetNode(jNode), ks,
                              self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
-        self.Springs.append(newSpring)
+        self.Springs[name] = newSpring
 
 #%%
-    def AddMember(self, Name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
+    def AddMember(self, name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
                   tension_only=False, comp_only=False):
         '''
         Adds a new member to the model.
         
         Parameters
         ----------
-        Name : string
+        name : string
             A unique user-defined name for the member.
         iNode : string
             The name of the i-node (start node).
@@ -150,16 +150,16 @@ class FEModel3D():
         
         # Create a new member
         if auxNode == None:
-            newMember = Member3D(Name, self.GetNode(iNode),
+            newMember = Member3D(name, self.GetNode(iNode),
             self.GetNode(jNode), E, G, Iy, Iz, J, A,
             LoadCombos=self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         else:
-            newMember = Member3D(Name, self.GetNode(iNode),
+            newMember = Member3D(name, self.GetNode(iNode),
             self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
             self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
-        self.Members[Name] = newMember
+        self.Members[name] = newMember
 
 #%%
     def AddPlate(self, name, iNode, jNode, mNode, nNode, t, E, nu):
@@ -560,53 +560,41 @@ class FEModel3D():
         try:
             return self.Nodes[name]
         except:
-            # if the node name is not found
+            # If the node name is not found
             raise ValueError(f"Node '{name}' was not found in the model.global")
             
-    def GetAuxNode(self, Name):
+    def GetAuxNode(self, name):
         '''
         Returns the auxiliary node with the given name.
         
         Parameters
         ----------
-        Name : string
+        name : string
             The name of the auxiliary node to be returned.
         '''
         
-        # Step through each node in the 'Nodes' list
-        for node in self.auxNodes:
-            
-            # Check the name of the node
-            if node.Name == Name:
-                
-                # Return the node of interest
-                return node
-        
-        # If the node name is not found and loop finishes
-        raise ValueError(f"AuxNode '{Name}' was not found in the model")
+        try:
+            return self.auxNodes[name]
+        except:
+            # If the auxiliary node name is not found
+            raise ValueError(f"Auxiliary node '{name}' was not found in the model.")
 
 #%%
-    def GetSpring(self, Name):
+    def GetSpring(self, name):
         '''
         Returns the spring with the given name.
         
         Parameters
         ----------
-        Name : string
+        name : string
             The name of the spring to be returned.
         '''
         
-        # Step through each spring in the 'Springs' list
-        for spring in self.Springs:
-            
-            # Check the name of the member
-            if spring.Name == Name:
-                
-                # Return the spring of interest
-                return spring
-        
-        # If the spring name is not found and loop finishes
-        raise ValueError(f"Spring '{Name}' was not found in the model")
+        try:
+            return self.Springs[name]
+        except:
+            # If the auxiliary node name is not found
+            raise ValueError(f"Spring '{name}' was not found in the model.")
 
 #%%
     def GetMember(self, name):
@@ -623,7 +611,7 @@ class FEModel3D():
             return self.Members[name]
         except:
             # If the member name is not found
-            raise ValueError(f"Member '{name}' was not found in the model")
+            raise ValueError(f"Member '{name}' was not found in the model.")
 
 #%%
     def GetPlate(self, name):
@@ -672,7 +660,7 @@ class FEModel3D():
             node.ID = id
         
         # Number each spring in the model
-        for id, spring in enumerate(self.Springs):
+        for id, spring in enumerate(self.Springs.values()):
             spring.ID = id
 
         # Number each member in the model
@@ -796,7 +784,7 @@ class FEModel3D():
         
         # Add stiffness terms for each spring in the model
         print('...Adding spring stiffness terms to global stiffness matrix')
-        for spring in self.Springs:
+        for spring in self.Springs.values():
             
             if spring.active[combo_name] == True:
 
@@ -1242,7 +1230,7 @@ class FEModel3D():
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
         
         # Activate all springs and members for all load combinations
-        for spring in self.Springs:
+        for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
 
@@ -1353,7 +1341,7 @@ class FEModel3D():
 
                 # Check tension-only and compression-only springs
                 print('...Checking for tension/compression-only spring convergence')
-                for spring in self.Springs:
+                for spring in self.Springs.values():
 
                     if spring.active[combo.name] == True:
 
@@ -1439,7 +1427,7 @@ class FEModel3D():
     
         # Activate all springs and members for all load combinations. They can be turned inactive
         # during the course of the tension/compression-only analysis
-        for spring in self.Springs:
+        for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
 
@@ -1564,7 +1552,7 @@ class FEModel3D():
 
                 # Check for tension/compression-only springs that need to be deactivated
                 print('...Checking for tension/compression-only spring convergence')
-                for spring in self.Springs:
+                for spring in self.Springs.values():
 
                     # Only run the tension/compression only check if the spring is still active
                     if spring.active[combo.name] == True:
@@ -1700,7 +1688,7 @@ class FEModel3D():
                 or (node.SupportRZ == True):
 
                     # Sum the spring end forces at the node
-                    for spring in self.Springs:
+                    for spring in self.Springs.values():
 
                         if spring.iNode == node and spring.active[combo.name] == True:
                             
