@@ -30,7 +30,7 @@ class FEModel3D():
         self.Springs = {}    # A dictionary of the structure's springs
         self.Members = {}    # A dictionary of the structure's members
         self.Quads = {}      # A dictionary of the structure's quadiralterals
-        self.Plates = {}     # A ditionary of the structure's rectangular plates
+        self.Plates = {}     # A dictionary of the structure's rectangular plates
         self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
         self.LoadCombos = {} # A dictionary of the structure's load combinations
 
