@@ -48,10 +48,7 @@ Here's a list of projects that run on PyNite:
 
 # What's New?
 Version 0.0.28
-* Nodes are now stored as a dictionary for faster computing and easier user access. Instead of using the `FEModel3D.GetNode('node_name')` method you can now alternatively access a node from the dictionary using the syntax `FEModel3D.Nodes['my_node_name']`.
-* Members are now stored as a dictionary for faster computing and easier user access. Instead of using the `FEModel3D.GetMember('member_name')` method you can now alternatively access a member from the dictionary using the syntax `FEModel3D.Members['my_member_name']`.
-* Plates are now stored as a dictionary for faster computing and easier user access. Instead of using the `FEModel3D.GetPlate('plate_name')` method you can now alternatively access a plate from the dictionary using the syntax `FEModel3D.Plates['plate_name']`.
-* Quads are now stored as a dictionary for faster computing and easier user access. Instead of using the `FEModel3D.GetQuad('quad_name')` method you can now alternatively access a quad from the dictionary using the syntax `FEModel3D.Quads['quad_name']`.
+* Nodes, members, plates, quads, springs, and auxiliary nodes are now stored in dictionaries for faster computing and easier user access. For example, instead of using the `FEModel3D.GetNode('node_name')` method, which iterates through every node until it finds `node_name` you can now alternatively access a node from the dictionary using the syntax `FEModel3D.Nodes['my_node_name']`. It's a much quicker process computationally.
 
 Version 0.0.27
 * Pulled quadrilateral elements from the list of completed features, and placed a warning at the top of the quadrilateral example in the 'examples' folder. They are still available for use, but there is a known issue with them. They only seem to work properly when they are rectangular, or with nodes defined in a particular order and skewed in certain ways. After reviewing the derivation of the quad element multiple times, I can't seem to find the issue. I may resolve this issue in the future, but for now it's slowing down production of the rest of PyNite, so the feature is being sidelined to allow time for development of other features. Rectangular plates still work as expected to the best of my knowledge. Only quadrilaterals are affected.
