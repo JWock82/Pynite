@@ -37,12 +37,12 @@ class FEModel3D():
 #%%
     def AddNode(self, name, X, Y, Z):
         '''
-        Adds a new node to the model.
+        Adds a new node to the model. The node name will be returned
         
         Parameters
         ----------
         name : string
-            A unique user-defined name for the node.
+            A unique user-defined name for the node. If None or "", a name will be automatically assigned
         X : number
             The global X-coordinate of the node.
         Y : number
@@ -51,16 +51,30 @@ class FEModel3D():
             The global Z-coordinate of the node.
         '''
         
+        # Name the node or check it doesn't already exist
+        if name:
+            if name in self.Nodes: raise NameError(f"Node name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "N" + str(len(self.Nodes))
+            count = 1
+            while name in self.Nodes: 
+                name = "N" + str(len(self.Nodes)+count)
+                count += 1
+        
         # Create a new node
         new_node = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
         self.Nodes[name] = new_node
+        
+        #Return the node name
+        return name
 
 #%%
     def AddAuxNode(self, name, X, Y, Z):
         '''
-        Adds a new auxiliary node to the model.
+        Adds a new auxiliary node to the model. The node name will be returned
         
         Together with a member's `i` and `j` nodes, an auxiliary node defines the plane in which
         the member's local z-axis lies, and the side of the member the z-axis point towards. If no
@@ -69,7 +83,7 @@ class FEModel3D():
         Parameters
         ----------
         name : string
-            A unique user-defined name for the node.
+            A unique user-defined name for the node. If None or "", a name will be automatically assigned
         X : number
             The global X-coordinate of the node.
         Y : number
@@ -78,21 +92,35 @@ class FEModel3D():
             The global Z-coordinate of the node.
         '''
         
+        # Name the node or check it doesn't already exist
+        if name:
+            if name in self.auxNodes: raise NameError(f"Auxnode name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "AN" + str(len(self.auxNodes))
+            count = 1
+            while name in self.auxNodes: 
+                name = "AN" + str(len(self.auxNodes)+count)
+                count += 1
+                
         # Create a new node
         newNode = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
         self.auxNodes[name] = newNode
+        
+        #Return the node name
+        return name
   
 #%%
     def AddSpring(self, name, iNode, jNode, ks, tension_only=False, comp_only=False):
         '''
-        Adds a new spring to the model.
+        Adds a new spring to the model. The spring name will be returned.
         
         Parameters
         ----------
         name : string
-            A unique user-defined name for the member.
+            A unique user-defined name for the member. If None or "", a name will be automatically assigned
         iNode : string
             The name of the i-node (start node).
         jNode : string
@@ -104,24 +132,38 @@ class FEModel3D():
         comp_only : bool, optional
             Indicates if the member is compression-only. Default is False.
         '''
-        
+
+        # Name the spring or check it doesn't already exist
+        if name:
+            if name in self.Springs: raise NameError(f"Spring name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "S" + str(len(self.Springs))
+            count = 1
+            while name in self.Springs: 
+                name = "S" + str(len(self.Springs)+count)
+                count += 1
+                
         # Create a new spring
         newSpring = Spring3D(name, self.GetNode(iNode), self.GetNode(jNode), ks,
                              self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
         self.Springs[name] = newSpring
+        
+        #Return the spring name
+        return name
 
 #%%
     def AddMember(self, name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
                   tension_only=False, comp_only=False):
         '''
-        Adds a new member to the model.
+        Adds a new member to the model. The member name will be returned.
         
         Parameters
         ----------
         name : string
-            A unique user-defined name for the member.
+            A unique user-defined name for the member. If None or "", a name will be automatically assigned
         iNode : string
             The name of the i-node (start node).
         jNode : string
@@ -147,7 +189,18 @@ class FEModel3D():
         comp_only : bool, optional
             Indicates if the member is compression-only. Default is False.
         '''
-        
+
+        # Name the member or check it doesn't already exist
+        if name:
+            if name in self.Members: raise NameError(f"Member name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "M" + str(len(self.Members))
+            count = 1
+            while name in self.Members: 
+                name = "M" + str(len(self.Members)+count)
+                count += 1
+                
         # Create a new member
         if auxNode == None:
             newMember = Member3D(name, self.GetNode(iNode),
@@ -160,16 +213,19 @@ class FEModel3D():
         
         # Add the new member to the list
         self.Members[name] = newMember
+        
+        #Return the member name
+        return name
 
 #%%
     def AddPlate(self, name, iNode, jNode, mNode, nNode, t, E, nu):
         '''
-        Adds a new plate to the model.
+        Adds a new plate to the model. The plate name will be returned
         
         Parameters
         ----------
         name : string
-            A unique user-defined name for the plate.
+            A unique user-defined name for the plate. If None or "", a name will be automatically assigned
         iNode : string
             The name of the i-node (1st node definded in clockwise order).
         jNode : string
@@ -186,16 +242,30 @@ class FEModel3D():
             Posson's ratio for the plate.
         '''
         
+        # Name the plate or check it doesn't already exist
+        if name:
+            if name in self.Plates: raise NameError(f"Plate name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "P" + str(len(self.Plates))
+            count = 1
+            while name in self.Plates: 
+                name = "P" + str(len(self.Plates)+count)
+                count += 1
+        
         # Create a new member
         newPlate = Plate3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
         
         # Add the new member to the list
         self.Plates[name] = newPlate
+        
+        #Return the plate name
+        return name
 
 #%%
     def AddQuad(self, name, iNode, jNode, mNode, nNode, t, E, nu):
         '''
-        Adds a new quadrilateral to the model.
+        Adds a new quadrilateral to the model. The quad name will be returned
 
         Quadrilaterals are similar to plates, except they do not have to be
         rectangular.
@@ -203,7 +273,7 @@ class FEModel3D():
         Parameters
         ----------
         name : string
-            A unique user-defined name for the quadrilateral.
+            A unique user-defined name for the quadrilateral. If None or "", a name will be automatically assigned
         iNode : string
             The name of the i-node (1st node definded in counter-clockwise order).
         jNode : string
@@ -220,11 +290,25 @@ class FEModel3D():
             Posson's ratio for the quadrilateral.
         '''
         
+        # Name the quad or check it doesn't already exist
+        if name:
+            if name in self.Quads: raise NameError(f"Quad name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "Q" + str(len(self.Quads))
+            count = 1
+            while name in self.Quads: 
+                name = "Q" + str(len(self.Quads)+count)
+                count += 1
+        
         # Create a new member
         newQuad = Quad3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
         
         # Add the new member to the list
         self.Quads[name] = newQuad
+        
+        #Return the quad name
+        return name
 
 #%%
     def RemoveNode(self, Node):
