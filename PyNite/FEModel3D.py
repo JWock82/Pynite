@@ -562,7 +562,8 @@ class FEModel3D():
         except:
             # If the node name is not found
             raise ValueError(f"Node '{name}' was not found in the model.global")
-            
+
+#%%         
     def GetAuxNode(self, name):
         '''
         Returns the auxiliary node with the given name.
