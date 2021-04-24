@@ -958,13 +958,13 @@ class FEModel3D():
                     m = quad.mNode.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.nNode.ID*6 + (a-6)
+                    m = quad.nNode.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.iNode.ID*6 + (a-12)
+                    m = quad.iNode.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.jNode.ID*6 + (a-18)
+                    m = quad.jNode.ID*6 + (a - 18)
 
                 for b in range(24):
 
@@ -974,13 +974,13 @@ class FEModel3D():
                         n = quad.mNode.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.nNode.ID*6 + (b-6)
+                        n = quad.nNode.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.iNode.ID*6 + (b-12)
+                        n = quad.iNode.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.jNode.ID*6 + (b-18)
+                        n = quad.jNode.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     K[m, n] += quad_K[a, b]
@@ -1004,13 +1004,13 @@ class FEModel3D():
                     m = plate.iNode.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.nNode.ID*6 + (a-6)
+                    m = plate.nNode.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.mNode.ID*6 + (a-12)
+                    m = plate.mNode.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.jNode.ID*6 + (a-18)
+                    m = plate.jNode.ID*6 + (a - 18)
 
                 for b in range(24):
 
@@ -1020,16 +1020,16 @@ class FEModel3D():
                         n = plate.iNode.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.nNode.ID*6 + (b-6)
+                        n = plate.nNode.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.mNode.ID*6 + (b-12)
+                        n = plate.mNode.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.jNode.ID*6 + (b-18)
+                        n = plate.jNode.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K.itemset((m, n), K.item((m, n)) + plate_K.item((a, b)))
+                    K[m, n] += plate_K[a, b]
 
         # Return the global stiffness matrix
         return K      
