@@ -1,13 +1,11 @@
-# This is an isoparametric general quad element based on the MITC4
-# formulation. This element performs well for most basic structural and
-# mechanical engineering problems, even when distorted, and eliminates
-# the "shear locking" problems that can occur with some other plate bending
-# elements.
+# This is an isoparametric general quad element. The bending portion is based on the MITC4
+# formulation. This element performs well for most basic structural and mechanical engineering
+# problems, even when distorted, and eliminates the "shear locking" problems that can occur with
+# some other plate bending elements.
 
 # References used to derive this element:
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
-# 2. "A First Course in the Finite Element Method, 4th Edition",
-#    Daryl L. Logan
+# 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
 
 from numpy import array, arccos, dot, cross, matmul, add, zeros, insert, transpose
 from numpy.linalg import inv, det, norm
@@ -179,6 +177,8 @@ class Quad3D():
 
         alpha = arccos(dot(r_axis, x_axis))
         beta = arccos(dot(s_axis, x_axis))
+        # alpha = atan(Ay/Ax)
+        # beta = pi/2 - atan(Cx/Cy)
         
         # Reference 1, Equations 5.103 and 5.104 (p. 426)
         det_J = det(self.J(r, s))
@@ -414,13 +414,12 @@ class Quad3D():
                 if j in [0, 2, 4, 6]:  # indices associated with displacement in x
                     n = j*3
                 if j in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    n = i*3 - 2
+                    n = j*3 - 2
                 
                 # Ensure the indices are integers rather than floats
                 m, n = round(m), round(n)
 
-                # Add the term from the unexpanded matrix into the expanded
-                # matrix
+                # Add the term from the unexpanded matrix into the expanded matrix
                 k_exp[m, n] = k[i, j]
         
         return k_exp
