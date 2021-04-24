@@ -48,6 +48,7 @@ Here's a list of projects that run on PyNite:
 
 # What's New?
 Version 0.0.28
+* Issues with quad elements have been fixed.
 * Nodes, members, plates, quads, springs, and auxiliary nodes are now stored in dictionaries for faster computing and easier user access. For example, instead of using the `FEModel3D.GetNode('node_name')` method, which iterates through every node until it finds the name `'node_name'` you can now alternatively access a node from the dictionary using the syntax `FEModel3D.Nodes['node_name']`. It's a much quicker process computationally.
 
 Version 0.0.27
