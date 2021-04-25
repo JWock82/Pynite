@@ -1,5 +1,5 @@
 # PyNite
-A linear elastic 3D structural engineering finite element analysis library for Python.
+An easy to use linear elastic 3D structural engineering finite element analysis library for Python.
 
 # Current Capabilities
 * 3D static analysis of elastic structures.
@@ -9,7 +9,8 @@ A linear elastic 3D structural engineering finite element analysis library for P
 * Produces shear, moment, and deflection results and diagrams for each member.
 * Tension-only and compression-only elements.
 * Springs: two-way, tension-only, and compression-only.
-* Rectangular plate elements.
+* Quadrilateral plate elements (based on an isoparametric formulation).
+* Rectangular plate elements (based on a 12-term polynomial formulation).
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
 * Generates PDF reports for models and model results.
@@ -21,7 +22,7 @@ As I've gotten into the structural engineering profession, I've found there's a 
 
 2. Simplicity: There are other finite element alternatives out there with many more capabilities, but they are often lacking in documentation, written in outdated languages, or require extensive knowledge of finite element theory and/or element formulations to use. PyNite is not intended to be the most technically advanced solver out there. Rather, the goal is to provide a robust yet simple general purpose package.
 
-4. Improvement: I plan to continue supporting PyNite for many years to come. There are a lot of pieces I'd like to add to PyNite going forward: improvements to plates, dynamics, pushover anlysis, etc. There's a lot of potential to create extensions as well to solve all kinds of engineering problems. There are more problems to solve than I have time for, so some priorities will have to be made. The plan is to keep PyNite mainstream, adding core functionality first. Occasionally however I may just add what interests me at the time.
+4. Improvement: I plan to continue supporting PyNite for many years to come. There are a lot of pieces I'd like to add to PyNite going forward: triangular plates, plate meshing and loading algorithms, dynamics, pushover anlysis, etc. There's a lot of potential to create extensions as well to solve all kinds of engineering problems. There are more problems to solve than I have time for, so some priorities will have to be made. The plan is to keep PyNite mainstream, adding core functionality first. Occasionally however I may just add what interests me at the time.
 
 5. Collaboration: The intent is to keep PyNite free and open source. This will encourage future development and contributions. Keeping it open source will allow anyone to inspect and improve the code it runs on. If you see an area you think you can help PyNite improve in you are encouraged to contribute. I'd like to get PyNite doing a lot more. Don't be offended if I'm a little slow to accept your contributions. FEA is a very technical subject and accuracy is extremely important to me. Sometimes I'm a little slow understanding both FEA and Python and it takes some time for me to comprehend what's being proposed. I also have a young family to take care of that takes first priority.
 
@@ -48,29 +49,6 @@ Here's a list of projects that run on PyNite:
 
 # What's New?
 Version 0.0.28
-* Issues with quad elements have been fixed.
-* Nodes, members, plates, quads, springs, and auxiliary nodes are now stored in dictionaries for faster computing and easier user access. For example, instead of using the `FEModel3D.GetNode('node_name')` method, which iterates through every node until it finds the name `'node_name'` you can now alternatively access a node from the dictionary using the syntax `FEModel3D.Nodes['node_name']`. It's a much quicker process computationally.
+* Issues with quadrilateral elements have been fixed. Membrane stiffness terms were being placed in the wrong location in the element's global stifness matrix.
+* Nodes, members, plates, quads, springs, and auxiliary nodes are now stored in dictionaries for faster computing and easier user access. For example, instead of using the syntax `FEModel3D.GetNode('node_name')` to retrieve a node, you can now alternatively access a node directly from the `Nodes` dictionary using the syntax `FEModel3D.Nodes['node_name']`.
 
-Version 0.0.27
-* Pulled quadrilateral elements from the list of completed features, and placed a warning at the top of the quadrilateral example in the 'examples' folder. They are still available for use, but there is a known issue with them. They only seem to work properly when they are rectangular, or with nodes defined in a particular order and skewed in certain ways. After reviewing the derivation of the quad element multiple times, I can't seem to find the issue. I may resolve this issue in the future, but for now it's slowing down production of the rest of PyNite, so the feature is being sidelined to allow time for development of other features. Rectangular plates still work as expected to the best of my knowledge. Only quadrilaterals are affected.
-
-Version 0.0.26
-* Bug fix for member distributed axial loads. Member internal axial forces were being calculated by subtracting distributed axial forces from the member end forces instead of adding them. 
-
-Version 0.0.25:
-* Bug fix for quad local axes calculations. Prior to this fix quads only calculated correctly if their local x-axis was parallel to the global X-axis.
-* Bug fix for reactions. Load combination load factors were not being applied to point loads when calculating reactions.
-
-Version 0.0.24:
-* Corrections to reactions for plate and quad elements. Fixed member concentrated loads that were not rendering with the rest of the model.
-
-Version 0.0.23:
-* Bug fix for member concentrated moments. Fixed end reactions on one side of the Member3D element were being calculated incorrectly for concentrated moments.
-
-Version 0.0.22: This version makes some significant changes. Major improvements include:
-* Solution speed has been greatly improved for large models. The code has been profiled and many slow spots in the solution process have been isolated and removed.
-* A sparse matrix solver has been added as the default solver to improve solution speed. The sparse solver may be slower on smaller models, but those models usually solve faster anyway. The dense matrix solver can be used if this is a problem.
-* Quadrilateral elements have been implemented.
-* Rectangular plate nodes are now defined clockwise instead of counter-clockwise. This change was made in order to be consitent with the new quad element formulation.
-* Rendering of plate and quad stresses is now supported.
-* Plate surface pressure loads are now supported.
