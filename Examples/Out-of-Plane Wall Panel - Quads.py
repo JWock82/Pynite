@@ -1,18 +1,4 @@
 #%%
-# +---------+
-# | Warning |
-# +---------+
-
-# Quadrilateral elements have been pulled from the list of completed features. They are still
-# available for use, but there is a known issue with them. They only seem to work properly when
-# they are rectangular, or with nodes defined in a particular order and skewed in certain ways.
-# After reviewing the derivation of the quad element multiple times, I can't seem to find the
-# issue. I may resolve this issue in the future, but for now it's slowing down production of the
-# rest of PyNite, so the feature is being sidelined to allow time for development of other
-# features. Rectangular plates still work as expected to the best of my knowledge. Only
-# quadrilaterals are affected.
-
-#%%
 # This is an example of a how quads can be used to create a wall panel for out-of-plane bending problems.
 # A 'RectWall' class has been defined to automate the process of meshing, loading, and plotting results for a wall
 # panel of any geometry and edge support conditions. At the bottom of this file (below the class
@@ -183,8 +169,8 @@ class RectWall():
                 elif self.top_support == "Pinned":
                     node.SupportDX, node.SupportDY, node.SupportDZ = True, True, True
             
-            # Skew the grid if desired
-            node.X = node.X + node.Y*0.0
+            # The next line can be uncommented to test skewed grids
+            # node.X = node.X - node.Y*0.1
 
     # Analyzes the wall
     def analyze(self):
