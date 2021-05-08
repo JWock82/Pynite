@@ -16,7 +16,7 @@ class Quad3D():
 
 #%%
     def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu,
-                 LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
+                 LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}, x_axis=None):
 
         self.Name = Name
         self.ID = None
@@ -33,6 +33,8 @@ class Quad3D():
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
         self.LoadCombos = LoadCombos
+
+        self.x_axis = x_axis  # A direction vector that can be used to modify the quad's local x-axis
 
 #%%
     def __local_coords(self):
@@ -453,8 +455,7 @@ class Quad3D():
         Parameters
         ----------
         combo_name : string
-            The name of the load combination to get the consistent load vector
-            for.
+            The name of the load combination to get the consistent load vector for.
         '''
         
         Hw = lambda r, s : 1/4*array([[(1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0, (1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0]])
@@ -612,14 +613,15 @@ class Quad3D():
         Returns the coordinate transformation matrix for the quad element.
         '''
 
-        # Calculate the direction cosines for the local x-axis.The local
-        # x-axis will run from the i-node to the j-node.
         xi = self.iNode.X
         xj = self.jNode.X
         yi = self.iNode.Y
         yj = self.jNode.Y
         zi = self.iNode.Z
         zj = self.jNode.Z
+
+        # Calculate the direction cosines for the local x-axis.The local x-axis will run from
+        # the i-node to the j-node
         x = [xj - xi, yj - yi, zj - zi]
 
         # Divide the vector by its magnitude to produce a unit x-vector of
