@@ -5,7 +5,7 @@ from numpy.linalg import norm
 
 #%%
 def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
-                render_loads=True, color_map=None, combo_name='Combo 1', case=None):
+                render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True):
     '''
     Renders a finite element model using VTK.
     
@@ -33,6 +33,11 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       The default is 'Combo 1'.
     case : string, optional
       The load case used for rendering loads. The default is None.
+    labels : boolean, optional
+      Determines if labels will be rendered. Each lable is a single actor in VTK, which slows down
+      rendering on models with thousands of labels. Set this option to `False` if you want more
+      speed when rendering and interacting with a large model. This can be very useful on plate
+      models with large meshes.
       
     Raises
     ------
@@ -157,32 +162,52 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
             
             # Calculate the desired results for each corner of the quad
             if color_map == 'dz':
-                r0, r1, r2, r3 = item.d()[[14, 20, 2, 8], :]
+              r0, r1, r2, r3 = item.d()[[14, 20, 2, 8], :]
             elif color_map == 'Mx':
-                r0 = item.moment(-1, -1, combo_name)[0, 0]
-                r1 = item.moment(1, -1, combo_name)[0, 0]
-                r2 = item.moment(1, 1, combo_name)[0, 0]
-                r3 = item.moment(-1, 1, combo_name)[0, 0]
+              r0 = item.moment(-1, -1, combo_name)[0, 0]
+              r1 = item.moment(1, -1, combo_name)[0, 0]
+              r2 = item.moment(1, 1, combo_name)[0, 0]
+              r3 = item.moment(-1, 1, combo_name)[0, 0]
             elif color_map == 'My':
-                r0 = item.moment(-1, -1, combo_name)[1, 0]
-                r1 = item.moment(1, -1, combo_name)[1, 0]
-                r2 = item.moment(1, 1, combo_name)[1, 0]
-                r3 = item.moment(-1, 1, combo_name)[1, 0]
+              r0 = item.moment(-1, -1, combo_name)[1, 0]
+              r1 = item.moment(1, -1, combo_name)[1, 0]
+              r2 = item.moment(1, 1, combo_name)[1, 0]
+              r3 = item.moment(-1, 1, combo_name)[1, 0]
             elif color_map == 'Mxy':
-                r0 = item.moment(-1, -1, combo_name)[2, 0]
-                r1 = item.moment(1, -1, combo_name)[2, 0]
-                r2 = item.moment(1, 1, combo_name)[2, 0]
-                r3 = item.moment(-1, 1, combo_name)[2, 0]
+              r0 = item.moment(-1, -1, combo_name)[2, 0]
+              r1 = item.moment(1, -1, combo_name)[2, 0]
+              r2 = item.moment(1, 1, combo_name)[2, 0]
+              r3 = item.moment(-1, 1, combo_name)[2, 0]
             elif color_map == 'Qx':
-                r0 = item.shear(-1, -1, combo_name)[0, 0]
-                r1 = item.shear(1, -1, combo_name)[0, 0]
-                r2 = item.shear(1, 1, combo_name)[0, 0]
-                r3 = item.shear(-1, 1, combo_name)[0, 0]
+              r0 = item.shear(-1, -1, combo_name)[0, 0]
+              r1 = item.shear(1, -1, combo_name)[0, 0]
+              r2 = item.shear(1, 1, combo_name)[0, 0]
+              r3 = item.shear(-1, 1, combo_name)[0, 0]
             elif color_map == 'Qy':
-                r0 = item.shear(-1, -1, combo_name)[1, 0]
-                r1 = item.shear(1, -1, combo_name)[1, 0]
-                r2 = item.shear(1, 1, combo_name)[1, 0]
-                r3 = item.shear(-1, 1, combo_name)[1, 0]
+              r0 = item.shear(-1, -1, combo_name)[1, 0]
+              r1 = item.shear(1, -1, combo_name)[1, 0]
+              r2 = item.shear(1, 1, combo_name)[1, 0]
+              r3 = item.shear(-1, 1, combo_name)[1, 0]
+            elif color_map == 'Sx':
+              r0 = item.membrane(-1, -1, combo_name)[0, 0]
+              r1 = item.membrane(1, -1, combo_name)[0, 0]
+              r2 = item.membrane(1, 1, combo_name)[0, 0]
+              r3 = item.membrane(-1, 1, combo_name)[0, 0]
+            elif color_map == 'Sy':
+              r0 = item.membrane(-1, -1, combo_name)[1, 0]
+              r1 = item.membrane(1, -1, combo_name)[1, 0]
+              r2 = item.membrane(1, 1, combo_name)[1, 0]
+              r3 = item.membrane(-1, 1, combo_name)[1, 0]
+            elif color_map == 'Sy':
+              r0 = item.membrane(-1, -1, combo_name)[1, 0]
+              r1 = item.membrane(1, -1, combo_name)[1, 0]
+              r2 = item.membrane(1, 1, combo_name)[1, 0]
+              r3 = item.membrane(-1, 1, combo_name)[1, 0]
+            elif color_map == 'Txy':
+              r0 = item.membrane(-1, -1, combo_name)[2, 0]
+              r1 = item.membrane(1, -1, combo_name)[2, 0]
+              r2 = item.membrane(1, 1, combo_name)[2, 0]
+              r3 = item.membrane(-1, 1, combo_name)[2, 0]
         
         if color_map != None:
             
@@ -263,26 +288,28 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       
         # Add the actor for the spring
         renderer.AddActor(vis_spring.actor)
+
+        if labels == True:
+          # Add the actor for the spring label
+          renderer.AddActor(vis_spring.lblActor)
       
-        # Add the actor for the spring label
-        renderer.AddActor(vis_spring.lblActor)
-      
-        # Set the text to follow the camera as the user interacts. This will
-        # require a reset of the camera (see below)
-        vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())    
+          # Set the text to follow the camera as the user interacts. This will
+          # require a reset of the camera (see below)
+          vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())    
 
     # Add actors for each member
     for vis_member in vis_members:
         
         # Add the actor for the member
         renderer.AddActor(vis_member.actor)
+
+        if labels == True:
+          # Add the actor for the member label
+          renderer.AddActor(vis_member.lblActor)
       
-        # Add the actor for the member label
-        renderer.AddActor(vis_member.lblActor)
-      
-        # Set the text to follow the camera as the user interacts. This will
-        # require a reset of the camera (see below)
-        vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
+          # Set the text to follow the camera as the user interacts. This will
+          # require a reset of the camera (see below)
+          vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
 
     # Create an append filter for combining node polydata
     node_polydata = vtk.vtkAppendPolyData()
@@ -292,13 +319,14 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       
         # Add the node's polydata
         node_polydata.AddInputData(vis_node.polydata.GetOutput())
-      
-        # Add the actor for the node label
-        renderer.AddActor(vis_node.lblActor)
+
+        if labels == True:
+          # Add the actor for the node label
+          renderer.AddActor(vis_node.lblActor)
         
-        # Set the text to follow the camera as the user interacts. This will
-        # require a reset of the camera (see below)
-        vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+          # Set the text to follow the camera as the user interacts. This will
+          # require a reset of the camera (see below)
+          vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
     
     # Update the node polydata in the append filter
     node_polydata.Update()
@@ -317,13 +345,14 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       
         # Add the actor for the auxiliary node
         renderer.AddActor(vis_aux_node.actor)
+
+        if labels == True:
+          # Add the actor for the auxiliary node label
+          renderer.AddActor(vis_aux_node.lblActor)
       
-        # Add the actor for the auxiliary node label
-        renderer.AddActor(vis_aux_node.lblActor)
-      
-        # Set the text to follow the camera as the user interacts. This will
-        # require a reset of the camera (see below)
-        vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
+          # Set the text to follow the camera as the user interacts. This will
+          # require a reset of the camera (see below)
+          vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
     
     # Add the actor for the plates
     renderer.AddActor(plate_actor)
