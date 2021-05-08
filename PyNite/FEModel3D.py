@@ -26,7 +26,7 @@ class FEModel3D():
         '''
         
         self.Nodes = {}      # A dictionary of the structure's nodes
-        self.auxNodes = {}   # A dictionary of the structure's auxiliary nodes
+        self.AuxNodes = {}   # A dictionary of the structure's auxiliary nodes
         self.Springs = {}    # A dictionary of the structure's springs
         self.Members = {}    # A dictionary of the structure's members
         self.Quads = {}      # A dictionary of the structure's quadiralterals
@@ -59,7 +59,7 @@ class FEModel3D():
             name = "N" + str(len(self.Nodes))
             count = 1
             while name in self.Nodes: 
-                name = "N" + str(len(self.Nodes)+count)
+                name = "N" + str(len(self.Nodes) + count)
                 count += 1
         
         # Create a new node
@@ -94,20 +94,20 @@ class FEModel3D():
         
         # Name the node or check it doesn't already exist
         if name:
-            if name in self.auxNodes: raise NameError(f"Auxnode name '{name}' already exists")
+            if name in self.AuxNodes: raise NameError(f"Auxnode name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "AN" + str(len(self.auxNodes))
+            name = "AN" + str(len(self.AuxNodes))
             count = 1
-            while name in self.auxNodes: 
-                name = "AN" + str(len(self.auxNodes)+count)
+            while name in self.AuxNodes: 
+                name = "AN" + str(len(self.AuxNodes)+count)
                 count += 1
                 
         # Create a new node
         newNode = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
-        self.auxNodes[name] = newNode
+        self.AuxNodes[name] = newNode
         
         #Return the node name
         return name
@@ -286,8 +286,11 @@ class FEModel3D():
             The thickness of the quadrilateral.
         E : number
             The modulus of elasticity of the quadrilateral.
-        mew : number
+        nu : number
             Posson's ratio for the quadrilateral.
+        x_axis : list, Default is None
+            A vector in the direction of the plate's local x-axis, for example [1, 0, 0]. If None
+            the program defines the x_axis as runing from the i-node to the j-node.
         '''
         
         # Name the quad or check it doesn't already exist
@@ -298,7 +301,7 @@ class FEModel3D():
             name = "Q" + str(len(self.Quads))
             count = 1
             while name in self.Quads: 
-                name = "Q" + str(len(self.Quads)+count)
+                name = "Q" + str(len(self.Quads) + count)
                 count += 1
         
         # Create a new member
@@ -311,53 +314,72 @@ class FEModel3D():
         return name
 
 #%%
-    def RemoveNode(self, Node):
+    def RemoveNode(self, node_name):
         '''
         Removes a node from the model. All nodal loads associated with the
         node and members attached to the node will also be removed.
         
         Parameters
         ----------
-        Node : string
+        node_name : string
             The name of the node to be removed.
         '''
         
         # Remove the node. Nodal loads are stored within the node, so they
         # will be deleted automatically when the node is deleted.
-        self.Nodes.remove(self.GetNode(Node))
+        self.Nodes.pop(node_name)
         
         # Find any members attached to the node and remove them
-        self.Members = {name: member for name, member in self.Members.items() if member.iNode.Name != Node and member.jNode.Name != Node}
+        self.Members = {name: member for name, member in self.Members.items() if member.iNode.Name != node_name and member.jNode.Name != node_name}
 
 #%%
-    def RemoveSpring(self, Spring):
+    def RemoveAuxNode(self, auxnode_name):
+        '''
+        Removes an auxiliary node from the model.
+
+        Parameters
+        ----------
+        auxnode_name : string
+            The name of the auxiliary node to be removed
+        '''
+
+        # Remove the auxiliary node
+        self.AuxNodes.pop(auxnode_name)
+
+        # Remove the auxiliary node from any members that were using it
+        for member in self.Members.values():
+            if member.auxNode == auxnode_name:
+                member.auxNode = None
+
+#%%
+    def RemoveSpring(self, spring_name):
         '''
         Removes a spring from the model.
         
         Parameters
         ----------
-        Spring : string
+        spring_name : string
             The name of the spring to be removed.
         '''
         
-        # Remove the spring.
-        self.Springs.remove(self.GetSpring(Spring))
+        # Remove the spring
+        self.Springs.pop(spring_name)
 
 #%%
-    def RemoveMember(self, Member):
+    def RemoveMember(self, member_name):
         '''
         Removes a member from the model. All member loads associated with the
         member will also be removed.
         
         Parameters
         ----------
-        Member : string
+        member_name : string
             The name of the member to be removed.
         '''
         
         # Remove the member. Member loads are stored within the member, so they
         # will be deleted automatically when the member is deleted.
-        self.Members.remove(self.GetMember(Member))
+        self.Members.pop(member_name)
         
 #%%
     def DefineSupport(self, Node, SupportDX=False, SupportDY=False, SupportDZ=False, SupportRX=False, SupportRY=False, SupportRZ=False):
@@ -645,7 +667,7 @@ class FEModel3D():
             return self.Nodes[name]
         except:
             # If the node name is not found
-            raise ValueError(f"Node '{name}' was not found in the model.global")
+            raise ValueError(f"Node '{name}' was not found in the model.")
 
 #%%         
     def GetAuxNode(self, name):
@@ -659,7 +681,7 @@ class FEModel3D():
         '''
         
         try:
-            return self.auxNodes[name]
+            return self.AuxNodes[name]
         except:
             # If the auxiliary node name is not found
             raise ValueError(f"Auxiliary node '{name}' was not found in the model.")
