@@ -1,4 +1,4 @@
-from numpy import zeros, delete, matrix, array, matmul, transpose, insert, cross, divide, add
+from numpy import zeros, delete, matrix, array, matmul, transpose, cross, divide, add
 from numpy.linalg import inv, norm
 from PyNite.LoadCombo import LoadCombo
 
