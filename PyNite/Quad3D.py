@@ -16,7 +16,7 @@ class Quad3D():
 
 #%%
     def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu,
-                 LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}, x_axis=None):
+                 LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
 
         self.Name = Name
         self.ID = None
@@ -33,8 +33,6 @@ class Quad3D():
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
         self.LoadCombos = LoadCombos
-
-        self.x_axis = x_axis  # A direction vector that can be used to modify the quad's local x-axis
 
 #%%
     def __local_coords(self):
