@@ -48,6 +48,14 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.29
+* Fixed a bug where load combinations were being ignored on plates and quadrilaterals. The default load combination was being used for these items instead of user defined load combinations.
+* Fixed a bug where auxiliary nodes were causing renderings to crash in some cases.
+* Fixed a bug where area loads were always pointing in the positive direction during rendering. The loads were being applied properly in the model even though they were showing up incorrectly in the rendering.
+* Quad membrane stress contours can now be rendered.
+* A few meshing algorithms have been added to simplify building models from quadrilaterals. Rings, annulusses and frustrums can now be meshed automatically. This feature will continue to be expanded and examples will follow.
+* Added an option to turn off rendering of labels in the `RenderModel` method. This can greatly speed up interaction on large plate/quad models.
+
 Version 0.0.28
 * Issues with quadrilateral elements have been fixed. Membrane stiffness terms were being placed in the wrong location in the element's global stifness matrix.
 * Nodes, members, plates, quads, springs, and auxiliary nodes are now stored in dictionaries for faster computing and easier user access. For example, instead of using the syntax `FEModel3D.GetNode('node_name')` to retrieve a node, you can now alternatively access a node directly from the `Nodes` dictionary using the syntax `FEModel3D.Nodes['node_name']`.
