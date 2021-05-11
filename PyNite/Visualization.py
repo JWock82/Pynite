@@ -604,8 +604,8 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
         position3 = [plate.nNode.X, plate.nNode.Y, plate.nNode.Z]
 
         # Create an area load and get its data
-        area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*text_height, str(load_value), text_height)
-        
+        area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+
         # Add the area load's arrows to the overall load polydata
         polydata.AddInputData(area_load.polydata.GetOutput())
 
