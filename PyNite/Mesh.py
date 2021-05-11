@@ -50,12 +50,12 @@ class AnnulusMesh(Mesh):
             radial = r_outer - r_inner                    # Remaining length in the radial direction to be meshed
             circumf = 2*pi*r_inner                        # Circumference of the ring at the inner radius
             b_circ = circumf/n_circ                       # Element width in the circumferential direction
-            n_rad = int(radial/min(mesh_size, 4*b_circ))  # Number of times the plate width fits in the remaining unmeshed radial direction
+            n_rad = int(radial/min(mesh_size, 3*b_circ))  # Number of times the plate width fits in the remaining unmeshed radial direction
             h_rad = radial/n_rad                          # Element height in the radial direction
 
             # Determine if the mesh is getting too big. If so the mesh will need to transition to a
             # finer mesh.
-            if b_circ > mesh_size:
+            if b_circ > 3*mesh_size:
                 transition = True
             else:
                 transition = False
@@ -142,7 +142,7 @@ class AnnulusRingMesh(Mesh):
                 y = Yo + r2*sin(angle)
                 z = Zo
             
-            self.nodes[node_name] = Node3D(node_name, x, y, z)
+            self.nodes[node_name] = [node_name, x, y, z]
 
         # Generate the elements that make up the ring
         for i in range(1, n + 1, 1):
@@ -159,7 +159,11 @@ class AnnulusRingMesh(Mesh):
                 m_node = 1
                 j_node = 1 + n
 
-            self.elements[element_name] = Quad3D(element_name, 'N' + str(i_node + node_offset), 'N' + str(j_node + node_offset), 'N' + str(m_node + node_offset), 'N' + str(n_node + node_offset), self.t, self.E, self.nu)   
+            self.elements[element_name] = [element_name, 'N' + str(i_node + node_offset),
+                                                         'N' + str(j_node + node_offset),
+                                                         'N' + str(m_node + node_offset),
+                                                         'N' + str(n_node + node_offset),
+                                                         self.t, self.E, self.nu]
 
 class AnnulusTransRingMesh(Mesh):
 
@@ -240,7 +244,7 @@ class AnnulusTransRingMesh(Mesh):
                 y = Yo + r3*sin(angle)
                 z = Zo
             
-            self.nodes[node_name] = Node3D(node_name, x, y, z)
+            self.nodes[node_name] = [node_name, x, y, z]
 
         # Generate the elements that make up the ring
         for i in range(1, 4*n + 1, 1):
@@ -276,7 +280,11 @@ class AnnulusTransRingMesh(Mesh):
                     m_node = 1
                     j_node = 1 + 3*n
 
-            self.elements[element_name] = Quad3D(element_name, 'N' + str(i_node + node_offset), 'N' + str(j_node + node_offset), 'N' + str(m_node + node_offset), 'N' + str(n_node + node_offset), self.t, self.E, self.nu)
+            self.elements[element_name] = [element_name, 'N' + str(i_node + node_offset),
+                                                         'N' + str(j_node + node_offset),
+                                                         'N' + str(m_node + node_offset),
+                                                         'N' + str(n_node + node_offset),
+                                                         self.t, self.E, self.nu]
 
 class FrustrumMesh(AnnulusMesh):
 
@@ -287,10 +295,13 @@ class FrustrumMesh(AnnulusMesh):
 
         Xo = center[0]
         Yo = center[1]
-        Zo = center[2]
 
         # Adjust the Z-cooridnate of each node
         for node in self.nodes.values():
-            r = ((node.X - Xo)**2 + (node.Y - Yo)**2 + (node.Z - Zo)**2)**0.5
-            node.Z = (r - small_radius)/(large_radius - small_radius)*height
+            X = node[1]
+            Y = node[2]
+            Z = node[3]
+            r = ((X - Xo)**2 + (Y - Yo)**2)**0.5
+            Z += (r - large_radius)/(large_radius - small_radius)*height
+            node[3] = Z
 

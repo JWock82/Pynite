@@ -254,7 +254,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newPlate = Plate3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
+        newPlate = Plate3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu, self.LoadCombos)
         
         # Add the new member to the list
         self.Plates[name] = newPlate
@@ -305,13 +305,37 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newQuad = Quad3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu)
+        newQuad = Quad3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu, self.LoadCombos)
         
         # Add the new member to the list
         self.Quads[name] = newQuad
         
         #Return the quad name
         return name
+
+#%%
+    def AddMesh(self, mesh):
+
+        # Add the mesh's nodes to the finite element model
+        for node in mesh.nodes.values():
+            node_name = node[0]
+            X = node[1]
+            Y = node[2]
+            Z = node[3]
+            self.Nodes[node_name] = Node3D(node_name, X, Y, Z)
+
+        # Add the mesh's elements to the finite element model
+        for element in mesh.elements.values():
+            element_name = element[0]
+            iNode = self.Nodes[element[1]]
+            jNode = self.Nodes[element[2]]
+            mNode = self.Nodes[element[3]]
+            nNode = self.Nodes[element[4]]
+            t = element[5]
+            E = element[6]
+            nu = element[7]
+            self.Quads[element_name] = Quad3D(element_name, iNode, jNode, mNode, nNode, element[5], element[6], element[7], self.LoadCombos)
+
 
 #%%
     def RemoveNode(self, node_name):
