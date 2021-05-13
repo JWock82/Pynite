@@ -132,32 +132,48 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
         if item.type == 'Rect':
             
             if color_map == 'dz':
-                r0, r1, r2, r3 = item.d()[[2, 8, 14, 20], :]
+              r0, r1, r2, r3 = item.d()[[2, 8, 14, 20], :]
             elif color_map == 'Mx':
-                r0 = item.moment(0, 0, combo_name)[0, 0]
-                r1 = item.moment(item.width(), 0, combo_name)[0, 0]
-                r2 = item.moment(item.width(), item.height(), combo_name)[0, 0]
-                r3 = item.moment(0, item.height(), combo_name)[0, 0]
+              r0 = item.moment(0, 0, combo_name)[0, 0]
+              r1 = item.moment(item.width(), 0, combo_name)[0, 0]
+              r2 = item.moment(item.width(), item.height(), combo_name)[0, 0]
+              r3 = item.moment(0, item.height(), combo_name)[0, 0]
             elif color_map == 'My':
-                r0 = item.moment(0, 0, combo_name)[1, 0]
-                r1 = item.moment(item.width(), 0, combo_name)[1, 0]
-                r2 = item.moment(item.width(), item.height(), combo_name)[1, 0]
-                r3 = item.moment(0, item.height(), combo_name)[1, 0]
+              r0 = item.moment(0, 0, combo_name)[1, 0]
+              r1 = item.moment(item.width(), 0, combo_name)[1, 0]
+              r2 = item.moment(item.width(), item.height(), combo_name)[1, 0]
+              r3 = item.moment(0, item.height(), combo_name)[1, 0]
             elif color_map == 'Mxy':
-                r0 = item.moment(0, 0, combo_name)[2, 0]
-                r1 = item.moment(item.width(), 0, combo_name)[2, 0]
-                r2 = item.moment(item.width(), item.height(), combo_name)[2, 0]
-                r3 = item.moment(0, item.height(), combo_name)[2, 0]
+              r0 = item.moment(0, 0, combo_name)[2, 0]
+              r1 = item.moment(item.width(), 0, combo_name)[2, 0]
+              r2 = item.moment(item.width(), item.height(), combo_name)[2, 0]
+              r3 = item.moment(0, item.height(), combo_name)[2, 0]
             elif color_map == 'Qx':
-                r0 = item.shear(0, 0, combo_name)[0, 0]
-                r1 = item.shear(item.width(), 0, combo_name)[0, 0]
-                r2 = item.shear(item.width(), item.height(), combo_name)[0, 0]
-                r3 = item.shear(0, item.height(), combo_name)[0, 0]
+              r0 = item.shear(0, 0, combo_name)[0, 0]
+              r1 = item.shear(item.width(), 0, combo_name)[0, 0]
+              r2 = item.shear(item.width(), item.height(), combo_name)[0, 0]
+              r3 = item.shear(0, item.height(), combo_name)[0, 0]
             elif color_map == 'Qy':
-                r0 = item.shear(0, 0, combo_name)[1, 0]
-                r1 = item.shear(item.width(), 0, combo_name)[1, 0]
-                r2 = item.shear(item.width(), item.height(), combo_name)[1, 0]
-                r3 = item.shear(0, item.height(), combo_name)[1, 0]
+              r0 = item.shear(0, 0, combo_name)[1, 0]
+              r1 = item.shear(item.width(), 0, combo_name)[1, 0]
+              r2 = item.shear(item.width(), item.height(), combo_name)[1, 0]
+              r3 = item.shear(0, item.height(), combo_name)[1, 0]
+            elif color_map == 'Sx':
+              r0 = item.membrane(0, 0, combo_name)[0, 0]
+              r1 = item.membrane(item.width(), 0, combo_name)[0, 0]
+              r2 = item.membrane(item.width(), item.height(), combo_name)[0, 0]
+              r3 = item.membrane(0, item.height(), combo_name)[0, 0]
+            elif color_map == 'Sy':
+              r0 = item.membrane(0, 0, combo_name)[1, 0]
+              r1 = item.membrane(item.width(), 0, combo_name)[1, 0]
+              r2 = item.membrane(item.width(), item.height(), combo_name)[1, 0]
+              r3 = item.membrane(0, item.height(), combo_name)[1, 0]
+            elif color_map == 'Txy':
+              r0 = item.membrane(0, 0, combo_name)[2, 0]
+              r1 = item.membrane(item.width(), 0, combo_name)[2, 0]
+              r2 = item.membrane(item.width(), item.height(), combo_name)[2, 0]
+              r3 = item.membrane(0, item.height(), combo_name)[2, 0]
+              
         else:
             
             # Calculate the desired results for each corner of the quad
