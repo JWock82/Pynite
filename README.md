@@ -52,6 +52,11 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.30
+* Fixed a bug where quad and plate displacement contours weren't being plotted correctly when user-defined load combinations were being used.
+* Added a few basic meshing features for quads.
+* Added the ability to merge duplicate nodes.
+
 Version 0.0.29
 * Fixed a bug where load combinations were being ignored on plates and quadrilaterals. The default load combination was being used for these items instead of user defined load combinations.
 * Fixed a bug where auxiliary nodes were causing renderings to crash in some cases.
