@@ -15,6 +15,7 @@ An easy to use linear elastic 3D structural engineering finite element analysis 
 * Springs: two-way, tension-only, and compression-only.
 * Quadrilateral plate elements (based on an isoparametric formulation).
 * Rectangular plate elements (based on a 12-term polynomial formulation).
+* Basic meshing algorithms for some common shapes.
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
 * Generates PDF reports for models and model results.
