@@ -132,7 +132,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
         if item.type == 'Rect':
             
             if color_map == 'dz':
-              r0, r1, r2, r3 = item.d()[[2, 8, 14, 20], :]
+              r0, r1, r2, r3 = item.d(combo_name)[[2, 8, 14, 20], :]
             elif color_map == 'Mx':
               r0 = item.moment(0, 0, combo_name)[0, 0]
               r1 = item.moment(item.width(), 0, combo_name)[0, 0]
@@ -178,7 +178,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
             
             # Calculate the desired results for each corner of the quad
             if color_map == 'dz':
-              r0, r1, r2, r3 = item.d()[[14, 20, 2, 8], :]
+              r0, r1, r2, r3 = item.d(combo_name)[[14, 20, 2, 8], :]
             elif color_map == 'Mx':
               r0 = item.moment(-1, -1, combo_name)[0, 0]
               r1 = item.moment(1, -1, combo_name)[0, 0]
@@ -609,9 +609,14 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
       # Determine if this load is part of the requested load combination
       if load[1] in load_factors:
 
-        # Calculate the factored value for this load and it's sign (positive or negative)
+        # Calculate the factored value for this load
         load_value = load[0]*load_factors[load[1]]
-        sign = abs(load[0])/load[0]
+        
+        # Find the sign for this load. Intercept any divide by zero errors
+        if load[0] == 0:
+          sign = 1
+        else:
+          sign = abs(load[0])/load[0]
 
         # Find the position of the load's 4 corners
         position0 = [plate.iNode.X, plate.iNode.Y, plate.iNode.Z]
@@ -1372,7 +1377,10 @@ class VisPtLoad():
     self.polydata = vtk.vtkAppendPolyData()
 
     # Determine if the load is positive or negative
-    sign = abs(length)/length
+    if length == 0:
+      sign = 1
+    else:
+      sign = abs(length)/length
 
     # Generate the tip of the load arrow
     tip_length = abs(length)/4
