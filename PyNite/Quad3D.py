@@ -7,9 +7,9 @@
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
 
-from numpy import array, arccos, dot, cross, matmul, add, zeros, insert, transpose
+from numpy import array, arccos, dot, cross, matmul, add, zeros, transpose
 from numpy.linalg import inv, det, norm
-from math import atan, sin, cos, pi
+from math import sin, cos
 from PyNite.LoadCombo import LoadCombo
 
 class Quad3D():
@@ -131,8 +131,8 @@ class Quad3D():
         # Differentiate the interpolation functions
         # Row 1 = interpolation functions differentiated with respect to x
         # Row 2 = interpolation functions differentiated with respect to y
-        # Note that the inverse of the Jacobian converts from derivatives with
-        # respect to r and s to derivatives with respect to x and y
+        # Note that the inverse of the Jacobian converts from derivatives with respect to r and s
+        # to derivatives with respect to x and y
         dH = matmul(inv(self.J(r, s)), 1/4*array([[1 + s, -1 - s, -1 + s,  1 - s],                 
                                                   [1 + r,  1 - r, -1 + r, -1 - r]]))
 
@@ -624,7 +624,8 @@ class Quad3D():
 
         # Divide the vector by its magnitude to produce a unit x-vector of
         # direction cosines
-        x = x/norm(x)
+        mag = (x[0]**2 + x[1]**2 + x[2]**2)**0.5
+        x = [x[0]/mag, x[1]/mag, x[2]/mag]
         
         # The local y-axis will be in the plane of the plate. Find a vector in
         # the plate's local xy plane.
@@ -639,7 +640,8 @@ class Quad3D():
         
         # Divide the z-vector by its magnitude to produce a unit z-vector of
         # direction cosines.
-        z = z/norm(z)
+        mag = (z[0]**2 + z[1]**2 + z[2]**2)**0.5
+        z = [z[0]/mag, z[1]/mag, z[2]/mag]
 
         # Calculate the local y-axis as a vector perpendicular to the local z
         # and x-axes.
@@ -647,7 +649,8 @@ class Quad3D():
         
         # Divide the y-vector by its magnitude to produce a unit vector of
         # direction cosines.
-        y = y/norm(y)
+        mag = (y[0]**2 + y[1]**2 + y[2]**2)**0.5
+        y = [y[0]/mag, y[1]/mag, y[2]/mag]
 
         # Create the direction cosines matrix.
         dirCos = array([x,
