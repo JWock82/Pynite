@@ -1,6 +1,10 @@
 # PyNite
 An easy to use linear elastic 3D structural engineering finite element analysis library for Python.
 
+<div>
+<img src="https://github.com/JWock82/PyNite/blob/master/Resources/PyNite%20Bin.PNG" width="300"/>
+</div>
+
 # Current Capabilities
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
