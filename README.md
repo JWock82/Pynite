@@ -2,7 +2,7 @@
 An easy to use linear elastic 3D structural engineering finite element analysis library for Python.
 
 <div>
-<img src="https://github.com/JWock82/PyNite/blob/master/Resources/Member%20Local%20Coordinates.png" width="500"/>
+<img src="https://github.com/JWock82/PyNite/blob/master/Resources/PyNite%20Bin.png" width="500"/>
 </div>
 
 # Current Capabilities
