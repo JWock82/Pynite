@@ -1,4 +1,4 @@
-from numpy import zeros, delete, matrix, array, matmul, transpose, cross, divide, add
+from numpy import zeros, matrix, array, matmul, transpose, cross, add
 from numpy.linalg import inv, norm
 from PyNite.LoadCombo import LoadCombo
 
@@ -533,6 +533,24 @@ class Plate3D():
 
 #%%
     def membrane(self, x, y, combo_name='Combo 1'):
+        """
+        Returns the in-plane (membrane) stresses in the plate.
+
+        Parameters
+        ----------
+        x : number
+            The plate's local x-coordinate where stresses will be calculated.
+        y : number
+            The plate's local y-coordinate where stresses will be calculated.
+        combo_name : string, optional
+            The name of the load combination to get stresses for. The default is 'Combo 1'.
+
+        Returns
+        -------
+        array
+            An array of the local in-plane stresses in the format [[Sx, Sy, Txy]].
+        
+        """
 
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
