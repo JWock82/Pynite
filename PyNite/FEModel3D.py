@@ -1,11 +1,10 @@
 # %%
-from numpy import array, matrix, zeros, empty, delete, insert, matmul, divide, add, subtract
-from numpy import nanmax, seterr, shape
+from numpy import array, matrix, zeros, matmul, divide, add, subtract
+from numpy import nanmax, seterr
 from numpy.linalg import solve
 
 from scipy.sparse.linalg import spsolve
 from scipy.sparse import csc_matrix
-from math import isclose
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
@@ -317,26 +316,99 @@ class FEModel3D():
     def AddMesh(self, mesh):
 
         # Add the mesh's nodes to the finite element model
-        for node in mesh.nodes.values():
-            node_name = node[0]
-            X = node[1]
-            Y = node[2]
-            Z = node[3]
-            self.Nodes[node_name] = Node3D(node_name, X, Y, Z)
+        self.Nodes.update(mesh.nodes)
+
+        # Add the mesh's elements to the finite element model
+        self.Quads.update(mesh.elements)
+
+        # If the mesh contained duplicate keys that were already in the `Nodes` dictionary, the old
+        # nodes will have been abandoned in favor of the new nodes. Reattach any elements that are
+        # still referencing the old nodes to the new nodes.
+        for element in self.Quads.values():
+            element.iNode = self.Nodes[element.iNode.Name]
+            element.jNode = self.Nodes[element.jNode.Name]
+            element.mNode = self.Nodes[element.mNode.Name]
+            element.nNode = self.Nodes[element.nNode.Name]
+        
+        for element in self.Plates.values():
+            element.iNode = self.Nodes[element.iNode.Name]
+            element.jNode = self.Nodes[element.jNode.Name]
+            element.mNode = self.Nodes[element.mNode.Name]
+            element.nNode = self.Nodes[element.nNode.Name]
+
+        for element in self.Members.values():
+            element.iNode = self.Nodes[element.iNode.Name]
+            element.jNode = self.Nodes[element.jNode.Name]
 
         # Add the mesh's elements to the finite element model
         for element in mesh.elements.values():
-            element_name = element[0]
-            iNode = self.Nodes[element[1]]
-            jNode = self.Nodes[element[2]]
-            mNode = self.Nodes[element[3]]
-            nNode = self.Nodes[element[4]]
-            t = element[5]
-            E = element[6]
-            nu = element[7]
-            self.Quads[element_name] = Quad3D(element_name, iNode, jNode, mNode, nNode, element[5], element[6], element[7], self.LoadCombos)
+            element.LoadCombos = self.LoadCombos
+
+#%%
+    def MergeDuplicateNodes(self, tolerance=0.001):
+
+        # Initialize a list of nodes to be removed from the `Nodes` dictionary
+        remove_list = []
+
+        # Initialize a list of nodes that have been checked for duplicates
+        checked_list = []
+
+        # Make a temporary copy of `Nodes`
+        temp_1 = self.Nodes.items()
+
+        # Step through each node in the `Nodes` dictionary
+        for name_1, node_1 in self.Nodes.items():
+
+            # Add this node to the list of checked nodes
+            checked_list.append(name_1)
+
+            # Make a temporary copy of the dictionary that's missing all the checked nodes
+            temp = {key: self.Nodes[key] for key in self.Nodes.keys() if key not in checked_list}
+
+            # Compare all the other nodes to `node_1`
+            for name_2, node_2 in temp.items():
+
+                # Calculate the distance between nodes
+                dist = ((node_2.X - node_1.X)**2 + (node_2.Y - node_1.Y)**2 + (node_2.Z - node_1.Z)**2)**0.5
+
+                # Determine if the nodes need to be merged
+                if dist < tolerance:
+
+                    # Attach any elements that were using `node_2` to `node_1` instead
+                    for element in self.Quads.values():
+                        if element.iNode.Name == name_2:
+                            element.iNode = self.Nodes[name_1]
+                        if element.jNode.Name == name_2:
+                            element.jNode = self.Nodes[name_1]
+                        if element.mNode.Name == name_2:
+                            element.mNode = self.Nodes[name_1]
+                        if element.nNode.Name == name_2:
+                            element.nNode = self.Nodes[name_1]
+        
+                    for element in self.Plates.values():
+                        if element.iNode.Name == name_2:
+                            element.iNode = self.Nodes[name_1]
+                        if element.jNode.Name == name_2:
+                            element.jNode = self.Nodes[name_1]
+                        if element.mNode.Name == name_2:
+                            element.mNode = self.Nodes[name_1]
+                        if element.nNode.Name == name_2:
+                            element.nNode = self.Nodes[name_1]
+
+                    for element in self.Members.values():
+                        if element.iNode.Name == name_2:
+                            element.iNode = self.Nodes[name_1]
+                        if element.jNode.Name == name_2:
+                            element.jNode = self.Nodes[name_1]
+                    
+                    # Add `name_2` to the list of nodes to be removed
+                    remove_list.append(name_2)
+
+        for name in remove_list:
+            self.Nodes.pop(name)
 
 
+                
 #%%
     def RemoveNode(self, node_name):
         '''
