@@ -28,6 +28,18 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     render_loads : boolean, optional
       Determines if loads will be rendered with the deformed shape. The default
       is True.
+    color_map : string, optional
+      The type of contour to plot. Acceptable values are:
+      'dz'
+      'Mx'
+      'My'
+      'Mxy'
+      'Qx'
+      'Qy'
+      'Sx'
+      'Sy'
+      'Txy'
+      If no value is specified the default is None.
     combo_name : string, optional
       The load combination used for rendering the deformed shape and the loads.
       The default is 'Combo 1'.
@@ -89,6 +101,9 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
   
     # Each plate will be assigned a unique plate number `i`
     i = 0
+    
+    # Calculate the smoothed contour results at each node
+    PrepContour(model, color_map, combo_name)
 
     # Add each plate in the model to the cell array we just created
     for item in list(model.Plates.values()) + list(model.Quads.values()):
@@ -128,102 +143,11 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
         quad.GetPointIds().SetId(2, i*4 + 2)
         quad.GetPointIds().SetId(3, i*4 + 3)
 
-        # Calculate the results for each corner of the quad
-        if item.type == 'Rect':
-            
-            if color_map == 'dz':
-              r0, r1, r2, r3 = item.d(combo_name)[[2, 8, 14, 20], :]
-            elif color_map == 'Mx':
-              r0 = item.moment(0, 0, combo_name)[0, 0]
-              r1 = item.moment(item.width(), 0, combo_name)[0, 0]
-              r2 = item.moment(item.width(), item.height(), combo_name)[0, 0]
-              r3 = item.moment(0, item.height(), combo_name)[0, 0]
-            elif color_map == 'My':
-              r0 = item.moment(0, 0, combo_name)[1, 0]
-              r1 = item.moment(item.width(), 0, combo_name)[1, 0]
-              r2 = item.moment(item.width(), item.height(), combo_name)[1, 0]
-              r3 = item.moment(0, item.height(), combo_name)[1, 0]
-            elif color_map == 'Mxy':
-              r0 = item.moment(0, 0, combo_name)[2, 0]
-              r1 = item.moment(item.width(), 0, combo_name)[2, 0]
-              r2 = item.moment(item.width(), item.height(), combo_name)[2, 0]
-              r3 = item.moment(0, item.height(), combo_name)[2, 0]
-            elif color_map == 'Qx':
-              r0 = item.shear(0, 0, combo_name)[0, 0]
-              r1 = item.shear(item.width(), 0, combo_name)[0, 0]
-              r2 = item.shear(item.width(), item.height(), combo_name)[0, 0]
-              r3 = item.shear(0, item.height(), combo_name)[0, 0]
-            elif color_map == 'Qy':
-              r0 = item.shear(0, 0, combo_name)[1, 0]
-              r1 = item.shear(item.width(), 0, combo_name)[1, 0]
-              r2 = item.shear(item.width(), item.height(), combo_name)[1, 0]
-              r3 = item.shear(0, item.height(), combo_name)[1, 0]
-            elif color_map == 'Sx':
-              r0 = item.membrane(0, 0, combo_name)[0, 0]
-              r1 = item.membrane(item.width(), 0, combo_name)[0, 0]
-              r2 = item.membrane(item.width(), item.height(), combo_name)[0, 0]
-              r3 = item.membrane(0, item.height(), combo_name)[0, 0]
-            elif color_map == 'Sy':
-              r0 = item.membrane(0, 0, combo_name)[1, 0]
-              r1 = item.membrane(item.width(), 0, combo_name)[1, 0]
-              r2 = item.membrane(item.width(), item.height(), combo_name)[1, 0]
-              r3 = item.membrane(0, item.height(), combo_name)[1, 0]
-            elif color_map == 'Txy':
-              r0 = item.membrane(0, 0, combo_name)[2, 0]
-              r1 = item.membrane(item.width(), 0, combo_name)[2, 0]
-              r2 = item.membrane(item.width(), item.height(), combo_name)[2, 0]
-              r3 = item.membrane(0, item.height(), combo_name)[2, 0]
-              
-        else:
-            
-            # Calculate the desired results for each corner of the quad
-            if color_map == 'dz':
-              r0, r1, r2, r3 = item.d(combo_name)[[14, 20, 2, 8], :]
-            elif color_map == 'Mx':
-              r0 = item.moment(-1, -1, combo_name)[0, 0]
-              r1 = item.moment(1, -1, combo_name)[0, 0]
-              r2 = item.moment(1, 1, combo_name)[0, 0]
-              r3 = item.moment(-1, 1, combo_name)[0, 0]
-            elif color_map == 'My':
-              r0 = item.moment(-1, -1, combo_name)[1, 0]
-              r1 = item.moment(1, -1, combo_name)[1, 0]
-              r2 = item.moment(1, 1, combo_name)[1, 0]
-              r3 = item.moment(-1, 1, combo_name)[1, 0]
-            elif color_map == 'Mxy':
-              r0 = item.moment(-1, -1, combo_name)[2, 0]
-              r1 = item.moment(1, -1, combo_name)[2, 0]
-              r2 = item.moment(1, 1, combo_name)[2, 0]
-              r3 = item.moment(-1, 1, combo_name)[2, 0]
-            elif color_map == 'Qx':
-              r0 = item.shear(-1, -1, combo_name)[0, 0]
-              r1 = item.shear(1, -1, combo_name)[0, 0]
-              r2 = item.shear(1, 1, combo_name)[0, 0]
-              r3 = item.shear(-1, 1, combo_name)[0, 0]
-            elif color_map == 'Qy':
-              r0 = item.shear(-1, -1, combo_name)[1, 0]
-              r1 = item.shear(1, -1, combo_name)[1, 0]
-              r2 = item.shear(1, 1, combo_name)[1, 0]
-              r3 = item.shear(-1, 1, combo_name)[1, 0]
-            elif color_map == 'Sx':
-              r0 = item.membrane(-1, -1, combo_name)[0, 0]
-              r1 = item.membrane(1, -1, combo_name)[0, 0]
-              r2 = item.membrane(1, 1, combo_name)[0, 0]
-              r3 = item.membrane(-1, 1, combo_name)[0, 0]
-            elif color_map == 'Sy':
-              r0 = item.membrane(-1, -1, combo_name)[1, 0]
-              r1 = item.membrane(1, -1, combo_name)[1, 0]
-              r2 = item.membrane(1, 1, combo_name)[1, 0]
-              r3 = item.membrane(-1, 1, combo_name)[1, 0]
-            elif color_map == 'Sy':
-              r0 = item.membrane(-1, -1, combo_name)[1, 0]
-              r1 = item.membrane(1, -1, combo_name)[1, 0]
-              r2 = item.membrane(1, 1, combo_name)[1, 0]
-              r3 = item.membrane(-1, 1, combo_name)[1, 0]
-            elif color_map == 'Txy':
-              r0 = item.membrane(-1, -1, combo_name)[2, 0]
-              r1 = item.membrane(1, -1, combo_name)[2, 0]
-              r2 = item.membrane(1, 1, combo_name)[2, 0]
-              r3 = item.membrane(-1, 1, combo_name)[2, 0]
+        # Get the contour value for each node
+        r0 = item.iNode.contour
+        r1 = item.jNode.contour
+        r2 = item.mNode.contour
+        r3 = item.nNode.contour
         
         if color_map != None:
             
@@ -679,7 +603,6 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
   # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
   polygon_actor.SetMapper(polygon_mapper)
   renderer.AddActor(polygon_actor)
-
 
 #%%
 def __MaxLoads(model, combo_name=None, case=None):
@@ -1636,3 +1559,66 @@ def PerpVector(v):
   
   # Return the unit vector
   return [i2, j2, k2]/norm([i2, j2, k2])
+
+def PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
+
+  # Erase any previous contours
+  for node in model.Nodes.values():
+    node.contour = []
+
+  # Step through each element in the model
+  for element in list(model.Quads.values()) + list(model.Plates.values()):
+    if stress_type == 'dz':
+      if item.type == 'Rect':
+        i, j, m, n = item.d(combo_name)[[2, 8, 14, 20], :]
+      elif item.type == 'Quad':
+        i, j, m, n = item.d(combo_name)[[14, 20, 2, 8], :]
+      element.iNode.contour.append(i)
+      element.jNode.contour.append(j)
+      element.mNode.contour.append(m)
+      element.nNode.contour.append(n)
+    elif stress_type == 'Mx':
+      element.iNode.contour.append(element.moment(-1, -1, combo_name)[0])
+      element.jNode.contour.append(element.moment(1, -1, combo_name)[0])
+      element.mNode.contour.append(element.moment(1, 1, combo_name)[0])
+      element.nNode.contour.append(element.moment(-1, 1, combo_name)[0])
+    elif stress_type == 'My':
+      element.iNode.contour.append(element.moment(-1, -1, combo_name)[1])
+      element.jNode.contour.append(element.moment(1, -1, combo_name)[1])
+      element.mNode.contour.append(element.moment(1, 1, combo_name)[1])
+      element.nNode.contour.append(element.moment(-1, 1, combo_name)[1])
+    elif stress_type == 'Mxy':
+      element.iNode.contour.append(element.moment(-1, -1, combo_name)[2])
+      element.jNode.contour.append(element.moment(1, -1, combo_name)[2])
+      element.mNode.contour.append(element.moment(1, 1, combo_name)[2])
+      element.nNode.contour.append(element.moment(-1, 1, combo_name)[2])
+    elif stress_type == 'Qx':
+      element.iNode.contour.append(element.shear(-1, -1, combo_name)[0])
+      element.jNode.contour.append(element.shear(1, -1, combo_name)[0])
+      element.mNode.contour.append(element.shear(1, 1, combo_name)[0])
+      element.nNode.contour.append(element.shear(-1, 1, combo_name)[0])
+    elif stress_type == 'Qy':
+      element.iNode.contour.append(element.shear(-1, -1, combo_name)[1])
+      element.jNode.contour.append(element.shear(1, -1, combo_name)[1])
+      element.mNode.contour.append(element.shear(1, 1, combo_name)[1])
+      element.nNode.contour.append(element.shear(-1, 1, combo_name)[1])
+    elif stress_type == 'Sx':
+      element.iNode.contour.append(element.membrane(-1, -1, combo_name)[0])
+      element.jNode.contour.append(element.membrane(1, -1, combo_name)[0])
+      element.mNode.contour.append(element.membrane(1, 1, combo_name)[0])
+      element.nNode.contour.append(element.membrane(-1, 1, combo_name)[0])
+    elif stress_type == 'Sy':
+      element.iNode.contour.append(element.membrane(-1, -1, combo_name)[1])
+      element.jNode.contour.append(element.membrane(1, -1, combo_name)[1])
+      element.mNode.contour.append(element.membrane(1, 1, combo_name)[1])
+      element.nNode.contour.append(element.membrane(-1, 1, combo_name)[1])
+    elif stress_type == 'Txy':
+      element.iNode.contour.append(element.membrane(-1, -1, combo_name)[2])
+      element.jNode.contour.append(element.membrane(1, -1, combo_name)[2])
+      element.mNode.contour.append(element.membrane(1, 1, combo_name)[2])
+      element.nNode.contour.append(element.membrane(-1, 1, combo_name)[2])
+
+  # Average the values at each node to obtain a smoothed contour
+  for node in model.Nodes.values():
+    node.contour = sum(node.contour)/len(node.contour)
+

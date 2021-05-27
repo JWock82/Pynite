@@ -413,19 +413,13 @@ myWall.analyze()
 # below.
 
 # Render the wall. The default load combination 'Combo 1' will be displayed since we're not
-# specifying otherwise. The quad mesh will be set to show 'Mx' results. It will be noted that the
-# results are `unsmoothed` making the contour plot look "striped" like a step function. This will
-# be discussed below in more detail.
+# specifying otherwise. The quad mesh will be set to show 'Mx' results.
 from PyNite import Visualization
 Visualization.RenderModel(myWall.fem, text_height=meshsize/6, deformed_shape=False, combo_name='Combo 1', color_map='Mx', render_loads=True)
 
-# The `RectWall` class has a smoothing algorithm built into it. Let's plot a smoothed contour for
-# Mx for comparison.
-myWall.plot_forces('Mx')
-
-# Essentially, smoothing averages the corner stresses from every quad framing into each node. This
-# leads to a much more accurate solution. The unsmoothed plot is essentially showing quad center
-# stresses at the quad element corners.
+# The it should be noted that the rendered contours are smoothed. Smoothing averages the corner
+# stresses from every quad framing into each node. This leads to a much more accurate contour.
+# An unsmoothed plot would essentially show quad center stresses at the quad element corners.
 
 # Here are the expected results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202.
 # Note that the deflection values for the PyNite solution are slightly larger, due to transverse
@@ -462,7 +456,7 @@ f_vector = myWall.fem.GetQuad('Q101').f()
 # to derive this element. Therefore the MITC4 element's force vector is arranged as follows:
 # ************************************************************************************************************************************************************
 # f vector: [[fx_m, fy_m, fz_m, mx_m, my_m, mz_m, fx_n, fy_n, fz_n, mx_n, my_n, mz_n, fx_i, fy_i, fz_i, mx_i, my_i, mz_i, fx_j, fy_j, fz_j, mx_j, my_j, mz_j]]
-# indices:  [[  0 ,   1 ,   2 ,   3 ,   4 ,   5 ,   6 ,   7 ,   8 ,   9 ,  10 ,  11 ,  12 ,  13 ,  14 ,  15 ,  16 ,  17 ,  18 ,  19 ,  20 ,  21 ,  22 ,  23 ]]
+# index:    [[  0 ,   1 ,   2 ,   3 ,   4 ,   5 ,   6 ,   7 ,   8 ,   9 ,  10 ,  11 ,  12 ,  13 ,  14 ,  15 ,  16 ,  17 ,  18 ,  19 ,  20 ,  21 ,  22 ,  23 ]]
 # ************************************************************************************************************************************************************
 # nomenclature: fx_n = force in the local x-direction at the n-node
 #               my_j = moment about the local y-axis at the j-node

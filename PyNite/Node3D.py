@@ -55,3 +55,6 @@ class Node3D():
         self.EnforcedRX = None
         self.EnforcedRY = None
         self.EnforcedRZ = None
+
+        # Initialize the color contour value for the node. This will be used for contour smoothing.
+        self.contour = []
