@@ -708,7 +708,7 @@ class Quad3D():
         # Get the stress-strain matrix
         Cs = self.Cs()
 
-        # Calculate the internal moments [Mx, My, Mxy] at each gauss point
+        # Calculate the internal shears [Qx, Qy] at each gauss point
         q1 = matmul(Cs, matmul(self.B_gamma_MITC4(gp, gp), d))
         q2 = matmul(Cs, matmul(self.B_gamma_MITC4(-gp, gp), d))
         q3 = matmul(Cs, matmul(self.B_gamma_MITC4(-gp, -gp), d))
@@ -793,7 +793,7 @@ class Quad3D():
         # Get the stress-strain matrix
         C = self.C()
         
-        # Calculate the internal moments [Sx, Sy, Txy] at each gauss point
+        # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
         s1 = matmul(C, matmul(self.B_m(gp, gp), d))
         s2 = matmul(C, matmul(self.B_m(-gp, gp), d))
         s3 = matmul(C, matmul(self.B_m(-gp, -gp), d))
