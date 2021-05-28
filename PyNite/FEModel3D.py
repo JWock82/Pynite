@@ -353,17 +353,15 @@ class FEModel3D():
         # Initialize a list of nodes that have been checked for duplicates
         checked_list = []
 
-        # Make a temporary copy of `Nodes`
-        temp_1 = self.Nodes.items()
+        # Make a copy of the `Nodes` dictionary
+        temp = self.Nodes.copy()
 
         # Step through each node in the `Nodes` dictionary
         for name_1, node_1 in self.Nodes.items():
 
-            # Add this node to the list of checked nodes
-            checked_list.append(name_1)
-
-            # Make a temporary copy of the dictionary that's missing all the checked nodes
-            temp = {key: self.Nodes[key] for key in self.Nodes.keys() if key not in checked_list}
+            # Make a temporary copy of the dictionary that's missing all the previously checked nodes
+            temp = temp.copy()
+            temp.pop(name_1)
 
             # Compare all the other nodes to `node_1`
             for name_2, node_2 in temp.items():
@@ -406,9 +404,7 @@ class FEModel3D():
 
         for name in remove_list:
             self.Nodes.pop(name)
-
-
-                
+            
 #%%
     def RemoveNode(self, node_name):
         '''
