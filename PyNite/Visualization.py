@@ -1569,10 +1569,10 @@ def PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
   # Step through each element in the model
   for element in list(model.Quads.values()) + list(model.Plates.values()):
     if stress_type == 'dz':
-      if item.type == 'Rect':
-        i, j, m, n = item.d(combo_name)[[2, 8, 14, 20], :]
-      elif item.type == 'Quad':
-        i, j, m, n = item.d(combo_name)[[14, 20, 2, 8], :]
+      if element.type == 'Rect':
+        i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
+      elif element.type == 'Quad':
+        i, j, m, n = element.d(combo_name)[[14, 20, 2, 8], :]
       element.iNode.contour.append(i)
       element.jNode.contour.append(j)
       element.mNode.contour.append(m)
