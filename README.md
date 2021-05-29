@@ -53,6 +53,13 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.31
+* Added contour smoothing for better plate and quad contour plots.
+* Greatly reduced memory usage. The stiffness matrix is now stored as a sparse matrix by default.
+  If the user opts not to use the sparse solver it is converted to a dense matrix later on.
+* Revised circular meshes so that the Y-axis is upward instead of the Z-axis.
+* Bug fix - Rendering springs was broken after the recent change to storing springs in dictionaries.
+
 Version 0.0.30
 * Fixed a bug where quad and plate displacement contours weren't being plotted correctly when user-defined load combinations were being used.
 * Added a few basic meshing features for quads.
