@@ -1,10 +1,10 @@
 # %%
-from numpy import array, matrix, zeros, matmul, divide, add, subtract
+from numpy import array, matrix, zeros, matmul, divide, add, subtract, atleast_2d
 from numpy import nanmax, seterr
 from numpy.linalg import solve
 
 from scipy.sparse.linalg import spsolve
-from scipy.sparse import csc_matrix
+from scipy.sparse import lil_matrix, csr_matrix
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
@@ -349,9 +349,6 @@ class FEModel3D():
 
         # Initialize a list of nodes to be removed from the `Nodes` dictionary
         remove_list = []
-
-        # Initialize a list of nodes that have been checked for duplicates
-        checked_list = []
 
         # Make a copy of the `Nodes` dictionary
         temp = self.Nodes.copy()
@@ -979,7 +976,8 @@ class FEModel3D():
         '''
         
         # Initialize a zero matrix to hold all the stiffness terms
-        K = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
+        # K = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
+        K = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
         
         # Add stiffness terms for each spring in the model
         print('...Adding spring stiffness terms to global stiffness matrix')
@@ -1015,7 +1013,7 @@ class FEModel3D():
                             n = spring.jNode.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        K.itemset((m, n), K.item((m, n)) + spring_K.item((a, b)))
+                        K[(m, n)] += spring_K[(a, b)]
 
         # Add stiffness terms for each member in the model
         print('...Adding member stiffness terms to global stiffness matrix')
@@ -1051,7 +1049,7 @@ class FEModel3D():
                             n = member.jNode.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        K.itemset((m, n), K.item((m, n)) + member_K.item((a, b)))
+                        K[(m, n)] += member_K[(a, b)]
                 
         # Add stiffness terms for each quadrilateral in the model
         print('...Adding quadrilateral stiffness terms to global stiffness matrix')
@@ -1163,7 +1161,8 @@ class FEModel3D():
         '''
         
         # Initialize a zero matrix to hold all the stiffness terms
-        Kg = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
+        # Kg = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
+        Kg = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
         
         # Add stiffness terms for each member in the model
         print('...Adding member geometric stiffness terms to global geometric stiffness matrix')
@@ -1206,7 +1205,7 @@ class FEModel3D():
                             n = member.jNode.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        Kg.itemset((m, n), Kg.item((m, n)) + member_Kg.item((a, b)))
+                        Kg[m, n] += member_Kg[(a, b)]
 
         # Return the global geometric stiffness matrix
         return Kg
@@ -1440,8 +1439,8 @@ class FEModel3D():
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self.__AuxList()
 
-        # Convert D2 from a list to a matrix
-        D2 = matrix(D2).T
+        # Convert D2 from a list to a vector
+        D2 = atleast_2d(D2).T
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
@@ -1475,10 +1474,10 @@ class FEModel3D():
                     try:
                         # Calculate the unknown displacements D1
                         if sparse == True:
-                            D1 = spsolve(csc_matrix(K11), subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:
-                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = solve(K11.toarray(), subtract(subtract(P1, FER1), matmul(K12.toarray(), D2)))
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
                         raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
@@ -1677,10 +1676,10 @@ class FEModel3D():
                     Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name), D1_indices, D2_indices) # Geometric stiffness matrix
 
                     # Combine the stiffness matrices
-                    K11 = add(K11, Kg11)
-                    K12 = add(K12, Kg12)
-                    K21 = add(K21, Kg21)
-                    K22 = add(K22, Kg22)                     
+                    K11 = K11.tocsr() + Kg11.tocsr()
+                    K12 = K12.tocsr() + Kg12.tocsr()
+                    K21 = K21.tocsr() + Kg21.tocsr()
+                    K22 = K22.tocsr() + Kg22.tocsr()                     
 
                 # Calculate the global displacement vector
                 print('...Calculating the global displacement vector')
@@ -1689,12 +1688,13 @@ class FEModel3D():
                     D1 = []
                 else:
                     try:
-                        # Calculate the global displacement vector
+                        # Calculate the unknown displacements D1
                         if sparse == True:
-                            D1 = spsolve(csc_matrix(K11), subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:
-                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                            D1 = solve(K11.toarray(), subtract(subtract(P1, FER1), matmul(K12.toarray(), D2)))
+
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
                         raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
