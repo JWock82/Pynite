@@ -363,7 +363,7 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
         vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
         
     # Add the springs to the append filter
-    for spring in model.Springs:
+    for spring in model.Springs.values():
         
         # Only add the spring if it is active for the given load combination
         if spring.active[combo_name] == True:
@@ -1562,63 +1562,65 @@ def PerpVector(v):
 
 def PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 
-  # Erase any previous contours
-  for node in model.Nodes.values():
-    node.contour = []
+  if stress_type != None:
 
-  # Step through each element in the model
-  for element in list(model.Quads.values()) + list(model.Plates.values()):
-    if stress_type == 'dz':
-      if element.type == 'Rect':
-        i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
-      elif element.type == 'Quad':
-        i, j, m, n = element.d(combo_name)[[14, 20, 2, 8], :]
-      element.iNode.contour.append(i)
-      element.jNode.contour.append(j)
-      element.mNode.contour.append(m)
-      element.nNode.contour.append(n)
-    elif stress_type == 'Mx':
-      element.iNode.contour.append(element.moment(-1, -1, combo_name)[0])
-      element.jNode.contour.append(element.moment(1, -1, combo_name)[0])
-      element.mNode.contour.append(element.moment(1, 1, combo_name)[0])
-      element.nNode.contour.append(element.moment(-1, 1, combo_name)[0])
-    elif stress_type == 'My':
-      element.iNode.contour.append(element.moment(-1, -1, combo_name)[1])
-      element.jNode.contour.append(element.moment(1, -1, combo_name)[1])
-      element.mNode.contour.append(element.moment(1, 1, combo_name)[1])
-      element.nNode.contour.append(element.moment(-1, 1, combo_name)[1])
-    elif stress_type == 'Mxy':
-      element.iNode.contour.append(element.moment(-1, -1, combo_name)[2])
-      element.jNode.contour.append(element.moment(1, -1, combo_name)[2])
-      element.mNode.contour.append(element.moment(1, 1, combo_name)[2])
-      element.nNode.contour.append(element.moment(-1, 1, combo_name)[2])
-    elif stress_type == 'Qx':
-      element.iNode.contour.append(element.shear(-1, -1, combo_name)[0])
-      element.jNode.contour.append(element.shear(1, -1, combo_name)[0])
-      element.mNode.contour.append(element.shear(1, 1, combo_name)[0])
-      element.nNode.contour.append(element.shear(-1, 1, combo_name)[0])
-    elif stress_type == 'Qy':
-      element.iNode.contour.append(element.shear(-1, -1, combo_name)[1])
-      element.jNode.contour.append(element.shear(1, -1, combo_name)[1])
-      element.mNode.contour.append(element.shear(1, 1, combo_name)[1])
-      element.nNode.contour.append(element.shear(-1, 1, combo_name)[1])
-    elif stress_type == 'Sx':
-      element.iNode.contour.append(element.membrane(-1, -1, combo_name)[0])
-      element.jNode.contour.append(element.membrane(1, -1, combo_name)[0])
-      element.mNode.contour.append(element.membrane(1, 1, combo_name)[0])
-      element.nNode.contour.append(element.membrane(-1, 1, combo_name)[0])
-    elif stress_type == 'Sy':
-      element.iNode.contour.append(element.membrane(-1, -1, combo_name)[1])
-      element.jNode.contour.append(element.membrane(1, -1, combo_name)[1])
-      element.mNode.contour.append(element.membrane(1, 1, combo_name)[1])
-      element.nNode.contour.append(element.membrane(-1, 1, combo_name)[1])
-    elif stress_type == 'Txy':
-      element.iNode.contour.append(element.membrane(-1, -1, combo_name)[2])
-      element.jNode.contour.append(element.membrane(1, -1, combo_name)[2])
-      element.mNode.contour.append(element.membrane(1, 1, combo_name)[2])
-      element.nNode.contour.append(element.membrane(-1, 1, combo_name)[2])
+    # Erase any previous contours
+    for node in model.Nodes.values():
+      node.contour = []
 
-  # Average the values at each node to obtain a smoothed contour
-  for node in model.Nodes.values():
-    node.contour = sum(node.contour)/len(node.contour)
+    # Step through each element in the model
+    for element in list(model.Quads.values()) + list(model.Plates.values()):
+      if stress_type == 'dz':
+        if element.type == 'Rect':
+          i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
+        elif element.type == 'Quad':
+          i, j, m, n = element.d(combo_name)[[14, 20, 2, 8], :]
+        element.iNode.contour.append(i)
+        element.jNode.contour.append(j)
+        element.mNode.contour.append(m)
+        element.nNode.contour.append(n)
+      elif stress_type == 'Mx':
+        element.iNode.contour.append(element.moment(-1, -1, combo_name)[0])
+        element.jNode.contour.append(element.moment(1, -1, combo_name)[0])
+        element.mNode.contour.append(element.moment(1, 1, combo_name)[0])
+        element.nNode.contour.append(element.moment(-1, 1, combo_name)[0])
+      elif stress_type == 'My':
+        element.iNode.contour.append(element.moment(-1, -1, combo_name)[1])
+        element.jNode.contour.append(element.moment(1, -1, combo_name)[1])
+        element.mNode.contour.append(element.moment(1, 1, combo_name)[1])
+        element.nNode.contour.append(element.moment(-1, 1, combo_name)[1])
+      elif stress_type == 'Mxy':
+        element.iNode.contour.append(element.moment(-1, -1, combo_name)[2])
+        element.jNode.contour.append(element.moment(1, -1, combo_name)[2])
+        element.mNode.contour.append(element.moment(1, 1, combo_name)[2])
+        element.nNode.contour.append(element.moment(-1, 1, combo_name)[2])
+      elif stress_type == 'Qx':
+        element.iNode.contour.append(element.shear(-1, -1, combo_name)[0])
+        element.jNode.contour.append(element.shear(1, -1, combo_name)[0])
+        element.mNode.contour.append(element.shear(1, 1, combo_name)[0])
+        element.nNode.contour.append(element.shear(-1, 1, combo_name)[0])
+      elif stress_type == 'Qy':
+        element.iNode.contour.append(element.shear(-1, -1, combo_name)[1])
+        element.jNode.contour.append(element.shear(1, -1, combo_name)[1])
+        element.mNode.contour.append(element.shear(1, 1, combo_name)[1])
+        element.nNode.contour.append(element.shear(-1, 1, combo_name)[1])
+      elif stress_type == 'Sx':
+        element.iNode.contour.append(element.membrane(-1, -1, combo_name)[0])
+        element.jNode.contour.append(element.membrane(1, -1, combo_name)[0])
+        element.mNode.contour.append(element.membrane(1, 1, combo_name)[0])
+        element.nNode.contour.append(element.membrane(-1, 1, combo_name)[0])
+      elif stress_type == 'Sy':
+        element.iNode.contour.append(element.membrane(-1, -1, combo_name)[1])
+        element.jNode.contour.append(element.membrane(1, -1, combo_name)[1])
+        element.mNode.contour.append(element.membrane(1, 1, combo_name)[1])
+        element.nNode.contour.append(element.membrane(-1, 1, combo_name)[1])
+      elif stress_type == 'Txy':
+        element.iNode.contour.append(element.membrane(-1, -1, combo_name)[2])
+        element.jNode.contour.append(element.membrane(1, -1, combo_name)[2])
+        element.mNode.contour.append(element.membrane(1, 1, combo_name)[2])
+        element.nNode.contour.append(element.membrane(-1, 1, combo_name)[2])
+
+    # Average the values at each node to obtain a smoothed contour
+    for node in model.Nodes.values():
+      node.contour = sum(node.contour)/len(node.contour)
 

@@ -16,9 +16,7 @@ class Spring3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, iNode, jNode, ks, 
-                 LoadCombos={'Combo 1':LoadCombo('Combo 1', 
-                             factors={'Case 1':1.0})},
+    def __init__(self, Name, iNode, jNode, ks, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})},
                  tension_only=False, comp_only=False):
         '''
         Initializes a new spring.
