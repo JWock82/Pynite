@@ -1478,15 +1478,15 @@ class FEModel3D():
                     try:
                         # Calculate the unknown displacements D1
                         if sparse == True:
-                            # The stiffness matrix is in `lil` format, which is great for memory,
-                            # but slow for mathematical operations. The stiffness matrix will be
-                            # converted to `csr` format for mathematical operations. The `@`
-                            # operator performs matrix multiplication on sparse matrices.
+                            # The partitioned stiffness matrix is in `lil` format, which is great
+                            # for memory, but slow for mathematical operations. The stiffness
+                            # matrix will be converted to `csr` format for mathematical operations.
+                            # The `@` operator performs matrix multiplication on sparse matrices.
                             D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:
-                            # The stiffness matrix is in `lil` format. It will be converted to a 2D
-                            # dense array for mathematical operations.
+                            # The partitioned stiffness matrix is in `lil` format. It will be
+                            # converted to a 2D dense array for mathematical operations.
                             D1 = solve(K11.toarray(), subtract(subtract(P1, FER1), matmul(K12.toarray(), D2)))
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
@@ -1685,14 +1685,14 @@ class FEModel3D():
                     K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices)      # Initial stiffness matrix
                     Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name), D1_indices, D2_indices) # Geometric stiffness matrix
 
-                    # Combine the stiffness matrices. They are currently `lil` format which is
-                    # great for memory, but slow for mathematical operations. They will be
+                    # Combine the partitioned stiffness matrices. They are currently `lil` format
+                    # which is great for memory, but slow for mathematical operations. They will be
                     # converted to `csr` format. The `+` operator performs matrix addition on `csr`
                     # matrices.
                     K11 = K11.tocsr() + Kg11.tocsr()
                     K12 = K12.tocsr() + Kg12.tocsr()
                     K21 = K21.tocsr() + Kg21.tocsr()
-                    K22 = K22.tocsr() + Kg22.tocsr()                     
+                    K22 = K22.tocsr() + Kg22.tocsr()                
 
                 # Calculate the global displacement vector
                 print('...Calculating the global displacement vector')
@@ -1703,15 +1703,13 @@ class FEModel3D():
                     try:
                         # Calculate the unknown displacements D1
                         if sparse == True:
-                            # The stiffness matrix is in `lil` format, which is great for memory,
-                            # but slow for mathematical operations. The stiffness matrix will be
-                            # converted to `csr` format for mathematical operations. The `@`
+                            # The partitioned stiffness matrix is already in `csr` format. The `@`
                             # operator performs matrix multiplication on sparse matrices.
-                            D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
+                            D1 = spsolve(K11, subtract(subtract(P1, FER1), K12 @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:
-                            # The stiffness matrix is in `lil` format. It will be converted to a 2D
-                            # dense array for mathematical operations.
+                            # The partitioned stiffness matrix is in `csr` format. It will be
+                            # converted to a 2D dense array for mathematical operations.
                             D1 = solve(K11.toarray(), subtract(subtract(P1, FER1), matmul(K12.toarray(), D2)))
 
                     except:
