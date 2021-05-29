@@ -151,14 +151,14 @@ class AnnulusRingMesh(Mesh):
             if i <= n:
                 angle = theta*(i - 1)
                 x = Xo + r1*cos(angle)
-                y = Yo + r1*sin(angle)
-                z = Zo
+                y = Yo
+                z = Zo + r1*sin(angle)
             # Generate the outer radius of nodes
             else:
                 angle = theta*((i - n) - 1)
                 x = Xo + r2*cos(angle)
-                y = Yo + r2*sin(angle)
-                z = Zo
+                y = Yo 
+                z = Zo + r2*sin(angle)
             
             self.nodes[node_name] = Node3D(node_name, x, y, z)
 
@@ -244,8 +244,8 @@ class AnnulusTransRingMesh(Mesh):
             if i <= n:
                 angle = theta1*(i - 1)
                 x = Xo + r1*cos(angle)
-                y = Yo + r1*sin(angle)
-                z = Zo
+                y = Yo 
+                z = Zo + r1*sin(angle)
             # Generate the center radius of nodes
             elif i <= 3*n:
                 if (i - n) == 1:
@@ -255,8 +255,8 @@ class AnnulusTransRingMesh(Mesh):
                 else:
                     angle += 2*theta2
                 x = Xo + r2*cos(angle)
-                y = Yo + r2*sin(angle)
-                z = Zo
+                y = Yo
+                z = Zo + r2*sin(angle)
             # Generate the outer radius of nodes
             else:
                 if (i - 3*n) == 1:
@@ -264,8 +264,8 @@ class AnnulusTransRingMesh(Mesh):
                 else:
                     angle = theta3*((i - 3*n) - 1)
                 x = Xo + r3*cos(angle)
-                y = Yo + r3*sin(angle)
-                z = Zo
+                y = Yo
+                z = Zo + r3*sin(angle)
             
             self.nodes[node_name] = Node3D(node_name, x, y, z)
 
@@ -321,16 +321,16 @@ class FrustrumMesh(AnnulusMesh):
         super().__init__(t, E, nu, mesh_size, large_radius, small_radius, center, start_node, start_element)
 
         Xo = center[0]
-        Yo = center[1]
+        Zo = center[2]
 
         # Adjust the Z-cooridnate of each node
         for node in self.nodes.values():
             X = node.X
             Y = node.Y
             Z = node.Z
-            r = ((X - Xo)**2 + (Y - Yo)**2)**0.5
-            Z += (r - large_radius)/(large_radius - small_radius)*height
-            node.Z = Z
+            r = ((X - Xo)**2 + (Z - Zo)**2)**0.5
+            Y += (r - large_radius)/(large_radius - small_radius)*height
+            node.Y = Y
 
 #%%
 class CylinderMesh(Mesh):
@@ -380,7 +380,7 @@ class CylinderMesh(Mesh):
 
         radius = self.radius
         h = self.h
-        z = self.center[2]
+        y = self.center[1]
         n = int(self.start_node[1:])
         q = int(self.start_element[1:])
 
@@ -389,14 +389,14 @@ class CylinderMesh(Mesh):
             num_quads = int(2*pi/mesh_size)
 
         # Mesh the cylinder from the bottom toward the top
-        while round(z, 10) < round(h, 10):
+        while round(y, 10) < round(h, 10):
             
-            height = h - z                                # Remaining height to be meshed
+            height = h - y                                # Remaining height to be meshed
             n_vert = int(height/mesh_size)  # Number of times the plate height fits in the remaining unmeshed height
-            h_z = height/n_vert                         # Element height in the vertical direction
+            h_y = height/n_vert                         # Element height in the vertical direction
         
             # Create a mesh of nodes for the ring
-            ring = CylinderRingMesh(t, E, nu, radius, h_z, num_quads, [0, 0, z], 'N' + str(n), 'Q' + str(q))
+            ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [0, y, 0], 'N' + str(n), 'Q' + str(q))
             n += num_quads
             q += num_quads
         
@@ -408,7 +408,7 @@ class CylinderMesh(Mesh):
             self.elements.update(ring.elements)
 
             # Prepare to move to the next ring
-            z += h_z
+            y += h_y
         
         # After calling the `.update()` method some elements are still attached to the duplicate
         # nodes that are no longer in the dictionary. Attach these plates to the nodes that are
@@ -489,14 +489,14 @@ class CylinderRingMesh(Mesh):
             if i <= n:
                 angle = theta*(i - 1)
                 x = Xo + radius*cos(angle)
-                y = Yo + radius*sin(angle)
-                z = Zo
+                y = Yo
+                z = Zo + radius*sin(angle)
             # Generate the top nodes of the ring
             else:
                 angle = theta*((i - n) - 1)
                 x = Xo + radius*cos(angle)
-                y = Yo + radius*sin(angle)
-                z = Zo + height
+                y = Yo + height
+                z = Zo + radius*sin(angle)
             
             self.nodes[node_name] = Node3D(node_name, x, y, z)
 
