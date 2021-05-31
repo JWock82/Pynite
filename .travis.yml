@@ -9,4 +9,4 @@ install:
 
 # command to run tests
 script:
-  - python -m unittest Testing.test_2D_frames Testing.test_axial_load Testing.test_benchmark Testing.test_end_releases Testing.test_plates Testing.test_springs Testing.test_support_settlement
+  - python -m unittest Testing
