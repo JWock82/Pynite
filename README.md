@@ -53,6 +53,9 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Versions 0.0.32 and 0.0.33
+* Started work in integrating Travis-CI into GitHub for testing PyNite code.
+
 Version 0.0.31
 * Added contour smoothing for better plate and quad contour plots.
 * Greatly reduced memory usage. The stiffness matrix is now stored as a sparse matrix by default.
