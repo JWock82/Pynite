@@ -6,4 +6,4 @@ install:
   - pip install numpy scipy matplotlib PrettyTable
 # command to run tests
 script:
-  - python -m unittest Testing.run_tests
+  - python -m unittest Testing.test_2D_frames
