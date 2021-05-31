@@ -14,6 +14,6 @@ if __name__ == '__main__':
     # from numpy.matrix
     # unittest.main(warnings='ignore')
     loader = unittest.TestLoader()
-    testSuite = loader.discover("Testing & Debugging", pattern='test_*.py')
+    testSuite = loader.discover("Testing", pattern='test_*.py')
     testRunner = unittest.TextTestRunner(warnings='ignore')
     testRunner.run(testSuite)
