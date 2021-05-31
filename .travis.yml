@@ -3,7 +3,7 @@ python:
   - "3.6"      # current default Python on Travis CI
 # command to install dependencies
 install:
-  - pip install -r requirements.txt
+  - pip install numpy scipy matplotlib PrettyTable
 # command to run tests
 script:
-  - python -m unittest "Testing & Debugging"
+  - python -m unittest Testing.run_tests
