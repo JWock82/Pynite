@@ -1,5 +1,6 @@
 # PyNite
 [![Build Status](https://travis-ci.com/JWock82/PyNite.svg?branch=master)](https://travis-ci.com/JWock82/PyNite)
+![GitHub all releases](https://img.shields.io/github/downloads/JWock82/PyNite/total)
 
 An easy to use linear elastic 3D structural engineering finite element analysis library for Python.
 
