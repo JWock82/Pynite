@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.com/JWock82/PyNite.svg?branch=master)](https://travis-ci.com/JWock82/PyNite)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/PyNite">
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/JWock82/PyNite)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/JWock82/PyNite)
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/PyNite)
 ![GitHub](https://img.shields.io/github/license/JWock82/PyNite)
 
