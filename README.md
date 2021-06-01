@@ -4,7 +4,7 @@
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/PyNite">
 ![GitHub](https://img.shields.io/github/license/JWock82/PyNite)
 
-An easy to use linear elastic 3D structural engineering finite element analysis library for Python.
+An easy to use elastic 3D structural engineering finite element analysis library for Python.
 
 <div>
 <img src="https://github.com/JWock82/PyNite/blob/master/Resources/PyNite%20Bin.PNG" width="300"/>
