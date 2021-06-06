@@ -19,6 +19,83 @@ class Mesh():
         self.nodes = {}                     # A dictionary containing the nodes in the mesh
         self.elements = {}                  # A dictionary containing the elements in the mesh
 
+#%%
+class RectangleMesh(Mesh):
+    """
+    A mesh of quadrilaterals forming a rectangle
+    """
+
+    def __init__(self, t, E, nu, mesh_size, width, height, start_node='N1', start_element='Q1'):
+
+        super().__init__(t, E, nu, start_node, start_element)
+        self.mesh_size = mesh_size
+        self.width = width
+        self.height = height
+        self.__mesh()
+    
+    def __mesh(self):
+
+        mesh_size = self.mesh_size
+        width = self.width
+        height = self.height
+        
+        # Each node number will be increased by the offset calculated below
+        node_offset = int(self.start_node[1:]) - 1
+
+        # Each element number will be increased by the offset calculated below
+        element_offset = int(self.start_element[1:]) - 1
+
+        # Determine how many rows and columns of elements are necessary
+        num_rows = round(height/mesh_size)
+        num_cols = round(width/mesh_size)
+
+        # Determine the element width and height
+        b = width/num_cols
+        h = height/num_rows
+
+        # Create the nodes
+        n = 1
+        for yi in range(num_rows + 1):
+            for xi in range(num_cols + 1):
+                
+                # Assign the node a name
+                node_name = 'N' + str(n + node_offset)
+                
+                # Calculate the coordinates
+                X = xi*b
+                Y = yi*h
+                Z = 0
+
+                # Add the node to the mesh
+                self.nodes[node_name] = Node3D(node_name, X, Y, Z)
+
+                n += 1
+        
+        # Create the elements
+        r = 1
+        n = 1
+        for i in range(1, num_cols*num_rows + 1, 1):
+
+            # Assign the element a name
+            element_name = 'Q' + str(i + element_offset)
+
+            # Find the attached nodes
+            i_node = n + (r - 1)
+            j_node = i_node + 1
+            m_node = j_node + (num_cols + 1)
+            n_node = m_node - 1
+
+            if i % num_cols == 0:
+                r += 1
+            
+            n += 1
+            
+            self.elements[element_name] = Quad3D(element_name, self.nodes['N' + str(i_node + node_offset)],
+                                                               self.nodes['N' + str(j_node + node_offset)],
+                                                               self.nodes['N' + str(m_node + node_offset)],
+                                                               self.nodes['N' + str(n_node + node_offset)],
+                                                               self.t, self.E, self.nu)
+
 #%%           
 class AnnulusMesh(Mesh):
     """
