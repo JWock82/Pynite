@@ -115,7 +115,7 @@ class RectangleMesh(Mesh):
                     X = Xo + xi*b
                     Y = Yo + yi*h
                     Z = Zo + 0
-                if plane == 'YZ':
+                elif plane == 'YZ':
                     X = Xo + 0
                     Y = Yo + yi*h
                     Z = Zo + xi*b
