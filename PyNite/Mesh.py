@@ -21,16 +21,53 @@ class Mesh():
 
 #%%
 class RectangleMesh(Mesh):
-    """
-    A mesh of quadrilaterals forming a rectangle
-    """
 
-    def __init__(self, t, E, nu, mesh_size, width, height, start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY', start_node='N1',
+                 start_element='Q1', element_type='Quad'):
+        """
+        A rectangular mesh of elements.
 
+        Parameters
+        ----------
+        t : number
+            Element thickness.
+        E : number
+            Element modulus of elasticity.
+        nu : number
+            Element poisson's ratio.
+        mesh_size : number
+            Desired mesh size.
+        width : number
+            The overall width of the mesh measured along its local x-axis.
+        height : number
+            The overall height of the mesh measured along its local y-axis.
+        origin : list, optional
+            The origin of the rectangular mesh's local coordinate system. The default is [0, 0, 0].
+        plane : string, optional
+            The plane the mesh will be parallel to. Options are 'XY', 'YZ', and 'XZ'. The default
+            is 'XY'.
+        start_node : string, optional
+            A unique name for the first node in the mesh. The default is 'N1'.
+        start_element : string, optional
+            A unique name for the first element in the mesh. The default is 'Q1' or 'R1' depending
+            on the type of element selected.
+        element_type : string, optional
+            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
+            'Quad'.
+
+        Returns
+        -------
+        A new rectangular mesh object.
+
+        """
+        
         super().__init__(t, E, nu, start_node, start_element)
         self.mesh_size = mesh_size
         self.width = width
         self.height = height
+        self.origin = origin
+        self.plane = plane
+        self.element_type = element_type
         self.__mesh()
     
     def __mesh(self):
@@ -38,12 +75,23 @@ class RectangleMesh(Mesh):
         mesh_size = self.mesh_size
         width = self.width
         height = self.height
+        Xo = self.origin[0]
+        Yo = self.origin[1]
+        Zo = self.origin[2]
+        plane = self.plane
+        element_type = self.element_type
         
         # Each node number will be increased by the offset calculated below
         node_offset = int(self.start_node[1:]) - 1
 
         # Each element number will be increased by the offset calculated below
         element_offset = int(self.start_element[1:]) - 1
+
+        # Determine which prefix to assign to new elements
+        if element_type == 'Quad':
+            element_prefix = 'Q'
+        else:
+            element_prefix = 'R'
 
         # Determine how many rows and columns of elements are necessary
         num_rows = round(height/mesh_size)
@@ -54,22 +102,31 @@ class RectangleMesh(Mesh):
         h = height/num_rows
 
         # Create the nodes
-        n = 1
+        node_num = 1
         for yi in range(num_rows + 1):
             for xi in range(num_cols + 1):
                 
                 # Assign the node a name
-                node_name = 'N' + str(n + node_offset)
+                node_name = 'N' + str(node_num + node_offset)
                 
-                # Calculate the coordinates
-                X = xi*b
-                Y = yi*h
-                Z = 0
+                # Calculate the node's coordinates
+                if plane == 'XY':
+                    X = Xo + xi*b
+                    Y = Yo + yi*h
+                    Z = Zo + 0
+                if plane == 'YZ':
+                    X = Xo + 0
+                    Y = Yo + yi*h
+                    Z = Zo + xi*b
+                else:
+                    X = Xo + xi*b
+                    Y = Yo + 0
+                    Z = Zo + yi*h
 
                 # Add the node to the mesh
                 self.nodes[node_name] = Node3D(node_name, X, Y, Z)
 
-                n += 1
+                node_num += 1
         
         # Create the elements
         r = 1
@@ -77,7 +134,7 @@ class RectangleMesh(Mesh):
         for i in range(1, num_cols*num_rows + 1, 1):
 
             # Assign the element a name
-            element_name = 'Q' + str(i + element_offset)
+            element_name = element_prefix + str(i + element_offset)
 
             # Find the attached nodes
             i_node = n + (r - 1)
@@ -90,11 +147,18 @@ class RectangleMesh(Mesh):
             
             n += 1
             
-            self.elements[element_name] = Quad3D(element_name, self.nodes['N' + str(i_node + node_offset)],
-                                                               self.nodes['N' + str(j_node + node_offset)],
-                                                               self.nodes['N' + str(m_node + node_offset)],
-                                                               self.nodes['N' + str(n_node + node_offset)],
-                                                               self.t, self.E, self.nu)
+            if element_type == 'Quad':
+                self.elements[element_name] = Quad3D(element_name, self.nodes['N' + str(i_node + node_offset)],
+                                                                   self.nodes['N' + str(j_node + node_offset)],
+                                                                   self.nodes['N' + str(m_node + node_offset)],
+                                                                   self.nodes['N' + str(n_node + node_offset)],
+                                                                   self.t, self.E, self.nu)
+            else:
+                self.elements[element_name] = Plate3D(element_name, self.nodes['N' + str(i_node + node_offset)],
+                                                                    self.nodes['N' + str(j_node + node_offset)],
+                                                                    self.nodes['N' + str(m_node + node_offset)],
+                                                                    self.nodes['N' + str(n_node + node_offset)],
+                                                                    self.t, self.E, self.nu)
 
 #%%           
 class AnnulusMesh(Mesh):
