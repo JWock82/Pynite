@@ -1,5 +1,6 @@
 from PyNite.Node3D import Node3D
 from PyNite.Quad3D import Quad3D
+from PyNite.Plate3D import Plate3D
 from math import pi, sin, cos
 
 #%%
