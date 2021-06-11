@@ -61,6 +61,7 @@ Here's a list of projects that run on PyNite:
 # What's New?
 Version 0.0.34
 * Bug fix for contour smoothing on rectangular plates. The plate results were correct, but the contours were slightly off after adding the contour smoothing feature.
+* Added rectangular meshes. More to come on this feature.
 
 Versions 0.0.32 and 0.0.33
 * Started work in integrating Travis-CI into GitHub for testing PyNite code.
