@@ -314,12 +314,23 @@ class FEModel3D():
 
 #%%
     def AddMesh(self, mesh):
+        """
+        Adds a predefined mesh to the model.
+
+        Parameters
+        ----------
+        mesh : Mesh
+            A mesh object.
+        """
 
         # Add the mesh's nodes to the finite element model
         self.Nodes.update(mesh.nodes)
 
         # Add the mesh's elements to the finite element model
-        self.Quads.update(mesh.elements)
+        if list(mesh.elements.values())[0].type == 'Quad':
+            self.Quads.update(mesh.elements)
+        elif list(mesh.elements.values())[0].type == 'Rect':
+            self.Plates.update(mesh.elements)
 
         # If the mesh contained duplicate keys that were already in the `Nodes` dictionary, the old
         # nodes will have been abandoned in favor of the new nodes. Reattach any elements that are
