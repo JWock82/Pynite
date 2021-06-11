@@ -2,11 +2,36 @@ from numpy import zeros, matrix, array, matmul, transpose, cross, add
 from numpy.linalg import inv, norm
 from PyNite.LoadCombo import LoadCombo
 
-# A rectangular plate bending element
+#%%
 class Plate3D():
 
     def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu,
                  LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
+        """
+        A rectangular plate element
+
+        Parameters
+        ----------
+        Name : string
+            A unique plate name
+        iNode : Node3D
+            The plate's i-node
+        jNode : Node3D
+            The plate's j-node
+        mNode : Node3D
+            The plate's m-node
+        nNode : Node3D
+            The plate's n-node
+        t : number
+            Plate thickness
+        E : number
+            Plate modulus of elasticity
+        nu : number
+            Poisson's ratio
+        LoadCombos : dict {combo_name: LoacCombo}
+            A dictionary of the load combinations used in the model the plate is in
+        
+        """
 
         self.Name = Name
         self.ID = None
@@ -25,19 +50,27 @@ class Plate3D():
         self.LoadCombos = LoadCombos
     
     def width(self):
+        """
+        Returns the width of the plate along its local x-axis
+        """
         return ((self.jNode.X - self.iNode.X)**2 + (self.jNode.Y - self.iNode.Y)**2 + (self.jNode.Z - self.iNode.Z)**2)**0.5
 
     def height(self):
+        """
+        Returns the height of the plate along its local y-axis
+        """
         return ((self.nNode.X - self.iNode.X)**2 + (self.nNode.Y - self.iNode.Y)**2 + (self.nNode.Z - self.iNode.Z)**2)**0.5
 
-    # Creates the local stiffness matrix
     def k(self):
+        """
+        returns the plate's local stiffness matrix
+        """
         return add(self.k_b(), self.k_m())
     
     def k_b(self):
-        '''
+        """
         Returns the local stiffness matrix for bending
-        '''
+        """
 
         a = self.width()
         b = self.height()
@@ -125,11 +158,11 @@ class Plate3D():
         # Return the local stiffness matrix
         return k_exp
 
-#%%
     def k_m(self):
-        '''
+        """
         Returns the local stiffness matrix for membrane forces
-        '''
+        """
+
         a = self.width()
         b = self.height()
         beta = b/a
@@ -196,26 +229,24 @@ class Plate3D():
                 k_exp[m, n] = k[i, j]
         
         return k_exp
-
-#%%   
+  
     def f(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the plate's local end force vector
-        '''
+        """
         
         # Calculate and return the plate's local end force vector
         return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
-#%%
     def fer(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the rectangle's local fixed end reaction vector.
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to get the load vector for.
-        '''
+        """
         
         # Initialize the fixed end reaction vector
         fer = zeros((12, 1))
@@ -277,27 +308,26 @@ class Plate3D():
 
         return fer_exp
         
-
-#%%
     def d(self, combo_name='Combo 1'):
-       '''
+       """
        Returns the plate's local displacement vector
-       '''
+       """
 
        # Calculate and return the local displacement vector
        return matmul(self.T(), self.D(combo_name))
 
-#%%
     def F(self, combo_name='Combo 1'):
-        
+        """
+        Returns the plate's global nodal force vector
+        """
+
         # Calculate and return the global force vector
         return matmul(inv(self.T()), self.f(combo_name))
 
-#%%
     def D(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the plate's global displacement vector for the given load combination.
-        '''
+        """
         
         # Initialize the displacement vector
         D = zeros((24, 1))
@@ -333,10 +363,11 @@ class Plate3D():
         
         # Return the global displacement vector
         return D
-
-#%%  
-    # Transformation matrix
+ 
     def T(self):
+        """
+        Returns the plate's transformation matrix
+        """
 
         # Calculate the direction cosines for the local x-axis
         # The local x-axis will run from the i-node to the j-node
@@ -384,17 +415,16 @@ class Plate3D():
         
         return transMatrix
 
-#%%
-    # Plate global stiffness matrix
     def K(self):
-        
+        """
+        Returns the plate's global stiffness matrix
+        """
+
         # Calculate and return the stiffness matrix in global coordinates
         return matmul(matmul(transpose(self.T()), self.k()), self.T())
 
-#%% 
-    # Global fixed end reaction vector
     def FER(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the global fixed end reaction vector.
 
         Parameters
@@ -402,14 +432,15 @@ class Plate3D():
         combo_name : string
             The name of the load combination to calculate the fixed end
             reaction vector for (not the load combination itself).
-        '''
+        """
         
         # Calculate and return the fixed end reaction vector
         return matmul(inv(self.T()), self.fer(combo_name))
 
-#%%
-    # Calculates and returns the displacement coefficient matrix [C]
     def __C(self):
+        """
+        Returns the plate's displacement coefficient matrix [C]
+        """
 
         # Find the local x and y coordinates at each node
         xi = 0
@@ -441,9 +472,11 @@ class Plate3D():
         # Return the coefficient matrix
         return C
 
-#%%
-    # Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y) in the plate's local system
     def __Q(self, x, y):
+        """
+        Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y)
+        in the plate's local system.
+        """
 
         # Calculate the [Q] coefficient matrix
         Q = matrix([[0, 0, 0, -2, 0, 0, -6*x, -2*y, 0, 0, -6*x*y, 0],
@@ -453,12 +486,15 @@ class Plate3D():
         # Return the [Q] coefficient matrix
         return Q
 
-#%%
-    # Returns the vector of constants for plate bending
     def __a(self, combo_name='Combo 1'):
-        '''
-        Returns the vector of plate bending constants for the displacement function
-        '''
+        """
+        Returns the vector of plate bending constants for the displacement function.
+
+        Parameters
+        ----------
+        combo_name : string
+            The name of the load combination to get the vector for
+        """
 
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
@@ -467,11 +503,10 @@ class Plate3D():
         # Return the plate bending constants
         return inv(self.__C())*d
 
-#%%  
     def __D(self):
-        '''
+        """
         Calculates and returns the constitutive matrix for isotropic materials [D].
-        '''
+        """
 
         # Calculate the coefficient for the constitutive matrix [D]
         nu = self.nu
@@ -485,22 +520,40 @@ class Plate3D():
         # Return the constitutive matrix [D]
         return D
 
-#%%   
     def moment(self, x, y, combo_name='Combo 1'):
-        '''
+        """
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
-        '''
+
+        Parameters
+        ----------
+        x : number
+            The x-coordinate in the plate's local coordinate system.
+        y : number
+            The y-coordinate in the plate's local coordinate system.
+        combo_name : string
+            The name of the load combination to evaluate. The default is 'Combo 1'.
+
+        """
         
         # Calculate and return internal moments
         return self.__D()*self.__Q(x, y)*self.__a(combo_name)
-
-#%%  
+ 
     def shear(self, x, y, combo_name='Combo 1'):
-        '''
+        """
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
-        '''
+
+        Parameters
+        ----------
+        x : number
+            The x-coordinate in the plate's local coordinate system.
+        y : number
+            The y-coordinate in the plate's local coordinate system.
+        combo_name : string
+            The name of the load combination to evaluate. The default is 'Combo 1'.
+
+        """
 
         # Store matrices into local variables for quicker access
         D = self.__D()
@@ -531,7 +584,6 @@ class Plate3D():
         return matrix([[Qx], 
                        [Qy]])
 
-#%%
     def membrane(self, x, y, combo_name='Combo 1'):
         """
         Returns the in-plane (membrane) stresses in the plate.
