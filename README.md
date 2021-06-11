@@ -59,6 +59,9 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.34
+* Bug fix for contour smoothing on rectangular plates. The plate results were correct, but the contours were slightly off after adding the contour smoothing feature.
+
 Versions 0.0.32 and 0.0.33
 * Started work in integrating Travis-CI into GitHub for testing PyNite code.
 
