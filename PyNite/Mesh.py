@@ -2,6 +2,7 @@ from PyNite.Node3D import Node3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from math import pi, sin, cos
+from bisect import bisect
 
 #%%
 class Mesh():
@@ -23,8 +24,9 @@ class Mesh():
 #%%
 class RectangleMesh(Mesh):
 
-    def __init__(self, t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY', start_node='N1',
-                 start_element='Q1', element_type='Quad'):
+    def __init__(self, t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY', 
+                 x_control=[], y_control=[], start_node='N1', start_element='Q1',
+                 element_type='Quad'):
         """
         A rectangular mesh of elements.
 
@@ -47,6 +49,10 @@ class RectangleMesh(Mesh):
         plane : string, optional
             The plane the mesh will be parallel to. Options are 'XY', 'YZ', and 'XZ'. The default
             is 'XY'.
+        x_control : list, optional
+            A list of control points along the mesh's local x-axis work into the mesh.
+        y_control : list, optional
+            A list of control points along the mesh's local y-axis work into the mesh.
         start_node : string, optional
             A unique name for the first node in the mesh. The default is 'N1'.
         start_element : string, optional
@@ -68,6 +74,8 @@ class RectangleMesh(Mesh):
         self.height = height
         self.origin = origin
         self.plane = plane
+        self.x_control = x_control
+        self.y_control = y_control
         self.element_type = element_type
         self.__mesh()
     
@@ -80,7 +88,19 @@ class RectangleMesh(Mesh):
         Yo = self.origin[1]
         Zo = self.origin[2]
         plane = self.plane
+        x_control = self.x_control
+        y_control = self.y_control
         element_type = self.element_type
+
+        # Add the mesh's boundaries to the list of control points
+        x_control.append(0)
+        x_control.append(width)
+        y_control.append(0)
+        y_control.append(height)
+
+        # Sort the control points and remove duplicate values
+        x_control = sorted(set(x_control))
+        y_control = sorted(set(y_control))
         
         # Each node number will be increased by the offset calculated below
         node_offset = int(self.start_node[1:]) - 1
@@ -94,40 +114,74 @@ class RectangleMesh(Mesh):
         else:
             element_prefix = 'R'
 
-        # Determine how many rows and columns of elements are necessary
-        num_rows = round(height/mesh_size)
-        num_cols = round(width/mesh_size)
-
-        # Determine the element width and height
-        b = width/num_cols
-        h = height/num_rows
-
-        # Create the nodes
+        # Initialize node numbering
         node_num = 1
-        for yi in range(num_rows + 1):
-            for xi in range(num_cols + 1):
-                
-                # Assign the node a name
-                node_name = 'N' + str(node_num + node_offset)
-                
-                # Calculate the node's coordinates
-                if plane == 'XY':
-                    X = Xo + xi*b
-                    Y = Yo + yi*h
-                    Z = Zo + 0
-                elif plane == 'YZ':
-                    X = Xo + 0
-                    Y = Yo + yi*h
-                    Z = Zo + xi*b
-                else:
-                    X = Xo + xi*b
-                    Y = Yo + 0
-                    Z = Zo + yi*h
 
-                # Add the node to the mesh
-                self.nodes[node_name] = Node3D(node_name, X, Y, Z)
+        # Step through each y control point (except the first one which is always zero)
+        num_rows = 0
+        num_cols = 0
+        y = 0
+        for j in range(1, len(y_control), 1):
+            
+            # Determine the mesh size between this y control point and the previous one
+            ny = max(1, (y_control[j] - y_control[j - 1])/mesh_size)
+            h = (y_control[j] - y_control[j - 1])/ ny
 
-                node_num += 1
+            # Generate nodes between the y control points
+            while round(y, 10) <= round(y_control[j], 10):
+                
+                # Count the number of rows of plates as we go
+                num_rows += 1
+
+                # Step through each x control point (except the first one which is always zero)
+                x = 0
+                for i in range(1, len(x_control), 1):
+
+                    # Determine the mesh size between this x control point and the previous one
+                    nx = max(1, (x_control[i] - x_control[i - 1])/mesh_size)
+                    b = (x_control[i] - x_control[i - 1])/nx
+
+                    # Generate nodes between the x control points
+                    while round(x, 10) <= round(x_control[i], 10):
+                        
+                        # Count the number of columns of plates as we go
+                        if y == 0:
+                            num_cols += 1
+
+                        # Assign the node a name
+                        node_name = 'N' + str(node_num + node_offset)
+
+                        # Calculate the node's coordinates
+                        if plane == 'XY':
+                            X = Xo + x
+                            Y = Yo + y
+                            Z = Zo + 0
+                        elif plane == 'YZ':
+                            X = Xo + 0
+                            Y = Yo + y
+                            Z = Zo + x
+                        else:
+                            X = Xo + x
+                            Y = Yo + 0
+                            Z = Zo + y
+
+                        # Add the node to the mesh
+                        self.nodes[node_name] = Node3D(node_name, X, Y, Z)
+
+                        # Move to the next x coordinate
+                        x += b
+
+                        # Move to the next node number
+                        node_num += 1
+
+                # Move to the next y coordinate
+                y += h
+        
+        # At this point `num_cols` and `num_rows` represent the number of columns and rows of
+        # nodes. We'll adjust these variables to be the number of columns and rows of elements
+        # instead.
+        num_cols -= 1
+        num_rows -= 1
         
         # Create the elements
         r = 1
