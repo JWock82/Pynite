@@ -59,6 +59,10 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.35
+* Issues with rectangular plate elements have been fixed. Membrane stiffness terms were being placed in the wrong location in the element's global stifness matrix. This bug was identical to the one that had been occuring in quadrilateral elements prior to v0.0.28.
+* Bug fix for `dz` countours for rectangular plate elements. The individual plate corner displacements were being mapped to the wrong corners. Only the `dz` contours were affected by this issue.
+
 Version 0.0.34
 * Bug fix for contour smoothing on rectangular plates. The plate results were correct, but the contours were slightly off after adding the contour smoothing feature.
 * Added rectangular meshes. More to come on this feature.
