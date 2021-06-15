@@ -219,7 +219,7 @@ class Plate3D():
                 if j in [0, 2, 4, 6]:  # indices associated with displacement in x
                     n = j*3
                 if j in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    n = i*3 - 2
+                    n = j*3 - 2
                 
                 # Ensure the indices are integers rather than floats
                 m, n = round(m), round(n)
