@@ -1591,7 +1591,6 @@ def PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
         # Internally PyNite defines the nodes for a rectangular element in the order (i, n, m, j),
         # while it defines the nodes for a quadrilateral element in the order (m, n, i, j)
         if element.type == 'Rect':
-          #i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
           i, j, m, n = element.d(combo_name)[[2, 20, 14, 8], :]
         else:
           i, j, m, n = element.d(combo_name)[[14, 20, 2, 8], :]
