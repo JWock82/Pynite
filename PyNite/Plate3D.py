@@ -266,7 +266,7 @@ class Plate3D():
                 if pressure[1] == case:
 
                     # Sum the pressures
-                    p -= factor*pressure[0]
+                    p += factor*pressure[0]
         
         b = self.width()/2
         c = self.height()/2
