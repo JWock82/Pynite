@@ -1355,17 +1355,17 @@ class FEModel3D():
                     if load[2] == case:
 
                         if load[0] == 'FX':
-                            P.itemset((ID*6 + 0, 0), P[ID*6 + 0, 0] + factor*load[1])
+                            P[ID*6 + 0, 0] += factor*load[1]
                         elif load[0] == 'FY':
-                            P.itemset((ID*6 + 1, 0), P[ID*6 + 1, 0] + factor*load[1])
+                            P[ID*6 + 1, 0] += factor*load[1]
                         elif load[0] == 'FZ':
-                            P.itemset((ID*6 + 2, 0), P[ID*6 + 2, 0] + factor*load[1])
+                            P[ID*6 + 2, 0] += factor*load[1]
                         elif load[0] == 'MX':
-                            P.itemset((ID*6 + 3, 0), P[ID*6 + 3, 0] + factor*load[1])
+                            P[ID*6 + 3, 0] += factor*load[1]
                         elif load[0] == 'MY':
-                            P.itemset((ID*6 + 4, 0), P[ID*6 + 4, 0] + factor*load[1])
+                            P[ID*6 + 4, 0] += factor*load[1]
                         elif load[0] == 'MZ':
-                            P.itemset((ID*6 + 5, 0), P[ID*6 + 5, 0] + factor*load[1])
+                            P[ID*6 + 5, 0] += factor*load[1]
         
         # Return the global nodal force vector
         return P
