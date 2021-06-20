@@ -265,12 +265,12 @@ class Plate3D():
                 # Check if the current pressure corresponds to the current load case
                 if pressure[1] == case:
 
-                    # Sum the pressures
-                    p += factor*pressure[0]
+                    # Sum the pressures multiplied by their load factors
+                    p = factor*pressure[0]
         
         b = self.width()/2
         c = self.height()/2
-
+        
         fer = -4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [-c/12], [-b/12], [1/4], [-c/12], [b/12], [1/4], [c/12], [b/12]])
 
         # At this point `fer` only contains terms for the degrees of freedom
@@ -537,7 +537,9 @@ class Plate3D():
         """
         
         # Calculate and return internal moments
-        return self.__D()*self.__Q(x, y)*self.__a(combo_name)
+        # A negative sign will be applied to change the sign convention to match that of
+        # PyNite's quadrilateral elements.
+        return -self.__D()*self.__Q(x, y)*self.__a(combo_name)
  
     def shear(self, x, y, combo_name='Combo 1'):
         """
