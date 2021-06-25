@@ -1,7 +1,7 @@
 from PyNite.Node3D import Node3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
-from math import pi, sin, cos
+from math import pi, sin, cos, ceil
 from bisect import bisect
 
 #%%
@@ -123,9 +123,17 @@ class RectangleMesh(Mesh):
         y = 0
         for j in range(1, len(y_control), 1):
             
+            # If this is not the first iteration 'y' will be too high at this point.
+            if j != 1:
+                y -= h
+
             # Determine the mesh size between this y control point and the previous one
             ny = max(1, (y_control[j] - y_control[j - 1])/mesh_size)
-            h = (y_control[j] - y_control[j - 1])/ ny
+            h = (y_control[j] - y_control[j - 1])/ceil(ny)
+
+            # Adjust 'y' if this is not the first iteration.
+            if j != 1:
+                y += h
 
             # Generate nodes between the y control points
             while round(y, 10) <= round(y_control[j], 10):
@@ -136,10 +144,17 @@ class RectangleMesh(Mesh):
                 # Step through each x control point (except the first one which is always zero)
                 x = 0
                 for i in range(1, len(x_control), 1):
+                    
+                    # 'x' needs to be adjusted for the same reasons 'y' needed to be adjusted
+                    if i != 1:
+                        x -= b
 
                     # Determine the mesh size between this x control point and the previous one
                     nx = max(1, (x_control[i] - x_control[i - 1])/mesh_size)
-                    b = (x_control[i] - x_control[i - 1])/nx
+                    b = (x_control[i] - x_control[i - 1])/ceil(nx)
+
+                    if i != 1:
+                        x += b
 
                     # Generate nodes between the x control points
                     while round(x, 10) <= round(x_control[i], 10):
