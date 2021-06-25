@@ -44,11 +44,12 @@ for element in list(model.Quads.values()) + list(model.Plates.values()):
 
     # Determine if the element falls below the liquid level
     if Yavg < HL:
+
         # Add hydrostatic loads to the element
         if mesh.element_type == 'Rect':
-            model.AddPlateSurfacePressure(element.Name, 62.4*(HL - Yavg), case='Hydrostatic')
+            model.AddPlateSurfacePressure(element.Name, 62.4*(HL - Yavg), case='F')
         else:
-            model.AddQuadSurfacePressure(element.Name, 62.4*(HL - Yavg), case='Hydrostatic')
+            model.AddQuadSurfacePressure(element.Name, 62.4*(HL - Yavg), case='F')
 
 # Add fully fixed supports at left, right, and bottom of the wall
 for node in model.Nodes.values():
@@ -57,7 +58,7 @@ for node in model.Nodes.values():
 
 # Add a load combination named '1.4F' with a factor of 1.4 applied to any loads designated as
 # 'Hydrostatic'.
-model.AddLoadCombo('1.4F', {'Hydrostatic': 1.4})
+model.AddLoadCombo('1.4F', {'F': 1.4})
 
 # Analyze the model
 model.Analyze(check_statics=True)
