@@ -21,9 +21,141 @@ class Mesh():
         self.nodes = {}                     # A dictionary containing the nodes in the mesh
         self.elements = {}                  # A dictionary containing the elements in the mesh
     
+    def max_shear(self, direction='Qx', combo=None):
+        '''
+        Returns the maximum shear in the mesh.
+        
+        Checks corner and center shears in all the elements in the mesh. The mesh must be part of
+        a solved model prior to using this function.
+
+        Parameters
+        ----------
+        direction : string, optional
+            The direction to ge the maximum shear for. Options are 'Qx' or 'Qy'. Default
+            is 'Qx'.
+        combo : string, optional
+            The name of the load combination to get the maximum shear for. If omitted, all load
+            combinations will be evaluated.
+        '''
+
+        if direction == 'Qx':
+            i = 0
+        elif direction == 'Qy':
+            i = 1
+        else:
+            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', or \'Qy\'')
+
+        # Initialize the maximum value to None
+        Q_max = None
+
+        # Step through each element in the mesh
+        for element in self.elements.values():
+
+            # Determine whether the element is a rectangle or a quadrilateral
+            if element.type == 'Rect':
+                # Use the rectangle's local (x, y) coordinate system
+                xi, yi = 0, 0
+                xj, yj = element.width(), 0
+                xm, ym = element.width(), element.height()
+                xn, yn, = 0, element.height()
+            elif element.type == 'Quad':
+                # Use the quad's natural (r, s) coordinate system
+                xi, yi = -1, -1
+                xj, yj = 1, -1
+                xm, ym = 1, 1
+                xn, yn = -1, 1
+
+            # Step through each load combination the element utilizes
+            for load_combo in element.LoadCombos.values():
+
+                # Determine if this load combination should be evaluated
+                if combo == None or load_combo.name == combo:
+                    
+                    # Find the maximum shear in the element, checking each corner and the center
+                    # of the element
+                    Q_element = max([element.shear(xi, yi, load_combo.name)[i, 0],
+                                     element.shear(xj, yj, load_combo.name)[i, 0],
+                                     element.shear(xm, ym, load_combo.name)[i, 0],
+                                     element.shear(xn, yn, load_combo.name)[i, 0],
+                                     element.shear((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+
+                    # Determine if the maximum shear calculated is the largest encountered so far
+                    if Q_max == None or Q_max < Q_element:
+                        # Save this value if it's the largest
+                        Q_max = Q_element
+            
+        # Return the largest value encountered from all the elements
+        return Q_max
+    
+    def min_shear(self, direction='Qx', combo=None):
+        '''
+        Returns the minimum shear in the mesh.
+        
+        Checks corner and center shears in all the elements in the mesh. The mesh must be part of
+        a solved model prior to using this function.
+
+        Parameters
+        ----------
+        direction : string, optional
+            The direction to ge the minimum shear for. Options are 'Qx' or 'Qy'. Default
+            is 'Qx'.
+        combo : string, optional
+            The name of the load combination to get the minimum shear for. If omitted, all load
+            combinations will be evaluated.
+        '''
+
+        if direction == 'Qx':
+            i = 0
+        elif direction == 'Qy':
+            i = 1
+        else:
+            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', or \'Qy\'')
+
+        # Initialize the minimum value to None
+        Q_min = None
+
+        # Step through each element in the mesh
+        for element in self.elements.values():
+
+            # Determine whether the element is a rectangle or a quadrilateral
+            if element.type == 'Rect':
+                # Use the rectangle's local (x, y) coordinate system
+                xi, yi = 0, 0
+                xj, yj = element.width(), 0
+                xm, ym = element.width(), element.height()
+                xn, yn, = 0, element.height()
+            elif element.type == 'Quad':
+                # Use the quad's natural (r, s) coordinate system
+                xi, yi = -1, -1
+                xj, yj = 1, -1
+                xm, ym = 1, 1
+                xn, yn = -1, 1
+
+            # Step through each load combination the element utilizes
+            for load_combo in element.LoadCombos.values():
+
+                # Determine if this load combination should be evaluated
+                if combo == None or load_combo.name == combo:
+                    
+                    # Find the minimum shear in the element, checking each corner and the center
+                    # of the element
+                    Q_element = min([element.shear(xi, yi, load_combo.name)[i, 0],
+                                     element.shear(xj, yj, load_combo.name)[i, 0],
+                                     element.shear(xm, ym, load_combo.name)[i, 0],
+                                     element.shear(xn, yn, load_combo.name)[i, 0],
+                                     element.shear((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+
+                    # Determine if the minimum shear calculated is the smallest encountered so far
+                    if Q_min == None or Q_min > Q_element:
+                        # Save this value if it's the smallest
+                        Q_min = Q_element
+            
+        # Return the smallest value encountered from all the elements
+        return Q_min
+
     def max_moment(self, direction='Mx', combo=None):
         '''
-        Returns the maximum Mx moment in the mesh.
+        Returns the maximum moment in the mesh.
         
         Checks corner and center moments in all the elements in the mesh. The mesh must be part of
         a solved model prior to using this function.
@@ -67,7 +199,7 @@ class Mesh():
                 xm, ym = 1, 1
                 xn, yn = -1, 1
 
-            # Step through each load combination the plate element utilizes
+            # Step through each load combination the element utilizes
             for load_combo in element.LoadCombos.values():
 
                 # Determine if this load combination should be evaluated
@@ -86,12 +218,12 @@ class Mesh():
                         # Save this value if it's the largest
                         M_max = M_element
             
-        # Return the largest value encountered from all the plates
+        # Return the largest value encountered from all the elements
         return M_max
     
     def min_moment(self, direction='Mx', combo=None):
         '''
-        Returns the minimum Mx moment in the mesh.
+        Returns the minimum moment in the mesh.
         
         Checks corner and center moments in all the elements in the mesh. The mesh must be part of
         a solved model prior to using this function.
@@ -154,7 +286,7 @@ class Mesh():
                         # Save this value if it's the smallest
                         M_min = M_element
             
-        # Return the smallest value encountered from all the plates
+        # Return the smallest value encountered from all the elements
         return M_min
     
 #%%
