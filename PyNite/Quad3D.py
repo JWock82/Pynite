@@ -467,10 +467,11 @@ class Quad3D():
         # Define the gauss point used for numerical integration
         gp = 1/3**0.5
 
+        # Initialize the element's surface pressure to zero
+        p = 0
+
         # Loop through each load case and factor in the load combination
         for case, factor in combo.factors.items():
-            
-            p = 0
 
             # Sum the pressures
             for pressure in self.pressures:

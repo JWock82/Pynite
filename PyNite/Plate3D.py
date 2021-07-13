@@ -254,10 +254,11 @@ class Plate3D():
         # Get the requested load combination
         combo = self.LoadCombos[combo_name]
 
-        # Loop through each load case and factor in the load combination
+        # Initialize the element's surface pressure to zero
+        p = 0
+        
+        # Loop through each load case and factor in the load combination 
         for case, factor in combo.factors.items():
-            
-            p = 0
 
             # Sum the pressures
             for pressure in self.pressures:
@@ -266,7 +267,7 @@ class Plate3D():
                 if pressure[1] == case:
 
                     # Sum the pressures multiplied by their load factors
-                    p = factor*pressure[0]
+                    p += factor*pressure[0]
         
         b = self.width()/2
         c = self.height()/2
