@@ -5,7 +5,8 @@ from numpy.linalg import norm
 
 #%%
 def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
-                render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True):
+                render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
+                screenshot=None):
     '''
     Renders a finite element model using VTK.
     
@@ -50,6 +51,8 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       rendering on models with thousands of labels. Set this option to `False` if you want more
       speed when rendering and interacting with a large model. This can be very useful on plate
       models with large meshes.
+    screenshot : string, optional
+      Sends a screenshot to the specified filepath unless set to None. Default is None.
       
     Raises
     ------
@@ -319,7 +322,33 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       
     # Render the window and start the interactor
     window.Render()
-    interactor.Start()
+
+    # Create a screenshot if requested
+    if screenshot == True:
+
+      # Screenshot code
+      w2if = vtk.vtkWindowToImageFilter()
+      w2if.SetInput(window)
+      w2if.SetInputBufferTypeToRGB()
+      w2if.ReadFrontBufferOff()
+      w2if.Update()
+
+      writer = vtk.vtkPNGWriter()
+      writer.SetFileName('TestScreenshot.png')
+      writer.SetInputConnection(w2if.GetOutputPort())
+      writer.Write()
+
+      # Close the window
+      window.Finalize()
+      
+    else:
+
+      # Start the interactor
+      interactor.Start()
+    
+    # Return the window
+    return window
+
 
 #%%
 def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
@@ -672,8 +701,10 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each plate load
       for load in quad.pressures:
 
-        if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-          max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
+        # Check to see if the load case is in the requested load combination
+        if load[1] in model.LoadCombos[combo_name].factors:
+          if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
+            max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
 
   # Behavior if case has been specified
   else:
@@ -1237,7 +1268,6 @@ class VisDeformedMember():
     self.source.SetPoints(points)
     self.source.SetLines(lines)
     
-#%%
 class VisDeformedSpring():
     
     def __init__(self, spring, nodes, scale_factor, text_height=5, 
@@ -1269,7 +1299,6 @@ class VisDeformedSpring():
         
         self.source.Update()
     
-#%%
 class VisPtLoad():
   '''
   Creates a point load for the viewer
