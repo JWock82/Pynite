@@ -692,8 +692,9 @@ def __MaxLoads(model, combo_name=None, case=None):
       # Step through each plate load
       for load in plate.pressures:
 
-        if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-          max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
+        if load[1] in model.LoadCombos[combo_name].factors:
+          if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
+            max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
 
     # Step through each quad
     for quad in model.Quads.values():
