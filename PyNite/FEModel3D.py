@@ -708,7 +708,7 @@ class FEModel3D():
         '''
 
         # Add the surface pressure to the rectangle
-        self.GetPlate(plate_ID).pressures.append([pressure, case])
+        self.Plates[plate_ID].pressures.append([pressure, case])
 
 #%%
     def AddQuadSurfacePressure(self, quad_ID, pressure, case='Case 1'):
@@ -717,7 +717,7 @@ class FEModel3D():
         '''
 
         # Add the surface pressure to the quadrilateral
-        self.GetQuad(quad_ID).pressures.append([pressure, case])
+        self.Quads[quad_ID].pressures.append([pressure, case])
 
 #%%
     def ClearLoads(self):

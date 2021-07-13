@@ -59,6 +59,10 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.38
+* Bug fix for load vector calculation. When multiple load cases were present on a plate or quad, only the last entered load case was being considered.
+* Additional fix for an exception that occured when unused load cases were in a model that was being rendered.
+
 Version 0.0.37
 * Fixed rectangular mesh control point feature. It was not working.
 * Added functions to simplify getting localized max/min moment and shear results from meshes.
