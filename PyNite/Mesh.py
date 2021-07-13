@@ -20,7 +20,143 @@ class Mesh():
         self.last_element = None            # The name of the last element in the mesh
         self.nodes = {}                     # A dictionary containing the nodes in the mesh
         self.elements = {}                  # A dictionary containing the elements in the mesh
+    
+    def max_moment(self, direction='Mx', combo=None):
+        '''
+        Returns the maximum Mx moment in the mesh.
+        
+        Checks corner and center moments in all the elements in the mesh. The mesh must be part of
+        a solved model prior to using this function.
 
+        Parameters
+        ----------
+        direction : string, optional
+            The direction to ge the maximum moment for. Options are 'Mx', 'My', or 'Mxy'. Default
+            is 'Mx'.
+        combo : string, optional
+            The name of the load combination to get the maximum moment for. If omitted, all load
+            combinations will be evaluated.
+        '''
+
+        if direction == 'Mx':
+            i = 0
+        elif direction == 'My':
+            i = 1
+        elif direction == 'Mxy':
+            i = 2
+        else:
+            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', or \'Mxy\'')
+
+        # Initialize the maximum value to None
+        M_max = None
+
+        # Step through each element in the mesh
+        for element in self.elements.values():
+
+            # Determine whether the element is a rectangle or a quadrilateral
+            if element.type == 'Rect':
+                # Use the rectangle's local (x, y) coordinate system
+                xi, yi = 0, 0
+                xj, yj = element.width(), 0
+                xm, ym = element.width(), element.height()
+                xn, yn, = 0, element.height()
+            elif element.type == 'Quad':
+                # Use the quad's natural (r, s) coordinate system
+                xi, yi = -1, -1
+                xj, yj = 1, -1
+                xm, ym = 1, 1
+                xn, yn = -1, 1
+
+            # Step through each load combination the plate element utilizes
+            for load_combo in element.LoadCombos.values():
+
+                # Determine if this load combination should be evaluated
+                if combo == None or load_combo.name == combo:
+                    
+                    # Find the maximum moment in the element, checking each corner and the center
+                    # of the element
+                    M_element = max([element.moment(xi, yi, load_combo.name)[i, 0],
+                                     element.moment(xj, yj, load_combo.name)[i, 0],
+                                     element.moment(xm, ym, load_combo.name)[i, 0],
+                                     element.moment(xn, yn, load_combo.name)[i, 0],
+                                     element.moment((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+
+                    # Determine if the maximum moment calculated is the largest encountered so far
+                    if M_max == None or M_max < M_element:
+                        # Save this value if it's the largest
+                        M_max = M_element
+            
+        # Return the largest value encountered from all the plates
+        return M_max
+    
+    def min_moment(self, direction='Mx', combo=None):
+        '''
+        Returns the minimum Mx moment in the mesh.
+        
+        Checks corner and center moments in all the elements in the mesh. The mesh must be part of
+        a solved model prior to using this function.
+
+        Parameters
+        ----------
+        direction : string, optional
+            The direction to ge the minimum moment for. Options are 'Mx', 'My', or 'Mxy'. Default
+            is 'Mx'.
+        combo : string, optional
+            The name of the load combination to get the minimum moment for. If omitted, all load
+            combinations will be evaluated.
+        '''
+
+        if direction == 'Mx':
+            i = 0
+        elif direction == 'My':
+            i = 1
+        elif direction == 'Mxy':
+            i = 2
+        else:
+            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', or \'Mxy\'')
+
+        # Initialize the minimum value to None
+        M_min = None
+
+        # Step through each element in the mesh
+        for element in self.elements.values():
+
+            # Determine whether the element is a rectangle or a quadrilateral
+            if element.type == 'Rect':
+                # Use the rectangle's local (x, y) coordinate system
+                xi, yi = 0, 0
+                xj, yj = element.width(), 0
+                xm, ym = element.width(), element.height()
+                xn, yn, = 0, element.height()
+            elif element.type == 'Quad':
+                # Use the quad's natural (r, s) coordinate system
+                xi, yi = -1, -1
+                xj, yj = 1, -1
+                xm, ym = 1, 1
+                xn, yn = -1, 1
+
+            # Step through each load combination the element utilizes
+            for load_combo in element.LoadCombos.values():
+
+                # Determine if this load combination should be evaluated
+                if combo == None or load_combo.name == combo:
+                    
+                    # Find the minimum moment in the element, checking each corner and the center
+                    # of the element
+                    M_element = min([element.moment(xi, yi, load_combo.name)[i, 0],
+                                     element.moment(xj, yj, load_combo.name)[i, 0],
+                                     element.moment(xm, ym, load_combo.name)[i, 0],
+                                     element.moment(xn, yn, load_combo.name)[i, 0],
+                                     element.moment((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+
+                    # Determine if the minimum moment calculated is the smallest encountered so far
+                    if M_min == None or M_min > M_element:
+                        # Save this value if it's the smallest
+                        M_min = M_element
+            
+        # Return the smallest value encountered from all the plates
+        return M_min
+    
 #%%
 class RectangleMesh(Mesh):
 
@@ -111,8 +247,10 @@ class RectangleMesh(Mesh):
         # Determine which prefix to assign to new elements
         if element_type == 'Quad':
             element_prefix = 'Q'
-        else:
+        elif element_type == 'Rect':
             element_prefix = 'R'
+        else:
+            raise Exception('Invalid element type specified for RectangleMesh. Select \'Quad\' or \'Rect\'.')
 
         # Initialize node numbering
         node_num = 1
@@ -175,10 +313,12 @@ class RectangleMesh(Mesh):
                             X = Xo + 0
                             Y = Yo + y
                             Z = Zo + x
-                        else:
+                        elif plane == 'XZ':
                             X = Xo + x
                             Y = Yo + 0
                             Z = Zo + y
+                        else:
+                            raise Exception('Invalid plane selected for RectangleMesh.')
 
                         # Add the node to the mesh
                         self.nodes[node_name] = Node3D(node_name, X, Y, Z)
@@ -236,14 +376,16 @@ class AnnulusMesh(Mesh):
     A mesh of quadrilaterals forming an annulus (a donut).
     """
 
-    def __init__(self, t, E, nu, mesh_size, outer_radius, inner_radius, center=[0, 0, 0], start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, mesh_size, outer_radius, inner_radius, origin=[0, 0, 0], axis='Y',
+                 start_node='N1', start_element='Q1'):
 
         super().__init__(t, E, nu, start_node, start_element)
 
         self.r1 = inner_radius
         self.r2 = outer_radius
         self.mesh_size = mesh_size
-        self.center = center
+        self.origin = origin
+        self.axis = axis
 
         self.num_quads_inner = None
         self.num_quads_outer = None
@@ -283,13 +425,15 @@ class AnnulusMesh(Mesh):
         
             # Create a mesh of nodes for the ring
             if transition == True:
-                ring = AnnulusTransRingMesh(t, E, nu, r_inner + h_rad, r_inner, n_circ, self.center, 'N' + str(n), 'Q' + str(q))
+                ring = AnnulusTransRingMesh(t, E, nu, r_inner + h_rad, r_inner, n_circ,
+                                            self.origin, self.axis, 'N' + str(n), 'Q' + str(q))
                 n += 3*n_circ
                 q += 4*n_circ
                 n_circ *= 3
                 self.num_quads_outer = n_circ
             else:
-                ring = AnnulusRingMesh(t, E, nu, r_inner + h_rad, r_inner, n_circ, self.center, 'N' + str(n), 'Q' + str(q))
+                ring = AnnulusRingMesh(t, E, nu, r_inner + h_rad, r_inner, n_circ, self.origin,
+                                       self.axis, 'N' + str(n), 'Q' + str(q))
                 n += n_circ
                 q += n_circ
         
@@ -318,16 +462,19 @@ class AnnulusRingMesh(Mesh):
     A mesh of quadrilaterals forming an annular ring (a donut).
     """
 
-    def __init__(self, t, E, nu, outer_radius, inner_radius, num_quads, center=[0, 0, 0], start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, outer_radius, inner_radius, num_quads, origin=[0, 0, 0], axis='Y',
+                 start_node='N1', start_element='Q1'):
 
         super().__init__(t, E, nu, start_node=start_node, start_element=start_element)
 
         self.r1 = inner_radius
         self.r2 = outer_radius
         self.n = num_quads
-        self.Xo = center[0]
-        self.Yo = center[1]
-        self.Zo = center[2]
+        self.Xo = origin[0]
+        self.Yo = origin[1]
+        self.Zo = origin[2]
+
+        self.axis = axis
 
         # Generate the nodes and elements
         self.__mesh()
@@ -342,6 +489,8 @@ class AnnulusRingMesh(Mesh):
         Xo = self.Xo  # Global X-coordinate of the center of the ring
         Yo = self.Yo  # Global Y-coordinate of the center of the ring
         Zo = self.Zo  # Global Z-coordinate of the center of the ring
+
+        axis = self.axis
 
         theta = 2*pi/self.n  # Angle between nodes in the ring
 
@@ -361,15 +510,38 @@ class AnnulusRingMesh(Mesh):
             # Generate the inner radius of nodes
             if i <= n:
                 angle = theta*(i - 1)
-                x = Xo + r1*cos(angle)
-                y = Yo
-                z = Zo + r1*sin(angle)
+                if axis == 'Y':
+                    x = Xo + r1*cos(angle)
+                    y = Yo
+                    z = Zo + r1*sin(angle)
+                elif axis == 'X':
+                    x = Xo
+                    y = Yo + r1*sin(angle)
+                    z = Zo + r1*cos(angle)
+                elif axis == 'Z':
+                    x = Xo + r1*sin(angle)
+                    y = Yo + r1*cos(angle)
+                    z = Zo
+                else:
+                    raise Exception('Invalid axis specified for AnnulusRingMesh.')
+            
             # Generate the outer radius of nodes
             else:
                 angle = theta*((i - n) - 1)
-                x = Xo + r2*cos(angle)
-                y = Yo 
-                z = Zo + r2*sin(angle)
+                if axis == 'Y':
+                    x = Xo + r2*cos(angle)
+                    y = Yo 
+                    z = Zo + r2*sin(angle)
+                elif axis == 'X':
+                    x = Xo
+                    y = Yo + r2*sin(angle)
+                    z = Zo + r2*cos(angle)
+                elif axis == 'Z':
+                    x = Xo + r2*sin(angle)
+                    y = Yo + r2*cos(angle)
+                    z = Zo
+                else:
+                    raise Exception('Invalid axis specified for AnnulusRingMesh.')
             
             self.nodes[node_name] = Node3D(node_name, x, y, z)
 
@@ -401,7 +573,8 @@ class AnnulusTransRingMesh(Mesh):
     edge.
     """
 
-    def __init__(self, t, E, nu, outer_radius, inner_radius, num_inner_quads, center=[0, 0, 0], start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, outer_radius, inner_radius, num_inner_quads, origin=[0, 0, 0],
+                 axis='Y', start_node='N1', start_element='Q1'):
         '''
         Parameters
         ----------
@@ -415,9 +588,9 @@ class AnnulusTransRingMesh(Mesh):
         self.r2 = (inner_radius + outer_radius)/2
         self.r3 = outer_radius
         self.n = num_inner_quads
-        self.Xo = center[0]
-        self.Yo = center[1]
-        self.Zo = center[2]
+        self.Xo = origin[0]
+        self.Yo = origin[1]
+        self.Zo = origin[2]
 
         # Create the mesh
         self.__mesh()
@@ -433,6 +606,8 @@ class AnnulusTransRingMesh(Mesh):
         Xo = self.Xo  # Global X-coordinate of the center of the ring
         Yo = self.Yo  # Global Y-coordinate of the center of the ring
         Zo = self.Zo  # Global Z-coordinate of the center of the ring
+
+        axis = self.axis
 
         theta1 = 2*pi/self.n      # Angle between nodes at the inner radius of the ring
         theta2 = 2*pi/(self.n*3)  # Angle between nodes at the center of the ring
@@ -454,9 +629,21 @@ class AnnulusTransRingMesh(Mesh):
             # Generate the inner radius of nodes
             if i <= n:
                 angle = theta1*(i - 1)
-                x = Xo + r1*cos(angle)
-                y = Yo 
-                z = Zo + r1*sin(angle)
+                if axis == 'Y':
+                    x = Xo + r1*cos(angle)
+                    y = Yo
+                    z = Zo + r1*sin(angle)
+                elif axis == 'X':
+                    x = Xo
+                    y = Yo + r1*sin(angle)
+                    z = Zo + r1*cos(angle)
+                elif axis == 'Z':
+                    x = Xo + r1*sin(angle)
+                    y = Yo + r1*cos(angle)
+                    z = Zo
+                else:
+                    raise Exception('Invalid axis specified for AnnulusTransRingMesh.')
+            
             # Generate the center radius of nodes
             elif i <= 3*n:
                 if (i - n) == 1:
@@ -465,18 +652,38 @@ class AnnulusTransRingMesh(Mesh):
                     angle += theta2
                 else:
                     angle += 2*theta2
-                x = Xo + r2*cos(angle)
-                y = Yo
-                z = Zo + r2*sin(angle)
+                if axis == 'Y':
+                    x = Xo + r2*cos(angle)
+                    y = Yo 
+                    z = Zo + r2*sin(angle)
+                elif axis == 'X':
+                    x = Xo
+                    y = Yo + r2*sin(angle)
+                    z = Zo + r2*cos(angle)
+                elif axis == 'Z':
+                    x = Xo + r2*sin(angle)
+                    y = Yo + r2*cos(angle)
+                    z = Zo
             # Generate the outer radius of nodes
             else:
                 if (i - 3*n) == 1:
                     angle = 0
                 else:
                     angle = theta3*((i - 3*n) - 1)
-                x = Xo + r3*cos(angle)
-                y = Yo
-                z = Zo + r3*sin(angle)
+                if axis == 'Y':
+                    x = Xo + r3*cos(angle)
+                    y = Yo 
+                    z = Zo + r3*sin(angle)
+                elif axis == 'X':
+                    x = Xo
+                    y = Yo + r3*sin(angle)
+                    z = Zo + r3*cos(angle)
+                elif axis == 'Z':
+                    x = Xo + r3*sin(angle)
+                    y = Yo + r3*cos(angle)
+                    z = Zo
+                else:
+                    raise Exception('Invalid axis specified for AnnulusTransRingMesh.')
             
             self.nodes[node_name] = Node3D(node_name, x, y, z)
 
@@ -526,22 +733,30 @@ class FrustrumMesh(AnnulusMesh):
     A mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane at the top and bottom).
     """
 
-    def __init__(self, t, E, nu, mesh_size, large_radius, small_radius, height, center=[0, 0, 0], start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, mesh_size, large_radius, small_radius, height, origin=[0, 0, 0],
+                 axis='Y', start_node='N1', start_element='Q1'):
         
         # Create an annulus mesh
-        super().__init__(t, E, nu, mesh_size, large_radius, small_radius, center, start_node, start_element)
+        super().__init__(t, E, nu, mesh_size, large_radius, small_radius, origin, start_node, start_element)
 
-        Xo = center[0]
-        Zo = center[2]
+        Xo = origin[0]
+        Yo = origin[1]
+        Zo = origin[2]
 
-        # Adjust the Z-cooridnate of each node
+        # Adjust the cooridnates of each node to make a frustrum
         for node in self.nodes.values():
             X = node.X
             Y = node.Y
             Z = node.Z
             r = ((X - Xo)**2 + (Z - Zo)**2)**0.5
-            Y += (r - large_radius)/(large_radius - small_radius)*height
-            node.Y = Y
+            if axis == 'Y':
+                node.Y += (r - large_radius)/(large_radius - small_radius)*height
+            elif axis == 'X':
+                node.X += (r - large_radius)/(large_radius - small_radius)*height
+            elif axis == 'Z':
+                node.Z += (r - large_radius)/(large_radius - small_radius)*height
+            else:
+                raise Exception('Invalid axis specified for frustrum mesh.')
 
 #%%
 class CylinderMesh(Mesh):
@@ -649,7 +864,8 @@ class CylinderRingMesh(Mesh):
         The number of quadrilaterals to divide the circumference into.
     """
 
-    def __init__(self, t, E, nu, radius, height, num_quads, center=[0, 0, 0], start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, radius, height, num_quads, origin=[0, 0, 0], axis='Y',
+                 start_node='N1', start_element='Q1'):
 
         super().__init__(t, E, nu, start_node=start_node, start_element=start_element)
 
@@ -658,9 +874,11 @@ class CylinderRingMesh(Mesh):
 
         self.num_quads = num_quads
 
-        self.Xo = center[0]
-        self.Yo = center[1]
-        self.Zo = center[2]
+        self.Xo = origin[0]
+        self.Yo = origin[1]
+        self.Zo = origin[2]
+
+        self.axis = axis
 
         # Generate the nodes and elements
         self.__mesh()
@@ -679,6 +897,8 @@ class CylinderRingMesh(Mesh):
         Xo = self.Xo  # Global X-coordinate of the center of the bottom of the ring
         Yo = self.Yo  # Global Y-coordinate of the center of the bottom of the ring
         Zo = self.Zo  # Global Z-coordinate of the center of the bottom of the ring
+
+        axis = self.axis
         
         # Calculate the angle between nodes in the circumference of the ring
         theta = 2*pi/num_quads
@@ -699,15 +919,38 @@ class CylinderRingMesh(Mesh):
             # Generate the bottom nodes of the ring
             if i <= n:
                 angle = theta*(i - 1)
-                x = Xo + radius*cos(angle)
-                y = Yo
-                z = Zo + radius*sin(angle)
+                if axis == 'Y':
+                    x = Xo + radius*cos(angle)
+                    y = Yo
+                    z = Zo + radius*sin(angle)
+                elif axis == 'X':
+                    x = Xo
+                    y = Yo + radius*sin(angle)
+                    z = Zo + radius*cos(angle)
+                elif axis == 'Z':
+                    x = Xo + radius*sin(angle)
+                    y = Yo + radius*cos(angle)
+                    z = Zo
+                else:
+                    raise Exception('Invalid axis specified for CylinderRingMesh.')
+
             # Generate the top nodes of the ring
             else:
                 angle = theta*((i - n) - 1)
-                x = Xo + radius*cos(angle)
-                y = Yo + height
-                z = Zo + radius*sin(angle)
+                if axis == 'Y':
+                    x = Xo + radius*cos(angle)
+                    y = Yo
+                    z = Zo + radius*sin(angle)
+                elif axis == 'X':
+                    x = Xo
+                    y = Yo + radius*sin(angle)
+                    z = Zo + radius*cos(angle)
+                elif axis == 'Z':
+                    x = Xo + radius*sin(angle)
+                    y = Yo + radius*cos(angle)
+                    z = Zo
+                else:
+                    raise Exception('Invalid axis specified for CylinderRingMesh.')
             
             self.nodes[node_name] = Node3D(node_name, x, y, z)
 
