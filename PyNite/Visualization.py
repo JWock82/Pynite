@@ -27,8 +27,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       Determines what magnification factor will be applied to the deformed
       shape. The default is 30.
     render_loads : boolean, optional
-      Determines if loads will be rendered with the deformed shape. The default
-      is True.
+      Determines if loads will be rendered with the model. The default is True.
     color_map : string, optional
       The type of contour to plot. Acceptable values are:
       'dz'
@@ -47,7 +46,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     case : string, optional
       The load case used for rendering loads. The default is None.
     labels : boolean, optional
-      Determines if labels will be rendered. Each lable is a single actor in VTK, which slows down
+      Determines if labels will be rendered. Each label is a single actor in VTK, which slows down
       rendering on models with thousands of labels. Set this option to `False` if you want more
       speed when rendering and interacting with a large model. This can be very useful on plate
       models with large meshes.
@@ -113,18 +112,18 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
 
         # Create a point for each corner (must be in counter clockwise order)
         if deformed_shape == True:
-          p0 = [item.iNode.X + item.iNode.DX[combo_name],
-                item.iNode.Y + item.iNode.DY[combo_name],
-                item.iNode.Z + item.iNode.DZ[combo_name]]
-          p1 = [item.jNode.X + item.jNode.DX[combo_name],
-                item.jNode.Y + item.jNode.DY[combo_name],
-                item.jNode.Z + item.jNode.DZ[combo_name]]
-          p2 = [item.mNode.X + item.mNode.DX[combo_name],
-                item.mNode.Y + item.mNode.DY[combo_name],
-                item.mNode.Z + item.mNode.DZ[combo_name]]
-          p3 = [item.nNode.X + item.nNode.DX[combo_name],
-                item.nNode.Y + item.nNode.DY[combo_name],
-                item.nNode.Z + item.nNode.DZ[combo_name]]
+          p0 = [item.iNode.X + item.iNode.DX[combo_name]*deformed_scale,
+                item.iNode.Y + item.iNode.DY[combo_name]*deformed_scale,
+                item.iNode.Z + item.iNode.DZ[combo_name]*deformed_scale]
+          p1 = [item.jNode.X + item.jNode.DX[combo_name]*deformed_scale,
+                item.jNode.Y + item.jNode.DY[combo_name]*deformed_scale,
+                item.jNode.Z + item.jNode.DZ[combo_name]*deformed_scale]
+          p2 = [item.mNode.X + item.mNode.DX[combo_name]*deformed_scale,
+                item.mNode.Y + item.mNode.DY[combo_name]*deformed_scale,
+                item.mNode.Z + item.mNode.DZ[combo_name]*deformed_scale]
+          p3 = [item.nNode.X + item.nNode.DX[combo_name]*deformed_scale,
+                item.nNode.Y + item.nNode.DY[combo_name]*deformed_scale,
+                item.nNode.Z + item.nNode.DZ[combo_name]*deformed_scale]
         else:
           p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
           p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
