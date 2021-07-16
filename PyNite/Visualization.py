@@ -112,24 +112,24 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     for item in list(model.Plates.values()) + list(model.Quads.values()):
 
         # Create a point for each corner (must be in counter clockwise order)
-        # if deformed_shape == True:
-        #     p0 = [item.iNode.X + item.iNode.DX[combo_name],
-        #           item.iNode.Y + item.iNode.DY[combo_name],
-        #           item.iNode.Z + item.iNode.DZ[combo_name]]
-        #     p1 = [item.jNode.X + item.jNode.DX[combo_name],
-        #           item.jNode.Y + item.jNode.DY[combo_name],
-        #           item.jNode.Z + item.jNode.DZ[combo_name]]
-        #     p2 = [item.mNode.X + item.mNode.DX[combo_name],
-        #           item.mNode.Y + item.mNode.DY[combo_name],
-        #           item.mNode.Z + item.mNode.DZ[combo_name]]
-        #     p3 = [item.nNode.X + item.nNode.DX[combo_name],
-        #           item.nNode.Y + item.nNode.DY[combo_name],
-        #           item.nNode.Z + item.nNode.DZ[combo_name]]
-        # else:
-        p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
-        p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
-        p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
-        p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
+        if deformed_shape == True:
+          p0 = [item.iNode.X + item.iNode.DX[combo_name],
+                item.iNode.Y + item.iNode.DY[combo_name],
+                item.iNode.Z + item.iNode.DZ[combo_name]]
+          p1 = [item.jNode.X + item.jNode.DX[combo_name],
+                item.jNode.Y + item.jNode.DY[combo_name],
+                item.jNode.Z + item.jNode.DZ[combo_name]]
+          p2 = [item.mNode.X + item.mNode.DX[combo_name],
+                item.mNode.Y + item.mNode.DY[combo_name],
+                item.mNode.Z + item.mNode.DZ[combo_name]]
+          p3 = [item.nNode.X + item.nNode.DX[combo_name],
+                item.nNode.Y + item.nNode.DY[combo_name],
+                item.nNode.Z + item.nNode.DZ[combo_name]]
+        else:
+          p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
+          p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
+          p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
+          p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
 
         # Add the points to the `vtkPoints` object we created earlier
         plate_points.InsertNextPoint(p0)
@@ -314,17 +314,17 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     if (combo_name != None or case != None) and render_loads != False:
         __RenderLoads(model, renderer, text_height, combo_name, case)
     
-    # Set the window's background to blue
-    renderer.SetBackground(0.1, 0.1, 0.4)
+    # Set the window's background to gray
+    renderer.SetBackground(160/255, 160/255, 160/255)
     
     # Reset the camera
     renderer.ResetCamera()
-      
-    # Render the window and start the interactor
+    
+    # Render the window
     window.Render()
 
     # Create a screenshot if requested
-    if screenshot == True:
+    if screenshot != None:
 
       # Screenshot code
       w2if = vtk.vtkWindowToImageFilter()
@@ -334,7 +334,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       w2if.Update()
 
       writer = vtk.vtkPNGWriter()
-      writer.SetFileName('TestScreenshot.png')
+      writer.SetFileName(screenshot)
       writer.SetInputConnection(w2if.GetOutputPort())
       writer.Write()
 
@@ -343,12 +343,10 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
       
     else:
 
-      # Start the interactor
       interactor.Start()
     
     # Return the window
     return window
-
 
 #%%
 def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
