@@ -55,7 +55,7 @@ MomentFrame.AddLoadCombo('0.9D+1.0W', factors={'D':0.9, 'W':1.0})
 
 # Perform a P-Big Delta analysis on the frame
 # Note that to capture P-little delta effects the members should idealy be broken into three segments each
-MomentFrame.Analyze_PDelta()
+MomentFrame.Analyze_PDelta(log=True)
 
 # A first-order analysis could be done with the following line instead
 # MomentFrame.Analyze()
