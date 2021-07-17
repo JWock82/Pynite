@@ -61,10 +61,10 @@ for node in model.Nodes.values():
 model.AddLoadCombo('1.4F', {'F': 1.4})
 
 # Analyze the model
-model.Analyze(check_statics=True)
+model.Analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Mx` moments.
-RenderModel(model, text_height=0.2, render_loads=True, color_map='Mx', combo_name='1.4F', labels=True)
+RenderModel(model, text_height=0.2, render_loads=True, deformed_shape=True, deformed_scale=500, color_map='Mx', combo_name='1.4F', labels=True)
 
 # Print the maximum and minumum displacements
 print('Max displacement: ', max([node.DZ['1.4F'] for node in model.Nodes.values()]))
