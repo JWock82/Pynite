@@ -63,7 +63,6 @@ Version 0.0.39
 * Made console output optional. By default it is now turned off.
 * Fixed a warning that occured during P-Delta analysis. Sparse matrix solution efficiency was poor.
 * Fixed deformed shape rendering for plates and quads. The scale factor was not being applied.
-* Changed rendering background to light gray. It's a little easier on the eyes.
 * Added a basic screenshot feature for rendering. If `screenshot` is set to a filepath in the `RenderModel` method a .PNG screenshot will be saved to the filepath and the render window will be closed automatically.
 
 Version 0.0.38
