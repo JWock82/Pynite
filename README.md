@@ -33,7 +33,7 @@ As I've gotten into the structural engineering profession, I've found there's a 
 
 2. Simplicity: There are other finite element alternatives out there with many more capabilities, but they are often lacking in documentation, written in outdated languages, or require extensive knowledge of finite element theory and/or element formulations to use. PyNite is not intended to be the most technically advanced solver out there. Rather, the goal is to provide a robust yet simple general purpose package.
 
-4. Improvement: I plan to continue supporting PyNite for many years to come. There are a lot of pieces I'd like to add to PyNite going forward: triangular plates, plate meshing and loading algorithms, dynamics, pushover anlysis, etc. There's a lot of potential to create extensions as well to solve all kinds of engineering problems. There are more problems to solve than I have time for, so some priorities will have to be made. The plan is to keep PyNite mainstream, adding core functionality first. Occasionally however I may just add what interests me at the time.
+4. Improvement: I plan to continue supporting PyNite for many years to come. There are a lot of pieces I'd like to add to PyNite going forward. There's a lot of potential to create extensions as well to solve all kinds of engineering problems. There are more problems to solve than I have time for, so some priorities will have to be made. The plan is to keep PyNite mainstream, adding core functionality first. Occasionally however I may just add what interests me at the time.
 
 5. Collaboration: The intent is to keep PyNite free and open source. This will encourage future development and contributions. Keeping it open source will allow anyone to inspect and improve the code it runs on. If you see an area you think you can help PyNite improve in you are encouraged to contribute. I'd like to get PyNite doing a lot more. Don't be offended if I'm a little slow to accept your contributions. FEA is a very technical subject and accuracy is extremely important to me. Sometimes I'm a little slow understanding both FEA and Python and it takes some time for me to comprehend what's being proposed. I also have a young family to take care of that takes first priority.
 
@@ -59,6 +59,13 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.39
+* Made console output optional. By default it is now turned off.
+* Fixed a warning that occured during P-Delta analysis. Sparse matrix solution efficiency was poor.
+* Fixed deformed shape rendering for plates and quads. The scale factor was not being applied.
+* Changed rendering background to light gray. It's a little easier on the eyes.
+* Added a basic screenshot feature for rendering. If `screenshot` is set to a filepath in the `RenderModel` method a .PNG screenshot will be saved to the filepath and the render window will be closed automatically.
+
 Version 0.0.38
 * Bug fix for load vector calculation. When multiple load cases were present on a plate or quad, only the last entered load case was being considered.
 * Additional fix for an exception that occured when unused load cases were in a model that was being rendered.
@@ -89,9 +96,4 @@ Version 0.0.31
   If the user opts not to use the sparse solver it is converted to a dense matrix later on.
 * Revised circular meshes so that the Y-axis is upward instead of the Z-axis.
 * Bug fix - Rendering springs was broken after the recent change to storing springs in dictionaries.
-
-Version 0.0.30
-* Fixed a bug where quad and plate displacement contours weren't being plotted correctly when user-defined load combinations were being used.
-* Added a few basic meshing features for quads.
-* Added the ability to merge duplicate nodes.
 
