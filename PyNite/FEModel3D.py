@@ -981,9 +981,16 @@ class FEModel3D():
         return D1_indices, D2_indices, D2
             
 #%%    
-    def K(self, combo_name='Combo 1'):
+    def K(self, combo_name='Combo 1', log=False):
         '''
-        Assembles and returns the global stiffness matrix.
+        Returns the model's global stiffness matrix.
+
+        Parameters
+        ----------
+        combo_name : string, optional
+            The load combination to get the stiffness matrix for. Default is 'Combo 1'.
+        log : bool, optional
+            Prints updates to the console if set to True. Default is False.
         '''
         
         # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a
@@ -993,7 +1000,7 @@ class FEModel3D():
         K = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
         
         # Add stiffness terms for each spring in the model
-        print('...Adding spring stiffness terms to global stiffness matrix')
+        if log: print('- Adding spring stiffness terms to global stiffness matrix')
         for spring in self.Springs.values():
             
             if spring.active[combo_name] == True:
@@ -1029,7 +1036,7 @@ class FEModel3D():
                         K[(m, n)] += spring_K[(a, b)]
 
         # Add stiffness terms for each member in the model
-        print('...Adding member stiffness terms to global stiffness matrix')
+        if log: print('- Adding member stiffness terms to global stiffness matrix')
         for member in self.Members.values():
             
             if member.active[combo_name] == True:
@@ -1065,7 +1072,7 @@ class FEModel3D():
                         K[(m, n)] += member_K[(a, b)]
                 
         # Add stiffness terms for each quadrilateral in the model
-        print('...Adding quadrilateral stiffness terms to global stiffness matrix')
+        if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
         for quad in self.Quads.values():
             
             # Get the quadrilateral's global stiffness matrix
@@ -1111,7 +1118,7 @@ class FEModel3D():
                     K[m, n] += quad_K[a, b]
         
         # Add stiffness terms for each plate in the model
-        print('...Adding plate stiffness terms to global stiffness matrix')
+        if log: print('- Adding plate stiffness terms to global stiffness matrix')
         for plate in self.Plates.values():
             
             # Get the plate's global stiffness matrix
@@ -1160,17 +1167,19 @@ class FEModel3D():
         return K      
 
 #%%    
-    def Kg(self, combo_name='Combo 1'):
+    def Kg(self, combo_name='Combo 1', log=False):
         '''
-        Assembles and returns the global geometric stiffness matrix.
+        Returns the model's global geometric stiffness matrix.
 
         The model must have a static solution prior to obtaining the geometric stiffness matrix.
         Stiffness of plates is not included.
 
         Parameters
         ----------
-        combo_name : string
+        combo_name : string, optional.
             The name of the load combination to derive the matrix for (not the load combination itself).
+        log : bool, optional
+            Prints updates to the console if set to True. Default is False.
         '''
         
         # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a
@@ -1180,7 +1189,7 @@ class FEModel3D():
         Kg = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
         
         # Add stiffness terms for each member in the model
-        print('...Adding member geometric stiffness terms to global geometric stiffness matrix')
+        if log: print('- Adding member geometric stiffness terms to global geometric stiffness matrix')
         for member in self.Members.values():
             
             if member.active[combo_name] == True:
@@ -1407,7 +1416,7 @@ class FEModel3D():
             return m11, m12, m21, m22
 
 #%%  
-    def Analyze(self, check_statics=False, max_iter=30, sparse=True):
+    def Analyze(self, log=False, check_statics=False, max_iter=30, sparse=True):
         '''
         Performs first-order static analysis.
         
@@ -1417,6 +1426,8 @@ class FEModel3D():
 
         Parameters
         ----------
+        log : bool, optional
+            Prints the analysis log to the console if set to True. Default is False.
         check_statics : bool, optional
             When set to True, causes a statics check to be performed
         max_iter : number, optional
@@ -1429,10 +1440,11 @@ class FEModel3D():
             for such matrices. Using the sparse solver on dense matrices may lead to slower
             solution times.
         '''
-        
-        print('+-----------+')
-        print('| Analyzing |')
-        print('+-----------+')
+
+        if log:
+            print('+-----------+')
+            print('| Analyzing |')
+            print('+-----------+')
 
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
@@ -1460,8 +1472,9 @@ class FEModel3D():
         # Step through each load combination
         for combo in self.LoadCombos.values():
 
-            print('')
-            print('...Analyzing load combination ' + combo.name)
+            if log:
+                print('')
+                print('- Analyzing load combination ' + combo.name)
 
             # Keep track of the number of iterations
             iter_count = 1
@@ -1472,7 +1485,7 @@ class FEModel3D():
             while convergence == False and divergence == False:
 
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
-                K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices)
+                K11, K12, K21, K22 = self.__Partition(self.K(combo.name, log), D1_indices, D2_indices)
 
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)
@@ -1481,7 +1494,7 @@ class FEModel3D():
                 P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)          
 
                 # Calculate the global displacement vector
-                print('...Calculating global displacement vector for load combination', combo.name)
+                if log: print('- Calculating global displacement vector for load combination', combo.name)
                 if K11.shape == (0, 0):
                     # All displacements are known, so D1 is an empty vector
                     D1 = []
@@ -1553,13 +1566,13 @@ class FEModel3D():
                 # Check for divergence
                 if iter_count > max_iter:
                     divergence = True
-                    raise Exception('...Model diverged during tension/compression-only analysis')
+                    raise Exception('- Model diverged during tension/compression-only analysis')
                 
                 # Assume the model has converged (to be checked below)
                 convergence = True
 
                 # Check tension-only and compression-only springs
-                print('...Checking for tension/compression-only spring convergence')
+                if log: print('- Checking for tension/compression-only spring convergence')
                 for spring in self.Springs.values():
 
                     if spring.active[combo.name] == True:
@@ -1575,7 +1588,7 @@ class FEModel3D():
                             convergence = False
 
                 # Check tension-only and compression-only members
-                print('...Checking for tension/compression-only member convergence')
+                if log: print('- Checking for tension/compression-only member convergence')
                 for member in self.Members.values():
 
                     # Only run the tension/compression only check if the member is still active
@@ -1592,30 +1605,34 @@ class FEModel3D():
                             convergence = False
                 
                 if convergence == False:
-                    print('...Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
+                    if log: print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
                 else:
-                    print('...Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
+                    if log: print('- Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
 
                 # Keep track of the number of tension/compression only iterations
                 iter_count += 1
 
         # Calculate reactions
         self.__CalcReactions()
-                
-        print('...Analysis complete')
-        print('')
+
+        if log:
+            print('')     
+            print('- Analysis complete')
+            print('')
 
         # Check statics if requested
         if check_statics == True:
             self.__CheckStatics()
 
 #%%
-    def Analyze_PDelta(self, max_iter=30, tol=0.01, sparse=True):
+    def Analyze_PDelta(self, log=False, max_iter=30, tol=0.01, sparse=True):
         '''
         Performs second order (P-Delta) analysis.
 
         Parameters
         ----------
+        log : bool, optional
+            Prints updates to the console if set to True. Default is False.
         max_iter : number
             The maximum number of iterations permitted. If this value is exceeded the program will
             report divergence.
@@ -1631,9 +1648,10 @@ class FEModel3D():
             solution times.
         '''
         
-        print('+--------------------+')
-        print('| Analyzing: P-Delta |')
-        print('+--------------------+')
+        if log:
+            print('+--------------------+')
+            print('| Analyzing: P-Delta |')
+            print('+--------------------+')
 
         # Assign an ID to all nodes and elements in the model
         self.__Renumber()
@@ -1662,9 +1680,10 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
-
-            print('')
-            print('...Analyzing load combination ' + combo.name)
+            
+            if log:
+                print('')
+                print('- Analyzing load combination ' + combo.name)
 
             iter_count_TC = 1 # Tracks tension/compression-only iterations
             iter_count_PD = 1 # Tracks P-Delta iterations
@@ -1680,21 +1699,22 @@ class FEModel3D():
                   and (divergence_TC == False and divergence_PD == False)):
 
                 # Inform the user which iteration we're on
-                print('...Beginning tension/compression-only iteration #' + str(iter_count_TC))
-                print('...Beginning P-Delta iteration #' + str(iter_count_PD))
+                if log:
+                    print('- Beginning tension/compression-only iteration #' + str(iter_count_TC))
+                    print('- Beginning P-Delta iteration #' + str(iter_count_PD))
 
                 # Get the partitioned global matrices
                 if iter_count_PD == 1:
                     
-                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices) # Initial stiffness matrix
+                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name, log), D1_indices, D2_indices) # Initial stiffness matrix
                     FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)       # Fixed end reactions
                     P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)             # Nodal forces
 
                 else:
 
                     # Calculate the global stiffness matrices (partitioned)
-                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name), D1_indices, D2_indices)      # Initial stiffness matrix
-                    Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name), D1_indices, D2_indices) # Geometric stiffness matrix
+                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name, log), D1_indices, D2_indices)      # Initial stiffness matrix
+                    Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name, log), D1_indices, D2_indices) # Geometric stiffness matrix
 
                     # Combine the partitioned stiffness matrices. They are currently `lil` format
                     # which is great for memory, but slow for mathematical operations. They will be
@@ -1706,7 +1726,7 @@ class FEModel3D():
                     K22 = K22.tocsr() + Kg22.tocsr()                
 
                 # Calculate the global displacement vector
-                print('...Calculating the global displacement vector')
+                if log: print('- Calculating the global displacement vector')
                 if K11.shape == (0, 0):
                     # All displacements are known, so D1 is an empty vector
                     D1 = []
@@ -1716,7 +1736,7 @@ class FEModel3D():
                         if sparse == True:
                             # The partitioned stiffness matrix is already in `csr` format. The `@`
                             # operator performs matrix multiplication on sparse matrices.
-                            D1 = spsolve(K11, subtract(subtract(P1, FER1), K12 @ D2))
+                            D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:
                             # The partitioned stiffness matrix is in `csr` format. It will be
@@ -1778,7 +1798,7 @@ class FEModel3D():
                 convergence_TC = True
 
                 # Check for tension/compression-only springs that need to be deactivated
-                print('...Checking for tension/compression-only spring convergence')
+                if log: print('- Checking for tension/compression-only spring convergence')
                 for spring in self.Springs.values():
 
                     # Only run the tension/compression only check if the spring is still active
@@ -1805,7 +1825,7 @@ class FEModel3D():
                             convergence_PD = False
                 
                 # Check for tension/compression-only members that need to be deactivated
-                print('...Checking for tension/compression-only member convergence')
+                if log: print('- Checking for tension/compression-only member convergence')
                 for member in self.Members.values():
 
                     # Only run the tension/compression only check if the member is still active
@@ -1834,26 +1854,27 @@ class FEModel3D():
                 # Report on convergence of tension/compression only analysis
                 if convergence_TC == False:
                     
-                    print('...Tension/compression-only analysis did not converge on this iteration')
-                    print('...Stiffness matrix will be adjusted for newly deactivated elements')
-                    print('...P-Delta analysis will be restarted')
+                    if log:
+                        print('- Tension/compression-only analysis did not converge on this iteration')
+                        print('- Stiffness matrix will be adjusted for newly deactivated elements')
+                        print('- P-Delta analysis will be restarted')
                     
                     # Increment the tension/compression-only iteration count
                     iter_count_TC += 1
 
                 else:
-                    print('...Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
+                    if log: print('- Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
                 
                 # Check for divergence in the tension/compression-only analysis
                 if iter_count_TC > max_iter:
                     divergence_TC = True
-                    raise Exception('...Model diverged during tension/compression-only analysis')
+                    raise Exception('- Model diverged during tension/compression-only analysis')
 
                 # Check for P-Delta convergence
                 if iter_count_PD > 1:
                 
                     # Print a status update for the user
-                    print('...Checking for convergence')
+                    if log: print('- Checking for convergence')
 
                     # Temporarily disable error messages for invalid values.
                     # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
@@ -1862,11 +1883,11 @@ class FEModel3D():
                     # Check for convergence
                     if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
                         convergence_PD = True
-                        print('...P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')
+                        if log: print('- P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')
                     # Check for divergence
                     elif iter_count_PD > max_iter:
                         divergence_PD = True
-                        print('...P-Delta analysis failed to converge after ' + str(max_iter) + ' iteration(s)')
+                        if log: print('- P-Delta analysis failed to converge after ' + str(max_iter) + ' iteration(s)')
 
                     # Turn invalid value warnings back on
                     seterr(invalid='warn') 
@@ -1880,17 +1901,24 @@ class FEModel3D():
         # Calculate reactions
         self.__CalcReactions()
 
-        print('...Analysis complete')
-        print('')
+        if log:
+            print('')
+            print('- Analysis complete')
+            print('')
 
 #%%
-    def __CalcReactions(self):
+    def __CalcReactions(self, log=False):
         '''
         Calculates reactions once the model is solved.
+
+        Parameters
+        ----------
+        log : bool, optional
+            Prints updates to the console if set to True. Default is False.
         '''
 
         # Print a status update to the console
-        print('...Calculating reactions')
+        if log: print('- Calculating reactions')
 
         # Calculate the reactions node by node
         for node in self.Nodes.values():
