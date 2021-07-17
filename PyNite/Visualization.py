@@ -314,7 +314,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
         __RenderLoads(model, renderer, text_height, combo_name, case)
     
     # Set the window's background to gray
-    renderer.SetBackground(160/255, 160/255, 160/255)
+    renderer.SetBackground(0/255, 0/255, 128/255)
     
     # Reset the camera
     renderer.ResetCamera()
