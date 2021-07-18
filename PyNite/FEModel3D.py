@@ -1396,19 +1396,30 @@ class FEModel3D():
 #%%
     def __Partition(self, unp_matrix, D1_indices, D2_indices):
         '''
-        Partitions a matrix into submatrices based on degree of freedom boundary conditions
+        Partitions a matrix (or vector) into submatrices (or subvectors) based on degree of freedom
+        boundary conditions.
 
         Parameters
         ----------
-        unp_matrix : matrix
-            The unpartitioned matrix to be partitioned.
+        unp_matrix : array
+            The unpartitioned matrix (or vector) to be partitioned.
+        D1_indices : list
+            A list of the indices for degrees of freedom that have unknown displacements.
+        D2_indices : list
+            A list of the indices for degrees of freedom that have known displacements.
         '''
 
+        # Determine if this is a 1D vector or a 2D matrix
+
+        # 1D vectors
         if unp_matrix.shape[1] == 1:
+            # Partition the vector into 2 subvectors
             m1 = unp_matrix[D1_indices, :]
             m2 = unp_matrix[D2_indices, :]
             return m1, m2
+        # 2D matrices
         else:
+            # Partition the matrix into 4 submatrices
             m11 = unp_matrix[D1_indices, :][:, D1_indices]
             m12 = unp_matrix[D1_indices, :][:, D2_indices]
             m21 = unp_matrix[D2_indices, :][:, D1_indices]
