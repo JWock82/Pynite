@@ -29,16 +29,8 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     render_loads : boolean, optional
       Determines if loads will be rendered with the model. The default is True.
     color_map : string, optional
-      The type of contour to plot. Acceptable values are:
-      'dz'
-      'Mx'
-      'My'
-      'Mxy'
-      'Qx'
-      'Qy'
-      'Sx'
-      'Sy'
-      'Txy'
+      The type of contour to plot. Acceptable values are: 'dz', 'Mx', 'My', 'Mxy', 'Qx', 'Qy',
+      'Sx', 'Sy', 'Txy'
       If no value is specified the default is None.
     combo_name : string, optional
       The load combination used for rendering the deformed shape and the loads.
@@ -64,14 +56,15 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     '''
     
     # Input validation
-    if deformed_shape == True and case != None:
+    if deformed_shape and case != None:
         raise Exception('Deformed shape is only available for load combinations,'
                         ' not load cases.')
     
     # Create a visual node for each node in the model
-    vis_nodes = []
-    for node in model.Nodes.values():
-        vis_nodes.append(VisNode(node, text_height))
+    if not deformed_shape:
+      vis_nodes = []
+      for node in model.Nodes.values():
+          vis_nodes.append(VisNode(node, text_height))
     
     # Create a visual auxiliary node for each auxiliary node in the model
     vis_aux_nodes = []
@@ -253,12 +246,14 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
           # require a reset of the camera (see below)
           vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
 
-    # Create an append filter for combining node polydata
-    node_polydata = vtk.vtkAppendPolyData()
-
     # Combine the polydata from each node
-    for vis_node in vis_nodes:
-      
+    if not deformed_shape:
+
+      # Create an append filter for combining node polydata
+      node_polydata = vtk.vtkAppendPolyData()
+
+      for vis_node in vis_nodes:
+        
         # Add the node's polydata
         node_polydata.AddInputData(vis_node.polydata.GetOutput())
 
@@ -269,18 +264,18 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
           # Set the text to follow the camera as the user interacts. This will
           # require a reset of the camera (see below)
           vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+      
+      # Update the node polydata in the append filter
+      node_polydata.Update()
     
-    # Update the node polydata in the append filter
-    node_polydata.Update()
+      # Create a mapper and actor for the nodes
+      node_mapper = vtk.vtkPolyDataMapper()
+      node_mapper.SetInputConnection(node_polydata.GetOutputPort())
+      node_actor = vtk.vtkActor()
+      node_actor.SetMapper(node_mapper)
     
-    # Create a mapper and actor for the nodes
-    node_mapper = vtk.vtkPolyDataMapper()
-    node_mapper.SetInputConnection(node_polydata.GetOutputPort())
-    node_actor = vtk.vtkActor()
-    node_actor.SetMapper(node_mapper)
-    
-    # Add the node actor to the renderer
-    renderer.AddActor(node_actor)
+      # Add the node actor to the renderer
+      renderer.AddActor(node_actor)
 
     # Add actors for each auxiliary node
     for vis_aux_node in vis_aux_nodes:
@@ -301,9 +296,9 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     
     # Add an actor for the plate scalar bar
     if color_map != None:
-        bar = vtk.vtkScalarBarActor()
-        bar.SetLookupTable(lut)
-        renderer.AddActor(bar)
+        scalar_bar = vtk.vtkScalarBarActor()
+        scalar_bar.SetLookupTable(lut)
+        renderer.AddActor(scalar_bar)
 
     # Render the deformed shape if requested
     if deformed_shape == True:
