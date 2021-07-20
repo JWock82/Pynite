@@ -11,9 +11,6 @@ class Node3D():
     """
     
     def __init__(self, Name, X, Y, Z):
-        """
-        Initializes a new node.
-        """
         
         self.Name = Name    # A unique name for the node assigned by the user
         self.ID = None      # A unique index number for the node assigned by the program
