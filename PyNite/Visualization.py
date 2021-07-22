@@ -517,7 +517,7 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
   i = 0
 
   # Calculate the smoothed contour results at each node
-  PrepContour(model, color_map, combo_name)
+  _PrepContour(model, color_map, combo_name)
 
   # Add each plate and quad in the model to the cell array we just created
   for item in list(model.Plates.values()) + list(model.Quads.values()):
@@ -1470,7 +1470,7 @@ class VisMoment():
     
     # Find a vector perpendicular to the directional unit vector
     v1 = direction/norm(direction)  # v1 = The directional unit vector for the moment
-    v2 = PerpVector(v1)             # v2 = A unit vector perpendicular to v1
+    v2 = _PerpVector(v1)             # v2 = A unit vector perpendicular to v1
     v3 = cross(v1, v2)
     v3 = v3/norm(v3)                # v3 = A unit vector perpendicular to v1 and v2
 
@@ -1548,7 +1548,7 @@ class VisAreaLoad():
     # Add a label
     self.label_actor = ptLoads[0].lblActor
 
-def PerpVector(v):
+def _PerpVector(v):
   '''
   Returns a unit vector perpendicular to v=[i, j, k]
   '''
@@ -1578,7 +1578,7 @@ def PerpVector(v):
   # Return the unit vector
   return [i2, j2, k2]/norm([i2, j2, k2])
 
-def PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
+def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 
   if stress_type != None:
 
