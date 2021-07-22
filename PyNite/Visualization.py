@@ -217,559 +217,6 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     # Return the window
     return window
 
-def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
-    '''
-    Renders the deformed shape of a model.
-    
-    Parameters
-    ----------
-    model : FEModel3D
-        Finite element model to be rendered.
-    renderer : vtk.vtkRenderer
-        The VTK renderer object that will render the model.
-    scale_factor : number
-        The scale factor to apply to the model deformations.
-    text_height : number
-        Controls the height of text displayed with the model. The units used for `text_height` are
-        the same as those used for lengths in the model. Sizes of other objects (such as nodes) are
-        related to this value.
-    combo_name : string
-        The load case used for rendering the deflected shape.
-    
-    Returns
-    -------
-    None.
-    '''
-    
-    # Create an append filter to add all the shape polydata to
-    append_filter = vtk.vtkAppendPolyData()
-    
-    # Add the nodes to the append filter and add the node labels to the renderer
-    for node in model.Nodes.values():
-        
-        vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
-        append_filter.AddInputData(vis_node.source.GetOutput())
-    
-        # Add the actor for the node label
-        renderer.AddActor(vis_node.lblActor)
-        
-        # Set the text to follow the camera as the user interacts
-        # This next line will require us to reset the camera when we're done (below)
-        vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
-        
-    # Add the springs to the append filter
-    for spring in model.Springs.values():
-        
-        # Only add the spring if it is active for the given load combination
-        if spring.active[combo_name] == True:
-            
-            vis_spring = VisDeformedSpring(spring, model.Nodes, scale_factor, text_height, combo_name)
-            append_filter.AddInputData(vis_spring.source.GetOutput())
-            
-    # Add the members to the append filter
-    for member in model.Members.values():
-        
-        # Only add the member if it is active for the given load combination.
-        if member.active[combo_name] == True:
-            
-            vis_member = VisDeformedMember(member, model.Nodes, scale_factor, text_height, combo_name)
-            append_filter.AddInputData(vis_member.source)
-            
-    # Create a mapper and actor for the append filter
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(append_filter.GetOutputPort())
-    actor = vtk.vtkActor()
-    actor.GetProperty().SetColor(255, 255, 0)  # Yellow
-    actor.SetMapper(mapper)
-    renderer.AddActor(actor)
-
-def _RenderLoads(model, renderer, text_height, combo_name, case):
-
-  # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
-  # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
-  # becomes very slow when a large number of actors are used.
-  polydata = vtk.vtkAppendPolyData()
-
-  # Polygons are treated as cells in VTK. Create a cell array to store all the area load polygons
-  # in. We'll also create a list of points to store the polygon points in. The polydata for these
-  # polygons will be stored separately from the other load data.
-  polygons = vtk.vtkCellArray()
-  polygon_points = vtk.vtkPoints()
-  polygon_polydata = vtk.vtkPolyData()
-
-  # Get the maximum load magnitudes that will be used to normalize the display scale
-  max_pt_load, max_moment, max_dist_load, max_area_load = _MaxLoads(model, combo_name, case)
-
-  # Display the requested load combination, or 'Combo 1' if no load combo or case has been
-  # specified
-  if case == None:
-    # Store model.LoadCombos[combo].factors under a simpler name for use below
-    load_factors = model.LoadCombos[combo_name].factors
-  else:
-    # Set up a load combination dictionary that represents the load case
-    load_factors = {case: 1}
-
-  # Step through each node
-  for node in model.Nodes.values():
-
-    # Step through and display each nodal load
-    for load in node.NodeLoads:
-      
-      # Determine if this load is part of the requested LoadCombo or case
-      if load[2] in load_factors:
-        
-        # Calculate the factored value for this load and it's sign (positive or negative)
-        load_value = load[1]*load_factors[load[2]]
-        sign = load_value/abs(load_value)
-        
-        # Display the load
-        if load[0] == 'FX':
-          ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'FY':
-          ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'FZ':
-          ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'MX':
-          ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'MY':
-          ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'MZ':
-          ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-        
-        polydata.AddInputData(ptLoad.polydata.GetOutput())
-        renderer.AddActor(ptLoad.lblActor)
-        ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-
-  # Step through each member
-  for member in model.Members.values():
-
-    # Get the direction cosines for the member's local axes
-    dir_cos = member.T()[0:3, 0:3]
-
-    # Get the starting point for the member
-    x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
-
-    # Step through each member point load
-    for load in member.PtLoads:
-
-      # Determine if this load is part of the requested load combination
-      if load[3] in load_factors:
-
-        # Calculate the factored value for this load and it's sign (positive or negative)
-        load_value = load[1]*load_factors[load[3]]
-        sign = load_value/abs(load_value)
-
-        # Calculate the load's location in 3D space
-        x = load[2]
-        position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
-
-        # Display the load
-        if load[0] == 'Fx':
-          ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'Fy':
-          ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'Fz':
-          ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'Mx':
-          ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'My':
-          ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-        elif load[0] == 'Mz':
-          ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
-    
-        polydata.AddInputData(ptLoad.polydata.GetOutput())
-        renderer.AddActor(ptLoad.lblActor)
-        ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-
-    # Step through each member distributed load
-    for load in member.DistLoads:
-
-      # Determine if this load is part of the requested load combination
-      if load[5] in load_factors:
-
-        # Calculate the factored value for this load and it's sign (positive or negative)
-        w1 = load[1]*load_factors[load[5]]
-        w2 = load[2]*load_factors[load[5]]
-        sign1 = w1/abs(w1)
-        sign2 = w2/abs(w2)
-
-        # Calculate the loads location in 3D space
-        x1 = load[3]
-        x2 = load[4]
-        position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
-        position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
-        
-        # Display the load
-        if load[0] == 'Fx':
-          distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
-        elif load[0] == 'Fy':
-          distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
-        elif load[0] == 'Fz':
-          distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
-       
-        polydata.AddInputData(distLoad.polydata.GetOutput())
-        renderer.AddActor(distLoad.lblActors[0])
-        renderer.AddActor(distLoad.lblActors[1])
-        distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-        distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
-
-  # Step through each plate
-  i = 0
-  for plate in list(model.Plates.values()) + list(model.Quads.values()):
-
-    # Get the direction cosines for the plate's local z-axis
-    dir_cos = plate.T()[0:3, 0:3]
-    dir_cos = dir_cos[2]
-
-    # Step through each plate load
-    for load in plate.pressures:
-
-      # Determine if this load is part of the requested load combination
-      if load[1] in load_factors:
-
-        # Calculate the factored value for this load
-        load_value = load[0]*load_factors[load[1]]
-        
-        # Find the sign for this load. Intercept any divide by zero errors
-        if load[0] == 0:
-          sign = 1
-        else:
-          sign = abs(load[0])/load[0]
-
-        # Find the position of the load's 4 corners
-        position0 = [plate.iNode.X, plate.iNode.Y, plate.iNode.Z]
-        position1 = [plate.jNode.X, plate.jNode.Y, plate.jNode.Z]
-        position2 = [plate.mNode.X, plate.mNode.Y, plate.mNode.Z]
-        position3 = [plate.nNode.X, plate.nNode.Y, plate.nNode.Z]
-
-        # Create an area load and get its data
-        area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*text_height, '{:.3g}'.format(load_value), text_height)
-
-        # Add the area load's arrows to the overall load polydata
-        polydata.AddInputData(area_load.polydata.GetOutput())
-
-        # Add the 4 points at the corners of this area load to the list of points
-        polygon_points.InsertNextPoint(area_load.p0[0], area_load.p0[1], area_load.p0[2])
-        polygon_points.InsertNextPoint(area_load.p1[0], area_load.p1[1], area_load.p1[2])
-        polygon_points.InsertNextPoint(area_load.p2[0], area_load.p2[1], area_load.p2[2])
-        polygon_points.InsertNextPoint(area_load.p3[0], area_load.p3[1], area_load.p3[2])
-
-        # Create a polygon based on the four points we just defined.
-        # The 1st number in `SetId()` is the local point id
-        # The 2nd number in `SetId()` is the global point id
-        polygon = vtk.vtkPolygon()
-        polygon.GetPointIds().SetNumberOfIds(4)
-        polygon.GetPointIds().SetId(0, i*4)
-        polygon.GetPointIds().SetId(1, i*4 + 1)
-        polygon.GetPointIds().SetId(2, i*4 + 2)
-        polygon.GetPointIds().SetId(3, i*4 + 3)
-
-        # Add the polygon to the list of polygons
-        polygons.InsertNextCell(polygon)
-        
-        # Add the load label
-        renderer.AddActor(area_load.label_actor)
-
-        # Set the text to follow the camera as the user interacts
-        area_load.label_actor.SetCamera(renderer.GetActiveCamera())
-
-        # `i` keeps track of the next polygon's ID. We've just added a polygon, so `i` needs to
-        # go up 1.
-        i += 1
-    
-    # Create polygon polydata from all the points and polygons we just defined
-    polygon_polydata.SetPoints(polygon_points)
-    polygon_polydata.SetPolys(polygons)
-
-  # Set up an actor and mapper for the loads
-  load_mapper = vtk.vtkPolyDataMapper()
-  load_mapper.SetInputConnection(polydata.GetOutputPort())
-  load_actor = vtk.vtkActor()
-  load_actor.GetProperty().SetColor(0, 255, 0)  # Green
-  load_actor.SetMapper(load_mapper)
-  renderer.AddActor(load_actor)
-
-  # Set up an actor and a mapper for the area load polygons
-  polygon_mapper = vtk.vtkPolyDataMapper()
-  polygon_mapper.SetInputData(polygon_polydata)
-  polygon_actor = vtk.vtkActor()
-  polygon_actor.GetProperty().SetColor(0, 255, 0)  # Green
-  # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
-  polygon_actor.SetMapper(polygon_mapper)
-  renderer.AddActor(polygon_actor)
-
-def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, combo_name):
-  
-  # Create a new `vtkCellArray` object to store the elements
-  plates = vtk.vtkCellArray()
-
-  # Create a `vtkPoints` object to store the coordinates of the corners of the elements
-  plate_points = vtk.vtkPoints()
-
-  # Create 2 lists to store plate results
-  # `results` will store the results in a Python iterable list
-  # `plate_results` will store the results in a `vtkDoubleArray` for VTK
-  results = []
-  plate_results = vtk.vtkDoubleArray()
-  plate_results.SetNumberOfComponents(1)
-
-  # Each element will be assigned a unique element number `i` beginning at 0
-  i = 0
-
-  # Calculate the smoothed contour results at each node
-  _PrepContour(model, color_map, combo_name)
-
-  # Add each plate and quad in the model to the cell array we just created
-  for item in list(model.Plates.values()) + list(model.Quads.values()):
-      
-    # Create a point for each corner (must be in counter clockwise order)
-    if deformed_shape == True:
-      p0 = [item.iNode.X + item.iNode.DX[combo_name]*deformed_scale,
-            item.iNode.Y + item.iNode.DY[combo_name]*deformed_scale,
-            item.iNode.Z + item.iNode.DZ[combo_name]*deformed_scale]
-      p1 = [item.jNode.X + item.jNode.DX[combo_name]*deformed_scale,
-            item.jNode.Y + item.jNode.DY[combo_name]*deformed_scale,
-            item.jNode.Z + item.jNode.DZ[combo_name]*deformed_scale]
-      p2 = [item.mNode.X + item.mNode.DX[combo_name]*deformed_scale,
-            item.mNode.Y + item.mNode.DY[combo_name]*deformed_scale,
-            item.mNode.Z + item.mNode.DZ[combo_name]*deformed_scale]
-      p3 = [item.nNode.X + item.nNode.DX[combo_name]*deformed_scale,
-            item.nNode.Y + item.nNode.DY[combo_name]*deformed_scale,
-            item.nNode.Z + item.nNode.DZ[combo_name]*deformed_scale]
-    else:
-      p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
-      p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
-      p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
-      p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
-
-    # Add the points to the `vtkPoints` object we created earlier
-    plate_points.InsertNextPoint(p0)
-    plate_points.InsertNextPoint(p1)
-    plate_points.InsertNextPoint(p2)
-    plate_points.InsertNextPoint(p3)
-
-    # Create a `vtkQuad` based on the four points we just defined
-    # The 1st number in `SetId()` is the local point id
-    # The 2nd number in `SetId()` is the global point id
-    quad = vtk.vtkQuad()
-    quad.GetPointIds().SetId(0, i*4)
-    quad.GetPointIds().SetId(1, i*4 + 1)
-    quad.GetPointIds().SetId(2, i*4 + 2)
-    quad.GetPointIds().SetId(3, i*4 + 3)
-
-    # Get the contour value for each node
-    r0 = item.iNode.contour
-    r1 = item.jNode.contour
-    r2 = item.mNode.contour
-    r3 = item.nNode.contour
-        
-    if color_map != None:
-        
-      # Save the results to the Python list of results we created earlier
-      results.append(r0)
-      results.append(r1)
-      results.append(r2)
-      results.append(r3)
-            
-      # Save the results to the `vtkDoubleArray` list of results for VTK
-      plate_results.InsertNextTuple([r0])
-      plate_results.InsertNextTuple([r1])
-      plate_results.InsertNextTuple([r2])
-      plate_results.InsertNextTuple([r3])
-
-    # Insert the quad into the cell array
-    plates.InsertNextCell(quad)
-
-    # Increment `i` for the next plate
-    i += 1
-
-  # Create a `vtkPolyData` object to store plate data in
-  plate_polydata = vtk.vtkPolyData()
-    
-  # Add the points and plates to the dataset
-  plate_polydata.SetPoints(plate_points)
-  plate_polydata.SetPolys(plates)
-    
-  # Setup actor and mapper for the plates
-  plate_mapper = vtk.vtkPolyDataMapper()
-  plate_mapper.SetInputData(plate_polydata)
-  plate_actor = vtk.vtkActor()
-  plate_actor.SetMapper(plate_mapper)
-
-  # Map the results to the plates
-  if color_map != None:
-        
-    plate_polydata.GetPointData().SetScalars(plate_results)
-        
-    # Create a `vtkLookupTable` for the colors used to map results
-    lut = vtk.vtkLookupTable()
-    lut.SetTableRange(min(results), max(results))
-    lut.SetNumberOfColors(256) 
-    # The commented code below can be uncommented and modified to change the color scheme
-    # ctf = vtk.vtkColorTransferFunction()
-    # ctf.SetColorSpaceToDiverging()
-    # ctf.AddRGBPoint(min(results), 255, 0, 255)  # Purple
-    # ctf.AddRGBPoint(max(results), 255, 0, 0)    # Red
-    # for i in range(256):
-    #   rgb = list(ctf.GetColor(float(i)/256))
-    #   rgb.append(1.0)
-    #   lut.SetTableValue(i, *rgb)
-    plate_mapper.SetLookupTable(lut)
-    plate_mapper.SetUseLookupTableScalarRange(True)
-    plate_mapper.SetScalarModeToUsePointData()
-    lut.Build()
-
-    # Add the scalar bar for the contours
-    scalar_bar = vtk.vtkScalarBarActor()
-    scalar_bar.SetLookupTable(lut)
-    renderer.AddActor(scalar_bar)
-    
-  # Add the actor for the plates
-  renderer.AddActor(plate_actor)
-
-def _MaxLoads(model, combo_name=None, case=None):
-
-  max_pt_load = 0
-  max_moment = 0
-  max_dist_load = 0
-  max_area_load = 0
-
-  # Find the requested load combination or load case
-  if case == None:
-
-    # Step through each node
-    for node in model.Nodes.values():
-
-      # Step through each nodal load to find the largest one
-      for load in node.NodeLoads:
-        
-        # Find the largest loads in the load combination
-        if load[2] in model.LoadCombos[combo_name].factors:
-          if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_pt_load:
-              max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
-          else:
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_moment:
-              max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
-
-    # Step through each member
-    for member in model.Members.values():
-
-      # Step through each member point load
-      for load in member.PtLoads:
-        
-        # Find and store the largest point load and moment in the load combination
-        if load[3] in model.LoadCombos[combo_name].factors:
-
-          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_pt_load:
-              max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
-          else:
-            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_moment:
-              max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
-
-      # Step through each member distributed load
-      for load in member.DistLoads:
-
-        #Find and store the largest distributed load in the load combination
-        if load[5] in model.LoadCombos[combo_name].factors:
-
-          if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
-            max_dist_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
-          if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
-            max_dist_load = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
-
-    # Step through each plate
-    for plate in model.Plates.values():
-
-      # Step through each plate load
-      for load in plate.pressures:
-
-        if load[1] in model.LoadCombos[combo_name].factors:
-          if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-            max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
-
-    # Step through each quad
-    for quad in model.Quads.values():
-
-      # Step through each plate load
-      for load in quad.pressures:
-
-        # Check to see if the load case is in the requested load combination
-        if load[1] in model.LoadCombos[combo_name].factors:
-          if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-            max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
-
-  # Behavior if case has been specified
-  else:
-    
-    # Step through each node
-    for node in model.Nodes.values():
-
-      # Step through each nodal load to find the largest one
-      for load in node.NodeLoads:
-        
-        # Find the largest loads in the load case
-        if load[2] == case:
-          if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-            if abs(load[1]) > max_pt_load:
-              max_pt_load = abs(load[1])
-          else:
-            if abs(load[1]) > max_moment:
-              max_moment = abs(load[1])
-
-    # Step through each member
-    for member in model.Members.values():
-
-      # Step through each member point load
-      for load in member.PtLoads:
-        
-        # Find and store the largest point load and moment in the load case
-        if load[3] == case:
-
-          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
-            if abs(load[1]) > max_pt_load:
-              max_pt_load = abs(load[1])
-          else:
-            if abs(load[1]) > max_moment:
-              max_moment = abs(load[1])
-
-      # Step through each member distributed load
-      for load in member.DistLoads:
-
-        # Find and store the largest distributed load in the load case
-        if load[5] == case:
-
-          if abs(load[1]) > max_dist_load:
-            max_dist_load = abs(load[1])
-          if abs(load[2]) > max_dist_load:
-            max_dist_load = abs(load[2])
-      
-      # Step through each plate
-      for plate in model.Plates.values():
-
-        # Step through each plate load
-        for load in plate.pressures:
-
-          if load[1] == case:
-
-            if abs(load[0]) > max_area_load:
-              max_area_load = abs(load[0])
-
-    # Step through each quad
-    for quad in model.Quads.values():
-
-      # Step through each plate load
-      for load in quad.pressures:
-
-        if load[1] == case:
-
-          if abs(load[0]) > max_area_load:
-            max_area_load = abs(load[0])
-
-  # Return the maximum loads in the load combination or load case
-  return max_pt_load, max_moment, max_dist_load, max_area_load
-
 # Converts a node object into a node for the viewer
 class VisNode():
 
@@ -1661,3 +1108,555 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
     for node in model.Nodes.values():
       node.contour = sum(node.contour)/len(node.contour)
 
+def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
+    '''
+    Renders the deformed shape of a model.
+    
+    Parameters
+    ----------
+    model : FEModel3D
+        Finite element model to be rendered.
+    renderer : vtk.vtkRenderer
+        The VTK renderer object that will render the model.
+    scale_factor : number
+        The scale factor to apply to the model deformations.
+    text_height : number
+        Controls the height of text displayed with the model. The units used for `text_height` are
+        the same as those used for lengths in the model. Sizes of other objects (such as nodes) are
+        related to this value.
+    combo_name : string
+        The load case used for rendering the deflected shape.
+    
+    Returns
+    -------
+    None.
+    '''
+    
+    # Create an append filter to add all the shape polydata to
+    append_filter = vtk.vtkAppendPolyData()
+    
+    # Add the nodes to the append filter and add the node labels to the renderer
+    for node in model.Nodes.values():
+        
+        vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
+        append_filter.AddInputData(vis_node.source.GetOutput())
+    
+        # Add the actor for the node label
+        renderer.AddActor(vis_node.lblActor)
+        
+        # Set the text to follow the camera as the user interacts
+        # This next line will require us to reset the camera when we're done (below)
+        vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+        
+    # Add the springs to the append filter
+    for spring in model.Springs.values():
+        
+        # Only add the spring if it is active for the given load combination
+        if spring.active[combo_name] == True:
+            
+            vis_spring = VisDeformedSpring(spring, model.Nodes, scale_factor, text_height, combo_name)
+            append_filter.AddInputData(vis_spring.source.GetOutput())
+            
+    # Add the members to the append filter
+    for member in model.Members.values():
+        
+        # Only add the member if it is active for the given load combination.
+        if member.active[combo_name] == True:
+            
+            vis_member = VisDeformedMember(member, model.Nodes, scale_factor, text_height, combo_name)
+            append_filter.AddInputData(vis_member.source)
+            
+    # Create a mapper and actor for the append filter
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(append_filter.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.GetProperty().SetColor(255, 255, 0)  # Yellow
+    actor.SetMapper(mapper)
+    renderer.AddActor(actor)
+
+def _RenderLoads(model, renderer, text_height, combo_name, case):
+
+  # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
+  # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
+  # becomes very slow when a large number of actors are used.
+  polydata = vtk.vtkAppendPolyData()
+
+  # Polygons are treated as cells in VTK. Create a cell array to store all the area load polygons
+  # in. We'll also create a list of points to store the polygon points in. The polydata for these
+  # polygons will be stored separately from the other load data.
+  polygons = vtk.vtkCellArray()
+  polygon_points = vtk.vtkPoints()
+  polygon_polydata = vtk.vtkPolyData()
+
+  # Get the maximum load magnitudes that will be used to normalize the display scale
+  max_pt_load, max_moment, max_dist_load, max_area_load = _MaxLoads(model, combo_name, case)
+
+  # Display the requested load combination, or 'Combo 1' if no load combo or case has been
+  # specified
+  if case == None:
+    # Store model.LoadCombos[combo].factors under a simpler name for use below
+    load_factors = model.LoadCombos[combo_name].factors
+  else:
+    # Set up a load combination dictionary that represents the load case
+    load_factors = {case: 1}
+
+  # Step through each node
+  for node in model.Nodes.values():
+
+    # Step through and display each nodal load
+    for load in node.NodeLoads:
+      
+      # Determine if this load is part of the requested LoadCombo or case
+      if load[2] in load_factors:
+        
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        load_value = load[1]*load_factors[load[2]]
+        sign = load_value/abs(load_value)
+        
+        # Display the load
+        if load[0] == 'FX':
+          ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'FY':
+          ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'FZ':
+          ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'MX':
+          ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'MY':
+          ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'MZ':
+          ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        
+        polydata.AddInputData(ptLoad.polydata.GetOutput())
+        renderer.AddActor(ptLoad.lblActor)
+        ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+
+  # Step through each member
+  for member in model.Members.values():
+
+    # Get the direction cosines for the member's local axes
+    dir_cos = member.T()[0:3, 0:3]
+
+    # Get the starting point for the member
+    x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
+
+    # Step through each member point load
+    for load in member.PtLoads:
+
+      # Determine if this load is part of the requested load combination
+      if load[3] in load_factors:
+
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        load_value = load[1]*load_factors[load[3]]
+        sign = load_value/abs(load_value)
+
+        # Calculate the load's location in 3D space
+        x = load[2]
+        position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
+
+        # Display the load
+        if load[0] == 'Fx':
+          ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'Fy':
+          ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'Fz':
+          ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'Mx':
+          ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'My':
+          ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'Mz':
+          ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+    
+        polydata.AddInputData(ptLoad.polydata.GetOutput())
+        renderer.AddActor(ptLoad.lblActor)
+        ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+
+    # Step through each member distributed load
+    for load in member.DistLoads:
+
+      # Determine if this load is part of the requested load combination
+      if load[5] in load_factors:
+
+        # Calculate the factored value for this load and it's sign (positive or negative)
+        w1 = load[1]*load_factors[load[5]]
+        w2 = load[2]*load_factors[load[5]]
+        sign1 = w1/abs(w1)
+        sign2 = w2/abs(w2)
+
+        # Calculate the loads location in 3D space
+        x1 = load[3]
+        x2 = load[4]
+        position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
+        position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
+        
+        # Display the load
+        if load[0] == 'Fx':
+          distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+        elif load[0] == 'Fy':
+          distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+        elif load[0] == 'Fz':
+          distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+       
+        polydata.AddInputData(distLoad.polydata.GetOutput())
+        renderer.AddActor(distLoad.lblActors[0])
+        renderer.AddActor(distLoad.lblActors[1])
+        distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+        distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+
+  # Step through each plate
+  i = 0
+  for plate in list(model.Plates.values()) + list(model.Quads.values()):
+
+    # Get the direction cosines for the plate's local z-axis
+    dir_cos = plate.T()[0:3, 0:3]
+    dir_cos = dir_cos[2]
+
+    # Step through each plate load
+    for load in plate.pressures:
+
+      # Determine if this load is part of the requested load combination
+      if load[1] in load_factors:
+
+        # Calculate the factored value for this load
+        load_value = load[0]*load_factors[load[1]]
+        
+        # Find the sign for this load. Intercept any divide by zero errors
+        if load[0] == 0:
+          sign = 1
+        else:
+          sign = abs(load[0])/load[0]
+
+        # Find the position of the load's 4 corners
+        position0 = [plate.iNode.X, plate.iNode.Y, plate.iNode.Z]
+        position1 = [plate.jNode.X, plate.jNode.Y, plate.jNode.Z]
+        position2 = [plate.mNode.X, plate.mNode.Y, plate.mNode.Z]
+        position3 = [plate.nNode.X, plate.nNode.Y, plate.nNode.Z]
+
+        # Create an area load and get its data
+        area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+
+        # Add the area load's arrows to the overall load polydata
+        polydata.AddInputData(area_load.polydata.GetOutput())
+
+        # Add the 4 points at the corners of this area load to the list of points
+        polygon_points.InsertNextPoint(area_load.p0[0], area_load.p0[1], area_load.p0[2])
+        polygon_points.InsertNextPoint(area_load.p1[0], area_load.p1[1], area_load.p1[2])
+        polygon_points.InsertNextPoint(area_load.p2[0], area_load.p2[1], area_load.p2[2])
+        polygon_points.InsertNextPoint(area_load.p3[0], area_load.p3[1], area_load.p3[2])
+
+        # Create a polygon based on the four points we just defined.
+        # The 1st number in `SetId()` is the local point id
+        # The 2nd number in `SetId()` is the global point id
+        polygon = vtk.vtkPolygon()
+        polygon.GetPointIds().SetNumberOfIds(4)
+        polygon.GetPointIds().SetId(0, i*4)
+        polygon.GetPointIds().SetId(1, i*4 + 1)
+        polygon.GetPointIds().SetId(2, i*4 + 2)
+        polygon.GetPointIds().SetId(3, i*4 + 3)
+
+        # Add the polygon to the list of polygons
+        polygons.InsertNextCell(polygon)
+        
+        # Add the load label
+        renderer.AddActor(area_load.label_actor)
+
+        # Set the text to follow the camera as the user interacts
+        area_load.label_actor.SetCamera(renderer.GetActiveCamera())
+
+        # `i` keeps track of the next polygon's ID. We've just added a polygon, so `i` needs to
+        # go up 1.
+        i += 1
+    
+    # Create polygon polydata from all the points and polygons we just defined
+    polygon_polydata.SetPoints(polygon_points)
+    polygon_polydata.SetPolys(polygons)
+
+  # Set up an actor and mapper for the loads
+  load_mapper = vtk.vtkPolyDataMapper()
+  load_mapper.SetInputConnection(polydata.GetOutputPort())
+  load_actor = vtk.vtkActor()
+  load_actor.GetProperty().SetColor(0, 255, 0)  # Green
+  load_actor.SetMapper(load_mapper)
+  renderer.AddActor(load_actor)
+
+  # Set up an actor and a mapper for the area load polygons
+  polygon_mapper = vtk.vtkPolyDataMapper()
+  polygon_mapper.SetInputData(polygon_polydata)
+  polygon_actor = vtk.vtkActor()
+  polygon_actor.GetProperty().SetColor(0, 255, 0)  # Green
+  # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
+  polygon_actor.SetMapper(polygon_mapper)
+  renderer.AddActor(polygon_actor)
+
+def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, combo_name):
+  
+  # Create a new `vtkCellArray` object to store the elements
+  plates = vtk.vtkCellArray()
+
+  # Create a `vtkPoints` object to store the coordinates of the corners of the elements
+  plate_points = vtk.vtkPoints()
+
+  # Create 2 lists to store plate results
+  # `results` will store the results in a Python iterable list
+  # `plate_results` will store the results in a `vtkDoubleArray` for VTK
+  results = []
+  plate_results = vtk.vtkDoubleArray()
+  plate_results.SetNumberOfComponents(1)
+
+  # Each element will be assigned a unique element number `i` beginning at 0
+  i = 0
+
+  # Calculate the smoothed contour results at each node
+  _PrepContour(model, color_map, combo_name)
+
+  # Add each plate and quad in the model to the cell array we just created
+  for item in list(model.Plates.values()) + list(model.Quads.values()):
+      
+    # Create a point for each corner (must be in counter clockwise order)
+    if deformed_shape == True:
+      p0 = [item.iNode.X + item.iNode.DX[combo_name]*deformed_scale,
+            item.iNode.Y + item.iNode.DY[combo_name]*deformed_scale,
+            item.iNode.Z + item.iNode.DZ[combo_name]*deformed_scale]
+      p1 = [item.jNode.X + item.jNode.DX[combo_name]*deformed_scale,
+            item.jNode.Y + item.jNode.DY[combo_name]*deformed_scale,
+            item.jNode.Z + item.jNode.DZ[combo_name]*deformed_scale]
+      p2 = [item.mNode.X + item.mNode.DX[combo_name]*deformed_scale,
+            item.mNode.Y + item.mNode.DY[combo_name]*deformed_scale,
+            item.mNode.Z + item.mNode.DZ[combo_name]*deformed_scale]
+      p3 = [item.nNode.X + item.nNode.DX[combo_name]*deformed_scale,
+            item.nNode.Y + item.nNode.DY[combo_name]*deformed_scale,
+            item.nNode.Z + item.nNode.DZ[combo_name]*deformed_scale]
+    else:
+      p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
+      p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
+      p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
+      p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
+
+    # Add the points to the `vtkPoints` object we created earlier
+    plate_points.InsertNextPoint(p0)
+    plate_points.InsertNextPoint(p1)
+    plate_points.InsertNextPoint(p2)
+    plate_points.InsertNextPoint(p3)
+
+    # Create a `vtkQuad` based on the four points we just defined
+    # The 1st number in `SetId()` is the local point id
+    # The 2nd number in `SetId()` is the global point id
+    quad = vtk.vtkQuad()
+    quad.GetPointIds().SetId(0, i*4)
+    quad.GetPointIds().SetId(1, i*4 + 1)
+    quad.GetPointIds().SetId(2, i*4 + 2)
+    quad.GetPointIds().SetId(3, i*4 + 3)
+
+    # Get the contour value for each node
+    r0 = item.iNode.contour
+    r1 = item.jNode.contour
+    r2 = item.mNode.contour
+    r3 = item.nNode.contour
+        
+    if color_map != None:
+        
+      # Save the results to the Python list of results we created earlier
+      results.append(r0)
+      results.append(r1)
+      results.append(r2)
+      results.append(r3)
+            
+      # Save the results to the `vtkDoubleArray` list of results for VTK
+      plate_results.InsertNextTuple([r0])
+      plate_results.InsertNextTuple([r1])
+      plate_results.InsertNextTuple([r2])
+      plate_results.InsertNextTuple([r3])
+
+    # Insert the quad into the cell array
+    plates.InsertNextCell(quad)
+
+    # Increment `i` for the next plate
+    i += 1
+
+  # Create a `vtkPolyData` object to store plate data in
+  plate_polydata = vtk.vtkPolyData()
+    
+  # Add the points and plates to the dataset
+  plate_polydata.SetPoints(plate_points)
+  plate_polydata.SetPolys(plates)
+    
+  # Setup actor and mapper for the plates
+  plate_mapper = vtk.vtkPolyDataMapper()
+  plate_mapper.SetInputData(plate_polydata)
+  plate_actor = vtk.vtkActor()
+  plate_actor.SetMapper(plate_mapper)
+
+  # Map the results to the plates
+  if color_map != None:
+        
+    plate_polydata.GetPointData().SetScalars(plate_results)
+        
+    # Create a `vtkLookupTable` for the colors used to map results
+    lut = vtk.vtkLookupTable()
+    lut.SetTableRange(min(results), max(results))
+    lut.SetNumberOfColors(256) 
+    # The commented code below can be uncommented and modified to change the color scheme
+    # ctf = vtk.vtkColorTransferFunction()
+    # ctf.SetColorSpaceToDiverging()
+    # ctf.AddRGBPoint(min(results), 255, 0, 255)  # Purple
+    # ctf.AddRGBPoint(max(results), 255, 0, 0)    # Red
+    # for i in range(256):
+    #   rgb = list(ctf.GetColor(float(i)/256))
+    #   rgb.append(1.0)
+    #   lut.SetTableValue(i, *rgb)
+    plate_mapper.SetLookupTable(lut)
+    plate_mapper.SetUseLookupTableScalarRange(True)
+    plate_mapper.SetScalarModeToUsePointData()
+    lut.Build()
+
+    # Add the scalar bar for the contours
+    scalar_bar = vtk.vtkScalarBarActor()
+    scalar_bar.SetLookupTable(lut)
+    renderer.AddActor(scalar_bar)
+    
+  # Add the actor for the plates
+  renderer.AddActor(plate_actor)
+
+def _MaxLoads(model, combo_name=None, case=None):
+
+  max_pt_load = 0
+  max_moment = 0
+  max_dist_load = 0
+  max_area_load = 0
+
+  # Find the requested load combination or load case
+  if case == None:
+
+    # Step through each node
+    for node in model.Nodes.values():
+
+      # Step through each nodal load to find the largest one
+      for load in node.NodeLoads:
+        
+        # Find the largest loads in the load combination
+        if load[2] in model.LoadCombos[combo_name].factors:
+          if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_pt_load:
+              max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
+          else:
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_moment:
+              max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
+
+    # Step through each member
+    for member in model.Members.values():
+
+      # Step through each member point load
+      for load in member.PtLoads:
+        
+        # Find and store the largest point load and moment in the load combination
+        if load[3] in model.LoadCombos[combo_name].factors:
+
+          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_pt_load:
+              max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
+          else:
+            if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_moment:
+              max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
+
+      # Step through each member distributed load
+      for load in member.DistLoads:
+
+        #Find and store the largest distributed load in the load combination
+        if load[5] in model.LoadCombos[combo_name].factors:
+
+          if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
+            max_dist_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
+          if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
+            max_dist_load = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
+
+    # Step through each plate
+    for plate in model.Plates.values():
+
+      # Step through each plate load
+      for load in plate.pressures:
+
+        if load[1] in model.LoadCombos[combo_name].factors:
+          if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
+            max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
+
+    # Step through each quad
+    for quad in model.Quads.values():
+
+      # Step through each plate load
+      for load in quad.pressures:
+
+        # Check to see if the load case is in the requested load combination
+        if load[1] in model.LoadCombos[combo_name].factors:
+          if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
+            max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
+
+  # Behavior if case has been specified
+  else:
+    
+    # Step through each node
+    for node in model.Nodes.values():
+
+      # Step through each nodal load to find the largest one
+      for load in node.NodeLoads:
+        
+        # Find the largest loads in the load case
+        if load[2] == case:
+          if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
+            if abs(load[1]) > max_pt_load:
+              max_pt_load = abs(load[1])
+          else:
+            if abs(load[1]) > max_moment:
+              max_moment = abs(load[1])
+
+    # Step through each member
+    for member in model.Members.values():
+
+      # Step through each member point load
+      for load in member.PtLoads:
+        
+        # Find and store the largest point load and moment in the load case
+        if load[3] == case:
+
+          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
+            if abs(load[1]) > max_pt_load:
+              max_pt_load = abs(load[1])
+          else:
+            if abs(load[1]) > max_moment:
+              max_moment = abs(load[1])
+
+      # Step through each member distributed load
+      for load in member.DistLoads:
+
+        # Find and store the largest distributed load in the load case
+        if load[5] == case:
+
+          if abs(load[1]) > max_dist_load:
+            max_dist_load = abs(load[1])
+          if abs(load[2]) > max_dist_load:
+            max_dist_load = abs(load[2])
+      
+      # Step through each plate
+      for plate in model.Plates.values():
+
+        # Step through each plate load
+        for load in plate.pressures:
+
+          if load[1] == case:
+
+            if abs(load[0]) > max_area_load:
+              max_area_load = abs(load[0])
+
+    # Step through each quad
+    for quad in model.Quads.values():
+
+      # Step through each plate load
+      for load in quad.pressures:
+
+        if load[1] == case:
+
+          if abs(load[0]) > max_area_load:
+            max_area_load = abs(load[0])
+
+  # Return the maximum loads in the load combination or load case
+  return max_pt_load, max_moment, max_dist_load, max_area_load
