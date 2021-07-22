@@ -80,125 +80,6 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     vis_members = []
     for member in model.Members.values():
         vis_members.append(VisMember(member, model.Nodes, text_height))
-  
-    # Create a cell array to store the plate elements
-    plates = vtk.vtkCellArray()
-    
-    # Create a `vtkPoints` object to store all the plate points
-    plate_points = vtk.vtkPoints()
-    
-    # Create a lists to store plate results
-    # `results` will store the results in a python iterable list
-    # `plate_results` will store the results in a `vtkDoubleArray` for VTK
-    results = []
-    plate_results = vtk.vtkDoubleArray()
-    plate_results.SetNumberOfComponents(1)
-  
-    # Each plate will be assigned a unique plate number `i`
-    i = 0
-    
-    # Calculate the smoothed contour results at each node
-    PrepContour(model, color_map, combo_name)
-
-    # Add each plate in the model to the cell array we just created
-    for item in list(model.Plates.values()) + list(model.Quads.values()):
-
-        # Create a point for each corner (must be in counter clockwise order)
-        if deformed_shape == True:
-          p0 = [item.iNode.X + item.iNode.DX[combo_name]*deformed_scale,
-                item.iNode.Y + item.iNode.DY[combo_name]*deformed_scale,
-                item.iNode.Z + item.iNode.DZ[combo_name]*deformed_scale]
-          p1 = [item.jNode.X + item.jNode.DX[combo_name]*deformed_scale,
-                item.jNode.Y + item.jNode.DY[combo_name]*deformed_scale,
-                item.jNode.Z + item.jNode.DZ[combo_name]*deformed_scale]
-          p2 = [item.mNode.X + item.mNode.DX[combo_name]*deformed_scale,
-                item.mNode.Y + item.mNode.DY[combo_name]*deformed_scale,
-                item.mNode.Z + item.mNode.DZ[combo_name]*deformed_scale]
-          p3 = [item.nNode.X + item.nNode.DX[combo_name]*deformed_scale,
-                item.nNode.Y + item.nNode.DY[combo_name]*deformed_scale,
-                item.nNode.Z + item.nNode.DZ[combo_name]*deformed_scale]
-        else:
-          p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
-          p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
-          p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
-          p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
-
-        # Add the points to the `vtkPoints` object we created earlier
-        plate_points.InsertNextPoint(p0)
-        plate_points.InsertNextPoint(p1)
-        plate_points.InsertNextPoint(p2)
-        plate_points.InsertNextPoint(p3)
-
-        # Create a `vtkQuad` based on the four points we just defined
-        # The 1st number in `SetId()` is the local point id
-        # The 2nd number in `SetId()` is the global point id
-        quad = vtk.vtkQuad()
-        quad.GetPointIds().SetId(0, i*4)
-        quad.GetPointIds().SetId(1, i*4 + 1)
-        quad.GetPointIds().SetId(2, i*4 + 2)
-        quad.GetPointIds().SetId(3, i*4 + 3)
-
-        # Get the contour value for each node
-        r0 = item.iNode.contour
-        r1 = item.jNode.contour
-        r2 = item.mNode.contour
-        r3 = item.nNode.contour
-        
-        if color_map != None:
-            
-            # Save the results to the list of results
-            results.append(r0)
-            results.append(r1)
-            results.append(r2)
-            results.append(r3)
-            
-            # Save the results to the `vtkDoubleArray`
-            plate_results.InsertNextTuple([r0])
-            plate_results.InsertNextTuple([r1])
-            plate_results.InsertNextTuple([r2])
-            plate_results.InsertNextTuple([r3])
-
-        # Insert the quad into the cell array
-        plates.InsertNextCell(quad)
-
-        # Increment `i` for the next plate
-        i += 1
-
-    # Create a `vtkPolyData` object to store plate data in
-    plate_polydata = vtk.vtkPolyData()
-    
-    # Add the points and plates to the dataset
-    plate_polydata.SetPoints(plate_points)
-    plate_polydata.SetPolys(plates)
-    
-    # Setup actor and mapper for the plates
-    plate_mapper = vtk.vtkPolyDataMapper()
-    plate_mapper.SetInputData(plate_polydata)
-    plate_actor = vtk.vtkActor()
-    plate_actor.SetMapper(plate_mapper)
-
-    # Map the results to the plates
-    if color_map != None:
-        
-        plate_polydata.GetPointData().SetScalars(plate_results)
-        
-        # Create a `vtkLookupTable` for the colors used to map results
-        lut = vtk.vtkLookupTable()
-        lut.SetTableRange(min(results), max(results))
-        lut.SetNumberOfColors(256) 
-        # The commented code below can be uncommented and modified to change the color scheme
-        # ctf = vtk.vtkColorTransferFunction()
-        # ctf.SetColorSpaceToDiverging()
-        # ctf.AddRGBPoint(min(results), 255, 0, 255)  # Purple
-        # ctf.AddRGBPoint(max(results), 255, 0, 0)    # Red
-        # for i in range(256):
-        #   rgb = list(ctf.GetColor(float(i)/256))
-        #   rgb.append(1.0)
-        #   lut.SetTableValue(i, *rgb)
-        plate_mapper.SetLookupTable(lut)
-        plate_mapper.SetUseLookupTableScalarRange(True)
-        plate_mapper.SetScalarModeToUsePointData()
-        lut.Build()
     
     # Create a window
     window = vtk.vtkRenderWindow()
@@ -290,24 +171,18 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
           # Set the text to follow the camera as the user interacts. This will
           # require a reset of the camera (see below)
           vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
-    
-    # Add the actor for the plates
-    renderer.AddActor(plate_actor)
-    
-    # Add an actor for the plate scalar bar
-    if color_map != None:
-        scalar_bar = vtk.vtkScalarBarActor()
-        scalar_bar.SetLookupTable(lut)
-        renderer.AddActor(scalar_bar)
 
     # Render the deformed shape if requested
     if deformed_shape == True:
-        __DeformedShape(model, renderer, deformed_scale, text_height, combo_name)
+        _DeformedShape(model, renderer, deformed_scale, text_height, combo_name)
 
     # Render the loads if requested
     if (combo_name != None or case != None) and render_loads != False:
-        __RenderLoads(model, renderer, text_height, combo_name, case)
+        _RenderLoads(model, renderer, text_height, combo_name, case)
     
+    # Render the plates and quads
+    _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, combo_name)
+
     # Set the window's background to gray
     renderer.SetBackground(0/255, 0/255, 128/255)
     
@@ -342,8 +217,7 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     # Return the window
     return window
 
-#%%
-def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
+def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     '''
     Renders the deformed shape of a model.
     
@@ -409,8 +283,7 @@ def __DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     actor.SetMapper(mapper)
     renderer.AddActor(actor)
 
-#%%
-def __RenderLoads(model, renderer, text_height, combo_name, case):
+def _RenderLoads(model, renderer, text_height, combo_name, case):
 
   # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
   # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
@@ -425,7 +298,7 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
   polygon_polydata = vtk.vtkPolyData()
 
   # Get the maximum load magnitudes that will be used to normalize the display scale
-  max_pt_load, max_moment, max_dist_load, max_area_load = __MaxLoads(model, combo_name, case)
+  max_pt_load, max_moment, max_dist_load, max_area_load = _MaxLoads(model, combo_name, case)
 
   # Display the requested load combination, or 'Combo 1' if no load combo or case has been
   # specified
@@ -625,8 +498,136 @@ def __RenderLoads(model, renderer, text_height, combo_name, case):
   polygon_actor.SetMapper(polygon_mapper)
   renderer.AddActor(polygon_actor)
 
-#%%
-def __MaxLoads(model, combo_name=None, case=None):
+def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, combo_name):
+  
+  # Create a new `vtkCellArray` object to store the elements
+  plates = vtk.vtkCellArray()
+
+  # Create a `vtkPoints` object to store the coordinates of the corners of the elements
+  plate_points = vtk.vtkPoints()
+
+  # Create 2 lists to store plate results
+  # `results` will store the results in a Python iterable list
+  # `plate_results` will store the results in a `vtkDoubleArray` for VTK
+  results = []
+  plate_results = vtk.vtkDoubleArray()
+  plate_results.SetNumberOfComponents(1)
+
+  # Each element will be assigned a unique element number `i` beginning at 0
+  i = 0
+
+  # Calculate the smoothed contour results at each node
+  PrepContour(model, color_map, combo_name)
+
+  # Add each plate and quad in the model to the cell array we just created
+  for item in list(model.Plates.values()) + list(model.Quads.values()):
+      
+    # Create a point for each corner (must be in counter clockwise order)
+    if deformed_shape == True:
+      p0 = [item.iNode.X + item.iNode.DX[combo_name]*deformed_scale,
+            item.iNode.Y + item.iNode.DY[combo_name]*deformed_scale,
+            item.iNode.Z + item.iNode.DZ[combo_name]*deformed_scale]
+      p1 = [item.jNode.X + item.jNode.DX[combo_name]*deformed_scale,
+            item.jNode.Y + item.jNode.DY[combo_name]*deformed_scale,
+            item.jNode.Z + item.jNode.DZ[combo_name]*deformed_scale]
+      p2 = [item.mNode.X + item.mNode.DX[combo_name]*deformed_scale,
+            item.mNode.Y + item.mNode.DY[combo_name]*deformed_scale,
+            item.mNode.Z + item.mNode.DZ[combo_name]*deformed_scale]
+      p3 = [item.nNode.X + item.nNode.DX[combo_name]*deformed_scale,
+            item.nNode.Y + item.nNode.DY[combo_name]*deformed_scale,
+            item.nNode.Z + item.nNode.DZ[combo_name]*deformed_scale]
+    else:
+      p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
+      p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
+      p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
+      p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
+
+    # Add the points to the `vtkPoints` object we created earlier
+    plate_points.InsertNextPoint(p0)
+    plate_points.InsertNextPoint(p1)
+    plate_points.InsertNextPoint(p2)
+    plate_points.InsertNextPoint(p3)
+
+    # Create a `vtkQuad` based on the four points we just defined
+    # The 1st number in `SetId()` is the local point id
+    # The 2nd number in `SetId()` is the global point id
+    quad = vtk.vtkQuad()
+    quad.GetPointIds().SetId(0, i*4)
+    quad.GetPointIds().SetId(1, i*4 + 1)
+    quad.GetPointIds().SetId(2, i*4 + 2)
+    quad.GetPointIds().SetId(3, i*4 + 3)
+
+    # Get the contour value for each node
+    r0 = item.iNode.contour
+    r1 = item.jNode.contour
+    r2 = item.mNode.contour
+    r3 = item.nNode.contour
+        
+    if color_map != None:
+        
+      # Save the results to the Python list of results we created earlier
+      results.append(r0)
+      results.append(r1)
+      results.append(r2)
+      results.append(r3)
+            
+      # Save the results to the `vtkDoubleArray` list of results for VTK
+      plate_results.InsertNextTuple([r0])
+      plate_results.InsertNextTuple([r1])
+      plate_results.InsertNextTuple([r2])
+      plate_results.InsertNextTuple([r3])
+
+    # Insert the quad into the cell array
+    plates.InsertNextCell(quad)
+
+    # Increment `i` for the next plate
+    i += 1
+
+  # Create a `vtkPolyData` object to store plate data in
+  plate_polydata = vtk.vtkPolyData()
+    
+  # Add the points and plates to the dataset
+  plate_polydata.SetPoints(plate_points)
+  plate_polydata.SetPolys(plates)
+    
+  # Setup actor and mapper for the plates
+  plate_mapper = vtk.vtkPolyDataMapper()
+  plate_mapper.SetInputData(plate_polydata)
+  plate_actor = vtk.vtkActor()
+  plate_actor.SetMapper(plate_mapper)
+
+  # Map the results to the plates
+  if color_map != None:
+        
+    plate_polydata.GetPointData().SetScalars(plate_results)
+        
+    # Create a `vtkLookupTable` for the colors used to map results
+    lut = vtk.vtkLookupTable()
+    lut.SetTableRange(min(results), max(results))
+    lut.SetNumberOfColors(256) 
+    # The commented code below can be uncommented and modified to change the color scheme
+    # ctf = vtk.vtkColorTransferFunction()
+    # ctf.SetColorSpaceToDiverging()
+    # ctf.AddRGBPoint(min(results), 255, 0, 255)  # Purple
+    # ctf.AddRGBPoint(max(results), 255, 0, 0)    # Red
+    # for i in range(256):
+    #   rgb = list(ctf.GetColor(float(i)/256))
+    #   rgb.append(1.0)
+    #   lut.SetTableValue(i, *rgb)
+    plate_mapper.SetLookupTable(lut)
+    plate_mapper.SetUseLookupTableScalarRange(True)
+    plate_mapper.SetScalarModeToUsePointData()
+    lut.Build()
+
+    # Add the scalar bar for the contours
+    scalar_bar = vtk.vtkScalarBarActor()
+    scalar_bar.SetLookupTable(lut)
+    renderer.AddActor(scalar_bar)
+    
+  # Add the actor for the plates
+  renderer.AddActor(plate_actor)
+
+def _MaxLoads(model, combo_name=None, case=None):
 
   max_pt_load = 0
   max_moment = 0
@@ -769,7 +770,6 @@ def __MaxLoads(model, combo_name=None, case=None):
   # Return the maximum loads in the load combination or load case
   return max_pt_load, max_moment, max_dist_load, max_area_load
 
-#%%
 # Converts a node object into a node for the viewer
 class VisNode():
 
@@ -1050,13 +1050,12 @@ class VisNode():
     # Set the mapper for the node's actor
     self.actor.SetMapper(mapper)
 
-#%%
 class VisSpring():
     
     def __init__(self, spring, nodes, text_height=5):
-    
+
         # Generate a line source for the spring
-        line = vtk.vtkLineSource()
+        spring = vtk.vtkLineSource()
 
         # Step through each node in the model and find the position of the
         # i-node and j-node
@@ -1067,18 +1066,18 @@ class VisSpring():
                 Xi = node.X
                 Yi = node.Y
                 Zi = node.Z
-                line.SetPoint1(Xi, Yi, Zi)
+                spring.SetPoint1(Xi, Yi, Zi)
 
             # Check to see if the current node is the j-node
             elif node.Name == spring.jNode.Name:
                 Xj = node.X
                 Yj = node.Y
                 Zj = node.Z
-                line.SetPoint2(Xj, Yj, Zj)
+                spring.SetPoint2(Xj, Yj, Zj)
     
         # Set up a mapper for the spring
         mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(line.GetOutputPort())
+        mapper.SetInputConnection(spring.GetOutputPort())
 
         # Set up an actor for the spring
         self.actor = vtk.vtkActor()
@@ -1098,8 +1097,7 @@ class VisSpring():
         self.lblActor.SetMapper(lblMapper)
         self.lblActor.SetScale(text_height, text_height, text_height)
         self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
-
-#%%        
+      
 # Converts a member object into a member for the viewer
 class VisMember():
 
@@ -1148,7 +1146,6 @@ class VisMember():
     self.lblActor.SetScale(text_height, text_height, text_height)
     self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
 
-#%%
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
     
@@ -1180,7 +1177,6 @@ class VisDeformedNode():
         self.lblActor.SetPosition(newX + 0.6*text_height, newY + 0.6*text_height, newZ)
         self.lblActor.GetProperty().SetColor(255, 255, 0)  # Yellow
 
-#%%
 class VisDeformedMember():
     
   def __init__(self, member, nodes, scale_factor, text_height=5,
