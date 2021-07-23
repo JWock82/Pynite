@@ -37,6 +37,12 @@ As I've gotten into the structural engineering profession, I've found there's a 
 
 5. Collaboration: The intent is to keep PyNite free and open source. This will encourage future development and contributions. Keeping it open source will allow anyone to inspect and improve the code it runs on. If you see an area you think you can help PyNite improve in you are encouraged to contribute. I'd like to get PyNite doing a lot more. Don't be offended if I'm a little slow to accept your contributions. FEA is a very technical subject and accuracy is extremely important to me. Sometimes I'm a little slow understanding both FEA and Python and it takes some time for me to comprehend what's being proposed. I also have a young family to take care of that takes first priority.
 
+# Support
+Whether you just need help getting started with PyNite, or are looking to build something more complex, there are a few resources available:
+* The examples in the "Examples" folder in this repository cover a variety of simple problems. The comments in the examples provide additional guidance on how PyNite works.
+* The wiki in this repository provides basic guidance on how to use PyNite.
+* If you're looking for more direct guidance on using PyNite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com.
+
 # Dependencies
 PyNite depends on the following packages:
 ## Required Dependencies
@@ -88,11 +94,4 @@ Version 0.0.34
 
 Versions 0.0.32 and 0.0.33
 * Started work in integrating Travis-CI into GitHub for testing PyNite code.
-
-Version 0.0.31
-* Added contour smoothing for better plate and quad contour plots.
-* Greatly reduced memory usage. The stiffness matrix is now stored as a sparse matrix by default.
-  If the user opts not to use the sparse solver it is converted to a dense matrix later on.
-* Revised circular meshes so that the Y-axis is upward instead of the Z-axis.
-* Bug fix - Rendering springs was broken after the recent change to storing springs in dictionaries.
 
