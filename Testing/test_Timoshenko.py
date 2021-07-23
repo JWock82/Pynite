@@ -50,15 +50,17 @@ class Test_Timoshenko(unittest.TestCase):
         # Analyze the model
         plate_model.Analyze()
 
-        # Find the maximum deflection in the model
-        dz_calcd = max([node.DZ['F'] for node in plate_model.Nodes.values() if node.Y == b])
+        # Get the maximum deflection in the model at the top of the wall
+        DZ_calcd = max([node.DZ['F'] for node in plate_model.Nodes.values() if node.Y == b])
+        
+        # Find the maximum deflection at the top of the wall from Timoshenko's Table 45
         q = 62.4*b
         D = E*t**3/(12*(1 - nu**2))
-        dz_expected = 0.00042*q*a**4/D
+        DZ_expected = 0.00042*q*a**4/D
 
         # Check that the PyNite calculated values are within 15% of the Timoshenko calculated
         # values.
-        self.assertLess(abs(dz_calcd/dz_expected - 1), 0.15, 'Failed Timoshenko rectangle hydrostatic test.')
+        self.assertLess(abs(DZ_calcd/DZ_expected - 1), 0.15, 'Failed Timoshenko rectangle hydrostatic test.')
     
     def test_hydrostatic_quad(self):
 
@@ -94,12 +96,14 @@ class Test_Timoshenko(unittest.TestCase):
         # Analyze the model
         plate_model.Analyze()
 
-        # Find the maximum deflection in the model
-        dz_calcd = max([node.DZ['F'] for node in plate_model.Nodes.values() if node.Y == b])
+        # Get the maximum deflection in the model at the top of the wall
+        DZ_calcd = max([node.DZ['F'] for node in plate_model.Nodes.values() if node.Y == b])
+        
+        # Find the maximum deflection at the top of the wall from Timoshenko's Table 45
         q = 62.4*b
         D = E*t**3/(12*(1 - nu**2))
-        dz_expected = 0.00042*q*a**4/D
+        DZ_expected = 0.00042*q*a**4/D
 
         # Check that the PyNite calculated values are within 15% of the Timoshenko calculated
         # values.
-        self.assertLess(abs(dz_calcd/dz_expected - 1), 0.15, 'Failed Timoshenko quadrilateral hydrostatic test.')    
+        self.assertLess(abs(DZ_calcd/DZ_expected - 1), 0.15, 'Failed Timoshenko quadrilateral hydrostatic test.')    
