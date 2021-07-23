@@ -41,7 +41,7 @@ As I've gotten into the structural engineering profession, I've found there's a 
 Whether you just need help getting started with PyNite, or are looking to build something more complex, there are a few resources available:
 * The examples in the "Examples" folder in this repository cover a variety of simple problems. The comments in the examples provide additional guidance on how PyNite works.
 * The wiki in this repository provides basic guidance on how to use PyNite.
-* If you're looking for more direct guidance on using PyNite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com.
+* If you're looking for more direct guidance on using PyNite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com to discuss options.
 
 # Dependencies
 PyNite depends on the following packages:
