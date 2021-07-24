@@ -104,6 +104,6 @@ class Test_Timoshenko(unittest.TestCase):
         D = E*t**3/(12*(1 - nu**2))
         DZ_expected = 0.00042*q*a**4/D
 
-        # Check that the PyNite calculated values are within 10% of the Timoshenko calculated
+        # Check that the PyNite calculated values are within 15% of the Timoshenko calculated
         # values.
-        self.assertLess(abs(DZ_calcd/DZ_expected - 1), 0.10, 'Failed Timoshenko quadrilateral hydrostatic test.')    
+        self.assertLess(abs(DZ_calcd/DZ_expected - 1), 0.15, 'Failed Timoshenko quadrilateral hydrostatic test.')    
