@@ -65,6 +65,10 @@ Here's a list of projects that run on PyNite:
 * Standard Solver (https://www.standardsolver.com/)
 
 # What's New?
+Version 0.0.40
+* Added support springs.
+* Reorganized visualization code.
+
 Version 0.0.39
 * Made console output optional. By default it is now turned off.
 * Fixed a warning that occured during P-Delta analysis. Sparse matrix solution efficiency was poor.
