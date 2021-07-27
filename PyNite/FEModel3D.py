@@ -417,7 +417,7 @@ class FEModel3D():
     def RemoveNode(self, node_name):
         '''
         Removes a node from the model. All nodal loads associated with the
-        node and members attached to the node will also be removed.
+        node and elements attached to the node will also be removed.
         
         Parameters
         ----------
@@ -429,8 +429,10 @@ class FEModel3D():
         # will be deleted automatically when the node is deleted.
         self.Nodes.pop(node_name)
         
-        # Find any members attached to the node and remove them
+        # Find any elements attached to the node and remove them
         self.Members = {name: member for name, member in self.Members.items() if member.iNode.Name != node_name and member.jNode.Name != node_name}
+        self.Plates = {name: plate for name, plate in self.Plates.items() if plate.iNode.Name != node_name and plate.jNode.Name != node_name and plate.mNode.Name != node_name and plate.nNode.Name != node_name}
+        self.Quads = {name: quad for name, quad in self.Quads.items() if quad.iNode.Name != node_name and quad.jNode.Name != node_name and quad.mNode.Name != node_name and quad.nNode.Name != node_name}
 
 #%%
     def RemoveAuxNode(self, auxnode_name):
