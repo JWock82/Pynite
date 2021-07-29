@@ -1,5 +1,5 @@
-<div>
-<img src="https://github.com/JWock82/PyNite/blob/master/Resources/FullColor_1280x1024_72dpi.png" width="400"/>
+<div >
+<img src="https://github.com/JWock82/PyNite/blob/master/Resources/FullColor_1280x1024_72dpi.png" width=50% />
 </div>
 
 [![Build Status](https://travis-ci.com/JWock82/PyNite.svg?branch=master)](https://travis-ci.com/JWock82/PyNite)
