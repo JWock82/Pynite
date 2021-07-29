@@ -1,6 +1,7 @@
 <div>
 <img src="https://github.com/JWock82/PyNite/blob/master/Resources/FullColor_1280x1024_72dpi.png" width="400"/>
 </div>
+
 [![Build Status](https://travis-ci.com/JWock82/PyNite.svg?branch=master)](https://travis-ci.com/JWock82/PyNite)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/PyNite">
