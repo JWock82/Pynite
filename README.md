@@ -1,5 +1,5 @@
 <div >
-<img src="https://github.com/JWock82/PyNite/blob/master/Resources/FullColor_1280x1024_72dpi.png" width=50% align="center"/>
+<img src="https://github.com/JWock82/PyNite/raw/master/Resources/FullColor_1280x1024_72dpi.png" width=50% align="center"/>
 </div>
 
 [![Build Status](https://travis-ci.com/JWock82/PyNite.svg?branch=master)](https://travis-ci.com/JWock82/PyNite)
@@ -11,7 +11,7 @@
 An easy to use elastic 3D structural engineering finite element analysis library for Python.
 
 <div>
-<img src="https://github.com/JWock82/PyNite/blob/master/Resources/PyNite%20Bin.PNG" width="300" align="center"/>
+<img src="https://github.com/JWock82/PyNite/raw/master/Resources/PyNite%20Bin.PNG" width="300" align="center"/>
 </div>
 
 # Current Capabilities
