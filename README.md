@@ -1,5 +1,7 @@
-<div >
-<img src="https://github.com/JWock82/PyNite/raw/master/Resources/FullColor_1280x1024_72dpi.png" width=50% align="center"/>
+<div align="center">
+  <img src="https://github.com/JWock82/PyNite/raw/master/Resources/website_logo_solid_background.png" width=40% align="center"/>
+  <br>
+  <h1>Simple Finite Element Analysis in Python</h1>
 </div>
 
 [![Build Status](https://travis-ci.com/JWock82/PyNite.svg?branch=master)](https://travis-ci.com/JWock82/PyNite)
@@ -10,10 +12,6 @@
 
 An easy to use elastic 3D structural engineering finite element analysis library for Python.
 
-<div>
-<img src="https://github.com/JWock82/PyNite/raw/master/Resources/PyNite%20Bin.PNG" width="300" align="center"/>
-</div>
-
 # Current Capabilities
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
@@ -21,7 +19,8 @@ An easy to use elastic 3D structural engineering finite element analysis library
 * Classify loads by load case and create load combinations from load cases.
 * Produces shear, moment, and deflection results and diagrams for each member.
 * Tension-only and compression-only elements.
-* Springs: two-way, tension-only, and compression-only.
+* Spring elements: two-way, tension-only, and compression-only.
+* Spring supports
 * Quadrilateral plate elements (based on an isoparametric formulation).
 * Rectangular plate elements (based on a 12-term polynomial formulation).
 * Basic meshing algorithms for some common shapes.
