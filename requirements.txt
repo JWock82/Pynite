@@ -1,5 +1,5 @@
-matplotlib==3.4.2
-numpy==1.20.3
-prettytable==2.1.0
-scipy==1.6.3
-vtk==9.0.3
+matplotlib
+numpy
+prettytable
+scipy
+vtk
