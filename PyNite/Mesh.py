@@ -390,7 +390,7 @@ class RectangleMesh(Mesh):
         # Step through each y control point (except the first one which is always zero)
         num_rows = 0
         num_cols = 0
-        y = 0
+        y, h = 0, 0
         for j in range(1, len(y_control), 1):
             
             # If this is not the first iteration 'y' will be too high at this point.
