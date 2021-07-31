@@ -1728,11 +1728,12 @@ class FEModel3D():
                 print('')
                 print('- Analyzing load combination ' + combo.name)
 
-            iter_count_TC = 1 # Tracks tension/compression-only iterations
-            iter_count_PD = 1 # Tracks P-Delta iterations
+            iter_count_TC = 1    # Tracks tension/compression-only iterations
+            iter_count_PD = 1    # Tracks P-Delta iterations
+            prev_results = None  # Used to store results from the previous iteration
 
-            convergence_TC = False # Tracks tension/compression-only convergence
-            convergence_PD = False # Tracks P-Delta convergence
+            convergence_TC = False  # Tracks tension/compression-only convergence
+            convergence_PD = False  # Tracks P-Delta convergence
 
             divergence_TC = False  # Tracks tension/compression-only divergence
             divergence_PD = False  # Tracks P-Delta divergence
