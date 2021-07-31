@@ -65,39 +65,3 @@ Here's a list of projects that run on PyNite:
 
 * Building Code (https://building-code.herokuapp.com/) - This one is my personal side project.
 * Standard Solver (https://www.standardsolver.com/)
-
-# What's New?
-Version 0.0.40
-* Added support springs.
-* Reorganized visualization code.
-
-Version 0.0.39
-* Made console output optional. By default it is now turned off.
-* Fixed a warning that occured during P-Delta analysis. Sparse matrix solution efficiency was poor.
-* Fixed deformed shape rendering for plates and quads. The scale factor was not being applied.
-* Added a basic screenshot feature for rendering. If `screenshot` is set to a filepath in the `RenderModel` method a .PNG screenshot will be saved to the filepath and the render window will be closed automatically.
-
-Version 0.0.38
-* Bug fix for load vector calculation. When multiple load cases were present on a plate or quad, only the last entered load case was being considered.
-* Additional fix for an exception that occured when unused load cases were in a model that was being rendered.
-
-Version 0.0.37
-* Fixed rectangular mesh control point feature. It was not working.
-* Added functions to simplify getting localized max/min moment and shear results from meshes.
-* Fixed an exception that occured when unused load cases were in a model that was being rendered.
-
-Version 0.0.36
-* Correction to sign convention to rectangular plate loads. They were being applied in the opposite direction than was specified by the user. Quadrilaterals were not affected.
-* Changed sign convention on rectangular plate to match the sign convention for quadrilaterals. These two elements are derived using different bending sign conventions and it seemed to be appropriate to make them behave the same way for the end user.
-
-Version 0.0.35
-* Issues with rectangular plate elements have been fixed. Membrane stiffness terms were being placed in the wrong location in the element's global stifness matrix. This bug was identical to the one that had been occuring in quadrilateral elements prior to v0.0.28.
-* Bug fix for `dz` countours for rectangular plate elements. The individual plate corner displacements were being mapped to the wrong corners. Only the `dz` contours were affected by this issue.
-
-Version 0.0.34
-* Bug fix for contour smoothing on rectangular plates. The plate results were correct, but the contours were slightly off after adding the contour smoothing feature.
-* Added rectangular meshes. More to come on this feature.
-
-Versions 0.0.32 and 0.0.33
-* Started work in integrating Travis-CI into GitHub for testing PyNite code.
-
