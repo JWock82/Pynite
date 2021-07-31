@@ -11,7 +11,14 @@ import unittest
 # Use warnings flag to suppress the PendingDeprecationWarning 
 # from numpy.matrix
 # unittest.main(warnings='ignore')
-loader = unittest.TestLoader()
-testSuite = loader.discover("Testing", pattern='test_*.py')
-testRunner = unittest.TextTestRunner()
-testRunner.run(testSuite)
+test_suite = unittest.TestLoader().discover("Testing", pattern='test_*.py')
+
+# `TextTestRunner` does not exit the module. Travis-CI will get confused unless we save the result
+# and send the proper exit code.
+result = unittest.TextTestRunner().run(test_suite)
+
+# Send the proper exit code for Travis-CI to read
+if result.wasSuccessful():
+    exit(0)
+else:
+    exit(1)
