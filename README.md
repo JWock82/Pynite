@@ -4,7 +4,7 @@
   <h1>Simple Finite Element Analysis in Python</h1>
 </div>
 
-[![Build Status](https://travis-ci.com/JWock82/PyNite.svg?branch=master)](https://travis-ci.com/JWock82/PyNite)
+![Build Status](https://github.com/JWock82/PyNite/actions/workflows/build-and-test.yml/badge.svg)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/PyNite">
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/PyNite)
