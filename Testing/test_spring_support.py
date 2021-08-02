@@ -68,5 +68,5 @@ class Test_Spring_Supports(unittest.TestCase):
         print(boef.Members['M8'].MaxMoment('Mz'))
 
         # Check that results are within 5% of the expected answer
-        self.assertLess(abs(boef.Nodes['N9'].DY['Combo 1']/(-0.238)) - 1, 0.05, 'Failed beam on elastic foundation test.')
-        self.assertLess(abs(boef.Members['M8'].MinMoment('Mz')/547) - 1, 0.05, 'Failed beam on elastic foundation test.')
+        self.assertLess(boef.Nodes['N9'].DY['Combo 1']/(-0.238) - 1, 0.05, 'Failed beam on elastic foundation test.')
+        self.assertLess(-boef.Members['M8'].MinMoment('Mz')/547 - 1, 0.05, 'Failed beam on elastic foundation test.')

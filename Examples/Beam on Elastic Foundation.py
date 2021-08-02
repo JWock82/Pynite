@@ -1,0 +1,77 @@
+# -*- coding: utf-8 -*-
+"""
+MIT License
+
+Copyright (c) 2021 D. Craig Brinck, SE
+"""
+
+from PyNite import FEModel3D
+
+# Units for this model are kips and inches
+
+# Create a new model for the beam
+boef = FEModel3D()
+
+# Assign the length of the beam
+L = 25*12  # in
+
+# The beam will be modeled as a series of elements at a 12 inch spacing. A support spring will be
+# added at the end of each segment.
+num_segs = round(L / 12)
+num_nodes = num_segs + 1
+L_seg = L/num_segs
+
+# Define the spring stiffness
+ks = 22.5  # k/in
+
+# Generate the nodes
+for i in range(num_nodes):
+
+    # Add nodes spaced at 15"
+    boef.AddNode('N' + str(i + 1), i*L_seg, 0, 0)
+
+    # Add supports to the nodes
+    if i == 0 or i == num_nodes:
+        # Pinned supports at beam ends
+        boef.DefineSupport('N' + str(i + 1), True, True, True, True, False, False)
+    else:
+        # Spring supports at all other locations
+        boef.DefineSupport('N' + str(i + 1), False, ks, False, False, False, False)
+
+# Define member material properties (W8x35)
+E = 29000   # ksi
+G = 11200   # ksi
+A = 10.3    # in^2
+Iz = 127    # in^4 (strong axis)
+Iy = 42.6   # in^4 (weak axis)
+J = 0.769   # in^4
+
+# Define members
+for i in range(num_segs):
+
+    # Add the members
+    boef.AddMember('M' + str(i + 1), 'N' + str(i + 1), 'N' + str(i + 2), E, G, Iy, Iz, J, A)
+        
+# Add a point load at midspan
+if num_nodes % 2 == 0:
+    mid_node = 'N' + str(int(num_nodes/2))
+    boef.AddNodeLoad(mid_node, 'FY', -40)
+else:
+    mid_member = 'M' + str(int(num_segs/2))
+    boef.AddMemberPtLoad(mid_member, 'Fy', -40)
+
+
+# Analyze the model
+boef.Analyze()
+
+# Render the mdoel with the deformed shape
+from PyNite.Visualization import RenderModel
+RenderModel(boef, text_height=1, deformed_shape=True)
+
+# Find and print the maximum displacement
+d_max = min([node.DY['Combo 1'] for node in boef.Nodes.values()])
+print('Maximum displacement: ', d_max)
+
+# Find and print the maximum moment
+M_max = min([segment.MinMoment('Mz') for segment in boef.Members.values()])
+print('Maximum moment: ', M_max)
