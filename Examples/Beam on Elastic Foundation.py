@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-MIT License
-
-Copyright (c) 2021 D. Craig Brinck, SE
-"""
-
-from PyNite import FEModel3D
-
-# Units for this model are kips and inches
+'''
+This example shows how to generate a beam on elastic foundation by using spring supports. All units
+in this model are expressed in terms of kips (force) and inches (length).
+'''
 
 # Create a new model for the beam
+from PyNite import FEModel3D
 boef = FEModel3D()
 
 # Assign the length of the beam
@@ -31,7 +27,7 @@ for i in range(num_nodes):
     boef.AddNode('N' + str(i + 1), i*L_seg, 0, 0)
 
     # Add supports to the nodes
-    if i == 0 or i == num_nodes:
+    if i == 0 or i == num_nodes - 1:
         # Pinned supports at beam ends
         boef.DefineSupport('N' + str(i + 1), True, True, True, True, False, False)
     else:
@@ -53,25 +49,24 @@ for i in range(num_segs):
     boef.AddMember('M' + str(i + 1), 'N' + str(i + 1), 'N' + str(i + 2), E, G, Iy, Iz, J, A)
         
 # Add a point load at midspan
-if num_nodes % 2 == 0:
+if num_nodes % 2 == 0:  # Checks if there is a node at midspan or a member between nodes
+    mid_member = 'M' + str(int(num_segs/2))
+    boef.AddMemberPtLoad(mid_member, 'Fy', -40, L_seg/2)
+else:
     mid_node = 'N' + str(int(num_nodes/2))
     boef.AddNodeLoad(mid_node, 'FY', -40)
-else:
-    mid_member = 'M' + str(int(num_segs/2))
-    boef.AddMemberPtLoad(mid_member, 'Fy', -40)
-
 
 # Analyze the model
 boef.Analyze()
 
 # Render the mdoel with the deformed shape
 from PyNite.Visualization import RenderModel
-RenderModel(boef, text_height=1, deformed_shape=True)
+RenderModel(boef, text_height=1.5, deformed_shape=True)
 
 # Find and print the maximum displacement
 d_max = min([node.DY['Combo 1'] for node in boef.Nodes.values()])
-print('Maximum displacement: ', d_max)
+print('Maximum displacement: ', round(d_max, 4), 'in')
 
 # Find and print the maximum moment
 M_max = min([segment.MinMoment('Mz') for segment in boef.Members.values()])
-print('Maximum moment: ', M_max)
+print('Maximum moment: ', round(M_max), 'k-in')

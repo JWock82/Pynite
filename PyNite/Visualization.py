@@ -57,14 +57,13 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
     
     # Input validation
     if deformed_shape and case != None:
-        raise Exception('Deformed shape is only available for load combinations,'
-                        ' not load cases.')
+      raise Exception('Deformed shape is only available for load combinations,'
+                      ' not load cases.')
     
     # Create a visual node for each node in the model
-    if not deformed_shape:
-      vis_nodes = []
-      for node in model.Nodes.values():
-          vis_nodes.append(VisNode(node, text_height))
+    vis_nodes = []
+    for node in model.Nodes.values():
+      vis_nodes.append(VisNode(node, text_height))
     
     # Create a visual auxiliary node for each auxiliary node in the model
     vis_aux_nodes = []
@@ -128,35 +127,35 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
           vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
 
     # Combine the polydata from each node
-    if not deformed_shape:
 
-      # Create an append filter for combining node polydata
-      node_polydata = vtk.vtkAppendPolyData()
+    # Create an append filter for combining node polydata
+    node_polydata = vtk.vtkAppendPolyData()
 
-      for vis_node in vis_nodes:
-        
-        # Add the node's polydata
-        node_polydata.AddInputData(vis_node.polydata.GetOutput())
-
-        if labels == True:
-          # Add the actor for the node label
-          renderer.AddActor(vis_node.lblActor)
-        
-          # Set the text to follow the camera as the user interacts. This will
-          # require a reset of the camera (see below)
-          vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+    for vis_node in vis_nodes:
       
-      # Update the node polydata in the append filter
-      node_polydata.Update()
+      # Add the node's polydata
+      node_polydata.AddInputData(vis_node.polydata.GetOutput())
+
+      if labels == True:
+
+        # Add the actor for the node label
+        renderer.AddActor(vis_node.lblActor)
+        
+        # Set the text to follow the camera as the user interacts. This will
+        # require a reset of the camera (see below)
+        vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+      
+    # Update the node polydata in the append filter
+    node_polydata.Update()
     
-      # Create a mapper and actor for the nodes
-      node_mapper = vtk.vtkPolyDataMapper()
-      node_mapper.SetInputConnection(node_polydata.GetOutputPort())
-      node_actor = vtk.vtkActor()
-      node_actor.SetMapper(node_mapper)
+    # Create a mapper and actor for the nodes
+    node_mapper = vtk.vtkPolyDataMapper()
+    node_mapper.SetInputConnection(node_polydata.GetOutputPort())
+    node_actor = vtk.vtkActor()
+    node_actor.SetMapper(node_mapper)
     
-      # Add the node actor to the renderer
-      renderer.AddActor(node_actor)
+    # Add the node actor to the renderer
+    renderer.AddActor(node_actor)
 
     # Add actors for each auxiliary node
     for vis_aux_node in vis_aux_nodes:
@@ -596,33 +595,18 @@ class VisMember():
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
     
-    def __init__(self, node, scale_factor, text_height=5, combo_name='Combo 1'):
+  def __init__(self, node, scale_factor, text_height=5, combo_name='Combo 1'):
         
-        # Calculate the node's deformed position
-        newX = node.X + scale_factor*(node.DX[combo_name])
-        newY = node.Y + scale_factor*(node.DY[combo_name])
-        newZ = node.Z + scale_factor*(node.DZ[combo_name])
+    # Calculate the node's deformed position
+    newX = node.X + scale_factor*(node.DX[combo_name])
+    newY = node.Y + scale_factor*(node.DY[combo_name])
+    newZ = node.Z + scale_factor*(node.DZ[combo_name])
         
-        # Generate a sphere source for the node in its deformed position
-        self.source = vtk.vtkSphereSource()
-        self.source.SetCenter(newX, newY, newZ)
-        self.source.SetRadius(0.6*text_height)
-        self.source.Update()
-        
-        # Create the text for the node label
-        self.lbl_source = vtk.vtkVectorText()
-        self.lbl_source.SetText(node.Name)
-        
-        # Set up a mapper for the node label
-        lblMapper = vtk.vtkPolyDataMapper()
-        lblMapper.SetInputConnection(self.lbl_source.GetOutputPort())
-        
-        # Set up an actor for the node label
-        self.lblActor = vtk.vtkFollower()
-        self.lblActor.SetMapper(lblMapper)
-        self.lblActor.SetScale(text_height, text_height, text_height)
-        self.lblActor.SetPosition(newX + 0.6*text_height, newY + 0.6*text_height, newZ)
-        self.lblActor.GetProperty().SetColor(255, 255, 0)  # Yellow
+    # Generate a sphere source for the node in its deformed position
+    self.source = vtk.vtkSphereSource()
+    self.source.SetCenter(newX, newY, newZ)
+    self.source.SetRadius(0.6*text_height)
+    self.source.Update()
 
 class VisDeformedMember():
     
@@ -1135,18 +1119,11 @@ def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     # Create an append filter to add all the shape polydata to
     append_filter = vtk.vtkAppendPolyData()
     
-    # Add the nodes to the append filter and add the node labels to the renderer
+    # Add the deformed nodes to the append filter
     for node in model.Nodes.values():
         
         vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
         append_filter.AddInputData(vis_node.source.GetOutput())
-    
-        # Add the actor for the node label
-        renderer.AddActor(vis_node.lblActor)
-        
-        # Set the text to follow the camera as the user interacts
-        # This next line will require us to reset the camera when we're done (below)
-        vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
         
     # Add the springs to the append filter
     for spring in model.Springs.values():
