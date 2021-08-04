@@ -1,6 +1,7 @@
 # Import libraries necessary for report printing
 from jinja2 import Environment, PackageLoader
 import pdfkit
+import warnings
 
 # Determine the filepath to the local PyNite installation
 from pathlib import Path
@@ -18,6 +19,15 @@ def CreateReport(model, output_filepath=path / './PyNite Report.pdf', \
                  nodes=True, members=True, plates=True, member_releases=True, \
                  node_reactions=True, node_displacements=True, member_end_forces=True, member_internal_forces=True, \
                  plate_corner_forces=True, plate_center_forces=True, plate_corner_membrane=True, plate_center_membrane=True):
+                 warnings.warn('`CreateReport` will be replaced with `create_report` in a future version of PyNite.', FutureWarning)
+                 create_report(model, output_filepath, nodes, members, plates, member_releases, \
+                               node_reactions, node_displacements, member_end_forces, member_internal_forces, \
+                               plate_corner_forces, plate_center_forces, plate_corner_membrane, plate_center_membrane)
+
+def create_report(model, output_filepath=path / './PyNite Report.pdf', \
+                  nodes=True, members=True, plates=True, member_releases=True, \
+                  node_reactions=True, node_displacements=True, member_end_forces=True, member_internal_forces=True, \
+                  plate_corner_forces=True, plate_center_forces=True, plate_corner_membrane=True, plate_center_membrane=True):
     '''
     Creates a pdf report for a given finite element model.
 

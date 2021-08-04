@@ -6,6 +6,7 @@ from PyNite.BeamSegZ import BeamSegZ
 from PyNite.BeamSegY import BeamSegY
 import PyNite.FixedEndReactions
 from PyNite.LoadCombo import LoadCombo
+import warnings
 
 # %%
 class Member3D():
@@ -515,6 +516,10 @@ class Member3D():
 
 #%%
     def Shear(self, Direction, x, combo_name='Combo 1'):
+        warnings.warn('`Shear` will be replaced with `shear` in a future version of PyNite.', FutureWarning)
+        self.shear(self, Direction, x, combo_name)
+
+    def shear(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the shear at a point along the member's length.
         
@@ -562,6 +567,10 @@ class Member3D():
             
 #%%
     def MaxShear(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`MaxShear` will be replaced with `max_shear` in a future version of PyNite.', FutureWarning)
+        self.max_shear(self, Direction, combo_name)
+
+    def max_shear(self, Direction, combo_name='Combo 1'):
         '''
         Returns the maximum shear in the member for the given direction
         
@@ -604,6 +613,10 @@ class Member3D():
     
 #%%
     def MinShear(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`MinShear` will be replaced with `min_shear` in a future version of PyNite.', FutureWarning)
+        self.min_shear(self, Direction, combo_name)
+
+    def min_shear(self, Direction, combo_name='Combo 1'):
         '''
         Returns the minimum shear in the member for the given direction
         
@@ -646,6 +659,10 @@ class Member3D():
     
 #%%
     def PlotShear(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`PlotShear` will be replaced with `plot_shear` in a future version of PyNite.', FutureWarning)
+        self.plot_shear(self, Direction, combo_name)
+
+    def plot_shear(self, Direction, combo_name='Combo 1'):
         '''
         Plots the shear diagram for the member
         
@@ -687,6 +704,10 @@ class Member3D():
         
 #%%
     def Moment(self, Direction, x, combo_name='Combo 1'):
+        warnings.warn('`Moment` will be replaced with `moment` in a future version of PyNite.', FutureWarning)
+        self.moment(self, Direction, x, combo_name)
+
+    def moment(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the moment at a point along the member's length
         
@@ -737,6 +758,10 @@ class Member3D():
             
 #%%
     def MaxMoment(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`MaxMoment` will be replaced with `max_moment` in a future version of PyNite.', FutureWarning)
+        self.max_moment(self, Direction, combo_name)
+
+    def max_moment(self, Direction, combo_name='Combo 1'):
         '''
         Returns the maximum moment in the member for the given direction.
         
@@ -779,6 +804,10 @@ class Member3D():
 
 #%%
     def MinMoment(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`MinMoment` will be replaced with `min_moment` in a future version of PyNite.', FutureWarning)
+        self.min_moment(self, Direction, combo_name)
+
+    def min_moment(self, Direction, combo_name='Combo 1'):
         '''
         Returns the minimum moment in the member for the given direction
         
@@ -821,6 +850,10 @@ class Member3D():
 
 #%%
     def PlotMoment(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`PlotMoment` will be replaced with `plot_moment` in a future version of PyNite.', FutureWarning)
+        self.plot_moment(self, Direction, combo_name)
+
+    def plot_moment(self, Direction, combo_name='Combo 1'):
         '''
         Plots the moment diagram for the member
         
@@ -863,6 +896,10 @@ class Member3D():
        
 #%%
     def Torsion(self, x, combo_name='Combo 1'):
+        warnings.warn('`Torsion` will be replaced with `torque` in a future version of PyNite.', FutureWarning)
+        self.torque(self, x, combo_name)
+
+    def torque(self, x, combo_name='Combo 1'):
         '''
         Returns the torsional moment at a point along the member's length
         
@@ -890,6 +927,10 @@ class Member3D():
 
 #%%
     def MaxTorsion(self, combo_name='Combo 1'):
+        warnings.warn('`MaxTorsion` will be replaced with `max_torque` in a future version of PyNite.', FutureWarning)
+        self.max_torque(self, combo_name)
+
+    def max_torque(self, combo_name='Combo 1'):
         '''
         Returns the maximum torsional moment in the member.
 
@@ -916,6 +957,10 @@ class Member3D():
     
 #%%
     def MinTorsion(self, combo_name='Combo 1'):
+        warnings.warn('`MinTorsion` will be replaced with `min_torque` in a future version of PyNite.', FutureWarning)
+        self.min_torque(self, combo_name)
+
+    def min_torque(self, combo_name='Combo 1'):
         '''
         Returns the minimum torsional moment in the member.
 
@@ -942,6 +987,10 @@ class Member3D():
 
 #%%
     def PlotTorsion(self, combo_name='Combo 1'):
+        warnings.warn('`PlotTorsion` will be replaced with `plot_torque` in a future version of PyNite.', FutureWarning)
+        self.plot_torque(self, combo_name)
+
+    def plot_torque(self, combo_name='Combo 1'):
         '''
         Plots the axial force diagram for the member.
         
@@ -981,6 +1030,10 @@ class Member3D():
         
 #%%
     def Axial(self, x, combo_name='Combo 1'):
+        warnings.warn('`Axial` will be replaced with `axial` in a future version of PyNite.', FutureWarning)
+        self.axial(self, x, combo_name)
+
+    def axial(self, x, combo_name='Combo 1'):
         '''
         Returns the axial force at a point along the member's length.
         

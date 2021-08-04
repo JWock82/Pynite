@@ -2,11 +2,19 @@
 import vtk
 from numpy import array, empty, append, cross
 from numpy.linalg import norm
+import warnings
 
 #%%
 def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
                 render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
                 screenshot=None):
+  warnings.warn('`RenderModel` will be replaced with `render_model` in a future version of PyNite.', FutureWarning)
+  render_model(model, text_height, deformed_shape, deformed_scale, render_loads, color_map,
+               combo_name, case, labels, screenshot)
+
+def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
+                 render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
+                 screenshot=None):
     '''
     Renders a finite element model using VTK.
     
