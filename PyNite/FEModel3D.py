@@ -12,6 +12,8 @@ from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
 
+import warnings
+
 # %%
 class FEModel3D():
     '''
@@ -35,6 +37,10 @@ class FEModel3D():
 
 #%%
     def AddNode(self, name, X, Y, Z):
+        warnings.warn('`AddNode` will be replaced with `add_node` in a future version of PyNite.', FutureWarning)
+        self.add_node(name, X, Y, Z)
+
+    def add_node(self, name, X, Y, Z):
         '''
         Adds a new node to the model. The node name will be returned
         
@@ -72,6 +78,10 @@ class FEModel3D():
 
 #%%
     def AddAuxNode(self, name, X, Y, Z):
+        warnings.warn('`AddAuxNode` will be replaced with `add_auxnode` in a future version of PyNite.', FutureWarning)
+        self.add_auxnode(name, X, Y, Z)
+
+    def add_auxnode(self, name, X, Y, Z):
         '''
         Adds a new auxiliary node to the model. The node name will be returned
         
@@ -113,6 +123,10 @@ class FEModel3D():
   
 #%%
     def AddSpring(self, name, iNode, jNode, ks, tension_only=False, comp_only=False):
+        warnings.warn('`AddSpring` will be replaced with `add_spring` in a future version of PyNite.', FutureWarning)
+        self.add_spring(name, iNode, jNode, ks, tension_only, comp_only)
+
+    def add_spring(self, name, iNode, jNode, ks, tension_only=False, comp_only=False):
         '''
         Adds a new spring to the model. The spring name will be returned.
         
@@ -156,6 +170,11 @@ class FEModel3D():
 #%%
     def AddMember(self, name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
                   tension_only=False, comp_only=False):
+        warnings.warn('`AddMember` will be replaced with `add_member` in a future version of PyNite.', FutureWarning)
+        self.add_member(name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode, tension_only, comp_only)
+
+    def add_member(self, name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
+                   tension_only=False, comp_only=False):
         '''
         Adds a new member to the model. The member name will be returned.
         
@@ -218,6 +237,10 @@ class FEModel3D():
 
 #%%
     def AddPlate(self, name, iNode, jNode, mNode, nNode, t, E, nu):
+        warnings.warn('`AddPlate` will be replaced with `add_plate` in a future version of PyNite.', FutureWarning)
+        self.add_plate(name, iNode, jNode, mNode, nNode, t, E, nu)
+
+    def add_plate(self, name, iNode, jNode, mNode, nNode, t, E, nu):
         '''
         Adds a new plate to the model. The plate name will be returned
         
@@ -263,6 +286,10 @@ class FEModel3D():
 
 #%%
     def AddQuad(self, name, iNode, jNode, mNode, nNode, t, E, nu):
+        warnings.warn('`AddQuad` will be replaced with `add_quad` in a future version of PyNite.', FutureWarning)
+        self.add_quad(name, iNode, jNode, mNode, nNode, t, E, nu)
+
+    def add_quad(self, name, iNode, jNode, mNode, nNode, t, E, nu):
         '''
         Adds a new quadrilateral to the model. The quad name will be returned
 
@@ -314,6 +341,10 @@ class FEModel3D():
 
 #%%
     def AddMesh(self, mesh):
+        warnings.warn('`AddMesh` will be replaced with `add_mesh` in a future version of PyNite.', FutureWarning)
+        self.add_mesh(mesh)
+
+    def add_mesh(self, mesh):
         """
         Adds a predefined mesh to the model.
 
@@ -357,6 +388,10 @@ class FEModel3D():
 
 #%%
     def MergeDuplicateNodes(self, tolerance=0.001):
+        warnings.warn('`MergeDuplicateNodes` will be replaced with `merge_duplicate_nodes` in a future version of PyNite.', FutureWarning)
+        self.merge_duplicate_nodes(tolerance)
+
+    def merge_duplicate_nodes(self, tolerance=0.001):
 
         # Initialize a list of nodes to be removed from the `Nodes` dictionary
         remove_list = []
@@ -415,6 +450,10 @@ class FEModel3D():
             
 #%%
     def RemoveNode(self, node_name):
+        warnings.warn('`RemoveNode` will be replaced with `delete_node` in a future version of PyNite.', FutureWarning)
+        self.delete_node(node_name)
+
+    def delete_node(self, node_name):
         '''
         Removes a node from the model. All nodal loads associated with the
         node and elements attached to the node will also be removed.
@@ -436,6 +475,10 @@ class FEModel3D():
 
 #%%
     def RemoveAuxNode(self, auxnode_name):
+        warnings.warn('`RemoveAuxNode` will be replaced with `delete_auxnode` in a future version of PyNite.', FutureWarning)
+        self.delete_auxnode(auxnode_name)
+
+    def delete_auxnode(self, auxnode_name):
         '''
         Removes an auxiliary node from the model.
 
@@ -455,6 +498,10 @@ class FEModel3D():
 
 #%%
     def RemoveSpring(self, spring_name):
+        warnings.warn('`RemoveSpring` will be replaced with `delete_spring` in a future version of PyNite.', FutureWarning)
+        self.delete_spring(spring_name)
+
+    def delete_spring(self, spring_name):
         '''
         Removes a spring from the model.
         
@@ -469,6 +516,10 @@ class FEModel3D():
 
 #%%
     def RemoveMember(self, member_name):
+        warnings.warn('`RemoveMember` will be replaced with `delete_member` in a future version of PyNite.', FutureWarning)
+        self.delete_member(member_name)
+
+    def delete_member(self, member_name):
         '''
         Removes a member from the model. All member loads associated with the
         member will also be removed.
@@ -485,6 +536,10 @@ class FEModel3D():
         
 #%%
     def DefineSupport(self, node_name, SupportDX=False, SupportDY=False, SupportDZ=False, SupportRX=False, SupportRY=False, SupportRZ=False):
+        warnings.warn('`DefineSupport` will be replaced with `def_support` in a future version of PyNite.', FutureWarning)
+        self.def_support(node_name, SupportDX, SupportDY, SupportDZ, SupportRX, SupportRY, SupportRZ)
+
+    def def_support(self, node_name, SupportDX=False, SupportDY=False, SupportDZ=False, SupportRX=False, SupportRY=False, SupportRZ=False):
         '''
         Defines the support conditions at a node.
         
@@ -519,8 +574,12 @@ class FEModel3D():
         node.SupportRY = SupportRY
         node.SupportRZ = SupportRZ
 
-#%%            
-    def AddNodeDisplacement (self, Node, Direction, Magnitude): 
+#%%    
+    def AddNodeDisplacement(self, Node, Direction, Magnitude):
+        warnings.warn('`AddNodeDisplacement` will be replaced with `def_node_disp` in a future version of PyNite.', FutureWarning)
+        self.def_node_disp(Node, Direction, Magnitude)
+        
+    def def_node_disp(self, Node, Direction, Magnitude): 
         '''
         Defines a nodal displacement at a node.
 
@@ -553,6 +612,10 @@ class FEModel3D():
 
 #%%
     def DefineReleases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
+        warnings.warn('`DefineReleases` will be replaced with `def_releases` in a future version of PyNite.', FutureWarning)
+        self.def_releases(Member, Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj)
+
+    def def_releases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
         '''
         Defines member end releases.
         
@@ -593,6 +656,10 @@ class FEModel3D():
 
 #%%
     def AddLoadCombo(self, name, factors, combo_type='strength'):
+        warnings.warn('`AddLoadCombo` will be replaced with `add_load_combo` in a future version of PyNite.', FutureWarning)
+        self.add_load_combo(name, factors, combo_type)
+
+    def add_load_combo(self, name, factors, combo_type='strength'):
         '''
         Adds a load combination to the model
 
@@ -615,6 +682,10 @@ class FEModel3D():
 
 #%%
     def AddNodeLoad(self, Node, Direction, P, case='Case 1'):
+        warnings.warn('`AddNodeLoad` will be replaced with `add_node_load` in a future version of PyNite.', FutureWarning)
+        self.add_node_load(Node, Direction, P, case)
+
+    def add_node_load(self, Node, Direction, P, case='Case 1'):
         '''
         Adds a nodal load to the model.
         
@@ -635,8 +706,12 @@ class FEModel3D():
         # Add the node load to the model
         self.GetNode(Node).NodeLoads.append((Direction, P, case))
 
-#%%      
+#%%
     def AddMemberPtLoad(self, Member, Direction, P, x, case='Case 1'):
+        warnings.warn('`AddMemberPtLoad` will be replaced with `add_member_pt_load` in a future version of PyNite.', FutureWarning)
+        self.add_member_pt_load(Member, Direction, P, x, case)
+
+    def add_member_pt_load(self, Member, Direction, P, x, case='Case 1'):
         '''
         Adds a member point load to the model.
         
@@ -663,6 +738,10 @@ class FEModel3D():
 
 #%%
     def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
+        warnings.warn('`AddMemberDistLoad` will be replaced with `add_member_dist_load` in a future version of PyNite.', FutureWarning)
+        self.add_member_dist_load(Member, Direction, w1, w2, x1, x2, case)
+
+    def add_member_dist_load(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
         '''
         Adds a member distributed load to the model.
         
@@ -705,6 +784,10 @@ class FEModel3D():
         
 #%%
     def AddPlateSurfacePressure(self, plate_ID, pressure, case='Case 1'):
+        warnings.warn('`AddPlateSurfacePressure` will be replaced with `add_plate_surface_pressure` in a future version of PyNite.', FutureWarning)
+        self.add_plate_surface_pressure(plate_ID, pressure, case)
+
+    def add_plate_surface_pressure(self, plate_ID, pressure, case='Case 1'):
         '''
         Adds a surface pressure to the rectangular plate element.
         '''
@@ -714,6 +797,10 @@ class FEModel3D():
 
 #%%
     def AddQuadSurfacePressure(self, quad_ID, pressure, case='Case 1'):
+        warnings.warn('`AddQuadSurfacePressure` will be replaced with `add_quad_surface_pressure` in a future version of PyNite.', FutureWarning)
+        self.add_quad_surface_pressure(quad_ID, pressure, case)
+
+    def add_quad_surface_pressure(self, quad_ID, pressure, case='Case 1'):
         '''
         Adds a surface pressure to the quadrilateral element.
         '''
@@ -723,11 +810,15 @@ class FEModel3D():
 
 #%%
     def ClearLoads(self):
+        warnings.warn('`ClearLoads` will be replaced with `delete_loads` in a future version of PyNite.', FutureWarning)
+        self.delete_loads()
+
+    def delete_loads(self):
         '''
-        Clears all loads from the model along with any results based on the loads.
+        Deletes all loads from the model along with any results based on the loads.
         '''
 
-        # Clear out the member loads and the calculated internal forces
+        # Delete the member loads and the calculated internal forces
         for member in self.Members.values():
             member.DistLoads = []
             member.PtLoads = []
@@ -735,7 +826,15 @@ class FEModel3D():
             member.SegmentsY = []
             member.SegmentsX = []
         
-        # Clear out the nodal loads, calculated displacements, and calculated reactions
+        # Delete the plate loads
+        for plate in self.Plates.values():
+            plate.pressures = []
+        
+        # Delete the quadrilateral loads
+        for quad in self.Quads.values():
+            quad.pressures = []
+        
+        # Delete the nodal loads, calculated displacements, and calculated reactions
         for node in self.Nodes.values():
 
             node.NodeLoads = []
@@ -765,6 +864,8 @@ class FEModel3D():
             The name of the node to be returned.
         '''
         
+        warnings.warn('`GetNode` will be deleted in a future version of PyNite. Use `Nodes[node_name]` instead.', FutureWarning)
+
         try:
             return self.Nodes[name]
         except:
@@ -782,6 +883,8 @@ class FEModel3D():
             The name of the auxiliary node to be returned.
         '''
         
+        warnings.warn('`GetAuxNode` will be deleted in a future version of PyNite. Use `AuxNodes[auxnode_name]` instead.', FutureWarning)
+
         try:
             return self.AuxNodes[name]
         except:
@@ -798,6 +901,8 @@ class FEModel3D():
         name : string
             The name of the spring to be returned.
         '''
+        
+        warnings.warn('`GetSpring` will be deleted in a future version of PyNite. Use `Springs[spring_name]` instead.', FutureWarning)
         
         try:
             return self.Springs[name]
@@ -816,6 +921,8 @@ class FEModel3D():
             The name of the member to be returned.
         '''
 
+        warnings.warn('`GetMember` will be deleted in a future version of PyNite. Use `Members[member_name]` instead.', FutureWarning)
+
         try:
             return self.Members[name]
         except:
@@ -833,6 +940,8 @@ class FEModel3D():
             The name of the plate to be returned.
         '''
         
+        warnings.warn('`GetPlate` will be deleted in a future version of PyNite. Use `Plates[plate_name]` instead.', FutureWarning)
+
         try:
             return self.Plates[name]
         except:
@@ -850,6 +959,8 @@ class FEModel3D():
             The name of the quadrilateral to be returned.
         '''
         
+        warnings.warn('`GetQuad` will be deleted in a future version of PyNite. Use `Quads[quad_name]` instead.', FutureWarning)
+        
         try:
             return self.Quads[name]
         except:
@@ -857,7 +968,7 @@ class FEModel3D():
             raise ValueError(f"Quad '{name}' was not found in the model")
 
 #%%
-    def __Renumber(self):
+    def _renumber(self):
         '''
         Assigns node, spring, member, and plate member ID numbers to be used internally by the
         program. Numbers are assigned according to the order nodes, springs, members, and plates
@@ -885,7 +996,7 @@ class FEModel3D():
             quad.ID = id
 
 #%%
-    def __AuxList(self):
+    def _aux_list(self):
         '''
         Builds a list with known nodal displacements and with the positions in global stiffness matrix of known 
         and unknown nodal displacements
@@ -1426,7 +1537,7 @@ class FEModel3D():
         return self.__D[combo_name]
 
 #%%
-    def __Partition(self, unp_matrix, D1_indices, D2_indices):
+    def _partition(self, unp_matrix, D1_indices, D2_indices):
         '''
         Partitions a matrix (or vector) into submatrices (or subvectors) based on degree of freedom
         boundary conditions.
@@ -1458,8 +1569,12 @@ class FEModel3D():
             m22 = unp_matrix[D2_indices, :][:, D2_indices]
             return m11, m12, m21, m22
 
-#%%  
+#%%
     def Analyze(self, log=False, check_statics=False, max_iter=30, sparse=True):
+        warnings.warn('`Analyze` will be replaced with `analyze` in a future version of PyNite.', FutureWarning)
+        self.analyze(log, check_statics, max_iter, sparse)
+
+    def analyze(self, log=False, check_statics=False, max_iter=30, sparse=True):
         '''
         Performs first-order static analysis.
         
@@ -1490,7 +1605,7 @@ class FEModel3D():
             print('+-----------+')
 
         # Assign an ID to all nodes and elements in the model
-        self.__Renumber()
+        self._renumber()
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
@@ -1507,7 +1622,7 @@ class FEModel3D():
                 member.active[combo_name] = True 
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
-        D1_indices, D2_indices, D2 = self.__AuxList()
+        D1_indices, D2_indices, D2 = self._aux_list()
 
         # Convert D2 from a list to a vector
         D2 = atleast_2d(D2).T
@@ -1528,13 +1643,13 @@ class FEModel3D():
             while convergence == False and divergence == False:
 
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
-                K11, K12, K21, K22 = self.__Partition(self.K(combo.name, log), D1_indices, D2_indices)
+                K11, K12, K21, K22 = self._partition(self.K(combo.name, log), D1_indices, D2_indices)
 
                 # Get the partitioned global fixed end reaction vector
-                FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)
+                FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
 
                 # Get the partitioned global nodal force vector       
-                P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)          
+                P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)          
 
                 # Calculate the global displacement vector
                 if log: print('- Calculating global displacement vector for load combination', combo.name)
@@ -1656,7 +1771,7 @@ class FEModel3D():
                 iter_count += 1
 
         # Calculate reactions
-        self.__CalcReactions()
+        self._calc_reactions()
 
         if log:
             print('')     
@@ -1665,10 +1780,14 @@ class FEModel3D():
 
         # Check statics if requested
         if check_statics == True:
-            self.__CheckStatics()
+            self._check_statics()
 
 #%%
     def Analyze_PDelta(self, log=False, max_iter=30, tol=0.01, sparse=True):
+        warnings.warn('`Analyze_PDelta` will be replaced with `analyze_P_Delta` in a future version of PyNite.', FutureWarning)
+        self.analyze_P_Delta(log, max_iter, tol, sparse)
+
+    def analyze_P_Delta(self, log=False, max_iter=30, tol=0.01, sparse=True):
         '''
         Performs second order (P-Delta) analysis.
 
@@ -1697,7 +1816,7 @@ class FEModel3D():
             print('+--------------------+')
 
         # Assign an ID to all nodes and elements in the model
-        self.__Renumber()
+        self._renumber()
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
@@ -1716,7 +1835,7 @@ class FEModel3D():
                 member.active[combo_name] = True 
         
         # Get the auxiliary list used to determine how the matrices will be partitioned
-        D1_indices, D2_indices, D2 = self.__AuxList()
+        D1_indices, D2_indices, D2 = self._aux_list()
 
         # Convert D2 from a list to a matrix
         D2 = array(D2, ndmin=2).T
@@ -1750,15 +1869,15 @@ class FEModel3D():
                 # Get the partitioned global matrices
                 if iter_count_PD == 1:
                     
-                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name, log), D1_indices, D2_indices) # Initial stiffness matrix
-                    FER1, FER2 = self.__Partition(self.FER(combo.name), D1_indices, D2_indices)       # Fixed end reactions
-                    P1, P2 = self.__Partition(self.P(combo.name), D1_indices, D2_indices)             # Nodal forces
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log), D1_indices, D2_indices) # Initial stiffness matrix
+                    FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)       # Fixed end reactions
+                    P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)             # Nodal forces
 
                 else:
 
                     # Calculate the global stiffness matrices (partitioned)
-                    K11, K12, K21, K22 = self.__Partition(self.K(combo.name, log), D1_indices, D2_indices)      # Initial stiffness matrix
-                    Kg11, Kg12, Kg21, Kg22 = self.__Partition(self.Kg(combo.name, log), D1_indices, D2_indices) # Geometric stiffness matrix
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log), D1_indices, D2_indices)      # Initial stiffness matrix
+                    Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log), D1_indices, D2_indices) # Geometric stiffness matrix
 
                     # Combine the partitioned stiffness matrices. They are currently `lil` format
                     # which is great for memory, but slow for mathematical operations. They will be
@@ -1943,7 +2062,7 @@ class FEModel3D():
                 iter_count_PD += 1
         
         # Calculate reactions
-        self.__CalcReactions()
+        self._calc_reactions()
 
         if log:
             print('')
@@ -1951,7 +2070,7 @@ class FEModel3D():
             print('')
 
 #%%
-    def __CalcReactions(self, log=False):
+    def _calc_reactions(self, log=False):
         '''
         Calculates reactions once the model is solved.
 
@@ -2175,7 +2294,7 @@ class FEModel3D():
                                     node.RxnMZ[combo.name] -= load[1]*factor
 
 #%%
-    def __CheckStatics(self):
+    def _check_statics(self):
         '''
         Checks static equilibrium and prints results to the console.
 
