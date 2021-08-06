@@ -1785,9 +1785,9 @@ class FEModel3D():
 #%%
     def Analyze_PDelta(self, log=False, max_iter=30, tol=0.01, sparse=True):
         warnings.warn('`Analyze_PDelta` will be replaced with `analyze_P_Delta` in a future version of PyNite.', FutureWarning)
-        self.analyze_P_Delta(log, max_iter, tol, sparse)
+        self.analyze_PDelta(log, max_iter, tol, sparse)
 
-    def analyze_P_Delta(self, log=False, max_iter=30, tol=0.01, sparse=True):
+    def analyze_PDelta(self, log=False, max_iter=30, tol=0.01, sparse=True):
         '''
         Performs second order (P-Delta) analysis.
 
