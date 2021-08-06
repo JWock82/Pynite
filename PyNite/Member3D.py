@@ -517,7 +517,7 @@ class Member3D():
 #%%
     def Shear(self, Direction, x, combo_name='Combo 1'):
         warnings.warn('`Shear` will be replaced with `shear` in a future version of PyNite.', FutureWarning)
-        self.shear(Direction, x, combo_name)
+        return self.shear(Direction, x, combo_name)
 
     def shear(self, Direction, x, combo_name='Combo 1'):
         '''
@@ -568,7 +568,7 @@ class Member3D():
 #%%
     def MaxShear(self, Direction, combo_name='Combo 1'):
         warnings.warn('`MaxShear` will be replaced with `max_shear` in a future version of PyNite.', FutureWarning)
-        self.max_shear(Direction, combo_name)
+        return self.max_shear(Direction, combo_name)
 
     def max_shear(self, Direction, combo_name='Combo 1'):
         '''
@@ -614,7 +614,7 @@ class Member3D():
 #%%
     def MinShear(self, Direction, combo_name='Combo 1'):
         warnings.warn('`MinShear` will be replaced with `min_shear` in a future version of PyNite.', FutureWarning)
-        self.min_shear(Direction, combo_name)
+        return self.min_shear(Direction, combo_name)
 
     def min_shear(self, Direction, combo_name='Combo 1'):
         '''
@@ -705,7 +705,7 @@ class Member3D():
 #%%
     def Moment(self, Direction, x, combo_name='Combo 1'):
         warnings.warn('`Moment` will be replaced with `moment` in a future version of PyNite.', FutureWarning)
-        self.moment(Direction, x, combo_name)
+        return self.moment(Direction, x, combo_name)
 
     def moment(self, Direction, x, combo_name='Combo 1'):
         '''
@@ -759,7 +759,7 @@ class Member3D():
 #%%
     def MaxMoment(self, Direction, combo_name='Combo 1'):
         warnings.warn('`MaxMoment` will be replaced with `max_moment` in a future version of PyNite.', FutureWarning)
-        self.max_moment(Direction, combo_name)
+        return self.max_moment(Direction, combo_name)
 
     def max_moment(self, Direction, combo_name='Combo 1'):
         '''
@@ -805,7 +805,7 @@ class Member3D():
 #%%
     def MinMoment(self, Direction, combo_name='Combo 1'):
         warnings.warn('`MinMoment` will be replaced with `min_moment` in a future version of PyNite.', FutureWarning)
-        self.min_moment(Direction, combo_name)
+        return self.min_moment(Direction, combo_name)
 
     def min_moment(self, Direction, combo_name='Combo 1'):
         '''
@@ -897,7 +897,7 @@ class Member3D():
 #%%
     def Torsion(self, x, combo_name='Combo 1'):
         warnings.warn('`Torsion` will be replaced with `torque` in a future version of PyNite.', FutureWarning)
-        self.torque(x, combo_name)
+        return self.torque(x, combo_name)
 
     def torque(self, x, combo_name='Combo 1'):
         '''
@@ -928,7 +928,7 @@ class Member3D():
 #%%
     def MaxTorsion(self, combo_name='Combo 1'):
         warnings.warn('`MaxTorsion` will be replaced with `max_torque` in a future version of PyNite.', FutureWarning)
-        self.max_torque(combo_name)
+        return self.max_torque(combo_name)
 
     def max_torque(self, combo_name='Combo 1'):
         '''
@@ -958,7 +958,7 @@ class Member3D():
 #%%
     def MinTorsion(self, combo_name='Combo 1'):
         warnings.warn('`MinTorsion` will be replaced with `min_torque` in a future version of PyNite.', FutureWarning)
-        self.min_torque(combo_name)
+        return self.min_torque(combo_name)
 
     def min_torque(self, combo_name='Combo 1'):
         '''
@@ -1031,7 +1031,7 @@ class Member3D():
 #%%
     def Axial(self, x, combo_name='Combo 1'):
         warnings.warn('`Axial` will be replaced with `axial` in a future version of PyNite.', FutureWarning)
-        self.axial(x, combo_name)
+        return self.axial(x, combo_name)
 
     def axial(self, x, combo_name='Combo 1'):
         '''
