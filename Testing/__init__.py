@@ -13,7 +13,7 @@ import unittest
 # unittest.main(warnings='ignore')
 test_suite = unittest.TestLoader().discover("Testing", pattern='test_*.py')
 
-# `TextTestRunner` does not exit the module. Travis-CI will get confused unless we save the result
+# `TextTestRunner` does not exit the module. CI will get confused unless we save the result
 # and send the proper exit code.
 result = unittest.TextTestRunner().run(test_suite)
 
