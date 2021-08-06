@@ -438,7 +438,7 @@ class Plate3D():
         # Calculate and return the fixed end reaction vector
         return matmul(inv(self.T()), self.fer(combo_name))
 
-    def __C(self):
+    def _C(self):
         """
         Returns the plate's displacement coefficient matrix [C]
         """
@@ -473,7 +473,7 @@ class Plate3D():
         # Return the coefficient matrix
         return C
 
-    def __Q(self, x, y):
+    def _Q(self, x, y):
         """
         Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y)
         in the plate's local system.
@@ -487,7 +487,7 @@ class Plate3D():
         # Return the [Q] coefficient matrix
         return Q
 
-    def __a(self, combo_name='Combo 1'):
+    def _a(self, combo_name='Combo 1'):
         """
         Returns the vector of plate bending constants for the displacement function.
 
@@ -502,9 +502,9 @@ class Plate3D():
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
         # Return the plate bending constants
-        return inv(self.__C())*d
+        return inv(self._C())*d
 
-    def __D(self):
+    def _D(self):
         """
         Calculates and returns the constitutive matrix for isotropic materials [D].
         """
@@ -540,7 +540,7 @@ class Plate3D():
         # Calculate and return internal moments
         # A negative sign will be applied to change the sign convention to match that of
         # PyNite's quadrilateral elements.
-        return -self.__D()*self.__Q(x, y)*self.__a(combo_name)
+        return -self._D()*self._Q(x, y)*self._a(combo_name)
  
     def shear(self, x, y, combo_name='Combo 1'):
         """
@@ -559,8 +559,8 @@ class Plate3D():
         """
 
         # Store matrices into local variables for quicker access
-        D = self.__D()
-        a = self.__a(combo_name)
+        D = self._D()
+        a = self._a(combo_name)
 
         # Calculate the derivatives of the plate moments needed to compute shears
         dMx_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],

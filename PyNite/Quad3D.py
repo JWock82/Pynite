@@ -35,7 +35,7 @@ class Quad3D():
         self.LoadCombos = LoadCombos
 
 #%%
-    def __local_coords(self):
+    def _local_coords(self):
         '''
         Calculates or recalculates and stores the local (x, y) coordinates for each node of the
         quadrilateral.
@@ -431,7 +431,7 @@ class Quad3D():
         '''
 
         # Recalculate the local coordinate system
-        self.__local_coords()
+        self._local_coords()
 
         # Sum the bending and membrane stiffness matrices
         return self.k_b() + self.k_m()
