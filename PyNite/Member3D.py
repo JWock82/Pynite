@@ -1061,6 +1061,10 @@ class Member3D():
 
 #%%
     def MaxAxial(self, combo_name='Combo 1'):
+        warnings.warn('`MaxAxial` will be replaced with `max_axial` in a future version of PyNite.', FutureWarning)
+        return self.max_axial(combo_name)
+
+    def max_axial(self, combo_name='Combo 1'):
         '''
         Returns the maximum axial force in the member
 
@@ -1087,6 +1091,10 @@ class Member3D():
     
 #%%
     def MinAxial(self, combo_name='Combo 1'):
+        warnings.warn('`MinAxial` will be replaced with `min_axial` in a future version of PyNite.', FutureWarning)
+        return self.min_axial(combo_name)
+
+    def min_axial(self, combo_name='Combo 1'):
         '''
         Returns the minimum axial force in the member.
         
@@ -1113,6 +1121,10 @@ class Member3D():
     
 #%%
     def PlotAxial(self, combo_name='Combo 1'):
+        warnings.warn('`PlotAxial` will be replaced with `plot_axial` in a future version of PyNite.', FutureWarning)
+        self.plot_axial(combo_name)
+
+    def plot_axial(self, combo_name='Combo 1'):
         '''
         Plots the axial force diagram for the member.
         
@@ -1152,6 +1164,10 @@ class Member3D():
                         
 #%%
     def Deflection(self, Direction, x, combo_name='Combo 1'):
+        warnings.warn('`Deflection` will be replaced with `deflection` in a future version of PyNite.', FutureWarning)
+        return self.deflection(Direction, x, combo_name)
+
+    def deflection(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the deflection at a point along the member's length.
         
@@ -1216,6 +1232,10 @@ class Member3D():
 
 #%%
     def MaxDeflection(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`MaxDeflection` will be replaced with `max_deflection` in a future version of PyNite.', FutureWarning)
+        return self.max_deflection(Direction, combo_name)
+
+    def max_deflection(self, Direction, combo_name='Combo 1'):
         '''
         Returns the maximum deflection in the member.
         
@@ -1246,6 +1266,10 @@ class Member3D():
     
 #%%
     def MinDeflection(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`MinDeflection` will be replaced with `min_deflection` in a future version of PyNite.', FutureWarning)
+        return self.min_deflection(Direction, combo_name)
+
+    def min_deflection(self, Direction, combo_name='Combo 1'):
         '''
         Returns the minimum deflection in the member.
         
@@ -1276,6 +1300,10 @@ class Member3D():
               
 #%%
     def PlotDeflection(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`PlotDeflection` will be replaced with `plot_deflection` in a future version of PyNite.', FutureWarning)
+        self.plot_deflection(Direction, combo_name)
+
+    def plot_deflection(self, Direction, combo_name='Combo 1'):
         '''
         Plots the deflection diagram for the member
         
@@ -1316,8 +1344,12 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
         Member3D.__plt.show()
     
-#%%   
+#%%
     def RelativeDeflection(self, Direction, x, combo_name='Combo 1'):
+        warnings.warn('`RelativeDeflection` will be replaced with `rel_deflection` in a future version of PyNite.', FutureWarning)
+        return self.rel_deflection(Direction, x, combo_name)
+
+    def rel_deflection(self, Direction, x, combo_name='Combo 1'):
         '''
         Returns the relative deflection at a point along the member's length
         
@@ -1375,6 +1407,10 @@ class Member3D():
 
 #%%
     def PlotRelativeDeflection(self, Direction, combo_name='Combo 1'):
+        warnings.warn('`PlotRelativeDeflection` will be replaced with `plot_rel_deflection` in a future version of PyNite.', FutureWarning)
+        self.plot_rel_deflection(Direction, combo_name)
+
+    def plot_rel_deflection(self, Direction, combo_name='Combo 1'):
         '''
         Plots the deflection diagram for the member
         
