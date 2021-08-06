@@ -71,7 +71,7 @@ class Member3D():
         return ((jNode.X-iNode.X)**2+(jNode.Y-iNode.Y)**2+(jNode.Z-iNode.Z)**2)**0.5
 
 #%%
-    def AuxList(self):
+    def _aux_list(self):
         '''
         Builds lists of unreleased and released degree of freedom indices for the member.
 
@@ -101,7 +101,7 @@ class Member3D():
 
         # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
-        k11, k12, k21, k22 = self.__Partition(self.__k_Unc())
+        k11, k12, k21, k22 = self._partition(self._k_unc())
                
         # Calculate the condensed local stiffness matrix
         k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
@@ -120,7 +120,7 @@ class Member3D():
         return k_Condensed
 
 #%%
-    def __k_Unc(self):
+    def _k_unc(self):
         '''
         Returns the uncondensed local stiffness matrix for the member.
         '''
@@ -185,7 +185,7 @@ class Member3D():
 
         # Partition the geometric stiffness matrix as 4 submatrices in
         # preparation for static condensation
-        kg11, kg12, kg21, kg22 = self.__Partition(kg)
+        kg11, kg12, kg21, kg22 = self._partition(kg)
                
         # Calculate the condensed local geometric stiffness matrix
         # Note that a matrix of zeros cannot be inverted, so if P is 0 an error will occur
@@ -219,11 +219,11 @@ class Member3D():
         '''
         
         # Get the lists of unreleased and released degree of freedom indices
-        R1_indices, R2_indices = self.AuxList()
+        R1_indices, R2_indices = self._aux_list()
 
         # Partition the local stiffness matrix and local fixed end reaction vector
-        k11, k12, k21, k22 = self.__Partition(self.__k_Unc())
-        fer1, fer2 = self.__Partition(self.__fer_Unc(combo_name))
+        k11, k12, k21, k22 = self._partition(self._k_unc())
+        fer1, fer2 = self._partition(self._fer_unc(combo_name))
         
         # Calculate the condensed fixed end reaction vector
         ferCondensed = subtract(fer1, matmul(matmul(k12, inv(k22)), fer2))
@@ -241,7 +241,7 @@ class Member3D():
         return ferCondensed
     
 #%%
-    def __fer_Unc(self, combo_name='Combo 1'):
+    def _fer_unc(self, combo_name='Combo 1'):
         '''
         Returns the member's local fixed end reaction vector, ignoring the effects of end releases.
         Needed to apply the slope-deflection equation properly.
@@ -290,13 +290,13 @@ class Member3D():
         return fer
 
 #%%
-    def __Partition(self, unp_matrix):
+    def _partition(self, unp_matrix):
         '''
         Partitions a matrix into sub-matrices based on unreleased and released degree of freedom indices.
         '''
 
         # Create auxiliary lists of released/unreleased DOFs
-        R1_indices, R2_indices = self.AuxList()
+        R1_indices, R2_indices = self._aux_list()
 
         # Partition the matrix by slicing
         if unp_matrix.shape[1] == 1:
@@ -537,7 +537,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
 
         # Check which direction is of interest
@@ -586,7 +586,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         if Direction == 'Fy':
@@ -632,7 +632,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]   
         
         if Direction == 'Fy':
@@ -676,7 +676,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
@@ -725,7 +725,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Check which axis is of interest
@@ -777,7 +777,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         if Direction == 'Mz':
@@ -823,7 +823,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)   
+            self._segment_member(combo_name)   
             self.__solved_combo = self.LoadCombos[combo_name]
         
         if Direction == 'Mz':
@@ -867,7 +867,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
@@ -913,7 +913,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
             
         # Check which segment 'x' falls on
@@ -942,7 +942,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]       
         
         Tmax = self.SegmentsX[0].Torsion()   
@@ -972,7 +972,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         Tmin = self.SegmentsX[0].Torsion()
@@ -1002,7 +1002,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
@@ -1047,7 +1047,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
             
         # Check which segment 'x' falls on
@@ -1076,7 +1076,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         Pmax = self.SegmentsZ[0].Axial(0)   
@@ -1106,7 +1106,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         Pmin = self.SegmentsZ[0].Axial(0)
@@ -1136,7 +1136,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
@@ -1186,7 +1186,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Check which axis is of interest
@@ -1249,7 +1249,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Initialize the maximum deflection
@@ -1283,7 +1283,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Initialize the minimum deflection
@@ -1317,7 +1317,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
@@ -1367,7 +1367,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
         d = self.d(self.LoadCombos[combo_name])
@@ -1424,7 +1424,7 @@ class Member3D():
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self.SegmentMember(combo_name)
+            self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
@@ -1453,7 +1453,7 @@ class Member3D():
         
 #%%    
     # Divides the element up into mathematically continuous segments along each axis
-    def SegmentMember(self, combo_name='Combo 1'):
+    def _segment_member(self, combo_name='Combo 1'):
         
         # Get the member's length and stiffness properties
         L = self.L()
@@ -1514,7 +1514,7 @@ class Member3D():
         
         # Get the element local end forces, local fixed end reactions, and local displacements
         f = self.f(combo_name)           # Member local end force vector
-        fer = self.__fer_Unc(combo_name) # Member local fixed end reaction vector
+        fer = self._fer_unc(combo_name) # Member local fixed end reaction vector
         d = self.d(combo_name)           # Member local displacement vector
         
         # Get the local deflections and calculate the slope at the start of the member
