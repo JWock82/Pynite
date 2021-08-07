@@ -25,17 +25,17 @@ class Test_End_Release(unittest.TestCase):
     def test_member_torque_load(self):
         TorqueBeam = FEModel3D()
         # Add nodes (14 ft = 168 in apart)
-        TorqueBeam.AddNode('N1', 0, 0, 0)
-        TorqueBeam.AddNode('N2', 168, 0, 0)
+        TorqueBeam.add_node('N1', 0, 0, 0)
+        TorqueBeam.add_node('N2', 168, 0, 0)
         # Add a beam with the following properties:
-        TorqueBeam.AddMember('M1', 'N1', 'N2', 29000, 11400, 100, 150, 250, 20)
+        TorqueBeam.add_member('M1', 'N1', 'N2', 29000, 11400, 100, 150, 250, 20)
         # Provide fixed supports
-        TorqueBeam.DefineSupport('N1', False, True, True, True, True, True)
-        TorqueBeam.DefineSupport('N2', True, True, True, True, True, True)
+        TorqueBeam.def_support('N1', False, True, True, True, True, True)
+        TorqueBeam.def_support('N2', True, True, True, True, True, True)
         # Add a point load of 5 kip-ft and 10 kip-ft at 3ft and 11 ft along the beam respectively
-        TorqueBeam.AddMemberPtLoad('M1', 'Mx', 5, 3*12)
-        TorqueBeam.AddMemberPtLoad('M1', 'Mx', 10, 11*12)
-        TorqueBeam.Analyze(check_statics=True)
+        TorqueBeam.add_member_pt_load('M1', 'Mx', 5, 3*12)
+        TorqueBeam.add_member_pt_load('M1', 'Mx', 10, 11*12)
+        TorqueBeam.analyze(check_statics=True)
         # Support reactions (around local x axis) at each end
         left_Rxn = TorqueBeam.GetNode('N1').RxnMX['Combo 1']
         # subTest context manager prints which portion fails, if any
@@ -47,10 +47,10 @@ class Test_End_Release(unittest.TestCase):
             self.assertAlmostEqual(right_Rxn, -8.93, 2)
         
         # Max/min torques on the beam
-        max_torque = TorqueBeam.GetMember('M1').MaxTorsion()
+        max_torque = TorqueBeam.GetMember('M1').max_torque()
         with self.subTest(max_torque=max_torque):
             self.assertAlmostEqual(max_torque, 8.93, 2)
         
-        min_torque = TorqueBeam.GetMember('M1').MinTorsion()
+        min_torque = TorqueBeam.GetMember('M1').min_torque()
         with self.subTest(min_torque=min_torque):
             self.assertAlmostEqual(min_torque, -6.07, 2)

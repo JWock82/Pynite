@@ -28,24 +28,24 @@ from PyNite import FEModel3D
 model = FEModel3D()
 
 # Add the mesh to the model
-model.AddMesh(mesh)
+model.add_mesh(mesh)
 
 # Step through each quadrilateral in the model
 for element in model.Quads.values():
     # Add loads to the element
-    model.AddQuadSurfacePressure(element.Name, load, case='W')
+    model.add_quad_surface_pressure(element.Name, load, case='W')
 
 # Add fully fixed supports on all side of the wall
 for node in model.Nodes.values():
     if (round(node.Y, 10) == 0 or round(node.Y, 10) == height or round(node.X, 10) == 0 or
         round(node.X, 10) == width):
-        model.DefineSupport(node.Name, True, True, True, True, True, True)
+        model.def_support(node.Name, True, True, True, True, True, True)
 
 # Add a load combination named '1.0W' with a factor of 1.0 applied to any loads designated as 'W'
-model.AddLoadCombo('1.0W', {'W': 1.0})
+model.add_load_combo('1.0W', {'W': 1.0})
 
 # Analyze the model
-model.Analyze(check_statics=True)
+model.analyze(check_statics=True)
 
 # +-----------------------+
 # | Discussion of Results |

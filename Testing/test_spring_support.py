@@ -36,13 +36,13 @@ class Test_Spring_Supports(unittest.TestCase):
         for i in range(17):
 
             # Add nodes spaced at 15"
-            boef.AddNode('N' + str(i + 1), i*15, 0, 0)
+            boef.add_node('N' + str(i + 1), i*15, 0, 0)
 
             # Add supports to the nodes
             if i == 0 or i == 16:
-                boef.DefineSupport('N' + str(i + 1), True, True, True, True, False, False)
+                boef.def_support('N' + str(i + 1), True, True, True, True, False, False)
             else:
-                boef.DefineSupport('N' + str(i + 1), False, 22.5, False, False, False, False)
+                boef.def_support('N' + str(i + 1), False, 22.5, False, False, False, False)
 
         # Define member material properties
         E = 29000   # ksi
@@ -56,17 +56,17 @@ class Test_Spring_Supports(unittest.TestCase):
         for i in range(16):
 
             # Add the members
-            boef.AddMember('M' + str(i + 1), 'N' + str(i + 1), 'N' + str(i + 2), E, G, Iy, Iz, J, A)
+            boef.add_member('M' + str(i + 1), 'N' + str(i + 1), 'N' + str(i + 2), E, G, Iy, Iz, J, A)
         
         # Add a point load at midspan
-        boef.AddNodeLoad('N9', 'FY', -40)
+        boef.add_node_load('N9', 'FY', -40)
 
         # Analyze the model
-        boef.Analyze()
+        boef.analyze()
 
-        print(boef.Members['M8'].MinMoment('Mz'))
-        print(boef.Members['M8'].MaxMoment('Mz'))
+        print(boef.Members['M8'].min_moment('Mz'))
+        print(boef.Members['M8'].max_moment('Mz'))
 
         # Check that results are within 5% of the expected answer
         self.assertLess(boef.Nodes['N9'].DY['Combo 1']/(-0.238) - 1, 0.05, 'Failed beam on elastic foundation test.')
-        self.assertLess(-boef.Members['M8'].MinMoment('Mz')/547 - 1, 0.05, 'Failed beam on elastic foundation test.')
+        self.assertLess(-boef.Members['M8'].min_moment('Mz')/547 - 1, 0.05, 'Failed beam on elastic foundation test.')

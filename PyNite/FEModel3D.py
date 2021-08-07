@@ -681,7 +681,7 @@ class FEModel3D():
         self.LoadCombos[name] = new_combo
 
 #%%
-    def AddNodeLoad(self, Node, Direction, P, case='Case 1'):
+    def add_node_load(self, Node, Direction, P, case='Case 1'):
         warnings.warn('`AddNodeLoad` will be replaced with `add_node_load` in a future version of PyNite.', FutureWarning)
         self.add_node_load(Node, Direction, P, case)
 
@@ -783,7 +783,7 @@ class FEModel3D():
         self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end, case))
         
 #%%
-    def AddPlateSurfacePressure(self, plate_ID, pressure, case='Case 1'):
+    def add_plate_surface_pressure(self, plate_ID, pressure, case='Case 1'):
         warnings.warn('`AddPlateSurfacePressure` will be replaced with `add_plate_surface_pressure` in a future version of PyNite.', FutureWarning)
         self.add_plate_surface_pressure(plate_ID, pressure, case)
 
@@ -1753,12 +1753,12 @@ class FEModel3D():
                     if member.active[combo.name] == True:
 
                         # Check if tension-only conditions exist
-                        if member.tension_only == True and member.MaxAxial(combo.name) > 0:
+                        if member.tension_only == True and member.max_axial(combo.name) > 0:
                             member.active[combo.name] = False
                             convergence = False
 
                         # Check if compression-only conditions exist
-                        elif member.comp_only == True and member.MinAxial(combo.name) < 0:
+                        elif member.comp_only == True and member.min_axial(combo.name) < 0:
                             member.active[combo.name] = False
                             convergence = False
                 
@@ -1995,7 +1995,7 @@ class FEModel3D():
                     if member.active[combo.name] == True:
 
                         # Check if tension-only conditions exist
-                        if member.tension_only == True and member.MaxAxial(combo.name) > 0:
+                        if member.tension_only == True and member.max_axial(combo.name) > 0:
                             
                             member.active[combo.name] = False
                             convergence_TC = False
@@ -2005,7 +2005,7 @@ class FEModel3D():
                             convergence_PD = False
 
                         # Check if compression-only conditions exist
-                        elif member.comp_only == True and member.MinAxial(combo.name) < 0:
+                        elif member.comp_only == True and member.min_axial(combo.name) < 0:
                             
                             member.active[combo.name] = False
                             convergence_TC = False

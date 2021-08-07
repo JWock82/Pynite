@@ -328,18 +328,18 @@
                 <tr>
                     <td>{{ member.Name }}</td>
                     <td>{{ combo }}</td>
-                    <td>{{ "%.4g" | format(member.MaxAxial(combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MinAxial(combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MaxShear("Fy", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MinShear("Fy", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MaxShear("Fz", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MinShear("Fz", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MaxMoment("My", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MinMoment("My", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MaxMoment("Mz", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MinMoment("Mz", combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MaxTorsion(combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.MinTorsion(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_axial(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_axial(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_shear("Fy", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_shear("Fy", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_shear("Fz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_shear("Fz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_moment("My", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_moment("My", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_moment("Mz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_moment("Mz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_torque(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_torque(combo)) }}</td>
                 </tr>
                 {% endfor %}
             {% endfor %}

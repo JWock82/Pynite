@@ -11,14 +11,14 @@ from PyNite import Visualization
 frame = FEModel3D()
 
 # Define the nodes
-frame.AddNode('N1', 0, 0, 0)
-frame.AddNode('N2', 10*12, 0, 0)
-frame.AddNode('N3', 10*12, 0, -10*12)
-frame.AddNode('N4', 10*12, -20*12, -10*12)
+frame.add_node('N1', 0, 0, 0)
+frame.add_node('N2', 10*12, 0, 0)
+frame.add_node('N3', 10*12, 0, -10*12)
+frame.add_node('N4', 10*12, -20*12, -10*12)
 
 # Define the supports
-frame.DefineSupport('N1', True, True, True, True, True, True)
-frame.DefineSupport('N4', True, True, True, True, True, True)
+frame.def_support('N1', True, True, True, True, True, True)
+frame.def_support('N4', True, True, True, True, True, True)
 
 # Create members (all members will have the same properties in this example)
 J = 100
@@ -28,17 +28,17 @@ E = 30000
 G = 10000
 A = 100
 
-frame.AddMember('M12', 'N1', 'N2', E, G, Iy, Iz, J, A)
-frame.AddMember('M23', 'N2', 'N3', E, G, Iy, Iz, J, A)
-frame.AddMember('M34', 'N3', 'N4', E, G, Iy, Iz, J, A)
+frame.add_member('M12', 'N1', 'N2', E, G, Iy, Iz, J, A)
+frame.add_member('M23', 'N2', 'N3', E, G, Iy, Iz, J, A)
+frame.add_member('M34', 'N3', 'N4', E, G, Iy, Iz, J, A)
 
 # Add nodal loads
-frame.AddNodeLoad('N2', 'FY', -5)
-frame.AddNodeLoad('N2', 'MX', -100*12)
-frame.AddNodeLoad('N3', 'FZ', 40)
+frame.add_node_load('N2', 'FY', -5)
+frame.add_node_load('N2', 'MX', -100*12)
+frame.add_node_load('N3', 'FZ', 40)
 
 # Analyze the frame
-frame.Analyze()
+frame.analyze()
 
 print('Calculated results: ', frame.GetNode('N2').DY, frame.GetNode('N3').DZ)
 print('Expected results: ', -0.063, 1.825)

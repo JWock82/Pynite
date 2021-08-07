@@ -25,18 +25,18 @@ class Test_End_Release(unittest.TestCase):
     def test_end_release_Rz(self):
         myModel = FEModel3D()
         # Add two supported nodes and one member
-        myModel.AddNode('N1', 0, 0, 0)
-        myModel.AddNode('N2', 10*12, 0, 0)
-        myModel.DefineSupport('N1', True, True, True, True, True, True)
-        myModel.DefineSupport('N2', True, True, True, True, True, True)
-        myModel.AddMember('M1', 'N1', 'N2', 29000, 11400, 100, 150, 250, 10)
+        myModel.add_node('N1', 0, 0, 0)
+        myModel.add_node('N2', 10*12, 0, 0)
+        myModel.def_support('N1', True, True, True, True, True, True)
+        myModel.def_support('N2', True, True, True, True, True, True)
+        myModel.add_member('M1', 'N1', 'N2', 29000, 11400, 100, 150, 250, 10)
         # Release Rzi and Rzj on member M1
-        myModel.DefineReleases('M1', False, False, False, False, False, True, \
+        myModel.def_releases('M1', False, False, False, False, False, True, \
                                     False, False, False, False, False, True)
         # Add a load
-        myModel.AddMemberDistLoad('M1', 'Fy', -0.5, -0.5)
-        myModel.Analyze()
+        myModel.add_member_dist_load('M1', 'Fy', -0.5, -0.5)
+        myModel.analyze()
         # Get the resulting moments
-        calculated_moment = myModel.GetMember('M1').MinMoment('Mz')
+        calculated_moment = myModel.GetMember('M1').min_moment('Mz')
         expected_moment = -0.5*(10*12)**2/8
         self.assertAlmostEqual(calculated_moment, expected_moment)

@@ -33,10 +33,10 @@ class Test_Support_Settlement(unittest.TestCase):
         beam = FEModel3D()
 
         # Add nodes
-        beam.AddNode('A', 0, 0, 0)
-        beam.AddNode('B', 20*12, 0, 0)
-        beam.AddNode('C', 40*12, 0, 0)
-        beam.AddNode('D', 60*12, 0, 0)
+        beam.add_node('A', 0, 0, 0)
+        beam.add_node('B', 20*12, 0, 0)
+        beam.add_node('C', 40*12, 0, 0)
+        beam.add_node('D', 60*12, 0, 0)
 
         # Add members
         A = 20
@@ -45,28 +45,28 @@ class Test_Support_Settlement(unittest.TestCase):
         Iy = 1000
         Iz = 7800
         J = 8800
-        beam.AddMember('AB', 'A', 'B', E, G, Iy, Iz, J, A)
-        beam.AddMember('BC', 'B', 'C', E, G, Iy, Iz, J, A)
-        beam.AddMember('CD', 'C', 'D', E, G, Iy, Iz, J, A)
+        beam.add_member('AB', 'A', 'B', E, G, Iy, Iz, J, A)
+        beam.add_member('BC', 'B', 'C', E, G, Iy, Iz, J, A)
+        beam.add_member('CD', 'C', 'D', E, G, Iy, Iz, J, A)
 
         # Provide supports
-        beam.DefineSupport('A', True, True, True, True, False, False)
-        beam.DefineSupport('B', False, True, True, False, False, False)
-        beam.DefineSupport('C', False, True, True, False, False, False)
-        beam.DefineSupport('D', False, True, True, False, False, False)
+        beam.def_support('A', True, True, True, True, False, False)
+        beam.def_support('B', False, True, True, False, False, False)
+        beam.def_support('C', False, True, True, False, False, False)
+        beam.def_support('D', False, True, True, False, False, False)
 
         # Add a uniform load to the beam
-        beam.AddMemberDistLoad('AB', 'Fy', -2/12, -2/12)
-        beam.AddMemberDistLoad('BC', 'Fy', -2/12, -2/12)
-        beam.AddMemberDistLoad('CD', 'Fy', -2/12, -2/12)
+        beam.add_member_dist_load('AB', 'Fy', -2/12, -2/12)
+        beam.add_member_dist_load('BC', 'Fy', -2/12, -2/12)
+        beam.add_member_dist_load('CD', 'Fy', -2/12, -2/12)
 
         # Add support settlements
-        beam.AddNodeDisplacement('B', 'DY', -5/8)
-        beam.AddNodeDisplacement('C', 'DY', -1.5)
-        beam.AddNodeDisplacement('D', 'DY', -0.75)
+        beam.def_node_disp('B', 'DY', -5/8)
+        beam.def_node_disp('C', 'DY', -1.5)
+        beam.def_node_disp('D', 'DY', -0.75)
 
         # Analyze the beam
-        beam.Analyze()
+        beam.analyze()
 
         # Below are the textbook reactions given in the back of the textbook
         textbook_rxns = [('A', -1.098),

@@ -11,15 +11,15 @@ from PyNite import Visualization
 frame = FEModel3D()
 
 # Define the nodes
-frame.AddNode('N1', 0, 0, 0)
-frame.AddNode('N2', -100, 0, 0)
-frame.AddNode('N3', 0, 0, -100)
-frame.AddNode('N4', 0, -100, 0)
+frame.add_node('N1', 0, 0, 0)
+frame.add_node('N2', -100, 0, 0)
+frame.add_node('N3', 0, 0, -100)
+frame.add_node('N4', 0, -100, 0)
 
 # Define the supports
-frame.DefineSupport('N2', True, True, True, True, True, True)
-frame.DefineSupport('N3', True, True, True, True, True, True)
-frame.DefineSupport('N4', True, True, True, True, True, True)
+frame.def_support('N2', True, True, True, True, True, True)
+frame.def_support('N3', True, True, True, True, True, True)
+frame.def_support('N4', True, True, True, True, True, True)
 
 # Create members (all members will have the same properties in this example)
 J = 50
@@ -29,16 +29,16 @@ E = 30000
 G = 10000
 A = 10
 
-frame.AddMember('M1', 'N2', 'N1', E, G, Iy, Iz, J, A)
-frame.AddMember('M2', 'N3', 'N1', E, G, Iy, Iz, J, A)
-frame.AddMember('M3', 'N4', 'N1', E, G, Iy, Iz, J, A)
+frame.add_member('M1', 'N2', 'N1', E, G, Iy, Iz, J, A)
+frame.add_member('M2', 'N3', 'N1', E, G, Iy, Iz, J, A)
+frame.add_member('M3', 'N4', 'N1', E, G, Iy, Iz, J, A)
 
 # Add nodal loads
-frame.AddNodeLoad('N1', 'FY', -50)
-frame.AddNodeLoad('N1', 'MX', -1000)
+frame.add_node_load('N1', 'FY', -50)
+frame.add_node_load('N1', 'MX', -1000)
 
 # Analyze the model
-frame.Analyze(check_statics=True)
+frame.analyze(check_statics=True)
 
 # Render the deformed shape
 Visualization.RenderModel(frame, text_height=5, deformed_shape=True, deformed_scale=100, render_loads=True)

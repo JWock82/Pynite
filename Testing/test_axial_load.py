@@ -26,8 +26,8 @@ class Test_AxialLoads(unittest.TestCase):
         Beam = FEModel3D()
         L = 5 # m
         # Nodes
-        Beam.AddNode("N1", 0, 0, 0)
-        Beam.AddNode("N2", L, 0, 0)
+        Beam.add_node("N1", 0, 0, 0)
+        Beam.add_node("N2", L, 0, 0)
         # Beams (30x50 cm)
         E = 2.1e11 # N/m^2
         G = 1
@@ -35,14 +35,14 @@ class Test_AxialLoads(unittest.TestCase):
         Iz = 0.003125 # m^4
         J = 1
         A = 0.15 # m^2
-        Beam.AddMember("M1", "N1", "N2", E, G, Iy, Iz, J, A)
+        Beam.add_member("M1", "N1", "N2", E, G, Iy, Iz, J, A)
         # Supports
-        Beam.DefineSupport("N1", True, True, True, True, True, True)
-        Beam.DefineSupport("N2", True, True, True, False, True, True)
+        Beam.def_support("N1", True, True, True, True, True, True)
+        Beam.def_support("N2", True, True, True, False, True, True)
         # Load
-        Beam.AddMemberDistLoad("M1", "Fx", 10, 10, 0, 5)
+        Beam.add_member_dist_load("M1", "Fx", 10, 10, 0, 5)
         # Analyze
-        Beam.Analyze()
+        Beam.analyze()
         # Member fixed end reaction vector
         # print('M1 Displacement Vector: ', Beam.GetMember('M1').d())
         # print('M1 Fixed End Reaction Vector: ', Beam.GetMember('M1').fer())

@@ -27,22 +27,22 @@ class Test_Spring_Elements(unittest.TestCase):
         # Example 2.1
         # Units for this model are pounds and inches
         system = FEModel3D()
-        system.AddNode('1', 0, 0, 0)
-        system.AddNode('2', 30, 0, 0)
-        system.AddNode('3', 10, 0, 0)
-        system.AddNode('4', 20, 0, 0)
+        system.add_node('1', 0, 0, 0)
+        system.add_node('2', 30, 0, 0)
+        system.add_node('3', 10, 0, 0)
+        system.add_node('4', 20, 0, 0)
         # Add spring members
-        system.AddSpring('S1', '1', '3', 1000)
-        system.AddSpring('S2', '3', '4', 2000)
-        system.AddSpring('S3', '4', '2', 3000)
+        system.add_spring('S1', '1', '3', 1000)
+        system.add_spring('S2', '3', '4', 2000)
+        system.add_spring('S3', '4', '2', 3000)
         # Define supports
-        system.DefineSupport('1', True, True, True, True, True, True)
-        system.DefineSupport('2', True, True, True, True, True, True)
-        system.DefineSupport('3', False, True, True, True, True, True)
-        system.DefineSupport('4', False, True, True, True, True, True)
+        system.def_support('1', True, True, True, True, True, True)
+        system.def_support('2', True, True, True, True, True, True)
+        system.def_support('3', False, True, True, True, True, True)
+        system.def_support('4', False, True, True, True, True, True)
         # Add node loads
-        system.AddNodeLoad('4', 'FX', 5000)
-        system.Analyze(True)
+        system.add_node_load('4', 'FX', 5000)
+        system.analyze(True)
         # Check results
         # correct_values = [('3', 0.9090909090909092),
         #                   ('4', 1.3636363636363638),

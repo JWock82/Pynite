@@ -8,10 +8,10 @@ from PyNite import FEModel3D
 BracedFrame = FEModel3D()
 
 # Add nodes (frame is 15 ft wide x 12 ft tall)
-BracedFrame.AddNode('N1', 0, 0, 0)
-BracedFrame.AddNode('N2', 0, 12*12, 0)
-BracedFrame.AddNode('N3', 15*12, 12*12, 0)
-BracedFrame.AddNode('N4', 15*12, 0*12, 0)
+BracedFrame.add_node('N1', 0, 0, 0)
+BracedFrame.add_node('N2', 0, 12*12, 0)
+BracedFrame.add_node('N3', 15*12, 12*12, 0)
+BracedFrame.add_node('N4', 15*12, 0*12, 0)
 
 # Define column properties (use W10x33 from the AISC Manual):
 E = 29000 # ksi
@@ -22,8 +22,8 @@ J = 0.58 # in^4
 A = 9.71 # in^2
 
 # Define the columns
-BracedFrame.AddMember('Col1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-BracedFrame.AddMember('Col2', 'N4', 'N3', E, G, Iy, Iz, J, A)
+BracedFrame.add_member('Col1', 'N1', 'N2', E, G, Iy, Iz, J, A)
+BracedFrame.add_member('Col2', 'N4', 'N3', E, G, Iy, Iz, J, A)
 
 # Define beam properties (Use W8x24)
 Iy = 18.3 # in^4
@@ -32,8 +32,8 @@ J = 0.346 # in^4
 A = 7.08 # in^2
 
 # Define the beams
-BracedFrame.AddMember('Beam', 'N2', 'N3', E, G, Iy, Iz, J, A)
-BracedFrame.DefineReleases('Beam', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+BracedFrame.add_member('Beam', 'N2', 'N3', E, G, Iy, Iz, J, A)
+BracedFrame.def_releases('Beam', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
 
 # Define the brace properties
 # We'll use a section with L/r <= 300 which is a common rule of thumb for
@@ -44,44 +44,44 @@ J = 0.0438 # in^4
 A = 1.94 # in^2
 
 # Define the braces
-BracedFrame.AddMember('Brace1', 'N1', 'N3', E, G, Iy, Iz, J, A,
+BracedFrame.add_member('Brace1', 'N1', 'N3', E, G, Iy, Iz, J, A,
                       tension_only=True)
-BracedFrame.AddMember('Brace2', 'N4', 'N2', E, G, Iy, Iz, J, A,
+BracedFrame.add_member('Brace2', 'N4', 'N2', E, G, Iy, Iz, J, A,
                       tension_only=True)
 
 # Release the brace ends to form an axial member
-BracedFrame.DefineReleases('Brace1', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
-BracedFrame.DefineReleases('Brace2', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+BracedFrame.def_releases('Brace1', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+BracedFrame.def_releases('Brace2', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
 
 # Provide pinned supports at the bases of the columns (also restrained about
 # the Y-axis for stability)
-BracedFrame.DefineSupport('N1', SupportDX=True, SupportDY=True, SupportDZ=True,
+BracedFrame.def_support('N1', SupportDX=True, SupportDY=True, SupportDZ=True,
                           SupportRY=True)
-BracedFrame.DefineSupport('N4', SupportDX=True, SupportDY=True, SupportDZ=True,
+BracedFrame.def_support('N4', SupportDX=True, SupportDY=True, SupportDZ=True,
                           SupportRY=True)
 
 # Stabilize the frame in the global Z-direction so it doesn't tip over
 # out-of-plane.
-BracedFrame.DefineSupport('N2', SupportDZ=True)
-BracedFrame.DefineSupport('N3', SupportDZ=True)
+BracedFrame.def_support('N2', SupportDZ=True)
+BracedFrame.def_support('N3', SupportDZ=True)
 
 # Add self weight dead loads to the frame.
 # Note that we could leave 'x1' and 'x2' undefined below and it would default
 # to the full member length. Note also that the direction uses lowercase
 # notations to indicate member local coordinate systems. Brace loads have been
 # neglected.
-BracedFrame.AddMemberDistLoad('Beam', Direction='Fy', w1=-0.024/12,
+BracedFrame.add_member_dist_load('Beam', Direction='Fy', w1=-0.024/12,
                               w2=-0.024/12, x1=0, x2=15*12, case='D')
-BracedFrame.AddMemberDistLoad('Col1', Direction='Fx', w1=-0.033/12,
+BracedFrame.add_member_dist_load('Col1', Direction='Fx', w1=-0.033/12,
                               w2=-0.033/12, x1=0, x2=12*12, case='D')
-BracedFrame.AddMemberDistLoad('Col2', Direction='Fx', w1=-0.033/12,
+BracedFrame.add_member_dist_load('Col2', Direction='Fx', w1=-0.033/12,
                               w2=-0.033/12, x1=0, x2=12*12, case='D')
 
 # Add nodal wind loads of 25 kips to each side of the frame. Note that the
 # direction uses uppercase notation to indicate model global coordinate
 # system.
-BracedFrame.AddNodeLoad('N2', Direction='FX', P=25, case='W')
-BracedFrame.AddNodeLoad('N3', Direction='FX', P=25, case='W')
+BracedFrame.add_node_load('N2', Direction='FX', P=25, case='W')
+BracedFrame.add_node_load('N3', Direction='FX', P=25, case='W')
 
 # Create load combinations
 # Note that the load combination '1.4D' has no lateral load, but does have
@@ -92,15 +92,15 @@ BracedFrame.AddNodeLoad('N3', Direction='FX', P=25, case='W')
 # tension-only members to avoid this problem. Load combination '1.4D' ahs been
 # commented out, but you can uncomment it to see for yourself what happens.
 
-# BracedFrame.AddLoadCombo('1.4D', factors={'D':1.4})
-BracedFrame.AddLoadCombo('1.2D+1.0W', factors={'D':1.2, 'W':1.0})
-BracedFrame.AddLoadCombo('0.9D+1.0W', factors={'D':0.9, 'W':1.0})
+# BracedFrame.add_load_combo('1.4D', factors={'D':1.4})
+BracedFrame.add_load_combo('1.2D+1.0W', factors={'D':1.2, 'W':1.0})
+BracedFrame.add_load_combo('0.9D+1.0W', factors={'D':0.9, 'W':1.0})
 
 # Analyze the braced frame
-# P-Delta analysis could also be performed using BracedFrame.Analyze_PDelta().
+# P-Delta analysis could also be performed using BracedFrame.analyze_PDelta().
 # Generally, P-Delta analysis will have little effect on a model of a braced
 # frame, as there is usually very little bending moment in the members.
-BracedFrame.Analyze()
+BracedFrame.analyze()
 
 # Display the deformed shape of the structure magnified 50 times with the text
 # height 5 model units (inches) high

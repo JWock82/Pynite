@@ -5,20 +5,20 @@ beam = FEModel3D()
 
 # Add nodes to the model
 # All units will be in kips and inches
-beam.AddNode('N1', 0, 0, 0)
-beam.AddNode('N2', 10*12, 0, 0)
+beam.add_node('N1', 0, 0, 0)
+beam.add_node('N2', 10*12, 0, 0)
 
 # Add a member to the model and a member point load
-beam.AddMember('M1', 'N1', 'N2', 29000, 11200, 100, 100, 200, 20)
-beam.AddMemberPtLoad('M1', 'Fy', -10, 5*12)
+beam.add_member('M1', 'N1', 'N2', 29000, 11200, 100, 100, 200, 20)
+beam.add_member_pt_load('M1', 'Fy', -10, 5*12)
 
 # Define simple supports, except with a spring support at each end in the 'Y' direction.
 # The stiffness on the left side will be 2.5 k/in. The stiffness on the right will be 5 k/in.
-beam.DefineSupport('N1', True, 2.5, True, True, False, False)
-beam.DefineSupport('N2', True, 5, True, False, False, False)
+beam.def_support('N1', True, 2.5, True, True, False, False)
+beam.def_support('N2', True, 5, True, False, False, False)
 
 # Analyze the beam
-beam.Analyze(log=True)
+beam.analyze(log=True)
 
 # Print out support reactions
 print('FY1 = ', beam.Nodes['N1'].RxnFY['Combo 1'])

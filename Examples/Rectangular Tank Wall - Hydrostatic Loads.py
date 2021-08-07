@@ -34,7 +34,7 @@ mesh = RectangleMesh(t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane
 model = FEModel3D()
 
 # Add the mesh to the model
-model.AddMesh(mesh)
+model.add_mesh(mesh)
 
 # Step through each quadrilateral and rectangular plate in the model
 for element in list(model.Quads.values()) + list(model.Plates.values()):
@@ -47,21 +47,21 @@ for element in list(model.Quads.values()) + list(model.Plates.values()):
 
         # Add hydrostatic loads to the element
         if mesh.element_type == 'Rect':
-            model.AddPlateSurfacePressure(element.Name, 62.4*(HL - Yavg), case='F')
+            model.add_plate_surface_pressure(element.Name, 62.4*(HL - Yavg), case='F')
         else:
-            model.AddQuadSurfacePressure(element.Name, 62.4*(HL - Yavg), case='F')
+            model.add_quad_surface_pressure(element.Name, 62.4*(HL - Yavg), case='F')
 
 # Add fully fixed supports at left, right, and bottom of the wall
 for node in model.Nodes.values():
     if round(node.Y, 10) == 0 or round(node.X, 10) == 0 or round(node.X, 10) == width:
-        model.DefineSupport(node.Name, True, True, True, True, True, True)
+        model.def_support(node.Name, True, True, True, True, True, True)
 
 # Add a load combination named '1.4F' with a factor of 1.4 applied to any loads designated as
 # 'Hydrostatic'.
-model.AddLoadCombo('1.4F', {'F': 1.4})
+model.add_load_combo('1.4F', {'F': 1.4})
 
 # Analyze the model
-model.Analyze(log=True, check_statics=True)
+model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Mx` moments.
 RenderModel(model, text_height=0.2, render_loads=True, deformed_shape=True, deformed_scale=500, color_map='Mx', combo_name='1.4F', labels=True)

@@ -11,54 +11,54 @@ from PyNite import Visualization
 truss = FEModel3D()
 
 # Define the nodes
-truss.AddNode('A', 1.1, -0.4, 0)
-truss.AddNode('B', 1, 0, 0)
-truss.AddNode('C', 0, 0, 0.6)
-truss.AddNode('D', 0, 0, -0.4)
-truss.AddNode('E', 0, 0.8, 0)
+truss.add_node('A', 1.1, -0.4, 0)
+truss.add_node('B', 1, 0, 0)
+truss.add_node('C', 0, 0, 0.6)
+truss.add_node('D', 0, 0, -0.4)
+truss.add_node('E', 0, 0.8, 0)
 
 # Define the supports
-truss.DefineSupport('C', True, True, True, True, True, True)
-truss.DefineSupport('D', True, True, True, True, True, True)
-truss.DefineSupport('E', True, True, True, True, True, True)
+truss.def_support('C', True, True, True, True, True, True)
+truss.def_support('D', True, True, True, True, True, True)
+truss.def_support('E', True, True, True, True, True, True)
 
 # Create members
 # Member properties were not given for this problem, so assumed values will be used
 # To make all the members act rigid, the modulus of elasticity will be set to a very large value
 E = 99999999
-truss.AddMember('AB', 'A', 'B', E, 100, 100, 100, 100, 100)
-truss.AddMember('AC', 'A', 'C', E, 100, 100, 100, 100, 100)
-truss.AddMember('AD', 'A', 'D', E, 100, 100, 100, 100, 100)
-truss.AddMember('BC', 'B', 'C', E, 100, 100, 100, 100, 100)
-truss.AddMember('BD', 'B', 'D', E, 100, 100, 100, 100, 100)
-truss.AddMember('BE', 'B', 'E', E, 100, 100, 100, 100, 100)
+truss.add_member('AB', 'A', 'B', E, 100, 100, 100, 100, 100)
+truss.add_member('AC', 'A', 'C', E, 100, 100, 100, 100, 100)
+truss.add_member('AD', 'A', 'D', E, 100, 100, 100, 100, 100)
+truss.add_member('BC', 'B', 'C', E, 100, 100, 100, 100, 100)
+truss.add_member('BD', 'B', 'D', E, 100, 100, 100, 100, 100)
+truss.add_member('BE', 'B', 'E', E, 100, 100, 100, 100, 100)
 
 # Release the moments at the ends of the members to make truss members
-truss.DefineReleases('AC', False, False, False, False, True, True, \
+truss.def_releases('AC', False, False, False, False, True, True, \
                            False, False, False, False, True, True)
-truss.DefineReleases('AD', False, False, False, False, True, True, \
+truss.def_releases('AD', False, False, False, False, True, True, \
                            False, False, False, False, True, True)
-truss.DefineReleases('BC', False, False, False, False, True, True, \
+truss.def_releases('BC', False, False, False, False, True, True, \
                            False, False, False, False, True, True)
-truss.DefineReleases('BD', False, False, False, False, True, True, \
+truss.def_releases('BD', False, False, False, False, True, True, \
                            False, False, False, False, True, True)
-truss.DefineReleases('BE', False, False, False, False, True, True, \
+truss.def_releases('BE', False, False, False, False, True, True, \
                            False, False, False, False, True, True)
 
 # Add nodal loads
-truss.AddNodeLoad('A', 'FX', 10)
-truss.AddNodeLoad('A', 'FY', 60)
-truss.AddNodeLoad('A', 'FZ', 20)
+truss.add_node_load('A', 'FX', 10)
+truss.add_node_load('A', 'FY', 60)
+truss.add_node_load('A', 'FZ', 20)
 
 # Analyze the model
-truss.Analyze()
+truss.analyze()
 
 # Print results
-print('Member BC calculated axial force: ' + str(truss.GetMember('BC').MaxAxial()))
+print('Member BC calculated axial force: ' + str(truss.GetMember('BC').max_axial()))
 print('Member BC expected axial force: 32.7 Tension')
-print('Member BD calculated axial force: ' + str(truss.GetMember('BD').MaxAxial()))
+print('Member BD calculated axial force: ' + str(truss.GetMember('BD').max_axial()))
 print('Member BD expected axial force: 45.2 Tension')
-print('Member BE calculated axial force: ' + str(truss.GetMember('BE').MaxAxial()))
+print('Member BE calculated axial force: ' + str(truss.GetMember('BE').max_axial()))
 print('Member BE expected axial force: 112.1 Compression')
 
 # Render the model for viewing. The text height will be set to 50 mm.

@@ -40,23 +40,23 @@ class Test_AISC_Benchmark(unittest.TestCase):
         num_nodes = num_segs + 1
         for i in range(num_nodes):
             # Add nodes
-            cantilever.AddNode(str(i+1), 0, i*L/(num_segs), 0)
+            cantilever.add_node(str(i+1), 0, i*L/(num_segs), 0)
 
         for i in range(num_segs):
             # Add members between nodes
-            cantilever.AddMember(str(i+1), str(i+1), str(i+2), E, G, I, I, 200/12**4, 10/12**2)
+            cantilever.add_member(str(i+1), str(i+1), str(i+2), E, G, I, I, 200/12**4, 10/12**2)
 
         # Add a fixed support at the base of the column
-        cantilever.DefineSupport('1', True, True, True, True, True, True)
+        cantilever.def_support('1', True, True, True, True, True, True)
 
         # Add a -10 kip axial load to the top of the column
-        cantilever.AddNodeLoad(str(num_nodes), 'FY', -P)
+        cantilever.add_node_load(str(num_nodes), 'FY', -P)
 
         # Add a 5 kip lateral load to the top of the column
-        cantilever.AddNodeLoad(str(num_nodes), 'FX', H)
+        cantilever.add_node_load(str(num_nodes), 'FX', H)
 
         # Perform 2nd order analysis
-        cantilever.Analyze_PDelta()
+        cantilever.analyze_PDelta()
 
         # The moment at the base of the column
         calculated_moment = cantilever.GetNode('1').RxnMZ['Combo 1']

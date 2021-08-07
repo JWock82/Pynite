@@ -11,17 +11,17 @@ from PyNite import Visualization
 truss = FEModel3D()
 
 # Define the nodes
-truss.AddNode('a', 2, 4, 8)
-truss.AddNode('b', 0, 0, 0)
-truss.AddNode('c', 8, 0, 0)
-truss.AddNode('d', 8, 6, 0)
-truss.AddNode('e', 0, 6, 0)
+truss.add_node('a', 2, 4, 8)
+truss.add_node('b', 0, 0, 0)
+truss.add_node('c', 8, 0, 0)
+truss.add_node('d', 8, 6, 0)
+truss.add_node('e', 0, 6, 0)
 
 # Define the supports - All fixed - End releases will be used to create pins
-truss.DefineSupport('b', True, True, True, True, True, True)
-truss.DefineSupport('c', True, True, True, True, True, True)
-truss.DefineSupport('d', True, True, True, True, True, True)
-truss.DefineSupport('e', True, True, True, True, True, True)
+truss.def_support('b', True, True, True, True, True, True)
+truss.def_support('c', True, True, True, True, True, True)
+truss.def_support('d', True, True, True, True, True, True)
+truss.def_support('e', True, True, True, True, True, True)
 
 # Define properties common to all members
 E = 200000000  # kN/m^2
@@ -31,28 +31,28 @@ Iy = 100
 Iz = 100
 
 # Define members
-truss.AddMember('ab', 'a', 'b', E, G, Iy, Iz, J, 20*10**3/1000**2)
-truss.AddMember('ac', 'a', 'c', E, G, Iy, Iz, J, 30*10**3/1000**2)
-truss.AddMember('ad', 'a', 'd', E, G, Iy, Iz, J, 40*10**3/1000**2)
-truss.AddMember('ae', 'a', 'e', E, G, Iy, Iz, J, 30*10**3/1000**2)
+truss.add_member('ab', 'a', 'b', E, G, Iy, Iz, J, 20*10**3/1000**2)
+truss.add_member('ac', 'a', 'c', E, G, Iy, Iz, J, 30*10**3/1000**2)
+truss.add_member('ad', 'a', 'd', E, G, Iy, Iz, J, 40*10**3/1000**2)
+truss.add_member('ae', 'a', 'e', E, G, Iy, Iz, J, 30*10**3/1000**2)
 
 # Define member end releases
-truss.DefineReleases('ab', False, False, False, False, True, True,
+truss.def_releases('ab', False, False, False, False, True, True,
                            False, False, False, False, True, True)
-truss.DefineReleases('ac', False, False, False, False, True, True,
+truss.def_releases('ac', False, False, False, False, True, True,
                            False, False, False, False, True, True)
-truss.DefineReleases('ad', False, False, False, False, True, True,
+truss.def_releases('ad', False, False, False, False, True, True,
                            False, False, False, False, True, True)
-truss.DefineReleases('ae', False, False, False, False, True, True,
+truss.def_releases('ae', False, False, False, False, True, True,
                            False, False, False, False, True, True)
 
 # Add nodal loads
-truss.AddNodeLoad('a', 'FY', 600)
-truss.AddNodeLoad('a', 'FX', 200)
-truss.AddNodeLoad('a', 'FZ', -800)
+truss.add_node_load('a', 'FY', 600)
+truss.add_node_load('a', 'FX', 200)
+truss.add_node_load('a', 'FZ', -800)
 
 # Analyze the model
-truss.Analyze(False)
+truss.analyze(False)
 
 # Render the model
 Visualization.RenderModel(truss, text_height=0.2, deformed_shape=True, deformed_scale=1000, render_loads=True)
