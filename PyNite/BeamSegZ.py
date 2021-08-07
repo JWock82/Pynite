@@ -103,7 +103,7 @@ class BeamSegZ():
 
 #%% 
     # Returns the moment at a location on the segment
-    def Moment(self, x):
+    def moment(self, x):
         
         V1 = self.V1
         M1 = self.M1
@@ -115,7 +115,7 @@ class BeamSegZ():
 
 #%%
     # Returns the axial force at a location on the segment
-    def Axial(self, x):
+    def axial(self, x):
         
         P1 = self.P1
         p1 = self.p1
@@ -197,7 +197,7 @@ class BeamSegZ():
 
 #%%
     # Returns the maximum shear in the segment
-    def MaxShear(self):
+    def max_shear(self):
         
         w1 = self.w1
         w2 = self.w2
@@ -225,7 +225,7 @@ class BeamSegZ():
 
 #%%
     # Returns the minimum shear in the segment
-    def MinShear(self):
+    def min_shear(self):
         
         w1 = self.w1
         w2 = self.w2
@@ -253,7 +253,7 @@ class BeamSegZ():
     
 #%%
     # Returns the maximum moment in the segment
-    def MaxMoment(self):
+    def max_moment(self):
         
         w1 = self.w1
         w2 = self.w2
@@ -289,17 +289,17 @@ class BeamSegZ():
             x2 = 0
     
         # Find the moment at each location of interest
-        M1 = self.Moment(x1)
-        M2 = self.Moment(x2)
-        M3 = self.Moment(x3)
-        M4 = self.Moment(x4)
+        M1 = self.moment(x1)
+        M2 = self.moment(x2)
+        M3 = self.moment(x3)
+        M4 = self.moment(x4)
     
         # Return the maximum moment
         return max(M1, M2, M3, M4)
 
 #%%
     # Returns the minimum moment in the segment
-    def MinMoment(self):
+    def min_moment(self):
         
         w1 = self.w1
         w2 = self.w2
@@ -335,17 +335,17 @@ class BeamSegZ():
             x2 = 0
     
         # Find the moment at each location of interest
-        M1 = self.Moment(x1)
-        M2 = self.Moment(x2)
-        M3 = self.Moment(x3)
-        M4 = self.Moment(x4)
+        M1 = self.moment(x1)
+        M2 = self.moment(x2)
+        M3 = self.moment(x3)
+        M4 = self.moment(x4)
     
         # Return the minimum moment
         return min(M1, M2, M3, M4)
 
 #%%
     # Returns the maximum axial force in the segment
-    def MaxAxial(self):
+    def max_axial(self):
         
         p1 = self.p1
         p2 = self.p2
@@ -364,16 +364,16 @@ class BeamSegZ():
         x3 = L
     
         # Find the axial force at each location of interest
-        P1 = self.Axial(x1)
-        P2 = self.Axial(x2)
-        P3 = self.Axial(x3)
+        P1 = self.axial(x1)
+        P2 = self.axial(x2)
+        P3 = self.axial(x3)
     
         # Return the maximum axial force
         return max(P1, P2, P3)
 
 #%%
     # Returns the minimum axial force in the segment
-    def MinAxial(self):
+    def min_axial(self):
         
         p1 = self.p1
         p2 = self. p2
@@ -392,9 +392,9 @@ class BeamSegZ():
         x3 = L
     
         # Find the axial force at each location of interest
-        P1 = self.Axial(x1)
-        P2 = self.Axial(x2)
-        P3 = self.Axial(x3)
+        P1 = self.axial(x1)
+        P2 = self.axial(x2)
+        P3 = self.axial(x3)
     
         # Return the minimum axial force
         return min(P1, P2, P3)

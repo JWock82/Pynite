@@ -595,9 +595,9 @@ class Member3D():
 
             for segment in self.SegmentsZ:
                 
-                if segment.MaxShear() > Vmax:
+                if segment.max_shear() > Vmax:
                     
-                    Vmax = segment.MaxShear()
+                    Vmax = segment.max_shear()
                     
         if Direction == 'Fz':
             
@@ -605,9 +605,9 @@ class Member3D():
 
             for segment in self.SegmentsY:
                 
-                if segment.MaxShear() > Vmax:
+                if segment.max_shear() > Vmax:
                     
-                    Vmax = segment.MaxShear()
+                    Vmax = segment.max_shear()
         
         return Vmax
     
@@ -641,9 +641,9 @@ class Member3D():
 
             for segment in self.SegmentsZ:
                 
-                if segment.MinShear() < Vmin:
+                if segment.min_shear() < Vmin:
                     
-                    Vmin = segment.MinShear()
+                    Vmin = segment.min_shear()
                     
         if Direction == 'Fz':
             
@@ -651,9 +651,9 @@ class Member3D():
 
             for segment in self.SegmentsY:
                 
-                if segment.MinShear() < Vmin:
+                if segment.min_shear() < Vmin:
                     
-                    Vmin = segment.MinShear()
+                    Vmin = segment.min_shear()
         
         return Vmin
     
@@ -736,12 +736,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return segment.Moment(x - segment.x1)
+                    return segment.moment(x - segment.x1)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsY) - 1
-                return self.SegmentsY[lastIndex].Moment(x - self.SegmentsY[lastIndex].x1)
+                return self.SegmentsY[lastIndex].moment(x - self.SegmentsY[lastIndex].x1)
                 
         elif Direction == 'Mz':
             
@@ -749,7 +749,7 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return segment.Moment(x - segment.x1)
+                    return segment.moment(x - segment.x1)
                 
             if isclose(x, self.L()):
                 
@@ -782,23 +782,23 @@ class Member3D():
         
         if Direction == 'Mz':
             
-            Mmax = self.SegmentsZ[0].Moment(0)
+            Mmax = self.SegmentsZ[0].moment(0)
 
             for segment in self.SegmentsZ:
                 
-                if segment.MaxMoment() > Mmax:
+                if segment.max_moment() > Mmax:
                     
-                    Mmax = segment.MaxMoment()
+                    Mmax = segment.max_moment()
                     
         if Direction == 'My':
             
-            Mmax = self.SegmentsY[0].Moment(0)
+            Mmax = self.SegmentsY[0].moment(0)
 
             for segment in self.SegmentsY:
                 
-                if segment.MaxMoment() > Mmax:
+                if segment.max_moment() > Mmax:
                     
-                    Mmax = segment.MaxMoment()
+                    Mmax = segment.max_moment()
         
         return Mmax
 
@@ -828,23 +828,23 @@ class Member3D():
         
         if Direction == 'Mz':
             
-            Mmin = self.SegmentsZ[0].Moment(0)
+            Mmin = self.SegmentsZ[0].moment(0)
 
             for segment in self.SegmentsZ:
                 
-                if segment.MinMoment() < Mmin:
+                if segment.min_moment() < Mmin:
                     
-                    Mmin = segment.MinMoment()
+                    Mmin = segment.min_moment()
                     
         if Direction == 'My':
             
-            Mmin = self.SegmentsY[0].Moment(0)
+            Mmin = self.SegmentsY[0].moment(0)
 
             for segment in self.SegmentsY:
                 
-                if segment.MinMoment() < Mmin:
+                if segment.min_moment() < Mmin:
                     
-                    Mmin = segment.MinMoment()
+                    Mmin = segment.min_moment()
         
         return Mmin
 
@@ -886,7 +886,7 @@ class Member3D():
         for i in range(21):
             
             x.append(self.L()/20*i)
-            M.append(self.Moment(Direction, self.L()/20*i, combo_name))
+            M.append(self.moment(Direction, self.L()/20*i, combo_name))
 
         Member3D.__plt.plot(x, M)
         Member3D.__plt.ylabel('Moment')
@@ -1053,11 +1053,11 @@ class Member3D():
         # Check which segment 'x' falls on
         for segment in self.SegmentsZ:
             if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                return segment.Axial(x - segment.x1)
+                return segment.axial(x - segment.x1)
                 
             if isclose(x, self.L()):  
                 lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].Axial(x - self.SegmentsZ[lastIndex].x1)
+                return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
 
 #%%
     def MaxAxial(self, combo_name='Combo 1'):
@@ -1079,13 +1079,13 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
-        Pmax = self.SegmentsZ[0].Axial(0)   
+        Pmax = self.SegmentsZ[0].axial(0)   
         
         for segment in self.SegmentsZ:
 
-            if segment.MaxAxial() > Pmax:
+            if segment.max_axial() > Pmax:
                     
-                Pmax = segment.MaxAxial()
+                Pmax = segment.max_axial()
         
         return Pmax
     
@@ -1109,13 +1109,13 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.LoadCombos[combo_name]
         
-        Pmin = self.SegmentsZ[0].Axial(0)
+        Pmin = self.SegmentsZ[0].axial(0)
             
         for segment in self.SegmentsZ:
                 
-            if segment.MinAxial() < Pmin:
+            if segment.min_axial() < Pmin:
                     
-                Pmin = segment.MinAxial()
+                Pmin = segment.min_axial()
         
         return Pmin
     
@@ -1154,7 +1154,7 @@ class Member3D():
         # Calculate the axial force diagram
         for i in range(21):
             x.append(self.L()/20*i)
-            P.append(self.Axial(self.L()/20*i, combo_name))
+            P.append(self.axial(self.L()/20*i, combo_name))
 
         Member3D.__plt.plot(x, P)
         Member3D.__plt.ylabel('Axial Force')

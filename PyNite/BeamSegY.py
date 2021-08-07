@@ -5,7 +5,7 @@ class BeamSegY(BeamSegZ):
 
 #%% 
     # Returns the moment at a location on the segment
-    def Moment(self, x):
+    def moment(self, x):
         '''
         Returns the moment at a location on the segment.
 
@@ -75,7 +75,7 @@ class BeamSegY(BeamSegZ):
     
 #%%
     # Returns the maximum moment in the segment
-    def MaxMoment(self):
+    def max_moment(self):
         
         w1 = self.w1
         w2 = self.w2
@@ -111,17 +111,17 @@ class BeamSegY(BeamSegZ):
             x2 = 0
     
         # Find the moment at each location of interest
-        M1 = self.Moment(x1)
-        M2 = self.Moment(x2)
-        M3 = self.Moment(x3)
-        M4 = self.Moment(x4)
+        M1 = self.moment(x1)
+        M2 = self.moment(x2)
+        M3 = self.moment(x3)
+        M4 = self.moment(x4)
     
         # Return the maximum moment
         return max(M1, M2, M3, M4)
 
 #%%
     # Returns the minimum moment in the segment
-    def MinMoment(self):
+    def min_moment(self):
         
         w1 = self.w1
         w2 = self.w2
@@ -157,10 +157,10 @@ class BeamSegY(BeamSegZ):
             x2 = 0
     
         # Find the moment at each location of interest
-        M1 = self.Moment(x1)
-        M2 = self.Moment(x2)
-        M3 = self.Moment(x3)
-        M4 = self.Moment(x4)
+        M1 = self.moment(x1)
+        M2 = self.moment(x2)
+        M3 = self.moment(x3)
+        M4 = self.moment(x4)
     
         # Return the minimum moment
         return min(M1, M2, M3, M4)

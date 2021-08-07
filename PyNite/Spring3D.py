@@ -235,7 +235,7 @@ class Spring3D():
         return D
 
 #%%
-    def Axial(self, combo_name='Combo 1'):
+    def axial(self, combo_name='Combo 1'):
         '''
         Returns the axial force in the spring.
         

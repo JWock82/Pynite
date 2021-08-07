@@ -65,10 +65,10 @@ from PyNite import Visualization
 Visualization.RenderModel(MomentFrame, text_height=5, deformed_shape=True, deformed_scale=50, combo_name='1.2D+1.0W')
 
 # Plot the moment diagram for the beam
-MomentFrame.GetMember('Beam').PlotMoment('Mz', combo_name='1.2D+1.0W')
+MomentFrame.GetMember('Beam').plot_moment('Mz', combo_name='1.2D+1.0W')
 
 # Plot the deflection of the column
-MomentFrame.GetMember('Col1').PlotDeflection('dy', combo_name='1.2D+1.0W')
+MomentFrame.GetMember('Col1').plot_deflection('dy', combo_name='1.2D+1.0W')
 
 # Find the maximum shear in the first column
 print('Column Shear Force:', MomentFrame.GetMember('Col1').max_shear('Fy', combo_name='1.2D+1.0W'), 'kip')

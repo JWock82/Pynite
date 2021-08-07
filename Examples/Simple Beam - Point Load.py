@@ -36,9 +36,9 @@ SimpleBeam.analyze(check_statics=True)
 Visualization.RenderModel(SimpleBeam, text_height=10, deformed_shape=True, deformed_scale=30, render_loads=True, combo_name='1.2D+1.6L')
 
 # Print the shear, moment, and deflection diagrams
-SimpleBeam.GetMember('M1').PlotShear('Fy', '1.2D+1.6L')
-SimpleBeam.GetMember('M1').PlotMoment('Mz', '1.2D+1.6L')
-SimpleBeam.GetMember('M1').PlotDeflection('dy', '1.2D+1.6L')
+SimpleBeam.GetMember('M1').plot_shear('Fy', '1.2D+1.6L')
+SimpleBeam.GetMember('M1').plot_moment('Mz', '1.2D+1.6L')
+SimpleBeam.GetMember('M1').plot_deflection('dy', '1.2D+1.6L')
 
 # Print reactions at each end of the beam
 print('Left Support Reaction:', SimpleBeam.GetNode('N1').RxnFY['1.2D+1.6L'], 'kip')
@@ -51,8 +51,8 @@ print('Maximum Moment:', SimpleBeam.GetMember('M1').max_moment('Mz', '1.2D+1.6L'
 print('Minimum Moment:', SimpleBeam.GetMember('M1').min_moment('Mz', '1.2D+1.6L')/12, 'kip-ft')
 
 # Print the max/min deflections in the beam
-print('Maximum Deflection:', SimpleBeam.GetMember('M1').MaxDeflection('dy', '1.2D+1.6L'), 'in')
-print('Minimum Deflection:', SimpleBeam.GetMember('M1').MinDeflection('dy', '1.2D+1.6L'), 'in')
+print('Maximum Deflection:', SimpleBeam.GetMember('M1').max_deflection('dy', '1.2D+1.6L'), 'in')
+print('Minimum Deflection:', SimpleBeam.GetMember('M1').min_deflection('dy', '1.2D+1.6L'), 'in')
 
 # The following lines can be uncommented to create a PDF report. Follow the instructions on the
 # wiki under "Generating PDF Reports" to prevent errors. The report will be output to the PyNite

@@ -1736,12 +1736,12 @@ class FEModel3D():
                     if spring.active[combo.name] == True:
 
                         # Check if tension-only conditions exist
-                        if spring.tension_only == True and spring.Axial(combo.name) > 0:
+                        if spring.tension_only == True and spring.axial(combo.name) > 0:
                             spring.active[combo.name] = False
                             convergence = False
                         
                         # Check if compression-only conditions exist
-                        elif spring.comp_only == True and spring.Axial(combo.name) < 0:
+                        elif spring.comp_only == True and spring.axial(combo.name) < 0:
                             spring.active[combo.name] = False
                             convergence = False
 
@@ -1968,7 +1968,7 @@ class FEModel3D():
                     if spring.active[combo.name] == True:
 
                         # Check if tension-only conditions exist
-                        if spring.tension_only == True and spring.Axial(combo.name) > 0:
+                        if spring.tension_only == True and spring.axial(combo.name) > 0:
                             
                             spring.active[combo.name] = False
                             convergence_TC = False
@@ -1978,7 +1978,7 @@ class FEModel3D():
                             convergence_PD = False
 
                         # Check if compression-only conditions exist
-                        elif spring.comp_only == True and spring.Axial(combo.name) < 0:
+                        elif spring.comp_only == True and spring.axial(combo.name) < 0:
                             
                             spring.active[combo.name] = False
                             convergence_TC = False

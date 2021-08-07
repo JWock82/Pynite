@@ -282,16 +282,16 @@
                 <tr>
                     <td>{{ member.Name }}</td>
                     <td>{{ combo }}</td>
-                    <td>{{ "%.4g" | format(member.Axial(0, combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.Axial(member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.axial(0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.axial(member.L(), combo)) }}</td>
                     <td>{{ "%.4g" | format(member.Shear("Fy", 0, combo)) }}</td>
                     <td>{{ "%.4g" | format(member.Shear("Fz", 0, combo)) }}</td>
                     <td>{{ "%.4g" | format(member.Shear("Fy", member.L(), combo)) }}</td>
                     <td>{{ "%.4g" | format(member.Shear("Fz", member.L(), combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.Moment("My", 0, combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.Moment("Mz", 0, combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.Moment("My", member.L(), combo)) }}</td>
-                    <td>{{ "%.4g" | format(member.Moment("Mz", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("My", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("Mz", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("My", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("Mz", member.L(), combo)) }}</td>
                     <td>{{ "%.4g" | format(member.Torsion(0, combo)) }}</td>
                     <td>{{ "%.4g" | format(member.Torsion(member.L(), combo)) }}</td>
                 </tr>
