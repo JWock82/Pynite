@@ -37,6 +37,6 @@ class Test_End_Release(unittest.TestCase):
         myModel.add_member_dist_load('M1', 'Fy', -0.5, -0.5)
         myModel.analyze()
         # Get the resulting moments
-        calculated_moment = myModel.GetMember('M1').min_moment('Mz')
+        calculated_moment = myModel.Members['M1'].min_moment('Mz')
         expected_moment = -0.5*(10*12)**2/8
         self.assertAlmostEqual(calculated_moment, expected_moment)

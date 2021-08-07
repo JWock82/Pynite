@@ -58,11 +58,11 @@ truss.analyze(False)
 Visualization.RenderModel(truss, text_height=0.2, deformed_shape=True, deformed_scale=1000, render_loads=True)
 
 # Print results
-a = truss.GetNode('a')
-b = truss.GetNode('b')
-c = truss.GetNode('c')
-d = truss.GetNode('d')
-e = truss.GetNode('e')
+a = truss.Nodes['a']
+b = truss.Nodes['b']
+c = truss.Nodes['c']
+d = truss.Nodes['d']
+e = truss.Nodes['e']
 
 print('Node b Reactions: ', b.RxnFX, b.RxnFY, b.RxnFZ, b.RxnMX, b.RxnMY, b.RxnMZ)
 print('Node c Reactions: ', c.RxnFX, c.RxnFY, c.RxnFZ, c.RxnMX, c.RxnMY, c.RxnMZ)

@@ -158,7 +158,7 @@ class FEModel3D():
                 count += 1
                 
         # Create a new spring
-        newSpring = Spring3D(name, self.GetNode(iNode), self.GetNode(jNode), ks,
+        newSpring = Spring3D(name, self.Nodes[iNode], self.Nodes[jNode], ks,
                              self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
@@ -221,12 +221,12 @@ class FEModel3D():
                 
         # Create a new member
         if auxNode == None:
-            newMember = Member3D(name, self.GetNode(iNode),
-            self.GetNode(jNode), E, G, Iy, Iz, J, A,
+            newMember = Member3D(name, self.Nodes[iNode],
+            self.Nodes[jNode], E, G, Iy, Iz, J, A,
             LoadCombos=self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         else:
-            newMember = Member3D(name, self.GetNode(iNode),
-            self.GetNode(jNode), E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
+            newMember = Member3D(name, self.Nodes[iNode],
+            self.Nodes[jNode], E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
             self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
@@ -276,7 +276,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newPlate = Plate3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu, self.LoadCombos)
+        newPlate = Plate3D(name, self.Nodes[iNode], self.Nodes[jNode], self.Nodes[mNode], self.Nodes[nNode], t, E, nu, self.LoadCombos)
         
         # Add the new member to the list
         self.Plates[name] = newPlate
@@ -331,7 +331,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newQuad = Quad3D(name, self.GetNode(iNode), self.GetNode(jNode), self.GetNode(mNode), self.GetNode(nNode), t, E, nu, self.LoadCombos)
+        newQuad = Quad3D(name, self.Nodes[iNode], self.Nodes[jNode], self.Nodes[mNode], self.Nodes[nNode], t, E, nu, self.LoadCombos)
         
         # Add the new member to the list
         self.Quads[name] = newQuad
@@ -595,7 +595,7 @@ class FEModel3D():
         if Direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             raise ValueError(f"Direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {Direction} was given.")
         # Get the node
-        node = self.GetNode(Node)
+        node = self.Nodes[Node]
 
         if Direction == 'DX':
             node.EnforcedDX = Magnitude
@@ -652,7 +652,7 @@ class FEModel3D():
         '''
         
         # Apply the end releases to the member
-        self.GetMember(Member).Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
+        self.Members[Member].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
 
 #%%
     def AddLoadCombo(self, name, factors, combo_type='strength'):
@@ -704,7 +704,7 @@ class FEModel3D():
         if Direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
             raise ValueError(f"Direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {Direction} was given.")
         # Add the node load to the model
-        self.GetNode(Node).NodeLoads.append((Direction, P, case))
+        self.Nodes[Node].NodeLoads.append((Direction, P, case))
 
 #%%
     def AddMemberPtLoad(self, Member, Direction, P, x, case='Case 1'):
@@ -734,7 +734,7 @@ class FEModel3D():
         if Direction not in ('Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'):
             raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'Mx', 'My', or 'Mz'. {Direction} was given.")
         # Add the point load to the member
-        self.GetMember(Member).PtLoads.append((Direction, P, x, case))
+        self.Members[Member].PtLoads.append((Direction, P, x, case))
 
 #%%
     def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
@@ -775,12 +775,12 @@ class FEModel3D():
             start = x1
         
         if x2 == None:
-            end = self.GetMember(Member).L()
+            end = self.Members[Member].L()
         else:
             end = x2
 
         # Add the distributed load to the member
-        self.GetMember(Member).DistLoads.append((Direction, w1, w2, start, end, case))
+        self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
         
 #%%
     def add_plate_surface_pressure(self, plate_ID, pressure, case='Case 1'):

@@ -69,6 +69,6 @@ class Test_Plates(unittest.TestCase):
 
         plModel.analyze(check_statics=True)
         # Test: displacement of N5 in Z direction
-        calculated_displacement = plModel.GetNode('N5').DZ['Combo 1']
+        calculated_displacement = plModel.Nodes['N5'].DZ['Combo 1']
         expected_displacement = -0.0861742424242424
         self.assertAlmostEqual(calculated_displacement/expected_displacement, 1.0, 2)

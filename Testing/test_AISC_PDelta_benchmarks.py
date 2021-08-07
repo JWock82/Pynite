@@ -59,10 +59,10 @@ class Test_AISC_Benchmark(unittest.TestCase):
         cantilever.analyze_PDelta()
 
         # The moment at the base of the column
-        calculated_moment = cantilever.GetNode('1').RxnMZ['Combo 1']
+        calculated_moment = cantilever.Nodes['1'].RxnMZ['Combo 1']
 
         # the deflection at the top of the column
-        calculated_displacement = cantilever.GetNode(str(num_nodes)).DX['Combo 1']*12
+        calculated_displacement = cantilever.Nodes[str(num_nodes)].DX['Combo 1']*12
 
         # Calculate the AISC benchmark problem solution:
         alpha = (P*L**2/(E*I))**0.5

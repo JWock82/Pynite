@@ -65,17 +65,17 @@ from PyNite import Visualization
 Visualization.RenderModel(MomentFrame, text_height=5, deformed_shape=True, deformed_scale=50, combo_name='1.2D+1.0W')
 
 # Plot the moment diagram for the beam
-MomentFrame.GetMember('Beam').plot_moment('Mz', combo_name='1.2D+1.0W')
+MomentFrame.Members['Beam'].plot_moment('Mz', combo_name='1.2D+1.0W')
 
 # Plot the deflection of the column
-MomentFrame.GetMember('Col1').plot_deflection('dy', combo_name='1.2D+1.0W')
+MomentFrame.Members['Col1'].plot_deflection('dy', combo_name='1.2D+1.0W')
 
 # Find the maximum shear in the first column
-print('Column Shear Force:', MomentFrame.GetMember('Col1').max_shear('Fy', combo_name='1.2D+1.0W'), 'kip')
+print('Column Shear Force:', MomentFrame.Members['Col1'].max_shear('Fy', combo_name='1.2D+1.0W'), 'kip')
 
 # Find the frame lateral drift
 # Note that the deflections are stored as a dictionary in the node object by load combination, so [] are used instead of () below
-print('Frame Lateral Drift:', MomentFrame.GetNode('N2').DX['1.2D+1.0W'], 'in')
+print('Frame Lateral Drift:', MomentFrame.Nodes['N2'].DX['1.2D+1.0W'], 'in')
 
 # Find the maximum uplift reaction
-print('Left Support Y Reaction:', MomentFrame.GetNode('N1').RxnFY['0.9D+1.0W'], 'kip')
+print('Left Support Y Reaction:', MomentFrame.Nodes['N1'].RxnFY['0.9D+1.0W'], 'kip')

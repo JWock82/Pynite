@@ -44,10 +44,10 @@ class Test_AxialLoads(unittest.TestCase):
         # Analyze
         Beam.analyze()
         # Member fixed end reaction vector
-        # print('M1 Displacement Vector: ', Beam.GetMember('M1').d())
-        # print('M1 Fixed End Reaction Vector: ', Beam.GetMember('M1').fer())
+        # print('M1 Displacement Vector: ', Beam.Members['M1'].d())
+        # print('M1 Fixed End Reaction Vector: ', Beam.Members['M1'].fer())
         # Reactions
         for node_name in ('N1', 'N2'):
             with self.subTest(node=node_name):
-                rxn = Beam.GetNode(node_name).RxnFX['Combo 1']
+                rxn = Beam.Nodes[node_name].RxnFX['Combo 1']
                 self.assertAlmostEqual(rxn/-25.0, 1.0, 2)

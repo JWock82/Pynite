@@ -45,5 +45,5 @@ Visualization.RenderModel(frame, text_height=5, deformed_shape=True, deformed_sc
 
 # Print the node 1 displacements
 print('Node 1 deformations:')
-print('Calculated values: ', frame.GetNode('N1').DX, frame.GetNode('N1').DY, frame.GetNode('N1').DZ, frame.GetNode('N1').RX, frame.GetNode('N1').RY, frame.GetNode('N1').RZ)
+print('Calculated values: ', frame.Nodes['N1'].DX, frame.Nodes['N1'].DY, frame.Nodes['N1'].DZ, frame.Nodes['N1'].RX, frame.Nodes['N1'].RY, frame.Nodes['N1'].RZ)
 print('Expected values: ', 7.098e-5, -0.014, -2.352e-3, -3.996e-3, 1.78e-5, -1.033e-4)

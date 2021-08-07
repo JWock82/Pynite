@@ -40,7 +40,7 @@ frame.add_node_load('N3', 'FZ', 40)
 # Analyze the frame
 frame.analyze()
 
-print('Calculated results: ', frame.GetNode('N2').DY, frame.GetNode('N3').DZ)
+print('Calculated results: ', frame.Nodes['N2'].DY, frame.Nodes['N3'].DZ)
 print('Expected results: ', -0.063, 1.825)
 
 # Render the model for viewing

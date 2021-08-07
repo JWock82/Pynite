@@ -64,7 +64,7 @@ class Test_2D_Frame(unittest.TestCase):
                                   'RxnMZ': 1810.0745})]
         for name, values in correct_values:
             with self.subTest(node=name):
-                node = frame.GetNode(name)
+                node = frame.Nodes[name]
                 # Two decimal place accuracy requires +/-0.5% accuracy
                 # one decimal place requires +/-5%
                 self.assertAlmostEqual(node.RxnFX['Combo 1']/values['RxnFX'], 1.0, 2)
@@ -97,7 +97,7 @@ class Test_2D_Frame(unittest.TestCase):
         frame.add_member_dist_load('M2', 'Fy', -0.024, -0.024) # W8x24 self-weight
         # Analyze the frame
         frame.analyze()
-        calculated_RZ = frame.GetNode('N1').RZ['Combo 1']
+        calculated_RZ = frame.Nodes['N1'].RZ['Combo 1']
         # Update the expected value to an appropriate precision
         expected_RZ = 0.00022794540510395617
         self.assertAlmostEqual(calculated_RZ/expected_RZ, 1.0, 2)
@@ -145,7 +145,7 @@ class Test_2D_Frame(unittest.TestCase):
                                      'RxnMX': -1810.0745})]
         for name, values in correct_reactions:
             with self.subTest(node=name):
-                node = frame.GetNode(name)
+                node = frame.Nodes[name]
                 # Two decimal place accuracy requires +/-0.5% accuracy
                 # one decimal place requires +/-5%
                 self.assertAlmostEqual(node.RxnFZ['Combo 1']/values['RxnFZ'], 1.0, 2)
@@ -158,7 +158,7 @@ class Test_2D_Frame(unittest.TestCase):
                                          'RX': -0.032})]
         for name, values in correct_displacements:
             with self.subTest(node=name):
-                node = frame.GetNode(name)
+                node = frame.Nodes[name]
                 # Two decimal place accuracy requires +/-0.5% accuracy
                 # one decimal place requires +/-5%
                 self.assertAlmostEqual(node.DY['Combo 1']/values['DY'], 1.0, 2)
@@ -191,7 +191,7 @@ class Test_2D_Frame(unittest.TestCase):
                              ('N2', -2.5)]
         for node_name, rxn in correct_reactions:
             with self.subTest(node=node_name):
-                calculated_reaction = SimpleBeam.GetNode(node_name).RxnFY['Combo 1']
+                calculated_reaction = SimpleBeam.Nodes[node_name].RxnFY['Combo 1']
                 # Two decimal place accuracy requires +/-0.5% accuracy
                 # one decimal place requires +/-5%
                 self.assertAlmostEqual(calculated_reaction/rxn, 1.0, 2)

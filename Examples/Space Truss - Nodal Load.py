@@ -54,11 +54,11 @@ truss.add_node_load('A', 'FZ', 20)
 truss.analyze()
 
 # Print results
-print('Member BC calculated axial force: ' + str(truss.GetMember('BC').max_axial()))
+print('Member BC calculated axial force: ' + str(truss.Members['BC'].max_axial()))
 print('Member BC expected axial force: 32.7 Tension')
-print('Member BD calculated axial force: ' + str(truss.GetMember('BD').max_axial()))
+print('Member BD calculated axial force: ' + str(truss.Members['BD'].max_axial()))
 print('Member BD expected axial force: 45.2 Tension')
-print('Member BE calculated axial force: ' + str(truss.GetMember('BE').max_axial()))
+print('Member BE calculated axial force: ' + str(truss.Members['BE'].max_axial()))
 print('Member BE expected axial force: 112.1 Compression')
 
 # Render the model for viewing. The text height will be set to 50 mm.
