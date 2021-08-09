@@ -1,7 +1,7 @@
 from PyNite.Node3D import Node3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
-from math import pi, sin, cos, ceil
+from math import pi, sin, cos, ceil, isclose
 from bisect import bisect
 
 #%%
@@ -22,7 +22,7 @@ class Mesh():
         self.elements = {}                  # A dictionary containing the elements in the mesh
     
     def max_shear(self, direction='Qx', combo=None):
-        '''
+        """
         Returns the maximum shear in the mesh.
         
         Checks corner and center shears in all the elements in the mesh. The mesh must be part of
@@ -36,7 +36,7 @@ class Mesh():
         combo : string, optional
             The name of the load combination to get the maximum shear for. If omitted, all load
             combinations will be evaluated.
-        '''
+        """
 
         if direction == 'Qx':
             i = 0
@@ -88,7 +88,7 @@ class Mesh():
         return Q_max
     
     def min_shear(self, direction='Qx', combo=None):
-        '''
+        """
         Returns the minimum shear in the mesh.
         
         Checks corner and center shears in all the elements in the mesh. The mesh must be part of
@@ -102,7 +102,7 @@ class Mesh():
         combo : string, optional
             The name of the load combination to get the minimum shear for. If omitted, all load
             combinations will be evaluated.
-        '''
+        """
 
         if direction == 'Qx':
             i = 0
@@ -154,7 +154,7 @@ class Mesh():
         return Q_min
 
     def max_moment(self, direction='Mx', combo=None):
-        '''
+        """
         Returns the maximum moment in the mesh.
         
         Checks corner and center moments in all the elements in the mesh. The mesh must be part of
@@ -168,7 +168,7 @@ class Mesh():
         combo : string, optional
             The name of the load combination to get the maximum moment for. If omitted, all load
             combinations will be evaluated.
-        '''
+        """
 
         if direction == 'Mx':
             i = 0
@@ -222,7 +222,7 @@ class Mesh():
         return M_max
     
     def min_moment(self, direction='Mx', combo=None):
-        '''
+        """
         Returns the minimum moment in the mesh.
         
         Checks corner and center moments in all the elements in the mesh. The mesh must be part of
@@ -236,7 +236,7 @@ class Mesh():
         combo : string, optional
             The name of the load combination to get the minimum moment for. If omitted, all load
             combinations will be evaluated.
-        '''
+        """
 
         if direction == 'Mx':
             i = 0
@@ -345,9 +345,9 @@ class RectangleMesh(Mesh):
         self.x_control = x_control
         self.y_control = y_control
         self.element_type = element_type
-        self.__mesh()
+        self.openings = {}
     
-    def __mesh(self):
+    def generate(self):
 
         mesh_size = self.mesh_size
         width = self.width
@@ -502,6 +502,126 @@ class RectangleMesh(Mesh):
                                                                     self.nodes['N' + str(n_node + node_offset)],
                                                                     self.t, self.E, self.nu)
 
+        # Initialize a list of nodes and associated elements that fall within
+        # opening boundaries that will be deleted
+        node_del_list = []
+        element_del_list = []
+
+        # Go back through the mesh and delete any nodes and elements that are in the openings
+        for node in self.nodes.values():
+            
+            # Calculate the node's position in the mesh's local coordinate
+            # sytem.
+            if self.plane == 'XY':
+                x = node.X - self.origin[0]
+                y = node.Y - self.origin[1]
+            elif self.plane == 'YZ':
+                x = node.Z - self.origin[2]
+                y = node.Y - self.origin[1]
+            elif self.plane == 'XZ':
+                x = node.X - self.origin[0]
+                y = node.Z - self.origin[2]
+
+            # Step through each opening in the mesh
+            for opng in self.openings.values():
+
+                # Determine if the node falls within the boundaries of the
+                # opening
+                if (round(x, 10) > round(opng.x_left, 10)
+                and round(x, 10) < round(opng.x_left + opng.width, 10) 
+                and round(y, 10) > round(opng.y_bott, 10) 
+                and round(y, 10) < round(opng.y_bott + opng.height, 10)):
+
+                    # Mark the node for deletion if it's not already marked
+                    if node.Name not in node_del_list:
+                        node_del_list.append(node.Name)
+
+                    # Find any elements attached to the node
+                    for element in self.elements.values():
+
+                        # Determine if the element is attached to the node
+                        if (element.iNode.Name == node.Name or element.jNode.Name == node.Name
+                        or element.mNode.Name == node.Name or element.nNode.Name == node.Name):
+
+                            # Mark the element for deletion if it's not already marked
+                            if element.Name not in element_del_list:
+                                element_del_list.append(element.Name)
+
+        # Delete the nodes marked for deletion
+        for node_name in node_del_list:
+            del self.nodes[node_name]
+
+        # Delete the elements marked for deletion
+        for element_name in element_del_list:
+            del self.elements[element_name]
+        
+        # Find any remaining orphaned nodes around the perimeter of the mesh
+        node_del_list = []
+        for node in self.nodes.values():
+            if (node not in [element.iNode for element in self.elements.values()]
+            and node not in [element.jNode for element in self.elements.values()]
+            and node not in [element.mNode for element in self.elements.values()]
+            and node not in [element.nNode for element in self.elements.values()]):
+                node_del_list.append(node.Name)
+        
+        # Delete the orphaned nodes
+        for node_name in node_del_list:
+            del self.nodes[node_name]
+
+    def add_rect_opening(self, name, x_left, y_bott, width, height):
+        """
+        Adds a rectangular opening to the mesh.
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the opening that can be used to access it later
+            on.
+        x_left : number
+            The x-coordinate for the left side of the opening in the mesh's
+            local coordinate system.
+        y_bott : number
+            The y-coordinate for the bottom of the opening in the mesh's local
+            coordinate system
+        width : number
+            The width of the opening.
+        height : number
+            The height of the opening.
+        """
+
+        self.openings[name] = RectOpening(x_left, y_bott, width, height)
+        self.x_control.append(x_left)
+        self.y_control.append(y_bott)
+        self.x_control.append(x_left + width)
+        self.y_control.append(y_bott + height)
+
+#%%
+class RectOpening():
+    """
+    Represents a rectangular opening in a rectangular mesh.
+    """
+
+    def __init__(self, x_left, y_bott, width, height):
+        """
+        Parameters
+        ----------
+        x_left : number
+            The x-coordinate for the left side of the opening in the mesh's
+            local coordinate system.
+        y_bott : number
+            The y-coordinate for the bottom of the opening in the mesh's local
+            coordinate system
+        width : number
+            The width of the opening.
+        height : number
+            The height of the opening.
+        """
+
+        self.x_left = x_left
+        self.y_bott = y_bott
+        self.width = width
+        self.height = height
+
 #%%           
 class AnnulusMesh(Mesh):
     """
@@ -522,9 +642,9 @@ class AnnulusMesh(Mesh):
         self.num_quads_inner = None
         self.num_quads_outer = None
 
-        self.__mesh()
+        self._generate()
     
-    def __mesh(self):
+    def _generate(self):
         
         t = self.t
         E = self.E
@@ -609,9 +729,9 @@ class AnnulusRingMesh(Mesh):
         self.axis = axis
 
         # Generate the nodes and elements
-        self.__mesh()
+        self._generate()
 
-    def __mesh(self):
+    def _generate(self):
 
         n = self.n  # Number of plates in the initial ring
 
@@ -707,12 +827,12 @@ class AnnulusTransRingMesh(Mesh):
 
     def __init__(self, t, E, nu, outer_radius, inner_radius, num_inner_quads, origin=[0, 0, 0],
                  axis='Y', start_node='N1', start_element='Q1'):
-        '''
+        """
         Parameters
         ----------
         direction : array
             A vector indicating the direction normal to the ring.
-        '''
+        """
 
         super().__init__(t, E, nu, start_node=start_node, start_element=start_element)
 
@@ -725,9 +845,9 @@ class AnnulusTransRingMesh(Mesh):
         self.Zo = origin[2]
 
         # Create the mesh
-        self.__mesh()
+        self._generate()
 
-    def __mesh(self):
+    def _generate(self):
 
         n = self.n  # Number of plates in the outside of the ring (coarse mesh)
 
@@ -924,9 +1044,9 @@ class CylinderMesh(Mesh):
         self.num_quads = num_quads
         self.center = center
 
-        self.__mesh()
+        self._generate()
     
-    def __mesh(self):
+    def _generate(self):
         
         t = self.t
         E = self.E
@@ -1013,9 +1133,9 @@ class CylinderRingMesh(Mesh):
         self.axis = axis
 
         # Generate the nodes and elements
-        self.__mesh()
+        self._generate()
 
-    def __mesh(self):
+    def _generate(self):
         """
         Generates the nodes and elements in the mesh.
         """
