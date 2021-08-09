@@ -1,4 +1,9 @@
-# This example demonstrates how to analyze a shear wall with openings
+# This example demonstrates how to analyze a shear wall with openings. It
+# follows Section 10.5.3 of "Masonry Structures - Behavior and Design, 2nd
+# Edition" by Robert G. Drysdale, Ahmad A. Hamid, and Lawrie R. Baker. The
+# solution given in that text is obtained using an approximation method that
+# isn't nearly as accurate as the finite element method, so some differences
+# in the final results are expected.
 
 # Import a few libraries from PyNite that we'll need
 from PyNite.FEModel3D import FEModel3D
@@ -12,7 +17,7 @@ E = 900*f_m/1000  # Masonry modulus of elasticity (ksi)
 nu = 0.17         # Poisson's ratio for masonry
 
 # Choose a desired mesh size. The program will try to stick to this as best as it can.
-mesh_size = 3  # in
+mesh_size = 6  # in
 
 # Set the wall's dimensions
 width = 26*12   # Wall overall width (in)
@@ -35,7 +40,7 @@ mesh.add_rect_opening(name='Window 2', x_left=14*12, y_bott=8*12, width=4*12, he
 # Add another 4' wide x 12' tall door opening to the mesh
 mesh.add_rect_opening(name='Door 2', x_left=20*12, y_bott=0*12, width=4*12, height=12*12)
 
-# Generate the mesh
+# Generate the mesh now that we've defined all the openings
 mesh.generate()
 
 # Create a finite element model
@@ -75,11 +80,11 @@ model.add_load_combo('Seismic', {'E': 1.0})
 model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Txy` shears.
-render_model(model, text_height=0.01, render_loads=True, deformed_shape=True, deformed_scale=200, color_map='Txy', combo_name='Seismic', labels=False)
+render_model(model, text_height=1, render_loads=True, deformed_shape=True, deformed_scale=200, color_map='Txy', combo_name='Seismic', labels=False)
 
 # Print the maximum displacement
 d_max = max([node.DX['Seismic'] for node in model.Nodes.values()])
 print('Max displacement: ', d_max, 'in')
-print('Expected displacement: ', 7.623/E*t, 'in')
+print('Expected displacement from reference text: ', 7.623/E*t, 'in')
 print('Wall rigidity: ', V/d_max, 'kips/in')
-print('Expected rigidity: ', 1/7.623*E*t, 'kips/in')
+print('Expected rigidity from reference text: ', 1/7.623*E*t, 'kips/in')
