@@ -28,6 +28,7 @@ class Test_Timoshenko(unittest.TestCase):
         
         # Generate the mesh of plates
         plate_mesh = RectangleMesh(t, E, nu, mesh_size, a, b, element_type='Rect')
+        plate_mesh.generate()
 
         # Create the model and add the plates
         plate_model = FEModel3D()
@@ -74,6 +75,7 @@ class Test_Timoshenko(unittest.TestCase):
         
         # Generate the mesh of plates
         plate_mesh = RectangleMesh(t, E, nu, mesh_size, a, b, element_type='Quad')
+        plate_mesh.generate()
 
         # Create the model and add the plates
         plate_model = FEModel3D()

@@ -20,7 +20,7 @@ t = 1        # ft
 # Set the liquid height
 HL = 12.5  # ft
 
-# Generate the rectangular mesh. A few things worth noting:
+# Create a rectangular mesh. A few things worth noting:
 # 1. We will build it from rectangular plate elements. Alternatively we could build it from
 #    quadrilateral elements by setting 'element_type' equal to 'Quad' instead. Since the geometry
 #    is undistorted, and the wall panel is relatively thin (insignificant transverse shear
@@ -29,6 +29,10 @@ HL = 12.5  # ft
 #    liquid level to the list of control points along the mesh's local y-axis.
 mesh = RectangleMesh(t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY',
                      y_control=[HL], start_node='N1', start_element='R1', element_type='Rect')
+
+# Generate the mesh. Rectangle meshes won't generate unless you tell them to.
+# This allows you to add openings to them before meshing.
+mesh.generate()
 
 # Create a finite element model
 model = FEModel3D()

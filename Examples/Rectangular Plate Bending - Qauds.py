@@ -23,6 +23,10 @@ from PyNite.Mesh import RectangleMesh
 mesh = RectangleMesh(t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY',
                      start_node='N1', start_element='Q1', element_type='Quad')
 
+# Generate the mesh. Rectangle meshes won't generate unless you tell them to.
+# This allows you to add openings to them before meshing.
+mesh.generate()
+
 # Create a finite element model
 from PyNite import FEModel3D
 model = FEModel3D()
