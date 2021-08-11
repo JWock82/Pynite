@@ -1495,9 +1495,19 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
     plate_mapper.SetScalarModeToUsePointData()
     lut.Build()
 
-    # Add the scalar bar for the contours
+    # Add the scalar bar for the contours.
+    # Note: After searching online for how to change the font size for the scalar bar label text,
+    # I found that the text automatically sizes itself to the size of the scalar bar. VTK provides
+    # no other controls over the text size. The `vtkTextProperty` commented out below is normally
+    # how text size is controlled in VTK. All the lines of code excecute without an exception, but
+    # the text size is unaffected. The `SetMaximumWidthInPixels` function provides some control
+    # over the text size for larger windows.
     scalar_bar = vtk.vtkScalarBarActor()
+    # scalar_text = vtk.vtkTextProperty()
+    # scalar_text.SetFontSize(12)
+    # scalar_bar.SetLabelTextProperty(scalar_text)
     scalar_bar.SetLookupTable(lut)
+    scalar_bar.SetMaximumWidthInPixels(100)
     renderer.AddActor(scalar_bar)
     
   # Add the actor for the plates
