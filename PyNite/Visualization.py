@@ -9,11 +9,11 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
                 render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
                 screenshot=None):
   warnings.warn('`RenderModel` will be replaced with `render_model` in a future version of PyNite.', FutureWarning)
-  render_model(model, text_height, deformed_shape, deformed_scale, render_loads, color_map,
+  render_model(model, text_height, deformed_shape, True, deformed_scale, render_loads, color_map,
                combo_name, case, labels, screenshot)
 
 def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
-                 render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
+                 render_loads=True, color_map=None, scalar_bar=True, combo_name='Combo 1', case=None, labels=True,
                  screenshot=None):
     '''
     Renders a finite element model using VTK.
@@ -188,7 +188,7 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
         _RenderLoads(model, renderer, text_height, combo_name, case)
     
     # Render the plates and quads
-    _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, combo_name)
+    _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, combo_name)
 
     # Set the window's background to gray
     renderer.SetBackground(0/255, 0/255, 128/255)
@@ -1374,7 +1374,7 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
   polygon_actor.SetMapper(polygon_mapper)
   renderer.AddActor(polygon_actor)
 
-def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, combo_name):
+def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, combo_name):
   
   # Create a new `vtkCellArray` object to store the elements
   plates = vtk.vtkCellArray()
@@ -1501,14 +1501,15 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
     # no other controls over the text size. The `vtkTextProperty` commented out below is normally
     # how text size is controlled in VTK. All the lines of code excecute without an exception, but
     # the text size is unaffected. The `SetMaximumWidthInPixels` function provides some control
-    # over the text size for larger windows.
-    scalar_bar = vtk.vtkScalarBarActor()
-    # scalar_text = vtk.vtkTextProperty()
-    # scalar_text.SetFontSize(12)
-    # scalar_bar.SetLabelTextProperty(scalar_text)
-    scalar_bar.SetLookupTable(lut)
-    scalar_bar.SetMaximumWidthInPixels(100)
-    renderer.AddActor(scalar_bar)
+    # over the text size until the window gets too small.
+    if scalar_bar:
+      scalar = vtk.vtkScalarBarActor()
+      # scalar_text = vtk.vtkTextProperty()
+      # scalar_text.SetFontSize(12)
+      # scalar_bar.SetLabelTextProperty(scalar_text)
+      scalar.SetLookupTable(lut)
+      scalar.SetMaximumWidthInPixels(100)
+      renderer.AddActor(scalar)
     
   # Add the actor for the plates
   renderer.AddActor(plate_actor)
