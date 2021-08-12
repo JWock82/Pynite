@@ -51,7 +51,8 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
       speed when rendering and interacting with a large model. This can be very useful on plate
       models with large meshes.
     screenshot : string, optional
-      Sends a screenshot to the specified filepath unless set to None. Default is None.
+      Sends a screenshot to the specified filepath unless set to None. The screenshot will be taken
+      when the user closes out of the render window. Default is None.
       
     Raises
     ------
@@ -199,7 +200,15 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
     # Render the window
     window.Render()
 
-    # Create a screenshot if requested
+    # Start the interactor. Code execution will pause here until the user closes the window.
+    interactor.Start()
+
+    # Finalize the render window once the user closes out of it. I don't understand everything
+    # this does, but I've found screenshots will cause the program to crash if this line is
+    # omitted.
+    window.Finalize()
+
+    # Create a screenshot of the last view in the window (if requested)
     if screenshot != None:
 
       # Screenshot code
@@ -207,20 +216,18 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
       w2if.SetInput(window)
       w2if.SetInputBufferTypeToRGB()
       w2if.ReadFrontBufferOff()
-      w2if.Update()
+
+      # These next two lines are in the examples and documentation for VTK, but don't seem to do
+      # anything. I've left them here in case I find a bug somewhere down the line that needs
+      # fixing.
+      # w2if.Update()
+      # w2if.Modified()
 
       writer = vtk.vtkPNGWriter()
       writer.SetFileName(screenshot)
       writer.SetInputConnection(w2if.GetOutputPort())
       writer.Write()
 
-      # Close the window
-      window.Finalize()
-      
-    else:
-
-      interactor.Start()
-    
     # Return the window
     return window
 
