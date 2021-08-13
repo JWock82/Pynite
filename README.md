@@ -61,6 +61,9 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v.0.0.47 - Bug Fix After Refactoring
+* Fixed a bug identified in Issue #98 caused by refactoring in v0.0.44.
+
 v0.0.46 - Rendering Improvements
 * The size of the scalar bar for plate contours is now a little more predictable. It used to be based off of the window size. Now it only resizes when the window gets really small.
 * The user now has more control over screenshots. If a screenshot is requested, it will be captured when
