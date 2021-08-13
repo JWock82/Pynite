@@ -754,7 +754,7 @@ class Member3D():
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].Moment(x - self.SegmentsZ[lastIndex].x1)
+                return self.SegmentsZ[lastIndex].moment(x - self.SegmentsZ[lastIndex].x1)
             
 #%%
     def MaxMoment(self, Direction, combo_name='Combo 1'):
