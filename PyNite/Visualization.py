@@ -188,8 +188,8 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
     if (combo_name != None or case != None) and render_loads != False:
         _RenderLoads(model, renderer, text_height, combo_name, case)
     
-    # Render the plate and quad contours
-    if color_map != None:
+    # Render the plates and quads, if present
+    if model.Quads or model.Plates:
       _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, combo_name)
 
     # Set the window's background to gray
