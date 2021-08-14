@@ -731,8 +731,8 @@ class FEModel3D():
             The load's location along the member's local x-axis.
         '''
         # Validate the value of Direction
-        if Direction not in ('Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'):
-            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'Mx', 'My', or 'Mz'. {Direction} was given.")
+        if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz'):
+            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', or 'Mz'. {Direction} was given.")
         # Add the point load to the member
         self.Members[Member].PtLoads.append((Direction, P, x, case))
 

@@ -9,8 +9,8 @@ def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
                 render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
                 screenshot=None):
   warnings.warn('`RenderModel` will be replaced with `render_model` in a future version of PyNite.', FutureWarning)
-  render_model(model, text_height, deformed_shape, True, deformed_scale, render_loads, color_map,
-               combo_name, case, labels, screenshot)
+  render_model(model, text_height, deformed_shape, deformed_scale, render_loads, color_map,
+               True, combo_name, case, labels, screenshot)
 
 def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
                  render_loads=True, color_map=None, scalar_bar=True, combo_name='Combo 1', case=None, labels=True,
@@ -188,8 +188,9 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
     if (combo_name != None or case != None) and render_loads != False:
         _RenderLoads(model, renderer, text_height, combo_name, case)
     
-    # Render the plates and quads
-    _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, combo_name)
+    # Render the plate and quad contours
+    if color_map != None:
+      _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, combo_name)
 
     # Set the window's background to gray
     renderer.SetBackground(0/255, 0/255, 128/255)
@@ -1259,6 +1260,18 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
           ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'Mz':
           ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'FX':
+          ptLoad = VisPtLoad(position, [1, 0, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'FY':
+          ptLoad = VisPtLoad(position, [0, 1, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'FZ':
+          ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'MX':
+          ptLoad = VisMoment(position, [1, 0, 0]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'MY':
+          ptLoad = VisMoment(position, [0, 1, 0]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+        elif load[0] == 'MZ':
+          ptLoad = VisMoment(position, [0, 0, 1]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
     
         polydata.AddInputData(ptLoad.polydata.GetOutput())
         renderer.AddActor(ptLoad.lblActor)
@@ -1555,7 +1568,8 @@ def _MaxLoads(model, combo_name=None, case=None):
         # Find and store the largest point load and moment in the load combination
         if load[3] in model.LoadCombos[combo_name].factors:
 
-          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
+          if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
+          or load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
             if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_pt_load:
               max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
           else:
