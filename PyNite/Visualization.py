@@ -1267,11 +1267,11 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
         elif load[0] == 'FZ':
           ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'MX':
-          ptLoad = VisMoment(position, [1, 0, 0]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisMoment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'MY':
-          ptLoad = VisMoment(position, [0, 1, 0]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisMoment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
         elif load[0] == 'MZ':
-          ptLoad = VisMoment(position, [0, 0, 1]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+          ptLoad = VisMoment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
     
         polydata.AddInputData(ptLoad.polydata.GetOutput())
         renderer.AddActor(ptLoad.lblActor)
