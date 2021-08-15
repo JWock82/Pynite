@@ -785,6 +785,10 @@ class Member3D():
                 
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].moment(x - self.SegmentsZ[lastIndex].x1)
+                return self.SegmentsZ[lastIndex].Moment(x - self.SegmentsZ[lastIndex].x1)
+        
+        else:
+            raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
             
 #%%
     def MaxMoment(self, Direction, combo_name='Combo 1'):
