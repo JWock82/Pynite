@@ -765,8 +765,8 @@ class FEModel3D():
             is not specified, the end of the member will be used.
         '''
         # Validate the value of Direction
-        if Direction not in ('Fx', 'Fy', 'Fz'):
-            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz'. {Direction} was given.")
+        if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'):
+            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', or 'FZ'. {Direction} was given.")
         # Determine if a starting and ending points for the load have been specified.
         # If not, use the member start and end as defaults
         if x1 == None:

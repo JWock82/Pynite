@@ -1302,6 +1302,12 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
           distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
         elif load[0] == 'Fz':
           distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+        elif load[0] == 'FX':
+          distLoad = VisDistLoad(position1, position2, [1, 0, 0], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+        elif load[0] == 'FY':
+          distLoad = VisDistLoad(position1, position2, [0, 1, 0], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+        elif load[0] == 'FZ':
+          distLoad = VisDistLoad(position1, position2, [0, 0, 1], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
        
         polydata.AddInputData(distLoad.polydata.GetOutput())
         renderer.AddActor(distLoad.lblActors[0])

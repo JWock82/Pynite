@@ -274,33 +274,21 @@ class Member3D():
                         fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My'))
                     elif ptLoad[0] == 'Mz':     
                         fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz'))
-                    elif ptLoad[0] == 'FX':
-                        f = self.T()[:3, :][:, :3] @ array([ptLoad[1], 0, 0])
+                    elif ptLoad[0] == 'FX' or ptLoad[0] == 'FY' or ptLoad[0] == 'FZ':
+                        FX, FY, FZ = 0, 0, 0
+                        if ptLoad[0] == 'FX': FX = 1
+                        if ptLoad[0] == 'FY': FY = 1
+                        if ptLoad[0] == 'FZ': FZ = 1
+                        f = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
                         fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
                         fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
                         fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
-                    elif ptLoad[0] == 'FY':
-                        f = self.T()[:3, :][:, :3] @ array([0, ptLoad[1], 0])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
-                    elif ptLoad[0] == 'FZ':
-                        f = self.T()[:3, :][:, :3] @ array([0, 0, ptLoad[1]])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
-                    elif ptLoad[0] == 'MX':
-                        f = self.T()[:3, :][:, :3] @ array([ptLoad[1], 0, 0])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
-                    elif ptLoad[0] == 'MY':
-                        f = self.T()[:3, :][:, :3] @ array([0, ptLoad[1], 0])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
-                    elif ptLoad[0] == 'MZ':
-                        f = self.T()[:3, :][:, :3] @ array([0, 0, ptLoad[1]])
+                    elif ptLoad[0] == 'MX' or ptLoad[0] == 'MY' or ptLoad[0] == 'MZ':
+                        MX, MY, MZ = 0, 0, 0
+                        if ptLoad[0] == 'MX': MX = 1
+                        if ptLoad[0] == 'MY': MY = 1
+                        if ptLoad[0] == 'MZ': MZ = 1
+                        f = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
                         fer = add(fer, PyNite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
                         fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
                         fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
@@ -315,9 +303,19 @@ class Member3D():
 
                     if distLoad[0] == 'Fx':
                         fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L()))
-                    else:
+                    elif distLoad[0] == 'Fy' or distLoad[0] == 'Fz':
                         fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
-        
+                    elif distLoad[0] == 'FX' or distLoad[0] == 'FY' or distLoad[0] == 'FZ':
+                        FX, FY, FZ = 0, 0, 0
+                        if distLoad[0] =='FX': FX = 1
+                        if distLoad[0] =='FY': FY = 1
+                        if distLoad[0] =='FZ': FZ = 1
+                        w1 = self.T()[:3, :][:, :3] @ array([FX*distLoad[1], FY*distLoad[1], FZ*distLoad[1]])
+                        w2 = self.T()[:3, :][:, :3] @ array([FX*distLoad[2], FY*distLoad[2], FZ*distLoad[2]])
+                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(factor*w1[0], factor*w2[0], distLoad[3], distLoad[4], self.L()))
+                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*w1[1], factor*w2[1], distLoad[3], distLoad[4], self.L(), 'Fy'))
+                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*w1[2], factor*w2[2], distLoad[3], distLoad[4], self.L(), 'Fz'))
+
         # Return the fixed end reaction vector, uncondensed
         return fer
 
@@ -1632,39 +1630,23 @@ class Member3D():
                             SegmentsY[i].M1 += factor*ptLoad[1]
                         elif ptLoad[0] == 'Mz':
                             SegmentsZ[i].M1 += factor*ptLoad[1]
-                        elif ptLoad[0] == 'FX':
-                            f = self.T()[:3, :][:, :3] @ array([ptLoad[1], 0, 0])
+                        elif ptLoad[0] == 'FX' or ptLoad[0] == 'FY' or ptLoad[0] == 'FZ':
+                            FX, FY, FZ = 0, 0, 0
+                            if ptLoad[0] == 'FX': FX = 1
+                            if ptLoad[0] == 'FY': FY = 1
+                            if ptLoad[0] == 'FZ': FZ = 1
+                            f = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
                             SegmentsZ[i].P1 += factor*f[0]
                             SegmentsZ[i].V1 += factor*f[1]
                             SegmentsZ[i].M1 -= factor*f[1]*(x - ptLoad[2])
                             SegmentsY[i].V1 += factor*f[2]
                             SegmentsY[i].M1 += factor*f[2]*(x - ptLoad[2])
-                        elif ptLoad[0] == 'FY':
-                            f = self.T()[:3, :][:, :3] @ array([0, ptLoad[1], 0])
-                            SegmentsZ[i].P1 += factor*f[0]
-                            SegmentsZ[i].V1 += factor*f[1]
-                            SegmentsZ[i].M1 -= factor*f[1]*(x - ptLoad[2])
-                            SegmentsY[i].V1 += factor*f[2]
-                            SegmentsY[i].M1 += factor*f[2]*(x - ptLoad[2])
-                        elif ptLoad[0] == 'FZ':
-                            f = self.T()[:3, :][:, :3] @ array([0, 0, ptLoad[1]])
-                            SegmentsZ[i].P1 += factor*f[0]
-                            SegmentsZ[i].V1 += factor*f[1]
-                            SegmentsZ[i].M1 -= factor*f[1]*(x - ptLoad[2])
-                            SegmentsY[i].V1 += factor*f[2]
-                            SegmentsY[i].M1 += factor*f[2]*(x - ptLoad[2])
-                        elif ptLoad[0] == 'MX':
-                            f = self.T()[:3, :][:, :3] @ array([ptLoad[1], 0, 0])
-                            SegmentsX[i].T1 += factor*f[0]
-                            SegmentsY[i].M1 += factor*f[1]
-                            SegmentsZ[i].M1 += factor*f[2]
-                        elif ptLoad[0] == 'MY':
-                            f = self.T()[:3, :][:, :3] @ array([0, ptLoad[1], 0])
-                            SegmentsX[i].T1 += factor*f[0]
-                            SegmentsY[i].M1 += factor*f[1]
-                            SegmentsZ[i].M1 += factor*f[2]
-                        elif ptLoad[0] == 'MZ':
-                            f = self.T()[:3, :][:, :3] @ array([0, 0, ptLoad[1]])
+                        elif ptLoad[0] == 'MX' or ptLoad[0] == 'MY' or ptLoad[0] == 'MZ':
+                            MX, MY, MZ = 0, 0, 0
+                            if ptLoad[0] == 'MX': MX = 1
+                            if ptLoad[0] == 'MY': MY = 1
+                            if ptLoad[0] == 'MZ': MZ = 1
+                            f = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
                             SegmentsX[i].T1 += factor*f[0]
                             SegmentsY[i].M1 += factor*f[1]
                             SegmentsZ[i].M1 += factor*f[2]
@@ -1686,7 +1668,7 @@ class Member3D():
                     
                             if Direction == 'Fx':
                         
-                                # Determine if the load ends after the start of the segment
+                                # Determine if the load is on this segment
                                 if round(x2,10) > round(x,10):
                                                 
                                     # Break up the load and place it on the segment
@@ -1706,7 +1688,7 @@ class Member3D():
                     
                             elif Direction == 'Fy':
                         
-                                # Determine if the load ends after the start of the segment
+                                # Determine if the load is on this segment
                                 if round(x2,10) > round(x,10):
                                                 
                                     # Break up the load and place it on the segment
@@ -1724,7 +1706,7 @@ class Member3D():
                     
                             elif Direction == 'Fz':
                         
-                                # Determine if the load ends after the start of the segment
+                                # Determine if the load is on this segment
                                 if round(x2,10) > round(x,10):
                                                 
                                     # Break up the load and place it on the segment
@@ -1738,3 +1720,44 @@ class Member3D():
                                 # Calculate the shear and moment at the start of the segment due to the load
                                 SegmentsY[i].V1 += (w1 + w2)/2*(x2 - x1)
                                 SegmentsY[i].M1 += (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
+
+                            elif Direction == 'FX' or Direction == 'FY' or Direction == 'FZ':
+                                
+                                FX, FY, FZ = 0, 0, 0
+                                if Direction == 'FX': FX = 1
+                                if Direction == 'FY': FY = 1
+                                if Direction == 'FZ': FZ = 1
+                                T = self.T()[:3, :][:, :3]
+                                f1 = T @ array([FX*w1, FY*w1, FZ*w1])
+                                f2 = T @ array([FX*w2, FY*w2, FZ*w2])
+
+                                # Determine if the load is on this segment
+                                if round(x2, 10) > round(x, 10):
+                                                
+                                    # Break up the load and place it on the segment
+                                    SegmentsZ[i].p1 += (f2[0] - f1[0])/(x2 - x1)*(x - x1) + f1[0]
+                                    SegmentsZ[i].p2 += (f2[0] - f1[0])/(x2 - x1)*(SegmentsZ[i].x2 - x1) + f1[0]
+                                    SegmentsY[i].p1 += (f2[0] - f1[0])/(x2 - x1)*(x - x1) + f1[0]
+                                    SegmentsY[i].p2 += (f2[0] - f1[0])/(x2 - x1)*(SegmentsY[i].x2 - x1) + f1[0]
+
+                                    SegmentsZ[i].w1 += (f2[1] - f1[1])/(x2 - x1)*(x - x1) + f1[1]
+                                    SegmentsZ[i].w2 += (f2[1] - f1[1])/(x2 - x1)*(SegmentsZ[i].x2 - x1) + f1[1]
+
+                                    SegmentsY[i].w1 += (f2[2] - f1[2])/(x2 - x1)*(SegmentsY[i].x1 - x1) + f1[2]
+                                    SegmentsY[i].w2 += (f2[2] - f1[2])/(x2 - x1)*(SegmentsY[i].x2 - x1) + f1[2]
+
+                                    # Calculate the magnitude of the load at the start of the segment
+                                    w2 = w1 + (w2 - w1)/(x2 - x1)*(x - x1)
+                                    f2 = T @ array([FX*w2, FY*w2, FZ*w2])
+                                    x2 = x
+
+                                # Calculate the axial force, shear and moment at the start of the segment
+                                SegmentsZ[i].P1 += (f1[0] + f2[0])/2*(x2 - x1)
+                                SegmentsY[i].P1 += (f1[0] + f2[0])/2*(x2 - x1)
+
+                                SegmentsZ[i].V1 += (f1[1] + f2[1])/2*(x2 - x1)
+                                SegmentsZ[i].M1 -= (x1 - x2)*(2*f1[1]*x1 - 3*f1[1]*x + f1[1]*x2 + f2[1]*x1 - 3*f2[1]*x + 2*f2[1]*x2)/6
+
+                                SegmentsY[i].V1 += (f1[2] + f2[2])/2*(x2 - x1)
+                                SegmentsY[i].M1 += (x1 - x2)*(2*f1[2]*x1 - 3*f1[2]*x + f1[2]*x2 + f2[2]*x1 - 3*f2[2]*x + 2*f2[2]*x2)/6
+                            
