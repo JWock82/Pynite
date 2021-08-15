@@ -61,6 +61,10 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v.0.0.48 - Global Load Directions
+* Global load directions can now be used for member loads now. Use capital notation to apply the member load in the global X, Y, or Z direction (e.g. 'FX', 'MY', 'FZ'...). Use lower case notation to apply the member load in the member's local x, y, or z direction (e.g. 'Fx', 'My', 'Fz'...).
+* Bug fix for rendering models without plates/quads (special thanks to tamalone1 for this pull request!)
+
 v.0.0.47 - Bug Fix After Refactoring
 * Fixed a bug identified in Issue #98 caused by refactoring in v0.0.44.
 
