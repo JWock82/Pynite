@@ -27,6 +27,7 @@ setuptools.setup(
     ],
     extras_require = {
         'Visualization':  ['vtk'],
+        'Visualization Screenshots': ['IPython'],
         'Reporting': ['pdfkit', 'Jinja2'],
         'Reviewing Derivations': ['jupyterlab', 'sympy']
     },

@@ -1,8 +1,10 @@
-# Import the Visualization Toolkit (VTK). VTK requires a 64 bit version of Python.
-import vtk
+
+import warnings
+
+from IPython.display import Image
 from numpy import array, empty, append, cross
 from numpy.linalg import norm
-import warnings
+import vtk
 
 #%%
 def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
@@ -52,7 +54,8 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
       models with large meshes.
     screenshot : string, optional
       Sends a screenshot to the specified filepath unless set to None. The screenshot will be taken
-      when the user closes out of the render window. Default is None.
+      when the user closes out of the render window. If screenshot is set to 'console' the
+      screenshot will be returned as an IPython image. Default is None.
       
     Raises
     ------
@@ -225,12 +228,16 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
       # w2if.Modified()
 
       writer = vtk.vtkPNGWriter()
-      writer.SetFileName(screenshot)
       writer.SetInputConnection(w2if.GetOutputPort())
-      writer.Write()
 
-    # Return the window
-    return window
+      if screenshot == 'console':
+        writer.SetWriteToMemory(1)
+        writer.Write()
+        fig_file = memoryview(writer.GetResult()).tobytes()
+        return Image(fig_file)
+      else:
+        writer.SetFileName(screenshot)
+        writer.Write()
 
 # Converts a node object into a node for the viewer
 class VisNode():

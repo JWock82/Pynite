@@ -1,3 +1,4 @@
+IPython
 matplotlib
 numpy
 prettytable

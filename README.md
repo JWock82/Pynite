@@ -56,6 +56,7 @@ PyNite depends on the following packages:
 ## Optional Dependencies
 * VTK: Used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. VTK is published by Kitware. I've noticed Kitware takes a little time updating VTK to be compatible anytime a new version of Python is released. If you're having trouble installing VTK, you can see which versions of Python are supported by visiting https://pypi.org/project/vtk/#files. VTK does not need to be installed if you don't plan to use the visualization tools built into PyNite.
 * PDFKit: Used for generating pdf reports. In order to generate pdf reports, PDFKit requires you to have wkhtmltopdf installed on your computer. This is a free program available for download at https://wkhtmltopdf.org/downloads.html. Once installed, you'll need to help PyNite find it. On Windows, this can be done by setting your PATH environment variable to include the path to "wkhtmltopdf.exe" after installation. For example, mine is installed at "C:\Program Files\wkhtmltopdf\bin"
+* IPython: Used for displaying screenshots from VTK.
 * jinja2: Used for templating reports into HTML prior to HTML-to-pdf conversion.
 * jupyterlab: Only needed if you want to view the derivations used to build PyNite.
 * sympy: Only needed if you want to view the derivations used to build PyNite.
