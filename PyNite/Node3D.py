@@ -38,12 +38,12 @@ class Node3D():
         self.RxnMZ = {}
 
         # Initialize all support conditions to 'False'
-        self.SupportDX = False
-        self.SupportDY = False
-        self.SupportDZ = False
-        self.SupportRX = False
-        self.SupportRY = False
-        self.SupportRZ = False
+        self.support_DX = False
+        self.support_DY = False
+        self.support_DZ = False
+        self.support_RX = False
+        self.support_RY = False
+        self.support_RZ = False
 
         # Initialize all enforced displacements to 'None'
         self.EnforcedDX = None

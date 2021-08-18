@@ -35,8 +35,8 @@ A = 7.08 # in^2
 MomentFrame.add_member('Beam', 'N2', 'N3', E, G, Iy, Iz, J, A)
 
 # Provide fixed supports at the bases of the columns
-MomentFrame.def_support('N1', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRX=True, SupportRY=True, SupportRZ=True)
-MomentFrame.def_support('N4', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRX=True, SupportRY=True, SupportRZ=True)
+MomentFrame.def_support('N1', support_DX=True, support_DY=True, support_DZ=True, support_RX=True, support_RY=True, support_RZ=True)
+MomentFrame.def_support('N4', support_DX=True, support_DY=True, support_DZ=True, support_RX=True, support_RY=True, support_RZ=True)
 
 # Add self weight dead loads to the frame
 # Note that we could leave 'x1' and 'x2' undefined below and it would default to the full member length

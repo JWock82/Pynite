@@ -55,15 +55,15 @@ BracedFrame.def_releases('Brace2', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
 
 # Provide pinned supports at the bases of the columns (also restrained about
 # the Y-axis for stability)
-BracedFrame.def_support('N1', SupportDX=True, SupportDY=True, SupportDZ=True,
-                          SupportRY=True)
-BracedFrame.def_support('N4', SupportDX=True, SupportDY=True, SupportDZ=True,
-                          SupportRY=True)
+BracedFrame.def_support('N1', support_DX=True, support_DY=True, support_DZ=True,
+                          support_RY=True)
+BracedFrame.def_support('N4', support_DX=True, support_DY=True, support_DZ=True,
+                          support_RY=True)
 
 # Stabilize the frame in the global Z-direction so it doesn't tip over
 # out-of-plane.
-BracedFrame.def_support('N2', SupportDZ=True)
-BracedFrame.def_support('N3', SupportDZ=True)
+BracedFrame.def_support('N2', support_DZ=True)
+BracedFrame.def_support('N3', support_DZ=True)
 
 # Add self weight dead loads to the frame.
 # Note that we could leave 'x1' and 'x2' undefined below and it would default

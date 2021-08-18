@@ -106,8 +106,8 @@ def filter_node_coordinates(nodes, coordinate, value):
 # Create a file of supports
 filename = os.path.join(os.path.dirname(__file__), 'gridsupports.csv')
 with open(filename, mode='w', newline='') as f:
-    support_types = ['Node', 'SupportDX', 'SupportDY', 'SupportDZ', 'SupportRX',
-                     'SupportRY', 'SupportRZ']
+    support_types = ['Node', 'support_DX', 'support_DY', 'support_DZ', 'support_RX',
+                     'support_RY', 'support_RZ']
     csv_writer = csv.DictWriter(f, fieldnames=support_types, restval=False)
     csv_writer.writeheader()
 
@@ -123,9 +123,9 @@ with open(filename, mode='w', newline='') as f:
                     name = k[0]
                     # Write the supports to the file
                     csv_writer.writerow({'Node': name,
-                                         'SupportDX': True,
-                                         'SupportDY': True,
-                                         'SupportDZ': True})
+                                         'support_DX': True,
+                                         'support_DY': True,
+                                         'support_DZ': True})
 
 # Create a file of loads
 # Find all nodes at top level

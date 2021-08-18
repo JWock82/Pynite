@@ -276,8 +276,8 @@ class VisNode():
 
     # Generate any supports that occur at the node
     # Check for a fixed suppport
-    if node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
-    and node.SupportRX == True and node.SupportRY == True and node.SupportRZ == True:
+    if node.support_DX == True and node.support_DY == True and node.support_DZ == True \
+    and node.support_RX == True and node.support_RY == True and node.support_RZ == True:
 
       # Create the fixed support
       support = vtk.vtkCubeSource()
@@ -291,8 +291,8 @@ class VisNode():
       self.polydata.AddInputData(support.GetOutput())
     
     # Check for a pinned support
-    elif node.SupportDX == True and node.SupportDY == True and node.SupportDZ == True \
-    and node.SupportRX == False and node.SupportRY == False and node.SupportRZ == False:
+    elif node.support_DX == True and node.support_DY == True and node.support_DZ == True \
+    and node.support_RX == False and node.support_RY == False and node.support_RZ == False:
       
       # Create the pinned support
       support = vtk.vtkConeSource()
@@ -309,7 +309,7 @@ class VisNode():
     else:
 
       # Restrained against X translation
-      if node.SupportDX == True:
+      if node.support_DX == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -341,7 +341,7 @@ class VisNode():
         self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against Y translation
-      if node.SupportDY == True:
+      if node.support_DY == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -373,7 +373,7 @@ class VisNode():
         self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against Z translation
-      if node.SupportDZ == True:
+      if node.support_DZ == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -405,7 +405,7 @@ class VisNode():
         self.polydata.AddInputData(support3.GetOutput())
 
       # Restrained against rotation about the X-axis
-      if node.SupportRX == True:
+      if node.support_RX == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -437,7 +437,7 @@ class VisNode():
         self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against rotation about the Y-axis
-      if node.SupportRY == True:
+      if node.support_RY == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -469,7 +469,7 @@ class VisNode():
         self.polydata.AddInputData(support3.GetOutput())
       
       # Restrained against rotation about the Z-axis
-      if node.SupportRZ == True:
+      if node.support_RZ == True:
         
         # Create the support
         support1 = vtk.vtkLineSource()  # The line showing the support direction

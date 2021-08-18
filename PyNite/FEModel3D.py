@@ -539,7 +539,7 @@ class FEModel3D():
         warnings.warn('`DefineSupport` will be replaced with `def_support` in a future version of PyNite.', FutureWarning)
         self.def_support(node_name, SupportDX, SupportDY, SupportDZ, SupportRX, SupportRY, SupportRZ)
 
-    def def_support(self, node_name, SupportDX=False, SupportDY=False, SupportDZ=False, SupportRX=False, SupportRY=False, SupportRZ=False):
+    def def_support(self, node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False):
         '''
         Defines the support conditions at a node.
         
@@ -549,17 +549,17 @@ class FEModel3D():
         ----------
         node_name : string
             The name of the node where the support is being defined
-        SupportDX : bool
+        support_DX : bool
             Indicates whether the node is supported against translation in the global X-direction.
-        SupportDY : bool
+        support_DY : bool
             Indicates whether the node is supported against translation in the global Y-direction.
-        SupportDZ : bool
+        support_DZ : bool
             Indicates whether the node is supported against translation in the global Z-direction.
-        SupportRX : bool
+        support_RX : bool
             Indicates whether the node is supported against rotation about the global X-axis.
-        SupportRY : bool
+        support_RY : bool
             Indicates whether the node is supported against rotation about the global Y-axis.
-        SupportRZ : bool
+        support_RZ : bool
             Indicates whether the node is supported against rotation about the global Z-axis.
         '''
         
@@ -567,48 +567,47 @@ class FEModel3D():
         node = self.Nodes[node_name]
                 
         # Set the node's support conditions
-        node.SupportDX = SupportDX
-        node.SupportDY = SupportDY
-        node.SupportDZ = SupportDZ
-        node.SupportRX = SupportRX
-        node.SupportRY = SupportRY
-        node.SupportRZ = SupportRZ
+        node.support_DX = support_DX
+        node.support_DY = support_DY
+        node.support_DZ = support_DZ
+        node.support_RX = support_RX
+        node.support_RY = support_RY
+        node.support_RZ = support_RZ
 
 #%%    
     def AddNodeDisplacement(self, Node, Direction, Magnitude):
         warnings.warn('`AddNodeDisplacement` will be replaced with `def_node_disp` in a future version of PyNite.', FutureWarning)
         self.def_node_disp(Node, Direction, Magnitude)
         
-    def def_node_disp(self, Node, Direction, Magnitude): 
+    def def_node_disp(self, node_name, direction, magnitude): 
         '''
         Defines a nodal displacement at a node.
 
-        Node : string
+        node_name : string
             The name of the node where the nodal displacement is being applied.
-        Direction : {'DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'}
+        direction : string
             The global direction the nodal displacement is being applied in. Displacements are 'DX', 'DY', and 'DZ'. Rotations are 'RX', 'RY', and 'RZ'.
-            Sign convention follows the model's global coordinate system.
-        Magnitude : number
+        magnitude : number
             The magnitude of the displacement.
         '''
         # Validate the value of Direction
-        if Direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
-            raise ValueError(f"Direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {Direction} was given.")
+        if direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
+            raise ValueError(f"Direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {direction} was given.")
         # Get the node
-        node = self.Nodes[Node]
+        node = self.Nodes[node_name]
 
-        if Direction == 'DX':
-            node.EnforcedDX = Magnitude
-        if Direction == 'DY':
-            node.EnforcedDY = Magnitude
-        if Direction == 'DZ':
-            node.EnforcedDZ = Magnitude
-        if Direction == 'RX':
-            node.EnforcedRX = Magnitude
-        if Direction == 'RY':
-            node.EnforcedRY = Magnitude
-        if Direction == 'RZ':
-            node.EnforcedRZ = Magnitude
+        if direction == 'DX':
+            node.EnforcedDX = magnitude
+        if direction == 'DY':
+            node.EnforcedDY = magnitude
+        if direction == 'DZ':
+            node.EnforcedDZ = magnitude
+        if direction == 'RX':
+            node.EnforcedRX = magnitude
+        if direction == 'RY':
+            node.EnforcedRY = magnitude
+        if direction == 'RZ':
+            node.EnforcedRZ = magnitude
 
 #%%
     def DefineReleases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
@@ -1019,8 +1018,8 @@ class FEModel3D():
         for node in self.Nodes.values():
             
             # Unknown displacement DX
-            if ((node.SupportDX == False and node.EnforcedDX == None)
-               or type(node.SupportDX) == int or type(node.SupportDX) == float):
+            if ((node.support_DX == False and node.EnforcedDX == None)
+               or type(node.support_DX) == int or type(node.support_DX) == float):
                 D1_indices.append(node.ID*6 + 0)
             # Known displacement DX
             elif node.EnforcedDX != None:
@@ -1032,8 +1031,8 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement DY
-            if ((node.SupportDY == False and node.EnforcedDY == None) 
-               or type(node.SupportDY) == int or type(node.SupportDY) == float):
+            if ((node.support_DY == False and node.EnforcedDY == None) 
+               or type(node.support_DY) == int or type(node.support_DY) == float):
                 D1_indices.append(node.ID*6 + 1)
             # Known displacement DY
             elif node.EnforcedDY != None:
@@ -1045,8 +1044,8 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement DZ
-            if ((node.SupportDZ == False and node.EnforcedDZ == None)
-               or type(node.SupportDZ) == int or type(node.SupportDZ) == float):
+            if ((node.support_DZ == False and node.EnforcedDZ == None)
+               or type(node.support_DZ) == int or type(node.support_DZ) == float):
                 D1_indices.append(node.ID*6 + 2)
             # Known displacement DZ
             elif node.EnforcedDZ != None:
@@ -1058,8 +1057,8 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement RX
-            if ((node.SupportRX == False and node.EnforcedRX == None)
-               or type(node.SupportRX) == int or type(node.SupportRX) == float):
+            if ((node.support_RX == False and node.EnforcedRX == None)
+               or type(node.support_RX) == int or type(node.support_RX) == float):
                 D1_indices.append(node.ID*6 + 3)
             # Known displacement RX
             elif node.EnforcedRX != None:
@@ -1071,8 +1070,8 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement RY
-            if ((node.SupportRY == False and node.EnforcedRY == None)
-               or type(node.SupportRY) == int or type(node.SupportRY) == float):
+            if ((node.support_RY == False and node.EnforcedRY == None)
+               or type(node.support_RY) == int or type(node.support_RY) == float):
                 D1_indices.append(node.ID*6 + 4)
             # Known displacement RY
             elif node.EnforcedRY != None:
@@ -1084,8 +1083,8 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement RZ
-            if ((node.SupportRZ == False and node.EnforcedRZ == None)
-               or type(node.SupportRZ) == int or type(node.SupportRZ) == float):
+            if ((node.support_RZ == False and node.EnforcedRZ == None)
+               or type(node.support_RZ) == int or type(node.support_RZ) == float):
                 D1_indices.append(node.ID*6 + 5)
             # Known displacement RZ
             elif node.EnforcedRZ != None:
@@ -1123,24 +1122,24 @@ class FEModel3D():
         for node in self.Nodes.values():
             
             # Determine if the node has any spring supports
-            if type(node.SupportDX) == float or type(node.SupportDX) == int:
+            if type(node.support_DX) == float or type(node.support_DX) == int:
                 m, n = node.ID*6, node.ID*6
-                K[(m, n)] += node.SupportDX
-            if type(node.SupportDY) == float or type(node.SupportDY) == int:
+                K[(m, n)] += node.support_DX
+            if type(node.support_DY) == float or type(node.support_DY) == int:
                 m, n = node.ID*6 + 1, node.ID*6 + 1
-                K[(m, n)] += node.SupportDY
-            if type(node.SupportDZ) == float or type(node.SupportDZ) == int:
+                K[(m, n)] += node.support_DY
+            if type(node.support_DZ) == float or type(node.support_DZ) == int:
                 m, n = node.ID*6 + 2, node.ID*6 + 2
-                K[(m, n)] += node.SupportDZ
-            if type(node.SupportRX) == float or type(node.SupportRX) == int:
+                K[(m, n)] += node.support_DZ
+            if type(node.support_RX) == float or type(node.support_RX) == int:
                 m, n = node.ID*6 + 3, node.ID*6 + 3
-                K[(m, n)] += node.SupportRX
-            if type(node.SupportRY) == float or type(node.SupportRY) == int:
+                K[(m, n)] += node.support_RX
+            if type(node.support_RY) == float or type(node.support_RY) == int:
                 m, n = node.ID*6 + 4, node.ID*6 + 4
-                K[(m, n)] += node.SupportRY
-            if type(node.SupportRZ) == float or type(node.SupportRZ) == int:
+                K[(m, n)] += node.support_RY
+            if type(node.support_RZ) == float or type(node.support_RZ) == int:
                 m, n = node.ID*6 + 5, node.ID*6 + 5
-                K[(m, n)] += node.SupportRZ
+                K[(m, n)] += node.support_RZ
 
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
@@ -2098,12 +2097,12 @@ class FEModel3D():
                 node.RxnMZ[combo.name] = 0.0
 
                 # Determine if the node has any supports
-                if (node.SupportDX == True) \
-                or (node.SupportDY == True) \
-                or (node.SupportDZ == True) \
-                or (node.SupportRX == True) \
-                or (node.SupportRY == True) \
-                or (node.SupportRZ == True):
+                if (node.support_DX == True) \
+                or (node.support_DY == True) \
+                or (node.support_DZ == True) \
+                or (node.support_RX == True) \
+                or (node.support_RY == True) \
+                or (node.support_RZ == True):
 
                     # Sum the spring end forces at the node
                     for spring in self.Springs.values():

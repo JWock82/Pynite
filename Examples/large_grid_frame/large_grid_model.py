@@ -21,7 +21,7 @@ nodes_list = inputfiles.nodes_from_csv(path)
 
 # Add the nodes to the model
 for node in nodes_list:
-    model.AddNode(*node)
+    model.add_node(*node)
 
 # Import members from file
 path = os.path.join(os.path.dirname(__file__), 'gridmembers.csv')
@@ -30,13 +30,13 @@ member_list = inputfiles.read_csv(path)
 # Add the members to the model
 for member in member_list:
     Name, iNode, jNode = member
-    model.AddMember(Name, iNode, jNode, E, G, Iy, Iz, J, A)
+    model.add_member(Name, iNode, jNode, E, G, Iy, Iz, J, A)
 
 # Import supports from file
 path = os.path.join(os.path.dirname(__file__), 'gridsupports.csv')
 support_list = inputfiles.read_dict_from_csv(path)
 for row in support_list:
-    model.DefineSupport(**row)
+    model.def_support(**row)
 
 # Import node loads from file
 path = os.path.join(os.path.dirname(__file__), 'gridnodesloads.csv')
@@ -44,10 +44,10 @@ node_loads = inputfiles.read_csv(path)
 for load in node_loads:
     Node, Direction, P = load
     # Add node loads
-    model.AddNodeLoad(Node, Direction, float(P))
+    model.add_node_load(Node, Direction, float(P))
 
 # Analyze the model
-model.Analyze(check_statics=True)
+model.analyze(check_statics=True)
 
 # Render the model
 Visualization.RenderModel(model,

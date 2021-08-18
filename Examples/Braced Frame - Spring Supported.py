@@ -68,8 +68,8 @@ braced_frame.def_releases('Brace1', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
 # the column bases in the other directions. The column bases will be
 # supported by the springs vertically. For the other directions (horizontally
 # and about the Y-axis) we'll need to provide supports.
-braced_frame.def_support('N1', SupportDX=True, SupportDZ=True, SupportRY=True)
-braced_frame.def_support('N4', SupportDX=True, SupportDZ=True, SupportRY=True)
+braced_frame.def_support('N1', support_DX=True, support_DZ=True, support_RY=True)
+braced_frame.def_support('N4', support_DX=True, support_DZ=True, support_RY=True)
 
 # Fix the nodes supporting the bottoms of the springs. Note that even though
 # we're fixing these nodes, the only reactions the supports will carry will
@@ -79,13 +79,13 @@ braced_frame.def_support('N4', SupportDX=True, SupportDZ=True, SupportRY=True)
 # the model would crash. PyNite is unforgiving in this regard. Every degree of
 # freedom (3 translations and 3 rotations) at every node must be stabilized so
 # it's not free to move infinitely.
-braced_frame.def_support('N1s', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRX=True, SupportRY=True, SupportRZ=True)
-braced_frame.def_support('N4s', SupportDX=True, SupportDY=True, SupportDZ=True, SupportRX=True, SupportRY=True, SupportRZ=True)
+braced_frame.def_support('N1s', support_DX=True, support_DY=True, support_DZ=True, support_RX=True, support_RY=True, support_RZ=True)
+braced_frame.def_support('N4s', support_DX=True, support_DY=True, support_DZ=True, support_RX=True, support_RY=True, support_RZ=True)
 
 # Stabilize the frame in the global Z-direction so it doesn't tip over
 # out-of-plane.
-braced_frame.def_support('N2', SupportDZ=True)
-braced_frame.def_support('N3', SupportDZ=True)
+braced_frame.def_support('N2', support_DZ=True)
+braced_frame.def_support('N3', support_DZ=True)
 
 # Add self weight dead loads to the frame.
 # Note that we could leave 'x1' and 'x2' undefined below and it would default
