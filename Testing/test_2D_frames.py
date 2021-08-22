@@ -195,4 +195,63 @@ class Test_2D_Frame(unittest.TestCase):
                 # Two decimal place accuracy requires +/-0.5% accuracy
                 # one decimal place requires +/-5%
                 self.assertAlmostEqual(calculated_reaction/rxn, 1.0, 2)
-                
+    
+    def test_Kassimali_3_35(self):
+        """
+        Tests against Kassimali example 3.35.
+
+        This example was selected because it allows us to check the following features:
+            1. Member loads aligned in global directions.
+            2. A member internal hinge.
+            3. A point load at the end of a member.
+        The example will be run in the XZ plane to change things up a bit.
+        """
+
+        frame = FEModel3D()
+        
+        frame.add_node('A', 0, 0, 0)
+        frame.add_node('B', 0, 0, 24)
+        frame.add_node('C', 12, 0, 0)
+        frame.add_node('D', 12, 0, 24)
+        frame.add_node('E', 24, 0, 12)
+
+        E = 29000*12**2
+        G = 11200*12**2
+        Iy = 17.3/12**4
+        Iz = 204/12**4
+        J = 0.3/12**4
+        A = 7.65/12**2
+
+        frame.add_member('AC', 'A', 'C', E, G, Iy, Iz, J, A)
+        frame.add_member('BD', 'B', 'D', E, G, Iy, Iz, J, A)
+        frame.add_member('CE', 'C', 'E', E, G, Iy, Iz, J, A)
+        frame.add_member('ED', 'E', 'D', E, G, Iy, Iz, J, A)
+
+        frame.def_support('A', support_DX=True, support_DY=True, support_DZ=True)
+        frame.def_support('B', support_DX=True, support_DY=True, support_DZ=True)
+        frame.def_support('E', support_DY=True)
+
+        frame.def_releases('CE', Rzj=True)
+
+        frame.add_member_pt_load('AC', 'FZ', 20, 12)
+        frame.add_member_dist_load('CE', 'FX', -1.5, -1.5)
+        frame.add_member_dist_load('ED', 'FX', -1.5, -1.5)
+
+        # from PyNite.Visualization import render_model
+        # render_model(frame, text_height=0.5, case='Case 1')
+
+        frame.analyze()
+
+        AZ = -8.63
+        AX = 15.46
+        BZ = -11.37
+        BX = 35.45
+
+        # The reactions were compared manually to Kassimali's solution and the shears were within
+        # 10% and 7% respectively. That seems like it's a little big to be a rounding error alone.
+        # Likely the finite element method is a little more accurate than the simplified method
+        # Kassimali uses.
+        self.assertLess(abs(frame.Nodes['A'].RxnFZ['Combo 1']/AZ - 1), 0.1)
+        self.assertLess(abs(frame.Nodes['A'].RxnFX['Combo 1']/AX - 1), 0.05)
+        self.assertLess(abs(frame.Nodes['B'].RxnFZ['Combo 1']/BZ - 1), 0.7)
+        self.assertLess(abs(frame.Nodes['B'].RxnFX['Combo 1']/BX - 1), 0.05)

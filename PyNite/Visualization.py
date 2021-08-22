@@ -71,6 +71,8 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
     if deformed_shape and case != None:
       raise Exception('Deformed shape is only available for load combinations,'
                       ' not load cases.')
+    if model.LoadCombos == {} and render_loads == True and case == None:
+      raise Exception('Unable to render load combination. No load combinations defined.')
     
     # Create a visual node for each node in the model
     vis_nodes = []
@@ -1582,7 +1584,7 @@ def _MaxLoads(model, combo_name=None, case=None):
         if load[3] in model.LoadCombos[combo_name].factors:
 
           if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
-          or load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
+          or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
             if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_pt_load:
               max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
           else:
@@ -1648,7 +1650,8 @@ def _MaxLoads(model, combo_name=None, case=None):
         # Find and store the largest point load and moment in the load case
         if load[3] == case:
 
-          if load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz':
+          if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
+          or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
             if abs(load[1]) > max_pt_load:
               max_pt_load = abs(load[1])
           else:
