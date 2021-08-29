@@ -43,7 +43,7 @@ model.MergeDuplicateNodes()
 
 # Add hydrostatic pressure to each element in the model
 for element in model.Quads.values():
-    Yavg = (element.iNode.Y + element.jNode.Y + element.mNode.Y + element.nNode.Y)/4
+    Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
     model.add_quad_surface_pressure(element.Name, 62.4*(h_shell - Yavg), case='Hydrostatic')
 
 # Add supports at the springline

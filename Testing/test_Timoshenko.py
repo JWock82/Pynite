@@ -41,7 +41,7 @@ class Test_Timoshenko(unittest.TestCase):
         
         # Add hydrostatic loads to the elements
         for element in plate_model.Plates.values():
-            Yavg = (element.iNode.Y + element.jNode.Y + element.mNode.Y + element.nNode.Y)/4
+            Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
             plate_model.add_plate_surface_pressure(element.Name, p, 'Hydrostatic')
         
@@ -88,7 +88,7 @@ class Test_Timoshenko(unittest.TestCase):
         
         # Add hydrostatic loads to the elements
         for element in plate_model.Quads.values():
-            Yavg = (element.iNode.Y + element.jNode.Y + element.mNode.Y + element.nNode.Y)/4
+            Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
             plate_model.add_quad_surface_pressure(element.Name, p, 'Hydrostatic')
         

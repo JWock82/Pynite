@@ -15,17 +15,17 @@ from PyNite.LoadCombo import LoadCombo
 class Quad3D():
 
 #%%
-    def __init__(self, Name, iNode, jNode, mNode, nNode, t, E, nu,
+    def __init__(self, Name, i_node, j_node, m_node, n_node, t, E, nu,
                  LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
 
         self.Name = Name
         self.ID = None
         self.type = 'Quad'
 
-        self.iNode = iNode
-        self.jNode = jNode
-        self.mNode = mNode
-        self.nNode = nNode
+        self.i_node = i_node
+        self.j_node = j_node
+        self.m_node = m_node
+        self.n_node = n_node
 
         self.t = t
         self.E = E
@@ -42,10 +42,10 @@ class Quad3D():
         '''
 
         # Get the global coordinates for each node
-        X1, Y1, Z1 = self.mNode.X, self.mNode.Y, self.mNode.Z
-        X2, Y2, Z2 = self.nNode.X, self.nNode.Y, self.nNode.Z
-        X3, Y3, Z3 = self.iNode.X, self.iNode.Y, self.iNode.Z
-        X4, Y4, Z4 = self.jNode.X, self.jNode.Y, self.jNode.Z
+        X1, Y1, Z1 = self.m_node.X, self.m_node.Y, self.m_node.Z
+        X2, Y2, Z2 = self.n_node.X, self.n_node.Y, self.n_node.Z
+        X3, Y3, Z3 = self.i_node.X, self.i_node.Y, self.i_node.Z
+        X4, Y4, Z4 = self.j_node.X, self.j_node.Y, self.j_node.Z
 
         # Following Reference 1, Figure 5.26, node 3 will be used as the
         # origin of the plate's local (x, y) coordinate system. Find the
@@ -547,33 +547,33 @@ class Quad3D():
         D = zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        D.itemset((0, 0), self.mNode.DX[combo_name])
-        D.itemset((1, 0), self.mNode.DY[combo_name])
-        D.itemset((2, 0), self.mNode.DZ[combo_name])
-        D.itemset((3, 0), self.mNode.RX[combo_name])
-        D.itemset((4, 0), self.mNode.RY[combo_name])
-        D.itemset((5, 0), self.mNode.RZ[combo_name])
+        D.itemset((0, 0), self.m_node.DX[combo_name])
+        D.itemset((1, 0), self.m_node.DY[combo_name])
+        D.itemset((2, 0), self.m_node.DZ[combo_name])
+        D.itemset((3, 0), self.m_node.RX[combo_name])
+        D.itemset((4, 0), self.m_node.RY[combo_name])
+        D.itemset((5, 0), self.m_node.RZ[combo_name])
 
-        D.itemset((6, 0), self.nNode.DX[combo_name])
-        D.itemset((7, 0), self.nNode.DY[combo_name])
-        D.itemset((8, 0), self.nNode.DZ[combo_name])
-        D.itemset((9, 0), self.nNode.RX[combo_name])
-        D.itemset((10, 0), self.nNode.RY[combo_name])
-        D.itemset((11, 0), self.nNode.RZ[combo_name])
+        D.itemset((6, 0), self.n_node.DX[combo_name])
+        D.itemset((7, 0), self.n_node.DY[combo_name])
+        D.itemset((8, 0), self.n_node.DZ[combo_name])
+        D.itemset((9, 0), self.n_node.RX[combo_name])
+        D.itemset((10, 0), self.n_node.RY[combo_name])
+        D.itemset((11, 0), self.n_node.RZ[combo_name])
 
-        D.itemset((12, 0), self.iNode.DX[combo_name])
-        D.itemset((13, 0), self.iNode.DY[combo_name])
-        D.itemset((14, 0), self.iNode.DZ[combo_name])
-        D.itemset((15, 0), self.iNode.RX[combo_name])
-        D.itemset((16, 0), self.iNode.RY[combo_name])
-        D.itemset((17, 0), self.iNode.RZ[combo_name])
+        D.itemset((12, 0), self.i_node.DX[combo_name])
+        D.itemset((13, 0), self.i_node.DY[combo_name])
+        D.itemset((14, 0), self.i_node.DZ[combo_name])
+        D.itemset((15, 0), self.i_node.RX[combo_name])
+        D.itemset((16, 0), self.i_node.RY[combo_name])
+        D.itemset((17, 0), self.i_node.RZ[combo_name])
 
-        D.itemset((18, 0), self.jNode.DX[combo_name])
-        D.itemset((19, 0), self.jNode.DY[combo_name])
-        D.itemset((20, 0), self.jNode.DZ[combo_name])
-        D.itemset((21, 0), self.jNode.RX[combo_name])
-        D.itemset((22, 0), self.jNode.RY[combo_name])
-        D.itemset((23, 0), self.jNode.RZ[combo_name])
+        D.itemset((18, 0), self.j_node.DX[combo_name])
+        D.itemset((19, 0), self.j_node.DY[combo_name])
+        D.itemset((20, 0), self.j_node.DZ[combo_name])
+        D.itemset((21, 0), self.j_node.RX[combo_name])
+        D.itemset((22, 0), self.j_node.RY[combo_name])
+        D.itemset((23, 0), self.j_node.RZ[combo_name])
         
         # Return the global displacement vector
         return D
@@ -612,12 +612,12 @@ class Quad3D():
         Returns the coordinate transformation matrix for the quad element.
         '''
 
-        xi = self.iNode.X
-        xj = self.jNode.X
-        yi = self.iNode.Y
-        yj = self.jNode.Y
-        zi = self.iNode.Z
-        zj = self.jNode.Z
+        xi = self.i_node.X
+        xj = self.j_node.X
+        yi = self.i_node.Y
+        yj = self.j_node.Y
+        zi = self.i_node.Z
+        zj = self.j_node.Z
 
         # Calculate the direction cosines for the local x-axis.The local x-axis will run from
         # the i-node to the j-node
@@ -630,9 +630,9 @@ class Quad3D():
         
         # The local y-axis will be in the plane of the plate. Find a vector in
         # the plate's local xy plane.
-        xn = self.nNode.X
-        yn = self.nNode.Y
-        zn = self.nNode.Z
+        xn = self.n_node.X
+        yn = self.n_node.Y
+        zn = self.n_node.Z
         xy = [xn - xi, yn - yi, zn - zi]
 
         # Find a vector perpendicular to the plate surface to get the

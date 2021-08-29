@@ -44,7 +44,7 @@ model.add_mesh(mesh)
 for element in list(model.Quads.values()) + list(model.Plates.values()):
 
     # Calculate the average elevation of the element based on the positions of its nodes
-    Yavg = (element.iNode.Y + element.jNode.Y + element.mNode.Y + element.nNode.Y)/4
+    Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
 
     # Determine if the element falls below the liquid level
     if Yavg < HL:

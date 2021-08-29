@@ -29,8 +29,8 @@ member_list = inputfiles.read_csv(path)
 
 # Add the members to the model
 for member in member_list:
-    Name, iNode, jNode = member
-    model.add_member(Name, iNode, jNode, E, G, Iy, Iz, J, A)
+    Name, i_node, j_node = member
+    model.add_member(Name, i_node, j_node, E, G, Iy, Iz, J, A)
 
 # Import supports from file
 path = os.path.join(os.path.dirname(__file__), 'gridsupports.csv')

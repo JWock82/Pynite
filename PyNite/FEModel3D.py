@@ -1,10 +1,12 @@
 # %%
-from numpy import array, matrix, zeros, matmul, divide, add, subtract, atleast_2d
-from numpy import nanmax, seterr
+import warnings
+
+from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
+from numpy import seterr
 from numpy.linalg import solve
 
 from scipy.sparse.linalg import spsolve
-from scipy.sparse import lil_matrix, csr_matrix
+from scipy.sparse import lil_matrix
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
@@ -12,53 +14,79 @@ from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
 
-import warnings
-
 # %%
 class FEModel3D():
-    '''
-    A class representing a 3D finite element model.
-    '''
+    """
+    A 3D finite element model.
+    """
 
-#%% 
     def __init__(self):
-        '''
-        Initializes a new 3D finite element model.
-        '''
+        """
+        Generates a new 3D finite element model.
+
+        Returns
+        -------
+        None.
+        
+        """
         
         self.Nodes = {}      # A dictionary of the structure's nodes
         self.AuxNodes = {}   # A dictionary of the structure's auxiliary nodes
         self.Springs = {}    # A dictionary of the structure's springs
         self.Members = {}    # A dictionary of the structure's members
         self.Quads = {}      # A dictionary of the structure's quadiralterals
-        self.Plates = {}     # A dictionary of the structure's rectangular plates
-        self.__D = {}        # A dictionary of the structure's nodal displacements by load combination
-        self.LoadCombos = {} # A dictionary of the structure's load combinations
+        
+        self.Plates = {}     # A dictionary of the structure's rectangular
+                             # plates
+                             
+        self._D = {}         # A dictionary of the structure's nodal
+                             # displacements by load combination
+                             
+        self.LoadCombos = {} # A dictionary of the structure's load
+                             # combinations
+        return
 
-#%%
     def AddNode(self, name, X, Y, Z):
+        """
+        `AddNode` will soon be deprecated. Please use `add_node` instead.
+
+        """
+        
         warnings.warn('`AddNode` will be replaced with `add_node` in a future version of PyNite.', FutureWarning)
         self.add_node(name, X, Y, Z)
 
     def add_node(self, name, X, Y, Z):
-        '''
-        Adds a new node to the model. The node name will be returned
-        
+        """
+        Adds a new node to the model.
+
         Parameters
         ----------
         name : string
-            A unique user-defined name for the node. If None or "", a name will be automatically assigned
+            A unique user-defined name for the node. If set to None or "" a
+            name will be automatically assigned.
         X : number
             The global X-coordinate of the node.
         Y : number
             The global Y-coordinate of the node.
         Z : number
             The global Z-coordinate of the node.
-        '''
+
+        Raises
+        ------
+        NameError
+            Occurs when the specified name already exists in the model.
+
+        Returns
+        -------
+        name : string
+            The name of the node that was added to the model.
+
+        """
         
         # Name the node or check it doesn't already exist
         if name:
-            if name in self.Nodes: raise NameError(f"Node name '{name}' already exists")
+            if name in self.Nodes:
+                raise NameError(f"Node name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
             name = "N" + str(len(self.Nodes))
@@ -76,18 +104,23 @@ class FEModel3D():
         #Return the node name
         return name
 
-#%%
     def AddAuxNode(self, name, X, Y, Z):
+        """
+        `AddAuxNode` will soon be deprecated. Please use `add_auxnode` instead.
+        
+        """
+        
         warnings.warn('`AddAuxNode` will be replaced with `add_auxnode` in a future version of PyNite.', FutureWarning)
         self.add_auxnode(name, X, Y, Z)
 
     def add_auxnode(self, name, X, Y, Z):
-        '''
-        Adds a new auxiliary node to the model. The node name will be returned
+        """
+        Adds a new auxiliary node to the model.
         
-        Together with a member's `i` and `j` nodes, an auxiliary node defines the plane in which
-        the member's local z-axis lies, and the side of the member the z-axis point towards. If no
-        auxiliary node is specified for a member, PyNite uses its own defaut configuration.
+        Together with a member's `i` and `j` nodes, an auxiliary node defines
+        the plane in which the member's local z-axis lies, and the side of the
+        member the z-axis point toward. If no auxiliary node is specified for
+        a member, PyNite uses its own default configuration.
 
         Parameters
         ----------
@@ -99,11 +132,23 @@ class FEModel3D():
             The global Y-coordinate of the node.
         Z : number
             The global Z-coordinate of the node.
-        '''
+        
+        Raises
+        ------
+        NameError
+            Occurs when the specified name already exists in the model.
+
+        Returns
+        -------
+        name : string
+            The name of the auxiliary node that was added to the model.
+        
+        """
         
         # Name the node or check it doesn't already exist
         if name:
-            if name in self.AuxNodes: raise NameError(f"Auxnode name '{name}' already exists")
+            if name in self.AuxNodes:
+                raise NameError(f"Auxnode name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
             name = "AN" + str(len(self.AuxNodes))
@@ -113,30 +158,35 @@ class FEModel3D():
                 count += 1
                 
         # Create a new node
-        newNode = Node3D(name, X, Y, Z)
+        new_node = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
-        self.AuxNodes[name] = newNode
+        self.AuxNodes[name] = new_node
         
         #Return the node name
         return name
   
-#%%
-    def AddSpring(self, name, iNode, jNode, ks, tension_only=False, comp_only=False):
-        warnings.warn('`AddSpring` will be replaced with `add_spring` in a future version of PyNite.', FutureWarning)
-        self.add_spring(name, iNode, jNode, ks, tension_only, comp_only)
+    def AddSpring(self, name, i_node, j_node, ks, tension_only=False,
+                  comp_only=False):
+        """
+        `AddSpring` will soon be deprecated. Please use `add_spring` instead.
 
-    def add_spring(self, name, iNode, jNode, ks, tension_only=False, comp_only=False):
-        '''
-        Adds a new spring to the model. The spring name will be returned.
+        """
+        
+        warnings.warn('`AddSpring` will be replaced with `add_spring` in a future version of PyNite.', FutureWarning)
+        self.add_spring(name, i_node, j_node, ks, tension_only, comp_only)
+
+    def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
+        """
+        Adds a new spring to the model.
         
         Parameters
         ----------
         name : string
             A unique user-defined name for the member. If None or "", a name will be automatically assigned
-        iNode : string
+        i_node : string
             The name of the i-node (start node).
-        jNode : string
+        j_node : string
             The name of the j-node (end node).
         ks : number
             The spring constant (force/displacement).
@@ -144,36 +194,49 @@ class FEModel3D():
             Indicates if the member is tension-only. Default is False.
         comp_only : bool, optional
             Indicates if the member is compression-only. Default is False.
-        '''
+        
+        Raises
+        ------
+        NameError
+            Occurs when the specified name already exists in the model.
+        
+        Returns
+        -------
+        name : string
+            The name of the spring that was added to the model.
+            
+        """
 
         # Name the spring or check it doesn't already exist
         if name:
-            if name in self.Springs: raise NameError(f"Spring name '{name}' already exists")
+            if name in self.Springs:
+                raise NameError(f"Spring name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
             name = "S" + str(len(self.Springs))
             count = 1
             while name in self.Springs: 
-                name = "S" + str(len(self.Springs)+count)
+                name = "S" + str(len(self.Springs) + count)
                 count += 1
                 
         # Create a new spring
-        newSpring = Spring3D(name, self.Nodes[iNode], self.Nodes[jNode], ks,
-                             self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
+        new_spring = Spring3D(name, self.Nodes[i_node], self.Nodes[j_node],
+                              ks, self.LoadCombos, tension_only=tension_only,
+                              comp_only=comp_only)
         
         # Add the new member to the list
-        self.Springs[name] = newSpring
+        self.Springs[name] = new_spring
         
         #Return the spring name
         return name
 
 #%%
-    def AddMember(self, name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
+    def AddMember(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
                   tension_only=False, comp_only=False):
         warnings.warn('`AddMember` will be replaced with `add_member` in a future version of PyNite.', FutureWarning)
-        self.add_member(name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode, tension_only, comp_only)
+        self.add_member(name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode, tension_only, comp_only)
 
-    def add_member(self, name, iNode, jNode, E, G, Iy, Iz, J, A, auxNode=None,
+    def add_member(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
                    tension_only=False, comp_only=False):
         '''
         Adds a new member to the model. The member name will be returned.
@@ -182,9 +245,9 @@ class FEModel3D():
         ----------
         name : string
             A unique user-defined name for the member. If None or "", a name will be automatically assigned
-        iNode : string
+        i_node : string
             The name of the i-node (start node).
-        jNode : string
+        j_node : string
             The name of the j-node (end node).
         E : number
             The modulus of elasticity of the member.
@@ -221,12 +284,12 @@ class FEModel3D():
                 
         # Create a new member
         if auxNode == None:
-            newMember = Member3D(name, self.Nodes[iNode],
-            self.Nodes[jNode], E, G, Iy, Iz, J, A,
+            newMember = Member3D(name, self.Nodes[i_node],
+            self.Nodes[j_node], E, G, Iy, Iz, J, A,
             LoadCombos=self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         else:
-            newMember = Member3D(name, self.Nodes[iNode],
-            self.Nodes[jNode], E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
+            newMember = Member3D(name, self.Nodes[i_node],
+            self.Nodes[j_node], E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
             self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
@@ -236,11 +299,11 @@ class FEModel3D():
         return name
 
 #%%
-    def AddPlate(self, name, iNode, jNode, mNode, nNode, t, E, nu):
+    def AddPlate(self, name, i_node, j_node, m_node, n_node, t, E, nu):
         warnings.warn('`AddPlate` will be replaced with `add_plate` in a future version of PyNite.', FutureWarning)
-        self.add_plate(name, iNode, jNode, mNode, nNode, t, E, nu)
+        self.add_plate(name, i_node, j_node, m_node, n_node, t, E, nu)
 
-    def add_plate(self, name, iNode, jNode, mNode, nNode, t, E, nu):
+    def add_plate(self, name, i_node, j_node, m_node, n_node, t, E, nu):
         '''
         Adds a new plate to the model. The plate name will be returned
         
@@ -248,13 +311,13 @@ class FEModel3D():
         ----------
         name : string
             A unique user-defined name for the plate. If None or "", a name will be automatically assigned
-        iNode : string
+        i_node : string
             The name of the i-node (1st node definded in clockwise order).
-        jNode : string
+        j_node : string
             The name of the j-node (2nd node defined in clockwise order).
-        mNode : string
+        m_node : string
             The name of the m-node (3rd node defined in clockwise order).
-        nNode : string
+        n_node : string
             The name of the n-node (4th node defined in clockwise order).
         t : number
             The thickness of the plate.
@@ -276,7 +339,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newPlate = Plate3D(name, self.Nodes[iNode], self.Nodes[jNode], self.Nodes[mNode], self.Nodes[nNode], t, E, nu, self.LoadCombos)
+        newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, self.LoadCombos)
         
         # Add the new member to the list
         self.Plates[name] = newPlate
@@ -285,11 +348,11 @@ class FEModel3D():
         return name
 
 #%%
-    def AddQuad(self, name, iNode, jNode, mNode, nNode, t, E, nu):
+    def AddQuad(self, name, i_node, j_node, m_node, n_node, t, E, nu):
         warnings.warn('`AddQuad` will be replaced with `add_quad` in a future version of PyNite.', FutureWarning)
-        self.add_quad(name, iNode, jNode, mNode, nNode, t, E, nu)
+        self.add_quad(name, i_node, j_node, m_node, n_node, t, E, nu)
 
-    def add_quad(self, name, iNode, jNode, mNode, nNode, t, E, nu):
+    def add_quad(self, name, i_node, j_node, m_node, n_node, t, E, nu):
         '''
         Adds a new quadrilateral to the model. The quad name will be returned
 
@@ -300,13 +363,13 @@ class FEModel3D():
         ----------
         name : string
             A unique user-defined name for the quadrilateral. If None or "", a name will be automatically assigned
-        iNode : string
+        i_node : string
             The name of the i-node (1st node definded in counter-clockwise order).
-        jNode : string
+        j_node : string
             The name of the j-node (2nd node defined in counter-clockwise order).
-        mNode : string
+        m_node : string
             The name of the m-node (3rd node defined in counter-clockwise order).
-        nNode : string
+        n_node : string
             The name of the n-node (4th node defined in counter-clockwise order).
         t : number
             The thickness of the quadrilateral.
@@ -331,7 +394,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newQuad = Quad3D(name, self.Nodes[iNode], self.Nodes[jNode], self.Nodes[mNode], self.Nodes[nNode], t, E, nu, self.LoadCombos)
+        newQuad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, self.LoadCombos)
         
         # Add the new member to the list
         self.Quads[name] = newQuad
@@ -367,20 +430,20 @@ class FEModel3D():
         # nodes will have been abandoned in favor of the new nodes. Reattach any elements that are
         # still referencing the old nodes to the new nodes.
         for element in self.Quads.values():
-            element.iNode = self.Nodes[element.iNode.Name]
-            element.jNode = self.Nodes[element.jNode.Name]
-            element.mNode = self.Nodes[element.mNode.Name]
-            element.nNode = self.Nodes[element.nNode.Name]
+            element.i_node = self.Nodes[element.i_node.Name]
+            element.j_node = self.Nodes[element.j_node.Name]
+            element.m_node = self.Nodes[element.m_node.Name]
+            element.n_node = self.Nodes[element.n_node.Name]
         
         for element in self.Plates.values():
-            element.iNode = self.Nodes[element.iNode.Name]
-            element.jNode = self.Nodes[element.jNode.Name]
-            element.mNode = self.Nodes[element.mNode.Name]
-            element.nNode = self.Nodes[element.nNode.Name]
+            element.i_node = self.Nodes[element.i_node.Name]
+            element.j_node = self.Nodes[element.j_node.Name]
+            element.m_node = self.Nodes[element.m_node.Name]
+            element.n_node = self.Nodes[element.n_node.Name]
 
         for element in self.Members.values():
-            element.iNode = self.Nodes[element.iNode.Name]
-            element.jNode = self.Nodes[element.jNode.Name]
+            element.i_node = self.Nodes[element.i_node.Name]
+            element.j_node = self.Nodes[element.j_node.Name]
 
         # Add the mesh's elements to the finite element model
         for element in mesh.elements.values():
@@ -417,30 +480,30 @@ class FEModel3D():
 
                     # Attach any elements that were using `node_2` to `node_1` instead
                     for element in self.Quads.values():
-                        if element.iNode.Name == name_2:
-                            element.iNode = self.Nodes[name_1]
-                        if element.jNode.Name == name_2:
-                            element.jNode = self.Nodes[name_1]
-                        if element.mNode.Name == name_2:
-                            element.mNode = self.Nodes[name_1]
-                        if element.nNode.Name == name_2:
-                            element.nNode = self.Nodes[name_1]
+                        if element.i_node.Name == name_2:
+                            element.i_node = self.Nodes[name_1]
+                        if element.j_node.Name == name_2:
+                            element.j_node = self.Nodes[name_1]
+                        if element.m_node.Name == name_2:
+                            element.m_node = self.Nodes[name_1]
+                        if element.n_node.Name == name_2:
+                            element.n_node = self.Nodes[name_1]
         
                     for element in self.Plates.values():
-                        if element.iNode.Name == name_2:
-                            element.iNode = self.Nodes[name_1]
-                        if element.jNode.Name == name_2:
-                            element.jNode = self.Nodes[name_1]
-                        if element.mNode.Name == name_2:
-                            element.mNode = self.Nodes[name_1]
-                        if element.nNode.Name == name_2:
-                            element.nNode = self.Nodes[name_1]
+                        if element.i_node.Name == name_2:
+                            element.i_node = self.Nodes[name_1]
+                        if element.j_node.Name == name_2:
+                            element.j_node = self.Nodes[name_1]
+                        if element.m_node.Name == name_2:
+                            element.m_node = self.Nodes[name_1]
+                        if element.n_node.Name == name_2:
+                            element.n_node = self.Nodes[name_1]
 
                     for element in self.Members.values():
-                        if element.iNode.Name == name_2:
-                            element.iNode = self.Nodes[name_1]
-                        if element.jNode.Name == name_2:
-                            element.jNode = self.Nodes[name_1]
+                        if element.i_node.Name == name_2:
+                            element.i_node = self.Nodes[name_1]
+                        if element.j_node.Name == name_2:
+                            element.j_node = self.Nodes[name_1]
                     
                     # Add `name_2` to the list of nodes to be removed
                     remove_list.append(name_2)
@@ -469,9 +532,9 @@ class FEModel3D():
         self.Nodes.pop(node_name)
         
         # Find any elements attached to the node and remove them
-        self.Members = {name: member for name, member in self.Members.items() if member.iNode.Name != node_name and member.jNode.Name != node_name}
-        self.Plates = {name: plate for name, plate in self.Plates.items() if plate.iNode.Name != node_name and plate.jNode.Name != node_name and plate.mNode.Name != node_name and plate.nNode.Name != node_name}
-        self.Quads = {name: quad for name, quad in self.Quads.items() if quad.iNode.Name != node_name and quad.jNode.Name != node_name and quad.mNode.Name != node_name and quad.nNode.Name != node_name}
+        self.Members = {name: member for name, member in self.Members.items() if member.i_node.Name != node_name and member.j_node.Name != node_name}
+        self.Plates = {name: plate for name, plate in self.Plates.items() if plate.i_node.Name != node_name and plate.j_node.Name != node_name and plate.m_node.Name != node_name and plate.n_node.Name != node_name}
+        self.Quads = {name: quad for name, quad in self.Quads.items() if quad.i_node.Name != node_name and quad.j_node.Name != node_name and quad.m_node.Name != node_name and quad.n_node.Name != node_name}
 
 #%%
     def RemoveAuxNode(self, auxnode_name):
@@ -1159,20 +1222,20 @@ class FEModel3D():
                     # Determine if index 'a' is related to the i-node or j-node
                     if a < 6:
                         # Find the corresponding index 'm' in the global stiffness matrix
-                        m = spring.iNode.ID*6 + a
+                        m = spring.i_node.ID*6 + a
                     else:
                         # Find the corresponding index 'm' in the global stiffness matrix
-                        m = spring.jNode.ID*6 + (a-6)
+                        m = spring.j_node.ID*6 + (a-6)
                     
                     for b in range(12):
                     
                         # Determine if index 'b' is related to the i-node or j-node
                         if b < 6:
                             # Find the corresponding index 'n' in the global stiffness matrix
-                            n = spring.iNode.ID*6 + b
+                            n = spring.i_node.ID*6 + b
                         else:
                             # Find the corresponding index 'n' in the global stiffness matrix
-                            n = spring.jNode.ID*6 + (b-6)
+                            n = spring.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                         K[(m, n)] += spring_K[(a, b)]
@@ -1195,20 +1258,20 @@ class FEModel3D():
                     # Determine if index 'a' is related to the i-node or j-node
                     if a < 6:
                         # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.iNode.ID*6 + a
+                        m = member.i_node.ID*6 + a
                     else:
                         # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.jNode.ID*6 + (a-6)
+                        m = member.j_node.ID*6 + (a-6)
                     
                     for b in range(12):
                     
                         # Determine if index 'b' is related to the i-node or j-node
                         if b < 6:
                             # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.iNode.ID*6 + b
+                            n = member.i_node.ID*6 + b
                         else:
                             # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.jNode.ID*6 + (b-6)
+                            n = member.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                         K[(m, n)] += member_K[(a, b)]
@@ -1229,32 +1292,32 @@ class FEModel3D():
                 # Determine which node the index 'a' is related to
                 if a < 6:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.mNode.ID*6 + a
+                    m = quad.m_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.nNode.ID*6 + (a - 6)
+                    m = quad.n_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.iNode.ID*6 + (a - 12)
+                    m = quad.i_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.jNode.ID*6 + (a - 18)
+                    m = quad.j_node.ID*6 + (a - 18)
 
                 for b in range(24):
 
                     # Determine which node the index 'b' is related to
                     if b < 6:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.mNode.ID*6 + b
+                        n = quad.m_node.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.nNode.ID*6 + (b - 6)
+                        n = quad.n_node.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.iNode.ID*6 + (b - 12)
+                        n = quad.i_node.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.jNode.ID*6 + (b - 18)
+                        n = quad.j_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     K[m, n] += quad_K[a, b]
@@ -1275,32 +1338,32 @@ class FEModel3D():
                 # Determine which node the index 'a' is related to
                 if a < 6:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.iNode.ID*6 + a
+                    m = plate.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.nNode.ID*6 + (a - 6)
+                    m = plate.n_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.mNode.ID*6 + (a - 12)
+                    m = plate.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.jNode.ID*6 + (a - 18)
+                    m = plate.j_node.ID*6 + (a - 18)
 
                 for b in range(24):
 
                     # Determine which node the index 'b' is related to
                     if b < 6:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.iNode.ID*6 + b
+                        n = plate.i_node.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.nNode.ID*6 + (b - 6)
+                        n = plate.n_node.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.mNode.ID*6 + (b - 12)
+                        n = plate.m_node.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.jNode.ID*6 + (b - 18)
+                        n = plate.j_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     K[m, n] += plate_K[a, b]
@@ -1355,20 +1418,20 @@ class FEModel3D():
                     # Determine if index 'a' is related to the i-node or j-node
                     if a < 6:
                         # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.iNode.ID*6 + a
+                        m = member.i_node.ID*6 + a
                     else:
                         # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.jNode.ID*6 + (a-6)
+                        m = member.j_node.ID*6 + (a-6)
                     
                     for b in range(12):
                     
                         # Determine if index 'b' is related to the i-node or j-node
                         if b < 6:
                             # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.iNode.ID*6 + b
+                            n = member.i_node.ID*6 + b
                         else:
                             # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.jNode.ID*6 + (b-6)
+                            n = member.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                         Kg[m, n] += member_Kg[(a, b)]
@@ -1405,10 +1468,10 @@ class FEModel3D():
                 # Determine if index 'a' is related to the i-node or j-node
                 if a < 6:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = member.iNode.ID * 6 + a
+                    m = member.i_node.ID * 6 + a
                 else:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = member.jNode.ID * 6 + (a - 6)
+                    m = member.j_node.ID * 6 + (a - 6)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER[m, 0] += member_FER[a, 0]
@@ -1428,16 +1491,16 @@ class FEModel3D():
                 # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
                 if a < 6:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.iNode.ID*6 + a
+                    m = plate.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.nNode.ID*6 + (a - 6)
+                    m = plate.n_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.mNode.ID*6 + (a - 12)
+                    m = plate.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.jNode.ID*6 + (a - 18)
+                    m = plate.j_node.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER[m, 0] += plate_FER[a, 0]
@@ -1457,16 +1520,16 @@ class FEModel3D():
                 # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
                 if a < 6:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.mNode.ID*6 + a
+                    m = quad.m_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.nNode.ID*6 + (a - 6)
+                    m = quad.n_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.iNode.ID*6 + (a - 12)
+                    m = quad.i_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.jNode.ID*6 + (a - 18)
+                    m = quad.j_node.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER[m, 0] += quad_FER[a, 0]
@@ -1533,7 +1596,7 @@ class FEModel3D():
         '''
  
         # Return the global displacement vector
-        return self.__D[combo_name]
+        return self._D[combo_name]
 
 #%%
     def _partition(self, unp_matrix, D1_indices, D2_indices):
@@ -1709,7 +1772,7 @@ class FEModel3D():
                         D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
 
                 # Save the global displacement vector
-                self.__D[combo.name] = D
+                self._D[combo.name] = D
 
                 # Store the calculated global nodal displacements into each node
                 for node in self.Nodes.values():
@@ -1944,7 +2007,7 @@ class FEModel3D():
                         D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0])
 
                 # Save the global displacement vector
-                self.__D[combo.name] = D
+                self._D[combo.name] = D
 
                 # Store the calculated global nodal displacements into each node
                 for node in self.Nodes.values():
@@ -2107,7 +2170,7 @@ class FEModel3D():
                     # Sum the spring end forces at the node
                     for spring in self.Springs.values():
 
-                        if spring.iNode == node and spring.active[combo.name] == True:
+                        if spring.i_node == node and spring.active[combo.name] == True:
                             
                             # Get the spring's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2120,7 +2183,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += spring_F[4, 0]
                             node.RxnMZ[combo.name] += spring_F[5, 0]
 
-                        elif spring.jNode == node and spring.active[combo.name] == True:
+                        elif spring.j_node == node and spring.active[combo.name] == True:
                         
                             # Get the spring's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2136,7 +2199,7 @@ class FEModel3D():
                     # Sum the member end forces at the node
                     for member in self.Members.values():
                     
-                        if member.iNode == node and member.active[combo.name] == True:
+                        if member.i_node == node and member.active[combo.name] == True:
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2149,7 +2212,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += member_F[4, 0]
                             node.RxnMZ[combo.name] += member_F[5, 0]
 
-                        elif member.jNode == node and member.active[combo.name] == True:
+                        elif member.j_node == node and member.active[combo.name] == True:
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2165,7 +2228,7 @@ class FEModel3D():
                     # Sum the plate forces at the node
                     for plate in self.Plates.values():
 
-                        if plate.iNode == node:
+                        if plate.i_node == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2178,7 +2241,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += plate_F[4, 0]
                             node.RxnMZ[combo.name] += plate_F[5, 0]
 
-                        elif plate.nNode == node:
+                        elif plate.n_node == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2191,7 +2254,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += plate_F[10, 0]
                             node.RxnMZ[combo.name] += plate_F[11, 0]
 
-                        elif plate.mNode == node:
+                        elif plate.m_node == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2204,7 +2267,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += plate_F[16, 0]
                             node.RxnMZ[combo.name] += plate_F[17, 0]
 
-                        elif plate.jNode == node:
+                        elif plate.j_node == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2220,7 +2283,7 @@ class FEModel3D():
                     # Sum the quad forces at the node
                     for quad in self.Quads.values():
 
-                        if quad.mNode == node:
+                        if quad.m_node == node:
 
                             # Get the quad's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2233,7 +2296,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += quad_F[4, 0]
                             node.RxnMZ[combo.name] += quad_F[5, 0]
 
-                        elif quad.nNode == node:
+                        elif quad.n_node == node:
 
                             # Get the quad's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2246,7 +2309,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += quad_F[10, 0]
                             node.RxnMZ[combo.name] += quad_F[11, 0]
 
-                        elif quad.iNode == node:
+                        elif quad.i_node == node:
 
                             # Get the quad's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2259,7 +2322,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += quad_F[16, 0]
                             node.RxnMZ[combo.name] += quad_F[17, 0]
 
-                        elif quad.jNode == node:
+                        elif quad.j_node == node:
 
                             # Get the quad's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    

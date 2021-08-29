@@ -16,15 +16,15 @@ class Spring3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, iNode, jNode, ks, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})},
+    def __init__(self, Name, i_node, j_node, ks, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})},
                  tension_only=False, comp_only=False):
         '''
         Initializes a new spring.
         '''
         self.Name = Name    # A unique name for the spring given by the user
         self.ID = None      # Unique index number for the spring assigned by the program
-        self.iNode = iNode  # The spring's i-node
-        self.jNode = jNode  # The spring's j-node
+        self.i_node = i_node  # The spring's i-node
+        self.j_node = j_node  # The spring's j-node
         self.ks = ks        # The spring constant (force/displacement)
         self.LoadCombos = LoadCombos # The dictionary of load combinations in the model this spring belongs to
         self.tension_only = tension_only # Indicates whether the spring is tension-only
@@ -42,11 +42,11 @@ class Spring3D():
         '''
 
         # Get the i-node and the j-node for the spring
-        iNode = self.iNode
-        jNode = self.jNode
+        i_node = self.i_node
+        j_node = self.j_node
 
         # Return the distance between the two nodes
-        return ((jNode.X-iNode.X)**2+(jNode.Y-iNode.Y)**2+(jNode.Z-iNode.Z)**2)**0.5
+        return ((j_node.X-i_node.X)**2+(j_node.Y-i_node.Y)**2+(j_node.Z-i_node.Z)**2)**0.5
 
 #%%
     def k(self):
@@ -109,12 +109,12 @@ class Spring3D():
         Returns the transformation matrix for the spring.
         '''
 
-        x1 = self.iNode.X
-        x2 = self.jNode.X
-        y1 = self.iNode.Y
-        y2 = self.jNode.Y
-        z1 = self.iNode.Z
-        z2 = self.jNode.Z
+        x1 = self.i_node.X
+        x2 = self.j_node.X
+        y1 = self.i_node.Y
+        y2 = self.j_node.Y
+        z1 = self.i_node.Z
+        z2 = self.j_node.Z
         L = self.L()
         
         # Calculate the direction cosines for the local x-axis
@@ -216,20 +216,20 @@ class Spring3D():
         # Read in the global displacements from the nodes
         # Apply axial displacements only if the spring is active
         if self.active[combo_name] == True:
-            D[0, 0] = self.iNode.DX[combo_name]
-            D[6, 0] = self.jNode.DX[combo_name]
+            D[0, 0] = self.i_node.DX[combo_name]
+            D[6, 0] = self.j_node.DX[combo_name]
 
         # Apply the remaining displacements
-        D[1, 0] = self.iNode.DY[combo_name]
-        D[2, 0] = self.iNode.DZ[combo_name]
-        D[3, 0] = self.iNode.RX[combo_name]
-        D[4, 0] = self.iNode.RY[combo_name]
-        D[5, 0] = self.iNode.RZ[combo_name]
-        D[7, 0] = self.jNode.DY[combo_name]
-        D[8, 0] = self.jNode.DZ[combo_name]
-        D[9, 0] = self.jNode.RX[combo_name]
-        D[10, 0] = self.jNode.RY[combo_name]
-        D[11, 0] = self.jNode.RZ[combo_name]      
+        D[1, 0] = self.i_node.DY[combo_name]
+        D[2, 0] = self.i_node.DZ[combo_name]
+        D[3, 0] = self.i_node.RX[combo_name]
+        D[4, 0] = self.i_node.RY[combo_name]
+        D[5, 0] = self.i_node.RZ[combo_name]
+        D[7, 0] = self.j_node.DY[combo_name]
+        D[8, 0] = self.j_node.DZ[combo_name]
+        D[9, 0] = self.j_node.RX[combo_name]
+        D[10, 0] = self.j_node.RY[combo_name]
+        D[11, 0] = self.j_node.RZ[combo_name]      
 
         # Return the global displacement vector
         return D

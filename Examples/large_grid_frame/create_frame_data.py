@@ -81,7 +81,7 @@ filename = os.path.join(os.path.dirname(__file__), 'gridmembers.csv')
 with open(filename, mode='w', newline='') as f:
     csv_writer = csv.writer(f)
     # Write the header
-    csv_writer.writerow(['Name', 'iNode', 'jNode'])
+    csv_writer.writerow(['Name', 'i_node', 'j_node'])
     # Write the member list to the file
     csv_writer.writerows(member_list)
 

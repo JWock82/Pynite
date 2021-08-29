@@ -17,7 +17,7 @@ E = 900*f_m/1000  # Masonry modulus of elasticity (ksi)
 nu = 0.17         # Poisson's ratio for masonry
 
 # Choose a desired mesh size. The program will try to stick to this as best as it can.
-mesh_size = 6  # in
+mesh_size = 12  # in
 
 # Set the wall's dimensions
 width = 26*12   # Wall overall width (in)
@@ -79,8 +79,11 @@ model.add_load_combo('Seismic', {'E': 1.0})
 # Analyze the model
 model.analyze(log=True, check_statics=True)
 
+import os
 # Render the model and plot the `Txy` shears.
-render_model(model, text_height=1, render_loads=True, deformed_shape=True, deformed_scale=200, color_map='Txy', combo_name='Seismic', labels=False)
+window = render_model(model, text_height=1, render_loads=True, deformed_shape=True,
+                      deformed_scale=200, color_map='Txy', scalar_bar=False,
+                      combo_name='Seismic', labels=False, screenshot='console') #screenshot='Shear Wall Example.png'
 
 # Print the maximum displacement
 d_max = max([node.DX['Seismic'] for node in model.Nodes.values()])

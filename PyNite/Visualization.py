@@ -533,14 +533,14 @@ class VisSpring():
         for node in nodes.values():
 
             # Check to see if the current node is the i-node
-            if node.Name == spring.iNode.Name:
+            if node.Name == spring.i_node.Name:
                 Xi = node.X
                 Yi = node.Y
                 Zi = node.Z
                 spring.SetPoint1(Xi, Yi, Zi)
 
             # Check to see if the current node is the j-node
-            elif node.Name == spring.jNode.Name:
+            elif node.Name == spring.j_node.Name:
                 Xj = node.X
                 Yj = node.Y
                 Zj = node.Z
@@ -582,14 +582,14 @@ class VisMember():
     for node in nodes.values():
 
       # Check to see if the current node is the i-node
-      if node.Name == member.iNode.Name:
+      if node.Name == member.i_node.Name:
         Xi = node.X
         Yi = node.Y
         Zi = node.Z
         line.SetPoint1(Xi, Yi, Zi)
 
       # Check to see if the current node is the j-node
-      elif node.Name == member.jNode.Name:
+      elif node.Name == member.j_node.Name:
         Xj = node.X
         Yj = node.Y
         Zj = node.Z
@@ -653,7 +653,7 @@ class VisDeformedMember():
     for node in nodes.values():
       
       # Check to see if the current node is the i-node
-      if node.Name == member.iNode.Name:
+      if node.Name == member.i_node.Name:
         Xi = node.X
         Yi = node.Y
         Zi = node.Z
@@ -729,14 +729,14 @@ class VisDeformedSpring():
         for node in nodes.values():
       
             # Check to see if the current node is the i-node
-            if node.Name == spring.iNode.Name:
+            if node.Name == spring.i_node.Name:
                 Xi = node.X + node.DX[combo_name]*scale_factor
                 Yi = node.Y + node.DY[combo_name]*scale_factor
                 Zi = node.Z + node.DZ[combo_name]*scale_factor
                 self.source.SetPoint1(Xi, Yi, Zi)
         
             # Check to see if the current node is the i-node
-            if node.Name == spring.jNode.Name:
+            if node.Name == spring.j_node.Name:
                 Xj = node.X + node.DX[combo_name]*scale_factor
                 Yj = node.Y + node.DY[combo_name]*scale_factor
                 Zj = node.Z + node.DZ[combo_name]*scale_factor
@@ -1068,50 +1068,50 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
           i, j, m, n = element.d(combo_name)[[2, 20, 14, 8], :]
         else:
           i, j, m, n = element.d(combo_name)[[14, 20, 2, 8], :]
-        element.iNode.contour.append(i)
-        element.jNode.contour.append(j)
-        element.mNode.contour.append(m)
-        element.nNode.contour.append(n)
+        element.i_node.contour.append(i)
+        element.j_node.contour.append(j)
+        element.m_node.contour.append(m)
+        element.n_node.contour.append(n)
       elif stress_type == 'Mx':
-        element.iNode.contour.append(element.moment(r_left, s_bot, combo_name)[0])
-        element.jNode.contour.append(element.moment(r_right, s_bot, combo_name)[0])
-        element.mNode.contour.append(element.moment(r_right, s_top, combo_name)[0])
-        element.nNode.contour.append(element.moment(r_left, s_top, combo_name)[0])
+        element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[0])
+        element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[0])
+        element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[0])
+        element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[0])
       elif stress_type == 'My':
-        element.iNode.contour.append(element.moment(r_left, s_bot, combo_name)[1])
-        element.jNode.contour.append(element.moment(r_right, s_bot, combo_name)[1])
-        element.mNode.contour.append(element.moment(r_right, s_top, combo_name)[1])
-        element.nNode.contour.append(element.moment(r_left, s_top, combo_name)[1])
+        element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[1])
+        element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[1])
+        element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[1])
+        element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[1])
       elif stress_type == 'Mxy':
-        element.iNode.contour.append(element.moment(r_left, s_bot, combo_name)[2])
-        element.jNode.contour.append(element.moment(r_right, s_bot, combo_name)[2])
-        element.mNode.contour.append(element.moment(r_right, s_top, combo_name)[2])
-        element.nNode.contour.append(element.moment(r_left, s_top, combo_name)[2])
+        element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[2])
+        element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[2])
+        element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[2])
+        element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[2])
       elif stress_type == 'Qx':
-        element.iNode.contour.append(element.shear(r_left, s_bot, combo_name)[0])
-        element.jNode.contour.append(element.shear(r_right, s_bot, combo_name)[0])
-        element.mNode.contour.append(element.shear(r_right, s_top, combo_name)[0])
-        element.nNode.contour.append(element.shear(r_left, s_top, combo_name)[0])
+        element.i_node.contour.append(element.shear(r_left, s_bot, combo_name)[0])
+        element.j_node.contour.append(element.shear(r_right, s_bot, combo_name)[0])
+        element.m_node.contour.append(element.shear(r_right, s_top, combo_name)[0])
+        element.n_node.contour.append(element.shear(r_left, s_top, combo_name)[0])
       elif stress_type == 'Qy':
-        element.iNode.contour.append(element.shear(r_left, s_bot, combo_name)[1])
-        element.jNode.contour.append(element.shear(r_right, s_bot, combo_name)[1])
-        element.mNode.contour.append(element.shear(r_right, s_top, combo_name)[1])
-        element.nNode.contour.append(element.shear(r_left, s_top, combo_name)[1])
+        element.i_node.contour.append(element.shear(r_left, s_bot, combo_name)[1])
+        element.j_node.contour.append(element.shear(r_right, s_bot, combo_name)[1])
+        element.m_node.contour.append(element.shear(r_right, s_top, combo_name)[1])
+        element.n_node.contour.append(element.shear(r_left, s_top, combo_name)[1])
       elif stress_type == 'Sx':
-        element.iNode.contour.append(element.membrane(r_left, s_bot, combo_name)[0])
-        element.jNode.contour.append(element.membrane(r_right, s_bot, combo_name)[0])
-        element.mNode.contour.append(element.membrane(r_right, s_top, combo_name)[0])
-        element.nNode.contour.append(element.membrane(r_left, s_top, combo_name)[0])
+        element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[0])
+        element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[0])
+        element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[0])
+        element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[0])
       elif stress_type == 'Sy':
-        element.iNode.contour.append(element.membrane(r_left, s_bot, combo_name)[1])
-        element.jNode.contour.append(element.membrane(r_right, s_bot, combo_name)[1])
-        element.mNode.contour.append(element.membrane(r_right, s_top, combo_name)[1])
-        element.nNode.contour.append(element.membrane(r_left, s_top, combo_name)[1])
+        element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[1])
+        element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[1])
+        element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[1])
+        element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[1])
       elif stress_type == 'Txy':
-        element.iNode.contour.append(element.membrane(r_left, s_bot, combo_name)[2])
-        element.jNode.contour.append(element.membrane(r_right, s_bot, combo_name)[2])
-        element.mNode.contour.append(element.membrane(r_right, s_top, combo_name)[2])
-        element.nNode.contour.append(element.membrane(r_left, s_top, combo_name)[2])
+        element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[2])
+        element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[2])
+        element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[2])
+        element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[2])
 
     # Average the values at each node to obtain a smoothed contour
     for node in model.Nodes.values():
@@ -1213,7 +1213,10 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
         
         # Calculate the factored value for this load and it's sign (positive or negative)
         load_value = load[1]*load_factors[load[2]]
-        sign = load_value/abs(load_value)
+        if load_value != 0:
+          sign = load_value/abs(load_value)
+        else:
+          sign = 1
         
         # Display the load
         if load[0] == 'FX':
@@ -1240,7 +1243,7 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
     dir_cos = member.T()[0:3, 0:3]
 
     # Get the starting point for the member
-    x_start, y_start, z_start = member.iNode.X, member.iNode.Y, member.iNode.Z
+    x_start, y_start, z_start = member.i_node.X, member.i_node.Y, member.i_node.Z
 
     # Step through each member point load
     for load in member.PtLoads:
@@ -1348,10 +1351,10 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
           sign = abs(load[0])/load[0]
 
         # Find the position of the load's 4 corners
-        position0 = [plate.iNode.X, plate.iNode.Y, plate.iNode.Z]
-        position1 = [plate.jNode.X, plate.jNode.Y, plate.jNode.Z]
-        position2 = [plate.mNode.X, plate.mNode.Y, plate.mNode.Z]
-        position3 = [plate.nNode.X, plate.nNode.Y, plate.nNode.Z]
+        position0 = [plate.i_node.X, plate.i_node.Y, plate.i_node.Z]
+        position1 = [plate.j_node.X, plate.j_node.Y, plate.j_node.Z]
+        position2 = [plate.m_node.X, plate.m_node.Y, plate.m_node.Z]
+        position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
 
         # Create an area load and get its data
         area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*text_height, '{:.3g}'.format(load_value), text_height)
@@ -1435,23 +1438,23 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
       
     # Create a point for each corner (must be in counter clockwise order)
     if deformed_shape == True:
-      p0 = [item.iNode.X + item.iNode.DX[combo_name]*deformed_scale,
-            item.iNode.Y + item.iNode.DY[combo_name]*deformed_scale,
-            item.iNode.Z + item.iNode.DZ[combo_name]*deformed_scale]
-      p1 = [item.jNode.X + item.jNode.DX[combo_name]*deformed_scale,
-            item.jNode.Y + item.jNode.DY[combo_name]*deformed_scale,
-            item.jNode.Z + item.jNode.DZ[combo_name]*deformed_scale]
-      p2 = [item.mNode.X + item.mNode.DX[combo_name]*deformed_scale,
-            item.mNode.Y + item.mNode.DY[combo_name]*deformed_scale,
-            item.mNode.Z + item.mNode.DZ[combo_name]*deformed_scale]
-      p3 = [item.nNode.X + item.nNode.DX[combo_name]*deformed_scale,
-            item.nNode.Y + item.nNode.DY[combo_name]*deformed_scale,
-            item.nNode.Z + item.nNode.DZ[combo_name]*deformed_scale]
+      p0 = [item.i_node.X + item.i_node.DX[combo_name]*deformed_scale,
+            item.i_node.Y + item.i_node.DY[combo_name]*deformed_scale,
+            item.i_node.Z + item.i_node.DZ[combo_name]*deformed_scale]
+      p1 = [item.j_node.X + item.j_node.DX[combo_name]*deformed_scale,
+            item.j_node.Y + item.j_node.DY[combo_name]*deformed_scale,
+            item.j_node.Z + item.j_node.DZ[combo_name]*deformed_scale]
+      p2 = [item.m_node.X + item.m_node.DX[combo_name]*deformed_scale,
+            item.m_node.Y + item.m_node.DY[combo_name]*deformed_scale,
+            item.m_node.Z + item.m_node.DZ[combo_name]*deformed_scale]
+      p3 = [item.n_node.X + item.n_node.DX[combo_name]*deformed_scale,
+            item.n_node.Y + item.n_node.DY[combo_name]*deformed_scale,
+            item.n_node.Z + item.n_node.DZ[combo_name]*deformed_scale]
     else:
-      p0 = [item.iNode.X, item.iNode.Y, item.iNode.Z]
-      p1 = [item.jNode.X, item.jNode.Y, item.jNode.Z]
-      p2 = [item.mNode.X, item.mNode.Y, item.mNode.Z]
-      p3 = [item.nNode.X, item.nNode.Y, item.nNode.Z]
+      p0 = [item.i_node.X, item.i_node.Y, item.i_node.Z]
+      p1 = [item.j_node.X, item.j_node.Y, item.j_node.Z]
+      p2 = [item.m_node.X, item.m_node.Y, item.m_node.Z]
+      p3 = [item.n_node.X, item.n_node.Y, item.n_node.Z]
 
     # Add the points to the `vtkPoints` object we created earlier
     plate_points.InsertNextPoint(p0)
@@ -1469,10 +1472,10 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
     quad.GetPointIds().SetId(3, i*4 + 3)
 
     # Get the contour value for each node
-    r0 = item.iNode.contour
-    r1 = item.jNode.contour
-    r2 = item.mNode.contour
-    r3 = item.nNode.contour
+    r0 = item.i_node.contour
+    r1 = item.j_node.contour
+    r2 = item.m_node.contour
+    r3 = item.n_node.contour
         
     if color_map != None:
         

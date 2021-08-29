@@ -65,8 +65,8 @@
             {% for member in members %}
                 <tr>
                     <td>{{ member.Name }}</td>
-                    <td>{{ member.iNode.Name }}</td>
-                    <td>{{ member.jNode.Name }}</td>
+                    <td>{{ member.i_node.Name }}</td>
+                    <td>{{ member.j_node.Name }}</td>
                     <td>{{ "%.4g" | format(member.A) }}</td>
                     <td>{{ "%.4g" | format(member.Iy) }}</td>
                     <td>{{ "%.4g" | format(member.Iz) }}</td>
@@ -140,10 +140,10 @@
             {% for plate in plates %}
                 <tr>
                     <td>{{ plate.Name }}</td>
-                    <td>{{ plate.iNode.Name }}</td>
-                    <td>{{ plate.jNode.Name }}</td>
-                    <td>{{ plate.mNode.Name }}</td>
-                    <td>{{ plate.nNode.Name }}</td>
+                    <td>{{ plate.i_node.Name }}</td>
+                    <td>{{ plate.j_node.Name }}</td>
+                    <td>{{ plate.m_node.Name }}</td>
+                    <td>{{ plate.n_node.Name }}</td>
                     <td>{{ "%.4g" | format(plate.t) }}</td>
                     <td>{{ "%.4g" | format(plate.E) }}</td>
                     <td>{{ "%.4g" | format(plate.nu) }}</td>
@@ -172,10 +172,10 @@
             {% for quad in quads %}
                 <tr>
                     <td>{{ quad.Name }}</td>
-                    <td>{{ quad.iNode.Name }}</td>
-                    <td>{{ quad.jNode.Name }}</td>
-                    <td>{{ quad.mNode.Name }}</td>
-                    <td>{{ quad.nNode.Name }}</td>
+                    <td>{{ quad.i_node.Name }}</td>
+                    <td>{{ quad.j_node.Name }}</td>
+                    <td>{{ quad.m_node.Name }}</td>
+                    <td>{{ quad.n_node.Name }}</td>
                     <td>{{ "%.4g" | format(quad.t) }}</td>
                     <td>{{ "%.4g" | format(quad.E) }}</td>
                     <td>{{ "%.4g" | format(quad.nu) }}</td>
