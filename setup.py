@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/JWock82/PyNite.git",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(include=['PyNite', 'Pynite.*']),
     package_data = {'PyNite': ['*html', '*.css']},
     classifiers=[
         "Programming Language :: Python :: 3",
