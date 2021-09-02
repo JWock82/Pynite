@@ -6,7 +6,7 @@ from numpy import seterr
 from numpy.linalg import solve
 
 from scipy.sparse.linalg import spsolve
-from scipy.sparse import lil_matrix
+from scipy.sparse import lil_matrix, coo_matrix
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
@@ -18,11 +18,12 @@ from PyNite.LoadCombo import LoadCombo
 class FEModel3D():
     """
     A 3D finite element model.
+
     """
 
     def __init__(self):
         """
-        Generates a new 3D finite element model.
+        Creates a new 3D finite element model.
 
         Returns
         -------
@@ -1163,8 +1164,12 @@ class FEModel3D():
             
 #%%    
     def K(self, combo_name='Combo 1', log=False):
-        '''
+        """
         Returns the model's global stiffness matrix.
+
+        The stiffness matrix will be returned in scipy's sparse lil format,
+        which reduces memory usage and can be easily converted to other
+        formats.
 
         Parameters
         ----------
@@ -1172,13 +1177,22 @@ class FEModel3D():
             The load combination to get the stiffness matrix for. Default is 'Combo 1'.
         log : bool, optional
             Prints updates to the console if set to True. Default is False.
-        '''
         
-        # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a
-        # scipy sparse `lil_matrix`. This matrix format has several advantages. It uses less memory
-        # if the matrix is sparse, supports slicing, and can be converted to other formats (sparse
-        # or dense) later on for mathematical operations.
-        K = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
+        Returns
+        -------
+        K : coo_matrix
+            The global stiffness matrix for the structure.
+
+        """
+        
+        # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
+        # documentation states that this type of matrix is ideal for efficient
+        # construction of finite element matrices. When converted to another
+        # format, the `coo_matrix` sums values at the same (i, j) index. We'll
+        # build the matrix from three lists.
+        row = []
+        col = []
+        data = []
         
         # Add stiffness terms for each nodal spring in the model
         if log: print('- Adding nodal spring support stiffness terms to global stiffness matrix')
@@ -1187,22 +1201,34 @@ class FEModel3D():
             # Determine if the node has any spring supports
             if type(node.support_DX) == float or type(node.support_DX) == int:
                 m, n = node.ID*6, node.ID*6
-                K[(m, n)] += node.support_DX
+                row.append(m)
+                col.append(n)
+                data.append(node.support_DX)
             if type(node.support_DY) == float or type(node.support_DY) == int:
                 m, n = node.ID*6 + 1, node.ID*6 + 1
-                K[(m, n)] += node.support_DY
+                row.append(m)
+                col.append(n)
+                data.append(node.support_DY)
             if type(node.support_DZ) == float or type(node.support_DZ) == int:
                 m, n = node.ID*6 + 2, node.ID*6 + 2
-                K[(m, n)] += node.support_DZ
+                row.append(m)
+                col.append(n)
+                data.append(node.support_DZ)
             if type(node.support_RX) == float or type(node.support_RX) == int:
                 m, n = node.ID*6 + 3, node.ID*6 + 3
-                K[(m, n)] += node.support_RX
+                row.append(m)
+                col.append(n)
+                data.append(node.support_RX)
             if type(node.support_RY) == float or type(node.support_RY) == int:
                 m, n = node.ID*6 + 4, node.ID*6 + 4
-                K[(m, n)] += node.support_RY
+                row.append(m)
+                col.append(n)
+                data.append(node.support_RY)
             if type(node.support_RZ) == float or type(node.support_RZ) == int:
                 m, n = node.ID*6 + 5, node.ID*6 + 5
-                K[(m, n)] += node.support_RZ
+                row.append(m)
+                col.append(n)
+                data.append(node.support_RZ)
 
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
@@ -1238,7 +1264,9 @@ class FEModel3D():
                             n = spring.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        K[(m, n)] += spring_K[(a, b)]
+                        row.append(m)
+                        col.append(n)
+                        data.append(spring_K[(a, b)])
 
         # Add stiffness terms for each member in the model
         if log: print('- Adding member stiffness terms to global stiffness matrix')
@@ -1274,7 +1302,9 @@ class FEModel3D():
                             n = member.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        K[(m, n)] += member_K[(a, b)]
+                        row.append(m)
+                        col.append(n)
+                        data.append(member_K[(a, b)])
                 
         # Add stiffness terms for each quadrilateral in the model
         if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
@@ -1320,7 +1350,9 @@ class FEModel3D():
                         n = quad.j_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K[m, n] += quad_K[a, b]
+                    row.append(m)
+                    col.append(n)
+                    data.append(quad_K[a, b])
         
         # Add stiffness terms for each plate in the model
         if log: print('- Adding plate stiffness terms to global stiffness matrix')
@@ -1366,7 +1398,19 @@ class FEModel3D():
                         n = plate.j_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    K[m, n] += plate_K[a, b]
+                    row.append(m)
+                    col.append(n)
+                    data.append(plate_K[a, b])
+
+        # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
+        # documentation states that this type of matrix is ideal for efficient
+        # construction of finite element matrices. When converted to another
+        # format, the `coo_matrix` sums values at the same (i, j) index.
+        row = array(row)
+        col = array(col)
+        data = array(data)
+        K = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
+        K = K.tolil()
 
         # Return the global stiffness matrix
         return K      
