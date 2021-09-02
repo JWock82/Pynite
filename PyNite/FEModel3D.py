@@ -1410,7 +1410,6 @@ class FEModel3D():
         col = array(col)
         data = array(data)
         K = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
-        K = K.tolil()
 
         # Return the global stiffness matrix
         return K      
@@ -1749,7 +1748,7 @@ class FEModel3D():
             while convergence == False and divergence == False:
 
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
-                K11, K12, K21, K22 = self._partition(self.K(combo.name, log), D1_indices, D2_indices)
+                K11, K12, K21, K22 = self._partition(self.K(combo.name, log).tolil(), D1_indices, D2_indices)
 
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
@@ -1975,14 +1974,14 @@ class FEModel3D():
                 # Get the partitioned global matrices
                 if iter_count_PD == 1:
                     
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log), D1_indices, D2_indices) # Initial stiffness matrix
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log).tolil(), D1_indices, D2_indices) # Initial stiffness matrix
                     FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)       # Fixed end reactions
                     P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)             # Nodal forces
 
                 else:
 
                     # Calculate the global stiffness matrices (partitioned)
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log), D1_indices, D2_indices)      # Initial stiffness matrix
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log).tolil(), D1_indices, D2_indices)      # Initial stiffness matrix
                     Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log), D1_indices, D2_indices) # Geometric stiffness matrix
 
                     # Combine the partitioned stiffness matrices. They are currently `lil` format

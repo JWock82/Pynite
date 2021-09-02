@@ -42,7 +42,7 @@ As I've gotten into the structural engineering profession, I've found there's a 
 # Support
 Whether you just need help getting started with PyNite, or are looking to build something more complex, there are a few resources available:
 * The examples in the "Examples" folder in this repository cover a variety of simple problems. The comments in the examples provide additional guidance on how PyNite works.
-* The wiki in this repository provides basic guidance on how to use PyNite.
+* The wiki in this repository provides basic guidance on how to use PyNite, although it has fallen behind the development of the program.
 * If you're looking for more direct guidance on using PyNite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com to discuss options.
 
 # Dependencies
@@ -62,11 +62,16 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
-v.0.0.48 - Global Load Directions
+v0.0.49
+* Major speed boost. A lot of time was being wasted reading/writing to a SciPy `lil_matrix` format. The stiffness matrix is now assembled as a `coo_format` first, and then switched to lil format later on to facilitate slicing.
+* Refactored node names to match PEP8 style guide. Instead of `iNode`, `jNode`, etc. PyNite now uses `i_node`, `j_node` etc. This should only affect you if you were using the keyword arguments for node names.
+* Removed test modules from package distribution. These files were unnecessary for users to have installed on their computers.
+
+v0.0.48 - Global Load Directions
 * Global load directions can now be used for member loads now. Use capital notation to apply the member load in the global X, Y, or Z direction (e.g. 'FX', 'MY', 'FZ'...). Use lower case notation to apply the member load in the member's local x, y, or z direction (e.g. 'Fx', 'My', 'Fz'...).
 * Bug fix for rendering models without plates/quads (special thanks to tamalone1 for this pull request!)
 
-v.0.0.47 - Bug Fix After Refactoring
+v0.0.47 - Bug Fix After Refactoring
 * Fixed a bug identified in Issue #98 caused by refactoring in v0.0.44.
 
 v0.0.46 - Rendering Improvements
