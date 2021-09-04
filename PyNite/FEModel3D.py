@@ -846,30 +846,50 @@ class FEModel3D():
         self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
         
 #%%
-    def add_plate_surface_pressure(self, plate_ID, pressure, case='Case 1'):
+    def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         warnings.warn('`AddPlateSurfacePressure` will be replaced with `add_plate_surface_pressure` in a future version of PyNite.', FutureWarning)
-        self.add_plate_surface_pressure(plate_ID, pressure, case)
+        self.add_plate_surface_pressure(plate_name, pressure, case)
 
-    def add_plate_surface_pressure(self, plate_ID, pressure, case='Case 1'):
-        '''
+    def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
+        """
         Adds a surface pressure to the rectangular plate element.
-        '''
+
+        Parameters
+        ----------
+        plate_name : string
+            The name for the rectangular plate to add the surface pressure to.
+        pressure : number
+            The value for the surface pressure.
+        case : string, optional
+            The load case to add the surface pressure to. Default is 'Case 1'.
+        
+        """
 
         # Add the surface pressure to the rectangle
-        self.Plates[plate_ID].pressures.append([pressure, case])
+        self.Plates[plate_name].pressures.append([pressure, case])
 
 #%%
-    def AddQuadSurfacePressure(self, quad_ID, pressure, case='Case 1'):
+    def AddQuadSurfacePressure(self, quad_name, pressure, case='Case 1'):
         warnings.warn('`AddQuadSurfacePressure` will be replaced with `add_quad_surface_pressure` in a future version of PyNite.', FutureWarning)
-        self.add_quad_surface_pressure(quad_ID, pressure, case)
+        self.add_quad_surface_pressure(quad_name, pressure, case)
 
-    def add_quad_surface_pressure(self, quad_ID, pressure, case='Case 1'):
-        '''
+    def add_quad_surface_pressure(self, quad_name, pressure, case='Case 1'):
+        """
         Adds a surface pressure to the quadrilateral element.
-        '''
+
+        Parameters
+        ----------
+        quad_name : string
+            The name for the quad to add the surface pressure to.
+        pressure : number
+            The value for the surface pressure.
+        case : string, optional
+            The load case to add the surface pressure to. Default is 'Case 1'.
+        
+        """
 
         # Add the surface pressure to the quadrilateral
-        self.Quads[quad_ID].pressures.append([pressure, case])
+        self.Quads[quad_name].pressures.append([pressure, case])
 
 #%%
     def ClearLoads(self):

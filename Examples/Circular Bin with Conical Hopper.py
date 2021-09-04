@@ -1,14 +1,15 @@
+from math import pi
 from PyNite.FEModel3D import FEModel3D
 from PyNite.Mesh import FrustrumMesh, CylinderMesh
-from PyNite.Visualization import RenderModel
+from PyNite.Visualization import render_model
 
 t = 0.25/12
 E = 29000*1000*12**2
 nu = 0.3
 mesh_size = 0.5
-r_shell = 5
-r_hopper = 1
-h_shell = 15
+r_shell = 7.5
+r_hopper = 1.5
+h_shell = 20
 h_hopper = 10
 center = [0, 0, 0]
 axis = 'Y'
@@ -38,8 +39,8 @@ model.add_mesh(shell_mesh)
 
 # The two meshes have overlapping duplicate nodes that need to be merged
 import cProfile
-# cProfile.run('model.MergeDuplicateNodes()', sort='cumtime')
-model.MergeDuplicateNodes()
+# cProfile.run('model.merge_duplicate_nodes()', sort='cumtime')
+model.merge_duplicate_nodes()
 
 # Add hydrostatic pressure to each element in the model
 for element in model.Quads.values():
@@ -55,7 +56,8 @@ for node in model.Nodes.values():
 model.add_load_combo('1.4F', {'Hydrostatic': 1.4})
 
 # Analyze the model
-cProfile.run('model.analyze()', sort='cumtime')
+# cProfile.run('model.analyze()', sort='cumtime')
+model.analyze()
 
 # Render the model. Labels and loads will be turned off to speed up interaction.
-RenderModel(model, 0.1, render_loads=True, color_map='Sy', combo_name='1.4F', labels=False, screenshot=False)
+render_model(model, 0.1, render_loads=True, color_map='dz', combo_name='1.4F', labels=False)

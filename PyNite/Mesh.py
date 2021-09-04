@@ -843,6 +843,7 @@ class AnnulusTransRingMesh(Mesh):
         self.Xo = origin[0]
         self.Yo = origin[1]
         self.Zo = origin[2]
+        self.axis = axis
 
         # Create the mesh
         self._generate()
@@ -989,7 +990,7 @@ class FrustrumMesh(AnnulusMesh):
                  axis='Y', start_node='N1', start_element='Q1'):
         
         # Create an annulus mesh
-        super().__init__(t, E, nu, mesh_size, large_radius, small_radius, origin, start_node, start_element)
+        super().__init__(t, E, nu, mesh_size, large_radius, small_radius, origin, axis, start_node, start_element)
 
         Xo = origin[0]
         Yo = origin[1]
@@ -1034,7 +1035,7 @@ class CylinderMesh(Mesh):
         circumference. The default is `None`.
     """
 
-    def __init__(self, t, E, nu, mesh_size, radius, height, center=[0, 0, 0], start_node='N1', start_element='Q1', num_quads=None):
+    def __init__(self, t, E, nu, mesh_size, radius, height, center=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1', num_quads=None):
 
         super().__init__(t, E, nu, start_node, start_element)
 
@@ -1043,6 +1044,7 @@ class CylinderMesh(Mesh):
         self.mesh_size = mesh_size
         self.num_quads = num_quads
         self.center = center
+        self.axis = axis
 
         self._generate()
     
@@ -1052,7 +1054,7 @@ class CylinderMesh(Mesh):
         E = self.E
         nu = self.nu
 
-        mesh_size = self.mesh_size     # Desired mesh size
+        mesh_size = self.mesh_size  # Desired mesh size
         num_quads = self.num_quads  # Number of quadrilaterals in the ring
         n = self.num_quads
 
@@ -1069,12 +1071,18 @@ class CylinderMesh(Mesh):
         # Mesh the cylinder from the bottom toward the top
         while round(y, 10) < round(h, 10):
             
-            height = h - y                                # Remaining height to be meshed
+            height = h - y                  # Remaining height to be meshed
             n_vert = int(height/mesh_size)  # Number of times the plate height fits in the remaining unmeshed height
-            h_y = height/n_vert                         # Element height in the vertical direction
+            h_y = height/n_vert             # Element height in the vertical direction
         
             # Create a mesh of nodes for the ring
-            ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [0, y, 0], 'N' + str(n), 'Q' + str(q))
+            if self.axis == 'Y':
+                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [0, y, 0], self.axis, 'N' + str(n), 'Q' + str(q))
+            elif self.axis == 'X':
+                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [y, 0, 0], self.axis, 'N' + str(n), 'Q' + str(q))
+            elif self.axis == 'Z':
+                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [0, 0, y], self.axis, 'N' + str(n), 'Q' + str(q))
+
             n += num_quads
             q += num_quads
         
@@ -1097,6 +1105,7 @@ class CylinderMesh(Mesh):
             element.m_node = self.nodes[element.m_node.Name]
             element.n_node = self.nodes[element.n_node.Name]
 
+
 #%%
 class CylinderRingMesh(Mesh):
     """
@@ -1114,6 +1123,7 @@ class CylinderRingMesh(Mesh):
         from this number. The default is 'Q1'.
     num_quads : number
         The number of quadrilaterals to divide the circumference into.
+    
     """
 
     def __init__(self, t, E, nu, radius, height, num_quads, origin=[0, 0, 0], axis='Y',
@@ -1123,13 +1133,10 @@ class CylinderRingMesh(Mesh):
 
         self.radius = radius
         self.height = height
-
         self.num_quads = num_quads
-
         self.Xo = origin[0]
         self.Yo = origin[1]
         self.Zo = origin[2]
-
         self.axis = axis
 
         # Generate the nodes and elements
@@ -1138,6 +1145,7 @@ class CylinderRingMesh(Mesh):
     def _generate(self):
         """
         Generates the nodes and elements in the mesh.
+
         """
 
         num_quads = self.num_quads  # Number of quadrilaterals in the ring
@@ -1156,10 +1164,16 @@ class CylinderRingMesh(Mesh):
         theta = 2*pi/num_quads
 
         # Each node number will be increased by the offset calculated below
-        node_offset = int(self.start_node[1:]) - 1
+        try:
+            node_offset = int(self.start_node[1:]) - 1
+        except:
+            raise ValueError('Invalid node name. Enter a letter followed by a number (e.g. \'N25\')')
 
         # Each element number will be increased by the offset calculated below
-        element_offset = int(self.start_element[1:]) - 1
+        try:
+            element_offset = int(self.start_element[1:]) - 1
+        except:
+            raise ValueError('Invalid element ame. Enter a letter followed by a number (e.g. \'Q83\')')
 
         # Generate the nodes that make up the ring
         angle = 0
@@ -1191,16 +1205,16 @@ class CylinderRingMesh(Mesh):
                 angle = theta*((i - n) - 1)
                 if axis == 'Y':
                     x = Xo + radius*cos(angle)
-                    y = Yo
+                    y = Yo + height
                     z = Zo + radius*sin(angle)
                 elif axis == 'X':
-                    x = Xo
+                    x = Xo + height
                     y = Yo + radius*sin(angle)
                     z = Zo + radius*cos(angle)
                 elif axis == 'Z':
                     x = Xo + radius*sin(angle)
                     y = Yo + radius*cos(angle)
-                    z = Zo
+                    z = Zo + height
                 else:
                     raise Exception('Invalid axis specified for CylinderRingMesh.')
             
