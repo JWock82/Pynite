@@ -604,7 +604,7 @@ class FEModel3D():
         self.def_support(node_name, SupportDX, SupportDY, SupportDZ, SupportRX, SupportRY, SupportRZ)
 
     def def_support(self, node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False):
-        '''
+        """
         Defines the support conditions at a node.
         
         Nodes will default to fully unsupported unless specified otherwise.
@@ -625,7 +625,8 @@ class FEModel3D():
             Indicates whether the node is supported against rotation about the global Y-axis.
         support_RZ : bool
             Indicates whether the node is supported against rotation about the global Z-axis.
-        '''
+            
+        """
         
         # Get the node to be supported
         node = self.Nodes[node_name]
@@ -1103,7 +1104,7 @@ class FEModel3D():
             
             # Unknown displacement DX
             if ((node.support_DX == False and node.EnforcedDX == None)
-               or type(node.support_DX) == int or type(node.support_DX) == float):
+            or  isinstance(node.support_DX, (float, int, str))):
                 D1_indices.append(node.ID*6 + 0)
             # Known displacement DX
             elif node.EnforcedDX != None:
@@ -1116,7 +1117,7 @@ class FEModel3D():
 
             # Unknown displacement DY
             if ((node.support_DY == False and node.EnforcedDY == None) 
-               or type(node.support_DY) == int or type(node.support_DY) == float):
+            or  isinstance(node.support_DY, (float, int, str))):
                 D1_indices.append(node.ID*6 + 1)
             # Known displacement DY
             elif node.EnforcedDY != None:
@@ -1129,7 +1130,7 @@ class FEModel3D():
 
             # Unknown displacement DZ
             if ((node.support_DZ == False and node.EnforcedDZ == None)
-               or type(node.support_DZ) == int or type(node.support_DZ) == float):
+            or isinstance(node.support_DZ, (float, int, str))):
                 D1_indices.append(node.ID*6 + 2)
             # Known displacement DZ
             elif node.EnforcedDZ != None:
@@ -1142,7 +1143,7 @@ class FEModel3D():
 
             # Unknown displacement RX
             if ((node.support_RX == False and node.EnforcedRX == None)
-               or type(node.support_RX) == int or type(node.support_RX) == float):
+            or isinstance(node.support_RX, (float, int, str))):
                 D1_indices.append(node.ID*6 + 3)
             # Known displacement RX
             elif node.EnforcedRX != None:
@@ -1155,7 +1156,7 @@ class FEModel3D():
 
             # Unknown displacement RY
             if ((node.support_RY == False and node.EnforcedRY == None)
-               or type(node.support_RY) == int or type(node.support_RY) == float):
+            or isinstance(node.support_RY, (float, int, str))):
                 D1_indices.append(node.ID*6 + 4)
             # Known displacement RY
             elif node.EnforcedRY != None:
@@ -1168,7 +1169,7 @@ class FEModel3D():
 
             # Unknown displacement RZ
             if ((node.support_RZ == False and node.EnforcedRZ == None)
-               or type(node.support_RZ) == int or type(node.support_RZ) == float):
+            or isinstance(node.support_RZ, (float, int, str))):
                 D1_indices.append(node.ID*6 + 5)
             # Known displacement RZ
             elif node.EnforcedRZ != None:
@@ -1219,36 +1220,113 @@ class FEModel3D():
         for node in self.Nodes.values():
             
             # Determine if the node has any spring supports
-            if type(node.support_DX) == float or type(node.support_DX) == int:
+            if not isinstance(node.support_DX, bool):
+
                 m, n = node.ID*6, node.ID*6
                 row.append(m)
                 col.append(n)
-                data.append(node.support_DX)
-            if type(node.support_DY) == float or type(node.support_DY) == int:
+
+                # Check for a two-way spring support
+                if isinstance(node.support_DX, (float, int)):
+                    data.append(node.support_DX)
+
+                # Check for an active tension/compression only spring support
+                elif isinstance(node.support_DX, str):
+
+                    # See if the spring supports are active
+                    if ((node.support_DX[0] == '+' and (node.DX == {} or node.DX[combo_name] >= 0))
+                    or  (node.support_DX[0] == '-' and (node.DX == {} or node.DX[combo_name] <= 0))):
+                        data.append(abs(float(node.support_DX)))
+
+            if not isinstance(node.support_DY, bool):
+
                 m, n = node.ID*6 + 1, node.ID*6 + 1
                 row.append(m)
                 col.append(n)
-                data.append(node.support_DY)
-            if type(node.support_DZ) == float or type(node.support_DZ) == int:
+
+                # Check for a two-way spring support
+                if isinstance(node.support_DY, (float, int)):
+                    data.append(node.support_DY)
+
+                # Check for an active tension/compression only spring support
+                elif isinstance(node.support_DY, str):
+
+                    # See if the spring supports are active
+                    if ((node.support_DY[0] == '+' and (node.DY == {} or node.DY[combo_name] >= 0))
+                    or  (node.support_DY[0] == '-' and (node.DY == {} or node.DY[combo_name] <= 0))):
+                        data.append(abs(float(node.support_DY)))
+
+            if not isinstance(node.support_DZ, bool):
+
                 m, n = node.ID*6 + 2, node.ID*6 + 2
                 row.append(m)
                 col.append(n)
-                data.append(node.support_DZ)
-            if type(node.support_RX) == float or type(node.support_RX) == int:
-                m, n = node.ID*6 + 3, node.ID*6 + 3
+
+                # Check for a two-way spring support
+                if isinstance(node.support_DZ, (float, int)):
+                    data.append(node.support_DZ)
+
+                # Check for an active tension/compression only spring support
+                elif isinstance(node.support_DZ, str):
+
+                    # See if the spring supports are active
+                    if ((node.support_DZ[0] == '+' and (node.DZ == {} or node.DZ[combo_name] >= 0))
+                    or  (node.support_DZ[0] == '-' and (node.DZ == {} or node.DZ[combo_name] <= 0))):
+                        data.append(abs(float(node.support_DZ)))
+        
+            if not isinstance(node.support_RX, bool):
+
+                m, n = node.ID*6 + 3, node.ID*6 +3
                 row.append(m)
                 col.append(n)
-                data.append(node.support_RX)
-            if type(node.support_RY) == float or type(node.support_RY) == int:
+
+                # Check for a two-way spring support
+                if isinstance(node.support_RX, (float, int)):
+                    data.append(node.support_RX)
+
+                # Check for an active tension/compression only spring support
+                elif isinstance(node.support_RX, str):
+
+                    # See if the spring supports are active
+                    if ((node.support_RX[0] == '+' and (node.RX == {} or node.RX[combo_name] >= 0))
+                    or  (node.support_RX[0] == '-' and (node.RX == {} or node.RX[combo_name] <= 0))):
+                        data.append(abs(float(node.support_RX)))
+
+            if not isinstance(node.support_RY, bool):
+
                 m, n = node.ID*6 + 4, node.ID*6 + 4
                 row.append(m)
                 col.append(n)
-                data.append(node.support_RY)
-            if type(node.support_RZ) == float or type(node.support_RZ) == int:
+
+                # Check for a two-way spring support
+                if isinstance(node.support_RY, (float, int)):
+                    data.append(node.support_RY)
+
+                # Check for an active tension/compression only spring support
+                elif isinstance(node.support_RY, str):
+
+                    # See if the spring supports are active
+                    if ((node.support_RY[0] == '+' and (node.RY == {} or node.RY[combo_name] >= 0))
+                    or  (node.support_RY[0] == '-' and (node.RY == {} or node.RY[combo_name] <= 0))):
+                        data.append(abs(float(node.support_RY)))
+            
+            if not isinstance(node.support_RZ, bool):
+
                 m, n = node.ID*6 + 5, node.ID*6 + 5
                 row.append(m)
                 col.append(n)
-                data.append(node.support_RZ)
+
+                # Check for a two-way spring support
+                if isinstance(node.support_RZ, (float, int)):
+                    data.append(node.support_RZ)
+
+                # Check for an active tension/compression only spring support
+                elif isinstance(node.support_RZ, str):
+
+                    # See if the spring supports are active
+                    if ((node.support_RZ[0] == '+' and (node.RZ == {} or node.RZ[combo_name] >= 0))
+                    or  (node.support_RZ[0] == '-' and (node.RZ == {} or node.RZ[combo_name] <= 0))):
+                        data.append(abs(float(node.support_RZ)))
 
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
@@ -1854,7 +1932,28 @@ class FEModel3D():
                 # Assume the model has converged (to be checked below)
                 convergence = True
 
-                # Check tension-only and compression-only springs
+                # Check tension/compression-only spring supports
+                if log: print('- Checking for tension/compression-only support spring convergence')
+                for node in self.Nodes.values():
+                    
+                    # Check if a tension/compression-only support spring has not yet converged
+                    if isinstance(node.support_DX, str):
+                        if ((node.support_DX[0] == '-' and node.DX[combo.name] > 0)
+                        or  (node.support_DY[0] == '-' and node.DY[combo.name] > 0)
+                        or  (node.support_DZ[0] == '-' and node.DZ[combo.name] > 0)
+                        or  (node.support_RX[0] == '-' and node.RX[combo.name] > 0)
+                        or  (node.support_RY[0] == '-' and node.RY[combo.name] > 0)
+                        or  (node.support_RZ[0] == '-' and node.RZ[combo.name] > 0)
+                        or  (node.support_DX[0] == '+' and node.DX[combo.name] < 0)
+                        or  (node.support_DY[0] == '+' and node.DY[combo.name] < 0)
+                        or  (node.support_DZ[0] == '+' and node.DZ[combo.name] < 0)
+                        or  (node.support_RX[0] == '+' and node.RX[combo.name] < 0)
+                        or  (node.support_RY[0] == '+' and node.RY[combo.name] < 0)
+                        or  (node.support_RZ[0] == '+' and node.RZ[combo.name] < 0)):
+                            
+                            convergence = False
+
+                # Check tension/compression-only springs
                 if log: print('- Checking for tension/compression-only spring convergence')
                 for spring in self.Springs.values():
 
@@ -1870,7 +1969,7 @@ class FEModel3D():
                             spring.active[combo.name] = False
                             convergence = False
 
-                # Check tension-only and compression-only members
+                # Check tension/compression only members
                 if log: print('- Checking for tension/compression-only member convergence')
                 for member in self.Members.values():
 
