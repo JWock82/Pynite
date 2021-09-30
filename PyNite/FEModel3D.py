@@ -2588,6 +2588,45 @@ class FEModel3D():
                                     node.RxnMY[combo.name] -= load[1]*factor
                                 elif load[0] == 'MZ':
                                     node.RxnMZ[combo.name] -= load[1]*factor
+                
+                # Calculate reactions due to active spring supports at the node
+                elif node.spring_DX[0] != None and node.spring_DX[2] == True:
+                    sign = node.spring_DX[1]
+                    k = node.spring_DX[0]
+                    k = float(sign + str(k))
+                    DX = node.DX[combo.name]
+                    node.RxnFX[combo.name] += k*DX
+                elif node.spring_DY[0] != None and node.spring_DY[2] == True:
+                    sign = node.spring_DY[1]
+                    k = node.spring_DY[0]
+                    k = float(sign + str(k))
+                    DY = node.DY[combo.name]
+                    node.RxnFY[combo.name] += k*DY
+                elif node.spring_DZ[0] != None and node.spring_DZ[2] == True:
+                    sign = node.spring_DZ[1]
+                    k = node.spring_DZ[0]
+                    k = float(sign + str(k))
+                    DZ = node.DZ[combo.name]
+                    node.RxnFZ[combo.name] += k*DZ
+                elif node.spring_RX[0] != None and node.spring_RX[2] == True:
+                    sign = node.spring_RX[1]
+                    k = node.spring_RX[0]
+                    k = float(sign + str(k))
+                    RX = node.RX[combo.name]
+                    node.RxnRX[combo.name] += k*RX
+                elif node.spring_RY[0] != None and node.spring_RY[2] == True:
+                    sign = node.spring_RY[1]
+                    k = node.spring_RY[0]
+                    k = float(sign + str(k))
+                    RY = node.RY[combo.name]
+                    node.RxnRY[combo.name] += k*RY
+                elif node.spring_RZ[0] != None and node.spring_RZ[2] == True:
+                    sign = node.spring_RZ[1]
+                    k = node.spring_RZ[0]
+                    k = float(sign + str(k))
+                    RZ = node.RZ[combo.name]
+                    node.RxnRZ[combo.name] += k*RZ
+
 
 #%%
     def _check_statics(self):
