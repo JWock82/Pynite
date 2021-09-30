@@ -32,7 +32,7 @@ for i in range(num_nodes):
         boef.def_support('N' + str(i + 1), True, True, True, True, False, False)
     else:
         # Spring supports at all other locations
-        boef.def_support('N' + str(i + 1), False, ks, False, False, False, False)
+        boef.def_support_spring('N' + str(i + 1), 'DY', ks, '-')
 
 # Define member material properties (W8x35)
 E = 29000   # ksi

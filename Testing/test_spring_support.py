@@ -42,7 +42,7 @@ class Test_Spring_Supports(unittest.TestCase):
             if i == 0 or i == 16:
                 boef.def_support('N' + str(i + 1), True, True, True, True, False, False)
             else:
-                boef.def_support('N' + str(i + 1), False, 22.5, False, False, False, False)
+                boef.def_support_spring('N' + str(i + 1), 'DY', 22.5, '-')
 
         # Define member material properties
         E = 29000   # ksi

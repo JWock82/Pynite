@@ -37,7 +37,7 @@ class Node3D():
         self.RxnMY = {}
         self.RxnMZ = {}
 
-        # Initialize all support conditions to 'False'
+        # Initialize all support conditions to `False`
         self.support_DX = False
         self.support_DY = False
         self.support_DZ = False
@@ -45,7 +45,15 @@ class Node3D():
         self.support_RY = False
         self.support_RZ = False
 
-        # Initialize all enforced displacements to 'None'
+        # Inititialize all support springs
+        self.spring_DX = [None, None, None]  # [stiffness, direction, active]
+        self.spring_DY = [None, None, None]
+        self.spring_DZ = [None, None, None]
+        self.spring_RX = [None, None, None]
+        self.spring_RY = [None, None, None]
+        self.spring_RZ = [None, None, None]
+
+        # Initialize all enforced displacements to `None`
         self.EnforcedDX = None
         self.EnforcedDY = None
         self.EnforcedDZ = None
