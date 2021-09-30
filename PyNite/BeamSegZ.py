@@ -170,7 +170,7 @@ class BeamSegZ():
 
 #%%
     # Returns the deflection at a location on the segment
-    def Deflection(self, x):
+    def deflection(self, x):
         
         V1 = self.V1
         M1 = self.M1

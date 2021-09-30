@@ -1244,12 +1244,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return segment.Deflection(x - segment.x1)
+                    return segment.deflection(x - segment.x1)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].Deflection(x - self.SegmentsZ[lastIndex].x1)
+                return self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1)
                 
         elif Direction == 'dz':
             
@@ -1257,12 +1257,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return segment.Deflection(x - segment.x1)
+                    return segment.deflection(x - segment.x1)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsY) - 1
-                return self.SegmentsY[lastIndex].Deflection(x - self.SegmentsY[lastIndex].x1) 
+                return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1) 
 
 #%%
     def MaxDeflection(self, Direction, combo_name='Combo 1'):
@@ -1287,11 +1287,11 @@ class Member3D():
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Initialize the maximum deflection
-        dmax = self.Deflection(Direction, 0, combo_name)
+        dmax = self.deflection(Direction, 0, combo_name)
         
         # Check the deflection at 100 locations along the member and find the largest value
         for i in range(100):
-            d = self.Deflection(Direction, self.L()*i/99, combo_name)
+            d = self.deflection(Direction, self.L()*i/99, combo_name)
             if d > dmax:
                 dmax = d
         
@@ -1321,11 +1321,11 @@ class Member3D():
             self.__solved_combo = self.LoadCombos[combo_name]
         
         # Initialize the minimum deflection
-        dmin = self.Deflection(Direction, 0, combo_name)
+        dmin = self.deflection(Direction, 0, combo_name)
         
         # Check the deflection at 100 locations along the member and find the smallest value
         for i in range(100):
-            d = self.Deflection(Direction, self.L()*i/99, combo_name)
+            d = self.deflection(Direction, self.L()*i/99, combo_name)
             if d < dmin:
                 dmin = d
         
@@ -1370,7 +1370,7 @@ class Member3D():
         for i in range(21):
             
             x.append(self.L()/20*i)
-            d.append(self.Deflection(Direction, self.L()/20*i, combo_name))
+            d.append(self.deflection(Direction, self.L()/20*i, combo_name))
 
         Member3D.__plt.plot(x, d)
         Member3D.__plt.ylabel('Deflection')
@@ -1419,12 +1419,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return (segment.Deflection(x - segment.x1)) - (dyi + (dyj-dyi)/L*x)
+                    return (segment.deflection(x - segment.x1)) - (dyi + (dyj-dyi)/L*x)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsZ) - 1
-                return (self.SegmentsZ[lastIndex].Deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
+                return (self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
                 
         elif Direction == 'dz':
             
@@ -1432,12 +1432,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return (segment.Deflection(x - segment.x1)) - (dzi + (dzj-dzi)/L*x)
+                    return (segment.deflection(x - segment.x1)) - (dzi + (dzj-dzi)/L*x)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsY) - 1
-                return (self.SegmentsY[lastIndex].Deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
+                return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
 
 #%%
     def PlotRelativeDeflection(self, Direction, combo_name='Combo 1'):
@@ -1597,10 +1597,10 @@ class Member3D():
             # Initialize the slope and displacement at the start of the segment
             if i > 0: # The first segment has already been initialized
                 SegmentsZ[i].theta1 = SegmentsZ[i-1].Slope(SegmentsZ[i-1].Length())
-                SegmentsZ[i].delta1 = SegmentsZ[i-1].Deflection(SegmentsZ[i-1].Length())
+                SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].Length())
                 SegmentsZ[i].delta_x1 = SegmentsZ[i-1].AxialDeflection(SegmentsZ[i-1].Length())
                 SegmentsY[i].theta1 = SegmentsY[i-1].Slope(SegmentsY[i-1].Length())
-                SegmentsY[i].delta1 = SegmentsY[i-1].Deflection(SegmentsY[i-1].Length())
+                SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].Length())
                 SegmentsY[i].delta_x1 = SegmentsY[i-1].AxialDeflection(SegmentsY[i-1].Length())
                 
             # Add the effects of the beam end forces to the segment

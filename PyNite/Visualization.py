@@ -664,7 +664,7 @@ class VisDeformedMember():
     for i in range(20):
             
       # Calculate the local y-direction displacement
-      dy_tot = member.Deflection('dy', L/19*i, combo_name)
+      dy_tot = member.deflection('dy', L/19*i, combo_name)
 
       # Calculate the scaled displacement in global coordinates
       DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
@@ -675,7 +675,7 @@ class VisDeformedMember():
     for i in range(20):
             
       # Calculate the local z-direction displacement
-      dz_tot = member.Deflection('dz', L/19*i, combo_name)
+      dz_tot = member.deflection('dz', L/19*i, combo_name)
 
       # Calculate the scaled displacement in global coordinates
       DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
@@ -686,7 +686,7 @@ class VisDeformedMember():
     for i in range(20):
             
       # Displacements in local coordinates
-      dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.Deflection('dx', L/19*i, combo_name)*scale_factor)*cos_x
+      dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.deflection('dx', L/19*i, combo_name)*scale_factor)*cos_x
             
       # Magnified displacements in global coordinates
       DX_plot = append(DX_plot, dx_tot, axis=0)
