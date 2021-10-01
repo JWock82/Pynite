@@ -1115,7 +1115,9 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 
     # Average the values at each node to obtain a smoothed contour
     for node in model.Nodes.values():
-      node.contour = sum(node.contour)/len(node.contour)
+      # Prevent divide by zero errors for nodes with no contour values
+      if node.contour != []:
+        node.contour = sum(node.contour)/len(node.contour)
 
 def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     '''
