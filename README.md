@@ -20,7 +20,7 @@ An easy to use elastic 3D structural engineering finite element analysis library
 * Produces shear, moment, and deflection results and diagrams for each member.
 * Tension-only and compression-only elements.
 * Spring elements: two-way, tension-only, and compression-only.
-* Spring supports
+* Spring supports: two-way and one-way.
 * Quadrilateral plate elements (based on an isoparametric formulation).
 * Rectangular plate elements (based on a 12-term polynomial formulation).
 * Basic meshing algorithms for some common shapes and for openings in rectangular walls.
@@ -62,6 +62,12 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v0.0.50
+* Bug fix for cylindrical meshes.
+* Added tension/compression only support springs. This required some reworking of how support springs are implemented. See the "Beam on Elastic Foundation" example for an example of how to properly use support springs.
+* More PEP8 style changes. This shouldn't change the way you use the program. Some of the internal calls to function names still referenced the old function names. It was leading to deprecation warnings during runtime.
+* Fixed a divide by zero error for plotting contours on models with nodes not attached to plates/quads.
+
 v0.0.49
 * Major speed boost. A lot of time was being wasted reading/writing to a SciPy `lil_matrix` format. The stiffness matrix is now assembled as a `coo_format` first, and then switched to lil format later on to facilitate slicing.
 * Refactored node names to match PEP8 style guide. Instead of `iNode`, `jNode`, etc. PyNite now uses `i_node`, `j_node` etc. This should only affect you if you were using the keyword arguments for node names.
