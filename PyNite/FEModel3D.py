@@ -2367,14 +2367,14 @@ class FEModel3D():
 
 #%%
     def _calc_reactions(self, log=False):
-        '''
-        Calculates reactions once the model is solved.
+        """
+        Calculates reactions internally once the model is solved.
 
         Parameters
         ----------
         log : bool, optional
             Prints updates to the console if set to True. Default is False.
-        '''
+        """
 
         # Print a status update to the console
         if log: print('- Calculating reactions')
@@ -2394,12 +2394,8 @@ class FEModel3D():
                 node.RxnMZ[combo.name] = 0.0
 
                 # Determine if the node has any supports
-                if (node.support_DX == True) \
-                or (node.support_DY == True) \
-                or (node.support_DZ == True) \
-                or (node.support_RX == True) \
-                or (node.support_RY == True) \
-                or (node.support_RZ == True):
+                if (node.support_DX or node.support_DY or node.support_DZ 
+                or  node.support_RX or node.support_RY or node.support_RZ):
 
                     # Sum the spring end forces at the node
                     for spring in self.Springs.values():
@@ -2522,7 +2518,7 @@ class FEModel3D():
                             # Get the quad's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             quad_F = quad.F(combo.name)
-                    
+
                             node.RxnFX[combo.name] += quad_F[0, 0]
                             node.RxnFY[combo.name] += quad_F[1, 0]
                             node.RxnFZ[combo.name] += quad_F[2, 0]
@@ -2714,3 +2710,20 @@ class FEModel3D():
         # Print the static check table
         print(statics_table)
         print('')
+
+#%%
+    def _orphaned_nodes(self):
+
+        # Step through each node in the model
+        for node in self.Nodes.values():
+
+            orphaned = True
+
+            # Check to see if the node is attached to any quads
+            quads = [quad.Name for quad in self.Quads.values() if quad.i_node == node or quad.j_node == node or quad.m_node == node or quad.n_node == node]
+
+            if quads != []:
+                orphaned = False
+            
+            if orphaned == True:
+                print('Node ' + node.Name + ' is orphaned.')

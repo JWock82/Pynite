@@ -1,4 +1,4 @@
-from numpy import zeros, matrix, array, matmul, transpose, cross, add
+from numpy import zeros, matrix, array, matmul, cross, add
 from numpy.linalg import inv, norm
 from PyNite.LoadCombo import LoadCombo
 
@@ -106,7 +106,7 @@ class Plate3D():
         # rotational stiffnesses in the matrix.
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
-                   )/1000
+                   )/1000000
 
         # The matrix currently only holds terms related to bending action. We need to expand it to
         # with placeholders for all the degrees of freedom so it can be directly added to the
@@ -422,7 +422,7 @@ class Plate3D():
         """
 
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(transpose(self.T()), self.k()), self.T())
+        return matmul(matmul(inv(self.T()), self.k()), self.T())
 
     def FER(self, combo_name='Combo 1'):
         """

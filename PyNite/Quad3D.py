@@ -7,7 +7,7 @@
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
 
-from numpy import array, arccos, dot, cross, matmul, add, zeros, transpose
+from numpy import array, arccos, dot, cross, matmul, add, zeros
 from numpy.linalg import inv, det, norm
 from math import sin, cos
 from PyNite.LoadCombo import LoadCombo
@@ -319,7 +319,7 @@ class Quad3D():
         # Calculate the stiffness of a weak spring for the drilling degree of freedom (rotation about local z)
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
-                   )/1000
+                   )/1000000
         
         # Initialize the expanded stiffness matrix to all zeros
         k_exp = zeros((24, 24))
@@ -434,13 +434,13 @@ class Quad3D():
         self._local_coords()
 
         # Sum the bending and membrane stiffness matrices
-        return self.k_b() + self.k_m()
+        return add(self.k_b(), self.k_m())
 
 #%%   
     def f(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the quad element's local end force vector
-        '''
+        """
         
         # Calculate and return the plate's local end force vector
         return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
@@ -514,18 +514,23 @@ class Quad3D():
 
 #%%
     def d(self, combo_name='Combo 1'):
-       '''
+       """
        Returns the quad element's local displacement vector
-       '''
+       """
 
        # Calculate and return the local displacement vector
        return matmul(self.T(), self.D(combo_name))
 
 #%%
     def F(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the quad element's global force vector
-        '''
+
+        Parameters
+        ----------
+        combo_name : string
+            The load combination to get results for.
+        """
         
         # Calculate and return the global force vector
         return matmul(inv(self.T()), self.f(combo_name))
@@ -547,33 +552,33 @@ class Quad3D():
         D = zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        D.itemset((0, 0), self.m_node.DX[combo_name])
-        D.itemset((1, 0), self.m_node.DY[combo_name])
-        D.itemset((2, 0), self.m_node.DZ[combo_name])
-        D.itemset((3, 0), self.m_node.RX[combo_name])
-        D.itemset((4, 0), self.m_node.RY[combo_name])
-        D.itemset((5, 0), self.m_node.RZ[combo_name])
+        D[0, 0] = self.m_node.DX[combo_name]
+        D[1, 0] = self.m_node.DY[combo_name]
+        D[2, 0] = self.m_node.DZ[combo_name]
+        D[3, 0] = self.m_node.RX[combo_name]
+        D[4, 0] = self.m_node.RY[combo_name]
+        D[5, 0] = self.m_node.RZ[combo_name]
 
-        D.itemset((6, 0), self.n_node.DX[combo_name])
-        D.itemset((7, 0), self.n_node.DY[combo_name])
-        D.itemset((8, 0), self.n_node.DZ[combo_name])
-        D.itemset((9, 0), self.n_node.RX[combo_name])
-        D.itemset((10, 0), self.n_node.RY[combo_name])
-        D.itemset((11, 0), self.n_node.RZ[combo_name])
+        D[6, 0] = self.n_node.DX[combo_name]
+        D[7, 0] = self.n_node.DY[combo_name]
+        D[8, 0] = self.n_node.DZ[combo_name]
+        D[9, 0] = self.n_node.RX[combo_name]
+        D[10, 0] = self.n_node.RY[combo_name]
+        D[11, 0] = self.n_node.RZ[combo_name]
 
-        D.itemset((12, 0), self.i_node.DX[combo_name])
-        D.itemset((13, 0), self.i_node.DY[combo_name])
-        D.itemset((14, 0), self.i_node.DZ[combo_name])
-        D.itemset((15, 0), self.i_node.RX[combo_name])
-        D.itemset((16, 0), self.i_node.RY[combo_name])
-        D.itemset((17, 0), self.i_node.RZ[combo_name])
+        D[12, 0] = self.i_node.DX[combo_name]
+        D[13, 0] = self.i_node.DY[combo_name]
+        D[14, 0] = self.i_node.DZ[combo_name]
+        D[15, 0] = self.i_node.RX[combo_name]
+        D[16, 0] = self.i_node.RY[combo_name]
+        D[17, 0] = self.i_node.RZ[combo_name]
 
-        D.itemset((18, 0), self.j_node.DX[combo_name])
-        D.itemset((19, 0), self.j_node.DY[combo_name])
-        D.itemset((20, 0), self.j_node.DZ[combo_name])
-        D.itemset((21, 0), self.j_node.RX[combo_name])
-        D.itemset((22, 0), self.j_node.RY[combo_name])
-        D.itemset((23, 0), self.j_node.RZ[combo_name])
+        D[18, 0] = self.j_node.DX[combo_name]
+        D[19, 0] = self.j_node.DY[combo_name]
+        D[20, 0] = self.j_node.DZ[combo_name]
+        D[21, 0] = self.j_node.RX[combo_name]
+        D[22, 0] = self.j_node.RY[combo_name]
+        D[23, 0] = self.j_node.RZ[combo_name]
         
         # Return the global displacement vector
         return D
@@ -584,11 +589,11 @@ class Quad3D():
         Returns the quad element's global stiffness matrix
         '''
 
-        # Get the transpose matrix
+        # Get the transformation matrix
         T = self.T()
 
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(transpose(T), self.k()), T)
+        return matmul(matmul(inv(T), self.k()), T)
 
 #%% 
     # Global fixed end reaction vector

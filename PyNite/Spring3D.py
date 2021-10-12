@@ -1,5 +1,5 @@
 # %%
-from numpy import zeros, array, transpose, add, subtract, matmul, insert, cross, divide
+from numpy import zeros, array, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
 from math import isclose
 import PyNite.FixedEndReactions
@@ -187,7 +187,7 @@ class Spring3D():
         '''
         
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(transpose(self.T()), self.k()), self.T())
+        return matmul(matmul(inv(self.T()), self.k()), self.T())
 
 #%%
     def F(self, combo_name='Combo 1'):

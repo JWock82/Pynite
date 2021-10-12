@@ -1,5 +1,5 @@
 # %%
-from numpy import array, zeros, matrix, transpose, add, subtract, matmul, insert, cross, divide
+from numpy import array, zeros, matrix, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
@@ -475,14 +475,14 @@ class Member3D():
     def K(self):
         
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(transpose(self.T()), self.k()), self.T())
+        return matmul(matmul(inv(self.T()), self.k()), self.T())
 
 #%%
     # Member global geometric stiffness matrix
     def Kg(self, P=0):
         
         # Calculate and return the geometric stiffness matrix in global coordinates
-        return matmul(matmul(transpose(self.T()), self.kg(P)), self.T())
+        return matmul(matmul(inv(self.T()), self.kg(P)), self.T())
 
 #%%
     def F(self, combo_name='Combo 1'):
