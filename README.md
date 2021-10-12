@@ -62,6 +62,11 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+
+v0.0.51
+* Internal changes to some matrix operations. This was in response to Issue #102 where statics were not checking out for some 3D plate models.
+* Reduced stiffness of plate/quad element drilling degree of freedom. Again in response to Issue #102.
+
 v0.0.50
 * Bug fix for cylindrical meshes.
 * Added tension/compression only support springs. This required some reworking of how support springs are implemented. See the "Beam on Elastic Foundation" example for an example of how to properly use support springs.
