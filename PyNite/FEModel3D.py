@@ -2713,17 +2713,31 @@ class FEModel3D():
 
 #%%
     def _orphaned_nodes(self):
+        """
+        Returns a list of the names of nodes that are not attached to any elements.
+        """
+
+        # Initialize a list of orphaned nodes
+        orphans = []
 
         # Step through each node in the model
         for node in self.Nodes.values():
 
-            orphaned = True
+            orphaned = False
 
-            # Check to see if the node is attached to any quads
+            # Check to see if the node is attached to any elements
             quads = [quad.Name for quad in self.Quads.values() if quad.i_node == node or quad.j_node == node or quad.m_node == node or quad.n_node == node]
+            plates = [plate.Name for plate in self.Plates.values() if plate.i_node == node or plate.j_node == node or plate.m_node == node or plate.n_node == node]
+            members = [member.Name for member in self.Members.values() if member.i_node == node or member.j_node == node]
+            springs = [spring.Name for spring in self.Springs.values() if spring.i_node == node or spring.j_node == node]
 
-            if quads != []:
-                orphaned = False
+            # Determine if the node is orphaned
+            if quads == [] and plates == [] and members == [] and springs == []:
+                orphaned = True
             
+            # Add the orphaned nodes to the list of orphaned nodes
             if orphaned == True:
-                print('Node ' + node.Name + ' is orphaned.')
+                orphans.append(node.Name)
+        
+        return orphans
+            
