@@ -456,6 +456,18 @@ class FEModel3D():
         self.merge_duplicate_nodes(tolerance)
 
     def merge_duplicate_nodes(self, tolerance=0.001):
+        """
+        Removes duplicate nodes from the model and returns a list of the removed node names.
+
+        Parameters
+        ----------
+        tolerance : number
+            The maximum distance between two nodes in order to consider them duplicates.
+        
+        Returns:
+        remove_list : list
+            A list of th enames of the nodes that were removed.
+        """
 
         # Initialize a list of nodes to be removed from the `Nodes` dictionary
         remove_list = []
@@ -506,11 +518,21 @@ class FEModel3D():
                         if element.j_node.Name == name_2:
                             element.j_node = self.Nodes[name_1]
                     
+                    for element in self.Springs.values():
+                        if element.i_node.Name == name_2:
+                            element.i_node = self.Nodes[name_1]
+                        if element.j_node.Name == name_2:
+                            element.j_node = self.Nodes[name_1]
+                    
                     # Add `name_2` to the list of nodes to be removed
                     remove_list.append(name_2)
 
+        # Remove the duplicate nodes from the model
         for name in remove_list:
             self.Nodes.pop(name)
+        
+        # Return a list of the names of nodes that were removed from the model
+        return remove_list
             
 #%%
     def RemoveNode(self, node_name):
@@ -2712,7 +2734,7 @@ class FEModel3D():
         print('')
 
 #%%
-    def _orphaned_nodes(self):
+    def orphaned_nodes(self):
         """
         Returns a list of the names of nodes that are not attached to any elements.
         """
@@ -2740,4 +2762,11 @@ class FEModel3D():
                 orphans.append(node.Name)
         
         return orphans
+
+def duplicate_nodes(self):
+    """
+    Returns a list of duplicate nodes in the model.
+    """
+
+
             
