@@ -928,7 +928,10 @@ class FEModel3D():
         """
 
         # Add the surface pressure to the rectangle
-        self.Plates[plate_name].pressures.append([pressure, case])
+        if plate_name in self.Plates.keys():
+            self.Plates[plate_name].pressures.append([pressure, case])
+        else:
+            raise Exception('Invalid plate name specified for plate surface pressure.')
 
 #%%
     def AddQuadSurfacePressure(self, quad_name, pressure, case='Case 1'):
@@ -951,7 +954,10 @@ class FEModel3D():
         """
 
         # Add the surface pressure to the quadrilateral
-        self.Quads[quad_name].pressures.append([pressure, case])
+        if quad_name in self.Quads.keys():
+            self.Quads[quad_name].pressures.append([pressure, case])
+        else:
+            raise Exception('Invalid quad name specified for quad surface pressure.')
 
 #%%
     def ClearLoads(self):
