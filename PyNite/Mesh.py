@@ -1042,7 +1042,12 @@ class CylinderMesh(Mesh):
         self.radius = radius
         self.h = height
         self.mesh_size = mesh_size
-        self.num_quads = num_quads
+
+        if num_quads == None:
+            self.num_quads = int(round(2*pi*radius/mesh_size, 0))
+        else:
+            self.num_quads = num_quads
+        
         self.center = center
         self.axis = axis
 
