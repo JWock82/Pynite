@@ -1066,7 +1066,7 @@ class CylinderMesh(Mesh):
 
         # Determine the number of quads to mesh the circumference into
         if num_quads == None:
-            num_quads = int(2*pi/mesh_size)
+            num_quads = int(2*pi*self.radius/mesh_size)
 
         # Mesh the cylinder from the bottom toward the top
         while round(y, 10) < round(h, 10):
