@@ -144,8 +144,7 @@ class Quad3D():
                          [dH[1, 0], -H[0],  0,   dH[1, 1], -H[1],  0,   dH[1, 2], -H[2],  0,   dH[1, 3], -H[3],  0  ]])
         
         return B_gamma
-
-#%%
+    
     def B_gamma_MITC4(self, r, s):
         '''
         Returns the [B] matrix for shear.
@@ -186,14 +185,14 @@ class Quad3D():
         gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det_J)
         gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det_J)
 
-        # d        =           [    w1           theta_x1             theta_y1             w2            theta_x2              theta_y2            w3             theta_x3             theta_y3         w4             theta_x4             theta_y4       ]
-        B_gamma_rz = gr*array([[(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 + s)/2,  -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 - s)/2, -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s), (1 - s)/2,  -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s)]])
-        B_gamma_sz = gs*array([[(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r),  (1 - r)/2,  -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 - r)/2, -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r)]])
+        # d      =           [    w1           theta_x1             theta_y1             w2            theta_x2              theta_y2            w3             theta_x3             theta_y3         w4             theta_x4             theta_y4       ]
+        gamma_rz = gr*array([[(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 + s)/2,  -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 - s)/2, -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s), (1 - s)/2,  -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s)]])
+        gamma_sz = gs*array([[(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r),  (1 - r)/2,  -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 - r)/2, -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r)]])
         
         # Reference 1, Equations 5.102
         B_gamma_MITC4 = zeros((2, 12))
-        B_gamma_MITC4[0, :] = B_gamma_rz*sin(beta) - B_gamma_sz*sin(alpha)
-        B_gamma_MITC4[1, :] = -B_gamma_rz*cos(beta) + B_gamma_sz*cos(alpha)
+        B_gamma_MITC4[0, :] = gamma_rz*sin(beta) - gamma_sz*sin(alpha)
+        B_gamma_MITC4[1, :] = -gamma_rz*cos(beta) + gamma_sz*cos(alpha)
         
         # Return the [B] matrix for shear
         return B_gamma_MITC4
@@ -316,10 +315,21 @@ class Quad3D():
               matmul(B3.T, matmul(Cs, B3))*J3 +
               matmul(B4.T, matmul(Cs, B4))*J4)
         
-        # Calculate the stiffness of a weak spring for the drilling degree of freedom (rotation about local z)
+        # Following Bathe's recommendation for the drilling degree of freedom
+        # from Example 4.19 in "Finite Element Procedures, 2nd Ed.", calculate
+        # the drilling stiffness as 1/1000 of the smallest diagonal term in
+        # the element's stiffness matrix. This is not theoretically correct,
+        # but it allows the model to solve without singularities, and should
+        # have a minimal effect on the final solution. Bathe recommends 1/1000
+        # as a value that is weak enough but not so small that it affect the
+        # results. Bathe recommends looking at all the diagonals in the
+        # combined bending plus membrane stiffness matrix. Some of those terms
+        # relate to translational stiffness. It seems more rational to only
+        # look at the terms relating to rotational stiffness. That will be
+        # PyNite's approach.
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
-                   )/1000000
+                   )/1000
         
         # Initialize the expanded stiffness matrix to all zeros
         k_exp = zeros((24, 24))
@@ -483,9 +493,9 @@ class Quad3D():
                     p -= factor*pressure[0]
         
         fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
-               + Hw(-gp, gp).T*p*det(self.J(-gp, gp))
-               + Hw(gp, gp).T*p*det(self.J(gp, gp))
-               + Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
+             + Hw(-gp, gp).T*p*det(self.J(-gp, gp))
+             + Hw(gp, gp).T*p*det(self.J(gp, gp))
+             + Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
 
         # Initialize the expanded vector to all zeros
         fer_exp = zeros((24, 1))
