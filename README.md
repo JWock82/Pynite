@@ -63,6 +63,14 @@ PyNite depends on the following packages:
 
 # What's New?
 
+v0.0.52
+* Major bug fix for quadrilaterals. In-plane stiffnesses were 1/4 of what they should have been.
+* Added more unit testing for plates and quadrilaterals.
+* Fixed a bug where cylindrical quad meshes didn't calculate the number of quads that fit in the circumference correctly. This bug only affected models where the number was not explicitly specified.
+* Added plate/quad surface load validation to ensure loads are not added to ficticious plates/quads.
+* Improved the `remove_duplicate_nodes` method. It wasn't working properly for springs. It also now returns a list of the names of the nodes that were removed. Also added a docstring for this method.
+* Added the `orphaned_nodes` method that checks the model for orphaned nodes and returns a list of the names of orphaned nodes.
+
 v0.0.51
 * Internal changes to some matrix operations. This was in response to Issue #102 where statics were not checking out for some 3D plate models.
 * Reduced stiffness of plate/quad element drilling degree of freedom. Again in response to Issue #102.
