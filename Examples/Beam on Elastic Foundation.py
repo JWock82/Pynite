@@ -57,7 +57,7 @@ else:
     boef.add_node_load(mid_node, 'FY', -40)
 
 # Analyze the model
-boef.analyze()
+boef.analyze(check_statics=True)
 
 # Render the mdoel with the deformed shape
 from PyNite.Visualization import render_model
