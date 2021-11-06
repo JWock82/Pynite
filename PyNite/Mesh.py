@@ -1016,10 +1016,13 @@ class CylinderMesh(Mesh):
     """
     A mesh of quadrilaterals forming a cylinder.
 
+    The mesh is formed with the local y-axis of the elements pointed toward
+    the base of the 
+
     Parameters
     ----------
     mesh_size : number
-        The desired mesh size. This value will only be used to mesh vertically if `num_quads` is
+        The desired mesh size. This value will only be used to mesh vertically if `num_elements` is
         specified. Otherwise it will be used to mesh the circumference too.
     start_node : string, optional
         The name of the first node in the mesh. The name must be formatted starting with a single
@@ -1029,13 +1032,17 @@ class CylinderMesh(Mesh):
         The name of the first element in the mesh. The name must be formatted starting with a
         single letter followed by a number (e.g. 'Q32'). The mesh will begin numbering elements
         from this number. The default is 'Q1'.
-    num_quads : number, optional
+    num_elements : number, optional
         The number of quadrilaterals to divide the circumference into. If this value is omitted
         `mesh_size` will be used instead to calculate the number of quadrilaterals in the
         circumference. The default is `None`.
+    element_type : string
+        The type of element to use for the mesh: 'Quad' or 'Rect'
     """
 
-    def __init__(self, t, E, nu, mesh_size, radius, height, center=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1', num_quads=None):
+    def __init__(self, t, E, nu, mesh_size, radius, height, center=[0, 0, 0],
+                 axis='Y', start_node='N1', start_element='Q1',
+                 num_elements=None, element_type='Quad'):
 
         super().__init__(t, E, nu, start_node, start_element)
 
@@ -1043,13 +1050,15 @@ class CylinderMesh(Mesh):
         self.h = height
         self.mesh_size = mesh_size
 
-        if num_quads == None:
-            self.num_quads = int(round(2*pi*radius/mesh_size, 0))
+        if num_elements == None:
+            self.num_elements = int(round(2*pi*radius/mesh_size, 0))
         else:
-            self.num_quads = num_quads
+            self.num_elements = num_elements
         
         self.center = center
         self.axis = axis
+
+        self.element_type = element_type
 
         self._generate()
     
@@ -1060,8 +1069,8 @@ class CylinderMesh(Mesh):
         nu = self.nu
 
         mesh_size = self.mesh_size  # Desired mesh size
-        num_quads = self.num_quads  # Number of quadrilaterals in the ring
-        n = self.num_quads
+        num_elements = self.num_elements  # Number of quadrilaterals in the ring
+        n = self.num_elements
 
         radius = self.radius
         h = self.h
@@ -1069,9 +1078,11 @@ class CylinderMesh(Mesh):
         n = int(self.start_node[1:])
         q = int(self.start_element[1:])
 
+        element_type = self.element_type
+
         # Determine the number of quads to mesh the circumference into
-        if num_quads == None:
-            num_quads = int(2*pi/mesh_size)
+        if num_elements == None:
+            num_elements = int(2*pi/mesh_size)
 
         # Mesh the cylinder from the bottom toward the top
         while round(y, 10) < round(h, 10):
@@ -1082,14 +1093,14 @@ class CylinderMesh(Mesh):
         
             # Create a mesh of nodes for the ring
             if self.axis == 'Y':
-                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [0, y, 0], self.axis, 'N' + str(n), 'Q' + str(q))
+                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_elements, [0, y, 0], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'X':
-                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [y, 0, 0], self.axis, 'N' + str(n), 'Q' + str(q))
+                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_elements, [y, 0, 0], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'Z':
-                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_quads, [0, 0, y], self.axis, 'N' + str(n), 'Q' + str(q))
+                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_elements, [0, 0, y], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
 
-            n += num_quads
-            q += num_quads
+            n += num_elements
+            q += num_elements
         
             # Add the newly generated nodes and elements to the overall mesh. Note that if duplicate
             # keys exist, the `.update()` method will overwrite them with the newly generated key value
@@ -1126,23 +1137,24 @@ class CylinderRingMesh(Mesh):
         The name of the first element in the mesh. The name must be formatted starting with a
         single letter followed by a number (e.g. 'Q32'). The mesh will begin numbering elements
         from this number. The default is 'Q1'.
-    num_quads : number
-        The number of quadrilaterals to divide the circumference into.
+    num_elements : number
+        The number of elements to divide the circumference into.
     
     """
 
-    def __init__(self, t, E, nu, radius, height, num_quads, origin=[0, 0, 0], axis='Y',
-                 start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, radius, height, num_elements, origin=[0, 0, 0], axis='Y',
+                 start_node='N1', start_element='Q1', element_type='Quad'):
 
         super().__init__(t, E, nu, start_node=start_node, start_element=start_element)
 
         self.radius = radius
         self.height = height
-        self.num_quads = num_quads
+        self.num_elements = num_elements
         self.Xo = origin[0]
         self.Yo = origin[1]
         self.Zo = origin[2]
         self.axis = axis
+        self.element_type = element_type
 
         # Generate the nodes and elements
         self._generate()
@@ -1150,11 +1162,10 @@ class CylinderRingMesh(Mesh):
     def _generate(self):
         """
         Generates the nodes and elements in the mesh.
-
         """
 
-        num_quads = self.num_quads  # Number of quadrilaterals in the ring
-        n = self.num_quads
+        num_elements = self.num_elements  # Number of quadrilaterals in the ring
+        n = self.num_elements
 
         radius = self.radius  # The radius of the ring
         height = self.height  # The height of the ring
@@ -1166,7 +1177,7 @@ class CylinderRingMesh(Mesh):
         axis = self.axis
         
         # Calculate the angle between nodes in the circumference of the ring
-        theta = 2*pi/num_quads
+        theta = 2*pi/num_elements
 
         # Each node number will be increased by the offset calculated below
         try:
@@ -1229,7 +1240,12 @@ class CylinderRingMesh(Mesh):
         for i in range(1, n + 1, 1):
 
             # Assign the element a name
-            element_name = 'Q' + str(i + element_offset)
+            if self.element_type == 'Quad':
+                element_name = 'Q' + str(i + element_offset)
+            elif self.element_type == 'Rect':
+                element_name = 'R' + str(i + element_offset)
+            else:
+                raise Exception('Invalid element type specified for cylinder ring mesh.')
             
             # Assign nodes to the element
             n_node = i
@@ -1242,8 +1258,15 @@ class CylinderRingMesh(Mesh):
                 j_node = 1 + n
 
             # Create the element and add it to the `elements` dictionary
-            self.elements[element_name] = Quad3D(element_name, self.nodes['N' + str(i_node + node_offset)],
-                                                               self.nodes['N' + str(j_node + node_offset)],
-                                                               self.nodes['N' + str(m_node + node_offset)],
-                                                               self.nodes['N' + str(n_node + node_offset)],
-                                                               self.t, self.E, self.nu)
+            if self.element_type == 'Quad':
+                self.elements[element_name] = Quad3D(element_name, self.nodes['N' + str(i_node + node_offset)],
+                                                     self.nodes['N' + str(j_node + node_offset)],
+                                                     self.nodes['N' + str(m_node + node_offset)],
+                                                     self.nodes['N' + str(n_node + node_offset)],
+                                                     self.t, self.E, self.nu)
+            elif self.element_type == 'Rect':
+                self.elements[element_name] = Plate3D(element_name, self.nodes['N' + str(i_node + node_offset)],
+                                                      self.nodes['N' + str(j_node + node_offset)],
+                                                      self.nodes['N' + str(m_node + node_offset)],
+                                                      self.nodes['N' + str(n_node + node_offset)],
+                                                      self.t, self.E, self.nu)
