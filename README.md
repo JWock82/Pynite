@@ -21,7 +21,7 @@ An easy to use elastic 3D structural engineering finite element analysis library
 * Tension-only and compression-only elements.
 * Spring elements: two-way, tension-only, and compression-only.
 * Spring supports: two-way and one-way.
-* Quadrilateral plate elements (based on an isoparametric formulation).
+* Quadrilateral plate elements (MITC4 formulation).
 * Rectangular plate elements (based on a 12-term polynomial formulation).
 * Basic meshing algorithms for some common shapes and for openings in rectangular walls.
 * Reports support reactions.
