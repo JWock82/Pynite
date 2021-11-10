@@ -51,7 +51,7 @@ truss.add_node_load('A', 'FY', 60)
 truss.add_node_load('A', 'FZ', 20)
 
 # Analyze the model
-truss.analyze()
+truss.analyze(check_statics=True)
 
 # Print results
 print('Member BC calculated axial force: ' + str(truss.Members['BC'].max_axial()))
@@ -64,4 +64,4 @@ print('Member BE expected axial force: 112.1 Compression')
 # Render the model for viewing. The text height will be set to 50 mm.
 # Because the members in this example are nearly rigid, there will be virtually no deformation. The deformed shape won't be rendered.
 # The program has created a default load case 'Case 1' and a default load combo 'Combo 1' since we didn't specify any. We'll display 'Case 1'.
-Visualization.RenderModel(truss, text_height=0.05, render_loads=True, case='Case 1')
+Visualization.render_model(truss, text_height=0.05, render_loads=True, case='Case 1')
