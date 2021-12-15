@@ -47,15 +47,6 @@ class FEModel3D():
                              # combinations
         return
 
-    def AddNode(self, name, X, Y, Z):
-        """
-        `AddNode` will soon be deprecated. Please use `add_node` instead.
-
-        """
-        
-        warnings.warn('`AddNode` will be replaced with `add_node` in a future version of PyNite.', FutureWarning)
-        self.add_node(name, X, Y, Z)
-
     def add_node(self, name, X, Y, Z):
         """
         Adds a new node to the model.
@@ -104,15 +95,6 @@ class FEModel3D():
         
         #Return the node name
         return name
-
-    def AddAuxNode(self, name, X, Y, Z):
-        """
-        `AddAuxNode` will soon be deprecated. Please use `add_auxnode` instead.
-        
-        """
-        
-        warnings.warn('`AddAuxNode` will be replaced with `add_auxnode` in a future version of PyNite.', FutureWarning)
-        self.add_auxnode(name, X, Y, Z)
 
     def add_auxnode(self, name, X, Y, Z):
         """
@@ -165,17 +147,7 @@ class FEModel3D():
         self.AuxNodes[name] = new_node
         
         #Return the node name
-        return name
-  
-    def AddSpring(self, name, i_node, j_node, ks, tension_only=False,
-                  comp_only=False):
-        """
-        `AddSpring` will soon be deprecated. Please use `add_spring` instead.
-
-        """
-        
-        warnings.warn('`AddSpring` will be replaced with `add_spring` in a future version of PyNite.', FutureWarning)
-        self.add_spring(name, i_node, j_node, ks, tension_only, comp_only)
+        return name 
 
     def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
         """
@@ -230,12 +202,6 @@ class FEModel3D():
         
         #Return the spring name
         return name
-
-#%%
-    def AddMember(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
-                  tension_only=False, comp_only=False):
-        warnings.warn('`AddMember` will be replaced with `add_member` in a future version of PyNite.', FutureWarning)
-        self.add_member(name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode, tension_only, comp_only)
 
     def add_member(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
                    tension_only=False, comp_only=False):
@@ -299,11 +265,6 @@ class FEModel3D():
         #Return the member name
         return name
 
-#%%
-    def AddPlate(self, name, i_node, j_node, m_node, n_node, t, E, nu):
-        warnings.warn('`AddPlate` will be replaced with `add_plate` in a future version of PyNite.', FutureWarning)
-        self.add_plate(name, i_node, j_node, m_node, n_node, t, E, nu)
-
     def add_plate(self, name, i_node, j_node, m_node, n_node, t, E, nu):
         '''
         Adds a new plate to the model. The plate name will be returned
@@ -347,11 +308,6 @@ class FEModel3D():
         
         #Return the plate name
         return name
-
-#%%
-    def AddQuad(self, name, i_node, j_node, m_node, n_node, t, E, nu):
-        warnings.warn('`AddQuad` will be replaced with `add_quad` in a future version of PyNite.', FutureWarning)
-        self.add_quad(name, i_node, j_node, m_node, n_node, t, E, nu)
 
     def add_quad(self, name, i_node, j_node, m_node, n_node, t, E, nu):
         '''
@@ -403,11 +359,6 @@ class FEModel3D():
         #Return the quad name
         return name
 
-#%%
-    def AddMesh(self, mesh):
-        warnings.warn('`AddMesh` will be replaced with `add_mesh` in a future version of PyNite.', FutureWarning)
-        self.add_mesh(mesh)
-
     def add_mesh(self, mesh):
         """
         Adds a predefined mesh to the model.
@@ -449,11 +400,6 @@ class FEModel3D():
         # Add the mesh's elements to the finite element model
         for element in mesh.elements.values():
             element.LoadCombos = self.LoadCombos
-
-#%%
-    def MergeDuplicateNodes(self, tolerance=0.001):
-        warnings.warn('`MergeDuplicateNodes` will be replaced with `merge_duplicate_nodes` in a future version of PyNite.', FutureWarning)
-        self.merge_duplicate_nodes(tolerance)
 
     def merge_duplicate_nodes(self, tolerance=0.001):
         """
@@ -534,11 +480,6 @@ class FEModel3D():
         # Return a list of the names of nodes that were removed from the model
         return remove_list
             
-#%%
-    def RemoveNode(self, node_name):
-        warnings.warn('`RemoveNode` will be replaced with `delete_node` in a future version of PyNite.', FutureWarning)
-        self.delete_node(node_name)
-
     def delete_node(self, node_name):
         '''
         Removes a node from the model. All nodal loads associated with the
@@ -559,11 +500,6 @@ class FEModel3D():
         self.Plates = {name: plate for name, plate in self.Plates.items() if plate.i_node.Name != node_name and plate.j_node.Name != node_name and plate.m_node.Name != node_name and plate.n_node.Name != node_name}
         self.Quads = {name: quad for name, quad in self.Quads.items() if quad.i_node.Name != node_name and quad.j_node.Name != node_name and quad.m_node.Name != node_name and quad.n_node.Name != node_name}
 
-#%%
-    def RemoveAuxNode(self, auxnode_name):
-        warnings.warn('`RemoveAuxNode` will be replaced with `delete_auxnode` in a future version of PyNite.', FutureWarning)
-        self.delete_auxnode(auxnode_name)
-
     def delete_auxnode(self, auxnode_name):
         '''
         Removes an auxiliary node from the model.
@@ -582,11 +518,6 @@ class FEModel3D():
             if member.auxNode == auxnode_name:
                 member.auxNode = None
 
-#%%
-    def RemoveSpring(self, spring_name):
-        warnings.warn('`RemoveSpring` will be replaced with `delete_spring` in a future version of PyNite.', FutureWarning)
-        self.delete_spring(spring_name)
-
     def delete_spring(self, spring_name):
         '''
         Removes a spring from the model.
@@ -599,11 +530,6 @@ class FEModel3D():
         
         # Remove the spring
         self.Springs.pop(spring_name)
-
-#%%
-    def RemoveMember(self, member_name):
-        warnings.warn('`RemoveMember` will be replaced with `delete_member` in a future version of PyNite.', FutureWarning)
-        self.delete_member(member_name)
 
     def delete_member(self, member_name):
         '''
@@ -620,11 +546,6 @@ class FEModel3D():
         # will be deleted automatically when the member is deleted.
         self.Members.pop(member_name)
         
-#%%
-    def DefineSupport(self, node_name, SupportDX=False, SupportDY=False, SupportDZ=False, SupportRX=False, SupportRY=False, SupportRZ=False):
-        warnings.warn('`DefineSupport` will be replaced with `def_support` in a future version of PyNite.', FutureWarning)
-        self.def_support(node_name, SupportDX, SupportDY, SupportDZ, SupportRX, SupportRY, SupportRZ)
-
     def def_support(self, node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False):
         """
         Defines the support conditions at a node.
@@ -661,7 +582,6 @@ class FEModel3D():
         node.support_RY = support_RY
         node.support_RZ = support_RZ
 
-#%%
     def def_support_spring(self, node_name, dof, stiffness, direction=None):
         """
         Defines a spring support at a node.
@@ -699,12 +619,7 @@ class FEModel3D():
                 raise ValueError('Invalid support spring direction. Specify \'+\', \'-\', or None.')
         else:
             raise ValueError('Invalid support spring degree of freedom. Specify \'DX\', \'DY\', \'DZ\', \'RX\', \'RY\', or \'RZ\'')
-
-#%%    
-    def AddNodeDisplacement(self, Node, Direction, Magnitude):
-        warnings.warn('`AddNodeDisplacement` will be replaced with `def_node_disp` in a future version of PyNite.', FutureWarning)
-        self.def_node_disp(Node, Direction, Magnitude)
-        
+      
     def def_node_disp(self, node_name, direction, magnitude): 
         '''
         Defines a nodal displacement at a node.
@@ -734,11 +649,6 @@ class FEModel3D():
             node.EnforcedRY = magnitude
         if direction == 'RZ':
             node.EnforcedRZ = magnitude
-
-#%%
-    def DefineReleases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
-        warnings.warn('`DefineReleases` will be replaced with `def_releases` in a future version of PyNite.', FutureWarning)
-        self.def_releases(Member, Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj)
 
     def def_releases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
         '''
@@ -779,11 +689,6 @@ class FEModel3D():
         # Apply the end releases to the member
         self.Members[Member].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
 
-#%%
-    def AddLoadCombo(self, name, factors, combo_type='strength'):
-        warnings.warn('`AddLoadCombo` will be replaced with `add_load_combo` in a future version of PyNite.', FutureWarning)
-        self.add_load_combo(name, factors, combo_type)
-
     def add_load_combo(self, name, factors, combo_type='strength'):
         '''
         Adds a load combination to the model
@@ -805,11 +710,6 @@ class FEModel3D():
         # Add the load combination to the dictionary of load combinations
         self.LoadCombos[name] = new_combo
 
-#%%
-    def add_node_load(self, Node, Direction, P, case='Case 1'):
-        warnings.warn('`AddNodeLoad` will be replaced with `add_node_load` in a future version of PyNite.', FutureWarning)
-        self.add_node_load(Node, Direction, P, case)
-
     def add_node_load(self, Node, Direction, P, case='Case 1'):
         '''
         Adds a nodal load to the model.
@@ -830,11 +730,6 @@ class FEModel3D():
             raise ValueError(f"Direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {Direction} was given.")
         # Add the node load to the model
         self.Nodes[Node].NodeLoads.append((Direction, P, case))
-
-#%%
-    def AddMemberPtLoad(self, Member, Direction, P, x, case='Case 1'):
-        warnings.warn('`AddMemberPtLoad` will be replaced with `add_member_pt_load` in a future version of PyNite.', FutureWarning)
-        self.add_member_pt_load(Member, Direction, P, x, case)
 
     def add_member_pt_load(self, Member, Direction, P, x, case='Case 1'):
         '''
@@ -860,11 +755,6 @@ class FEModel3D():
             raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {Direction} was given.")
         # Add the point load to the member
         self.Members[Member].PtLoads.append((Direction, P, x, case))
-
-#%%
-    def AddMemberDistLoad(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
-        warnings.warn('`AddMemberDistLoad` will be replaced with `add_member_dist_load` in a future version of PyNite.', FutureWarning)
-        self.add_member_dist_load(Member, Direction, w1, w2, x1, x2, case)
 
     def add_member_dist_load(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
         '''
@@ -907,7 +797,6 @@ class FEModel3D():
         # Add the distributed load to the member
         self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
         
-#%%
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         warnings.warn('`AddPlateSurfacePressure` will be replaced with `add_plate_surface_pressure` in a future version of PyNite.', FutureWarning)
         self.add_plate_surface_pressure(plate_name, pressure, case)
@@ -933,11 +822,6 @@ class FEModel3D():
         else:
             raise Exception('Invalid plate name specified for plate surface pressure.')
 
-#%%
-    def AddQuadSurfacePressure(self, quad_name, pressure, case='Case 1'):
-        warnings.warn('`AddQuadSurfacePressure` will be replaced with `add_quad_surface_pressure` in a future version of PyNite.', FutureWarning)
-        self.add_quad_surface_pressure(quad_name, pressure, case)
-
     def add_quad_surface_pressure(self, quad_name, pressure, case='Case 1'):
         """
         Adds a surface pressure to the quadrilateral element.
@@ -958,11 +842,6 @@ class FEModel3D():
             self.Quads[quad_name].pressures.append([pressure, case])
         else:
             raise Exception('Invalid quad name specified for quad surface pressure.')
-
-#%%
-    def ClearLoads(self):
-        warnings.warn('`ClearLoads` will be replaced with `delete_loads` in a future version of PyNite.', FutureWarning)
-        self.delete_loads()
 
     def delete_loads(self):
         '''
@@ -1004,7 +883,6 @@ class FEModel3D():
             node.RxnMY = {}
             node.RxnMZ = {}
 
-#%%
     def GetNode(self, name):
         '''
         Returns the node with the given name.
@@ -1022,8 +900,7 @@ class FEModel3D():
         except:
             # If the node name is not found
             raise ValueError(f"Node '{name}' was not found in the model.")
-
-#%%         
+         
     def GetAuxNode(self, name):
         '''
         Returns the auxiliary node with the given name.
@@ -1042,7 +919,6 @@ class FEModel3D():
             # If the auxiliary node name is not found
             raise ValueError(f"Auxiliary node '{name}' was not found in the model.")
 
-#%%
     def GetSpring(self, name):
         '''
         Returns the spring with the given name.
@@ -1061,7 +937,6 @@ class FEModel3D():
             # If the auxiliary node name is not found
             raise ValueError(f"Spring '{name}' was not found in the model.")
 
-#%%
     def GetMember(self, name):
         '''
         Returns the member with the given name.
@@ -1080,7 +955,6 @@ class FEModel3D():
             # If the member name is not found
             raise ValueError(f"Member '{name}' was not found in the model.")
 
-#%%
     def GetPlate(self, name):
         '''
         Returns the plate with the given name.
@@ -1099,7 +973,6 @@ class FEModel3D():
             # If the plate name is not found
             raise ValueError(f"Plate '{name}' was not found in the model")
 
-#%%
     def GetQuad(self, name):
         '''
         Returns the quadrilateral with the given name.
@@ -1118,7 +991,6 @@ class FEModel3D():
             # If the quad name is not found
             raise ValueError(f"Quad '{name}' was not found in the model")
 
-#%%
     def _renumber(self):
         '''
         Assigns node, spring, member, and plate member ID numbers to be used internally by the
@@ -1146,7 +1018,6 @@ class FEModel3D():
         for id, quad in enumerate(self.Quads.values()):
             quad.ID = id
 
-#%%
     def _aux_list(self):
         '''
         Builds a list with known nodal displacements and with the positions in global stiffness matrix of known 
@@ -1249,8 +1120,7 @@ class FEModel3D():
 
         # Return the indices and the known displacements
         return D1_indices, D2_indices, D2
-            
-#%%    
+               
     def K(self, combo_name='Combo 1', log=False):
         """
         Returns the model's global stiffness matrix.
@@ -1524,8 +1394,7 @@ class FEModel3D():
 
         # Return the global stiffness matrix
         return K      
-
-#%%    
+   
     def Kg(self, combo_name='Combo 1', log=False):
         '''
         Returns the model's global geometric stiffness matrix.
@@ -1592,8 +1461,7 @@ class FEModel3D():
 
         # Return the global geometric stiffness matrix
         return Kg
-     
-#%%    
+      
     def FER(self, combo_name='Combo 1'):
         '''
         Assembles and returns the global fixed end reaction vector.
@@ -1691,7 +1559,6 @@ class FEModel3D():
         # Return the global fixed end reaction vector
         return FER
     
-#%%
     def P(self, combo_name='Combo 1'):
         '''
         Assembles and returns the global nodal force vector.
@@ -1738,7 +1605,6 @@ class FEModel3D():
         # Return the global nodal force vector
         return P
 
-#%%
     def D(self, combo_name='Combo 1'):
         '''
         Returns the global displacement vector for the model.
@@ -1752,7 +1618,6 @@ class FEModel3D():
         # Return the global displacement vector
         return self._D[combo_name]
 
-#%%
     def _partition(self, unp_matrix, D1_indices, D2_indices):
         '''
         Partitions a matrix (or vector) into submatrices (or subvectors) based on degree of freedom
@@ -1784,11 +1649,6 @@ class FEModel3D():
             m21 = unp_matrix[D2_indices, :][:, D1_indices]
             m22 = unp_matrix[D2_indices, :][:, D2_indices]
             return m11, m12, m21, m22
-
-#%%
-    def Analyze(self, log=False, check_statics=False, max_iter=30, sparse=True):
-        warnings.warn('`Analyze` will be replaced with `analyze` in a future version of PyNite.', FutureWarning)
-        self.analyze(log, check_statics, max_iter, sparse)
 
     def analyze(self, log=False, check_statics=False, max_iter=30, sparse=True):
         '''
@@ -2039,11 +1899,6 @@ class FEModel3D():
         # Check statics if requested
         if check_statics == True:
             self._check_statics()
-
-#%%
-    def Analyze_PDelta(self, log=False, max_iter=30, tol=0.01, sparse=True):
-        warnings.warn('`Analyze_PDelta` will be replaced with `analyze_P_Delta` in a future version of PyNite.', FutureWarning)
-        self.analyze_PDelta(log, max_iter, tol, sparse)
 
     def analyze_PDelta(self, log=False, max_iter=30, tol=0.01, sparse=True):
         '''
@@ -2393,7 +2248,6 @@ class FEModel3D():
             print('- Analysis complete')
             print('')
 
-#%%
     def _calc_reactions(self, log=False):
         """
         Calculates reactions internally once the model is solved.
@@ -2651,8 +2505,6 @@ class FEModel3D():
                     RZ = node.RZ[combo.name]
                     node.RxnRZ[combo.name] += k*RZ
 
-
-#%%
     def _check_statics(self):
         '''
         Checks static equilibrium and prints results to the console.
@@ -2739,7 +2591,6 @@ class FEModel3D():
         print(statics_table)
         print('')
 
-#%%
     def orphaned_nodes(self):
         """
         Returns a list of the names of nodes that are not attached to any elements.
@@ -2768,11 +2619,4 @@ class FEModel3D():
                 orphans.append(node.Name)
         
         return orphans
-
-def duplicate_nodes(self):
-    """
-    Returns a list of duplicate nodes in the model.
-    """
-
-
-            
+      
