@@ -62,7 +62,7 @@ class Test_Spring_Supports(unittest.TestCase):
         boef.add_node_load('N9', 'FY', -40)
 
         # Analyze the model
-        boef.analyze()
+        boef.analyze(sparse=False)
 
         print(boef.Members['M8'].min_moment('Mz'))
         print(boef.Members['M8'].max_moment('Mz'))

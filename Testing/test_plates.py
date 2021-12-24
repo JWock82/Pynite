@@ -67,7 +67,7 @@ class Test_Plates(unittest.TestCase):
         # Check to see if the global stiffness matrix is symmetric
         # print(allclose(plModel.K(Renumber=True), plModel.K(Renumber=False).T))
 
-        plModel.analyze(check_statics=True)
+        plModel.analyze(check_statics=True, sparse=False)
         # Test: displacement of N5 in Z direction
         calculated_displacement = plModel.Nodes['N5'].DZ['Combo 1']
         expected_displacement = -0.0861742424242424
