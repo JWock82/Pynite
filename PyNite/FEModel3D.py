@@ -5,8 +5,6 @@ from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
 from numpy import seterr
 from numpy.linalg import solve
 
-from scipy.sparse.linalg import spsolve
-from scipy.sparse import lil_matrix, coo_matrix
 from PyNite.Node3D import Node3D
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
@@ -1121,7 +1119,7 @@ class FEModel3D():
         # Return the indices and the known displacements
         return D1_indices, D2_indices, D2
                
-    def K(self, combo_name='Combo 1', log=False):
+    def K(self, combo_name='Combo 1', log=False, sparse=True):
         """
         Returns the model's global stiffness matrix.
 
@@ -1135,22 +1133,29 @@ class FEModel3D():
             The load combination to get the stiffness matrix for. Default is 'Combo 1'.
         log : bool, optional
             Prints updates to the console if set to True. Default is False.
+        sparse : bool, optional
+            Returns a sparse matrix if set to True, and a dense matrix
+            otherwise. Default is True
         
         Returns
         -------
-        K : coo_matrix
+        K : ndarray or coo_matrix
             The global stiffness matrix for the structure.
-
         """
         
-        # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
-        # documentation states that this type of matrix is ideal for efficient
-        # construction of finite element matrices. When converted to another
-        # format, the `coo_matrix` sums values at the same (i, j) index. We'll
-        # build the matrix from three lists.
-        row = []
-        col = []
-        data = []
+        # Determine if a sparse matrix has been requested
+        if sparse == True:
+            # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
+            # documentation states that this type of matrix is ideal for efficient
+            # construction of finite element matrices. When converted to another
+            # format, the `coo_matrix` sums values at the same (i, j) index. We'll
+            # build the matrix from three lists.
+            row = []
+            col = []
+            data = []
+        else:
+            # Initialize a dense matrix of zeros
+            K = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
         
         # Add stiffness terms for each nodal spring in the model
         if log: print('- Adding nodal spring support stiffness terms to global stiffness matrix')
@@ -1162,54 +1167,72 @@ class FEModel3D():
                 # Check for an active spring support
                 if node.spring_DX[2] == True:
                     m, n = node.ID*6, node.ID*6
-                    data.append(float(node.spring_DX[0]))
-                    row.append(m)
-                    col.append(n)
+                    if sparse == True:
+                        data.append(float(node.spring_DX[0]))
+                        row.append(m)
+                        col.append(n)
+                    else:
+                        K[m, n] += float(node.spring_DX[0])
 
             if node.spring_DY[0] != None:
 
                 # Check for an active spring support
                 if node.spring_DY[2] == True:
                     m, n = node.ID*6 + 1, node.ID*6 + 1
-                    data.append(float(node.spring_DY[0]))
-                    row.append(m)
-                    col.append(n)
+                    if sparse == True:
+                        data.append(float(node.spring_DY[0]))
+                        row.append(m)
+                        col.append(n)
+                    else:
+                        K[m, n] += float(node.spring_DY[0])
 
             if node.spring_DZ[0] != None:
 
                 # Check for an active spring support
                 if node.spring_DZ[2] == True:
                     m, n = node.ID*6 + 2, node.ID*6 + 2
-                    data.append(float(node.spring_DZ[0]))
-                    row.append(m)
-                    col.append(n)
+                    if sparse == True:
+                        data.append(float(node.spring_DZ[0]))
+                        row.append(m)
+                        col.append(n)
+                    else:
+                        K[m, n] += float(node.spring_DZ[0])
         
             if node.spring_RX[0] != None:
 
                 # Check for an active spring support
                 if node.spring_RX[2] == True:
                     m, n = node.ID*6 + 3, node.ID*6 + 3
-                    data.append(float(node.spring_RX[0]))
-                    row.append(m)
-                    col.append(n)
+                    if sparse == True:
+                        data.append(float(node.spring_RX[0]))
+                        row.append(m)
+                        col.append(n)
+                    else:
+                        K[m, n] += float(node.spring_RX[0])
 
             if node.spring_RY[0] != None:
 
                 # Check for an active spring support
                 if node.spring_RY[2] == True:
                     m, n = node.ID*6 + 4, node.ID*6 + 4
-                    data.append(float(node.spring_RY[0]))
-                    row.append(m)
-                    col.append(n)
+                    if sparse == True:
+                        data.append(float(node.spring_RY[0]))
+                        row.append(m)
+                        col.append(n)
+                    else:
+                        K[m, n] += float(node.spring_RY[0])
             
             if node.spring_RZ[0] != None:
 
                 # Check for an active spring support
                 if node.spring_RZ[2] == True:
                     m, n = node.ID*6 + 5, node.ID*6 + 5
-                    data.append(float(node.spring_RZ[0]))
-                    row.append(m)
-                    col.append(n)
+                    if sparse == True:
+                        data.append(float(node.spring_RZ[0]))
+                        row.append(m)
+                        col.append(n)
+                    else:
+                        K[m, n] += float(node.spring_RZ[0])
 
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
@@ -1245,9 +1268,12 @@ class FEModel3D():
                             n = spring.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        row.append(m)
-                        col.append(n)
-                        data.append(spring_K[(a, b)])
+                        if sparse == True:
+                            row.append(m)
+                            col.append(n)
+                            data.append(spring_K[a, b])
+                        else:
+                            K[m, n] += spring_K[a, b]
 
         # Add stiffness terms for each member in the model
         if log: print('- Adding member stiffness terms to global stiffness matrix')
@@ -1283,9 +1309,12 @@ class FEModel3D():
                             n = member.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        row.append(m)
-                        col.append(n)
-                        data.append(member_K[(a, b)])
+                        if sparse == True:
+                            row.append(m)
+                            col.append(n)
+                            data.append(member_K[a, b])
+                        else:
+                            K[m, n] += member_K[a, b]
                 
         # Add stiffness terms for each quadrilateral in the model
         if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
@@ -1331,9 +1360,12 @@ class FEModel3D():
                         n = quad.j_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    row.append(m)
-                    col.append(n)
-                    data.append(quad_K[a, b])
+                    if sparse == True:
+                        row.append(m)
+                        col.append(n)
+                        data.append(quad_K[a, b])
+                    else:
+                        K[m, n] += quad_K[a, b]
         
         # Add stiffness terms for each plate in the model
         if log: print('- Adding plate stiffness terms to global stiffness matrix')
@@ -1379,23 +1411,28 @@ class FEModel3D():
                         n = plate.j_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    row.append(m)
-                    col.append(n)
-                    data.append(plate_K[a, b])
+                    if sparse == True:
+                        row.append(m)
+                        col.append(n)
+                        data.append(plate_K[a, b])
+                    else:
+                        K[m, n] += plate_K[a, b]
 
-        # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
-        # documentation states that this type of matrix is ideal for efficient
-        # construction of finite element matrices. When converted to another
-        # format, the `coo_matrix` sums values at the same (i, j) index.
-        row = array(row)
-        col = array(col)
-        data = array(data)
-        K = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
+        if sparse == True:
+            # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
+            # documentation states that this type of matrix is ideal for efficient
+            # construction of finite element matrices. When converted to another
+            # format, the `coo_matrix` sums values at the same (i, j) index.
+            from scipy.sparse import coo_matrix
+            row = array(row)
+            col = array(col)
+            data = array(data)
+            K = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
 
         # Return the global stiffness matrix
         return K      
    
-    def Kg(self, combo_name='Combo 1', log=False):
+    def Kg(self, combo_name='Combo 1', log=False, sparse=True):
         '''
         Returns the model's global geometric stiffness matrix.
 
@@ -1408,13 +1445,25 @@ class FEModel3D():
             The name of the load combination to derive the matrix for (not the load combination itself).
         log : bool, optional
             Prints updates to the console if set to True. Default is False.
+        sparse : bool, optional
+            Returns a sparse matrix if set to True, and a dense matrix
+            otherwise. Default is True.
+                
+        Returns
+        -------
+        K : ndarray or coo_matrix
+            The global geometric stiffness matrix for the structure.
         '''
         
-        # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a
-        # scipy sparse `lil_matrix`. This matrix format has several advantages. It uses less memory
-        # if the matrix is sparse, supports slicing, and can be converted to other formats (sparse
-        # or dense) later on for mathematical operations.
-        Kg = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
+        if sparse == True:
+            # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a
+            # scipy sparse `lil_matrix`. This matrix format has several advantages. It uses less memory
+            # if the matrix is sparse, supports slicing, and can be converted to other formats (sparse
+            # or dense) later on for mathematical operations.
+            from scipy.sparse import lil_matrix
+            Kg = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
+        else:
+            Kg = zeros(len(self.Nodes)*6, len(self.Nodes*6))
         
         # Add stiffness terms for each member in the model
         if log: print('- Adding member geometric stiffness terms to global geometric stiffness matrix')
@@ -1625,7 +1674,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        unp_matrix : array
+        unp_matrix : ndarray or lil_matrix
             The unpartitioned matrix (or vector) to be partitioned.
         D1_indices : list
             A list of the indices for degrees of freedom that have unknown displacements.
@@ -1680,6 +1729,10 @@ class FEModel3D():
             print('| Analyzing |')
             print('+-----------+')
 
+        # Import `scipy` features if the sparse solver is being used
+        if sparse == True:
+            from scipy.sparse.linalg import spsolve
+
         # Assign an ID to all nodes and elements in the model
         self._renumber()
 
@@ -1719,7 +1772,10 @@ class FEModel3D():
             while convergence == False and divergence == False:
 
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
-                K11, K12, K21, K22 = self._partition(self.K(combo.name, log).tolil(), D1_indices, D2_indices)
+                if sparse == True:
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)
+                else:
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)
 
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
@@ -1743,9 +1799,7 @@ class FEModel3D():
                             D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:
-                            # The partitioned stiffness matrix is in `lil` format. It will be
-                            # converted to a 2D dense array for mathematical operations.
-                            D1 = solve(K11.toarray(), subtract(subtract(P1, FER1), matmul(K12.toarray(), D2)))
+                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
                         raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
@@ -1928,6 +1982,10 @@ class FEModel3D():
             print('| Analyzing: P-Delta |')
             print('+--------------------+')
 
+        # Import `scipy` features if the sparse solver is being used
+        if sparse == True:
+            from scipy.sparse.linalg import spsolve
+        
         # Assign an ID to all nodes and elements in the model
         self._renumber()
 
@@ -1981,25 +2039,36 @@ class FEModel3D():
 
                 # Get the partitioned global matrices
                 if iter_count_PD == 1:
-                    
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log).tolil(), D1_indices, D2_indices) # Initial stiffness matrix
-                    FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)       # Fixed end reactions
-                    P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)             # Nodal forces
-
+                    if sparse == True:
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
+                    else:
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
+                    FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
+                    P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
                 else:
 
                     # Calculate the global stiffness matrices (partitioned)
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log).tolil(), D1_indices, D2_indices)      # Initial stiffness matrix
-                    Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log), D1_indices, D2_indices) # Geometric stiffness matrix
-
-                    # Combine the partitioned stiffness matrices. They are currently `lil` format
-                    # which is great for memory, but slow for mathematical operations. They will be
-                    # converted to `csr` format. The `+` operator performs matrix addition on `csr`
-                    # matrices.
-                    K11 = K11.tocsr() + Kg11.tocsr()
-                    K12 = K12.tocsr() + Kg12.tocsr()
-                    K21 = K21.tocsr() + Kg21.tocsr()
-                    K22 = K22.tocsr() + Kg22.tocsr()                
+                    if sparse == True:
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
+                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)     # Geometric stiffness matrix
+                    else:
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)       # Initial stiffness matrix
+                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)  # Geometric stiffness matrix
+                    
+                    if sparse == True:
+                        # Combine the partitioned stiffness matrices. They are currently `lil` format
+                        # which is great for memory, but slow for mathematical operations. They will be
+                        # converted to `csr` format. The `+` operator performs matrix addition on `csr`
+                        # matrices.
+                        K11 = K11.tocsr() + Kg11.tocsr()
+                        K12 = K12.tocsr() + Kg12.tocsr()
+                        K21 = K21.tocsr() + Kg21.tocsr()
+                        K22 = K22.tocsr() + Kg22.tocsr()
+                    else:
+                        K11 = K11 + Kg11
+                        K12 = K12 + Kg12
+                        K21 = K21 + Kg21
+                        K22 = K22 + Kg22          
 
                 # Calculate the global displacement vector
                 if log: print('- Calculating the global displacement vector')
@@ -2017,7 +2086,7 @@ class FEModel3D():
                         else:
                             # The partitioned stiffness matrix is in `csr` format. It will be
                             # converted to a 2D dense array for mathematical operations.
-                            D1 = solve(K11.toarray(), subtract(subtract(P1, FER1), matmul(K12.toarray(), D2)))
+                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
 
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
