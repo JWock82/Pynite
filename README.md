@@ -63,6 +63,9 @@ PyNite depends on the following packages:
 
 # What's New?
 
+v0.0.53
+* `scipy` is now optional for the dense matrix solver. By default `PyNite` uses the sparse matrix solver. If you wish to use the dense matrix solver, you'll need to set the `sparse` parameter equal to `False` when you analyze a model. Generally, the sparse matrix solver is faster and uses less memory. This feature was added to improve compatibility with other programs that may not work well with `scipy`.
+
 v0.0.52
 * Major bug fix for quadrilaterals. In-plane stiffnesses were 1/4 of what they should have been.
 * Added more unit testing for plates and quadrilaterals.
