@@ -2292,7 +2292,9 @@ class FEModel3D():
                     seterr(invalid='ignore')
 
                     # Check for convergence
-                    if abs(1 - nanmax(divide(prev_results, D1))) <= tol:
+                    # Note: if the shape of K11 is (0, 0) then all degrees of freedom are fully
+                    # supported, and P-Delta analysis automatically converges
+                    if K11.shape == (0, 0) or abs(1 - nanmax(divide(prev_results, D1))) <= tol:
                         convergence_PD = True
                         if log: print('- P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')
                     # Check for divergence
