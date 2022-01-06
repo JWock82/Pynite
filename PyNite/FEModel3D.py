@@ -2037,38 +2037,45 @@ class FEModel3D():
                     print('- Beginning tension/compression-only iteration #' + str(iter_count_TC))
                     print('- Beginning P-Delta iteration #' + str(iter_count_PD))
 
-                # Get the partitioned global matrices
+                # On the first iteration, get all the partitioned global matrices
                 if iter_count_PD == 1:
+
                     if sparse == True:
                         K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
                     else:
                         K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
+                    
                     FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
                     P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
+
+                # On subsequent iterations, recalculate the stiffness matrix to account for P-Delta
+                # effects
                 else:
 
-                    # Calculate the global stiffness matrices (partitioned)
+                    # Calculate the partitioned global stiffness matrices
                     if sparse == True:
+
                         K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
                         Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)     # Geometric stiffness matrix
-                    else:
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)       # Initial stiffness matrix
-                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)  # Geometric stiffness matrix
-                    
-                    if sparse == True:
-                        # Combine the partitioned stiffness matrices. They are currently `lil` format
-                        # which is great for memory, but slow for mathematical operations. They will be
-                        # converted to `csr` format. The `+` operator performs matrix addition on `csr`
+                        
+                        # The stiffness matrices are currently `lil` format which is great for
+                        # memory, but slow for mathematical operations. They will be converted to
+                        # `csr` format. The `+` operator performs matrix addition on `csr`
                         # matrices.
                         K11 = K11.tocsr() + Kg11.tocsr()
                         K12 = K12.tocsr() + Kg12.tocsr()
                         K21 = K21.tocsr() + Kg21.tocsr()
                         K22 = K22.tocsr() + Kg22.tocsr()
+
                     else:
+
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)       # Initial stiffness matrix
+                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)  # Geometric stiffness matrix
+                        
                         K11 = K11 + Kg11
                         K12 = K12 + Kg12
                         K21 = K21 + Kg21
-                        K22 = K22 + Kg22          
+                        K22 = K22 + Kg22
 
                 # Calculate the global displacement vector
                 if log: print('- Calculating the global displacement vector')
@@ -2285,7 +2292,7 @@ class FEModel3D():
                 if iter_count_PD > 1:
                 
                     # Print a status update for the user
-                    if log: print('- Checking for convergence')
+                    if log: print('- Checking for P-Delta convergence')
 
                     # Temporarily disable error messages for invalid values.
                     # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
@@ -2293,7 +2300,7 @@ class FEModel3D():
 
                     # Check for convergence
                     # Note: if the shape of K11 is (0, 0) then all degrees of freedom are fully
-                    # supported, and P-Delta analysis automatically converges
+                    # restrained, and P-Delta analysis automatically converges
                     if K11.shape == (0, 0) or abs(1 - nanmax(divide(prev_results, D1))) <= tol:
                         convergence_PD = True
                         if log: print('- P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')

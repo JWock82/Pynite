@@ -1639,21 +1639,21 @@ class Member3D():
                             if ptLoad[0] == 'FX': FX = 1
                             if ptLoad[0] == 'FY': FY = 1
                             if ptLoad[0] == 'FZ': FZ = 1
-                            f = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
-                            SegmentsZ[i].P1 += factor*f[0]
-                            SegmentsZ[i].V1 += factor*f[1]
-                            SegmentsZ[i].M1 -= factor*f[1]*(x - ptLoad[2])
-                            SegmentsY[i].V1 += factor*f[2]
-                            SegmentsY[i].M1 += factor*f[2]*(x - ptLoad[2])
+                            force = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
+                            SegmentsZ[i].P1 += factor*force[0]
+                            SegmentsZ[i].V1 += factor*force[1]
+                            SegmentsZ[i].M1 -= factor*force[1]*(x - ptLoad[2])
+                            SegmentsY[i].V1 += factor*force[2]
+                            SegmentsY[i].M1 += factor*force[2]*(x - ptLoad[2])
                         elif ptLoad[0] == 'MX' or ptLoad[0] == 'MY' or ptLoad[0] == 'MZ':
                             MX, MY, MZ = 0, 0, 0
                             if ptLoad[0] == 'MX': MX = 1
                             if ptLoad[0] == 'MY': MY = 1
                             if ptLoad[0] == 'MZ': MZ = 1
-                            f = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
-                            SegmentsX[i].T1 += factor*f[0]
-                            SegmentsY[i].M1 += factor*f[1]
-                            SegmentsZ[i].M1 += factor*f[2]
+                            force = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
+                            SegmentsX[i].T1 += factor*force[0]
+                            SegmentsY[i].M1 += factor*force[1]
+                            SegmentsZ[i].M1 += factor*force[2]
                 
                 # Add distributed loads to the segment
                 for distLoad in self.DistLoads:
