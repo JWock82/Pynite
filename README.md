@@ -63,8 +63,14 @@ PyNite depends on the following packages:
 
 # What's New?
 
+v0.0.54
+* Bug fix for member point loads applied in a global direction. They were overiding the member end forces due to an ambiguous variable name.
+* Bug fix for rendering. Several variable names had underscores that didn't belong there. It was causing rendering errors. See version 0.0.53 notes for a full list of what's been changing with regard to rendering.
+
 v0.0.53
 * `scipy` is now optional for the dense matrix solver. By default `PyNite` uses the sparse matrix solver. If you wish to use the dense matrix solver, you'll need to set the `sparse` parameter equal to `False` when you analyze a model. Generally, the sparse matrix solver is faster and uses less memory. This feature was added to improve compatibility with other programs that may not work well with `scipy`.
+* Started work on a `Renderer` class for visualization to better organize the code.
+* Renamed several variables in the `render_model` function to make them more descriptive of what they control. If you use keyword arguments in your calls to `render_model` you may need to change some of the variable names.
 
 v0.0.52
 * Major bug fix for quadrilaterals. In-plane stiffnesses were 1/4 of what they should have been.
