@@ -6,15 +6,273 @@ from numpy import array, empty, append, cross
 from numpy.linalg import norm
 import vtk
 
-#%%
-def RenderModel(model, text_height=5, deformed_shape=False, deformed_scale=30,
+class Renderer():
+    """
+    This class is not in use yet. Future visualization code will use this
+    class to allow for more efficient building and rebuilding of visual models.
+    """
+
+    def __init__(self, model):
+
+        self.model = model
+
+        # Default settings
+        self.annotation_size = 5
+        self.deformed_shape = False
+        self.deformed_scale = 30
+        self.render_loads = True
+        self.color_map = None
+        self.combo_name = 'Combo 1'
+        self.case = None
+        self.labels = True
+        self.scalar_bar = False
+
+        # Initialize the renderer
+        self.renderer = None
+
+    def setannotation_size(self, size=5):
+        self.annotation_size = size
+    
+    def setdeformed_shape(self, deformed_shape=False):
+        self.deformed_shape = deformed_shape
+    
+    def set_deformed_scale(self, scale=30):
+        self.deformed_scale = 30
+    
+    def set_render_loads(self, render_loads=True):
+        self.render_loads = True
+    
+    def set_color_map(self, color_map = None):
+        self.color_map = None
+    
+    def set_combo_name(self, combo_name='Combo 1'):
+        self.combo_name = 'Combo 1'
+    
+    def set_case(self, case):
+        self.case = None
+    
+    def set_show_labels(self, show_labels=True):
+        self.labels = True
+    
+    def set_scalar_bar(self, scalar_bar=False):
+        self.scalar_bar = False
+
+    def render_model(self, win_length=750, win_height=750):
+        """
+        Renders the model in a window
+        """
+
+        # Create a window to hold the rendering
+        window = vtk.vtkRenderWindow()
+        
+        # Set the pixel width and length of the window
+        window.SetSize(win_length, win_height)
+        
+        # Set up the interactor. The interactor style determines how user
+        # interactions affect the view. The trackball camera style behaves much
+        # like popular commercial CAD programs.
+        interactor = vtk.vtkRenderWindowInteractor()
+        style = vtk.vtkInteractorStyleTrackballCamera()
+        interactor.SetInteractorStyle(style)
+        interactor.SetRenderWindow(window)
+        
+        # Create the renderer if it doesn't already exist
+        if self.renderer is None: self.renderer = self.update()
+
+        # Add the renderer to the window
+        window.AddRenderer(self.renderer)
+
+        # Render the window
+        window.Render()
+
+        # Start the interactor. Code execution will pause here until the user closes the window.
+        interactor.Start()
+
+        # Finalize the render window once the user closes out of it. I don't understand everything
+        # this does, but I've found screenshots will cause the program to crash if this line is
+        # omitted.
+        window.Finalize()
+
+        # Return the window
+        return window
+
+    def screenshot(self, filepath='console'):
+        """
+        Renders the model in a window. When the window is closed a screenshot is captured.
+
+        Parameters
+        ----------
+        Sends a screenshot to the specified filepath. The screenshot will be taken
+        when the user closes out of the render window. If screenshot is set to 'console' the
+        screenshot will be returned as an IPython image. Default is 'console'.
+        """
+
+        # Render the model in a window and save the window
+        window = render_model()
+
+        # Screenshot code
+        w2if = vtk.vtkWindowToImageFilter()
+        w2if.SetInput(window)
+        w2if.SetInputBufferTypeToRGB()
+        w2if.ReadFrontBufferOff()
+
+        # These next two lines are in the examples and documentation for VTK, but don't seem to do
+        # anything. I've left them here in case I find a bug somewhere down the line that needs
+        # fixing.
+        # w2if.Update()
+        # w2if.Modified()
+
+        writer = vtk.vtkPNGWriter()
+        writer.SetInputConnection(w2if.GetOutputPort())
+
+        if filepath == 'console':
+            writer.SetWriteToMemory(1)
+            writer.Write()
+            fig_file = memoryview(writer.GetResult()).tobytes()
+            return Image(fig_file)
+        else:
+            writer.SetFileName(filepath)
+            writer.Write()
+
+    def update(self):
+        """
+        Builds or rebuilds the VTK renderer
+        """
+
+        # Input validation
+        if self.deformed_shape and self.case != None:
+            raise Exception('Deformed shape is only available for load combinations,'
+                            ' not load cases.')
+        if self.model.LoadCombos == {} and self.render_loads == True and self.case == None:
+            raise Exception('Unable to render load combination. No load combinations defined.')
+        
+        # Create a visual node for each node in the model
+        vis_nodes = []
+        for node in self.model.Nodes.values():
+            vis_nodes.append(VisNode(node, self.annotation_size))
+        
+        # Create a visual auxiliary node for each auxiliary node in the model
+        vis_aux_nodes = []
+        for aux_node in self.model.AuxNodes.values():
+            vis_aux_nodes.append(VisNode(aux_node, self.annotation_size, color='red'))
+        
+        # Create a visual spring for each spring in the model
+        vis_springs = []
+        for spring in self.model.Springs.values():
+            vis_springs.append(VisSpring(spring, self.model.Nodes, self.annotation_size))    
+    
+        # Create a visual member for each member in the model
+        vis_members = []
+        for member in self.model.Members.values():
+            vis_members.append(VisMember(member, self.model.Nodes, self.annotation_size))
+        
+        # Create a renderer object and add it to the window
+        renderer = vtk.vtkRenderer()
+
+        # Add actors for each spring
+        for vis_spring in vis_springs:
+        
+            # Add the actor for the spring
+            renderer.AddActor(vis_spring.actor)
+
+            if self.labels == True:
+                # Add the actor for the spring label
+                renderer.AddActor(vis_spring.lblActor)
+            
+                # Set the text to follow the camera as the user interacts. This will
+                # require a reset of the camera (see below)
+                vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())    
+
+        # Add actors for each member
+        for vis_member in vis_members:
+            
+            # Add the actor for the member
+            renderer.AddActor(vis_member.actor)
+
+            if self.labels == True:
+                # Add the actor for the member label
+                renderer.AddActor(vis_member.lblActor)
+            
+                # Set the text to follow the camera as the user interacts. This will
+                # require a reset of the camera (see below)
+                vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
+
+        # Combine the polydata from each node
+
+        # Create an append filter for combining node polydata
+        node_polydata = vtk.vtkAppendPolyData()
+
+        for vis_node in vis_nodes:
+            
+            # Add the node's polydata
+            node_polydata.AddInputData(vis_node.polydata.GetOutput())
+
+            if self.labels == True:
+                
+                # Add the actor for the node label
+                renderer.AddActor(vis_node.lblActor)
+            
+                # Set the text to follow the camera as the user interacts. This will
+                # require a reset of the camera (see below)
+                vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
+        
+        # Update the node polydata in the append filter
+        node_polydata.Update()
+        
+        # Create a mapper and actor for the nodes
+        node_mapper = vtk.vtkPolyDataMapper()
+        node_mapper.SetInputConnection(node_polydata.GetOutputPort())
+        node_actor = vtk.vtkActor()
+        node_actor.SetMapper(node_mapper)
+        
+        # Add the node actor to the renderer
+        renderer.AddActor(node_actor)
+
+        # Add actors for each auxiliary node
+        for vis_aux_node in vis_aux_nodes:
+        
+            # Add the actor for the auxiliary node
+            renderer.AddActor(vis_aux_node.actor)
+
+            if self.labels == True:
+                
+                # Add the actor for the auxiliary node label
+                renderer.AddActor(vis_aux_node.lblActor)
+        
+                # Set the text to follow the camera as the user interacts. This will
+                # require a reset of the camera (see below)
+                vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
+
+        # Render the deformed shape if requested
+        if self.deformed_shape == True:
+            _DeformedShape(self.model, renderer, self.deformed_scale, self.annotation_size, self.combo_name)
+
+        # Render the loads if requested
+        if (self.combo_name != None or self.case != None) and self.render_loads != False:
+            _RenderLoads(self.model, renderer, self.annotation_size, self.combo_name, self.case)
+        
+        # Render the plates and quads, if present
+        if self.model.Quads or self.model.Plates:
+            _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale, self.color_map, self.scalar_bar, self.combo_name)
+
+        # Set the window's background to gray
+        renderer.SetBackground(0/255, 0/255, 128/255)
+        
+        # Reset the camera
+        renderer.ResetCamera()
+
+        # Return the renderer
+        return renderer
+
+# %%
+def RenderModel(model, annotation_size=5, deformed_shape=False, deformed_scale=30,
                 render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
                 screenshot=None):
     warnings.warn('`RenderModel` will be replaced with `render_model` in a future version of PyNite.', FutureWarning)
-    render_model(model, text_height, deformed_shape, deformed_scale, render_loads, color_map,
+    render_model(model, annotation_size, deformed_shape, deformed_scale, render_loads, color_map,
                  True, combo_name, case, labels, screenshot)
 
-def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
+def render_model(model, annotation_size=5, deformed_shape=False, deformed_scale=30,
                  render_loads=True, color_map=None, scalar_bar=True, combo_name='Combo 1', case=None, labels=True,
                  screenshot=None):
     '''
@@ -23,48 +281,49 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
     Parameters
     ----------
     model : FEModel3D
-      Finite element model to be rendered.
-    text_height : number, optional
-      Controls the height of text displayed with the model. The units used for
-      `text_height` are the same as those used for lengths in the model. Sizes
-      of other objects (such as nodes) are related to this value. The default is
-      5.
+        Finite element model to be rendered.
+    annotation_size : number, optional
+        Controls the height of text displayed with the model. The units used for
+        `annotation_size` are the same as those used for lengths in the model. Sizes
+        of other objects (such as nodes) are related to this value. The default is
+        5.
     deformed_shape : boolean, optional
-      Determines whether the deformed shape will be rendered or not. The model
-      must be solved to use this feature. Deformed shapes are not available for
-      load cases, only load combinations. The default is False.
+        Determines whether the deformed shape will be rendered or not. The model
+        must be solved to use this feature. Deformed shapes are not available for
+        load cases, only load combinations. The default is False.
     deformed_scale : boolean, optional
-      Determines what magnification factor will be applied to the deformed
-      shape. The default is 30.
+        Determines what magnification factor will be applied to the deformed
+        shape. The default is 30.
     render_loads : boolean, optional
-      Determines if loads will be rendered with the model. The default is True.
+        Determines if loads will be rendered with the model. The default is True.
     color_map : string, optional
-      The type of contour to plot. Acceptable values are: 'dz', 'Mx', 'My', 'Mxy', 'Qx', 'Qy',
-      'Sx', 'Sy', 'Txy'
-      If no value is specified the default is None.
+        The type of contour to plot. Acceptable values are: 'dz', 'Mx', 'My', 'Mxy', 'Qx', 'Qy',
+        'Sx', 'Sy', 'Txy'
+        If no value is specified the default is None.
     combo_name : string, optional
-      The load combination used for rendering the deformed shape and the loads.
-      The default is 'Combo 1'.
+        The load combination used for rendering the deformed shape and the loads.
+        The default is 'Combo 1'.
     case : string, optional
-      The load case used for rendering loads. The default is None.
+        The load case used for rendering loads. The default is None.
     labels : boolean, optional
-      Determines if labels will be rendered. Each label is a single actor in VTK, which slows down
-      rendering on models with thousands of labels. Set this option to `False` if you want more
-      speed when rendering and interacting with a large model. This can be very useful on plate
-      models with large meshes.
+        Determines if labels will be rendered. Each label is a single actor in VTK, which slows down
+        rendering on models with thousands of labels. Set this option to `False` if you want more
+        speed when rendering and interacting with a large model. This can be very useful on plate
+        models with large meshes.
     screenshot : string, optional
-      Sends a screenshot to the specified filepath unless set to None. The screenshot will be taken
-      when the user closes out of the render window. If screenshot is set to 'console' the
-      screenshot will be returned as an IPython image. Default is None.
+        Sends a screenshot to the specified filepath unless set to None. The screenshot will be taken
+        when the user closes out of the render window. If screenshot is set to 'console' the
+        screenshot will be returned as an IPython image. Default is None.
       
     Raises
     ------
     Exception
-      A deformed shape is requested and a load case has been specified.
+        A deformed shape is requested and a load case has been specified.
     
     Returns
     -------
-    None.
+    Ipython Image (if screenshot is set to 'console')
+    
     '''
     
     # Input validation
@@ -77,22 +336,22 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
     # Create a visual node for each node in the model
     vis_nodes = []
     for node in model.Nodes.values():
-        vis_nodes.append(VisNode(node, text_height))
+        vis_nodes.append(VisNode(node, annotation_size))
     
     # Create a visual auxiliary node for each auxiliary node in the model
     vis_aux_nodes = []
     for aux_node in model.AuxNodes.values():
-        vis_aux_nodes.append(VisNode(aux_node, text_height, color='red'))
+        vis_aux_nodes.append(VisNode(aux_node, annotation_size, color='red'))
     
     # Create a visual spring for each spring in the model
     vis_springs = []
     for spring in model.Springs.values():
-        vis_springs.append(VisSpring(spring, model.Nodes, text_height))    
+        vis_springs.append(VisSpring(spring, model.Nodes, annotation_size))    
   
     # Create a visual member for each member in the model
     vis_members = []
     for member in model.Members.values():
-        vis_members.append(VisMember(member, model.Nodes, text_height))
+        vis_members.append(VisMember(member, model.Nodes, annotation_size))
     
     # Create a window
     window = vtk.vtkRenderWindow()
@@ -188,11 +447,11 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
 
     # Render the deformed shape if requested
     if deformed_shape == True:
-        _DeformedShape(model, renderer, deformed_scale, text_height, combo_name)
+        _DeformedShape(model, renderer, deformed_scale, annotation_size, combo_name)
 
     # Render the loads if requested
     if (combo_name != None or case != None) and render_loads != False:
-        _RenderLoads(model, renderer, text_height, combo_name, case)
+        _RenderLoads(model, renderer, annotation_size, combo_name, case)
     
     # Render the plates and quads, if present
     if model.Quads or model.Plates:
@@ -246,7 +505,7 @@ def render_model(model, text_height=5, deformed_shape=False, deformed_scale=30,
 class VisNode():
 
     # Constructor
-    def __init__(self, node, text_height=5, color=None):
+    def __init__(self, node, annotation_size=5, color=None):
       
         # Create an append filter to append all the sources related to the node into a single 'PolyData' object
         self.polydata = vtk.vtkAppendPolyData()
@@ -259,7 +518,7 @@ class VisNode():
         # Generate a sphere source for the node
         sphere = vtk.vtkSphereSource()
         sphere.SetCenter(X, Y, Z)
-        sphere.SetRadius(0.6*text_height)
+        sphere.SetRadius(0.6*annotation_size)
         sphere.Update()
         self.polydata.AddInputData(sphere.GetOutput())
       
@@ -274,8 +533,8 @@ class VisNode():
         # Set up an actor for the node label
         self.lblActor = vtk.vtkFollower()
         self.lblActor.SetMapper(lblMapper)
-        self.lblActor.SetScale(text_height, text_height, text_height)
-        self.lblActor.SetPosition(X + 0.6*text_height, Y + 0.6*text_height, Z)
+        self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
+        self.lblActor.SetPosition(X + 0.6*annotation_size, Y + 0.6*annotation_size, Z)
       
         # Generate any supports that occur at the node
         # Check for a fixed suppport
@@ -285,9 +544,9 @@ class VisNode():
             # Create the fixed support
             support = vtk.vtkCubeSource()
             support.SetCenter(node.X, node.Y, node.Z)
-            support.SetXLength(text_height*1.2)
-            support.SetYLength(text_height*1.2)
-            support.SetZLength(text_height*1.2)
+            support.SetXLength(annotation_size*1.2)
+            support.SetYLength(annotation_size*1.2)
+            support.SetZLength(annotation_size*1.2)
         
             # Copy and append the support data to the append filter
             support.Update()
@@ -299,10 +558,10 @@ class VisNode():
           
             # Create the pinned support
             support = vtk.vtkConeSource()
-            support.SetCenter(node.X, node.Y-0.6*text_height, node.Z)
+            support.SetCenter(node.X, node.Y-0.6*annotation_size, node.Z)
             support.SetDirection((0, 1, 0))
-            support.SetHeight(text_height*1.2)
-            support.SetRadius(text_height*1.2)
+            support.SetHeight(annotation_size*1.2)
+            support.SetRadius(annotation_size*1.2)
         
             # Copy and append the support data to the append filter
             support.Update()
@@ -316,28 +575,28 @@ class VisNode():
                   
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
-                support1.SetPoint1(node.X-text_height, node.Y, node.Z)
-                support1.SetPoint2(node.X+text_height, node.Y, node.Z)
+                support1.SetPoint1(node.X-annotation_size, node.Y, node.Z)
+                support1.SetPoint2(node.X+annotation_size, node.Y, node.Z)
           
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
           
                 support2 = vtk.vtkConeSource()
-                support2.SetCenter(node.X-text_height, node.Y, node.Z)
+                support2.SetCenter(node.X-annotation_size, node.Y, node.Z)
                 support2.SetDirection((1, 0, 0))
-                support2.SetHeight(text_height*0.6)
-                support2.SetRadius(text_height*0.3)
+                support2.SetHeight(annotation_size*0.6)
+                support2.SetRadius(annotation_size*0.3)
           
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
           
                 support3 = vtk.vtkConeSource()
-                support3.SetCenter(node.X+text_height, node.Y, node.Z)
+                support3.SetCenter(node.X+annotation_size, node.Y, node.Z)
                 support3.SetDirection((-1, 0, 0))
-                support3.SetHeight(text_height*0.6)
-                support3.SetRadius(text_height*0.3)
+                support3.SetHeight(annotation_size*0.6)
+                support3.SetRadius(annotation_size*0.3)
           
                 # Copy and append the support data to the append filter
                 support3.Update()
@@ -348,28 +607,28 @@ class VisNode():
               
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
-                support1.SetPoint1(node.X, node.Y-text_height, node.Z)
-                support1.SetPoint2(node.X, node.Y+text_height, node.Z)
+                support1.SetPoint1(node.X, node.Y-annotation_size, node.Z)
+                support1.SetPoint2(node.X, node.Y+annotation_size, node.Z)
           
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
           
                 support2 = vtk.vtkConeSource()
-                support2.SetCenter(node.X, node.Y-text_height, node.Z)
+                support2.SetCenter(node.X, node.Y-annotation_size, node.Z)
                 support2.SetDirection((0, 1, 0))
-                support2.SetHeight(text_height*0.6)
-                support2.SetRadius(text_height*0.3)
+                support2.SetHeight(annotation_size*0.6)
+                support2.SetRadius(annotation_size*0.3)
           
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
           
                 support3 = vtk.vtkConeSource()
-                support3.SetCenter(node.X, node.Y+text_height, node.Z)
+                support3.SetCenter(node.X, node.Y+annotation_size, node.Z)
                 support3.SetDirection((0, -1, 0))
-                support3.SetHeight(text_height*0.6)
-                support3.SetRadius(text_height*0.3)
+                support3.SetHeight(annotation_size*0.6)
+                support3.SetRadius(annotation_size*0.3)
           
                 # Copy and append the support data to the append filter
                 support3.Update()
@@ -380,28 +639,28 @@ class VisNode():
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
-                support1.SetPoint1(node.X, node.Y, node.Z-text_height)
-                support1.SetPoint2(node.X, node.Y, node.Z+text_height)
+                support1.SetPoint1(node.X, node.Y, node.Z-annotation_size)
+                support1.SetPoint2(node.X, node.Y, node.Z+annotation_size)
           
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
           
                 support2 = vtk.vtkConeSource()
-                support2.SetCenter(node.X, node.Y, node.Z-text_height)
+                support2.SetCenter(node.X, node.Y, node.Z-annotation_size)
                 support2.SetDirection((0, 0, 1))
-                support2.SetHeight(text_height*0.6)
-                support2.SetRadius(text_height*0.3)
+                support2.SetHeight(annotation_size*0.6)
+                support2.SetRadius(annotation_size*0.3)
           
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
           
                 support3 = vtk.vtkConeSource()
-                support3.SetCenter(node.X, node.Y, node.Z+text_height)
+                support3.SetCenter(node.X, node.Y, node.Z+annotation_size)
                 support3.SetDirection((0, 0, -1))
-                support3.SetHeight(text_height*0.6)
-                support3.SetRadius(text_height*0.3)
+                support3.SetHeight(annotation_size*0.6)
+                support3.SetRadius(annotation_size*0.3)
           
                 # Copy and append the support data to the append filter
                 support3.Update()
@@ -412,28 +671,28 @@ class VisNode():
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
-                support1.SetPoint1(node.X-1.6*text_height, node.Y, node.Z)
-                support1.SetPoint2(node.X+1.6*text_height, node.Y, node.Z)
+                support1.SetPoint1(node.X-1.6*annotation_size, node.Y, node.Z)
+                support1.SetPoint2(node.X+1.6*annotation_size, node.Y, node.Z)
           
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
           
                 support2 = vtk.vtkCubeSource()
-                support2.SetCenter(node.X-1.9*text_height, node.Y, node.Z)
-                support2.SetXLength(text_height*0.6)
-                support2.SetYLength(text_height*0.6)
-                support2.SetZLength(text_height*0.6)
+                support2.SetCenter(node.X-1.9*annotation_size, node.Y, node.Z)
+                support2.SetXLength(annotation_size*0.6)
+                support2.SetYLength(annotation_size*0.6)
+                support2.SetZLength(annotation_size*0.6)
           
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
           
                 support3 = vtk.vtkCubeSource()
-                support3.SetCenter(node.X+1.9*text_height, node.Y, node.Z)
-                support3.SetXLength(text_height*0.6)
-                support3.SetYLength(text_height*0.6)
-                support3.SetZLength(text_height*0.6)
+                support3.SetCenter(node.X+1.9*annotation_size, node.Y, node.Z)
+                support3.SetXLength(annotation_size*0.6)
+                support3.SetYLength(annotation_size*0.6)
+                support3.SetZLength(annotation_size*0.6)
           
                 # Copy and append the support data to the append filter
                 support3.Update()
@@ -444,28 +703,28 @@ class VisNode():
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
-                support1.SetPoint1(node.X, node.Y-1.6*text_height, node.Z)
-                support1.SetPoint2(node.X, node.Y+1.6*text_height, node.Z)
+                support1.SetPoint1(node.X, node.Y-1.6*annotation_size, node.Z)
+                support1.SetPoint2(node.X, node.Y+1.6*annotation_size, node.Z)
           
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
           
                 support2 = vtk.vtkCubeSource()
-                support2.SetCenter(node.X, node.Y-1.9*text_height, node.Z)
-                support2.SetXLength(text_height*0.6)
-                support2.SetYLength(text_height*0.6)
-                support2.SetZLength(text_height*0.6)
+                support2.SetCenter(node.X, node.Y-1.9*annotation_size, node.Z)
+                support2.SetXLength(annotation_size*0.6)
+                support2.SetYLength(annotation_size*0.6)
+                support2.SetZLength(annotation_size*0.6)
           
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
           
                 support3 = vtk.vtkCubeSource()
-                support3.SetCenter(node.X, node.Y+1.9*text_height, node.Z)
-                support3.SetXLength(text_height*0.6)
-                support3.SetYLength(text_height*0.6)
-                support3.SetZLength(text_height*0.6)
+                support3.SetCenter(node.X, node.Y+1.9*annotation_size, node.Z)
+                support3.SetXLength(annotation_size*0.6)
+                support3.SetYLength(annotation_size*0.6)
+                support3.SetZLength(annotation_size*0.6)
           
                 # Copy and append the support data to the append filter
                 support3.Update()
@@ -476,28 +735,28 @@ class VisNode():
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
-                support1.SetPoint1(node.X, node.Y, node.Z-1.6*text_height)
-                support1.SetPoint2(node.X, node.Y, node.Z+1.6*text_height)
+                support1.SetPoint1(node.X, node.Y, node.Z-1.6*annotation_size)
+                support1.SetPoint2(node.X, node.Y, node.Z+1.6*annotation_size)
           
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
           
                 support2 = vtk.vtkCubeSource()
-                support2.SetCenter(node.X, node.Y, node.Z-1.9*text_height)
-                support2.SetXLength(text_height*0.6)
-                support2.SetYLength(text_height*0.6)
-                support2.SetZLength(text_height*0.6)
+                support2.SetCenter(node.X, node.Y, node.Z-1.9*annotation_size)
+                support2.SetXLength(annotation_size*0.6)
+                support2.SetYLength(annotation_size*0.6)
+                support2.SetZLength(annotation_size*0.6)
           
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
           
                 support3 = vtk.vtkCubeSource()
-                support3.SetCenter(node.X, node.Y, node.Z+1.9*text_height)
-                support3.SetXLength(text_height*0.6)
-                support3.SetYLength(text_height*0.6)
-                support3.SetZLength(text_height*0.6)
+                support3.SetCenter(node.X, node.Y, node.Z+1.9*annotation_size)
+                support3.SetXLength(annotation_size*0.6)
+                support3.SetYLength(annotation_size*0.6)
+                support3.SetZLength(annotation_size*0.6)
           
                 # Copy and append the support data to the append filter
                 support3.Update()
@@ -524,7 +783,7 @@ class VisNode():
 
 class VisSpring():
     
-    def __init__(self, spring, nodes, text_height=5):
+    def __init__(self, spring, nodes, annotation_size=5):
 
         # Generate a line source for the spring
         line = vtk.vtkLineSource()
@@ -567,14 +826,14 @@ class VisSpring():
         # Set up an actor for the spring label
         self.lblActor = vtk.vtkFollower()
         self.lblActor.SetMapper(lblMapper)
-        self.lblActor.SetScale(text_height, text_height, text_height)
+        self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
         self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
       
 # Converts a member object into a member for the viewer
 class VisMember():
 
     # Constructor
-    def __init__(self, member, nodes, text_height=5):
+    def __init__(self, member, nodes, annotation_size=5):
     
         # Generate a line for the member
         line = vtk.vtkLineSource()
@@ -615,13 +874,13 @@ class VisMember():
         # Set up an actor for the member label
         self.lblActor = vtk.vtkFollower()
         self.lblActor.SetMapper(lblMapper)
-        self.lblActor.SetScale(text_height, text_height, text_height)
+        self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
         self.lblActor.SetPosition((Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2)
 
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
     
-    def __init__(self, node, scale_factor, text_height=5, combo_name='Combo 1'):
+    def __init__(self, node, scale_factor, annotation_size=5, combo_name='Combo 1'):
           
         # Calculate the node's deformed position
         newX = node.X + scale_factor*(node.DX[combo_name])
@@ -631,7 +890,7 @@ class VisDeformedNode():
         # Generate a sphere source for the node in its deformed position
         self.source = vtk.vtkSphereSource()
         self.source.SetCenter(newX, newY, newZ)
-        self.source.SetRadius(0.6*text_height)
+        self.source.SetRadius(0.6*annotation_size)
         self.source.Update()
 
 class VisDeformedMember():
@@ -748,7 +1007,7 @@ class VisPtLoad():
     Creates a point load for the viewer
     '''
     
-    def __init__(self, position, direction, length, label_text=None, text_height=5):
+    def __init__(self, position, direction, length, label_text=None, annotation_size=5):
         '''
         Constructor.
       
@@ -824,10 +1083,10 @@ class VisPtLoad():
             # Set up an actor for the label
             self.lblActor = vtk.vtkFollower()
             self.lblActor.SetMapper(lblMapper)
-            self.lblActor.SetScale(text_height, text_height, text_height)
-            self.lblActor.SetPosition(position[0] - (length - 0.6*text_height)*unitVector[0], \
-                                      position[1] - (length - 0.6*text_height)*unitVector[1], \
-                                      position[2] - (length - 0.6*text_height)*unitVector[2])
+            self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
+            self.lblActor.SetPosition(position[0] - (length - 0.6*annotation_size)*unitVector[0], \
+                                      position[1] - (length - 0.6*annotation_size)*unitVector[1], \
+                                      position[2] - (length - 0.6*annotation_size)*unitVector[2])
             self.lblActor.GetProperty().SetColor(0, 255, 0) # Green
       
 class VisDistLoad():
@@ -835,7 +1094,7 @@ class VisDistLoad():
     Creates a distributed load for the viewer
     '''
     
-    def __init__(self, position1, position2, direction, length1, length2, label_text1, label_text2, text_height=5):
+    def __init__(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5):
         '''
         Constructor.
         '''
@@ -870,7 +1129,7 @@ class VisDistLoad():
                 label_text = label_text2
         
             # Create the load arrow
-            ptLoads.append(VisPtLoad(position, direction, length, label_text, text_height=text_height))
+            ptLoads.append(VisPtLoad(position, direction, length, label_text, annotation_size=annotation_size))
           
         # Draw a line between the first and last load arrow's tails
         tail_line = vtk.vtkLineSource()
@@ -902,7 +1161,7 @@ class VisMoment():
     Creates a concentrated moment for the viewer
     '''
     
-    def __init__(self, center, direction, radius, label_text=None, text_height=5):
+    def __init__(self, center, direction, radius, label_text=None, annotation_size=5):
         '''
         Constructor.
       
@@ -961,10 +1220,10 @@ class VisMoment():
         lblMapper.SetInputConnection(label.GetOutputPort())
         self.lblActor = vtk.vtkFollower()
         self.lblActor.SetMapper(lblMapper)
-        self.lblActor.SetScale(text_height, text_height, text_height)
-        self.lblActor.SetPosition(Xc + v3[0]*(radius + 0.25*text_height), \
-                                  Yc + v3[1]*(radius + 0.25*text_height), \
-                                  Zc + v3[2]*(radius + 0.25*text_height))
+        self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
+        self.lblActor.SetPosition(Xc + v3[0]*(radius + 0.25*annotation_size), \
+                                  Yc + v3[1]*(radius + 0.25*annotation_size), \
+                                  Zc + v3[2]*(radius + 0.25*annotation_size))
         self.lblActor.GetProperty().SetColor(0, 255, 0)  # Green
 
 class VisAreaLoad():
@@ -972,17 +1231,17 @@ class VisAreaLoad():
     Creates an area load for the viewer
     '''
     
-    def __init__(self, position0, position1, position2, position3, direction, length, label_text, text_height=5):
+    def __init__(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5):
         '''
         Constructor
         '''
       
         # Create a point load for each corner of the area load
         ptLoads = []
-        ptLoads.append(VisPtLoad(position0, direction, length, label_text, text_height=text_height))
-        ptLoads.append(VisPtLoad(position1, direction, length, label_text, text_height=text_height))
-        ptLoads.append(VisPtLoad(position2, direction, length, label_text, text_height=text_height))
-        ptLoads.append(VisPtLoad(position3, direction, length, label_text, text_height=text_height))
+        ptLoads.append(VisPtLoad(position0, direction, length, label_text, annotation_size=annotation_size))
+        ptLoads.append(VisPtLoad(position1, direction, length, label_text, annotation_size=annotation_size))
+        ptLoads.append(VisPtLoad(position2, direction, length, label_text, annotation_size=annotation_size))
+        ptLoads.append(VisPtLoad(position3, direction, length, label_text, annotation_size=annotation_size))
       
         # Find the direction cosines for the direction the load acts in
         dirDirCos = direction/norm(direction)
@@ -1118,7 +1377,7 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
             if node.contour != []:
                 node.contour = sum(node.contour)/len(node.contour)
 
-def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
+def _DeformedShape(model, renderer, scale_factor, annotation_size, combo_name):
     '''
     Renders the deformed shape of a model.
     
@@ -1130,8 +1389,8 @@ def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
         The VTK renderer object that will render the model.
     scale_factor : number
         The scale factor to apply to the model deformations.
-    text_height : number
-        Controls the height of text displayed with the model. The units used for `text_height` are
+    annotation_size : number
+        Controls the height of text displayed with the model. The units used for `annotation_size` are
         the same as those used for lengths in the model. Sizes of other objects (such as nodes) are
         related to this value.
     combo_name : string
@@ -1148,7 +1407,7 @@ def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     # Add the deformed nodes to the append filter
     for node in model.Nodes.values():
         
-        vis_node = VisDeformedNode(node, scale_factor, text_height, combo_name)
+        vis_node = VisDeformedNode(node, scale_factor, annotation_size, combo_name)
         append_filter.AddInputData(vis_node.source.GetOutput())
         
     # Add the springs to the append filter
@@ -1177,7 +1436,7 @@ def _DeformedShape(model, renderer, scale_factor, text_height, combo_name):
     actor.SetMapper(mapper)
     renderer.AddActor(actor)
 
-def _RenderLoads(model, renderer, text_height, combo_name, case):
+def _RenderLoads(model, renderer, annotation_size, combo_name, case):
 
     # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
     # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
@@ -1221,17 +1480,17 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
                 
                 # Display the load
                 if load[0] == 'FX':
-                    ptLoad = VisPtLoad((node.X - 0.6*text_height*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad((node.X - 0.6*annotation_size*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'FY':
-                    ptLoad = VisPtLoad((node.X, node.Y - 0.6*text_height*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad((node.X, node.Y - 0.6*annotation_size*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'FZ':
-                    ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*text_height*sign), [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*annotation_size*sign), [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'MX':
-                    ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'MY':
-                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'MZ':
-                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
@@ -1262,29 +1521,29 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
           
                 # Display the load
                 if load[0] == 'Fx':
-                    ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'Fy':
-                    ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'Fz':
-                    ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'Mx':
-                    ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'My':
-                    ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'Mz':
-                    ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'FX':
-                    ptLoad = VisPtLoad(position, [1, 0, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad(position, [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'FY':
-                    ptLoad = VisPtLoad(position, [0, 1, 0], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad(position, [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'FZ':
-                    ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'MX':
-                    ptLoad = VisMoment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'MY':
-                    ptLoad = VisMoment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 elif load[0] == 'MZ':
-                    ptLoad = VisMoment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*text_height, '{:.3g}'.format(load_value), text_height)
+                    ptLoad = VisMoment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
             
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
@@ -1308,17 +1567,17 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
                 
                 # Display the load
                 if load[0] == 'Fx':
-                    distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+                    distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
                 elif load[0] == 'Fy':
-                    distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+                    distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
                 elif load[0] == 'Fz':
-                    distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+                    distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
                 elif load[0] == 'FX':
-                    distLoad = VisDistLoad(position1, position2, [1, 0, 0], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+                    distLoad = VisDistLoad(position1, position2, [1, 0, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
                 elif load[0] == 'FY':
-                    distLoad = VisDistLoad(position1, position2, [0, 1, 0], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+                    distLoad = VisDistLoad(position1, position2, [0, 1, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
                 elif load[0] == 'FZ':
-                    distLoad = VisDistLoad(position1, position2, [0, 0, 1], w1/max_dist_load*5*text_height, w2/max_dist_load*5*text_height, '{:.3g}'.format(w1), '{:.3g}'.format(w2), text_height)
+                    distLoad = VisDistLoad(position1, position2, [0, 0, 1], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
                
                 polydata.AddInputData(distLoad.polydata.GetOutput())
                 renderer.AddActor(distLoad.lblActors[0])
@@ -1356,7 +1615,7 @@ def _RenderLoads(model, renderer, text_height, combo_name, case):
                 position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
           
                 # Create an area load and get its data
-                area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*text_height, '{:.3g}'.format(load_value), text_height)
+                area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
           
                 # Add the area load's arrows to the overall load polydata
                 polydata.AddInputData(area_load.polydata.GetOutput())
