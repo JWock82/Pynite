@@ -1,11 +1,7 @@
-# This is an isoparametric general quad element. The bending portion is based on the MITC4
-# formulation. This element performs well for most basic structural and mechanical engineering
-# problems, even when distorted, and eliminates the "shear locking" problems that can occur with
-# some other plate bending elements.
-
 # References used to derive this element:
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
+# 3. "Finite Element Analysis Fundamentals", Richard H. Gallagher
 
 from numpy import array, arccos, dot, cross, matmul, add, zeros
 from numpy.linalg import inv, det, norm
@@ -13,9 +9,21 @@ from math import sin, cos
 from PyNite.LoadCombo import LoadCombo
 
 class Quad3D():
+    """
+    An isoparametric general quadrilateral element, formulated by superimposing an isoparametric
+    MITC4 bending element with an isoparametric plane stress element. Drilling stability is
+    provided by adding a weak rotational spring stiffness at each node. Isotropic behavior is the
+    default, but orthotropic in-plane behavior can be modeled by specifying stiffness modification
+    factors for the element's local x and y axes.
+
+    This element performs well for thick and thin plates, and for skewed plates. Element center
+    stresses and corner FORCES converge rapidly; however, corner STRESSES are more representative
+    of center stresses. Minor errors are introduced into the solution due to the drilling
+    approximation. Orthotropic behavior is limited to acting along the plate's local axes.
+    """
 
 #%%
-    def __init__(self, Name, i_node, j_node, m_node, n_node, t, E, nu,
+    def __init__(self, Name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
                  LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
 
         self.Name = Name
@@ -30,6 +38,8 @@ class Quad3D():
         self.t = t
         self.E = E
         self.nu = nu
+        self.kx_mod = kx_mod
+        self.ky_mod = ky_mod
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
         self.LoadCombos = LoadCombos
@@ -249,20 +259,30 @@ class Quad3D():
         return Cs
 
 #%%
-    def C(self):
-        '''
-        Returns the stress-strain matrix for a plane stress.
-        '''
+    def Cm(self):
+        """
+        Returns the stress-strain matrix for an isotropic or orthotropic plane stress element
+        """
         
-        E = self.E
-        nu = self.nu
+        # Apply the stiffness modification factors for each direction to obtain orthotropic
+        # behavior. Stiffness modification factors of 1.0 in each direction (the default) will
+        # model isotropic behavior. Orthotropic behavior is limited to the element's local
+        # coordinate system.
+        Ex = self.E*self.kx_mod
+        Ey = self.E*self.ky_mod
+        nu_xy = self.nu
+        nu_yx = self.nu
 
-        # Reference 1, Table 4.3, page 194
-        C = E/(1 - nu**2)*array([[1,  nu,     0    ],
-                                 [nu, 1,      0    ],
-                                 [0,  0, (1 - nu)/2]])
+        # The shear modulus will be unafected by orthotropic behavior
+        # Logan, Appendix C.3, page 750
+        G = self.E/(2*(1 + self.nu))
+
+        # Gallagher, Equation 9.3, page 251
+        Cm = 1/(1 - nu_xy*nu_yx)*array([[   Ex,    nu_yx*Ex,           0         ],
+                                        [nu_xy*Ey,    Ey,              0         ],
+                                        [    0,        0,     (1 - nu_xy*nu_yx)*G]])
         
-        return C
+        return Cm
 
 #%%
     def k_b(self):
@@ -384,7 +404,7 @@ class Quad3D():
         '''
 
         t = self.t
-        C = self.C()
+        Cm = self.Cm()
 
         # Define the gauss point for numerical integration
         gp = 1/3**0.5
@@ -397,10 +417,10 @@ class Quad3D():
         B4 = self.B_m(gp, -gp)
 
         # See reference 1 at the bottom of page 353, and reference 2 page 466
-        k = t*(matmul(B1.T, matmul(C, B1))*det(self.J(gp, gp)) +
-               matmul(B2.T, matmul(C, B2))*det(self.J(-gp, gp)) +
-               matmul(B3.T, matmul(C, B3))*det(self.J(-gp, -gp)) +
-               matmul(B4.T, matmul(C, B4))*det(self.J(gp, -gp)))
+        k = t*(matmul(B1.T, matmul(Cm, B1))*det(self.J(gp, gp)) +
+               matmul(B2.T, matmul(Cm, B2))*det(self.J(-gp, gp)) +
+               matmul(B3.T, matmul(Cm, B3))*det(self.J(-gp, -gp)) +
+               matmul(B4.T, matmul(Cm, B4))*det(self.J(gp, -gp)))
         
         k_exp = zeros((24, 24))
 
@@ -807,13 +827,13 @@ class Quad3D():
         H = 1/4*array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
 
         # Get the stress-strain matrix
-        C = self.C()
+        Cm = self.Cm()
         
         # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
-        s1 = matmul(C, matmul(self.B_m(gp, gp), d))
-        s2 = matmul(C, matmul(self.B_m(-gp, gp), d))
-        s3 = matmul(C, matmul(self.B_m(-gp, -gp), d))
-        s4 = matmul(C, matmul(self.B_m(gp, -gp), d))
+        s1 = matmul(Cm, matmul(self.B_m(gp, gp), d))
+        s2 = matmul(Cm, matmul(self.B_m(-gp, gp), d))
+        s3 = matmul(Cm, matmul(self.B_m(-gp, -gp), d))
+        s4 = matmul(Cm, matmul(self.B_m(gp, -gp), d))
 
         # Extrapolate to get the value at the requested location
         Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]

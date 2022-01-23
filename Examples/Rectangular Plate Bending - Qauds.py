@@ -20,8 +20,8 @@ load = 250  # psf
 
 # Create a new rectangular mesh of quadrilaterals
 from PyNite.Mesh import RectangleMesh
-mesh = RectangleMesh(t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY',
-                     start_node='N1', start_element='Q1', element_type='Quad')
+mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
+                     plane='XY', start_node='N1', start_element='Q1', element_type='Quad')
 
 # Generate the mesh. Rectangle meshes won't generate unless you tell them to.
 # This allows you to add openings to them before meshing.
@@ -57,7 +57,7 @@ model.analyze(check_statics=True)
 
 # Render the wall. The quad mesh will be set to show 'Mx' results.
 from PyNite import Visualization
-Visualization.RenderModel(model, text_height=mesh_size/6, deformed_shape=False, combo_name='1.0W', color_map='Mx', render_loads=True)
+Visualization.RenderModel(model, annotation_size=mesh_size/6, deformed_shape=False, combo_name='1.0W', color_map='Mx', render_loads=True)
 
 # The it should be noted that the rendered contours are smoothed. Smoothing averages the corner
 # stresses from every quad framing into each node. This leads to a much more accurate contour.

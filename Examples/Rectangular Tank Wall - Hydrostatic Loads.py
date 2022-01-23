@@ -27,8 +27,9 @@ HL = 12.5  # ft
 #    deformations), rectangular plate elements will produce better plate corner stress results.
 # 2. It'd be nice to have the mesh hit the liquid level, so we'll add a control point at the
 #    liquid level to the list of control points along the mesh's local y-axis.
-mesh = RectangleMesh(t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY',
-                     y_control=[HL], start_node='N1', start_element='R1', element_type='Rect')
+mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
+                     plane='XY', y_control=[HL], start_node='N1', start_element='R1',
+                     element_type='Rect')
 
 # Generate the mesh. Rectangle meshes won't generate unless you tell them to.
 # This allows you to add openings to them before meshing.
@@ -68,7 +69,7 @@ model.add_load_combo('1.4F', {'F': 1.4})
 model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Mx` moments.
-RenderModel(model, text_height=0.2, render_loads=True, deformed_shape=True, deformed_scale=500, color_map='Mx', combo_name='1.4F', labels=True)
+RenderModel(model, annotation_size=0.2, render_loads=True, deformed_shape=True, deformed_scale=500*10, color_map='Mx', combo_name='1.4F', labels=True)
 
 # Print the maximum and minumum displacements
 print('Max displacement: ', max([node.DZ['1.4F'] for node in model.Nodes.values()]))

@@ -62,6 +62,10 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v0.0.55 (pre-release)
+* Added stiffness modification factors for rectangular plate and quarilateral elements. Orthotropic in-plane behavior can now be modeled. This can be used to model the cracked stiffness of concrete and masonry for in-plane loads. Exercise caution when using this feature. These factors only apply to in-plane stiffnesses in the element's local x and y directions. Out-of-plane stiffnesses are not modified. Ensure element local axes are aligned to the directions you want to apply the stiffness modifications to.
+* The arguments for many methods relating to rect plates and quads have been reorganized with the addition of the stiffness modification factors. With this update any plate/quad models you have will likely need to be updated.
+* Improved docstrings for plates and quads.
 
 v0.0.54
 * Bug fix for member point loads applied in a global direction. They were overiding the member end forces due to an ambiguous variable name.

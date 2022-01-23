@@ -1,11 +1,11 @@
 from numpy import zeros, matrix, array, matmul, cross, add
-from numpy.linalg import inv, norm
+from numpy.linalg import inv, norm, det
 from PyNite.LoadCombo import LoadCombo
 
 #%%
 class Plate3D():
 
-    def __init__(self, Name, i_node, j_node, m_node, n_node, t, E, nu,
+    def __init__(self, Name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
                  LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
         """
         A rectangular plate element
@@ -28,9 +28,14 @@ class Plate3D():
             Plate modulus of elasticity
         nu : number
             Poisson's ratio
+        kx_mod : number
+            Modification factor for stiffness in the plate's local x-direction. Default value is
+            1.0, which indicates no stiffness modification (100% stiffness).
+        ky_mod : number
+            Modification factor for stiffness in the plate's local y-direction. Default value is
+            1.0, which indicates no stiffness modification (100% stiffness).
         LoadCombos : dict {combo_name: LoacCombo}
             A dictionary of the load combinations used in the model the plate is in
-        
         """
 
         self.Name = Name
@@ -45,6 +50,8 @@ class Plate3D():
         self.t = t
         self.E = E
         self.nu = nu
+        self.kx_mod = kx_mod
+        self.ky_mod = ky_mod
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
         self.LoadCombos = LoadCombos
@@ -60,46 +67,176 @@ class Plate3D():
         Returns the height of the plate along its local y-axis
         """
         return ((self.n_node.X - self.i_node.X)**2 + (self.n_node.Y - self.i_node.Y)**2 + (self.n_node.Z - self.i_node.Z)**2)**0.5
+    
+    def Dm(self):
+        """
+        Returns the plane stress constitutive matrix for orthotropic materials [Dm]
+        """
 
+        # Apply the stiffness modification factors for each direction to obtain orthotropic
+        # behavior. Stiffness modification factors of 1.0 in each direction (the default) will
+        # model isotropic behavior. Orthotropic behavior is limited to the element's local
+        # coordinate system.
+        nu_xy = self.nu
+        nu_yx = self.nu
+        Ex = self.E*self.kx_mod
+        Ey = self.E*self.ky_mod
+
+        # The shear modulus will be unafected by orthotropic behavior
+        # Logan, Appendix C.3, page 750
+        G = self.E/(2*(1 + self.nu))
+
+        # Calculate the constitutive matrix [Dm]
+        Dm = 1/(1 - nu_xy*nu_yx)*array([[   Ex,    nu_yx*Ex, 0],
+                                        [nu_xy*Ey,    Ey,    0],
+                                        [   0,        0,     G]])
+
+        # Return the constitutive matrix [Dm]
+        return Dm
+
+    def Db(self):
+        """
+        Returns the bending constitutive matrix for orthotropic materials [Db]
+        """
+
+        # Get the plate thickness and other material parameters
+        t = self.t
+        nu_xy = self.nu
+        nu_yx = self.nu
+        Ex = self.E*self.kx_mod
+        Ey = self.E*self.ky_mod
+        G = self.E/(2*(1 + self.nu))
+
+        # Calculate the constitutive matrix [Db]
+        Db = t**3/(12*(1 - nu_xy*nu_yx))*array([[   Ex,    nu_yx*Ex, 0],
+                                                [nu_xy*Ey,    Ey,    0],
+                                                [   0,        0,     G]])
+
+        # Return the constitutive matrix [Db]
+        return Db
+
+    def J(self, r, s):
+        '''
+        Returns the Jacobian matrix for the element
+        '''
+        
+        # Get the local coordinates for the element's nodes
+        x1, y1, x2, y2, x3, y3, x4, y4 = 0, 0, self.width(), 0, self.width(), self.height(), 0, self.height()
+
+        # Return the Jacobian matrix
+        return 1/4*array([[x1*(s - 1) - x2*(s - 1) + x3*(s + 1) - x4*(s + 1), y1*(s - 1) - y2*(s - 1) + y3*(s + 1) - y4*(s + 1)],
+                          [x1*(r - 1) - x2*(r + 1) + x3*(r + 1) - x4*(r - 1), y1*(r - 1) - y2*(r + 1) + y3*(r + 1) - y4*(r - 1)]])
+    
+    def B_m(self, r, s):
+
+        # Differentiate the interpolation functions
+        # Row 1 = interpolation functions differentiated with respect to x
+        # Row 2 = interpolation functions differentiated with respect to y
+        # Note that the inverse of the Jacobian converts from derivatives with
+        # respect to r and s to derivatives with respect to x and y
+        dH = matmul(inv(self.J(r, s)), 1/4*array([[s - 1, -s + 1, s + 1, -s - 1],                 
+                                                  [r - 1, -r - 1, r + 1, -r + 1]]))
+
+        # Reference 1, Example 5.5 (page 353)
+        B_m = array([[dH[0, 0],    0,     dH[0, 1],    0,     dH[0, 2],    0,     dH[0, 3],    0    ],
+                     [   0,     dH[1, 0],    0,     dH[1, 1],    0,     dH[1, 2],    0,     dH[1, 3]],
+                     [dH[1, 0], dH[0, 0], dH[1, 1], dH[0, 1], dH[1, 2], dH[0, 2], dH[1, 3], dH[0, 3]]])
+        
+        return B_m
+    
     def k(self):
         """
         returns the plate's local stiffness matrix
         """
         return add(self.k_b(), self.k_m())
     
+    def k_m(self):
+        '''
+        Returns the local stiffness matrix for membrane (in-plane) stresses.
+
+        Plane stress is assumed
+        '''
+
+        t = self.t
+        Dm = self.Dm()
+
+        # Define the gauss point for numerical integration
+        gp = 1/3**0.5
+
+        # Get the membrane B matrices for each gauss point
+        # Doing this now will save us from doing it twice below
+        B1 = self.B_m(gp, gp)
+        B2 = self.B_m(-gp, gp)
+        B3 = self.B_m(-gp, -gp)
+        B4 = self.B_m(gp, -gp)
+
+        # See reference 1 at the bottom of page 353, and reference 2 page 466
+        k = t*(matmul(B1.T, matmul(Dm, B1))*det(self.J(gp, gp)) +
+               matmul(B2.T, matmul(Dm, B2))*det(self.J(-gp, gp)) +
+               matmul(B3.T, matmul(Dm, B3))*det(self.J(-gp, -gp)) +
+               matmul(B4.T, matmul(Dm, B4))*det(self.J(gp, -gp)))
+        
+        k_exp = zeros((24, 24))
+
+        # Step through each term in the unexpanded stiffness matrix
+        # i = Unexpanded matrix row
+        for i in range(8):
+
+            # j = Unexpanded matrix column
+            for j in range(8):
+                
+                # Find the corresponding term in the expanded stiffness
+                # matrix
+
+                # m = Expanded matrix row
+                if i in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    m = i*3
+                if i in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    m = i*3 - 2
+
+                # n = Expanded matrix column
+                if j in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    n = j*3
+                if j in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    n = j*3 - 2
+                
+                # Ensure the indices are integers rather than floats
+                m, n = round(m), round(n)
+
+                # Add the term from the unexpanded matrix into the expanded matrix
+                k_exp[m, n] = k[i, j]
+        
+        return k_exp
+    
     def k_b(self):
         """
         Returns the local stiffness matrix for bending
         """
 
-        a = self.width()
-        b = self.height()
-        beta = b/a
+        b = self.width()/2
+        c = self.height()/2
 
-        E = self.E
+        Ex = self.E
+        Ey = self.E
+        nu_xy = self.nu
+        nu_yx = self.nu
+        G = self.E/(2*(1 + self.nu))
         t = self.t
-        nu = self.nu
 
-        # Stiffness matrix for plate bending
-        k = matrix([[4*(beta**2+beta**(-2))+1/5*(14-4*nu),    0,                                 0,                              0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
-                    [(2*beta**(-2)+1/5*(1+4*nu))*b,           (4/3*beta**(-2)+4/15*(1-nu))*b**2, 0,                              0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
-                    [-(2*beta**2+1/5*(1+4*nu))*a,             -nu*a*b,                           (4/3*beta**2+4/15*(1-nu))*a**2, 0,                                       0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
-                    [2*(beta**2-2*beta**(-2))-1/5*(14-4*nu),  -(2*beta**(-2)+1/5*(1-nu))*b,      (-beta**2+1/5*(1+4*nu))*a,      4*(beta**2+beta**(-2))+1/5*(14-4*nu),    0,                                 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
-                    [(2*beta**(-2)+1/5*(1-nu))*b,             (2/3*beta**(-2)-1/15*(1-nu))*b**2, 0,                              -(2*beta**(-2)+1/5*(1+4*nu))*b,          (4/3*beta**(-2)+4/15*(1-nu))*b**2, 0,                               0,                                      0,                                 0,                              0,                                    0,                                  0],
-                    [(-beta**2+1/5*(1+4*nu))*a,               0,                                 (2/3*beta**2-4/15*(1-nu))*a**2, -(2*beta**2+1/5*(1+4*nu))*a,             nu*a*b,                            (4/3*beta**2+4/15*(1-nu))*a**2,  0,                                      0,                                 0,                              0,                                    0,                                  0],
-                    [-2*(beta**2+beta**(-2))+1/5*(14-4*nu),   (-beta**(-2)+1/5*(1-nu))*b,        (beta**2-1/5*(1-nu))*a,         -2*(2*beta**2-beta**(-2))-1/5*(14-4*nu), (-beta**(-2)+1/5*(1+4*nu))*b,      (2*beta**2+1/5*(1-nu))*a,        4*(beta**2+beta**(-2))+1/5*(14-4*nu),   0,                                 0,                              0,                                    0,                                  0],
-                    [(beta**(-2)-1/5*(1-nu))*b,               (1/3*beta**(-2)+1/15*(1-nu))*b**2, 0,                              (-beta**(-2)+1/5*(1+4*nu))*b,            (2/3*beta**(-2)-4/15*(1-nu))*b**2, 0,                               -(2*beta**(-2)+1/5*(1+4*nu))*b,         (4/3*beta**(-2)+4/15*(1-nu))*b**2, 0,                              0,                                    0,                                  0],
-                    [(-beta**2+1/5*(1-nu))*a,                 0,                                 (1/3*beta**2+1/15*(1-nu))*a**2, -(2*beta**2+1/5*(1-nu))*a,               0,                                 (2/3*beta**2-1/15*(1-nu))*a**2,  (2*beta**2+1/5*(1+4*nu))*a,             -nu*a*b,                           (4/3*beta**2+4/15*(1-nu))*a**2, 0,                                    0,                                  0],
-                    [-2*(2*beta**2-beta**(-2))-1/5*(14-4*nu), (beta**(-2)-1/5*(1+4*nu))*b,       (2*beta**2+1/5*(1-nu))*a,       -2*(beta**2+beta**(-2))+1/5*(14-4*nu),   (beta**(-2)-1/5*(1-nu))*b,         (beta**2-1/5*(1-nu))*a,          2*(beta**2-2*beta**(-2))-1/5*(14-4*nu), (2*beta**(-2)+1/5*(1-nu))*b,       (beta**2-1/5*(1+4*nu))*a,       4*(beta**2+beta**(-2))+1/5*(14-4*nu), 0,                                  0],
-                    [(beta**(-2)-1/5*(1+4*nu))*b,             (2/3*beta**(-2)-4/15*(1-nu))*b**2, 0,                              (-beta**(-2)+1/5*(1-nu))*b,              (1/3*beta**(-2)+1/15*(1-nu))*b**2, 0,                               -(2*beta**(-2)+1/5*(1-nu))*b,           (2/3*beta**(-2)-1/15*(1-nu))*b**2, 0,                              (2*beta**(-2)+1/5*(1+4*nu))*b,        (4/3*beta**(-2)+4/15*(1-nu))*b**2,  0],
-                    [-(2*beta**2+1/5*(1-nu))*a,               0,                                 (2/3*beta**2-1/15*(1-nu))*a**2, (-beta**2+1/5*(1-nu))*a,                 0,                                 (1/3*beta**2+1/15*(1-nu))*a**2,  (beta**2-1/5*(1+4*nu))*a,               0,                                 (2/3*beta**2-4/15*(1-nu))*a**2, (2*beta**2+1/5*(1+4*nu))*a,           nu*a*b,                             (4/3*beta**2+4/15*(1-nu))*a**2]])
-
-        k = k*E*t**3/(12*(1-nu**2)*a*b)
-
-        # Apply symmetry to the matrix
-        for i in range(12):
-            for j in range(i, 12):
-                k[i, j] = k[j, i]
+        # Stiffness matrix for plate bending. This matrix was derived using a jupyter notebook. The
+        # notebook can be found in the `Derivations`` folder of this project.
+        k = t**3/12*array([[(-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2 + Ey*nu_xy*b**2/2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), (-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2/2 - Ey*nu_xy*b**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(-Ey*nu_xy*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), Ey*nu_xy/(nu_xy*nu_yx - 1), (Ey*nu_xy*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0],
+                           [(Ex*nu_yx*b**2/2 + Ex*c**2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*nu_xy*nu_yx*b**2 - 2*G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), (-5*Ex*c**2 + G*nu_xy*nu_yx*b**2 - G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), 0, 2*(-5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2/2 + Ex*c**2/2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))],
+                           [(5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ex*c**2 + G*nu_xy*nu_yx*b**2 - G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2 - Ey*nu_xy*b**2/2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2/2 + Ey*nu_xy*b**2/2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(Ey*nu_xy*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-Ey*nu_xy*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), -Ey*nu_xy/(nu_xy*nu_yx - 1), (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0],
+                           [(5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), 0, 2*(-5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2/2 - Ex*c**2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), -Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*nu_xy*nu_yx*b**2 - 2*G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*nu_yx*b**2/2 - Ex*c**2/2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))],
+                           [(-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (-5*Ex*c**2 - 25*Ey*nu_xy*b**2 + 2*b**2*(15*Ey*nu_xy - G*nu_xy*nu_yx + G))/(10*b**2*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2 - Ey*nu_xy*b**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*nu_xy*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), Ey*nu_xy/(nu_xy*nu_yx - 1), (-Ey*nu_xy*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0],
+                           [(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*nu_yx*b**2/2 - Ex*c**2/2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2/2 - Ex*c**2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*c**2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))],
+                           [(5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (5*Ex*c**2 + 25*Ey*nu_xy*b**2 - 2*b**2*(15*Ey*nu_xy - G*nu_xy*nu_yx + G))/(10*b**2*c*(nu_xy*nu_yx - 1)), (-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2 + Ey*nu_xy*b**2/2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-Ey*nu_xy*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*nu_xy*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), -Ey*nu_xy/(nu_xy*nu_yx - 1)],
+                           [(-Ex*nu_yx*b**2/2 + Ex*c**2/2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*c**2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*nu_yx*b**2/2 + Ex*c**2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), -Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))]])
         
         # Calculate the stiffness of a weak spring for the drilling degree of freedom (rotation
         # about local z). We'll set the weak spring to be 1000 times weaker than any of the other
@@ -158,78 +295,6 @@ class Plate3D():
         # Return the local stiffness matrix
         return k_exp
 
-    def k_m(self):
-        """
-        Returns the local stiffness matrix for membrane forces
-        """
-
-        a = self.width()
-        b = self.height()
-        beta = b/a
-        
-        E = self.E
-        t = self.t
-        nu = self.nu
-        
-        k = matrix([[4*beta+2*(1-nu)*beta**(-1), 0,                          0,                          0,                          0,                          0,                          0,                          0],
-                    [3/2*(1+nu),                 4*beta**(-1)+2*(1-nu)*beta, 0,                          0,                          0,                          0,                          0,                          0],
-                    [2*beta-2*(1-nu)*beta**(-1), -3/2*(1-3*nu),              4*beta+2*(1-nu)*beta**(-1), 0,                          0,                          0,                          0,                          0],
-                    [3/2*(1-3*nu),               -4*beta**(-1)+(1-nu)*beta,  -3/2*(1+nu),                4*beta**(-1)+2*(1-nu)*beta, 0,                          0,                          0,                          0],
-                    [-2*beta-(1-nu)*beta**(-1),  -3/2*(1+nu),                -4*beta+(1-nu)*beta**(-1),  -3/2*(1-3*nu),              4*beta+2*(1-nu)*beta**(-1), 0,                          0,                          0],
-                    [-3/2*(1+nu),                -2*beta**(-1)-(1-nu)*beta,  3/2*(1-3*nu),               2*beta**(-1)-2*(1-nu)*beta, 3/2*(1+nu),                 4*beta**(-1)+2*(1-nu)*beta, 0,                          0],
-                    [-4*beta+(1-nu)*beta**(-1),  3/2*(1-3*nu),               -2*beta-(1-nu)*beta**(-1),  3/2*(1+nu),                 2*beta-2*(1-nu)*beta**(-1), -3/2*(1-3*nu),              4*beta+2*(1-nu)*beta**(-1), 0],
-                    [-3/2*(1-3*nu),              2*beta**(-1)-2*(1-nu)*beta, 3/2*(1+nu),                 -2*beta**(-1)-(1-nu)*beta,  3/2*(1-3*nu),               -4*beta**(-1)+(1-nu)*beta,  -3/2*(1+nu),                4*beta**(-1)+2*(1-nu)*beta]])
-        
-        k = k*E*t/(12*(1-nu**2))
-
-        # Apply symmetry to the matrix
-        for i in range(8):
-            for j in range(i, 8):
-                k[i, j] = k[j, i]
-        
-        # At this point `k` only contains terms for the degrees of freedom
-        # associated with membrane action. Expand `k` to include zero terms for
-        # the degrees of freedom related to bending forces. This will allow
-        # the bending and membrane stiffness matrices to be summed directly
-        # later on. `numpy` has an `insert` function that can be used to
-        # insert rows and columns of zeros one at a time, but it is very slow
-        # as it makes a temporary copy of the matrix term by term each time
-        # it's called. The algorithm used here accomplishes the same thing
-        # much faster. Terms are copied only once.
-        k_exp = zeros((24, 24))
-
-        # Step through each term in the unexpanded stiffness matrix
-
-        # i = Unexpanded matrix row
-        for i in range(8):
-
-            # j = Unexpanded matrix column
-            for j in range(8):
-                
-                # Find the corresponding term in the expanded stiffness
-                # matrix
-
-                # m = Expanded matrix row
-                if i in [0, 2, 4, 6]:  # indices associated with displacement in x
-                    m = i*3
-                if i in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    m = i*3 - 2
-
-                # n = Expanded matrix column
-                if j in [0, 2, 4, 6]:  # indices associated with displacement in x
-                    n = j*3
-                if j in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    n = j*3 - 2
-                
-                # Ensure the indices are integers rather than floats
-                m, n = round(m), round(n)
-
-                # Add the term from the unexpanded matrix into the expanded
-                # matrix
-                k_exp[m, n] = k[i, j]
-        
-        return k_exp
-  
     def f(self, combo_name='Combo 1'):
         """
         Returns the plate's local end force vector
@@ -272,7 +337,7 @@ class Plate3D():
         b = self.width()/2
         c = self.height()/2
         
-        fer = -4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [-c/12], [-b/12], [1/4], [-c/12], [b/12], [1/4], [c/12], [b/12]])
+        fer = -4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [c/12], [b/12], [1/4], [-c/12], [b/12], [1/4], [-c/12], [-b/12]])
 
         # At this point `fer` only contains terms for the degrees of freedom
         # associated with membrane action. Expand `fer` to include zero terms for
@@ -341,12 +406,12 @@ class Plate3D():
         D.itemset((4, 0), self.i_node.RY[combo_name])
         D.itemset((5, 0), self.i_node.RZ[combo_name])
 
-        D.itemset((6, 0), self.n_node.DX[combo_name])
-        D.itemset((7, 0), self.n_node.DY[combo_name])
-        D.itemset((8, 0), self.n_node.DZ[combo_name])
-        D.itemset((9, 0), self.n_node.RX[combo_name])
-        D.itemset((10, 0), self.n_node.RY[combo_name])
-        D.itemset((11, 0), self.n_node.RZ[combo_name])
+        D.itemset((6, 0), self.j_node.DX[combo_name])
+        D.itemset((7, 0), self.j_node.DY[combo_name])
+        D.itemset((8, 0), self.j_node.DZ[combo_name])
+        D.itemset((9, 0), self.j_node.RX[combo_name])
+        D.itemset((10, 0), self.j_node.RY[combo_name])
+        D.itemset((11, 0), self.j_node.RZ[combo_name])
 
         D.itemset((12, 0), self.m_node.DX[combo_name])
         D.itemset((13, 0), self.m_node.DY[combo_name])
@@ -355,12 +420,12 @@ class Plate3D():
         D.itemset((16, 0), self.m_node.RY[combo_name])
         D.itemset((17, 0), self.m_node.RZ[combo_name])
 
-        D.itemset((18, 0), self.j_node.DX[combo_name])
-        D.itemset((19, 0), self.j_node.DY[combo_name])
-        D.itemset((20, 0), self.j_node.DZ[combo_name])
-        D.itemset((21, 0), self.j_node.RX[combo_name])
-        D.itemset((22, 0), self.j_node.RY[combo_name])
-        D.itemset((23, 0), self.j_node.RZ[combo_name])
+        D.itemset((18, 0), self.n_node.DX[combo_name])
+        D.itemset((19, 0), self.n_node.DY[combo_name])
+        D.itemset((20, 0), self.n_node.DZ[combo_name])
+        D.itemset((21, 0), self.n_node.RX[combo_name])
+        D.itemset((22, 0), self.n_node.RY[combo_name])
+        D.itemset((23, 0), self.n_node.RZ[combo_name])
         
         # Return the global displacement vector
         return D
@@ -458,18 +523,18 @@ class Plate3D():
                     [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
                     [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
                     
-                    [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
-                    [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
-                    [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3],
+                    [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
+                    [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
+                    [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3],
 
                     [1, xm, ym, xm**2, xm*ym, ym**2, xm**3, xm**2*ym, xm*ym**2, ym**3, xm**3*ym, xm*ym**3],
                     [0, 0, 1, 0, xm, 2*ym, 0, xm**2, 2*xm*ym, 3*ym**2, xm**3, 3*xm*ym**2],
                     [0, -1, 0, -2*xm, -ym, 0, -3*xm**2, -2*xm*ym, -ym**2, 0, -3*xm**2*ym, -ym**3],
 
-                    [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
-                    [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
-                    [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3]])
-
+                    [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
+                    [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
+                    [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3]])
+        
         # Return the coefficient matrix
         return C
 
@@ -480,10 +545,10 @@ class Plate3D():
         """
 
         # Calculate the [Q] coefficient matrix
-        Q = matrix([[0, 0, 0, -2, 0, 0, -6*x, -2*y, 0, 0, -6*x*y, 0],
+        Q =  array([[0, 0, 0, -2, 0, 0, -6*x, -2*y, 0, 0, -6*x*y, 0],
                     [0, 0, 0, 0, 0, -2, 0, 0, -2*x, -6*y, 0, -6*x*y],
                     [0, 0, 0, 0, -2, 0, 0, -4*x, -4*y, 0, -6*x**2, -6*y**2]])
-        
+ 
         # Return the [Q] coefficient matrix
         return Q
 
@@ -504,23 +569,6 @@ class Plate3D():
         # Return the plate bending constants
         return inv(self._C())*d
 
-    def _D(self):
-        """
-        Calculates and returns the constitutive matrix for isotropic materials [D].
-        """
-
-        # Calculate the coefficient for the constitutive matrix [D]
-        nu = self.nu
-        C = self.E*self.t**3/(12*(1 - nu**2))
-
-        # Calculate the constitutive matrix [D]
-        D = C*matrix([[1, nu, 0],
-                      [nu, 1, 0],
-                      [0, 0, (1-nu)/2]])
-
-        # Return the constitutive matrix [D]
-        return D
-
     def moment(self, x, y, combo_name='Combo 1'):
         """
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
@@ -540,7 +588,7 @@ class Plate3D():
         # Calculate and return internal moments
         # A negative sign will be applied to change the sign convention to match that of
         # PyNite's quadrilateral elements.
-        return -self._D()*self._Q(x, y)*self._a(combo_name)
+        return -self.Db() @ self._Q(x, y) @ self._a(combo_name)
  
     def shear(self, x, y, combo_name='Combo 1'):
         """
@@ -559,25 +607,25 @@ class Plate3D():
         """
 
         # Store matrices into local variables for quicker access
-        D = self._D()
+        Db = self.Db()
         a = self._a(combo_name)
 
         # Calculate the derivatives of the plate moments needed to compute shears
-        dMx_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
-                            [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
-                            [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[0]
-
-        dMxy_dy = (D*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
-                             [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
-                             [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[2]
-        
-        dMy_dy = (D*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
-                            [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
-                            [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[1]
-
-        dMxy_dx = (D*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+        dMx_dx = (Db*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
                              [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
-                             [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[2]
+                             [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[0]
+
+        dMxy_dy = (Db*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+                              [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
+                              [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[2]
+        
+        dMy_dy = (Db*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
+                             [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[1]
+
+        dMxy_dx = (Db*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+                              [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
+                              [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[2]
         
         # Calculate internal shears
         Qx = (dMx_dx + dMxy_dy)[0, 0]
@@ -588,37 +636,39 @@ class Plate3D():
                        [Qy]])
 
     def membrane(self, x, y, combo_name='Combo 1'):
-        """
-        Returns the in-plane (membrane) stresses in the plate.
-
-        Parameters
-        ----------
-        x : number
-            The plate's local x-coordinate where stresses will be calculated.
-        y : number
-            The plate's local y-coordinate where stresses will be calculated.
-        combo_name : string, optional
-            The name of the load combination to get stresses for. The default is 'Combo 1'.
-
-        Returns
-        -------
-        array
-            An array of the local in-plane stresses in the format [[Sx, Sy, Txy]].
         
-        """
+        # Convert the (x, y) coordinates to (r, x) coordinates
+        r = x - self.width()/2
+        s = y - self.height()/2
 
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
+
+        # Define the gauss point used for numerical integration
+        gp = 1/3**0.5
+
+        # Define extrapolated r and s points
+        r_ex = r/gp
+        s_ex = s/gp
+
+        # Define the interpolation functions
+        H = 1/4*array([(1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex), (1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex)])
+
+        # Get the stress-strain matrix
+        Dm = self.Dm()
         
-        a = self.width()
-        b = self.height()
+        # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
+        s1 = matmul(Dm, matmul(self.B_m(gp, gp), d))
+        s2 = matmul(Dm, matmul(self.B_m(-gp, gp), d))
+        s3 = matmul(Dm, matmul(self.B_m(-gp, -gp), d))
+        s4 = matmul(Dm, matmul(self.B_m(gp, -gp), d))
 
-        eta = y/b
-        epsilon = x/a
-        nu = self.nu
-        E = self.E
+        # Extrapolate to get the value at the requested location
+        Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]
+        Sy = H[0]*s1[1] + H[1]*s2[1] + H[2]*s3[1] + H[3]*s4[1]
+        Txy = H[0]*s1[2] + H[1]*s2[2] + H[2]*s3[2] + H[3]*s4[2]
 
-        return E/(1-nu**2)*matmul(array([[-(1-eta)/a,                -nu*(1-epsilon)/b,     -eta/a,                   nu*(1-epsilon)/b,  eta/a,                nu*epsilon/b,     (1-eta)/a,             -nu*epsilon/b],
-                                         [-nu*(1-eta)/a,             -(1-epsilon)/b,        -nu*eta/a,                (1-epsilon)/b,     nu*eta/a,             epsilon/b,        nu*(1-eta)/a,          -epsilon/b],
-                                         [-(1-nu)*(1-epsilon)/(2*b), -(1-nu)*(1-eta)/(2*a), (1-nu)*(1-epsilon)/(2*b), -(1-nu)*eta/(2*a), (1-nu)*epsilon/(2*b), (1-nu)*eta/(2*a), -(1-nu)*epsilon/(2*b), (1-nu)*(1-eta)/(2*a)]]), d)
+        return array([Sx,
+                      Sy,
+                      Txy])

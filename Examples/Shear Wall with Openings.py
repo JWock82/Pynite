@@ -8,7 +8,6 @@
 # Import a few libraries from PyNite that we'll need
 from PyNite.FEModel3D import FEModel3D
 from PyNite.Mesh import RectangleMesh, RectOpening
-from PyNite.Visualization import render_model
 from math import isclose
 
 # Set material properties for the wall (2 ksi masonry)
@@ -17,7 +16,7 @@ E = 900*f_m/1000  # Masonry modulus of elasticity (ksi)
 nu = 0.17         # Poisson's ratio for masonry
 
 # Choose a desired mesh size. The program will try to stick to this as best as it can.
-mesh_size = 12  # in
+mesh_size = 6  # in
 
 # Set the wall's dimensions
 width = 26*12   # Wall overall width (in)
@@ -25,8 +24,8 @@ height = 16*12  # Wall overall height (in)
 t = 8           # Masonry thickness (in)
 
 # Generate the rectangular mesh
-mesh = RectangleMesh(t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY',
-                     start_node='N1', start_element='R1', element_type='Rect')
+mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
+                     plane='XY', start_node='N1', start_element='R1', element_type='Rect')
 
 # Add a 4' wide x 12' tall door opening to the mesh
 mesh.add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
@@ -79,11 +78,20 @@ model.add_load_combo('Seismic', {'E': 1.0})
 # Analyze the model
 model.analyze(log=True, check_statics=True)
 
-import os
 # Render the model and plot the `Txy` shears.
-window = render_model(model, text_height=1, render_loads=True, deformed_shape=True,
-                      deformed_scale=200, color_map='Txy', scalar_bar=False,
-                      combo_name='Seismic', labels=False, screenshot='console') #screenshot='Shear Wall Example.png'
+# window = render_model(model, text_height=1, render_loads=True, deformed_shape=True,
+#                       deformed_scale=200, color_map='Txy', scalar_bar=False,
+#                       combo_name='Seismic', labels=False, screenshot='console')
+from PyNite.Visualization import Renderer
+renderer = Renderer(model)
+renderer.combo_name = 'Seismic'
+renderer.color_map = 'Txy'
+renderer.set_annotation_size(1)
+renderer.set_deformed_shape(True)
+renderer.deformed_scale = 200
+renderer.scalar_bar = True
+# renderer.render_model()
+renderer.screenshot()
 
 # Print the maximum displacement
 d_max = max([node.DX['Seismic'] for node in model.Nodes.values()])

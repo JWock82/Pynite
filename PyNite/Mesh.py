@@ -10,11 +10,13 @@ class Mesh():
     A parent class for meshes to inherit from.
     """
 
-    def __init__(self, t, E, nu, start_node='N1', start_element='Q1'):
+    def __init__(self, t, E, nu, kx_mod=1, ky_mod=1, start_node='N1', start_element='Q1'):
 
         self.t = t                          # Thickness
         self.E = E                          # Modulus of elasticity
         self.nu = nu                        # Poisson's ratio
+        self.kx_mod = kx_mod                # Local x stiffness modification factor for elements in the mesh
+        self.ky_mod = ky_mod                # Local y stiffness modification factor for elements in the mesh
         self.start_node = start_node        # The name of the first node in the mesh
         self.start_element = start_element  # The name of the first element in the mesh
         self.last_element = None            # The name of the last element in the mesh
@@ -292,26 +294,32 @@ class Mesh():
 #%%
 class RectangleMesh(Mesh):
 
-    def __init__(self, t, E, nu, mesh_size, width, height, origin=[0, 0, 0], plane='XY', 
-                 x_control=[], y_control=[], start_node='N1', start_element='Q1',
+    def __init__(self, mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
+                 plane='XY', x_control=[], y_control=[], start_node='N1', start_element='Q1',
                  element_type='Quad'):
         """
         A rectangular mesh of elements.
 
         Parameters
         ----------
-        t : number
-            Element thickness.
-        E : number
-            Element modulus of elasticity.
-        nu : number
-            Element poisson's ratio.
         mesh_size : number
             Desired mesh size.
         width : number
             The overall width of the mesh measured along its local x-axis.
         height : number
             The overall height of the mesh measured along its local y-axis.
+        t : number
+            Element thickness.
+        E : number
+            Element modulus of elasticity.
+        nu : number
+            Element poisson's ratio.
+        kx_mod : number
+            Stiffness modification factor for in-plane stiffness in the element's local
+            x-direction. Default value is 1.0 (no modification).
+        ky_mod : number
+            Stiffness modification factor for in-plane stiffness in the element's local
+            y-direction. Default value is 1.0 (no modification).
         origin : list, optional
             The origin of the rectangular mesh's local coordinate system. The default is [0, 0, 0].
         plane : string, optional
@@ -336,7 +344,7 @@ class RectangleMesh(Mesh):
 
         """
         
-        super().__init__(t, E, nu, start_node, start_element)
+        super().__init__(t, E, nu, kx_mod, ky_mod, start_node, start_element)
         self.mesh_size = mesh_size
         self.width = width
         self.height = height
@@ -494,13 +502,13 @@ class RectangleMesh(Mesh):
                                                                    self.nodes['N' + str(j_node + node_offset)],
                                                                    self.nodes['N' + str(m_node + node_offset)],
                                                                    self.nodes['N' + str(n_node + node_offset)],
-                                                                   self.t, self.E, self.nu)
+                                                                   self.t, self.E, self.nu, self.kx_mod, self.ky_mod)
             else:
                 self.elements[element_name] = Plate3D(element_name, self.nodes['N' + str(i_node + node_offset)],
                                                                     self.nodes['N' + str(j_node + node_offset)],
                                                                     self.nodes['N' + str(m_node + node_offset)],
                                                                     self.nodes['N' + str(n_node + node_offset)],
-                                                                    self.t, self.E, self.nu)
+                                                                    self.t, self.E, self.nu, self.kx_mod, self.ky_mod)
 
         # Initialize a list of nodes and associated elements that fall within
         # opening boundaries that will be deleted
@@ -628,10 +636,10 @@ class AnnulusMesh(Mesh):
     A mesh of quadrilaterals forming an annulus (a donut).
     """
 
-    def __init__(self, t, E, nu, mesh_size, outer_radius, inner_radius, origin=[0, 0, 0], axis='Y',
-                 start_node='N1', start_element='Q1'):
+    def __init__(self, mesh_size, outer_radius, inner_radius, t, E, nu, kx_mod=1, ky_mod=1,
+                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1'):
 
-        super().__init__(t, E, nu, start_node, start_element)
+        super().__init__(t, E, nu, kx_mod, ky_mod, start_node, start_element)
 
         self.r1 = inner_radius
         self.r2 = outer_radius
@@ -649,6 +657,9 @@ class AnnulusMesh(Mesh):
         t = self.t
         E = self.E
         nu = self.nu
+        kx_mod = self.kx_mod
+        ky_mod = self.ky_mod
+
         mesh_size = self.mesh_size
         r_outer = self.r2
         r_inner = self.r1
@@ -677,14 +688,14 @@ class AnnulusMesh(Mesh):
         
             # Create a mesh of nodes for the ring
             if transition == True:
-                ring = AnnulusTransRingMesh(t, E, nu, r_inner + h_rad, r_inner, n_circ,
+                ring = AnnulusTransRingMesh(r_inner + h_rad, r_inner, n_circ, t, E, nu, kx_mod, ky_mod,
                                             self.origin, self.axis, 'N' + str(n), 'Q' + str(q))
                 n += 3*n_circ
                 q += 4*n_circ
                 n_circ *= 3
                 self.num_quads_outer = n_circ
             else:
-                ring = AnnulusRingMesh(t, E, nu, r_inner + h_rad, r_inner, n_circ, self.origin,
+                ring = AnnulusRingMesh(r_inner + h_rad, r_inner, n_circ, t, E, nu, kx_mod, ky_mod, self.origin,
                                        self.axis, 'N' + str(n), 'Q' + str(q))
                 n += n_circ
                 q += n_circ
@@ -714,10 +725,11 @@ class AnnulusRingMesh(Mesh):
     A mesh of quadrilaterals forming an annular ring (a donut).
     """
 
-    def __init__(self, t, E, nu, outer_radius, inner_radius, num_quads, origin=[0, 0, 0], axis='Y',
-                 start_node='N1', start_element='Q1'):
+    def __init__(self, outer_radius, inner_radius, num_quads, t, E, nu, kx_mod=1, ky_mod=1,
+                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1'):
 
-        super().__init__(t, E, nu, start_node=start_node, start_element=start_element)
+        super().__init__(t, E, nu, kx_mod, ky_mod, start_node=start_node,
+                         start_element=start_element)
 
         self.r1 = inner_radius
         self.r2 = outer_radius
@@ -816,7 +828,7 @@ class AnnulusRingMesh(Mesh):
                                                                self.nodes['N' + str(j_node + node_offset)],
                                                                self.nodes['N' + str(m_node + node_offset)],
                                                                self.nodes['N' + str(n_node + node_offset)],
-                                                               self.t, self.E, self.nu)
+                                                               self.t, self.E, self.nu, self.kx_mod, self.ky_mod)
 
 #%%
 class AnnulusTransRingMesh(Mesh):
@@ -825,8 +837,8 @@ class AnnulusTransRingMesh(Mesh):
     edge.
     """
 
-    def __init__(self, t, E, nu, outer_radius, inner_radius, num_inner_quads, origin=[0, 0, 0],
-                 axis='Y', start_node='N1', start_element='Q1'):
+    def __init__(self, outer_radius, inner_radius, num_inner_quads, t, E, nu, kx_mod=1, ky_mod=1,
+                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1'):
         """
         Parameters
         ----------
@@ -834,7 +846,8 @@ class AnnulusTransRingMesh(Mesh):
             A vector indicating the direction normal to the ring.
         """
 
-        super().__init__(t, E, nu, start_node=start_node, start_element=start_element)
+        super().__init__(t, E, nu, kx_mod, ky_mod, start_node=start_node,
+                         start_element=start_element)
 
         self.r1 = inner_radius
         self.r2 = (inner_radius + outer_radius)/2
@@ -978,7 +991,7 @@ class AnnulusTransRingMesh(Mesh):
                                                                self.nodes['N' + str(j_node + node_offset)],
                                                                self.nodes['N' + str(m_node + node_offset)],
                                                                self.nodes['N' + str(n_node + node_offset)],
-                                                               self.t, self.E, self.nu)
+                                                               self.t, self.E, self.nu, self.kx_mod, self.ky_mod)
 
 #%%
 class FrustrumMesh(AnnulusMesh):
@@ -986,11 +999,12 @@ class FrustrumMesh(AnnulusMesh):
     A mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane at the top and bottom).
     """
 
-    def __init__(self, t, E, nu, mesh_size, large_radius, small_radius, height, origin=[0, 0, 0],
-                 axis='Y', start_node='N1', start_element='Q1'):
+    def __init__(self, mesh_size, large_radius, small_radius, height, t, E, nu, kx_mod=1, ky_mod=1,
+                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1'):
         
         # Create an annulus mesh
-        super().__init__(t, E, nu, mesh_size, large_radius, small_radius, origin, axis, start_node, start_element)
+        super().__init__(mesh_size, large_radius, small_radius, t, E, nu, kx_mod, ky_mod, origin,
+                         axis, start_node, start_element)
 
         Xo = origin[0]
         Yo = origin[1]
@@ -1024,6 +1038,22 @@ class CylinderMesh(Mesh):
     mesh_size : number
         The desired mesh size. This value will only be used to mesh vertically if `num_elements` is
         specified. Otherwise it will be used to mesh the circumference too.
+    radius : number
+        The radius of the cylinder to the element centers
+    height : number
+        Total height of the cylinder.
+    t : number
+        Element thickness.
+    E : number
+        Element modulus of elasticity.
+    nu : number
+        Poisson's ratio for the element
+    kx_mod : number
+        Stiffness modification factor for in-plane stiffness in the element's local
+        x-direction. Default value is 1.0 (no modification).
+    ky_mod : number
+        Stiffness modification factor for in-plane stiffness in the element's local
+        y-direction. Default value is 1.0 (no modification).
     start_node : string, optional
         The name of the first node in the mesh. The name must be formatted starting with a single
         letter followed by a number (e.g. 'N12'). The mesh will begin numbering nodes from this
@@ -1040,11 +1070,11 @@ class CylinderMesh(Mesh):
         The type of element to use for the mesh: 'Quad' or 'Rect'
     """
 
-    def __init__(self, t, E, nu, mesh_size, radius, height, center=[0, 0, 0],
-                 axis='Y', start_node='N1', start_element='Q1',
-                 num_elements=None, element_type='Quad'):
+    def __init__(self, mesh_size, radius, height, t, E, nu, kx_mod=1, ky_mod=1, center=[0, 0, 0],
+                 axis='Y', start_node='N1', start_element='Q1', num_elements=None,
+                 element_type='Quad'):
 
-        super().__init__(t, E, nu, start_node, start_element)
+        super().__init__(t, E, nu, kx_mod, ky_mod, start_node, start_element)
 
         self.radius = radius
         self.h = height
@@ -1093,11 +1123,14 @@ class CylinderMesh(Mesh):
         
             # Create a mesh of nodes for the ring
             if self.axis == 'Y':
-                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_elements, [0, y, 0], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
+                ring = CylinderRingMesh(radius, h_y, num_elements, t, E, nu, 1, 1, [0, y, 0],
+                                        self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'X':
-                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_elements, [y, 0, 0], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
+                ring = CylinderRingMesh(radius, h_y, num_elements, t, E, nu, 1, 1, [y, 0, 0],
+                                        self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'Z':
-                ring = CylinderRingMesh(t, E, nu, radius, h_y, num_elements, [0, 0, y], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
+                ring = CylinderRingMesh(radius, h_y, num_elements, t, E, nu, 1, 1, [0, 0, y],
+                                        self.axis, 'N' + str(n), 'Q' + str(q), element_type)
 
             n += num_elements
             q += num_elements
@@ -1129,6 +1162,28 @@ class CylinderRingMesh(Mesh):
 
     Parameters
     ----------
+    radius : number
+        Radius to the center of the plates in the cylindrical ring.
+    height : number
+        Height of the cylindrical ring.
+    num_elements : number
+        Number of elements used to generate the cylindrical ring.
+    t : number
+        Element thickness.
+    E : number
+        Element modulus of elasticity
+    nu : number
+        Poisson's ratio for the elements.
+    kx_mod : number
+        Stiffness modification factor for in-plane stiffness in the element's local
+        x-direction. Default value is 1.0 (no modification).
+    ky_mod : number
+        Stiffness modification factor for in-plane stiffness in the element's local
+        y-direction. Default value is 1.0 (no modification).
+    origin : list
+        The location of the center of the base of the cylindrical ring. Default is [0, 0, 0].
+    axis : string
+        Global axis about which to revolve the ring ('X', 'Y', or 'Z'). Default is 'Y'.
     start_node : string, optional
         The name of the first node in the mesh. The name must be formatted starting with a single
         letter followed by a number (e.g. 'N12'). The mesh will begin numbering nodes from this
@@ -1142,10 +1197,11 @@ class CylinderRingMesh(Mesh):
     
     """
 
-    def __init__(self, t, E, nu, radius, height, num_elements, origin=[0, 0, 0], axis='Y',
-                 start_node='N1', start_element='Q1', element_type='Quad'):
+    def __init__(self, radius, height, num_elements, t, E, nu, kx_mod=1, ky_mod=1,
+                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1',
+                 element_type='Quad'):
 
-        super().__init__(t, E, nu, start_node=start_node, start_element=start_element)
+        super().__init__(t, E, nu, kx_mod, ky_mod, start_node=start_node, start_element=start_element)
 
         self.radius = radius
         self.height = height
@@ -1263,10 +1319,10 @@ class CylinderRingMesh(Mesh):
                                                      self.nodes['N' + str(j_node + node_offset)],
                                                      self.nodes['N' + str(m_node + node_offset)],
                                                      self.nodes['N' + str(n_node + node_offset)],
-                                                     self.t, self.E, self.nu)
+                                                     self.t, self.E, self.nu, self.kx_mod, self.ky_mod)
             elif self.element_type == 'Rect':
                 self.elements[element_name] = Plate3D(element_name, self.nodes['N' + str(i_node + node_offset)],
                                                       self.nodes['N' + str(j_node + node_offset)],
                                                       self.nodes['N' + str(m_node + node_offset)],
                                                       self.nodes['N' + str(n_node + node_offset)],
-                                                      self.t, self.E, self.nu)
+                                                      self.t, self.E, self.nu, self.kx_mod, self.ky_mod)

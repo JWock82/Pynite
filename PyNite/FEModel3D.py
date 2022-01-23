@@ -263,29 +263,41 @@ class FEModel3D():
         #Return the member name
         return name
 
-    def add_plate(self, name, i_node, j_node, m_node, n_node, t, E, nu):
-        '''
-        Adds a new plate to the model. The plate name will be returned
+    def add_plate(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
+        """
+        Adds a new rectangular plate to the model.
+
+        The plate formulation for in-plane (membrane) stiffness is based on an isoparametric
+        formulation. For bending, it is based on a 12-term polynomial formulation. This element
+        must be rectangular, and must not be used where a thick plate formulation is needed. For
+        a more versatile plate element that can handle distortion and thick plate conditions,
+        consider using the `add_quad` method instead.
         
         Parameters
         ----------
         name : string
             A unique user-defined name for the plate. If None or "", a name will be automatically assigned
         i_node : string
-            The name of the i-node (1st node definded in clockwise order).
+            The name of the i-node.
         j_node : string
-            The name of the j-node (2nd node defined in clockwise order).
+            The name of the j-node.
         m_node : string
-            The name of the m-node (3rd node defined in clockwise order).
+            The name of the m-node.
         n_node : string
-            The name of the n-node (4th node defined in clockwise order).
+            The name of the n-node.
         t : number
             The thickness of the plate.
         E : number
             The modulus of elasticity of the plate.
-        mew : number
+        nu : number
             Posson's ratio for the plate.
-        '''
+        kx_mod : number
+            Stiffness modification factor for in-plane stiffness in the element's local
+            x-direction. Default value is 1.0 (no modification).
+        ky_mod : number
+            Stiffness modification factor for in-plane stiffness in the element's local
+            y-direction. Default value is 1.0 (no modification).
+        """
         
         # Name the plate or check it doesn't already exist
         if name:
@@ -299,7 +311,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, self.LoadCombos)
+        newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, kx_mod, ky_mod, self.LoadCombos)
         
         # Add the new member to the list
         self.Plates[name] = newPlate
@@ -307,35 +319,42 @@ class FEModel3D():
         #Return the plate name
         return name
 
-    def add_quad(self, name, i_node, j_node, m_node, n_node, t, E, nu):
-        '''
-        Adds a new quadrilateral to the model. The quad name will be returned
+    def add_quad(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
+        """
+        Adds a new quadrilateral to the model.
 
-        Quadrilaterals are similar to plates, except they do not have to be
-        rectangular.
+        The quad formulation for in-plane (membrane) stiffness is based on an isoparametric
+        formulation. For bending, it is based on an MITC4 formulation. This element handles
+        distortion relatively well, and is appropriate for thick and thin plates. One limitation
+        with this element is that it does a poor job of reporting corner stresses. Corner forces,
+        however are very accurate. Center stresses are very accurate as well. For cases where
+        corner stress results are important, consider using the `add_plate` method instead.
         
         Parameters
         ----------
         name : string
             A unique user-defined name for the quadrilateral. If None or "", a name will be automatically assigned
         i_node : string
-            The name of the i-node (1st node definded in counter-clockwise order).
+            The name of the i-node.
         j_node : string
-            The name of the j-node (2nd node defined in counter-clockwise order).
+            The name of the j-node.
         m_node : string
-            The name of the m-node (3rd node defined in counter-clockwise order).
+            The name of the m-node.
         n_node : string
-            The name of the n-node (4th node defined in counter-clockwise order).
+            The name of the n-node.
         t : number
             The thickness of the quadrilateral.
         E : number
             The modulus of elasticity of the quadrilateral.
         nu : number
             Posson's ratio for the quadrilateral.
-        x_axis : list, Default is None
-            A vector in the direction of the plate's local x-axis, for example [1, 0, 0]. If None
-            the program defines the x_axis as runing from the i-node to the j-node.
-        '''
+        kx_mod : number
+            Stiffness modification factor for in-plane stiffness in the element's local
+            x-direction. Default value is 1.0 (no modification).
+        ky_mod : number
+            Stiffness modification factor for in-plane stiffness in the element's local
+            y-direction. Default value is 1.0 (no modification).
+        """
         
         # Name the quad or check it doesn't already exist
         if name:
@@ -349,7 +368,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newQuad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, self.LoadCombos)
+        newQuad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, kx_mod, ky_mod, self.LoadCombos)
         
         # Add the new member to the list
         self.Quads[name] = newQuad
@@ -1386,13 +1405,13 @@ class FEModel3D():
                     m = plate.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.n_node.ID*6 + (a - 6)
+                    m = plate.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
                     m = plate.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.j_node.ID*6 + (a - 18)
+                    m = plate.n_node.ID*6 + (a - 18)
 
                 for b in range(24):
 
@@ -1402,13 +1421,13 @@ class FEModel3D():
                         n = plate.i_node.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.n_node.ID*6 + (b - 6)
+                        n = plate.j_node.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
                         n = plate.m_node.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.j_node.ID*6 + (b - 18)
+                        n = plate.n_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     if sparse == True:
@@ -1565,13 +1584,13 @@ class FEModel3D():
                     m = plate.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.n_node.ID*6 + (a - 6)
+                    m = plate.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
                     m = plate.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.j_node.ID*6 + (a - 18)
+                    m = plate.n_node.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER[m, 0] += plate_FER[a, 0]
@@ -2431,7 +2450,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += plate_F[4, 0]
                             node.RxnMZ[combo.name] += plate_F[5, 0]
 
-                        elif plate.n_node == node:
+                        elif plate.j_node == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2457,7 +2476,7 @@ class FEModel3D():
                             node.RxnMY[combo.name] += plate_F[16, 0]
                             node.RxnMZ[combo.name] += plate_F[17, 0]
 
-                        elif plate.j_node == node:
+                        elif plate.n_node == node:
 
                             # Get the plate's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    

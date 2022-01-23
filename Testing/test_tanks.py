@@ -8,10 +8,8 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 import unittest
 from PyNite import FEModel3D
 from PyNite.Mesh import CylinderMesh
-import math
 import sys
 from io import StringIO
-from numpy import allclose
 
 class Test_Tanks(unittest.TestCase):
     ''' Tests of analyzing plate elements. '''
@@ -48,7 +46,8 @@ class Test_Tanks(unittest.TestCase):
         e_o = 'Q1'          # Start element ID
 
 
-        tank_mesh = CylinderMesh(t, E, nu, mesh_size, R, H, center, axis, n_o, e_o, element_type='Quad')
+        tank_mesh = CylinderMesh(mesh_size, R, H, t, E, nu, 1, 1, center, axis, n_o, e_o,
+                                 element_type='Quad')
         tank_model = FEModel3D()
         tank_model.add_mesh(tank_mesh)
 
@@ -126,7 +125,8 @@ class Test_Tanks(unittest.TestCase):
         e_o = 'Q1'          # Start element ID
 
 
-        tank_mesh = CylinderMesh(t, E, nu, mesh_size, R, H, center, axis, n_o, e_o, element_type='Rect')
+        tank_mesh = CylinderMesh(mesh_size, R, H, t, E, nu, 1, 1, center, axis, n_o, e_o,
+                                 element_type='Rect')
         tank_model = FEModel3D()
         tank_model.add_mesh(tank_mesh)
 

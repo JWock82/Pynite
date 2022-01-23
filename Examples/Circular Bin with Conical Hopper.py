@@ -6,6 +6,8 @@ from PyNite.Visualization import render_model
 t = 0.25/12
 E = 29000*1000*12**2
 nu = 0.3
+kx_mod=1
+ky_mod=1
 mesh_size = 0.5
 r_shell = 7.5
 r_hopper = 1.5
@@ -17,7 +19,8 @@ start_node = 'N1'
 start_element = 'Q1'
 
 # Generate the conical hopper mesh
-hopper_mesh = FrustrumMesh(t, E, nu, mesh_size, r_shell, r_hopper, h_hopper, center, axis, start_node, start_element)
+hopper_mesh = FrustrumMesh(mesh_size, r_shell, r_hopper, h_hopper, t, E, nu, kx_mod, ky_mod,
+                           center, axis, start_node, start_element)
 
 # Determine how many elements make up the circumference at the top of the hopper. This will
 # determine the number of elements making up the circumference of the cylindrical shell.
@@ -28,7 +31,8 @@ first_node = 'N' + str(len(hopper_mesh.nodes) + 1)
 first_element = 'Q' + str(len(hopper_mesh.elements) + 1)
 
 # Generate the cylindrical shell
-shell_mesh = CylinderMesh(t, E, nu, mesh_size, r_shell, h_shell, center, axis, first_node, first_element, n_hopper)
+shell_mesh = CylinderMesh(mesh_size, r_shell, h_shell, t, E, nu, kx_mod, ky_mod, center, axis,
+                          first_node, first_element, n_hopper)
 
 # Create a finite element model
 model = FEModel3D()
