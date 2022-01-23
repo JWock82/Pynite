@@ -61,11 +61,11 @@ class Test_2D_Frame(unittest.TestCase):
         # Analyze the model
         beam.analyze_PDelta()
 
-        from PyNite.Visualization import Renderer
-        renderer = Renderer(beam)
-        renderer.combo_name = '1.4D'
-        renderer.annotation_size = 1
-        renderer.render_model()
+        # from PyNite.Visualization import Renderer
+        # renderer = Renderer(beam)
+        # renderer.combo_name = '1.4D'
+        # renderer.annotation_size = 1
+        # renderer.render_model()
 
         RY1 = beam.Nodes['N1'].RxnFY['1.4D']
         RY2 = beam.Nodes['N2'].RxnFY['1.4D']
