@@ -87,9 +87,9 @@ class Plate3D():
         G = self.E/(2*(1 + self.nu))
 
         # Calculate the constitutive matrix [Dm]
-        Dm = 1/(1 - nu_xy*nu_yx)*array([[   Ex,    nu_yx*Ex, 0],
-                                        [nu_xy*Ey,    Ey,    0],
-                                        [   0,        0,     G]])
+        Dm = 1/(1 - nu_xy*nu_yx)*array([[   Ex,    nu_yx*Ex,            0             ],
+                                        [nu_xy*Ey,    Ey,               0             ],
+                                        [   0,        0,     (1 - nu_xy)*(1 - nu_xy)*G]])
 
         # Return the constitutive matrix [Dm]
         return Dm
@@ -638,8 +638,8 @@ class Plate3D():
     def membrane(self, x, y, combo_name='Combo 1'):
         
         # Convert the (x, y) coordinates to (r, x) coordinates
-        r = x - self.width()/2
-        s = y - self.height()/2
+        r = -1 + 2*x/self.width()
+        s = -1 + 2*y/self.height()
 
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
