@@ -24,6 +24,8 @@ height = 16*12  # Wall overall height (in)
 t = 8           # Masonry thickness (in)
 
 # Generate the rectangular mesh
+# The effects of cracked masonry can be modeled by adjusting the `ky_mod` factor. For this example
+# uncracked masonry will be used to match the textbook problem.
 mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
                      plane='XY', start_node='N1', start_element='R1', element_type='Rect')
 
@@ -86,8 +88,8 @@ from PyNite.Visualization import Renderer
 renderer = Renderer(model)
 renderer.combo_name = 'Seismic'
 renderer.color_map = 'Txy'
-renderer.set_annotation_size(1)
-renderer.set_deformed_shape(True)
+renderer.annotation_size = 1
+renderer.deformed_shape = True
 renderer.deformed_scale = 200
 renderer.scalar_bar = True
 # renderer.render_model()

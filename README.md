@@ -22,7 +22,7 @@ An easy to use elastic 3D structural engineering finite element analysis library
 * Spring elements: two-way, tension-only, and compression-only.
 * Spring supports: two-way and one-way.
 * Quadrilateral plate elements (MITC4 formulation).
-* Rectangular plate elements (based on a 12-term polynomial formulation).
+* Rectangular plate elements (12-term polynomial formulation).
 * Basic meshing algorithms for some common shapes and for openings in rectangular walls.
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
@@ -62,9 +62,10 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
-v0.0.55 (pre-release)
+v0.0.55
 * Added stiffness modification factors for rectangular plate and quarilateral elements. Orthotropic in-plane behavior can now be modeled. This can be used to model the cracked stiffness of concrete and masonry for in-plane loads. Exercise caution when using this feature. These factors only apply to in-plane stiffnesses in the element's local x and y directions. Out-of-plane stiffnesses are not modified. Ensure element local axes are aligned to the directions you want to apply the stiffness modifications to.
 * The arguments for many methods relating to rect plates and quads have been reorganized with the addition of the stiffness modification factors. With this update any plate/quad models you have will likely need to be updated.
+* Reformulated rectangular plate element in-plane (membrane) forces. These elements are now isoparametric just like the quad elements. This was done to make them orthotropic.
 * Improved docstrings for plates and quads.
 
 v0.0.54

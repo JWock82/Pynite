@@ -108,7 +108,7 @@ class Renderer():
         """
 
         # Render the model in a window and save the window
-        window = render_model()
+        window = self.render_model()
 
         # Screenshot code
         w2if = vtk.vtkWindowToImageFilter()
