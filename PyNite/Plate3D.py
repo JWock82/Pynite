@@ -89,7 +89,7 @@ class Plate3D():
         # Calculate the constitutive matrix [Dm]
         Dm = 1/(1 - nu_xy*nu_yx)*array([[   Ex,    nu_yx*Ex,            0             ],
                                         [nu_xy*Ey,    Ey,               0             ],
-                                        [   0,        0,     (1 - nu_xy)*(1 - nu_xy)*G]])
+                                        [   0,        0,     (1 - nu_xy)*(1 - nu_yx)*G]])
 
         # Return the constitutive matrix [Dm]
         return Dm
