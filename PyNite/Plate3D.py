@@ -165,16 +165,16 @@ class Plate3D():
 
         # Get the membrane B matrices for each gauss point
         # Doing this now will save us from doing it twice below
-        B1 = self.B_m(gp, gp)
-        B2 = self.B_m(-gp, gp)
-        B3 = self.B_m(-gp, -gp)
-        B4 = self.B_m(gp, -gp)
+        B1 = self.B_m(-gp, -gp)
+        B2 = self.B_m(gp, -gp)
+        B3 = self.B_m(gp, gp)
+        B4 = self.B_m(-gp, gp)
 
         # See reference 1 at the bottom of page 353, and reference 2 page 466
-        k = t*(matmul(B1.T, matmul(Dm, B1))*det(self.J(gp, gp)) +
-               matmul(B2.T, matmul(Dm, B2))*det(self.J(-gp, gp)) +
-               matmul(B3.T, matmul(Dm, B3))*det(self.J(-gp, -gp)) +
-               matmul(B4.T, matmul(Dm, B4))*det(self.J(gp, -gp)))
+        k = t*(matmul(B1.T, matmul(Dm, B1))*det(self.J(-gp, -gp)) +
+               matmul(B2.T, matmul(Dm, B2))*det(self.J(gp, -gp)) +
+               matmul(B3.T, matmul(Dm, B3))*det(self.J(gp, gp)) +
+               matmul(B4.T, matmul(Dm, B4))*det(self.J(-gp, gp)))
         
         k_exp = zeros((24, 24))
 
@@ -659,10 +659,10 @@ class Plate3D():
         Dm = self.Dm()
         
         # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
-        s1 = matmul(Dm, matmul(self.B_m(gp, gp), d))
-        s2 = matmul(Dm, matmul(self.B_m(-gp, gp), d))
-        s3 = matmul(Dm, matmul(self.B_m(-gp, -gp), d))
-        s4 = matmul(Dm, matmul(self.B_m(gp, -gp), d))
+        s1 = matmul(Dm, matmul(self.B_m(-gp, -gp), d))
+        s2 = matmul(Dm, matmul(self.B_m(gp, -gp), d))
+        s3 = matmul(Dm, matmul(self.B_m(gp, gp), d))
+        s4 = matmul(Dm, matmul(self.B_m(-gp, gp), d))
 
         # Extrapolate to get the value at the requested location
         Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]
