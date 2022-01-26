@@ -555,8 +555,8 @@ class RectangleMesh(Mesh):
 
             for opng in self.openings.values():
 
-                if ((isclose(top, opng.y_top) and isclose(bott, opng.y_bott))
-                or  (isclose(left, opng.x_left) and isclose(right, opng.x_right))):
+                if ((isclose(top, opng.y_bott + opng.height) and isclose(bott, opng.y_bott))
+                or  (isclose(left, opng.x_left) and isclose(right, opng.x_left + opng.width))):
 
                     # Mark the element for deletion if it's not already marked
                     if element.Name not in element_del_list:
