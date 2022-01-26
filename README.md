@@ -62,7 +62,7 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
-v0.0.57 & 0.0.58
+v0.0.57 & 0.0.59
 * Bug fix for small openings that weren't being added to meshes.
 
 v0.0.56
