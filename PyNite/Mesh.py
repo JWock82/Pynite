@@ -518,23 +518,13 @@ class RectangleMesh(Mesh):
         # Go back through the mesh and delete any nodes and elements that are in the openings
         for node in self.nodes.values():
             
-            # Calculate the node's position in the mesh's local coordinate
-            # sytem.
-            if self.plane == 'XY':
-                x = node.X - self.origin[0]
-                y = node.Y - self.origin[1]
-            elif self.plane == 'YZ':
-                x = node.Z - self.origin[2]
-                y = node.Y - self.origin[1]
-            elif self.plane == 'XZ':
-                x = node.X - self.origin[0]
-                y = node.Z - self.origin[2]
+            # Get the node's position in the mesh's local coordinate sytem.
+            x, y = self.node_local_coords(node)
 
             # Step through each opening in the mesh
             for opng in self.openings.values():
 
-                # Determine if the node falls within the boundaries of the
-                # opening
+                # Determine if the node falls within the boundaries of the opening
                 if (round(x, 10) > round(opng.x_left, 10)
                 and round(x, 10) < round(opng.x_left + opng.width, 10) 
                 and round(y, 10) > round(opng.y_bott, 10) 
@@ -554,6 +544,23 @@ class RectangleMesh(Mesh):
                             # Mark the element for deletion if it's not already marked
                             if element.Name not in element_del_list:
                                 element_del_list.append(element.Name)
+                
+        # The previous check will miss any elements that span the openings
+        # Check for elements that span any openings
+        for element in self.elements.values():
+
+            # Find the top, bottom, left side and right side of the element in local coordinates
+            left, top = self.node_local_coords(element.n_node)
+            right, bott = self.node_local_coords(element.j_node)
+
+            for opng in self.openings.values():
+
+                if ((isclose(top, opng.y_top) and isclose(bott, opng.y_bott))
+                or  (isclose(left, opng.x_left) and isclose(right, opng.x_right))):
+
+                    # Mark the element for deletion if it's not already marked
+                    if element.Name not in element_del_list:
+                        element_del_list.append(element.Name)
 
         # Delete the nodes marked for deletion
         for node_name in node_del_list:
@@ -575,6 +582,23 @@ class RectangleMesh(Mesh):
         # Delete the orphaned nodes
         for node_name in node_del_list:
             del self.nodes[node_name]
+
+    def node_local_coords(self, node):
+        """
+        Calculates a node's position in the mesh's local coordinate system
+        """
+
+        if self.plane == 'XY':
+            x = node.X - self.origin[0]
+            y = node.Y - self.origin[1]
+        elif self.plane == 'YZ':
+            x = node.Z - self.origin[2]
+            y = node.Y - self.origin[1]
+        elif self.plane == 'XZ':
+            x = node.X - self.origin[0]
+            y = node.Z - self.origin[2]
+        
+        return x, y
 
     def add_rect_opening(self, name, x_left, y_bott, width, height):
         """
