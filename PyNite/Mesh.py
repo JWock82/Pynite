@@ -515,7 +515,7 @@ class RectangleMesh(Mesh):
         node_del_list = []
         element_del_list = []
 
-        # Go back through the mesh and delete any nodes and elements that are in the openings
+        # Go back through the mesh and delete any nodes that are in the openings
         for node in self.nodes.values():
             
             # Get the node's position in the mesh's local coordinate sytem.
@@ -533,20 +533,8 @@ class RectangleMesh(Mesh):
                     # Mark the node for deletion if it's not already marked
                     if node.Name not in node_del_list:
                         node_del_list.append(node.Name)
-
-                    # Find any elements attached to the node
-                    for element in self.elements.values():
-
-                        # Determine if the element is attached to the node
-                        if (element.i_node.Name == node.Name or element.j_node.Name == node.Name
-                        or element.m_node.Name == node.Name or element.n_node.Name == node.Name):
-
-                            # Mark the element for deletion if it's not already marked
-                            if element.Name not in element_del_list:
-                                element_del_list.append(element.Name)
                 
-        # The previous check will miss any elements that span the openings
-        # Check for elements that span any openings
+        # Go back through the mesh and delete any elements that are in the openings
         for element in self.elements.values():
 
             # Find the top, bottom, left side and right side of the element in local coordinates
@@ -555,8 +543,10 @@ class RectangleMesh(Mesh):
 
             for opng in self.openings.values():
 
-                if ((isclose(top, opng.y_bott + opng.height) and isclose(bott, opng.y_bott))
-                or  (isclose(left, opng.x_left) and isclose(right, opng.x_left + opng.width))):
+                if ((round(opng.y_bott + opng.height, 10) >= round(top, 10))
+                and (round(opng.y_bott, 10) <= round(bott))
+                and (round(opng.x_left, 10) >= round(left, 10))
+                and (round(opng.x_left + opng.width, 10) <= round(right, 10))):
 
                     # Mark the element for deletion if it's not already marked
                     if element.Name not in element_del_list:
