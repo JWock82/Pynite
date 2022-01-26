@@ -310,10 +310,10 @@ class FEModel3D():
                 name = "P" + str(len(self.Plates)+count)
                 count += 1
         
-        # Create a new member
+        # Create a new plate
         newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, kx_mod, ky_mod, self.LoadCombos)
         
-        # Add the new member to the list
+        # Add the new plate to the list
         self.Plates[name] = newPlate
         
         #Return the plate name
@@ -813,10 +813,6 @@ class FEModel3D():
 
         # Add the distributed load to the member
         self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
-        
-    def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
-        warnings.warn('`AddPlateSurfacePressure` will be replaced with `add_plate_surface_pressure` in a future version of PyNite.', FutureWarning)
-        self.add_plate_surface_pressure(plate_name, pressure, case)
 
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         """

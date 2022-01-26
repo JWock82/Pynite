@@ -195,7 +195,7 @@ class Quad3D():
         gr = ((Cx + r*Bx)**2 + (Cy + r*By)**2)**0.5/(8*det_J)
         gs = ((Ax + s*Bx)**2 + (Ay + s*By)**2)**0.5/(8*det_J)
 
-        # d      =           [    w1           theta_x1             theta_y1             w2            theta_x2              theta_y2            w3             theta_x3             theta_y3         w4             theta_x4             theta_y4       ]
+        # d      =           [    w1           theta_x1             theta_y1             w2            theta_x2              theta_y2            w3             theta_x3             theta_y3         w4             theta_x4             theta_y4      ]
         gamma_rz = gr*array([[(1 + s)/2, -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 + s)/2,  -(y1 - y2)/4*(1 + s), (x1 - x2)/4*(1 + s), -(1 - s)/2, -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s), (1 - s)/2,  -(y4 - y3)/4*(1 - s), (x4 - x3)/4*(1 - s)]])
         gamma_sz = gs*array([[(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r),  (1 - r)/2,  -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 - r)/2, -(y2 - y3)/4*(1 - r), (x2 - x3)/4*(1 - r), -(1 + r)/2, -(y1 - y4)/4*(1 + r), (x1 - x4)/4*(1 + r)]])
         

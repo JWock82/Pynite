@@ -77,10 +77,10 @@ class Plate3D():
         # behavior. Stiffness modification factors of 1.0 in each direction (the default) will
         # model isotropic behavior. Orthotropic behavior is limited to the element's local
         # coordinate system.
-        nu_xy = self.nu
-        nu_yx = self.nu
         Ex = self.E*self.kx_mod
         Ey = self.E*self.ky_mod
+        nu_xy = self.nu
+        nu_yx = self.nu
 
         # The shear modulus will be unafected by orthotropic behavior
         # Logan, Appendix C.3, page 750
@@ -89,7 +89,7 @@ class Plate3D():
         # Calculate the constitutive matrix [Dm]
         Dm = 1/(1 - nu_xy*nu_yx)*array([[   Ex,    nu_yx*Ex,            0             ],
                                         [nu_xy*Ey,    Ey,               0             ],
-                                        [   0,        0,     (1 - nu_xy)*(1 - nu_yx)*G]])
+                                        [   0,        0,     (1 - nu_xy*nu_yx)*G]])
 
         # Return the constitutive matrix [Dm]
         return Dm
