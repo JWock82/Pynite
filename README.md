@@ -62,6 +62,9 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v.0.0.57
+* Bug fix for small openings that weren't being added to meshes.
+
 v0.0.56
 * Bug fix for orthotropic rectangular plates. The stiffness was slightly off on rectangular plates in version 0.0.55. Prior versions were not affected.
 * Added unit testing for in-plane (membrane) behavior, and stiffness modification factors. PyNite solutions matched theoretical solutions within 0.1% for uncracked sections, and within 2% for cracked sections.
@@ -107,21 +110,6 @@ v0.0.49
 v0.0.48 - Global Load Directions
 * Global load directions can now be used for member loads now. Use capital notation to apply the member load in the global X, Y, or Z direction (e.g. 'FX', 'MY', 'FZ'...). Use lower case notation to apply the member load in the member's local x, y, or z direction (e.g. 'Fx', 'My', 'Fz'...).
 * Bug fix for rendering models without plates/quads (special thanks to tamalone1 for this pull request!)
-
-v0.0.47 - Bug Fix After Refactoring
-* Fixed a bug identified in Issue #98 caused by refactoring in v0.0.44.
-
-v0.0.46 - Rendering Improvements
-* The size of the scalar bar for plate contours is now a little more predictable. It used to be based off of the window size. Now it only resizes when the window gets really small.
-* The user now has more control over screenshots. If a screenshot is requested, it will be captured when
-the user closes the render window.
-
-v0.0.45 - Rectangular Mesh Openings
-* Openings can now be added to rectangular meshes. An example of a shear wall with openings has been added to the `Examples` folder to help you get started.
-
-v0.0.44 - PEP8 Style Updates
-* Many method and function names have been renamed to match the PEP8 style guide for Python. For now PyNite is backwards compatible, but deprecation warnings have been implemented for function names that will be disappearing in a future release. If you see deprecation warnings when you run your code, it's recommended to move your code over to the new method and function names given in the deprecation warnings. This is a big change that will affect most users. I don't plan to make changes this big very often, but PyNite was getting large and complex enough that I had to do it now or never. When I started PyNite I didn't know much about Python coding styles. This change brings the code into better conformance with normal conventions in Python.
-* The `ClearLoads` method (`delete_loads` going forward) wasn't deleting plate and quad loads. Fixed this issue.
 
 # Example Projects
 Here's a list of projects that run on PyNite:
