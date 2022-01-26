@@ -5,7 +5,6 @@ MIT License
 Copyright (c) 2022 D. Craig Brinck, SE; tamalone1
 """
 
-from msilib.schema import tables
 import unittest
 from PyNite import FEModel3D
 from PyNite.Mesh import CylinderMesh, RectangleMesh
