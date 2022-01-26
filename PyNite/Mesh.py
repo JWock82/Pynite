@@ -545,20 +545,20 @@ class RectangleMesh(Mesh):
 
                 if ((round(opng.y_bott + opng.height, 10) >= round(top, 10))
                 and (round(opng.y_bott, 10) <= round(bott))
-                and (round(opng.x_left, 10) >= round(left, 10))
-                and (round(opng.x_left + opng.width, 10) <= round(right, 10))):
+                and (round(opng.x_left, 10) <= round(left, 10))
+                and (round(opng.x_left + opng.width, 10) >= round(right, 10))):
 
                     # Mark the element for deletion if it's not already marked
                     if element.Name not in element_del_list:
                         element_del_list.append(element.Name)
 
-        # Delete the nodes marked for deletion
-        for node_name in node_del_list:
-            del self.nodes[node_name]
-
         # Delete the elements marked for deletion
         for element_name in element_del_list:
             del self.elements[element_name]
+
+        # Delete the nodes marked for deletion
+        for node_name in node_del_list:
+            del self.nodes[node_name]
         
         # Find any remaining orphaned nodes around the perimeter of the mesh
         node_del_list = []
