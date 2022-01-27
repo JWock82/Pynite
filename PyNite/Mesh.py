@@ -543,8 +543,9 @@ class RectangleMesh(Mesh):
 
             for opng in self.openings.values():
 
+                # Determine if the element falls within the boundaries of the opening
                 if ((round(opng.y_bott + opng.height, 10) >= round(top, 10))
-                and (round(opng.y_bott, 10) <= round(bott))
+                and (round(opng.y_bott, 10) <= round(bott, 10))
                 and (round(opng.x_left, 10) <= round(left, 10))
                 and (round(opng.x_left + opng.width, 10) >= round(right, 10))):
 
