@@ -63,7 +63,7 @@ PyNite depends on the following packages:
 
 # What's New?
 v0.0.57 thru 0.0.61
-* Fixed a stubborn bug that wouldn't create openings if they didn't have a node inside them. This prevented openings from showing up in small meshes.
+* Fixed a stubborn bug that wouldn't create openings if they didn't have a node inside them. This prevented openings from showing up in some meshes.
 * Added unit testing to help identify similar problems with mesh openings in the future.
 
 v0.0.56
