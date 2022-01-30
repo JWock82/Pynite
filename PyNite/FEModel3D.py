@@ -1791,6 +1791,10 @@ class FEModel3D():
                     K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)
                 else:
                     K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)
+                
+                # Check that the structure is stable
+                if log: print('- Checking stability')
+                self._check_stability(K11)
 
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
@@ -1799,7 +1803,7 @@ class FEModel3D():
                 P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)          
 
                 # Calculate the global displacement vector
-                if log: print('- Calculating global displacement vector for load combination', combo.name)
+                if log: print('- Calculating global displacement vector')
                 if K11.shape == (0, 0):
                     # All displacements are known, so D1 is an empty vector
                     D1 = []
@@ -2059,7 +2063,12 @@ class FEModel3D():
                         K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
                     else:
                         K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
-                    
+                                                       
+                    # Check that the structure is stable
+                    if log: print('- Checking stability')
+                    self._check_stability(K11)
+
+                    # Assemble the force matrices
                     FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
                     P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
 
@@ -2091,6 +2100,10 @@ class FEModel3D():
                         K12 = K12 + Kg12
                         K21 = K21 + Kg21
                         K22 = K22 + Kg22
+                                                       
+                    # Check that the structure is stable
+                    if log: print('- Checking stability')
+                    self._check_stability(K11)
 
                 # Calculate the global displacement vector
                 if log: print('- Calculating the global displacement vector')
@@ -2113,7 +2126,7 @@ class FEModel3D():
                     except:
                         # Return out of the method if 'K' is singular and provide an error message
                         raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-            
+
                 D = zeros((len(self.Nodes)*6, 1))
 
                 for node in self.Nodes.values():
@@ -2598,6 +2611,42 @@ class FEModel3D():
                     RZ = node.RZ[combo.name]
                     node.RxnRZ[combo.name] += k*RZ
 
+    def _check_stability(self, K):
+        """
+        Identifies nodal instabilities in the model's stiffness matrix.
+        """
+
+        # Initialize the `unstable` flag to `False`
+        unstable = False
+
+        # Step through each diagonal term in the stiffness matrix
+        for i in range(K.shape[0]):
+
+            # Check if the degree of freedom on this diagonal is unstable
+            if K[i, i] == 0:
+                
+                # Flag the model as unstable
+                unstable = True
+
+                # Find the user defined name for the unstable node
+                node_name = [node.Name for node in self.Nodes.values() if node.ID == int(i/6)][0]
+
+                # Identify which direction this instability effects
+                if i%6 == 0: direction = 'for translation in the global X direction.'
+                if i%6 == 1: direction = 'for translation in the global Y direction.'
+                if i%6 == 2: direction = 'for translation in the global Z direction.'
+                if i%6 == 3: direction = 'for rotation about the global X axis.'
+                if i%6 == 4: direction = 'for rotation about the global Y axis.'
+                if i%6 == 5: direction = 'for rotation about the global Z axis.'
+
+                # Print a message to the console
+                print('* Nodal instability detected: node' + node_name + 'is unstable for' + direction)
+
+        if unstable:
+            raise Exception('Unstable node(s). See console output for details.')
+
+        return
+    
     def _check_statics(self):
         '''
         Checks static equilibrium and prints results to the console.
