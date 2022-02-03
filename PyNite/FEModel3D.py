@@ -1433,7 +1433,7 @@ class FEModel3D():
                     else:
                         K[m, n] += plate_K[a, b]
 
-        if sparse == True:
+        if sparse:
             # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
             # documentation states that this type of matrix is ideal for efficient
             # construction of finite element matrices. When converted to another
@@ -1443,6 +1443,11 @@ class FEModel3D():
             col = array(col)
             data = array(data)
             K = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
+
+        # Check that there are no nodal instabilities
+        if log: print('- Checking nodal stability')
+        if sparse: self._check_stability(K.tocsr())
+        else: self._check_stability(K)
 
         # Return the global stiffness matrix
         return K      
@@ -1791,10 +1796,6 @@ class FEModel3D():
                     K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)
                 else:
                     K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)
-                
-                # Check that the structure is stable
-                if log: print('- Checking stability')
-                self._check_stability(K11)
 
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
@@ -2100,10 +2101,6 @@ class FEModel3D():
                         K12 = K12 + Kg12
                         K21 = K21 + Kg21
                         K22 = K22 + Kg22
-                                                       
-                    # Check that the structure is stable
-                    if log: print('- Checking stability')
-                    self._check_stability(K11)
 
                 # Calculate the global displacement vector
                 if log: print('- Calculating the global displacement vector')
@@ -2621,15 +2618,32 @@ class FEModel3D():
 
         # Step through each diagonal term in the stiffness matrix
         for i in range(K.shape[0]):
+            
+            # Determine which node this term belongs to
+            node = [node for node in self.Nodes.values() if node.ID == int(i/6)][0]
+
+            # Determine which degree of freedom this term belongs to
+            dof = i%6
+
+            # Check to see if this degree of freedom is supported
+            if dof == 0:
+                supported = node.support_DX
+            elif dof == 1:
+                supported = node.support_DY
+            elif dof == 2:
+                supported = node.support_DZ
+            elif dof == 3:
+                supported = node.support_RX
+            elif dof == 4:
+                supported = node.support_RY
+            elif dof == 5:
+                supported = node.support_RZ
 
             # Check if the degree of freedom on this diagonal is unstable
-            if K[i, i] == 0:
-                
+            if K[i, i] == 0 and not supported:
+
                 # Flag the model as unstable
                 unstable = True
-
-                # Find the user defined name for the unstable node
-                node_name = [node.Name for node in self.Nodes.values() if node.ID == int(i/6)][0]
 
                 # Identify which direction this instability effects
                 if i%6 == 0: direction = 'for translation in the global X direction.'
@@ -2640,7 +2654,7 @@ class FEModel3D():
                 if i%6 == 5: direction = 'for rotation about the global Z axis.'
 
                 # Print a message to the console
-                print('* Nodal instability detected: node' + node_name + 'is unstable for' + direction)
+                print('* Nodal instability detected: node' + node.Name + 'is unstable for' + direction)
 
         if unstable:
             raise Exception('Unstable node(s). See console output for details.')
