@@ -62,6 +62,9 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v0.0.62
+* PyNite now checks for nodal instabilities when analyzing a model. If nodal instabilities are found, PyNite will output the unstable nodes and directions to the console, and will throw an exception.
+
 v0.0.57 thru 0.0.61
 * Fixed a stubborn bug that wouldn't create openings if they didn't have a node inside them. This prevented openings from showing up in some meshes.
 * Added unit testing to help identify similar problems with mesh openings in the future.
