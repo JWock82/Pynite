@@ -39,10 +39,12 @@ model = FEModel3D()
 
 # Add the two meshes to the model
 model.add_mesh(hopper_mesh)
+
+import cProfile
+# cProfile.run('model.add_mesh(shell_mesh)', sort='cumtime')
 model.add_mesh(shell_mesh)
 
 # The two meshes have overlapping duplicate nodes that need to be merged
-import cProfile
 # cProfile.run('model.merge_duplicate_nodes()', sort='cumtime')
 model.merge_duplicate_nodes()
 
@@ -60,8 +62,8 @@ for node in model.Nodes.values():
 model.add_load_combo('1.4F', {'Hydrostatic': 1.4})
 
 # Analyze the model
-# cProfile.run('model.analyze()', sort='cumtime')
-model.analyze()
+cProfile.run('model.analyze()', sort='cumtime')
+# model.analyze()
 
 # Render the model. Labels and loads will be turned off to speed up interaction.
 render_model(model, 0.1, render_loads=True, color_map='dz', combo_name='1.4F', labels=False)

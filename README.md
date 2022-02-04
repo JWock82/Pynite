@@ -62,6 +62,10 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v0.0.63
+* Fixed the `add_mesh` method. It was not working properly after version 0.0.62.
+* Made stability checks optional. Stability checks add significant solve time. If you are confident your model is stable, you can skip the stability check by toggling `check_stability` to `False` in your call to your analysis command.
+
 v0.0.62
 * PyNite now checks for nodal instabilities when analyzing a model. If nodal instabilities are found, PyNite will output the unstable nodes and directions to the console, and will throw an exception.
 * Added a method called `rename` to the `FEModel3D` class for quickly renaming all the nodes and elements in the model in sequential order.

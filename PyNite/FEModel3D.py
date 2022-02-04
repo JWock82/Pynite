@@ -403,7 +403,7 @@ class FEModel3D():
                 self.Nodes[node.Name] = node
             else:
                 # Get the next available node name and rename the node
-                new_name = 'N' + str(len(self.Nodes))
+                new_name = 'N' + str(len(self.Nodes + 1))
                 node.Name = new_name
                 self.Nodes[new_name] = node
         
@@ -422,7 +422,7 @@ class FEModel3D():
                     self.Plates[element.Name] = element
                 else:
                     # Get the next available element name and rename the element
-                    new_name = 'P' + str(len(self.Plates))
+                    new_name = 'P' + str(len(self.Plates + 1))
                     element.Name = new_name
                     self.Plates[new_name] = element
 
@@ -434,7 +434,7 @@ class FEModel3D():
                     self.Quads[element.Name] = element
                 else:
                     # Get the next available element name and rename the element
-                    new_name = 'Q' + str(len(self.Quads))
+                    new_name = 'Q' + str(len(self.Quads + 1))
                     element.Name = new_name
                     self.Quads[new_name] = element
 
@@ -1136,7 +1136,7 @@ class FEModel3D():
         # Return the indices and the known displacements
         return D1_indices, D2_indices, D2
                
-    def K(self, combo_name='Combo 1', log=False, sparse=True):
+    def K(self, combo_name='Combo 1', log=False, check_stability=True, sparse=True):
         """
         Returns the model's global stiffness matrix.
 
@@ -1447,9 +1447,10 @@ class FEModel3D():
             K = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
 
         # Check that there are no nodal instabilities
-        if log: print('- Checking nodal stability')
-        if sparse: self._check_stability(K.tocsr())
-        else: self._check_stability(K)
+        if check_stability:
+            if log: print('- Checking nodal stability')
+            if sparse: self._check_stability(K.tocsr())
+            else: self._check_stability(K)
 
         # Return the global stiffness matrix
         return K      
@@ -1721,7 +1722,7 @@ class FEModel3D():
             m22 = unp_matrix[D2_indices, :][:, D2_indices]
             return m11, m12, m21, m22
 
-    def analyze(self, log=False, check_statics=False, max_iter=30, sparse=True):
+    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True):
         '''
         Performs first-order static analysis.
         
@@ -1795,9 +1796,9 @@ class FEModel3D():
 
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
                 if sparse == True:
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
                 else:
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)
+                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
 
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
@@ -1976,7 +1977,7 @@ class FEModel3D():
         if check_statics == True:
             self._check_statics()
 
-    def analyze_PDelta(self, log=False, max_iter=30, tol=0.01, sparse=True):
+    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
         '''
         Performs second order (P-Delta) analysis.
 
@@ -2063,9 +2064,9 @@ class FEModel3D():
                 if iter_count_PD == 1:
 
                     if sparse == True:
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
                     else:
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
                                                        
                     # Check that the structure is stable
                     if log: print('- Checking stability')
@@ -2082,7 +2083,7 @@ class FEModel3D():
                     # Calculate the partitioned global stiffness matrices
                     if sparse == True:
 
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
                         Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)     # Geometric stiffness matrix
                         
                         # The stiffness matrices are currently `lil` format which is great for
@@ -2096,7 +2097,7 @@ class FEModel3D():
 
                     else:
 
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, sparse), D1_indices, D2_indices)       # Initial stiffness matrix
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)       # Initial stiffness matrix
                         Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)  # Geometric stiffness matrix
                         
                         K11 = K11 + Kg11
@@ -2781,24 +2782,49 @@ class FEModel3D():
         """
 
         # Rename each node in the model
-        for id, node in enumerate(self.Nodes.values()):
-            node.Name = 'N' + str(id)
+        temp = self.Nodes.copy()
+        id = 1
+        for old_key, node in temp.items():
+            new_key = 'N' + str(id)
+            self.Nodes[new_key] = self.Nodes.pop(old_key)
+            self.Nodes[new_key].Name = new_key
+            id += 1
         
         # Rename each spring in the model
-        for id, spring in enumerate(self.Springs.values()):
-            spring.Name = 'S' + str(id)
+        temp = self.Springs.copy()
+        id = 1
+        for old_key, spring in temp.items():
+            new_key = 'S' + str(id)
+            self.Springs[new_key] = self.Springs.pop(old_key)
+            self.Springs[new_key].Name = new_key
+            id += 1
 
         # Rename each member in the model
-        for id, member in enumerate(self.Members.values()):
-            member.Name = 'M' + str(id)
+        temp = self.Members.copy()
+        id = 1
+        for old_key, member in temp.items():
+            new_key = 'M' + str(id)
+            self.Members[new_key] = self.Members.pop(old_key)
+            self.Members[new_key].Name = new_key
+            id += 1
         
         # Rename each plate in the model
-        for id, plate in enumerate(self.Plates.values()):
-            plate.Name = 'P' + str(id)
+        temp = self.Plates.copy()
+        id = 1
+        for old_key, plate in temp.items():
+            new_key = 'P' + str(id)
+            self.Plates[new_key] = self.Plates.pop(old_key)
+            self.Plates[new_key].Name = new_key
+            id += 1
         
         # Rename each quad in the model
-        for id, quad in enumerate(self.Quads.values()):
-            quad.Name = 'Q' + str(id)
+        temp = self.Quads.copy()
+        id = 1
+        for old_key, quad in temp.items():
+            new_key = 'Q' + str(id)
+            self.Quads[new_key] = self.Quads.pop(old_key)
+            self.Quads[new_key].Name = new_key
+            id += 1
 
     def orphaned_nodes(self):
         """
