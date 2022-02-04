@@ -443,24 +443,20 @@ class FEModel3D():
         for element in mesh.elements.values():
             element.LoadCombos = self.LoadCombos
 
-    def merge_duplicate_nodes(self, rename=True, tolerance=0.001):
+    def merge_duplicate_nodes(self, tolerance=0.001):
         """
         Removes duplicate nodes from the model and returns a list of the removed node names.
 
         Parameters
         ----------
-        rename : bool
-            Sets whether nodes will be renamed. Default value is `True`.
         tolerance : number
             The maximum distance between two nodes in order to consider them duplicates.
         
-        Returns:
+        Returns
+        -------
         remove_list : list
             A list of th enames of the nodes that were removed.
         """
-
-        # Make sure each node name is unique
-        if rename: self.rename()
 
         # Initialize a list of nodes to be removed from the `Nodes` dictionary
         remove_list = []
@@ -485,7 +481,7 @@ class FEModel3D():
                 if dist < tolerance:
 
                     # Attach any elements that were using `node_2` to `node_1` instead
-                    for element in self.Quads.values():
+                    for element in self.Plates.values():
                         if element.i_node.Name == name_2:
                             element.i_node = self.Nodes[name_1]
                         if element.j_node.Name == name_2:
@@ -494,8 +490,8 @@ class FEModel3D():
                             element.m_node = self.Nodes[name_1]
                         if element.n_node.Name == name_2:
                             element.n_node = self.Nodes[name_1]
-        
-                    for element in self.Plates.values():
+
+                    for element in self.Quads.values():
                         if element.i_node.Name == name_2:
                             element.i_node = self.Nodes[name_1]
                         if element.j_node.Name == name_2:
@@ -519,6 +515,9 @@ class FEModel3D():
                     
                     # Add `name_2` to the list of nodes to be removed
                     remove_list.append(name_2)
+                
+            # Remove any duplicate values from the `remove_list`
+            remove_list = list(dict.fromkeys(remove_list))
 
         # Remove the duplicate nodes from the model
         for name in remove_list:
@@ -2785,7 +2784,7 @@ class FEModel3D():
         # Rename each node in the model
         temp = self.Nodes.copy()
         id = 1
-        for old_key, node in temp.items():
+        for old_key in temp.keys():
             new_key = 'N' + str(id)
             self.Nodes[new_key] = self.Nodes.pop(old_key)
             self.Nodes[new_key].Name = new_key
@@ -2794,7 +2793,7 @@ class FEModel3D():
         # Rename each spring in the model
         temp = self.Springs.copy()
         id = 1
-        for old_key, spring in temp.items():
+        for old_key in temp.keys():
             new_key = 'S' + str(id)
             self.Springs[new_key] = self.Springs.pop(old_key)
             self.Springs[new_key].Name = new_key
@@ -2803,7 +2802,7 @@ class FEModel3D():
         # Rename each member in the model
         temp = self.Members.copy()
         id = 1
-        for old_key, member in temp.items():
+        for old_key in temp.keys():
             new_key = 'M' + str(id)
             self.Members[new_key] = self.Members.pop(old_key)
             self.Members[new_key].Name = new_key
@@ -2812,7 +2811,7 @@ class FEModel3D():
         # Rename each plate in the model
         temp = self.Plates.copy()
         id = 1
-        for old_key, plate in temp.items():
+        for old_key in temp.keys():
             new_key = 'P' + str(id)
             self.Plates[new_key] = self.Plates.pop(old_key)
             self.Plates[new_key].Name = new_key
@@ -2821,7 +2820,7 @@ class FEModel3D():
         # Rename each quad in the model
         temp = self.Quads.copy()
         id = 1
-        for old_key, quad in temp.items():
+        for old_key in temp.keys():
             new_key = 'Q' + str(id)
             self.Quads[new_key] = self.Quads.pop(old_key)
             self.Quads[new_key].Name = new_key
