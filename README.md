@@ -62,7 +62,7 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
-v0.0.63
+v0.0.63 thru v0.0.64
 * Fixed the `add_mesh` method. It was not working properly after version 0.0.62.
 * Made stability checks optional. Stability checks add significant solve time. If you are confident your model is stable, you can skip the stability check by toggling `check_stability` to `False` in your call to your analysis command.
 
