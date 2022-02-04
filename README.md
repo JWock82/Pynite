@@ -64,6 +64,9 @@ PyNite depends on the following packages:
 # What's New?
 v0.0.62
 * PyNite now checks for nodal instabilities when analyzing a model. If nodal instabilities are found, PyNite will output the unstable nodes and directions to the console, and will throw an exception.
+* Added a method called `rename` to the `FEModel3D` class for quickly renaming all the nodes and elements in the model in sequential order.
+* Added a `last_node` and `last_element` attribute to the `mesh` class. These methods can be used to get the name of the last node or element in a mesh.
+* Improved the reliability of the `add_mesh` method. It now can handle adding meshes containing node and element names already defined in the model. It automatically resolves the duplicate names.
 
 v0.0.57 thru 0.0.61
 * Fixed a stubborn bug that wouldn't create openings if they didn't have a node inside them. This prevented openings from showing up in some meshes.

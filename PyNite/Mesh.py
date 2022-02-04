@@ -18,6 +18,7 @@ class Mesh():
         self.kx_mod = kx_mod                # Local x stiffness modification factor for elements in the mesh
         self.ky_mod = ky_mod                # Local y stiffness modification factor for elements in the mesh
         self.start_node = start_node        # The name of the first node in the mesh
+        self.last_node = None               # The name of the last node in the mesh
         self.start_element = start_element  # The name of the first element in the mesh
         self.last_element = None            # The name of the last element in the mesh
         self.nodes = {}                     # A dictionary containing the nodes in the mesh
@@ -573,6 +574,10 @@ class RectangleMesh(Mesh):
         # Delete the orphaned nodes
         for node_name in node_del_list:
             del self.nodes[node_name]
+
+        # Identify the last node and last element in the mesh
+        self.last_node = list(self.nodes.values())[-1]
+        self.last_element = list(self.elements.values())[-1]
 
     def node_local_coords(self, node):
         """

@@ -376,7 +376,7 @@ class FEModel3D():
         #Return the quad name
         return name
 
-    def add_mesh(self, mesh):
+    def add_mesh(self, mesh, rename=True):
         """
         Adds a predefined mesh to the model.
 
@@ -384,37 +384,61 @@ class FEModel3D():
         ----------
         mesh : Mesh
             A mesh object.
+        rename : bool
+            When set to `True`, all nodes and elements in the model will be renamed prior to
+            merging the mesh into the model. It's recommended to leave this value at its default of
+            `True`. Setting this value to `False` can cause problems if node or element names in
+            the mesh are already being used by the model.
         """
 
+        # rename all the nodes and elements currently in the model
+        if rename: self.rename()
+
         # Add the mesh's nodes to the finite element model
-        self.Nodes.update(mesh.nodes)
+        for node in mesh.nodes.values():
 
-        # Add the mesh's elements to the finite element model
-        if list(mesh.elements.values())[0].type == 'Quad':
-            self.Quads.update(mesh.elements)
-        elif list(mesh.elements.values())[0].type == 'Rect':
-            self.Plates.update(mesh.elements)
-
-        # If the mesh contained duplicate keys that were already in the `Nodes` dictionary, the old
-        # nodes will have been abandoned in favor of the new nodes. Reattach any elements that are
-        # still referencing the old nodes to the new nodes.
-        for element in self.Quads.values():
-            element.i_node = self.Nodes[element.i_node.Name]
-            element.j_node = self.Nodes[element.j_node.Name]
-            element.m_node = self.Nodes[element.m_node.Name]
-            element.n_node = self.Nodes[element.n_node.Name]
+            # Check to see if this node's name already exists in the `Nodes` dictionary
+            if not node.Name in self.Nodes.keys():
+                # Add the node to the `Nodes` dictionary
+                self.Nodes[node.Name] = node
+            else:
+                # Get the next available node name and rename the node
+                new_name = 'N' + str(len(self.Nodes))
+                node.Name = new_name
+                self.Nodes[new_name] = node
         
-        for element in self.Plates.values():
-            element.i_node = self.Nodes[element.i_node.Name]
-            element.j_node = self.Nodes[element.j_node.Name]
-            element.m_node = self.Nodes[element.m_node.Name]
-            element.n_node = self.Nodes[element.n_node.Name]
-
-        for element in self.Members.values():
-            element.i_node = self.Nodes[element.i_node.Name]
-            element.j_node = self.Nodes[element.j_node.Name]
+        # Determine what type of elements are in the mesh from the mesh's first element
+        element_type = list(mesh.elements.values())[0].type
 
         # Add the mesh's elements to the finite element model
+        for element in mesh.elements.values():
+
+            # Check the element type
+            if element_type == 'Rect':
+                
+                # Check to see if this element's name already exists  in the `Plates` dictionary
+                if not element.Name in self.Plates.keys():
+                    # Add the element to the `Plates` dictionary
+                    self.Plates[element.Name] = element
+                else:
+                    # Get the next available element name and rename the element
+                    new_name = 'P' + str(len(self.Plates))
+                    element.Name = new_name
+                    self.Plates[new_name] = element
+
+            elif element_type == 'Quad':
+                
+                # Check to see if this element's name already exists  in the `Quads` dictionary
+                if not element.Name in self.Quads.keys():
+                    # Add the element to the `Quads` dictionary
+                    self.Quads[element.Name] = element
+                else:
+                    # Get the next available element name and rename the element
+                    new_name = 'Q' + str(len(self.Quads))
+                    element.Name = new_name
+                    self.Quads[new_name] = element
+
+        # Attach the model's load combinations to each element from the mesh
         for element in mesh.elements.values():
             element.LoadCombos = self.LoadCombos
 
@@ -489,6 +513,11 @@ class FEModel3D():
                     
                     # Add `name_2` to the list of nodes to be removed
                     remove_list.append(name_2)
+                
+                # # Determine if there are any other nodes using this node's name
+                # if name_1 == name_2:
+                #     # Rename the node:
+                #     self.Nodes[name_2].Name = 'N' + str(len(self.Nodes))
 
         # Remove the duplicate nodes from the model
         for name in remove_list:
@@ -1003,33 +1032,6 @@ class FEModel3D():
         except:
             # If the quad name is not found
             raise ValueError(f"Quad '{name}' was not found in the model")
-
-    def _renumber(self):
-        '''
-        Assigns node, spring, member, and plate member ID numbers to be used internally by the
-        program. Numbers are assigned according to the order nodes, springs, members, and plates
-        were added to the model.
-        '''
-        
-        # Number each node in the model
-        for id, node in enumerate(self.Nodes.values()):
-            node.ID = id
-        
-        # Number each spring in the model
-        for id, spring in enumerate(self.Springs.values()):
-            spring.ID = id
-
-        # Number each member in the model
-        for id, member in enumerate(self.Members.values()):
-            member.ID = id
-        
-        # Number each plate in the model
-        for id, plate in enumerate(self.Plates.values()):
-            plate.ID = id
-        
-        # Number each quadrilateral in the model
-        for id, quad in enumerate(self.Quads.values()):
-            quad.ID = id
 
     def _aux_list(self):
         '''
@@ -2746,6 +2748,57 @@ class FEModel3D():
         # Print the static check table
         print(statics_table)
         print('')
+    
+    def _renumber(self):
+        """
+        Assigns noe and element ID numbers to be used internally by the program. Numbers are
+        assigned according to the order in which they occur in each dictionary.
+        """
+        
+        # Number each node in the model
+        for id, node in enumerate(self.Nodes.values()):
+            node.ID = id
+        
+        # Number each spring in the model
+        for id, spring in enumerate(self.Springs.values()):
+            spring.ID = id
+
+        # Number each member in the model
+        for id, member in enumerate(self.Members.values()):
+            member.ID = id
+        
+        # Number each plate in the model
+        for id, plate in enumerate(self.Plates.values()):
+            plate.ID = id
+        
+        # Number each quadrilateral in the model
+        for id, quad in enumerate(self.Quads.values()):
+            quad.ID = id
+    
+    def rename(self):
+        """
+        Renames all the nodes and elements in the model.
+        """
+
+        # Rename each node in the model
+        for id, node in enumerate(self.Nodes.values()):
+            node.Name = 'N' + str(id)
+        
+        # Rename each spring in the model
+        for id, spring in enumerate(self.Springs.values()):
+            spring.Name = 'S' + str(id)
+
+        # Rename each member in the model
+        for id, member in enumerate(self.Members.values()):
+            member.Name = 'M' + str(id)
+        
+        # Rename each plate in the model
+        for id, plate in enumerate(self.Plates.values()):
+            plate.Name = 'P' + str(id)
+        
+        # Rename each quad in the model
+        for id, quad in enumerate(self.Quads.values()):
+            quad.Name = 'Q' + str(id)
 
     def orphaned_nodes(self):
         """
