@@ -1,4 +1,5 @@
 # %%
+from os import rename
 import warnings
 
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
@@ -442,12 +443,14 @@ class FEModel3D():
         for element in mesh.elements.values():
             element.LoadCombos = self.LoadCombos
 
-    def merge_duplicate_nodes(self, tolerance=0.001):
+    def merge_duplicate_nodes(self, rename=True, tolerance=0.001):
         """
         Removes duplicate nodes from the model and returns a list of the removed node names.
 
         Parameters
         ----------
+        rename : bool
+            Sets whether nodes will be renamed. Default value is `True`.
         tolerance : number
             The maximum distance between two nodes in order to consider them duplicates.
         
@@ -455,6 +458,9 @@ class FEModel3D():
         remove_list : list
             A list of th enames of the nodes that were removed.
         """
+
+        # Make sure each node name is unique
+        if rename: self.rename()
 
         # Initialize a list of nodes to be removed from the `Nodes` dictionary
         remove_list = []
@@ -513,11 +519,6 @@ class FEModel3D():
                     
                     # Add `name_2` to the list of nodes to be removed
                     remove_list.append(name_2)
-                
-                # # Determine if there are any other nodes using this node's name
-                # if name_1 == name_2:
-                #     # Rename the node:
-                #     self.Nodes[name_2].Name = 'N' + str(len(self.Nodes))
 
         # Remove the duplicate nodes from the model
         for name in remove_list:
