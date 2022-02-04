@@ -403,7 +403,7 @@ class FEModel3D():
                 self.Nodes[node.Name] = node
             else:
                 # Get the next available node name and rename the node
-                new_name = 'N' + str(len(self.Nodes + 1))
+                new_name = 'N' + str(len(self.Nodes) + 1)
                 node.Name = new_name
                 self.Nodes[new_name] = node
         
@@ -422,7 +422,7 @@ class FEModel3D():
                     self.Plates[element.Name] = element
                 else:
                     # Get the next available element name and rename the element
-                    new_name = 'P' + str(len(self.Plates + 1))
+                    new_name = 'P' + str(len(self.Plates) + 1)
                     element.Name = new_name
                     self.Plates[new_name] = element
 
@@ -434,7 +434,7 @@ class FEModel3D():
                     self.Quads[element.Name] = element
                 else:
                     # Get the next available element name and rename the element
-                    new_name = 'Q' + str(len(self.Quads + 1))
+                    new_name = 'Q' + str(len(self.Quads) + 1)
                     element.Name = new_name
                     self.Quads[new_name] = element
 
