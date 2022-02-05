@@ -473,7 +473,7 @@ class FEModel3D():
 
             # There is no need to check `node_1` against itself, so it can be removed from the copy
             # of the `Nodes` dictionary. It may have already been removed on a previous iteration.
-            if name_1 in temp:
+            if node_1 in temp.values():
                 temp.pop(name_1)
 
             # Remove any duplicate nodes that were found on the previous iteration from the copy of
