@@ -481,7 +481,7 @@ class FEModel3D():
             for dup in duplicates:
                 temp.pop(dup)
             
-            # Reset `duplicates` to prepare to hold only the duplicates of `node_1`.
+            # Reset `duplicates` to prepare to hold only the duplicates of the current `node_1`.
             duplicates = []
 
             # Step through each node in the copy of the `Nodes` dictionary
@@ -526,16 +526,13 @@ class FEModel3D():
                         if element.j_node.Name == name_2:
                             element.j_node = self.Nodes[name_1]
                     
-                    # Add `name_2` to the list of nodes to be removed
+                    # Mark `node_2` for deletion from the `Nodes` dictonary
                     node_remove_list.append(name_2)
-                    duplicates.append(name_2)
-                
-            # # Duplicate values may exist in `remove_list` if two nodes, each with their own
-            # # duplicates, had the same name, but were located in different positions. Remove any
-            # # duplicate values from the `remove_list`
-            # node_remove_list = list(dict.fromkeys(node_remove_list))
 
-        # Remove the duplicate nodes from the model
+                    # Mark `node_2` for removal from the copy of the `Nodes` dictionary
+                    duplicates.append(name_2)
+
+        # Delete the duplicate nodes from the model
         for name in node_remove_list:
             self.Nodes.pop(name)
         
