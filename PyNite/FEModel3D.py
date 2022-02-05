@@ -447,6 +447,9 @@ class FEModel3D():
         """
         Removes duplicate nodes from the model and returns a list of the removed node names.
 
+        Note that supports may be lost if they are on a duplicate that is deleted. It's recommended
+        to add supports to the model after removing duplicate nodes.
+
         Parameters
         ----------
         tolerance : number
@@ -459,7 +462,8 @@ class FEModel3D():
         """
 
         # Initialize a list of nodes to be removed from the `Nodes` dictionary
-        remove_list = []
+        node_remove_list = []
+        duplicates = []
 
         # Make a copy of the `Nodes` dictionary
         temp = self.Nodes.copy()
@@ -467,11 +471,20 @@ class FEModel3D():
         # Step through each node in the `Nodes` dictionary
         for name_1, node_1 in self.Nodes.items():
 
-            # Make a temporary copy of the dictionary that's missing all the previously checked nodes
-            temp = temp.copy()
-            temp.pop(name_1)
+            # There is no need to check `node_1` against itself, so it can be removed from the copy
+            # of the `Nodes` dictionary. It may have already been removed on a previous iteration.
+            if name_1 in temp:
+                temp.pop(name_1)
 
-            # Compare all the other nodes to `node_1`
+            # Remove any duplicate nodes that were found on the previous iteration from the copy of
+            # the `Nodes` dictionary.
+            for dup in duplicates:
+                temp.pop(dup)
+            
+            # Reset `duplicates` to prepare to hold only the duplicates of `node_1`.
+            duplicates = []
+
+            # Step through each node in the copy of the `Nodes` dictionary
             for name_2, node_2 in temp.items():
 
                 # Calculate the distance between nodes
@@ -514,17 +527,20 @@ class FEModel3D():
                             element.j_node = self.Nodes[name_1]
                     
                     # Add `name_2` to the list of nodes to be removed
-                    remove_list.append(name_2)
+                    node_remove_list.append(name_2)
+                    duplicates.append(name_2)
                 
-            # Remove any duplicate values from the `remove_list`
-            remove_list = list(dict.fromkeys(remove_list))
+            # # Duplicate values may exist in `remove_list` if two nodes, each with their own
+            # # duplicates, had the same name, but were located in different positions. Remove any
+            # # duplicate values from the `remove_list`
+            # node_remove_list = list(dict.fromkeys(node_remove_list))
 
         # Remove the duplicate nodes from the model
-        for name in remove_list:
+        for name in node_remove_list:
             self.Nodes.pop(name)
         
         # Return a list of the names of nodes that were removed from the model
-        return remove_list
+        return node_remove_list
             
     def delete_node(self, node_name):
         '''
