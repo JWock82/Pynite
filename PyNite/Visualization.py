@@ -76,8 +76,7 @@ class Renderer():
         interactor.SetInteractorStyle(style)
         interactor.SetRenderWindow(window)
         
-        # Create the renderer if it doesn't already exist
-        # if self.renderer is None: self.renderer = self.update()
+        # Create a new renderer
         self.renderer = self.update()
 
         # Add the renderer to the window
@@ -105,8 +104,9 @@ class Renderer():
         ----------
         filepath : string
             Sends a screenshot to the specified filepath. The screenshot will be taken when the
-            user closes out of the render window. If screenshot is set to 'console' the screenshot
-            will be returned as an IPython image. Default is 'console'.
+            user closes out of the render window. If `filepath` is set to 'console' the screenshot
+            will be returned as an IPython image. If set to 'bytes' it will return the image as a
+            bytes string. Default is 'console'.
         length : number
             Width (in pixels) of the rendering.
         height : number
@@ -131,11 +131,14 @@ class Renderer():
         writer = vtk.vtkPNGWriter()
         writer.SetInputConnection(w2if.GetOutputPort())
 
-        if filepath == 'console':
+        if filepath == 'console' or filepath == 'bytes':
             writer.SetWriteToMemory(1)
             writer.Write()
             fig_file = memoryview(writer.GetResult()).tobytes()
-            return Image(fig_file)
+            if filepath == 'console':
+                return Image(fig_file)
+            elif filepath == 'bytes':
+                return fig_file
         else:
             writer.SetFileName(filepath)
             writer.Write()
