@@ -77,7 +77,8 @@ class Renderer():
         interactor.SetRenderWindow(window)
         
         # Create the renderer if it doesn't already exist
-        if self.renderer is None: self.renderer = self.update()
+        # if self.renderer is None: self.renderer = self.update()
+        self.renderer = self.update()
 
         # Add the renderer to the window
         window.AddRenderer(self.renderer)
@@ -138,6 +139,7 @@ class Renderer():
         else:
             writer.SetFileName(filepath)
             writer.Write()
+            return
 
     def update(self):
         """
