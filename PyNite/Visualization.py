@@ -96,15 +96,20 @@ class Renderer():
         # Return the window
         return window
 
-    def screenshot(self, filepath='console'):
+    def screenshot(self, filepath='console', length=750, height=750):
         """
         Renders the model in a window. When the window is closed a screenshot is captured.
 
         Parameters
         ----------
-        Sends a screenshot to the specified filepath. The screenshot will be taken
-        when the user closes out of the render window. If screenshot is set to 'console' the
-        screenshot will be returned as an IPython image. Default is 'console'.
+        filepath : string
+            Sends a screenshot to the specified filepath. The screenshot will be taken when the
+            user closes out of the render window. If screenshot is set to 'console' the screenshot
+            will be returned as an IPython image. Default is 'console'.
+        length : number
+            Width (in pixels) of the rendering.
+        height : number
+            Height (in pixels) of the rendering.
         """
 
         # Render the model in a window and save the window
