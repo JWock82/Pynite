@@ -105,8 +105,8 @@ class Renderer():
         filepath : string
             Sends a screenshot to the specified filepath. The screenshot will be taken when the
             user closes out of the render window. If `filepath` is set to 'console' the screenshot
-            will be returned as an IPython image. If set to 'bytes' it will return the image as a
-            bytes string. Default is 'console'.
+            will be returned as an IPython image. If set to 'BytesIO' it will return the image as a
+            `BytesIO` object. Default is 'console'.
         length : number
             Width (in pixels) of the rendering.
         height : number
@@ -137,8 +137,9 @@ class Renderer():
             fig_file = memoryview(writer.GetResult()).tobytes()
             if filepath == 'console':
                 return Image(fig_file)
-            elif filepath == 'bytes':
-                return fig_file
+            elif filepath == 'BytesIO':
+                from io import BytesIO
+                return BytesIO(fig_file)
         else:
             writer.SetFileName(filepath)
             writer.Write()
