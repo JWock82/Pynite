@@ -131,7 +131,7 @@ class Renderer():
         writer = vtk.vtkPNGWriter()
         writer.SetInputConnection(w2if.GetOutputPort())
 
-        if filepath == 'console' or filepath == 'bytes':
+        if filepath == 'console' or filepath == 'BytesIO':
             writer.SetWriteToMemory(1)
             writer.Write()
             fig_file = memoryview(writer.GetResult()).tobytes()
