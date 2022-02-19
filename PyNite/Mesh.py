@@ -351,8 +351,13 @@ class RectangleMesh(Mesh):
         self.height = height
         self.origin = origin
         self.plane = plane
-        self.x_control = x_control
-        self.y_control = y_control
+
+        if x_control is None: self.x_control = []
+        else: self.x_control = x_control
+
+        if y_control is None: self.y_control = []
+        else: self.y_control = y_control
+
         self.element_type = element_type
         self.openings = {}
     
@@ -365,12 +370,8 @@ class RectangleMesh(Mesh):
         Yo = self.origin[1]
         Zo = self.origin[2]
         plane = self.plane
-
-        if self.x_control is None: x_control = []
-        else: x_control = self.x_control
-
-        if self.y_control is None: y_control = []
-        else: y_control = self.y_control
+        x_control = self.x_control
+        y_control = self.y_control
 
         element_type = self.element_type
 
