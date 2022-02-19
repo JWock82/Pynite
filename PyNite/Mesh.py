@@ -296,7 +296,7 @@ class Mesh():
 class RectangleMesh(Mesh):
 
     def __init__(self, mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
-                 plane='XY', x_control=[], y_control=[], start_node='N1', start_element='Q1',
+                 plane='XY', x_control=None, y_control=None, start_node='N1', start_element='Q1',
                  element_type='Quad'):
         """
         A rectangular mesh of elements.
@@ -365,8 +365,13 @@ class RectangleMesh(Mesh):
         Yo = self.origin[1]
         Zo = self.origin[2]
         plane = self.plane
-        x_control = self.x_control
-        y_control = self.y_control
+
+        if x_control is None: x_control = []
+        else: x_control = self.x_control
+
+        if y_control is None: y_control = []
+        else: y_control = self.y_control
+
         element_type = self.element_type
 
         # Add the mesh's boundaries to the list of control points
