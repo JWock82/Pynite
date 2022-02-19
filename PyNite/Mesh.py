@@ -366,10 +366,10 @@ class RectangleMesh(Mesh):
         Zo = self.origin[2]
         plane = self.plane
 
-        if x_control is None: x_control = []
+        if self.x_control is None: x_control = []
         else: x_control = self.x_control
 
-        if y_control is None: y_control = []
+        if self.y_control is None: y_control = []
         else: y_control = self.y_control
 
         element_type = self.element_type
