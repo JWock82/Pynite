@@ -535,7 +535,7 @@ class VisNode():
       
         # Create the text for the node label
         label = vtk.vtkVectorText()
-        label.SetText(node.Name)
+        label.SetText(node.name)
         
         # Set up a mapper for the node label
         lblMapper = vtk.vtkPolyDataMapper()
@@ -804,14 +804,14 @@ class VisSpring():
         for node in nodes.values():
 
             # Check to see if the current node is the i-node
-            if node.Name == spring.i_node.Name:
+            if node.name == spring.i_node.name:
                 Xi = node.X
                 Yi = node.Y
                 Zi = node.Z
                 line.SetPoint1(Xi, Yi, Zi)
 
             # Check to see if the current node is the j-node
-            elif node.Name == spring.j_node.Name:
+            elif node.name == spring.j_node.name:
                 Xj = node.X
                 Yj = node.Y
                 Zj = node.Z
@@ -828,7 +828,7 @@ class VisSpring():
 
         # Create the text for the spring label
         label = vtk.vtkVectorText()
-        label.SetText(spring.Name)
+        label.SetText(spring.name)
 
         # Set up a mapper for the spring label
         lblMapper = vtk.vtkPolyDataMapper()
@@ -853,14 +853,14 @@ class VisMember():
         for node in nodes.values():
         
             # Check to see if the current node is the i-node
-            if node.Name == member.i_node.Name:
+            if node.name == member.i_node.name:
                 Xi = node.X
                 Yi = node.Y
                 Zi = node.Z
                 line.SetPoint1(Xi, Yi, Zi)
         
             # Check to see if the current node is the j-node
-            elif node.Name == member.j_node.Name:
+            elif node.name == member.j_node.name:
                 Xj = node.X
                 Yj = node.Y
                 Zj = node.Z
@@ -876,7 +876,7 @@ class VisMember():
       
         # Create the text for the member label
         label = vtk.vtkVectorText()
-        label.SetText(member.Name)
+        label.SetText(member.name)
       
         # Set up a mapper for the member label
         lblMapper = vtk.vtkPolyDataMapper()
@@ -923,7 +923,7 @@ class VisDeformedMember():
         for node in nodes.values():
           
             # Check to see if the current node is the i-node
-            if node.Name == member.i_node.Name:
+            if node.name == member.i_node.name:
                 Xi = node.X
                 Yi = node.Y
                 Zi = node.Z
@@ -998,14 +998,14 @@ class VisDeformedSpring():
         for node in nodes.values():
       
             # Check to see if the current node is the i-node
-            if node.Name == spring.i_node.Name:
+            if node.name == spring.i_node.name:
                 Xi = node.X + node.DX[combo_name]*scale_factor
                 Yi = node.Y + node.DY[combo_name]*scale_factor
                 Zi = node.Z + node.DZ[combo_name]*scale_factor
                 self.source.SetPoint1(Xi, Yi, Zi)
         
             # Check to see if the current node is the i-node
-            if node.Name == spring.j_node.Name:
+            if node.name == spring.j_node.name:
                 Xj = node.X + node.DX[combo_name]*scale_factor
                 Yj = node.Y + node.DY[combo_name]*scale_factor
                 Zj = node.Z + node.DZ[combo_name]*scale_factor

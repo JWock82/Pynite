@@ -59,13 +59,13 @@ class Test_Tanks(unittest.TestCase):
             
             p = (H - avg_Y)*w
 
-            tank_model.add_quad_surface_pressure(element.Name, p)
+            tank_model.add_quad_surface_pressure(element.name, p)
         
 
         # Add fixed supports to the base
         for node in tank_model.Nodes.values():
             if node.Y == 0:
-                tank_model.def_support(node.Name, True, True, True, True, True, True)
+                tank_model.def_support(node.name, True, True, True, True, True, True)
 
         # Analyze the model
         tank_model.analyze()
@@ -138,13 +138,13 @@ class Test_Tanks(unittest.TestCase):
             
             p = (H - avg_Y)*w
 
-            tank_model.add_plate_surface_pressure(element.Name, p)
+            tank_model.add_plate_surface_pressure(element.name, p)
         
 
         # Add fixed supports to the base
         for node in tank_model.Nodes.values():
             if node.Y == 0:
-                tank_model.def_support(node.Name, True, True, True, True, True, True)
+                tank_model.def_support(node.name, True, True, True, True, True, True)
 
         # Analyze the model
         tank_model.analyze()

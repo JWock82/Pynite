@@ -10,9 +10,9 @@ class Node3D():
     A class representing a node in a 3D finite element model.
     """
     
-    def __init__(self, Name, X, Y, Z):
+    def __init__(self, name, X, Y, Z):
         
-        self.Name = Name    # A unique name for the node assigned by the user
+        self.name = name    # A unique name for the node assigned by the user
         self.ID = None      # A unique index number for the node assigned by the program
         
         self.X = X          # Global X coordinate

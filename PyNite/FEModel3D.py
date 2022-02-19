@@ -399,13 +399,13 @@ class FEModel3D():
         for node in mesh.nodes.values():
 
             # Check to see if this node's name already exists in the `Nodes` dictionary
-            if not node.Name in self.Nodes.keys():
+            if not node.name in self.Nodes.keys():
                 # Add the node to the `Nodes` dictionary
-                self.Nodes[node.Name] = node
+                self.Nodes[node.name] = node
             else:
                 # Get the next available node name and rename the node
                 new_name = 'N' + str(len(self.Nodes) + 1)
-                node.Name = new_name
+                node.name = new_name
                 self.Nodes[new_name] = node
         
         # Determine what type of elements are in the mesh from the mesh's first element
@@ -418,25 +418,25 @@ class FEModel3D():
             if element_type == 'Rect':
                 
                 # Check to see if this element's name already exists  in the `Plates` dictionary
-                if not element.Name in self.Plates.keys():
+                if not element.name in self.Plates.keys():
                     # Add the element to the `Plates` dictionary
-                    self.Plates[element.Name] = element
+                    self.Plates[element.name] = element
                 else:
                     # Get the next available element name and rename the element
                     new_name = 'P' + str(len(self.Plates) + 1)
-                    element.Name = new_name
+                    element.name = new_name
                     self.Plates[new_name] = element
 
             elif element_type == 'Quad':
                 
                 # Check to see if this element's name already exists  in the `Quads` dictionary
-                if not element.Name in self.Quads.keys():
+                if not element.name in self.Quads.keys():
                     # Add the element to the `Quads` dictionary
-                    self.Quads[element.Name] = element
+                    self.Quads[element.name] = element
                 else:
                     # Get the next available element name and rename the element
                     new_name = 'Q' + str(len(self.Quads) + 1)
-                    element.Name = new_name
+                    element.name = new_name
                     self.Quads[new_name] = element
 
         # Attach the model's load combinations to each element from the mesh
@@ -495,35 +495,35 @@ class FEModel3D():
 
                     # Attach any elements that were using `node_2` to `node_1` instead
                     for element in self.Plates.values():
-                        if element.i_node.Name == name_2:
+                        if element.i_node.name == name_2:
                             element.i_node = self.Nodes[name_1]
-                        if element.j_node.Name == name_2:
+                        if element.j_node.name == name_2:
                             element.j_node = self.Nodes[name_1]
-                        if element.m_node.Name == name_2:
+                        if element.m_node.name == name_2:
                             element.m_node = self.Nodes[name_1]
-                        if element.n_node.Name == name_2:
+                        if element.n_node.name == name_2:
                             element.n_node = self.Nodes[name_1]
 
                     for element in self.Quads.values():
-                        if element.i_node.Name == name_2:
+                        if element.i_node.name == name_2:
                             element.i_node = self.Nodes[name_1]
-                        if element.j_node.Name == name_2:
+                        if element.j_node.name == name_2:
                             element.j_node = self.Nodes[name_1]
-                        if element.m_node.Name == name_2:
+                        if element.m_node.name == name_2:
                             element.m_node = self.Nodes[name_1]
-                        if element.n_node.Name == name_2:
+                        if element.n_node.name == name_2:
                             element.n_node = self.Nodes[name_1]
 
                     for element in self.Members.values():
-                        if element.i_node.Name == name_2:
+                        if element.i_node.name == name_2:
                             element.i_node = self.Nodes[name_1]
-                        if element.j_node.Name == name_2:
+                        if element.j_node.name == name_2:
                             element.j_node = self.Nodes[name_1]
                     
                     for element in self.Springs.values():
-                        if element.i_node.Name == name_2:
+                        if element.i_node.name == name_2:
                             element.i_node = self.Nodes[name_1]
-                        if element.j_node.Name == name_2:
+                        if element.j_node.name == name_2:
                             element.j_node = self.Nodes[name_1]
                     
                     # Mark `node_2` for deletion from the `Nodes` dictonary
@@ -555,9 +555,9 @@ class FEModel3D():
         self.Nodes.pop(node_name)
         
         # Find any elements attached to the node and remove them
-        self.Members = {name: member for name, member in self.Members.items() if member.i_node.Name != node_name and member.j_node.Name != node_name}
-        self.Plates = {name: plate for name, plate in self.Plates.items() if plate.i_node.Name != node_name and plate.j_node.Name != node_name and plate.m_node.Name != node_name and plate.n_node.Name != node_name}
-        self.Quads = {name: quad for name, quad in self.Quads.items() if quad.i_node.Name != node_name and quad.j_node.Name != node_name and quad.m_node.Name != node_name and quad.n_node.Name != node_name}
+        self.Members = {name: member for name, member in self.Members.items() if member.i_node.name != node_name and member.j_node.name != node_name}
+        self.Plates = {name: plate for name, plate in self.Plates.items() if plate.i_node.name != node_name and plate.j_node.name != node_name and plate.m_node.name != node_name and plate.n_node.name != node_name}
+        self.Quads = {name: quad for name, quad in self.Quads.items() if quad.i_node.name != node_name and quad.j_node.name != node_name and quad.m_node.name != node_name and quad.n_node.name != node_name}
 
     def delete_auxnode(self, auxnode_name):
         '''
@@ -2670,7 +2670,7 @@ class FEModel3D():
                 if i%6 == 5: direction = 'for rotation about the global Z axis.'
 
                 # Print a message to the console
-                print('* Nodal instability detected: node' + node.Name + 'is unstable for' + direction)
+                print('* Nodal instability detected: node' + node.name + 'is unstable for' + direction)
 
         if unstable:
             raise Exception('Unstable node(s). See console output for details.')
@@ -2800,7 +2800,7 @@ class FEModel3D():
         for old_key in temp.keys():
             new_key = 'N' + str(id)
             self.Nodes[new_key] = self.Nodes.pop(old_key)
-            self.Nodes[new_key].Name = new_key
+            self.Nodes[new_key].name = new_key
             id += 1
         
         # Rename each spring in the model
@@ -2809,7 +2809,7 @@ class FEModel3D():
         for old_key in temp.keys():
             new_key = 'S' + str(id)
             self.Springs[new_key] = self.Springs.pop(old_key)
-            self.Springs[new_key].Name = new_key
+            self.Springs[new_key].name = new_key
             id += 1
 
         # Rename each member in the model
@@ -2818,7 +2818,7 @@ class FEModel3D():
         for old_key in temp.keys():
             new_key = 'M' + str(id)
             self.Members[new_key] = self.Members.pop(old_key)
-            self.Members[new_key].Name = new_key
+            self.Members[new_key].name = new_key
             id += 1
         
         # Rename each plate in the model
@@ -2827,7 +2827,7 @@ class FEModel3D():
         for old_key in temp.keys():
             new_key = 'P' + str(id)
             self.Plates[new_key] = self.Plates.pop(old_key)
-            self.Plates[new_key].Name = new_key
+            self.Plates[new_key].name = new_key
             id += 1
         
         # Rename each quad in the model
@@ -2836,7 +2836,7 @@ class FEModel3D():
         for old_key in temp.keys():
             new_key = 'Q' + str(id)
             self.Quads[new_key] = self.Quads.pop(old_key)
-            self.Quads[new_key].Name = new_key
+            self.Quads[new_key].name = new_key
             id += 1
 
     def orphaned_nodes(self):
@@ -2853,10 +2853,10 @@ class FEModel3D():
             orphaned = False
 
             # Check to see if the node is attached to any elements
-            quads = [quad.Name for quad in self.Quads.values() if quad.i_node == node or quad.j_node == node or quad.m_node == node or quad.n_node == node]
-            plates = [plate.Name for plate in self.Plates.values() if plate.i_node == node or plate.j_node == node or plate.m_node == node or plate.n_node == node]
-            members = [member.Name for member in self.Members.values() if member.i_node == node or member.j_node == node]
-            springs = [spring.Name for spring in self.Springs.values() if spring.i_node == node or spring.j_node == node]
+            quads = [quad.name for quad in self.Quads.values() if quad.i_node == node or quad.j_node == node or quad.m_node == node or quad.n_node == node]
+            plates = [plate.name for plate in self.Plates.values() if plate.i_node == node or plate.j_node == node or plate.m_node == node or plate.n_node == node]
+            members = [member.name for member in self.Members.values() if member.i_node == node or member.j_node == node]
+            springs = [spring.name for spring in self.Springs.values() if spring.i_node == node or spring.j_node == node]
 
             # Determine if the node is orphaned
             if quads == [] and plates == [] and members == [] and springs == []:
@@ -2864,7 +2864,7 @@ class FEModel3D():
             
             # Add the orphaned nodes to the list of orphaned nodes
             if orphaned == True:
-                orphans.append(node.Name)
+                orphans.append(node.name)
         
         return orphans
       

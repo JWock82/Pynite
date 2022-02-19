@@ -51,12 +51,12 @@ model.merge_duplicate_nodes()
 # Add hydrostatic pressure to each element in the model
 for element in model.Quads.values():
     Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
-    model.add_quad_surface_pressure(element.Name, 62.4*(h_shell - Yavg), case='Hydrostatic')
+    model.add_quad_surface_pressure(element.name, 62.4*(h_shell - Yavg), case='Hydrostatic')
 
 # Add supports at the springline
 for node in model.Nodes.values():
     if round(node.Y, 10) == 0:
-        model.def_support(node.Name, True, True, True, False, False, False)
+        model.def_support(node.name, True, True, True, False, False, False)
 
 # Add a load combination
 model.add_load_combo('1.4F', {'Hydrostatic': 1.4})

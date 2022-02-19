@@ -65,13 +65,13 @@ for node in model.Nodes.values():
     # Determine if the node is at the base of the wall
     if isclose(node.Y, 0):
         # Fix the base of the wall
-        model.def_support(node.Name, True, True, True, True, True, True)
+        model.def_support(node.name, True, True, True, True, True, True)
     # Determine if the node is at the top of the wall
     elif isclose(node.Y, height):
         # Add out-of-plane support (provided by the diaphragm)
-        model.def_support(node.Name, False, False, True, False, False, False)
+        model.def_support(node.name, False, False, True, False, False, False)
         # Add a seismic shear load to the top of the wall (applied by the diaphragm)
-        model.add_node_load(node.Name, 'FX', v, case='E')
+        model.add_node_load(node.name, 'FX', v, case='E')
 
 # Add a load combination named 'Seismic' with a factor of 1.0 applied to any loads designated as
 # 'E'.

@@ -52,14 +52,14 @@ for element in list(model.Quads.values()) + list(model.Plates.values()):
 
         # Add hydrostatic loads to the element
         if mesh.element_type == 'Rect':
-            model.add_plate_surface_pressure(element.Name, 62.4*(HL - Yavg), case='F')
+            model.add_plate_surface_pressure(element.name, 62.4*(HL - Yavg), case='F')
         else:
-            model.add_quad_surface_pressure(element.Name, 62.4*(HL - Yavg), case='F')
+            model.add_quad_surface_pressure(element.name, 62.4*(HL - Yavg), case='F')
 
 # Add fully fixed supports at left, right, and bottom of the wall
 for node in model.Nodes.values():
     if round(node.Y, 10) == 0 or round(node.X, 10) == 0 or round(node.X, 10) == width:
-        model.def_support(node.Name, True, True, True, True, True, True)
+        model.def_support(node.name, True, True, True, True, True, True)
 
 # Add a load combination named '1.4F' with a factor of 1.4 applied to any loads designated as
 # 'Hydrostatic'.

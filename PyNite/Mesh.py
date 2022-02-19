@@ -538,8 +538,8 @@ class RectangleMesh(Mesh):
                 and round(y, 10) < round(opng.y_bott + opng.height, 10)):
 
                     # Mark the node for deletion if it's not already marked
-                    if node.Name not in node_del_list:
-                        node_del_list.append(node.Name)
+                    if node.name not in node_del_list:
+                        node_del_list.append(node.name)
                 
         # Go back through the mesh and delete any elements that are in the openings
         for element in self.elements.values():
@@ -557,8 +557,8 @@ class RectangleMesh(Mesh):
                 and (round(opng.x_left + opng.width, 10) >= round(right, 10))):
 
                     # Mark the element for deletion if it's not already marked
-                    if element.Name not in element_del_list:
-                        element_del_list.append(element.Name)
+                    if element.name not in element_del_list:
+                        element_del_list.append(element.name)
 
         # Delete the elements marked for deletion
         for element_name in element_del_list:
@@ -575,7 +575,7 @@ class RectangleMesh(Mesh):
             and node not in [element.j_node for element in self.elements.values()]
             and node not in [element.m_node for element in self.elements.values()]
             and node not in [element.n_node for element in self.elements.values()]):
-                node_del_list.append(node.Name)
+                node_del_list.append(node.name)
         
         # Delete the orphaned nodes
         for node_name in node_del_list:
@@ -740,10 +740,10 @@ class AnnulusMesh(Mesh):
         # nodes that are no longer in the dictionary. Attach these plates to the nodes that are
         # still in the dictionary instead. 
         for element in self.elements.values():
-            element.i_node = self.nodes[element.i_node.Name]
-            element.j_node = self.nodes[element.j_node.Name]
-            element.m_node = self.nodes[element.m_node.Name]
-            element.n_node = self.nodes[element.n_node.Name]
+            element.i_node = self.nodes[element.i_node.name]
+            element.j_node = self.nodes[element.j_node.name]
+            element.m_node = self.nodes[element.m_node.name]
+            element.n_node = self.nodes[element.n_node.name]
 
 #%%
 class AnnulusRingMesh(Mesh):
@@ -1175,10 +1175,10 @@ class CylinderMesh(Mesh):
         # nodes that are no longer in the dictionary. Attach these plates to the nodes that are
         # still in the dictionary instead. 
         for element in self.elements.values():
-            element.i_node = self.nodes[element.i_node.Name]
-            element.j_node = self.nodes[element.j_node.Name]
-            element.m_node = self.nodes[element.m_node.Name]
-            element.n_node = self.nodes[element.n_node.Name]
+            element.i_node = self.nodes[element.i_node.name]
+            element.j_node = self.nodes[element.j_node.name]
+            element.m_node = self.nodes[element.m_node.name]
+            element.n_node = self.nodes[element.n_node.name]
 
 
 #%%

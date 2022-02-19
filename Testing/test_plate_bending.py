@@ -100,13 +100,13 @@ class Test_Plates(unittest.TestCase):
         # Add supports to the sides and base of the wall
         for node in plate_model.Nodes.values():
             if node.X == 0 or node.X == a or node.Y == 0:
-                plate_model.def_support(node.Name, True, True, True, True, True, True)
+                plate_model.def_support(node.name, True, True, True, True, True, True)
         
         # Add hydrostatic loads to the elements
         for element in plate_model.Plates.values():
             Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
-            plate_model.add_plate_surface_pressure(element.Name, p, 'Hydrostatic')
+            plate_model.add_plate_surface_pressure(element.name, p, 'Hydrostatic')
         
         # Add a load combination to the model
         plate_model.add_load_combo('F', {'Hydrostatic': 1.0})
@@ -148,13 +148,13 @@ class Test_Plates(unittest.TestCase):
         # Add supports to the sides and base of the wall
         for node in plate_model.Nodes.values():
             if node.X == 0 or node.X == a or node.Y == 0:
-                plate_model.def_support(node.Name, True, True, True, True, True, True)
+                plate_model.def_support(node.name, True, True, True, True, True, True)
         
         # Add hydrostatic loads to the elements
         for element in plate_model.Quads.values():
             Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
-            plate_model.add_quad_surface_pressure(element.Name, p, 'Hydrostatic')
+            plate_model.add_quad_surface_pressure(element.name, p, 'Hydrostatic')
         
         # Add a load combination to the model
         plate_model.add_load_combo('F', {'Hydrostatic': 1.0})

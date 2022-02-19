@@ -19,14 +19,14 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None, 
+    def __init__(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None, 
                  LoadCombos={'Combo 1':LoadCombo('Combo 1', 
                              factors={'Case 1':1.0})},
                  tension_only=False, comp_only=False):
         '''
         Initializes a new member.
         '''
-        self.Name = Name    # A unique name for the member given by the user
+        self.name = name    # A unique name for the member given by the user
         self.ID = None      # Unique index number for the member assigned by the program
         self.i_node = i_node  # The element's i-node
         self.j_node = j_node  # The element's j-node
@@ -729,7 +729,7 @@ class Member3D():
         Member3D.__plt.plot(x, V)
         Member3D.__plt.ylabel('Shear')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
+        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()    
         
 #%%
@@ -925,7 +925,7 @@ class Member3D():
         Member3D.__plt.plot(x, M)
         Member3D.__plt.ylabel('Moment')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
+        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
        
 #%%
@@ -1059,7 +1059,7 @@ class Member3D():
         Member3D.__plt.plot(x, T)
         Member3D.__plt.ylabel('Torsional Moment (Warping Torsion Not Included)') # Torsion results are for pure torsion. Torsional warping has not been considered
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
+        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()   
         
 #%%
@@ -1193,7 +1193,7 @@ class Member3D():
         Member3D.__plt.plot(x, P)
         Member3D.__plt.ylabel('Axial Force')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
+        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()    
                         
 #%%
@@ -1375,7 +1375,7 @@ class Member3D():
         Member3D.__plt.plot(x, d)
         Member3D.__plt.ylabel('Deflection')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
+        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
     
 #%%
@@ -1482,7 +1482,7 @@ class Member3D():
         Member3D.__plt.plot(x, d_relative)
         Member3D.__plt.ylabel('Relative Deflection')
         Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.Name + '\n' + combo_name)
+        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()   
         
 #%%    

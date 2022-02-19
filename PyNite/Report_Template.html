@@ -28,7 +28,7 @@
             <tbody>
             {% for node in nodes %}
                 <tr>
-                    <td>{{ node.Name }}</td>
+                    <td>{{ node.name }}</td>
                     <td>{{ "%.4g" | format(node.X) }}</td>
                     <td>{{ "%.4g" | format(node.Y) }}</td>
                     <td>{{ "%.4g" | format(node.Z) }}</td>
@@ -64,9 +64,9 @@
             <tbody>
             {% for member in members %}
                 <tr>
-                    <td>{{ member.Name }}</td>
-                    <td>{{ member.i_node.Name }}</td>
-                    <td>{{ member.j_node.Name }}</td>
+                    <td>{{ member.name }}</td>
+                    <td>{{ member.i_node.name }}</td>
+                    <td>{{ member.j_node.name }}</td>
                     <td>{{ "%.4g" | format(member.A) }}</td>
                     <td>{{ "%.4g" | format(member.Iy) }}</td>
                     <td>{{ "%.4g" | format(member.Iz) }}</td>
@@ -102,7 +102,7 @@
             <tbody>
             {% for member in members %}
                 <tr>
-                    <td>{{ member.Name }}</td>
+                    <td>{{ member.name }}</td>
                     <td>{{ member.Releases[0] }}</td>
                     <td>{{ member.Releases[1] }}</td>
                     <td>{{ member.Releases[2] }}</td>
@@ -139,11 +139,11 @@
             <tbody>
             {% for plate in plates %}
                 <tr>
-                    <td>{{ plate.Name }}</td>
-                    <td>{{ plate.i_node.Name }}</td>
-                    <td>{{ plate.j_node.Name }}</td>
-                    <td>{{ plate.m_node.Name }}</td>
-                    <td>{{ plate.n_node.Name }}</td>
+                    <td>{{ plate.name }}</td>
+                    <td>{{ plate.i_node.name }}</td>
+                    <td>{{ plate.j_node.name }}</td>
+                    <td>{{ plate.m_node.name }}</td>
+                    <td>{{ plate.n_node.name }}</td>
                     <td>{{ "%.4g" | format(plate.t) }}</td>
                     <td>{{ "%.4g" | format(plate.E) }}</td>
                     <td>{{ "%.4g" | format(plate.nu) }}</td>
@@ -171,11 +171,11 @@
             <tbody>
             {% for quad in quads %}
                 <tr>
-                    <td>{{ quad.Name }}</td>
-                    <td>{{ quad.i_node.Name }}</td>
-                    <td>{{ quad.j_node.Name }}</td>
-                    <td>{{ quad.m_node.Name }}</td>
-                    <td>{{ quad.n_node.Name }}</td>
+                    <td>{{ quad.name }}</td>
+                    <td>{{ quad.i_node.name }}</td>
+                    <td>{{ quad.j_node.name }}</td>
+                    <td>{{ quad.m_node.name }}</td>
+                    <td>{{ quad.n_node.name }}</td>
                     <td>{{ "%.4g" | format(quad.t) }}</td>
                     <td>{{ "%.4g" | format(quad.E) }}</td>
                     <td>{{ "%.4g" | format(quad.nu) }}</td>
@@ -205,7 +205,7 @@
             {% for combo in load_combos %}
                 {% for node in nodes %}
                 <tr>
-                    <td>{{ node.Name }}</td>
+                    <td>{{ node.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.4g" | format(node.RxnFX[combo]) }}</td>
                     <td>{{ "%.4g" | format(node.RxnFY[combo]) }}</td>
@@ -240,7 +240,7 @@
             {% for combo in load_combos %}
                 {% for node in nodes %}
                 <tr>
-                    <td>{{ node.Name }}</td>
+                    <td>{{ node.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.4g" | format(node.DX[combo]) }}</td>
                     <td>{{ "%.4g" | format(node.DY[combo]) }}</td>
@@ -280,7 +280,7 @@
             {% for combo in load_combos %}
                 {% for member in members %}
                 <tr>
-                    <td>{{ member.Name }}</td>
+                    <td>{{ member.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.4g" | format(member.axial(0, combo)) }}</td>
                     <td>{{ "%.4g" | format(member.axial(member.L(), combo)) }}</td>
@@ -326,7 +326,7 @@
             {% for combo in load_combos %}
                 {% for member in members %}
                 <tr>
-                    <td>{{ member.Name }}</td>
+                    <td>{{ member.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.4g" | format(member.max_axial(combo)) }}</td>
                     <td>{{ "%.4g" | format(member.min_axial(combo)) }}</td>
@@ -391,7 +391,7 @@
             {% for combo in load_combos %}
                 {% for plate in plates %}
                 <tr>
-                    <td>{{ plate.Name }}</td>
+                    <td>{{ plate.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.3g" | format(plate.shear(0, 0, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(plate.shear(0, 0, combo)[1][0]) }}</td>
@@ -421,7 +421,7 @@
 
                 {% for quad in quads %}
                 <tr>
-                    <td>{{ quad.Name }}</td>
+                    <td>{{ quad.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.3g" | format(quad.shear(-1, -1, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(quad.shear(-1, -1, combo)[1][0]) }}</td>
@@ -475,7 +475,7 @@
 
                 {% for plate in plates %}
                 <tr>
-                    <td>{{ plate.Name }}</td>
+                    <td>{{ plate.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
@@ -487,7 +487,7 @@
 
                 {% for quad in quads %}
                 <tr>
-                    <td>{{ quad.Name }}</td>
+                    <td>{{ quad.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.3g" | format(quad.shear(0, 0, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(quad.shear(0, 0, combo)[1][0]) }}</td>
@@ -540,7 +540,7 @@
 
                 {% for plate in plates %}
                 <tr>
-                    <td>{{ plate.Name }}</td>
+                    <td>{{ plate.name }}</td>
                     <td>{{ combo }}</td>
 
                     <td>{{ "%.3g" | format(plate.membrane(0, 0, combo)[0]) }}</td>
@@ -563,7 +563,7 @@
 
                 {% for quad in quads %}
                 <tr>
-                    <td>{{ quad.Name }}</td>
+                    <td>{{ quad.name }}</td>
                     <td>{{ combo }}</td>
 
                     <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo)[0]) }}</td>
@@ -606,7 +606,7 @@
 
                 {% for plate in plates %}
                 <tr>
-                    <td>{{ plate.Name }}</td>
+                    <td>{{ plate.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
@@ -616,7 +616,7 @@
 
                 {% for quad in quads %}
                 <tr>
-                    <td>{{ quad.Name }}</td>
+                    <td>{{ quad.name }}</td>
                     <td>{{ combo }}</td>
                     <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[0][0]) }}</td>
                     <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[1][0]) }}</td>

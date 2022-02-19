@@ -23,10 +23,10 @@ class Quad3D():
     """
 
 #%%
-    def __init__(self, Name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
+    def __init__(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
                  LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
 
-        self.Name = Name
+        self.name = name
         self.ID = None
         self.type = 'Quad'
 

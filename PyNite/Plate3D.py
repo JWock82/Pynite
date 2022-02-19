@@ -5,14 +5,14 @@ from PyNite.LoadCombo import LoadCombo
 #%%
 class Plate3D():
 
-    def __init__(self, Name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
+    def __init__(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
                  LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
         """
         A rectangular plate element
 
         Parameters
         ----------
-        Name : string
+        name : string
             A unique plate name
         i_node : Node3D
             The plate's i-node
@@ -38,7 +38,7 @@ class Plate3D():
             A dictionary of the load combinations used in the model the plate is in
         """
 
-        self.Name = Name
+        self.name = name
         self.ID = None
         self.type = 'Rect'
 

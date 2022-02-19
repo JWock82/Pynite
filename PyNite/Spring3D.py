@@ -16,12 +16,12 @@ class Spring3D():
     __plt = None
 
 #%%
-    def __init__(self, Name, i_node, j_node, ks, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})},
+    def __init__(self, name, i_node, j_node, ks, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})},
                  tension_only=False, comp_only=False):
         '''
         Initializes a new spring.
         '''
-        self.Name = Name    # A unique name for the spring given by the user
+        self.name = name    # A unique name for the spring given by the user
         self.ID = None      # Unique index number for the spring assigned by the program
         self.i_node = i_node  # The spring's i-node
         self.j_node = j_node  # The spring's j-node
