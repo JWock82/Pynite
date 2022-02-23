@@ -61,7 +61,7 @@ boef.analyze(check_statics=True)
 
 # Render the mdoel with the deformed shape
 from PyNite.Visualization import render_model
-render_model(boef, text_height=1.5, deformed_shape=True)
+render_model(boef, annotation_size=1.5, deformed_shape=True)
 
 # Find and print the maximum displacement
 d_max = min([node.DY['Combo 1'] for node in boef.Nodes.values()])

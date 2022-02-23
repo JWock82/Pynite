@@ -81,7 +81,7 @@ model.add_load_combo('Seismic', {'E': 1.0})
 model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Txy` shears.
-# window = render_model(model, text_height=1, render_loads=True, deformed_shape=True,
+# window = render_model(model, annotation_size=1, render_loads=True, deformed_shape=True,
 #                       deformed_scale=200, color_map='Txy', scalar_bar=False,
 #                       combo_name='Seismic', labels=False, screenshot='console')
 from PyNite.Visualization import Renderer

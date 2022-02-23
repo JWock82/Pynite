@@ -3,7 +3,7 @@
 # Import a few libraries from PyNite that we'll need
 from PyNite.FEModel3D import FEModel3D
 from PyNite.Mesh import RectangleMesh
-from PyNite.Visualization import RenderModel
+from PyNite.Visualization import render_model
 
 # Set material properties for the wall (4500 psi concrete)
 E = 57000*(4500)**0.5*12**2  # psf
@@ -69,7 +69,7 @@ model.add_load_combo('1.4F', {'F': 1.4})
 model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Mx` moments.
-RenderModel(model, annotation_size=0.2, render_loads=True, deformed_shape=True, deformed_scale=500*10, color_map='Mx', combo_name='1.4F', labels=True)
+render_model(model, annotation_size=0.2, render_loads=True, deformed_shape=True, deformed_scale=500*10, color_map='Mx', combo_name='1.4F', labels=True)
 
 # Print the maximum and minumum displacements
 print('Max displacement: ', max([node.DZ['1.4F'] for node in model.Nodes.values()]))

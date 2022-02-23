@@ -44,4 +44,4 @@ print('Calculated results: ', frame.Nodes['N2'].DY, frame.Nodes['N3'].DZ)
 print('Expected results: ', -0.063, 1.825)
 
 # Render the model for viewing
-Visualization.RenderModel(frame, text_height=5, deformed_shape=True, deformed_scale=40, render_loads=True)
+Visualization.render_model(frame, annotation_size=5, deformed_shape=True, deformed_scale=40, render_loads=True)
