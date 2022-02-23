@@ -1811,6 +1811,7 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
         # over the text size until the window gets too small.
         if scalar_bar:
             scalar = vtk.vtkScalarBarActor()
+            scalar.SetAnnotationTextScaling(0)
             # scalar_text = vtk.vtkTextProperty()
             # scalar_text.SetFontSize(12)
             # scalar_bar.SetLabelTextProperty(scalar_text)
