@@ -30,10 +30,10 @@ class Renderer():
         # Initialize the renderer
         self.renderer = None
 
-    def setannotation_size(self, size=5):
+    def set_annotation_size(self, size=5):
         self.annotation_size = size
     
-    def setdeformed_shape(self, deformed_shape=False):
+    def set_deformed_shape(self, deformed_shape=False):
         self.deformed_shape = deformed_shape
     
     def set_deformed_scale(self, scale=30):
@@ -1803,20 +1803,23 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
         lut.Build()
       
         # Add the scalar bar for the contours.
-        # Note: After searching online for how to change the font size for the scalar bar label text,
-        # I found that the text automatically sizes itself to the size of the scalar bar. VTK provides
-        # no other controls over the text size. The `vtkTextProperty` commented out below is normally
-        # how text size is controlled in VTK. All the lines of code excecute without an exception, but
-        # the text size is unaffected. The `SetMaximumWidthInPixels` function provides some control
-        # over the text size until the window gets too small.
         if scalar_bar:
+            
             scalar = vtk.vtkScalarBarActor()
-            scalar.SetAnnotationTextScaling(0)
-            # scalar_text = vtk.vtkTextProperty()
-            # scalar_text.SetFontSize(12)
-            # scalar_bar.SetLabelTextProperty(scalar_text)
+
+            # This next group of lines controls the font on the scalar bar
+            scalar.SetUnconstrainedFontSize(1)
+            scalar_text = vtk.vtkTextProperty()
+            scalar_text.SetFontSize(24)
+            scalar_text.SetBold(1)
+            scalar.SetLabelTextProperty(scalar_text)
+
+            # Alternatively, the next line provides some control over the text size until the
+            # window gets too small.
+            # scalar.SetMaximumWidthInPixels(100)
+
             scalar.SetLookupTable(lut)
-            scalar.SetMaximumWidthInPixels(100)
+
             renderer.AddActor(scalar)
       
     # Add the actor for the plates
