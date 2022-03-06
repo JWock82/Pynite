@@ -62,6 +62,15 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v0.0.65
+* Improved the `merge_duplicate_nodes` method. It seemed to be working, but it was hard to follow, and there may have been cases where it didn't work as expected. Simplified the code for this method to make it clear what it was doing, and to make it more efficient. Added comments explaining each step.
+* Screenshot size is now adjustable when rendering.
+* Fixed a bug for `RectangleMesh` where it could not be used repeatedly.
+* Refactoring: changed `Name` to `name` throughout code. For example, `Node3D.Name` is now `Node3D.name`.
+* Fixed obsolete method names that had not been updated.
+* Scalar bar text size can now be controlled. It had strange behavior before. It would change with the window size (until the window size was too small).
+* More work on the new `Renderer` class. This class is being built to give the user more control over the appearance and behavior of renderings.
+
 v0.0.63 thru v0.0.64
 * Fixed the `add_mesh` method. It was not working properly after version 0.0.62.
 * Made stability checks optional. Stability checks add significant solve time. If you are confident your model is stable, you can skip the stability check by toggling `check_stability` to `False` in your call to your analysis command.
@@ -112,15 +121,6 @@ v0.0.50
 * Added tension/compression only support springs. This required some reworking of how support springs are implemented. See the "Beam on Elastic Foundation" example for an example of how to properly use support springs.
 * More PEP8 style changes. This shouldn't change the way you use the program. Some of the internal calls to function names still referenced the old function names. It was leading to deprecation warnings during runtime.
 * Fixed a divide by zero error for plotting contours on models with nodes not attached to plates/quads.
-
-v0.0.49
-* Major speed boost. A lot of time was being wasted reading/writing to a SciPy `lil_matrix` format. The stiffness matrix is now assembled as a `coo_format` first, and then switched to lil format later on to facilitate slicing.
-* Refactored node names to match PEP8 style guide. Instead of `iNode`, `jNode`, etc. PyNite now uses `i_node`, `j_node` etc. This should only affect you if you were using the keyword arguments for node names.
-* Removed test modules from package distribution. These files were unnecessary for users to have installed on their computers.
-
-v0.0.48 - Global Load Directions
-* Global load directions can now be used for member loads now. Use capital notation to apply the member load in the global X, Y, or Z direction (e.g. 'FX', 'MY', 'FZ'...). Use lower case notation to apply the member load in the member's local x, y, or z direction (e.g. 'Fx', 'My', 'Fz'...).
-* Bug fix for rendering models without plates/quads (special thanks to tamalone1 for this pull request!)
 
 # Example Projects
 Here's a list of projects that run on PyNite:

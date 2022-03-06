@@ -55,9 +55,17 @@ model.analyze(check_statics=True)
 # | Discussion of Results |
 # +-----------------------+
 
-# Render the wall. The quad mesh will be set to show 'Mx' results.
-from PyNite import Visualization
-Visualization.RenderModel(model, annotation_size=mesh_size/6, deformed_shape=False, combo_name='1.0W', color_map='Mx', render_loads=True)
+# Set up a renderer for the wall. The quad mesh will be set to show 'Mx' results.
+from PyNite.Visualization import Renderer
+renderer = Renderer(model)
+renderer.annotation_size = mesh_size/6
+renderer.deformed_shape = False
+renderer.combo_name = '1.0W'
+renderer.color_map = 'Mx'
+renderer.render_loads = True
+
+# Render the model
+renderer.render_model()
 
 # The it should be noted that the rendered contours are smoothed. Smoothing averages the corner
 # stresses from every quad framing into each node. This leads to a much more accurate contour.

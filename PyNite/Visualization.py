@@ -12,11 +12,13 @@ class Renderer():
     class to allow for more efficient building and rebuilding of visual models.
     """
 
+    scalar = None
+
     def __init__(self, model):
 
         self.model = model
 
-        # Default settings
+        # Default settings for rendering
         self.annotation_size = 5
         self.deformed_shape = False
         self.deformed_scale = 30
@@ -26,9 +28,39 @@ class Renderer():
         self.case = None
         self.labels = True
         self.scalar_bar = False
+        self.scalar_bar_text_size = 24
 
-        # Initialize the renderer
-        self.renderer = None
+        # Initialize VTK objects
+        self.renderer = vtk.vtkRenderer()
+        self.window = vtk.vtkRenderWindow()
+        self.window.SetWindowName('PyNite - Simple Finite Element Analysis in Python')
+        self.window.AddRenderer(self.renderer)
+        
+        # Set up the interactor. The interactor style determines how user
+        # interactions affect the view. The trackball camera style behaves much
+        # like popular commercial CAD programs.
+        self.interactor = vtk.vtkRenderWindowInteractor()
+        style = vtk.vtkInteractorStyleTrackballCamera()
+        self.interactor.SetInteractorStyle(style)
+        self.interactor.SetRenderWindow(self.window)
+
+    @property
+    def window_width(self):
+        return self.window.GetSize()[0]
+    
+    @window_width.setter
+    def window_width(self, width):
+        height = self.window.GetSize()[1]
+        self.window.SetSize(width, height)
+    
+    @property
+    def window_height(self):
+        return self.window.GetSize()[1]
+    
+    @window_height.setter
+    def window_height(self, height):
+        width = self.window.GetSize()[0]
+        self.window.SetSize(width, height)
 
     def set_annotation_size(self, size=5):
         self.annotation_size = size
@@ -37,66 +69,65 @@ class Renderer():
         self.deformed_shape = deformed_shape
     
     def set_deformed_scale(self, scale=30):
-        self.deformed_scale = 30
+        self.deformed_scale = scale
     
     def set_render_loads(self, render_loads=True):
-        self.render_loads = True
+        self.render_loads = render_loads
     
-    def set_color_map(self, color_map = None):
-        self.color_map = None
+    def set_color_map(self, color_map=None):
+        self.color_map = color_map
     
     def set_combo_name(self, combo_name='Combo 1'):
-        self.combo_name = 'Combo 1'
+        self.combo_name = combo_name
     
-    def set_case(self, case):
-        self.case = None
+    def set_case(self, case=None):
+        self.case = case
     
     def set_show_labels(self, show_labels=True):
-        self.labels = True
+        self.labels = show_labels
     
     def set_scalar_bar(self, scalar_bar=False):
-        self.scalar_bar = False
+        self.scalar_bar = scalar_bar
+    
+    def set_scalar_bar_text_size(self, text_size=24):
+        self.scalar_bar_text_size = text_size
 
-    def render_model(self, win_length=750, win_height=750):
+    def render_model(self, interact=True, reset_camera=True):
         """
         Renders the model in a window
+
+        Parameters
+        ----------
+        interact : bool
+            Suppresses interacting with the window if set to `False`. This can be used to capture a
+            screenshot without pausing the program for the user to interact. Default is `True`.
+        reset_camera : bool
+            Resets the camera if set to `True`. Default is `True`.
         """
-
-        # Create a window to hold the rendering
-        window = vtk.vtkRenderWindow()
         
-        # Set the pixel width and length of the window
-        window.SetSize(win_length, win_height)
+        # Get the render window
+        window = self.window
         
-        # Set up the interactor. The interactor style determines how user
-        # interactions affect the view. The trackball camera style behaves much
-        # like popular commercial CAD programs.
-        interactor = vtk.vtkRenderWindowInteractor()
-        style = vtk.vtkInteractorStyleTrackballCamera()
-        interactor.SetInteractorStyle(style)
-        interactor.SetRenderWindow(window)
-        
-        # Create a new renderer
-        self.renderer = self.update()
-
-        # Add the renderer to the window
-        window.AddRenderer(self.renderer)
+        # Update the renderer
+        self.update(reset_camera)
 
         # Render the window
         window.Render()
 
         # Start the interactor. Code execution will pause here until the user closes the window.
-        interactor.Start()
+        if interact == True:
 
-        # Finalize the render window once the user closes out of it. I don't understand everything
-        # this does, but I've found screenshots will cause the program to crash if this line is
-        # omitted.
-        window.Finalize()
+            self.interactor.Start()
+            
+            # Finalize the render window once the user closes out of it. I don't understand everything
+            # this does, but I've found screenshots will cause the program to crash if this line is
+            # omitted.
+            window.Finalize()
 
         # Return the window
         return window
 
-    def screenshot(self, filepath='console', length=750, height=750):
+    def screenshot(self, filepath='console', interact=True, reset_camera=True):
         """
         Renders the model in a window. When the window is closed a screenshot is captured.
 
@@ -107,14 +138,15 @@ class Renderer():
             user closes out of the render window. If `filepath` is set to 'console' the screenshot
             will be returned as an IPython image. If set to 'BytesIO' it will return the image as a
             `BytesIO` object. Default is 'console'.
-        length : number
-            Width (in pixels) of the rendering.
-        height : number
-            Height (in pixels) of the rendering.
+        interact : bool
+            Suppresses interacting with the window if set to `False`. This can be used to capture a
+            screenshot without pausing the program for the user to interact. Default is `True`.
+        reset_camera : bool
+            Resets the camera if set to `True`. Default is `True`.
         """
 
         # Render the model in a window and save the window
-        window = self.render_model(length, height)
+        window = self.render_model(interact, reset_camera)
 
         # Screenshot code
         w2if = vtk.vtkWindowToImageFilter()
@@ -132,22 +164,37 @@ class Renderer():
         writer.SetInputConnection(w2if.GetOutputPort())
 
         if filepath == 'console' or filepath == 'BytesIO':
+
             writer.SetWriteToMemory(1)
             writer.Write()
             fig_file = memoryview(writer.GetResult()).tobytes()
+
+            # Now that we're done with the render window, finalize it
+            window.Finalize()
+
             if filepath == 'console':
                 return Image(fig_file)
             elif filepath == 'BytesIO':
                 from io import BytesIO
                 return BytesIO(fig_file)
         else:
+
             writer.SetFileName(filepath)
             writer.Write()
+
+            # Now that we're done with the render window, finalize it
+            window.Finalize()
+
             return
 
-    def update(self):
+    def update(self, reset_camera=True):
         """
         Builds or rebuilds the VTK renderer
+
+        Parameters
+        ----------
+        reset_camera : bool
+            Resets the camera if set to `True`. Default is `True`.
         """
 
         # Input validation
@@ -177,8 +224,12 @@ class Renderer():
         for member in self.model.Members.values():
             vis_members.append(VisMember(member, self.model.Nodes, self.annotation_size))
         
-        # Create a renderer object and add it to the window
-        renderer = vtk.vtkRenderer()
+        # Get the renderer
+        renderer = self.renderer
+
+        # Clear out all the old actors from any previous renderings
+        for actor in renderer.GetActors():
+            renderer.RemoveActor(actor)
 
         # Add actors for each spring
         for vis_spring in vis_springs:
@@ -264,16 +315,13 @@ class Renderer():
         
         # Render the plates and quads, if present
         if self.model.Quads or self.model.Plates:
-            _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale, self.color_map, self.scalar_bar, self.combo_name)
+            _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale, self.color_map, self.scalar_bar, self.scalar_bar_text_size, self.combo_name)
 
         # Set the window's background to gray
         renderer.SetBackground(0/255, 0/255, 128/255)
         
         # Reset the camera
-        renderer.ResetCamera()
-
-        # Return the renderer
-        return renderer
+        if reset_camera: renderer.ResetCamera()
 
 # %%
 def RenderModel(model, annotation_size=5, deformed_shape=False, deformed_scale=30,
@@ -1681,7 +1729,8 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case):
     polygon_actor.SetMapper(polygon_mapper)
     renderer.AddActor(polygon_actor)
 
-def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, combo_name):
+def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar,
+                    scalar_bar_text_size, combo_name):
   
     # Create a new `vtkCellArray` object to store the elements
     plates = vtk.vtkCellArray()
@@ -1805,18 +1854,21 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
         # Add the scalar bar for the contours.
         if scalar_bar:
             
-            scalar = vtk.vtkScalarBarActor()
+            if Renderer.scalar == None:
+                Renderer.scalar = vtk.vtkScalarBarActor()
+            
+            scalar = Renderer.scalar
 
             # This next group of lines controls the font on the scalar bar
             scalar.SetUnconstrainedFontSize(1)
             scalar_text = vtk.vtkTextProperty()
-            scalar_text.SetFontSize(24)
+            scalar_text.SetFontSize(scalar_bar_text_size)
             scalar_text.SetBold(1)
             scalar.SetLabelTextProperty(scalar_text)
 
-            # Alternatively, the next line provides some control over the text size until the
-            # window gets too small.
-            # scalar.SetMaximumWidthInPixels(100)
+            scalar.SetMaximumWidthInPixels(100)
+
+            scalar.SetTextPositionToPrecedeScalarBar()
 
             scalar.SetLookupTable(lut)
 
