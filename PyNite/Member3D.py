@@ -724,7 +724,7 @@ class Member3D():
         # Calculate the shear diagram
         for i in range(21):
             x.append(self.L()/20*i)
-            V.append(self.Shear(Direction, self.L()/20*i, combo_name))
+            V.append(self.shear(Direction, self.L()/20*i, combo_name))
 
         Member3D.__plt.plot(x, V)
         Member3D.__plt.ylabel('Shear')

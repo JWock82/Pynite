@@ -105,7 +105,7 @@ BracedFrame.analyze()
 # Display the deformed shape of the structure magnified 50 times with the text
 # height 5 model units (inches) high
 from PyNite import Visualization
-Visualization.RenderModel(BracedFrame, text_height=5, deformed_shape=True,
+Visualization.render_model(BracedFrame, annotation_size=5, deformed_shape=True,
                           deformed_scale=50, combo_name='1.2D+1.0W')
 
 # Plot the axial load diagrams for the braces. We should see no compression on

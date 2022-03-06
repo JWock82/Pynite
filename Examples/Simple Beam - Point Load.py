@@ -33,7 +33,7 @@ SimpleBeam.add_load_combo('1.2D+1.6L', {'D':1.2, 'L':1.6})
 # Analyze the beam and perform a statics check
 SimpleBeam.analyze(check_statics=True)
 
-Visualization.RenderModel(SimpleBeam, text_height=10, deformed_shape=True, deformed_scale=30, render_loads=True, combo_name='1.2D+1.6L')
+Visualization.render_model(SimpleBeam, annotation_size=10, deformed_shape=True, deformed_scale=30, render_loads=True, combo_name='1.2D+1.6L')
 
 # Print the shear, moment, and deflection diagrams
 SimpleBeam.Members['M1'].plot_shear('Fy', '1.2D+1.6L')

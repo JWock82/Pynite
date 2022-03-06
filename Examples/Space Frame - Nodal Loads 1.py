@@ -41,7 +41,7 @@ frame.add_node_load('N1', 'MX', -1000)
 frame.analyze(check_statics=True)
 
 # Render the deformed shape
-Visualization.RenderModel(frame, text_height=5, deformed_shape=True, deformed_scale=100, render_loads=True)
+Visualization.render_model(frame, annotation_size=5, deformed_shape=True, deformed_scale=100, render_loads=True)
 
 # Print the node 1 displacements
 print('Node 1 deformations:')
