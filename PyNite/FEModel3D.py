@@ -1912,10 +1912,10 @@ class FEModel3D():
                     if node.spring_RX[2] == True and node.spring_RX[1] == '-' and node.RX[combo.name] > 0:
                         node.spring_RX[2] = False
                         convergence = False
-                    if node.spring_RY[2] == True and node.support_RY[1] == '-' and node.RY[combo.name] > 0:
+                    if node.spring_RY[2] == True and node.spring_RY[1] == '-' and node.RY[combo.name] > 0:
                         node.spring_RY[2] = False
                         convergence = False
-                    if node.spring_RZ[2] == True and node.support_RZ[1] == '-' and node.RZ[combo.name] > 0:
+                    if node.spring_RZ[2] == True and node.spring_RZ[1] == '-' and node.RZ[combo.name] > 0:
                         node.spring_RZ[2] = False
                         convergence = False
                     if node.spring_DX[2] == True and node.spring_DX[1] == '+' and node.DX[combo.name] < 0:
@@ -1930,10 +1930,10 @@ class FEModel3D():
                     if node.spring_RX[2] == True and node.spring_RX[1] == '+' and node.RX[combo.name] < 0:
                         node.spring_RX[2] = False
                         convergence = False
-                    if node.spring_RY[2] == True and node.support_RY[1] == '+' and node.RY[combo.name] < 0:
+                    if node.spring_RY[2] == True and node.spring_RY[1] == '+' and node.RY[combo.name] < 0:
                         node.spring_RY[2] = False
                         convergence = False
-                    if node.spring_RZ[2] == True and node.support_RZ[1] == '+' and node.RZ[combo.name] < 0:
+                    if node.spring_RZ[2] == True and node.spring_RZ[1] == '+' and node.RZ[combo.name] < 0:
                         node.spring_RZ[2] = False
                         convergence = False
 
@@ -2215,12 +2215,12 @@ class FEModel3D():
                         convergence_TC = False
                         iter_count_PD = 0
                         convergence_PD = False
-                    if node.spring_RY[2] == True and node.support_RY[1] == '-' and node.RY[combo.name] > 0:
+                    if node.spring_RY[2] == True and node.spring_RY[1] == '-' and node.RY[combo.name] > 0:
                         node.spring_RY[2] = False
                         convergence_TC = False
                         iter_count_PD = 0
                         convergence_PD = False
-                    if node.spring_RZ[2] == True and node.support_RZ[1] == '-' and node.RZ[combo.name] > 0:
+                    if node.spring_RZ[2] == True and node.spring_RZ[1] == '-' and node.RZ[combo.name] > 0:
                         node.spring_RZ[2] = False
                         convergence_TC = False
                         iter_count_PD = 0
@@ -2245,12 +2245,12 @@ class FEModel3D():
                         convergence_TC = False
                         iter_count_PD = 0
                         convergence_PD = False
-                    if node.spring_RY[2] == True and node.support_RY[1] == '+' and node.RY[combo.name] < 0:
+                    if node.spring_RY[2] == True and node.spring_RY[1] == '+' and node.RY[combo.name] < 0:
                         node.spring_RY[2] = False
                         convergence_TC = False
                         iter_count_PD = 0
                         convergence_PD = False
-                    if node.spring_RZ[2] == True and node.support_RZ[1] == '+' and node.RZ[combo.name] < 0:
+                    if node.spring_RZ[2] == True and node.spring_RZ[1] == '+' and node.RZ[combo.name] < 0:
                         node.spring_RZ[2] = False
                         convergence_TC = False
                         iter_count_PD = 0
