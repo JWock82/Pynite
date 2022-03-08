@@ -70,6 +70,7 @@ v0.0.65
 * Fixed obsolete method names that had not been updated.
 * Scalar bar text size can now be controlled. It had strange behavior before. It would change with the window size (until the window size was too small).
 * More work on the new `Renderer` class. This class is being built to give the user more control over the appearance and behavior of renderings.
+* Bug fix for nodal springs applied in the 'RY' and 'RZ' direction. Exceptions were being thrown in some cases.
 
 v0.0.63 thru v0.0.64
 * Fixed the `add_mesh` method. It was not working properly after version 0.0.62.
