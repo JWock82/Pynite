@@ -1,6 +1,6 @@
 # %%
-from numpy import array, zeros, matrix, add, subtract, matmul, insert, cross, divide
-from numpy.linalg import inv
+from numpy import array, zeros, matrix, add, subtract, matmul, insert, cross, divide, multiply
+from numpy.linalg import inv, det, norm
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
 from PyNite.BeamSegY import BeamSegY
@@ -1764,4 +1764,83 @@ class Member3D():
 
                                 SegmentsY[i].V1 += (f1[2] + f2[2])/2*(x2 - x1)
                                 SegmentsY[i].M1 += (x1 - x2)*(2*f1[2]*x1 - 3*f1[2]*x + f1[2]*x2 + f2[2]*x1 - 3*f2[2]*x + 2*f2[2]*x2)/6
-                            
+
+    @property
+    def nodes(self):
+        return (self.i_node, self.j_node)
+
+    @property
+    def coordinates(self):
+        return (node.coordinates for node in self.nodes)
+
+    def intersection(self, other, tolerance=1e-3, virtual=False):
+        if virtual:
+            return self.intersection_virtual(other, tolerance)
+
+        return self.intersection_real(other, tolerance)
+
+    def intersection_virtual(self, other, tolerance=1e-3):
+        o1, p1 = self.coordinates
+        o2, p2 = other.coordinates
+        d1 = divide(subtract(p1, o1), self.L())
+        d2 = divide(subtract(p2, o2), other.L())
+        d1xd2 = cross(d1, d2)
+
+        denominator = norm(d1xd2) ** 2
+        if denominator <= tolerance:
+            return None
+
+        o2_o1 = subtract(o2, o1)
+        det1 = det((o2_o1, d2, d1xd2))
+        det2 = det((o2_o1, d1, d1xd2))
+        p1 = add(o1, multiply(d1, det1 / denominator))
+        p2 = add(o2, multiply(d2, det2 / denominator))
+        distance = norm(subtract(p2, p1))
+        if distance <= tolerance:
+            return p1
+
+        return None
+
+    def intersection_real(self, other, point=None, tolerance=1e-3):
+        if point is None:
+            point = self.intersection_virtual(other, tolerance)
+
+        if point is None:
+            return None
+
+        if not self.extents_bound(point, tolerance):
+            return None
+
+        if not other.extents_bound(point, tolerance):
+            return None
+
+        return point
+
+    def extents_bound(self, coordinate, tolerance=1e-3):
+        (xmin, ymin, zmin), (xmax, ymax, zmax) = self.extents
+        x, y, z = coordinate
+
+        def r(x):
+            if x:
+                return round(x / tolerance) * tolerance
+            return x
+
+        return (
+            (r(xmin) <= r(x) <= r(xmax)) and
+            (r(ymin) <= r(y) <= r(ymax)) and
+            (r(zmin) <= r(z) <= r(zmax))
+            )
+
+    @property
+    def extents(self):
+        xi, yi, zi = self.i_node.coordinates
+        xj, yj, zj = self.j_node.coordinates
+        xmin, xmax = sorted((xi, xj))
+        ymin, ymax = sorted((yi, yj))
+        zmin, zmax = sorted((zi, zj))
+        return (xmin, ymin, zmin), (xmax, ymax, zmax)
+
+    @property
+    def properties(self):
+        attributes = ('E', 'G', 'Iy', 'Iz', 'J', 'A')
+        return {attr: getattr(self, attr) for attr in attributes}

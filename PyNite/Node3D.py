@@ -63,3 +63,7 @@ class Node3D():
 
         # Initialize the color contour value for the node. This will be used for contour smoothing.
         self.contour = []
+
+    @property
+    def coordinates(self):
+        return (self.X, self.Y, self.Z)
