@@ -41,12 +41,8 @@ class Spring3D():
         Returns the length of the spring.
         '''
 
-        # Get the i-node and the j-node for the spring
-        i_node = self.i_node
-        j_node = self.j_node
-
         # Return the distance between the two nodes
-        return ((j_node.X-i_node.X)**2+(j_node.Y-i_node.Y)**2+(j_node.Z-i_node.Z)**2)**0.5
+        return self.i_node.distance(self.j_node)
 
 #%%
     def k(self):

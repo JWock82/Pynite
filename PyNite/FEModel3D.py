@@ -12,7 +12,6 @@ from PyNite.Member3D import Member3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
-
 # %%
 class FEModel3D():
     """
@@ -454,7 +453,7 @@ class FEModel3D():
         ----------
         tolerance : number
             The maximum distance between two nodes in order to consider them duplicates.
-        
+
         Returns
         -------
         remove_list : list
@@ -463,82 +462,56 @@ class FEModel3D():
 
         # Initialize a list of nodes to be removed from the `Nodes` dictionary
         node_remove_list = []
-        duplicates = []
+
+        # Initialize a dictionary marking where each node is used
+        node_lookup = {node: [] for node in self.Nodes.values()}
+        element_attrs = ('Plates', 'Quads', 'Members', 'Springs')
+        node_attrs = ('i_node', 'j_node', 'm_node', 'n_node')
+
+        for element_attr in element_attrs:
+            for element in getattr(self, element_attr).values():
+                for node_attr in node_attrs:
+                    if (node := getattr(element, node_attr, None)):
+                        node_lookup[node].append((element, node_attr))
 
         # Make a copy of the `Nodes` dictionary
-        temp = self.Nodes.copy()
+        temp = list(self.Nodes.values())
 
         # Step through each node in the `Nodes` dictionary
-        for name_1, node_1 in self.Nodes.items():
+        for i, node_1 in enumerate(temp):
 
-            # There is no need to check `node_1` against itself, so it can be removed from the copy
-            # of the `Nodes` dictionary. It may have already been removed on a previous iteration.
-            if node_1 in temp.values():
-                temp.pop(name_1)
+            # Skip iteration if node_1 has already been removed
+            if node_lookup[node_1] is None:
+                continue
 
-            # Remove any duplicate nodes that were found on the previous iteration from the copy of
-            # the `Nodes` dictionary.
-            for dup in duplicates:
-                temp.pop(dup)
-            
-            # Reset `duplicates` to prepare to hold only the duplicates of the current `node_1`.
-            duplicates = []
+            # There is no need to check `node_1` against itself
+            for node_2 in temp[i+1:]:
 
-            # Step through each node in the copy of the `Nodes` dictionary
-            for name_2, node_2 in temp.items():
+                # Skip iteration if node_2 has already been removed
+                if node_lookup[node_2] is None:
+                    continue
 
                 # Calculate the distance between nodes
-                dist = ((node_2.X - node_1.X)**2 + (node_2.Y - node_1.Y)**2 + (node_2.Z - node_1.Z)**2)**0.5
+                if node_1.distance(node_2) > tolerance:
+                    continue
 
-                # Determine if the nodes need to be merged
-                if dist < tolerance:
+                # Overwrite node_2
+                for e, n in node_lookup[node_2]:
+                    setattr(e, n, node_1)
 
-                    # Attach any elements that were using `node_2` to `node_1` instead
-                    for element in self.Plates.values():
-                        if element.i_node.name == name_2:
-                            element.i_node = self.Nodes[name_1]
-                        if element.j_node.name == name_2:
-                            element.j_node = self.Nodes[name_1]
-                        if element.m_node.name == name_2:
-                            element.m_node = self.Nodes[name_1]
-                        if element.n_node.name == name_2:
-                            element.n_node = self.Nodes[name_1]
+                # Mark `node_2` for removal from the copy of the `Nodes` dictionary
+                node_remove_list.append(node_2.name)
 
-                    for element in self.Quads.values():
-                        if element.i_node.name == name_2:
-                            element.i_node = self.Nodes[name_1]
-                        if element.j_node.name == name_2:
-                            element.j_node = self.Nodes[name_1]
-                        if element.m_node.name == name_2:
-                            element.m_node = self.Nodes[name_1]
-                        if element.n_node.name == name_2:
-                            element.n_node = self.Nodes[name_1]
-
-                    for element in self.Members.values():
-                        if element.i_node.name == name_2:
-                            element.i_node = self.Nodes[name_1]
-                        if element.j_node.name == name_2:
-                            element.j_node = self.Nodes[name_1]
-                    
-                    for element in self.Springs.values():
-                        if element.i_node.name == name_2:
-                            element.i_node = self.Nodes[name_1]
-                        if element.j_node.name == name_2:
-                            element.j_node = self.Nodes[name_1]
-                    
-                    # Mark `node_2` for deletion from the `Nodes` dictonary
-                    node_remove_list.append(name_2)
-
-                    # Mark `node_2` for removal from the copy of the `Nodes` dictionary
-                    duplicates.append(name_2)
+                # Set the node information to `None` to show it has been removed
+                node_lookup[node_2] = None
 
         # Delete the duplicate nodes from the model
         for name in node_remove_list:
             self.Nodes.pop(name)
-        
+
         # Return a list of the names of nodes that were removed from the model
         return node_remove_list
-            
+
     def delete_node(self, node_name):
         '''
         Removes a node from the model. All nodal loads associated with the
