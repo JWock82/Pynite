@@ -471,7 +471,8 @@ class FEModel3D():
         for element_attr in element_attrs:
             for element in getattr(self, element_attr).values():
                 for node_attr in node_attrs:
-                    if (node := getattr(element, node_attr, None)):
+                    node = getattr(element, node_attr, None)
+                    if node:
                         node_lookup[node].append((element, node_attr))
 
         # Make a copy of the `Nodes` dictionary
