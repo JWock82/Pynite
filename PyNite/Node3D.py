@@ -63,3 +63,14 @@ class Node3D():
 
         # Initialize the color contour value for the node. This will be used for contour smoothing.
         self.contour = []
+
+    def distance(self, other):
+        """
+        Returns the distance to another node.
+
+        Parameters
+        ----------
+        other : Node3D
+            A node object to compare coordinates with.
+        """
+        return ((self.X - other.X)**2 + (self.Y - other.Y)**2 + (self.Z - other.Z)**2)**0.5
