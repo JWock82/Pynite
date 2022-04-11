@@ -2,7 +2,7 @@
 from os import rename
 import warnings
 
-from itertools import product
+from itertools import product, chain
 
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
 from numpy import seterr, interp
@@ -2880,40 +2880,78 @@ class FEModel3D():
                 return Node
 
     def repair(self, merge_duplicates=True, tolerance=1e-3):
+        # Prerequisite: merge duplicates
         if merge_duplicates:
             self.merge_duplicate_nodes(tolerance=tolerance)
 
+        # Generate a pool of members out of each member object
+        # We will modify each pool in-place later on
         members = [[m] for m in self.Members.values()]
 
-        for i in range(len(members)):
-            for j in range(i+1, len(members)):
-                pool_a = members[i]
-                pool_b = members[j]
+        # Get an index for the primary pool
+        for index_a in range(len(members)):
+            # This is the primary pool
+            pool_a = members[index_a]
+            # Get the nodes for the primary pool
+            nodes_a = set(chain.from_iterable(m.nodes for m in pool_a))
 
-                intersection_virtual = pool_a[0].intersection_virtual(pool_b[0], tolerance)
-                if intersection_virtual is None:
+            # Get an index for the secondary pool
+            for index_b in range(index_a+1, len(members)):
+                # This is the secondary pool
+                pool_b = members[index_b]
+                # Get the nodes for the secondary pool
+                nodes_b = set(chain.from_iterable(m.nodes for m in pool_b))
+
+                # Check if there are any common nodes between the pools.
+                # No need to split members when they already intersect at a node.
+                if nodes_a & nodes_b:
                     continue
 
-                for (ai, a), (bi, b) in product(*map(enumerate, (pool_a, pool_b))):
-                    all_nodes = set(a.nodes + b.nodes)
-                    if len(all_nodes) < 4:
+                # Create rays out of the i_node and j_node for the first member of each pool.
+                # If the rays intersect, there will be a virtual intersection.
+                # If there is no virtual intersection, there will be no real intersection either.
+                intersection = pool_a[0].intersection_virtual(pool_b[0], tolerance)
+                if intersection is None:
+                    continue
+
+                # Check each pool to see if the virtual insection point is on the real member.
+                # Start with the pool with the fewest members.
+                pools = sorted((pool_a, pool_b), key=len)
+                member_indices = []
+                for pool in pools:
+                    # Iterate over the pool
+                    for member_index, member in enumerate(pool):
+                        # Check if the intersection point is on the member
+                        if member.extents_bound(intersection, tolerance):
+                            # If so, add the index to the indices list
+                            member_indices.append(member_index)
+                            # Break out, since there can only be one intersection
+                            break
+                    else:
+                        # If not intersections are found in one of the loops, break to signal a failure
                         break
 
-                    intersection_real = a.intersection_real(b, intersection_virtual, tolerance)
-                    if intersection_real is None:
-                        continue
-
-                    Node = self.find_node_by_coordinates(intersection_real, tolerance)
+                else:
+                    # If no failure is signaled, continue onward
+                    # Check if there is a node at the intersection coordinates
+                    Node = self.find_node_by_coordinates(intersection, tolerance)
                     if not Node:
-                        Node = self.add_node(None, *intersection_real)
+                        # If not, make one
+                        Node = self.add_node(None, *intersection)
 
-                    for (index, member, pool) in ((ai, a, pool_a), (bi, b, pool_b)):
-                        Member = member.name
-                        new_members = self.split_member_at_node(Member, Node)
-
-                        pool.pop(index)
+                    # For each of the two pools, split the member that lies on the intersection
+                    for member_index, pool in zip(member_indices, pools):
+                        # Get the appropriate member by index
+                        member = pool[member_index]
+                        # Split the member
+                        new_members = self.split_member_at_node(member.name, Node)
+                        # Remove the old member from the pool
+                        pool.pop(member_index)
+                        # Add the new members to the pool
                         pool.extend(new_members)
-                    break
+
+                    # Reset the primary node set for the next inner loop
+                    nodes_a = set(chain.from_iterable(m.nodes for m in pool_a))
 
     def split_member_at_node(self, Member, Node, name_i=None, name_j=None):
         node = self.Nodes[Node]
