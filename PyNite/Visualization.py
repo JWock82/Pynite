@@ -315,7 +315,9 @@ class Renderer():
         
         # Render the plates and quads, if present
         if self.model.Quads or self.model.Plates:
-            _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale, self.color_map, self.scalar_bar, self.scalar_bar_text_size, self.combo_name)
+            _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale,
+                            self.color_map, self.scalar_bar, self.scalar_bar_text_size,
+                            self.combo_name)
 
         # Set the window's background to gray
         renderer.SetBackground(0/255, 0/255, 128/255)
@@ -514,7 +516,8 @@ def render_model(model, annotation_size=5, deformed_shape=False, deformed_scale=
     
     # Render the plates and quads, if present
     if model.Quads or model.Plates:
-        _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, combo_name)
+        _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar,
+                        12, combo_name)
 
     # Set the window's background to gray
     renderer.SetBackground(0/255, 0/255, 128/255)
@@ -1862,7 +1865,7 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
             # This next group of lines controls the font on the scalar bar
             scalar.SetUnconstrainedFontSize(1)
             scalar_text = vtk.vtkTextProperty()
-            scalar_text.SetFontSize(scalar_bar_text_size)
+            scalar_text.SetFontSize(max(int(scalar_bar_text_size), 1))
             scalar_text.SetBold(1)
             scalar.SetLabelTextProperty(scalar_text)
 

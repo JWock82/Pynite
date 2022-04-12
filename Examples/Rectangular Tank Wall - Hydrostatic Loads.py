@@ -69,7 +69,18 @@ model.add_load_combo('1.4F', {'F': 1.4})
 model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Mx` moments.
-render_model(model, annotation_size=0.2, render_loads=True, deformed_shape=True, deformed_scale=500*10, color_map='Mx', combo_name='1.4F', labels=True)
+from PyNite.Visualization import Renderer
+renderer = Renderer(model)
+renderer.annotation_size = 0.2
+renderer.render_loads = True
+renderer.deformed_shape = True
+renderer.deformed_scale = 1000
+renderer.color_map = 'Mx'
+renderer.combo_name = '1.4F'
+renderer.labels = True
+renderer.scalar_bar = True
+renderer.scalar_bar_text_size = 12
+renderer.render_model()
 
 # Print the maximum and minumum displacements
 print('Max displacement: ', max([node.DZ['1.4F'] for node in model.Nodes.values()]))
