@@ -1779,7 +1779,7 @@ class Member3D():
 
         return self.intersection_real(other, tolerance)
 
-    def intersection_virtual(self, other, tolerance=1e-3):
+    def intersection_virtual(self, other, tolerance_node_distance=1e-3, tolerance_intersection=1e-3):
         o1, p1 = self.coordinates
         o2, p2 = other.coordinates
         d1 = divide(subtract(p1, o1), self.L())
@@ -1787,7 +1787,7 @@ class Member3D():
         d1xd2 = cross(d1, d2)
 
         denominator = norm(d1xd2) ** 2
-        if denominator <= tolerance:
+        if denominator < min(tolerance_intersection, 1):
             return None
 
         o2_o1 = subtract(o2, o1)
@@ -1796,32 +1796,41 @@ class Member3D():
         p1 = add(o1, multiply(d1, det1 / denominator))
         p2 = add(o2, multiply(d2, det2 / denominator))
         distance = norm(subtract(p2, p1))
-        if distance <= tolerance:
+        if distance <= tolerance_node_distance:
             return p1
 
         return None
 
-    def intersection_real(self, other, point=None, tolerance=1e-3):
+    def intersection_real(self, other, point=None, tolerance_node_distance=1e-3, tolerance_intersection=1e-3):
         if point is None:
-            point = self.intersection_virtual(other, tolerance)
+            point = self.intersection_virtual(
+                other,
+                tolerance_node_distance=tolerance_node_distance,
+                tolerance_intersection=tolerance_intersection)
 
         if point is None:
             return None
 
-        if not self.extents_bound(point, tolerance):
+        if not self.extents_bound(
+            coordinates=point,
+            tolerance=tolerance_node_distance
+                ):
             return None
 
-        if not other.extents_bound(point, tolerance):
+        if not other.extents_bound(
+            coordinates=point,
+            tolerance=tolerance_node_distance
+                ):
             return None
 
         return point
 
-    def extents_bound(self, coordinate, tolerance=1e-3):
+    def extents_bound(self, coordinates, tolerance=1e-3):
         (xmin, ymin, zmin), (xmax, ymax, zmax) = self.extents
-        x, y, z = coordinate
+        x, y, z = coordinates
 
         def r(x):
-            if x:
+            if tolerance > 0:
                 return round(x / tolerance) * tolerance
             return x
 

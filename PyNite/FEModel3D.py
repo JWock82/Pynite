@@ -2879,10 +2879,10 @@ class FEModel3D():
             if norm(subtract(node.coordinates, coordinates)) <= tolerance:
                 return Node
 
-    def repair(self, merge_duplicates=True, tolerance=1e-3):
+    def repair(self, merge_duplicates=True, tolerance_node_distance=1e-3, tolerance_intersection=1e-3):
         # Prerequisite: merge duplicates
         if merge_duplicates:
-            self.merge_duplicate_nodes(tolerance=tolerance)
+            self.merge_duplicate_nodes(tolerance=tolerance_node_distance)
 
         # Generate a pool of members out of each member object
         # We will modify each pool in-place later on
@@ -2910,7 +2910,10 @@ class FEModel3D():
                 # Create rays out of the i_node and j_node for the first member of each pool.
                 # If the rays intersect, there will be a virtual intersection.
                 # If there is no virtual intersection, there will be no real intersection either.
-                intersection = pool_a[0].intersection_virtual(pool_b[0], tolerance)
+                intersection = pool_a[0].intersection_virtual(
+                    pool_b[0],
+                    tolerance_node_distance=tolerance_node_distance,
+                    tolerance_intersection=tolerance_intersection)
                 if intersection is None:
                     continue
 
@@ -2922,7 +2925,10 @@ class FEModel3D():
                     # Iterate over the pool
                     for member_index, member in enumerate(pool):
                         # Check if the intersection point is on the member
-                        if member.extents_bound(intersection, tolerance):
+                        if member.extents_bound(
+                            coordinates=intersection,
+                            tolerance=tolerance_node_distance
+                                ):
                             # If so, add the index to the indices list
                             member_indices.append(member_index)
                             # Break out, since there can only be one intersection
@@ -2934,7 +2940,9 @@ class FEModel3D():
                 else:
                     # If no failure is signaled, continue onward
                     # Check if there is a node at the intersection coordinates
-                    Node = self.find_node_by_coordinates(intersection, tolerance)
+                    Node = self.find_node_by_coordinates(
+                        coordinates=intersection,
+                        tolerance=tolerance_node_distance)
                     if not Node:
                         # If not, make one
                         Node = self.add_node(None, *intersection)
