@@ -60,13 +60,13 @@ class Plate3D():
         """
         Returns the width of the plate along its local x-axis
         """
-        return ((self.j_node.X - self.i_node.X)**2 + (self.j_node.Y - self.i_node.Y)**2 + (self.j_node.Z - self.i_node.Z)**2)**0.5
+        return self.i_node.distance(self.j_node)
 
     def height(self):
         """
         Returns the height of the plate along its local y-axis
         """
-        return ((self.n_node.X - self.i_node.X)**2 + (self.n_node.Y - self.i_node.Y)**2 + (self.n_node.Z - self.i_node.Z)**2)**0.5
+        return self.i_node.distance(self.n_node)
     
     def Dm(self):
         """

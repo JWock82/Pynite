@@ -1173,6 +1173,7 @@ class VisDistLoad():
         # Create point loads at intervals roughly equal to 75% of the load's largest length (magnitude)
         # Add text labels to the first and last load arrow
         num_steps = int(round(0.75*loadLength/max(abs(length1), abs(length2)), 0))
+        num_steps = max(num_steps, 1)
         step = loadLength/num_steps
         ptLoads = []
       
