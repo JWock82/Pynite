@@ -85,8 +85,9 @@ f.add_member_pt_load(
 # Clean-up
 f.repair(
     merge_duplicates=True,  # must be run to avoid duplicate nodes
-    tolerance=1e-3,  # maximum 3d distance between coordinates to determine duplicate node
-    )  # maximum 3d distance between lines to determine member intersection
+    tolerance_node_distance=1e-3,  # maximum 3d distance between coordinates to determine duplicate node
+    tolerance_intersection=1e-3,  # analagous to minimum intersection angle; equivalent to sin-1(angle)
+    )
 
 # Analyze
 f.analyze(log=False, check_statics=True)
