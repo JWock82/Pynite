@@ -6,3 +6,5 @@ dist/*
 Derivations/*.ipynb_checkpoints
 PyNite Report.pdf
 *.fbp
+gui.py
+wxTableBases.py
