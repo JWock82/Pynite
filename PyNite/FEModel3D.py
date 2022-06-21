@@ -45,6 +45,43 @@ class FEModel3D():
                              # combinations
         return
 
+    @property
+    def LoadCases(self):
+        """
+        Returns a list of all the load cases in the model (in ascending order).
+        """
+        
+        # Create an empty list of load cases
+        cases = []
+
+        # Step through each node
+        for node in self.Nodes.values():
+            # Step through each nodal load
+            for load in node.NodeLoads:
+                # Get the load case for each nodal laod
+                cases.append(load[2])
+        
+        # Step through each member
+        for member in self.Members.values():
+            # Step through each member point load
+            for load in member.PtLoads:
+                # Get the load case for each member point load
+                cases.append(load[3])
+            # Step through each member distributed load
+            for load in member.DistLoads:
+                # Get the load case for each member distributed load
+                cases.append(load[5])
+        
+        # Step through each plate/quad
+        for plate in self.Plates + self.Quads:
+            # Step through each surface load
+            for load in plate.pressures:
+                # Get the load case for each plate/quad pressure
+                cases.append(load[1])
+
+        # Remove duplicates and return the list (sorted ascending)
+        return sorted(list(dict.fromkeys(cases)))
+
     def add_node(self, name, X, Y, Z):
         """
         Adds a new node to the model.
