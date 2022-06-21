@@ -16,17 +16,11 @@ from PyNite.LoadCombo import LoadCombo
 class FEModel3D():
     """
     A 3D finite element model.
-
     """
 
     def __init__(self):
         """
         Creates a new 3D finite element model.
-
-        Returns
-        -------
-        None.
-        
         """
         
         self.Nodes = {}      # A dictionary of the structure's nodes
@@ -37,7 +31,7 @@ class FEModel3D():
         
         self.Plates = {}     # A dictionary of the structure's rectangular
                              # plates
-                             
+        
         self._D = {}         # A dictionary of the structure's nodal
                              # displacements by load combination
                              

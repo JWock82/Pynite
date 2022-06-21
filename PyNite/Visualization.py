@@ -202,7 +202,8 @@ class Renderer():
             raise Exception('Deformed shape is only available for load combinations,'
                             ' not load cases.')
         if self.model.LoadCombos == {} and self.render_loads == True and self.case == None:
-            raise Exception('Unable to render load combination. No load combinations defined.')
+            self.render_loads = False
+            warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
         
         # Create a visual node for each node in the model
         vis_nodes = []
