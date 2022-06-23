@@ -67,7 +67,7 @@ class FEModel3D():
                 cases.append(load[5])
         
         # Step through each plate/quad
-        for plate in self.Plates + self.Quads:
+        for plate in list(self.Plates.values()) + list(self.Quads.values()):
             # Step through each surface load
             for load in plate.pressures:
                 # Get the load case for each plate/quad pressure
