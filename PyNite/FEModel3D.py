@@ -1,6 +1,7 @@
 # %%
 from os import rename
 import warnings
+from matplotlib.pyplot import get
 
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
 from numpy import seterr
@@ -496,15 +497,27 @@ class FEModel3D():
 
         # Initialize a dictionary marking where each node is used
         node_lookup = {node: [] for node in self.Nodes.values()}
-        element_attrs = ('Plates', 'Quads', 'Members', 'Springs')
-        node_attrs = ('i_node', 'j_node', 'm_node', 'n_node')
+        element_dicts = ('Springs', 'Members', 'Plates', 'Quads')
+        node_types = ('i_node', 'j_node', 'm_node', 'n_node')
 
-        for element_attr in element_attrs:
-            for element in getattr(self, element_attr).values():
-                for node_attr in node_attrs:
-                    node = getattr(element, node_attr, None)
+        # Step through each dictionary of elements in the model (springs, member, plates, quads)
+        for element_dict in element_dicts:
+
+            # Step through each element in the dictionary
+            for element in getattr(self, element_dict).values():
+
+                # Step through each possible node type in the element (i-node, j-node, m-node, n-node)
+                for node_type in node_types:
+
+                    # Get the current element's node having the current type
+                    # Return `None` if the element doesn't have this node type
+                    node = getattr(element, node_type, None)
+
+                    # Determine if the node exists on the element
                     if node:
-                        node_lookup[node].append((element, node_attr))
+
+                        # Add the element to the list of elements attached to the node
+                        node_lookup[node].append((element, node_type))
 
         # Make a copy of the `Nodes` dictionary
         temp = list(self.Nodes.values())
@@ -512,30 +525,43 @@ class FEModel3D():
         # Step through each node in the `Nodes` dictionary
         for i, node_1 in enumerate(temp):
 
-            # Skip iteration if node_1 has already been removed
+            # Skip iteration if `node_1` has already been removed
             if node_lookup[node_1] is None:
                 continue
 
             # There is no need to check `node_1` against itself
-            for node_2 in temp[i+1:]:
+            for node_2 in temp[i + 1:]:
 
                 # Skip iteration if node_2 has already been removed
                 if node_lookup[node_2] is None:
                     continue
 
                 # Calculate the distance between nodes
-                if node_1.distance(node_2) > tolerance:
+                if self.Nodes[node_1.name].distance(self.Nodes[node_2.name]) > tolerance:
                     continue
 
                 # Overwrite node_2
-                for e, n in node_lookup[node_2]:
-                    setattr(e, n, node_1)
+                for element, node_type in node_lookup[node_2]:
+                    setattr(element, node_type, node_1)
 
-                # Mark `node_2` for removal from the copy of the `Nodes` dictionary
+                # Mark `node_2` for removal from the `Nodes` dictionary
                 node_remove_list.append(node_2.name)
 
-                # Set the node information to `None` to show it has been removed
+                # Flag `node_2` as not used
                 node_lookup[node_2] = None
+
+                # Merge any boundary conditions
+                support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
+                for dof in support_cond:
+                    if getattr(node_2, dof) == True:
+                        setattr(node_1, dof, True)
+                
+                # Merge any spring supports
+                spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
+                for dof in spring_cond:
+                    value = getattr(node_2, dof)
+                    if value != [None, None, None]:
+                        setattr(node_1, dof, value)
 
         # Delete the duplicate nodes from the model
         for name in node_remove_list:
