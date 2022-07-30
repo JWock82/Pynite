@@ -62,6 +62,10 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+v0.0.66
+* Code simplification and bug fix for merging duplicate nodes.
+* When nodes are merged, support conditions for the deleted node are now assigned to the remaining node.
+* Added a linear solver for faster analysis of simple models. If you don't need P-Delta analysis or tension/compression-only analysis this solver saves time by only assembling the global stiffness matrix once.
 v0.0.65
 * Improved the `merge_duplicate_nodes` method. It seemed to be working, but it was hard to follow, and there may have been cases where it didn't work as expected. Simplified the code for this method to make it clear what it was doing, and to make it more efficient. Added comments explaining each step.
 * Screenshot size is now adjustable when rendering.

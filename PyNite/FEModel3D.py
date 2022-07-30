@@ -1569,7 +1569,7 @@ class FEModel3D():
             else: self._check_stability(K)
 
         # Return the global stiffness matrix
-        return K      
+        return K    
    
     def Kg(self, combo_name='Combo 1', log=False, sparse=True):
         '''
@@ -2096,7 +2096,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solved = True
 
-def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True):
+    def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True):
         '''
         Performs first-order static analysis.
         
@@ -2151,10 +2151,11 @@ def analyze_linear(self, log=False, check_stability=True, check_statics=False, s
         D2 = atleast_2d(D2).T
 
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
+        combo_name = list(self.LoadCombos.keys())[0]
         if sparse == True:
-            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+            K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
         else:
-            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+            K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
@@ -2252,7 +2253,7 @@ def analyze_linear(self, log=False, check_stability=True, check_statics=False, s
         # Flag the model as solved
         self.solved = True
 
-def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
+    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
         '''
         Performs second order (P-Delta) analysis.
 

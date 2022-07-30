@@ -57,8 +57,11 @@ MomentFrame.add_load_combo('0.9D+1.0W', factors={'D':0.9, 'W':1.0})
 # Note that to capture P-little delta effects the members should idealy be broken into three segments each
 MomentFrame.analyze_PDelta(log=True)
 
-# A first-order analysis could be done with the following line instead
+# A first-order analysis could be done with the either of the following lines instead
+# The first option ignores P-Delta effects
+# The second option ignores P-Delta effects and tension/compression only elements and supports
 # MomentFrame.analyze()
+# MomentFrame.analyze_linear(log=True)
 
 # Display the deformed shape of the structure magnified 50 times with the text height 5 model units (inches) high
 from PyNite import Visualization
