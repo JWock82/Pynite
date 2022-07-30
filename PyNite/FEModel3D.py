@@ -38,7 +38,8 @@ class FEModel3D():
                              
         self.LoadCombos = {} # A dictionary of the structure's load
                              # combinations
-        return
+        
+        self.solved = False  # A flag that indicates if the model is solved
 
     @property
     def LoadCases(self):
@@ -123,6 +124,9 @@ class FEModel3D():
         # Add the new node to the list
         self.Nodes[name] = new_node
         
+        # Flag the model as unsolved
+        self.solved = False
+
         #Return the node name
         return name
 
@@ -175,6 +179,9 @@ class FEModel3D():
         
         # Add the new node to the list
         self.AuxNodes[name] = new_node
+
+        # Flag the model as unsolved
+        self.solved = False
         
         #Return the node name
         return name 
@@ -230,7 +237,10 @@ class FEModel3D():
         # Add the new member to the list
         self.Springs[name] = new_spring
         
-        #Return the spring name
+        # Flag the model as unsolved
+        self.solved = False
+
+        # Return the spring name
         return name
 
     def add_member(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
@@ -292,7 +302,10 @@ class FEModel3D():
         # Add the new member to the list
         self.Members[name] = newMember
         
-        #Return the member name
+        # Flag the model as unsolved
+        self.solved = False
+
+        # Return the member name
         return name
 
     def add_plate(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
@@ -347,8 +360,11 @@ class FEModel3D():
         
         # Add the new plate to the list
         self.Plates[name] = newPlate
+
+        # Flag the model as unsolved
+        self.solved = False
         
-        #Return the plate name
+        # Return the plate name
         return name
 
     def add_quad(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
@@ -404,6 +420,9 @@ class FEModel3D():
         
         # Add the new member to the list
         self.Quads[name] = newQuad
+
+        # Flag the model as unsolved
+        self.solved = False
         
         #Return the quad name
         return name
@@ -473,6 +492,9 @@ class FEModel3D():
         # Attach the model's load combinations to each element from the mesh
         for element in mesh.elements.values():
             element.LoadCombos = self.LoadCombos
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def merge_duplicate_nodes(self, tolerance=0.001):
         """
@@ -566,6 +588,9 @@ class FEModel3D():
         # Delete the duplicate nodes from the model
         for name in node_remove_list:
             self.Nodes.pop(name)
+        
+        # Flag the model as unsolved
+        self.solved = False
 
         # Return a list of the names of nodes that were removed from the model
         return node_remove_list
@@ -590,6 +615,9 @@ class FEModel3D():
         self.Plates = {name: plate for name, plate in self.Plates.items() if plate.i_node.name != node_name and plate.j_node.name != node_name and plate.m_node.name != node_name and plate.n_node.name != node_name}
         self.Quads = {name: quad for name, quad in self.Quads.items() if quad.i_node.name != node_name and quad.j_node.name != node_name and quad.m_node.name != node_name and quad.n_node.name != node_name}
 
+        # Flag the model as unsolved
+        self.solved = False
+
     def delete_auxnode(self, auxnode_name):
         '''
         Removes an auxiliary node from the model.
@@ -607,6 +635,9 @@ class FEModel3D():
         for member in self.Members.values():
             if member.auxNode == auxnode_name:
                 member.auxNode = None
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def delete_spring(self, spring_name):
         '''
@@ -620,6 +651,9 @@ class FEModel3D():
         
         # Remove the spring
         self.Springs.pop(spring_name)
+
+        # Flag the model as unsolved
+        self.solved = False
 
     def delete_member(self, member_name):
         '''
@@ -635,6 +669,9 @@ class FEModel3D():
         # Remove the member. Member loads are stored within the member, so they
         # will be deleted automatically when the member is deleted.
         self.Members.pop(member_name)
+
+        # Flag the model as unsolved
+        self.solved = False
         
     def def_support(self, node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False):
         """
@@ -671,6 +708,9 @@ class FEModel3D():
         node.support_RX = support_RX
         node.support_RY = support_RY
         node.support_RZ = support_RZ
+
+        # Flag the model as unsolved
+        self.solved = False
 
     def def_support_spring(self, node_name, dof, stiffness, direction=None):
         """
@@ -709,7 +749,10 @@ class FEModel3D():
                 raise ValueError('Invalid support spring direction. Specify \'+\', \'-\', or None.')
         else:
             raise ValueError('Invalid support spring degree of freedom. Specify \'DX\', \'DY\', \'DZ\', \'RX\', \'RY\', or \'RZ\'')
-      
+        
+        # Flag the model as unsolved
+        self.solved = False
+
     def def_node_disp(self, node_name, direction, magnitude): 
         '''
         Defines a nodal displacement at a node.
@@ -739,6 +782,9 @@ class FEModel3D():
             node.EnforcedRY = magnitude
         if direction == 'RZ':
             node.EnforcedRZ = magnitude
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def def_releases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
         '''
@@ -779,6 +825,9 @@ class FEModel3D():
         # Apply the end releases to the member
         self.Members[Member].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
 
+        # Flag the model as unsolved
+        self.solved = False
+
     def add_load_combo(self, name, factors, combo_type='strength'):
         '''
         Adds a load combination to the model
@@ -799,6 +848,9 @@ class FEModel3D():
 
         # Add the load combination to the dictionary of load combinations
         self.LoadCombos[name] = new_combo
+
+        # Flag the model as solved
+        self.solved = False
 
     def add_node_load(self, Node, Direction, P, case='Case 1'):
         '''
@@ -821,6 +873,9 @@ class FEModel3D():
         # Add the node load to the model
         self.Nodes[Node].NodeLoads.append((Direction, P, case))
 
+        # Flag the model as unsolved
+        self.solved = False
+
     def add_member_pt_load(self, Member, Direction, P, x, case='Case 1'):
         '''
         Adds a member point load to the model.
@@ -840,11 +895,16 @@ class FEModel3D():
         x : number
             The load's location along the member's local x-axis.
         '''
+
         # Validate the value of Direction
         if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', 'MZ'):
             raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {Direction} was given.")
+        
         # Add the point load to the member
         self.Members[Member].PtLoads.append((Direction, P, x, case))
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def add_member_dist_load(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
         '''
@@ -886,6 +946,9 @@ class FEModel3D():
 
         # Add the distributed load to the member
         self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         """
@@ -907,6 +970,9 @@ class FEModel3D():
             self.Plates[plate_name].pressures.append([pressure, case])
         else:
             raise Exception('Invalid plate name specified for plate surface pressure.')
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def add_quad_surface_pressure(self, quad_name, pressure, case='Case 1'):
         """
@@ -928,6 +994,9 @@ class FEModel3D():
             self.Quads[quad_name].pressures.append([pressure, case])
         else:
             raise Exception('Invalid quad name specified for quad surface pressure.')
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def delete_loads(self):
         '''
@@ -968,6 +1037,9 @@ class FEModel3D():
             node.RxnMX = {}
             node.RxnMY = {}
             node.RxnMZ = {}
+        
+        # Flag the model as unsolved
+        self.solved = False
 
     def GetNode(self, name):
         '''
@@ -2020,8 +2092,167 @@ class FEModel3D():
         # Check statics if requested
         if check_statics == True:
             self._check_statics()
+        
+        # Flag the model as solved
+        self.solved = True
 
-    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
+def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True):
+        '''
+        Performs first-order static analysis.
+        
+        This analysis procedure is much faster since it only assembles the global stiffness matrix
+        once, rather than once for each load combination. It is not appropriate when non-linear
+        behavior such as tension/compression only analysis or P-Delta analysis are required.
+
+        Parameters
+        ----------
+        log : bool, optional
+            Prints the analysis log to the console if set to True. Default is False.
+        check_statics : bool, optional
+            When set to True, causes a statics check to be performed
+        sparse : bool, optional
+            Indicates whether the sparse matrix solver should be used. A matrix can be considered
+            sparse or dense depening on how many zero terms there are. Structural stiffness
+            matrices often contain many zero terms. The sparse solver can offer faster solutions
+            for such matrices. Using the sparse solver on dense matrices may lead to slower
+            solution times.
+        '''
+
+        if log:
+            print('+-------------------+')
+            print('| Analyzing: Linear |')
+            print('+-------------------+')
+
+        # Import `scipy` features if the sparse solver is being used
+        if sparse == True:
+            from scipy.sparse.linalg import spsolve
+
+        # Assign an ID to all nodes and elements in the model
+        self._renumber()
+
+        # Ensure there is at least 1 load combination to solve if the user didn't define any
+        if self.LoadCombos == {}:
+            # Create and add a default load combination to the dictionary of load combinations
+            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
+        
+        # Activate all springs and members for all load combinations
+        for spring in self.Springs.values():
+            for combo_name in self.LoadCombos.keys():
+                spring.active[combo_name] = True
+
+        for member in self.Members.values():
+            for combo_name in self.LoadCombos.keys():
+                member.active[combo_name] = True 
+
+        # Get the auxiliary list used to determine how the matrices will be partitioned
+        D1_indices, D2_indices, D2 = self._aux_list()
+
+        # Convert D2 from a list to a vector
+        D2 = atleast_2d(D2).T
+
+        # Get the partitioned global stiffness matrix K11, K12, K21, K22
+        if sparse == True:
+            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+        else:
+            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+
+        # Step through each load combination
+        for combo in self.LoadCombos.values():
+
+            if log:
+                print('')
+                print('- Analyzing load combination ' + combo.name)
+
+            # Get the partitioned global fixed end reaction vector
+            FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
+
+            # Get the partitioned global nodal force vector       
+            P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)          
+
+            # Calculate the global displacement vector
+            if log: print('- Calculating global displacement vector')
+            if K11.shape == (0, 0):
+                # All displacements are known, so D1 is an empty vector
+                D1 = []
+            else:
+                try:
+                    # Calculate the unknown displacements D1
+                    if sparse == True:
+                        # The partitioned stiffness matrix is in `lil` format, which is great
+                        # for memory, but slow for mathematical operations. The stiffness
+                        # matrix will be converted to `csr` format for mathematical operations.
+                        # The `@` operator performs matrix multiplication on sparse matrices.
+                        D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
+                        D1 = D1.reshape(len(D1), 1)
+                    else:
+                        D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                except:
+                    # Return out of the method if 'K' is singular and provide an error message
+                    raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+
+            # Form the global displacement vector, D, from D1 and D2
+            D = zeros((len(self.Nodes)*6, 1))
+
+            for node in self.Nodes.values():
+
+                if D2_indices.count(node.ID*6 + 0) == 1:
+                    D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+                else:
+                    D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
+
+                if D2_indices.count(node.ID*6 + 1) == 1:
+                    D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
+                else:
+                    D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
+
+                if D2_indices.count(node.ID*6 + 2) == 1:
+                    D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
+                else:
+                    D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
+
+                if D2_indices.count(node.ID*6 + 3) == 1:
+                    D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
+                else:
+                    D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
+
+                if D2_indices.count(node.ID*6 + 4) == 1:
+                    D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
+                else:
+                    D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+
+                if D2_indices.count(node.ID*6 + 5) == 1:
+                    D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
+                else:
+                    D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
+
+            # Save the global displacement vector
+            self._D[combo.name] = D
+
+            # Store the calculated global nodal displacements into each node
+            for node in self.Nodes.values():
+                node.DX[combo.name] = D[node.ID*6 + 0, 0]
+                node.DY[combo.name] = D[node.ID*6 + 1, 0]
+                node.DZ[combo.name] = D[node.ID*6 + 2, 0]
+                node.RX[combo.name] = D[node.ID*6 + 3, 0]
+                node.RY[combo.name] = D[node.ID*6 + 4, 0]
+                node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+
+        # Calculate reactions
+        self._calc_reactions()
+
+        if log:
+            print('')     
+            print('- Analysis complete')
+            print('')
+
+        # Check statics if requested
+        if check_statics == True:
+            self._check_statics()
+        
+        # Flag the model as solved
+        self.solved = True
+
+def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
         '''
         Performs second order (P-Delta) analysis.
 
@@ -2397,6 +2628,9 @@ class FEModel3D():
             print('')
             print('- Analysis complete')
             print('')
+        
+        # Flag the model as solved
+        self.solved = True
 
     def _calc_reactions(self, log=False):
         """
