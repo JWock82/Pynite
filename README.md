@@ -62,6 +62,7 @@ PyNite depends on the following packages:
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # What's New?
+
 v0.0.66
 * Code simplification and bug fix for merging duplicate nodes.
 * When nodes are merged, support conditions for the deleted node are now assigned to the remaining node.
