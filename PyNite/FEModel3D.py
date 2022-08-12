@@ -39,7 +39,7 @@ class FEModel3D():
         self.LoadCombos = {} # A dictionary of the structure's load
                              # combinations
         
-        self.solved = False  # A flag that indicates if the model is solved
+        self.solution = None  # Indicates the solution type for the latest run of the model
 
     @property
     def LoadCases(self):
@@ -125,7 +125,7 @@ class FEModel3D():
         self.Nodes[name] = new_node
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
         #Return the node name
         return name
@@ -181,7 +181,7 @@ class FEModel3D():
         self.AuxNodes[name] = new_node
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
         
         #Return the node name
         return name 
@@ -238,7 +238,7 @@ class FEModel3D():
         self.Springs[name] = new_spring
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
         # Return the spring name
         return name
@@ -293,17 +293,17 @@ class FEModel3D():
         if auxNode == None:
             newMember = Member3D(name, self.Nodes[i_node],
             self.Nodes[j_node], E, G, Iy, Iz, J, A,
-            LoadCombos=self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
+            model=self, tension_only=tension_only, comp_only=comp_only)
         else:
             newMember = Member3D(name, self.Nodes[i_node],
             self.Nodes[j_node], E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
-            self.LoadCombos, tension_only=tension_only, comp_only=comp_only)
+            model=self, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
         self.Members[name] = newMember
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
         # Return the member name
         return name
@@ -362,7 +362,7 @@ class FEModel3D():
         self.Plates[name] = newPlate
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
         
         # Return the plate name
         return name
@@ -422,7 +422,7 @@ class FEModel3D():
         self.Quads[name] = newQuad
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
         
         #Return the quad name
         return name
@@ -494,7 +494,7 @@ class FEModel3D():
             element.LoadCombos = self.LoadCombos
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def merge_duplicate_nodes(self, tolerance=0.001):
         """
@@ -590,7 +590,7 @@ class FEModel3D():
             self.Nodes.pop(name)
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
         # Return a list of the names of nodes that were removed from the model
         return node_remove_list
@@ -616,7 +616,7 @@ class FEModel3D():
         self.Quads = {name: quad for name, quad in self.Quads.items() if quad.i_node.name != node_name and quad.j_node.name != node_name and quad.m_node.name != node_name and quad.n_node.name != node_name}
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def delete_auxnode(self, auxnode_name):
         '''
@@ -637,7 +637,7 @@ class FEModel3D():
                 member.auxNode = None
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def delete_spring(self, spring_name):
         '''
@@ -653,7 +653,7 @@ class FEModel3D():
         self.Springs.pop(spring_name)
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def delete_member(self, member_name):
         '''
@@ -671,7 +671,7 @@ class FEModel3D():
         self.Members.pop(member_name)
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
         
     def def_support(self, node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False):
         """
@@ -710,7 +710,7 @@ class FEModel3D():
         node.support_RZ = support_RZ
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def def_support_spring(self, node_name, dof, stiffness, direction=None):
         """
@@ -751,7 +751,7 @@ class FEModel3D():
             raise ValueError('Invalid support spring degree of freedom. Specify \'DX\', \'DY\', \'DZ\', \'RX\', \'RY\', or \'RZ\'')
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def def_node_disp(self, node_name, direction, magnitude): 
         '''
@@ -784,7 +784,7 @@ class FEModel3D():
             node.EnforcedRZ = magnitude
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def def_releases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
         '''
@@ -826,7 +826,7 @@ class FEModel3D():
         self.Members[Member].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def add_load_combo(self, name, factors, combo_type='strength'):
         '''
@@ -850,7 +850,7 @@ class FEModel3D():
         self.LoadCombos[name] = new_combo
 
         # Flag the model as solved
-        self.solved = False
+        self.solution = None
 
     def add_node_load(self, Node, Direction, P, case='Case 1'):
         '''
@@ -874,7 +874,7 @@ class FEModel3D():
         self.Nodes[Node].NodeLoads.append((Direction, P, case))
 
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def add_member_pt_load(self, Member, Direction, P, x, case='Case 1'):
         '''
@@ -904,7 +904,7 @@ class FEModel3D():
         self.Members[Member].PtLoads.append((Direction, P, x, case))
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def add_member_dist_load(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
         '''
@@ -948,7 +948,7 @@ class FEModel3D():
         self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         """
@@ -972,7 +972,7 @@ class FEModel3D():
             raise Exception('Invalid plate name specified for plate surface pressure.')
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def add_quad_surface_pressure(self, quad_name, pressure, case='Case 1'):
         """
@@ -996,7 +996,7 @@ class FEModel3D():
             raise Exception('Invalid quad name specified for quad surface pressure.')
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def delete_loads(self):
         '''
@@ -1039,7 +1039,7 @@ class FEModel3D():
             node.RxnMZ = {}
         
         # Flag the model as unsolved
-        self.solved = False
+        self.solution = None
 
     def GetNode(self, name):
         '''
@@ -2094,7 +2094,7 @@ class FEModel3D():
             self._check_statics()
         
         # Flag the model as solved
-        self.solved = True
+        self.solution = 'Linear TC'
 
     def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True):
         '''
@@ -2251,7 +2251,7 @@ class FEModel3D():
             self._check_statics()
         
         # Flag the model as solved
-        self.solved = True
+        self.solution = 'Linear'
 
     def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
         '''
@@ -2631,7 +2631,7 @@ class FEModel3D():
             print('')
         
         # Flag the model as solved
-        self.solved = True
+        self.solution = 'P-Delta'
 
     def _calc_reactions(self, log=False):
         """

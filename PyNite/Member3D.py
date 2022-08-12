@@ -19,9 +19,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None, 
-                 LoadCombos={'Combo 1':LoadCombo('Combo 1', 
-                             factors={'Case 1':1.0})},
+    def __init__(self, name, i_node, j_node, E, G, Iy, Iz, J, A, model, auxNode=None,
                  tension_only=False, comp_only=False):
         '''
         Initializes a new member.
@@ -43,7 +41,6 @@ class Member3D():
         self.SegmentsY = [] # A list of mathematically continuous beam segments for y-bending
         self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
-        self.LoadCombos = LoadCombos # The dictionary of load combinations in the model this member belongs to
         self.tension_only = tension_only # Indicates whether the member is tension-only
         self.comp_only = comp_only # Indicates whether the member is compression-only
 
@@ -56,6 +53,9 @@ class Member3D():
         # the '__solved_combo' variable will be used to track whether the member needs to be resegmented before running
         # calculations for any given load combination.
         self.__solved_combo = None # The current solved load combination
+
+        # Members need a link to the model they belong to
+        self.model = model
 
 #%%
     def L(self):
@@ -247,7 +247,7 @@ class Member3D():
         fer = zeros((12,1))
 
         # Get the requested load combination
-        combo = self.LoadCombos[combo_name]
+        combo = self.model.LoadCombos[combo_name]
 
         # Loop through each load case and factor in the load combination
         for case, factor in combo.factors.items():
@@ -348,7 +348,12 @@ class Member3D():
         '''
         
         # Calculate and return the member's local end force vector
-        return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
+        if self.model.solution == 'P-Delta':
+            # Back-calculate the axial force on the member from the axial strain
+            P = (self.d(combo_name)[6, 0] - self.d(combo_name)[0, 0])*self.A*self.E/self.L()
+            return add(matmul(add(self.k(), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
+        else:
+            return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
 #%%
     def d(self, combo_name='Combo 1'):
@@ -564,7 +569,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
 
         # Check which direction is of interest
         if Direction == 'Fy':
@@ -613,7 +618,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         if Direction == 'Fy':
             
@@ -659,7 +664,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]   
+            self.__solved_combo = self.model.LoadCombos[combo_name]   
         
         if Direction == 'Fy':
             
@@ -703,7 +708,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -752,7 +757,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         # Check which axis is of interest
         if Direction == 'My':
@@ -808,7 +813,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         if Direction == 'Mz':
             
@@ -854,7 +859,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)   
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         if Direction == 'Mz':
             
@@ -898,7 +903,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -944,7 +949,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
             
         # Check which segment 'x' falls on
         for segment in self.SegmentsX:
@@ -973,7 +978,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]       
+            self.__solved_combo = self.model.LoadCombos[combo_name]       
         
         Tmax = self.SegmentsX[0].Torsion()   
         
@@ -1003,7 +1008,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         Tmin = self.SegmentsX[0].Torsion()
             
@@ -1033,7 +1038,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1078,7 +1083,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
             
         # Check which segment 'x' falls on
         for segment in self.SegmentsZ:
@@ -1107,7 +1112,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         Pmax = self.SegmentsZ[0].axial(0)   
         
@@ -1137,7 +1142,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         Pmin = self.SegmentsZ[0].axial(0)
             
@@ -1167,7 +1172,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1217,7 +1222,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         # Check which axis is of interest
         if Direction == 'dx':
@@ -1280,7 +1285,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         # Initialize the maximum deflection
         dmax = self.deflection(Direction, 0, combo_name)
@@ -1314,7 +1319,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
         # Initialize the minimum deflection
         dmin = self.deflection(Direction, 0, combo_name)
@@ -1348,7 +1353,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1398,9 +1403,9 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
         
-        d = self.d(self.LoadCombos[combo_name])
+        d = self.d(self.model.LoadCombos[combo_name])
         dyi = d[1,0]
         dyj = d[7,0]
         dzi = d[2,0]
@@ -1455,7 +1460,7 @@ class Member3D():
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.LoadCombos[combo_name]
+            self.__solved_combo = self.model.LoadCombos[combo_name]
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1496,7 +1501,7 @@ class Member3D():
         SegmentsX = self.SegmentsX
         
         # Get the load combination to segment the member for
-        combo = self.LoadCombos[combo_name]
+        combo = self.model.LoadCombos[combo_name]
 
         # Create a list of discontinuity locations
         disconts = [0, L] # Member ends
