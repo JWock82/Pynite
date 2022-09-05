@@ -1549,7 +1549,7 @@ class Member3D():
         
         # Get the element local end forces, local fixed end reactions, and local displacements
         f = self.f(combo_name)           # Member local end force vector
-        fer = self._fer_unc(combo_name) # Member local fixed end reaction vector
+        fer = self._fer_unc(combo_name)  # Member local fixed end reaction vector
         d = self.d(combo_name)           # Member local displacement vector
         
         # Get the local deflections and calculate the slope at the start of the member

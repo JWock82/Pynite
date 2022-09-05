@@ -80,9 +80,11 @@ class Renderer():
     
     def set_combo_name(self, combo_name='Combo 1'):
         self.combo_name = combo_name
+        self.case = None
     
     def set_case(self, case=None):
         self.case = case
+        self.combo_name = None
     
     def set_show_labels(self, show_labels=True):
         self.labels = show_labels
