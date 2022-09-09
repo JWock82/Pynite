@@ -8,6 +8,7 @@ from numpy import seterr
 from numpy.linalg import solve
 
 from PyNite.Node3D import Node3D
+from PyNite.PhysMember import PhysMember
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
 from PyNite.Quad3D import Quad3D
@@ -27,7 +28,7 @@ class FEModel3D():
         self.Nodes = {}      # A dictionary of the structure's nodes
         self.AuxNodes = {}   # A dictionary of the structure's auxiliary nodes
         self.Springs = {}    # A dictionary of the structure's springs
-        self.Members = {}    # A dictionary of the structure's members
+        self.Members = {}    # A dictionary of the structure's physical members
         self.Quads = {}      # A dictionary of the structure's quadiralterals
         
         self.Plates = {}     # A dictionary of the structure's rectangular
@@ -246,7 +247,7 @@ class FEModel3D():
     def add_member(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
                    tension_only=False, comp_only=False):
         '''
-        Adds a new member to the model. The member name will be returned.
+        Adds a new physical member to the model. The member name will be returned.
         
         Parameters
         ----------
@@ -291,16 +292,15 @@ class FEModel3D():
                 
         # Create a new member
         if auxNode == None:
-            newMember = Member3D(name, self.Nodes[i_node],
-            self.Nodes[j_node], E, G, Iy, Iz, J, A,
-            model=self, tension_only=tension_only, comp_only=comp_only)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], E, G, Iy, Iz, J,
+                                    A, model=self, tension_only=tension_only, comp_only=comp_only)
         else:
-            newMember = Member3D(name, self.Nodes[i_node],
-            self.Nodes[j_node], E, G, Iy, Iz, J, A, self.GetAuxNode(auxNode),
-            model=self, tension_only=tension_only, comp_only=comp_only)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], E, G, Iy, Iz, J,
+                                    A, self.GetAuxNode(auxNode), model=self,
+                                    tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
-        self.Members[name] = newMember
+        self.Members[name] = new_member
         
         # Flag the model as unsolved
         self.solution = None
@@ -1408,46 +1408,53 @@ class FEModel3D():
                         else:
                             K[m, n] += spring_K[a, b]
 
-        # Add stiffness terms for each member in the model
+        # Add stiffness terms for each physical member in the model
         if log: print('- Adding member stiffness terms to global stiffness matrix')
-        for member in self.Members.values():
+        for phys_member in self.Members.values():
             
-            if member.active[combo_name] == True:
+            # Check to see if the physical member is active for the given load combination
+            if phys_member.active[combo_name] == True:
 
-                # Get the member's global stiffness matrix
-                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-                member_K = member.K()
+                # Subdivide the physical member into sub-members at each intermediate node
+                phys_member.subdivide()
 
-                # Step through each term in the member's stiffness matrix
-                # 'a' & 'b' below are row/column indices in the member's stiffness matrix
-                # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-                for a in range(12):
-                
-                    # Determine if index 'a' is related to the i-node or j-node
-                    if a < 6:
-                        # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.i_node.ID*6 + a
-                    else:
-                        # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.j_node.ID*6 + (a-6)
+                # Step through each sub-member in the physical member and add terms
+                for member in phys_member.sub_members.values():
                     
-                    for b in range(12):
+                    # Get the member's global stiffness matrix
+                    # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                    member_K = member.K()
+
+                    # Step through each term in the member's stiffness matrix
+                    # 'a' & 'b' below are row/column indices in the member's stiffness matrix
+                    # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+                    for a in range(12):
                     
-                        # Determine if index 'b' is related to the i-node or j-node
-                        if b < 6:
-                            # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.i_node.ID*6 + b
+                        # Determine if index 'a' is related to the i-node or j-node
+                        if a < 6:
+                            # Find the corresponding index 'm' in the global stiffness matrix
+                            m = member.i_node.ID*6 + a
                         else:
-                            # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.j_node.ID*6 + (b-6)
-                    
-                        # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        if sparse == True:
-                            row.append(m)
-                            col.append(n)
-                            data.append(member_K[a, b])
-                        else:
-                            K[m, n] += member_K[a, b]
+                            # Find the corresponding index 'm' in the global stiffness matrix
+                            m = member.j_node.ID*6 + (a-6)
+                        
+                        for b in range(12):
+                        
+                            # Determine if index 'b' is related to the i-node or j-node
+                            if b < 6:
+                                # Find the corresponding index 'n' in the global stiffness matrix
+                                n = member.i_node.ID*6 + b
+                            else:
+                                # Find the corresponding index 'n' in the global stiffness matrix
+                                n = member.j_node.ID*6 + (b-6)
+                        
+                            # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                            if sparse == True:
+                                row.append(m)
+                                col.append(n)
+                                data.append(member_K[a, b])
+                            else:
+                                K[m, n] += member_K[a, b]
                 
         # Add stiffness terms for each quadrilateral in the model
         if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
@@ -1604,48 +1611,55 @@ class FEModel3D():
         else:
             Kg = zeros(len(self.Nodes)*6, len(self.Nodes)*6)
         
-        # Add stiffness terms for each member in the model
+        # Add stiffness terms for each physical member in the model
         if log: print('- Adding member geometric stiffness terms to global geometric stiffness matrix')
-        for member in self.Members.values():
+        for phys_member in self.Members.values():
             
-            if member.active[combo_name] == True:
+            # Check to see if the physical member is active for the given load combination
+            if phys_member.active[combo_name] == True:
 
-                # Calculate the axial force in the member
-                E = member.E
-                A = member.A
-                L = member.L()
-                d = member.d(combo_name)
-                P = E*A/L*(d[6, 0] - d[0, 0])
+                # Subdivide the physical member into sub-members at each internal node
+                phys_member.subdivide()
 
-                # Get the member's global stiffness matrix
-                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-                member_Kg = member.Kg(P)
+                # Step through each sub-member in the physical member and add terms
+                for member in phys_member.sub_members.values():
 
-                # Step through each term in the member's stiffness matrix
-                # 'a' & 'b' below are row/column indices in the member's stiffness matrix
-                # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-                for a in range(12):
-                
-                    # Determine if index 'a' is related to the i-node or j-node
-                    if a < 6:
-                        # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.i_node.ID*6 + a
-                    else:
-                        # Find the corresponding index 'm' in the global stiffness matrix
-                        m = member.j_node.ID*6 + (a-6)
+                    # Calculate the axial force in the member
+                    E = member.E
+                    A = member.A
+                    L = member.L()
+                    d = member.d(combo_name)
+                    P = E*A/L*(d[6, 0] - d[0, 0])
+
+                    # Get the member's global stiffness matrix
+                    # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                    member_Kg = member.Kg(P)
+
+                    # Step through each term in the member's stiffness matrix
+                    # 'a' & 'b' below are row/column indices in the member's stiffness matrix
+                    # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
+                    for a in range(12):
                     
-                    for b in range(12):
-                    
-                        # Determine if index 'b' is related to the i-node or j-node
-                        if b < 6:
-                            # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.i_node.ID*6 + b
+                        # Determine if index 'a' is related to the i-node or j-node
+                        if a < 6:
+                            # Find the corresponding index 'm' in the global stiffness matrix
+                            m = member.i_node.ID*6 + a
                         else:
-                            # Find the corresponding index 'n' in the global stiffness matrix
-                            n = member.j_node.ID*6 + (b-6)
-                    
-                        # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        Kg[m, n] += member_Kg[(a, b)]
+                            # Find the corresponding index 'm' in the global stiffness matrix
+                            m = member.j_node.ID*6 + (a-6)
+                        
+                        for b in range(12):
+                        
+                            # Determine if index 'b' is related to the i-node or j-node
+                            if b < 6:
+                                # Find the corresponding index 'n' in the global stiffness matrix
+                                n = member.i_node.ID*6 + b
+                            else:
+                                # Find the corresponding index 'n' in the global stiffness matrix
+                                n = member.j_node.ID*6 + (b-6)
+                        
+                            # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
+                            Kg[m, n] += member_Kg[(a, b)]
 
         # Return the global geometric stiffness matrix
         return Kg
@@ -1663,28 +1677,31 @@ class FEModel3D():
         # Initialize a zero vector to hold all the terms
         FER = zeros((len(self.Nodes) * 6, 1))
         
-        # Add terms for each member in the model
-        for member in self.Members.values():
+        # Step through each physical member in the model
+        for phys_member in self.Members.values():
             
-            # Get the member's global fixed end reaction vector
-            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            member_FER = member.FER(combo_name)
+            # Step through each sub-member and add terms
+            for member in phys_member.sub_members.values():
 
-            # Step through each term in the member's fixed end reaction vector
-            # 'a' below is the row index in the member's fixed end reaction vector
-            # 'm' below is the corresponding row index in the global fixed end reaction vector
-            for a in range(12):
-                
-                # Determine if index 'a' is related to the i-node or j-node
-                if a < 6:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = member.i_node.ID * 6 + a
-                else:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = member.j_node.ID * 6 + (a - 6)
-                
-                # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER[m, 0] += member_FER[a, 0]
+                # Get the member's global fixed end reaction vector
+                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                member_FER = member.FER(combo_name)
+
+                # Step through each term in the member's fixed end reaction vector
+                # 'a' below is the row index in the member's fixed end reaction vector
+                # 'm' below is the corresponding row index in the global fixed end reaction vector
+                for a in range(12):
+                    
+                    # Determine if index 'a' is related to the i-node or j-node
+                    if a < 6:
+                        # Find the corresponding index 'm' in the global fixed end reaction vector
+                        m = member.i_node.ID * 6 + a
+                    else:
+                        # Find the corresponding index 'm' in the global fixed end reaction vector
+                        m = member.j_node.ID * 6 + (a - 6)
+                    
+                    # Now that 'm' is known, place the term in the global fixed end reaction vector
+                    FER[m, 0] += member_FER[a, 0]
         
         # Add terms for each rectangle in the model
         for plate in self.Plates.values():
@@ -2693,34 +2710,37 @@ class FEModel3D():
                             node.RxnMY[combo.name] += spring_F[10, 0]
                             node.RxnMZ[combo.name] += spring_F[11, 0]
 
-                    # Sum the member end forces at the node
-                    for member in self.Members.values():
-                    
-                        if member.i_node == node and member.active[combo.name] == True:
-                        
-                            # Get the member's global force matrix
-                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            member_F = member.F(combo.name)
+                    # Step through each physical member in the model
+                    for phys_member in self.Members.values():
 
-                            node.RxnFX[combo.name] += member_F[0, 0]
-                            node.RxnFY[combo.name] += member_F[1, 0]
-                            node.RxnFZ[combo.name] += member_F[2, 0]
-                            node.RxnMX[combo.name] += member_F[3, 0]
-                            node.RxnMY[combo.name] += member_F[4, 0]
-                            node.RxnMZ[combo.name] += member_F[5, 0]
+                        # Sum the sub-member end forces at the node
+                        for member in phys_member.sub_members.values():
+                            
+                            if member.i_node == node and member.active[combo.name] == True:
+                            
+                                # Get the member's global force matrix
+                                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                                member_F = member.F(combo.name)
 
-                        elif member.j_node == node and member.active[combo.name] == True:
-                        
-                            # Get the member's global force matrix
-                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
-                            member_F = member.F(combo.name)
-                        
-                            node.RxnFX[combo.name] += member_F[6, 0]
-                            node.RxnFY[combo.name] += member_F[7, 0]
-                            node.RxnFZ[combo.name] += member_F[8, 0]
-                            node.RxnMX[combo.name] += member_F[9, 0]
-                            node.RxnMY[combo.name] += member_F[10, 0]
-                            node.RxnMZ[combo.name] += member_F[11, 0]
+                                node.RxnFX[combo.name] += member_F[0, 0]
+                                node.RxnFY[combo.name] += member_F[1, 0]
+                                node.RxnFZ[combo.name] += member_F[2, 0]
+                                node.RxnMX[combo.name] += member_F[3, 0]
+                                node.RxnMY[combo.name] += member_F[4, 0]
+                                node.RxnMZ[combo.name] += member_F[5, 0]
+
+                            elif member.j_node == node and member.active[combo.name] == True:
+                            
+                                # Get the member's global force matrix
+                                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                                member_F = member.F(combo.name)
+                            
+                                node.RxnFX[combo.name] += member_F[6, 0]
+                                node.RxnFY[combo.name] += member_F[7, 0]
+                                node.RxnFZ[combo.name] += member_F[8, 0]
+                                node.RxnMX[combo.name] += member_F[9, 0]
+                                node.RxnMY[combo.name] += member_F[10, 0]
+                                node.RxnMZ[combo.name] += member_F[11, 0]
 
                     # Sum the plate forces at the node
                     for plate in self.Plates.values():

@@ -10,8 +10,8 @@ class PhysMember(Member3D):
         
         super.__init__(name, i_node, j_node, E, G, Iy, Iz, J, A, model, aux_node, tension_only, comp_only)
         self.sub_members = {}
-    
-    def __subdivide(self):
+
+    def subdivide(self):
         """
         Subdivides the physical member into sub-members at each node along the physical member
         """
@@ -62,18 +62,16 @@ class PhysMember(Member3D):
             xj = int_nodes[i][1]
 
             # Create a new sub-member
-            self.model.add_member(name, int_nodes[i-1], node, self.E,
-                                  self.G, self.Iy, self.Iz, self.J, self.A, self.aux_node,
-                                  self.tension_only, self.comp_only)
+            new_sub_member = Member3D(name, int_nodes[i-1], node, self.E, self.G, self.Iy, self.Iz, self.J, self.A, self.model, self.auxNode, self.tension_only, self.comp_only)
             
             # Apply end releases if applicable
             if i == 1:
-                self.model.Members[name].Releases[0:6] = self.Releases[0:6]
+                new_sub_member.Releases[0:6] = self.Releases[0:6]
             if i == len(int_nodes) - 1:
-                self.model.Members[name].Releases[6:12] = self.Releases[6:12]
+                new_sub_member.Releases[6:12] = self.Releases[6:12]
 
             # Add distributed to the sub-member
-            for dist_load in self.model.Members[name].DistLoads:
+            for dist_load in self.DistLoads:
                 
                 # Find the start and end points of the distributed load in the physical member's
                 # local coordinate system
@@ -110,10 +108,10 @@ class PhysMember(Member3D):
                         w2 = w(x2_mem)
 
                     # Add the load to the sub-member
-                    self.model.Members[name].DistLoads.append([direction, w1, w2, x1, x2, case])
+                    new_sub_member.DistLoads.append([direction, w1, w2, x1, x2, case])
 
             # Add point loads to the sub-member
-            for pt_load in self.model.Members[name].PtLoads:
+            for pt_load in self.PtLoads:
                 
                 direction = pt_load[0]
                 P = pt_load[1]
@@ -126,5 +124,7 @@ class PhysMember(Member3D):
                     x = x - x1_mem
                     
                     # Add the load to the sub-member
-                    self.model.Members[name].PtLoads.append([direction, P, x, case])
+                    new_sub_member.PtLoads.append([direction, P, x, case])
 
+            # Add the new sub-member to the sub-member dictionary for this physical member
+            self.sub_members[name] = new_sub_member
