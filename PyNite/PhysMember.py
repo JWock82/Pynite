@@ -41,21 +41,23 @@ class PhysMember(Member3D):
             # Step through each node in the model
             for node in self.model.Nodes.values():
 
-                # Create a vector from the i-node to the current node
-                X, Y, Z = node.X, node.Y, node.Z
-                vector_in = array([X-Xi, Y-Yi, Z-Zi])
+                if node is not self.i_node and node is not self.j_node:
 
-                # Calculate the angle between the two vectors
-                angle = acos(dot(vector_in, vector_ij)/(norm(vector_in)*norm(vector_ij)))
+                    # Create a vector from the i-node to the current node
+                    X, Y, Z = node.X, node.Y, node.Z
+                    vector_in = array([X-Xi, Y-Yi, Z-Zi])
 
-                # Determine if the node is colinear with the member
-                if isclose(angle, 0):
+                    # Calculate the angle between the two vectors
+                    angle = acos(round(dot(vector_in, vector_ij)/(norm(vector_in)*norm(vector_ij)), 10))
 
-                    # Determine if the node is on the member
-                    if norm(vector_in) < norm(vector_ij):
+                    # Determine if the node is colinear with the member
+                    if isclose(angle, 0):
 
-                        # Add the node to the list of intermediate nodes
-                        int_nodes.append([node, norm(vector_in)])
+                        # Determine if the node is on the member
+                        if norm(vector_in) < norm(vector_ij):
+
+                            # Add the node to the list of intermediate nodes
+                            int_nodes.append([node, norm(vector_in)])
             
             # Create a list of sorted intermediate nodes by distance from the i-node
             int_nodes = sorted(int_nodes, key=lambda x: x[1])

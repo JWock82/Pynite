@@ -11,7 +11,7 @@ import unittest
 # Use warnings flag to suppress the PendingDeprecationWarning 
 # from numpy.matrix
 # unittest.main(warnings='ignore')
-test_suite = unittest.TestLoader().discover("Testing", pattern='test_*.py')
+test_suite = unittest.TestLoader().discover("Testing", pattern='test_AISC*.py')
 
 # `TextTestRunner` does not exit the module. CI will get confused unless we save the result
 # and send the proper exit code.

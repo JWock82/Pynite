@@ -1889,9 +1889,6 @@ class FEModel3D():
         if sparse == True:
             from scipy.sparse.linalg import spsolve
 
-        # Assign an ID to all nodes and elements in the model
-        self._renumber()
-
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
             # Create and add a default load combination to the dictionary of load combinations
@@ -1906,7 +1903,10 @@ class FEModel3D():
         for phys_member in self.Members.values():
             phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True 
+                phys_member.active[combo_name] = True
+        
+        # Assign an internal ID to all nodes and elements in the model
+        self._renumber()
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2146,9 +2146,6 @@ class FEModel3D():
         if sparse == True:
             from scipy.sparse.linalg import spsolve
 
-        # Assign an ID to all nodes and elements in the model
-        self._renumber()
-
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
             # Create and add a default load combination to the dictionary of load combinations
@@ -2164,6 +2161,9 @@ class FEModel3D():
             phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
                 phys_member.active[combo_name] = True
+
+        # Assign an internal ID to all nodes and elements in the model
+        self._renumber()
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2305,9 +2305,6 @@ class FEModel3D():
         # Import `scipy` features if the sparse solver is being used
         if sparse == True:
             from scipy.sparse.linalg import spsolve
-        
-        # Assign an ID to all nodes and elements in the model
-        self._renumber()
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
@@ -2325,7 +2322,10 @@ class FEModel3D():
         for phys_member in self.Members.values():
             phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True 
+                phys_member.active[combo_name] = True
+                
+        # Assign an internal ID to all nodes and elements in the model
+        self._renumber()
         
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -3069,9 +3069,13 @@ class FEModel3D():
         for id, spring in enumerate(self.Springs.values()):
             spring.ID = id
 
-        # Number each member in the model
-        for id, member in enumerate(self.Members.values()):
-            member.ID = id
+        # Descritize all the physical members and number each member in the model
+        id = 0
+        for phys_member in self.Members.values():
+            phys_member.descritize()
+            for member in phys_member.sub_members.values():
+                member.ID = id
+                id += 1
         
         # Number each plate in the model
         for id, plate in enumerate(self.Plates.values()):
