@@ -1902,9 +1902,11 @@ class FEModel3D():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
 
-        for member in self.Members.values():
+        # Initialize all physical members
+        for phys_member in self.Members.values():
+            phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
-                member.active[combo_name] = True 
+                phys_member.active[combo_name] = True 
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2075,19 +2077,19 @@ class FEModel3D():
 
                 # Check tension/compression only members
                 if log: print('- Checking for tension/compression-only member convergence')
-                for member in self.Members.values():
+                for phys_member in self.Members.values():
 
                     # Only run the tension/compression only check if the member is still active
-                    if member.active[combo.name] == True:
+                    if phys_member.active[combo.name] == True:
 
                         # Check if tension-only conditions exist
-                        if member.tension_only == True and member.max_axial(combo.name) > 0:
-                            member.active[combo.name] = False
+                        if phys_member.tension_only == True and phys_member.max_axial(combo.name) > 0:
+                            phys_member.active[combo.name] = False
                             convergence = False
 
                         # Check if compression-only conditions exist
-                        elif member.comp_only == True and member.min_axial(combo.name) < 0:
-                            member.active[combo.name] = False
+                        elif phys_member.comp_only == True and phys_member.min_axial(combo.name) < 0:
+                            phys_member.active[combo.name] = False
                             convergence = False
                 
                 if convergence == False:
@@ -2152,14 +2154,16 @@ class FEModel3D():
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
         
-        # Activate all springs and members for all load combinations
+        # Activate all springs for all load combinations
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
 
-        for member in self.Members.values():
+        # Initialize all physical members
+        for phys_member in self.Members.values():
+            phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
-                member.active[combo_name] = True 
+                phys_member.active[combo_name] = True
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2311,15 +2315,17 @@ class FEModel3D():
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
     
-        # Activate all springs and members for all load combinations. They can be turned inactive
+        # Activate all springs for all load combinations. They can be turned inactive
         # during the course of the tension/compression-only analysis
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
 
-        for member in self.Members.values():
+        # Initialize all physical members
+        for phys_member in self.Members.values():
+            phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
-                member.active[combo_name] = True 
+                phys_member.active[combo_name] = True 
         
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2565,15 +2571,15 @@ class FEModel3D():
                 
                 # Check for tension/compression-only members that need to be deactivated
                 if log: print('- Checking for tension/compression-only member convergence')
-                for member in self.Members.values():
+                for phys_member in self.Members.values():
 
                     # Only run the tension/compression only check if the member is still active
-                    if member.active[combo.name] == True:
+                    if phys_member.active[combo.name] == True:
 
                         # Check if tension-only conditions exist
-                        if member.tension_only == True and member.max_axial(combo.name) > 0:
+                        if phys_member.tension_only == True and phys_member.max_axial(combo.name) > 0:
                             
-                            member.active[combo.name] = False
+                            phys_member.active[combo.name] = False
                             convergence_TC = False
 
                             # Reset the P-Delta analysis for the new geometry
@@ -2581,9 +2587,9 @@ class FEModel3D():
                             convergence_PD = False
 
                         # Check if compression-only conditions exist
-                        elif member.comp_only == True and member.min_axial(combo.name) < 0:
+                        elif phys_member.comp_only == True and phys_member.min_axial(combo.name) < 0:
                             
-                            member.active[combo.name] = False
+                            phys_member.active[combo.name] = False
                             convergence_TC = False
 
                             # Reset the P-Delta analysis for the new geometry
@@ -2716,7 +2722,7 @@ class FEModel3D():
                         # Sum the sub-member end forces at the node
                         for member in phys_member.sub_members.values():
                             
-                            if member.i_node == node and member.active[combo.name] == True:
+                            if member.i_node == node and phys_member.active[combo.name] == True:
                             
                                 # Get the member's global force matrix
                                 # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -2729,7 +2735,7 @@ class FEModel3D():
                                 node.RxnMY[combo.name] += member_F[4, 0]
                                 node.RxnMZ[combo.name] += member_F[5, 0]
 
-                            elif member.j_node == node and member.active[combo.name] == True:
+                            elif member.j_node == node and phys_member.active[combo.name] == True:
                             
                                 # Get the member's global force matrix
                                 # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
