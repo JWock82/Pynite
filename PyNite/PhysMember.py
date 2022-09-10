@@ -130,7 +130,7 @@ class PhysMember(Member3D):
                     case = pt_load[3]
 
                     # Determine if the point load should be applied to this segment
-                    if x >= x1_mem and x < x2_mem or isclose(x, self.Length()):
+                    if x >= x1_mem and x < x2_mem or isclose(x, self.L()):
 
                         x = x - x1_mem
                         
@@ -166,7 +166,7 @@ class PhysMember(Member3D):
         """
         
         member, x_mod = self.find_member(x)
-        return member.shear(Direction, x, combo_name)
+        return member.shear(Direction, x_mod, combo_name)
     
     def max_shear(self, Direction, combo_name='Combo 1'):
         """
@@ -227,7 +227,7 @@ class PhysMember(Member3D):
         """
         
         member, x_mod = self.find_member(x)
-        return member.moment(Direction, x, combo_name)
+        return member.moment(Direction, x_mod, combo_name)
     
     def max_moment(self, Direction, combo_name='Combo 1'):
         """
@@ -284,7 +284,7 @@ class PhysMember(Member3D):
         """
         
         member, x_mod = self.find_member(x)
-        return member.torque(x, combo_name)
+        return member.torque(x_mod, combo_name)
     
     def max_torque(self, combo_name='Combo 1'):
         
@@ -325,7 +325,7 @@ class PhysMember(Member3D):
         """
 
         member, x_mod = self.find_member(x)
-        return member.axial(x, combo_name)
+        return member.axial(x_mod, combo_name)
     
     def max_axial(self, combo_name='Combo 1'):
         
@@ -363,7 +363,7 @@ class PhysMember(Member3D):
         """
 
         member, x_mod = self.find_member(x)
-        return member.deflection(Direction, x, combo_name)
+        return member.deflection(Direction, x_mod, combo_name)
 
     def max_deflection(self, Direction, combo_name='Combo 1'):
         """
@@ -420,7 +420,7 @@ class PhysMember(Member3D):
         """
         
         member, x_mod = self.find_member(x)
-        return member.rel_deflection(Direction, x, combo_name)
+        return member.rel_deflection(Direction, x_mod, combo_name)
 
     def _segment_member(self, combo_name='Combo 1'):
         """
