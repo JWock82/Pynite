@@ -58,23 +58,28 @@ class PhysMember(Member3D):
         int_nodes = sorted(int_nodes, key=lambda x: x[1])
 
         # Break up the member into sub-members at each intermediate node
-        for i, node in enumerate(int_nodes[1:]):
+        for i in range(len(int_nodes) - 1):
 
             # Generate the sub-member's name (physical member name + a, b, c, etc.)
-            name = self.name + chr(i+96)
+            name = self.name + chr(i+97)
 
-            i_node = int_nodes[i-1][0]
-            j_node = node
-            xi = int_nodes[i-1][1]
-            xj = int_nodes[i][1]
+            i_node = int_nodes[i][0]
+            j_node = int_nodes[i+1][0]
+            xi = int_nodes[i][1]
+            xj = int_nodes[i+1][1]
+            
+            # Find the start and end points of the sub-member in the physical member's
+            # local coordinate system
+            x1_mem = ((i_node.X - Xi)**2 + (i_node.Y - Yi)**2 + (i_node.Z - Zi)**2)**0.5
+            x2_mem = ((j_node.X - Xi)**2 + (j_node.Y - Yi)**2 + (j_node.Z - Zi)**2)**0.5
 
             # Create a new sub-member
-            new_sub_member = Member3D(name, int_nodes[i-1], node, self.E, self.G, self.Iy, self.Iz, self.J, self.A, self.model, self.auxNode, self.tension_only, self.comp_only)
+            new_sub_member = Member3D(name, i_node, j_node, self.E, self.G, self.Iy, self.Iz, self.J, self.A, self.model, self.auxNode, self.tension_only, self.comp_only)
             
             # Apply end releases if applicable
-            if i == 1:
+            if i == 0:
                 new_sub_member.Releases[0:6] = self.Releases[0:6]
-            if i == len(int_nodes) - 1:
+            if i == len(int_nodes) - 2:
                 new_sub_member.Releases[6:12] = self.Releases[6:12]
 
             # Add distributed to the sub-member
@@ -84,11 +89,6 @@ class PhysMember(Member3D):
                 # local coordinate system
                 x1_load = dist_load[3]
                 x2_load = dist_load[4]
-
-                # Find the start and end points of the sub-member in the physical member's
-                # local coordinate system
-                x1_mem = ((int_nodes[i-1].X - Xi)**2 + (int_nodes[i-1].Y - Yi)**2 + (int_nodes[i-1].Z - Zi)**2)**0.5
-                x2_mem = ((node.X - Xi)**2 + (node.Y - Yi)**2 + (node.Z - Zi)**2)**0.5
 
                 # Determine if the distributed load should be applied to this segment
                 if x1_load <= x2_mem and x2_load > x1_mem: 
@@ -122,7 +122,7 @@ class PhysMember(Member3D):
                 
                 direction = pt_load[0]
                 P = pt_load[1]
-                x = dist_load[2]
+                x = pt_load[2]
                 case = pt_load[3]
 
                 # Determine if the point load should be applied to this segment
