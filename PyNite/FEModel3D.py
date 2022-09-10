@@ -1416,7 +1416,7 @@ class FEModel3D():
             if phys_member.active[combo_name] == True:
 
                 # Subdivide the physical member into sub-members at each intermediate node
-                phys_member.subdivide()
+                phys_member.descritize()
 
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
@@ -1619,7 +1619,7 @@ class FEModel3D():
             if phys_member.active[combo_name] == True:
 
                 # Subdivide the physical member into sub-members at each internal node
-                phys_member.subdivide()
+                phys_member.descritize()
 
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():

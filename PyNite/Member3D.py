@@ -546,12 +546,8 @@ class Member3D():
         return D
 
 #%%
-    def Shear(self, Direction, x, combo_name='Combo 1'):
-        warnings.warn('`Shear` will be replaced with `shear` in a future version of PyNite.', FutureWarning)
-        return self.shear(Direction, x, combo_name)
-
     def shear(self, Direction, x, combo_name='Combo 1'):
-        '''
+        """
         Returns the shear at a point along the member's length.
         
         Parameters
@@ -564,7 +560,7 @@ class Member3D():
             The location at which to find the shear.
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -597,12 +593,8 @@ class Member3D():
                 return self.SegmentsY[lastIndex].Shear(x - self.SegmentsY[lastIndex].x1)
             
 #%%
-    def MaxShear(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`MaxShear` will be replaced with `max_shear` in a future version of PyNite.', FutureWarning)
-        return self.max_shear(Direction, combo_name)
-
     def max_shear(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Returns the maximum shear in the member for the given direction
         
         Parameters
@@ -613,7 +605,7 @@ class Member3D():
                 'Fz' = Shear acting on the local z-axis
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -643,12 +635,8 @@ class Member3D():
         return Vmax
     
 #%%
-    def MinShear(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`MinShear` will be replaced with `min_shear` in a future version of PyNite.', FutureWarning)
-        return self.min_shear(Direction, combo_name)
-
     def min_shear(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Returns the minimum shear in the member for the given direction
         
         Parameters
@@ -659,7 +647,7 @@ class Member3D():
                 'Fz' = Shear acting on the local z-axis
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -689,10 +677,6 @@ class Member3D():
         return Vmin
     
 #%%
-    def PlotShear(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`PlotShear` will be replaced with `plot_shear` in a future version of PyNite.', FutureWarning)
-        self.plot_shear(Direction, combo_name)
-
     def plot_shear(self, Direction, combo_name='Combo 1'):
         '''
         Plots the shear diagram for the member
@@ -734,12 +718,8 @@ class Member3D():
         Member3D.__plt.show()    
         
 #%%
-    def Moment(self, Direction, x, combo_name='Combo 1'):
-        warnings.warn('`Moment` will be replaced with `moment` in a future version of PyNite.', FutureWarning)
-        return self.moment(Direction, x, combo_name)
-
     def moment(self, Direction, x, combo_name='Combo 1'):
-        '''
+        """
         Returns the moment at a point along the member's length
         
         Parameters
@@ -752,7 +732,7 @@ class Member3D():
             The location at which to find the moment.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -792,12 +772,8 @@ class Member3D():
             raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
             
 #%%
-    def MaxMoment(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`MaxMoment` will be replaced with `max_moment` in a future version of PyNite.', FutureWarning)
-        return self.max_moment(Direction, combo_name)
-
     def max_moment(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Returns the maximum moment in the member for the given direction.
         
         Parameters
@@ -808,7 +784,7 @@ class Member3D():
                 'Mz' = Moment about the local z-axis.
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -838,12 +814,8 @@ class Member3D():
         return Mmax
 
 #%%
-    def MinMoment(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`MinMoment` will be replaced with `min_moment` in a future version of PyNite.', FutureWarning)
-        return self.min_moment(Direction, combo_name)
-
     def min_moment(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Returns the minimum moment in the member for the given direction
         
         Parameters
@@ -854,7 +826,7 @@ class Member3D():
                 'Mz' = Moment about the local z-axis.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -884,10 +856,6 @@ class Member3D():
         return Mmin
 
 #%%
-    def PlotMoment(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`PlotMoment` will be replaced with `plot_moment` in a future version of PyNite.', FutureWarning)
-        self.plot_moment(Direction, combo_name)
-
     def plot_moment(self, Direction, combo_name='Combo 1'):
         '''
         Plots the moment diagram for the member
@@ -930,12 +898,8 @@ class Member3D():
         Member3D.__plt.show()
        
 #%%
-    def Torsion(self, x, combo_name='Combo 1'):
-        warnings.warn('`Torsion` will be replaced with `torque` in a future version of PyNite.', FutureWarning)
-        return self.torque(x, combo_name)
-
     def torque(self, x, combo_name='Combo 1'):
-        '''
+        """
         Returns the torsional moment at a point along the member's length
         
         Parameters
@@ -944,7 +908,7 @@ class Member3D():
             The location at which to find the torque
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -961,10 +925,6 @@ class Member3D():
                 return self.SegmentsX[lastIndex].Torsion()
 
 #%%
-    def MaxTorsion(self, combo_name='Combo 1'):
-        warnings.warn('`MaxTorsion` will be replaced with `max_torque` in a future version of PyNite.', FutureWarning)
-        return self.max_torque(combo_name)
-
     def max_torque(self, combo_name='Combo 1'):
         '''
         Returns the maximum torsional moment in the member.
@@ -991,19 +951,15 @@ class Member3D():
         return Tmax
     
 #%%
-    def MinTorsion(self, combo_name='Combo 1'):
-        warnings.warn('`MinTorsion` will be replaced with `min_torque` in a future version of PyNite.', FutureWarning)
-        return self.min_torque(combo_name)
-
     def min_torque(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the minimum torsional moment in the member.
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1021,10 +977,6 @@ class Member3D():
         return Tmin
 
 #%%
-    def PlotTorsion(self, combo_name='Combo 1'):
-        warnings.warn('`PlotTorsion` will be replaced with `plot_torque` in a future version of PyNite.', FutureWarning)
-        self.plot_torque(combo_name)
-
     def plot_torque(self, combo_name='Combo 1'):
         '''
         Plots the axial force diagram for the member.
@@ -1064,12 +1016,8 @@ class Member3D():
         Member3D.__plt.show()   
         
 #%%
-    def Axial(self, x, combo_name='Combo 1'):
-        warnings.warn('`Axial` will be replaced with `axial` in a future version of PyNite.', FutureWarning)
-        return self.axial(x, combo_name)
-
     def axial(self, x, combo_name='Combo 1'):
-        '''
+        """
         Returns the axial force at a point along the member's length.
         
         Parameters
@@ -1078,7 +1026,7 @@ class Member3D():
             The location at which to find the axial force.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1095,10 +1043,6 @@ class Member3D():
                 return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
 
 #%%
-    def MaxAxial(self, combo_name='Combo 1'):
-        warnings.warn('`MaxAxial` will be replaced with `max_axial` in a future version of PyNite.', FutureWarning)
-        return self.max_axial(combo_name)
-
     def max_axial(self, combo_name='Combo 1'):
         '''
         Returns the maximum axial force in the member
@@ -1125,10 +1069,6 @@ class Member3D():
         return Pmax
     
 #%%
-    def MinAxial(self, combo_name='Combo 1'):
-        warnings.warn('`MinAxial` will be replaced with `min_axial` in a future version of PyNite.', FutureWarning)
-        return self.min_axial(combo_name)
-
     def min_axial(self, combo_name='Combo 1'):
         '''
         Returns the minimum axial force in the member.
@@ -1155,10 +1095,6 @@ class Member3D():
         return Pmin
     
 #%%
-    def PlotAxial(self, combo_name='Combo 1'):
-        warnings.warn('`PlotAxial` will be replaced with `plot_axial` in a future version of PyNite.', FutureWarning)
-        self.plot_axial(combo_name)
-
     def plot_axial(self, combo_name='Combo 1'):
         '''
         Plots the axial force diagram for the member.
@@ -1198,12 +1134,8 @@ class Member3D():
         Member3D.__plt.show()    
                         
 #%%
-    def Deflection(self, Direction, x, combo_name='Combo 1'):
-        warnings.warn('`Deflection` will be replaced with `deflection` in a future version of PyNite.', FutureWarning)
-        return self.deflection(Direction, x, combo_name)
-
     def deflection(self, Direction, x, combo_name='Combo 1'):
-        '''
+        """
         Returns the deflection at a point along the member's length.
         
         Parameters
@@ -1217,7 +1149,7 @@ class Member3D():
             The location at which to find the deflection.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1266,12 +1198,8 @@ class Member3D():
                 return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1) 
 
 #%%
-    def MaxDeflection(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`MaxDeflection` will be replaced with `max_deflection` in a future version of PyNite.', FutureWarning)
-        return self.max_deflection(Direction, combo_name)
-
     def max_deflection(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Returns the maximum deflection in the member.
         
         Parameters
@@ -1280,7 +1208,7 @@ class Member3D():
             The direction in which to find the maximum deflection.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1300,12 +1228,8 @@ class Member3D():
         return dmax
     
 #%%
-    def MinDeflection(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`MinDeflection` will be replaced with `min_deflection` in a future version of PyNite.', FutureWarning)
-        return self.min_deflection(Direction, combo_name)
-
     def min_deflection(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Returns the minimum deflection in the member.
         
         Parameters
@@ -1314,7 +1238,7 @@ class Member3D():
             The direction in which to find the minimum deflection.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1334,12 +1258,8 @@ class Member3D():
         return dmin
               
 #%%
-    def PlotDeflection(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`PlotDeflection` will be replaced with `plot_deflection` in a future version of PyNite.', FutureWarning)
-        self.plot_deflection(Direction, combo_name)
-
     def plot_deflection(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Plots the deflection diagram for the member
         
         Parameters
@@ -1348,7 +1268,7 @@ class Member3D():
             The direction in which to plot the deflection.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1380,12 +1300,8 @@ class Member3D():
         Member3D.__plt.show()
     
 #%%
-    def RelativeDeflection(self, Direction, x, combo_name='Combo 1'):
-        warnings.warn('`RelativeDeflection` will be replaced with `rel_deflection` in a future version of PyNite.', FutureWarning)
-        return self.rel_deflection(Direction, x, combo_name)
-
     def rel_deflection(self, Direction, x, combo_name='Combo 1'):
-        '''
+        """
         Returns the relative deflection at a point along the member's length
         
         Parameters
@@ -1398,8 +1314,8 @@ class Member3D():
             The location at which to find the relative deflection
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
-        '''
-        
+        """
+
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
@@ -1441,12 +1357,8 @@ class Member3D():
                 return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
 
 #%%
-    def PlotRelativeDeflection(self, Direction, combo_name='Combo 1'):
-        warnings.warn('`PlotRelativeDeflection` will be replaced with `plot_rel_deflection` in a future version of PyNite.', FutureWarning)
-        self.plot_rel_deflection(Direction, combo_name)
-
     def plot_rel_deflection(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Plots the deflection diagram for the member
         
         Parameters
@@ -1455,7 +1367,7 @@ class Member3D():
             The direction in which to plot the deflection.
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1486,9 +1398,11 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()   
         
-#%%    
-    # Divides the element up into mathematically continuous segments along each axis
+#%%
     def _segment_member(self, combo_name='Combo 1'):
+        """
+        Divides the element up into mathematically continuous segments along each axis
+        """
         
         # Get the member's length and stiffness properties
         L = self.L()

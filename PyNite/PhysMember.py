@@ -1,17 +1,24 @@
-from numpy import array, cross
-from numpy.linalg import norm, dot
+from numpy import array, dot, cross
+from numpy.linalg import norm
 from math import isclose, acos
-import Member3D
+
+from PyNite.Member3D import Member3D
 
 class PhysMember(Member3D):
+    """
+    A physical member.
+
+    Physical members can detect internal nodes and subdivide themselves into sub-members at those
+    nodes.
+    """
 
     def __init__(self, name, i_node, j_node, E, G, Iy, Iz, J, A, model, aux_node=None,
                  tension_only=False, comp_only=False):
         
-        super.__init__(name, i_node, j_node, E, G, Iy, Iz, J, A, model, aux_node, tension_only, comp_only)
+        super().__init__(name, i_node, j_node, E, G, Iy, Iz, J, A, model, aux_node, tension_only, comp_only)
         self.sub_members = {}
 
-    def subdivide(self):
+    def descritize(self):
         """
         Subdivides the physical member into sub-members at each node along the physical member
         """
@@ -128,3 +135,310 @@ class PhysMember(Member3D):
 
             # Add the new sub-member to the sub-member dictionary for this physical member
             self.sub_members[name] = new_sub_member
+    
+    def shear(self, Direction, x, combo_name='Combo 1'):
+        """
+        Returns the shear at a point along the member's length.
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the shear. Must be one of the following:
+                'Fy' = Shear acting on the local y-axis.
+                'Fz' = Shear acting on the local z-axis.
+        x : number
+            The location at which to find the shear.
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        """
+        
+        member, x_mod = self.find_member(x)
+        return member.shear(Direction, 'x', combo_name)
+    
+    def max_shear(self, Direction, combo_name='Combo 1'):
+        """
+        Returns the maximum shear in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the maximum shear. Must be one of the following:
+                'Fy' = Shear acting on the local y-axis
+                'Fz' = Shear acting on the local z-axis
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        """
+
+        Vmax = None
+        for member in self.sub_members.values():
+            V = member.max_shear(Direction, combo_name)
+            if Vmax is None or V > Vmax:
+                Vmax = V
+        return Vmax
+    
+    def min_shear(self, Direction, combo_name='Combo 1'):
+        """
+        Returns the minimum shear in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the minimum shear. Must be one of the following:
+                'Fy' = Shear acting on the local y-axis
+                'Fz' = Shear acting on the local z-axis
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        
+        Vmin = None
+        for member in self.sub_members.values():
+            V = member.min_shear(Direction, combo_name)
+            if Vmin is None or V < Vmin:
+                Vmin = V
+        return Vmin
+   
+    def moment(self, Direction, x, combo_name='Combo 1'):
+        """
+        Returns the moment at a point along the member's length
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the moment. Must be one of the following:
+                'My' = Moment about the local y-axis.
+                'Mz' = moment about the local z-axis.
+        x : number
+            The location at which to find the moment.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        
+        member, x_mod = self.find_member(x)
+        return member.moment(Direction, 'x', combo_name)
+    
+    def max_moment(self, Direction, combo_name='Combo 1'):
+        """
+        Returns the maximum moment in the member for the given direction.
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the maximum moment. Must be one of the following:
+                'My' = Moment about the local y-axis.
+                'Mz' = Moment about the local z-axis.
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        """
+
+        Mmax = None
+        for member in self.sub_members.values():
+            M = member.max_moment(Direction, combo_name)
+            if Mmax is None or M > Mmax:
+                Mmax = M
+        return Mmax
+    
+    def min_moment(self, Direction, combo_name='Combo 1'):
+        """
+        Returns the minimum moment in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the minimum moment. Must be one of the following:
+                'My' = Moment about the local y-axis.
+                'Mz' = Moment about the local z-axis.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        
+        Mmin = None
+        for member in self.sub_members.values():
+            M = member.min_moment(Direction, combo_name)
+            if Mmin is None or M < Mmin:
+                Mmin = M
+        return Mmin
+
+    def torque(self, x, combo_name='Combo 1'):
+        """
+        Returns the torsional moment at a point along the member's length
+        
+        Parameters
+        ----------
+        x : number
+            The location at which to find the torque
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        
+        member, x_mod = self.find_member(x)
+        return member.torque('x', combo_name)
+    
+    def max_torque(self, combo_name='Combo 1'):
+        
+        Tmax = None
+        for member in self.sub_members.values():
+            T = member.max_torque(combo_name)
+            if Tmax is None or T > Tmax:
+                Tmax = T
+        return Tmax
+    
+    def min_torque(self, combo_name='Combo 1'):
+        """
+        Returns the minimum torsional moment in the member.
+
+        Parameters
+        ----------
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+
+        Tmin = None
+        for member in self.sub_members.values():
+            T = member.min_torque(combo_name)
+            if Tmin is None or T < Tmin:
+                Tmin = T
+        return Tmin
+
+    def axial(self, x, combo_name='Combo 1'):
+        """
+        Returns the axial force at a point along the member's length.
+        
+        Parameters
+        ----------
+        x : number
+            The location at which to find the axial force.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+
+        member, x_mod = self.find_member(x)
+        return member.axial('x', combo_name)
+    
+    def max_axial(self, combo_name='Combo 1'):
+        
+        Pmax = None
+        for member in self.sub_members.values():
+            P = member.max_axial(combo_name)
+            if Pmax is None or P > Pmax:
+                Pmax = P
+        return Pmax
+    
+    def min_axial(self, combo_name='Combo 1'):
+
+        Pmin = None
+        for member in self.sub_members.values():
+            P = member.min_axial(combo_name)
+            if Pmin is None or P < Pmin:
+                Pmin = P
+        return Pmin
+
+    def deflection(self, Direction, x, combo_name='Combo 1'):
+        """
+        Returns the deflection at a point along the member's length.
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the deflection. Must be one of the following:
+                'dx' = Deflection in the local x-axis.
+                'dy' = Deflection in the local y-axis.
+                'dz' = Deflection in the local z-axis.
+        x : number
+            The location at which to find the deflection.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+
+        member, x_mod = self.find_member(x)
+        return member.deflection(Direction, 'x', combo_name)
+
+    def max_deflection(self, Direction, combo_name='Combo 1'):
+        """
+        Returns the maximum deflection in the member.
+        
+        Parameters
+        ----------
+        Direction : {'dy', 'dz'}
+            The direction in which to find the maximum deflection.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+
+        dmax = None
+        for member in self.sub_members.values():
+            d = member.max_deflection(Direction, combo_name)
+            if dmax is None or d > dmax:
+                dmax = d
+        return dmax
+    
+    def min_deflection(self, Direction, combo_name='Combo 1'):
+        """
+        Returns the minimum deflection in the member.
+        
+        Parameters
+        ----------
+        Direction : {'dy', 'dz'}
+            The direction in which to find the minimum deflection.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+
+        dmin = None
+        for member in self.sub_members.values():
+            d = member.min_deflection(Direction, combo_name)
+            if dmin is None or d < dmin:
+                dmin = d
+        return dmin
+
+    def rel_deflection(self, Direction, x, combo_name='Combo 1'):
+        """
+        Returns the relative deflection at a point along the member's length
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the relative deflection. Must be one of the following:
+                'dy' = Deflection in the local y-axis
+                'dz' = Deflection in the local x-axis
+        x : number
+            The location at which to find the relative deflection
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        """
+        
+        member, x_mod = self.find_member(x)
+        return member.rel_deflection(Direction, 'x', combo_name)
+
+    def _segment_member(self, combo_name='Combo 1'):
+        """
+        Divides the element up into mathematically continuous segments along each axis
+        """
+
+        for member in self.sub_members.values():
+            member._segment_member(combo_name)
+
+    def find_member(self, x):
+        """
+        Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's
+        local coordinate system.
+        """
+
+        # Initialize a summation of sub-member lengths
+        L = 0
+
+        # Step through each sub-member (in order from start to end)
+        for member in self.sub_members.values():
+
+            # Sum the sub-member's length
+            L += member.L()
+
+            # Check if 'x' lies on this sub-member
+            if x < L:
+
+                # Return the sub-member, and a modified value for 'x' relative to the sub-member's
+                # i-node
+                return member, x - (L - member.L())
+
+                # Exit the 'for' loop
+                break
+            
