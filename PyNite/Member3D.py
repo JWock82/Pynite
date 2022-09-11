@@ -357,14 +357,14 @@ class Member3D():
 
 #%%
     def d(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the member's local displacement vector.
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to construct the displacement vector for (not the load combination itself).
-        '''
+        """
         
         # Calculate and return the local displacement vector
         return matmul(self.T(), self.D(combo_name))
@@ -511,7 +511,7 @@ class Member3D():
 
 #%%
     def D(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the member's global displacement vector.
 
         Parameters
@@ -519,7 +519,7 @@ class Member3D():
         combo_name : string
             The name of the load combination to construct the global
             displacement vector for (not the load combination itelf).
-        '''
+        """
         
         # Initialize the displacement vector
         D = zeros((12, 1))

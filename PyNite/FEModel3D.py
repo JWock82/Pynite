@@ -1415,9 +1415,6 @@ class FEModel3D():
             # Check to see if the physical member is active for the given load combination
             if phys_member.active[combo_name] == True:
 
-                # Subdivide the physical member into sub-members at each intermediate node
-                phys_member.descritize()
-
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
                     
@@ -1579,7 +1576,7 @@ class FEModel3D():
         return K    
    
     def Kg(self, combo_name='Combo 1', log=False, sparse=True):
-        '''
+        """
         Returns the model's global geometric stiffness matrix.
 
         The model must have a static solution prior to obtaining the geometric stiffness matrix.
@@ -1597,9 +1594,9 @@ class FEModel3D():
                 
         Returns
         -------
-        K : ndarray or coo_matrix
+        Kg : ndarray or coo_matrix
             The global geometric stiffness matrix for the structure.
-        '''
+        """
         
         if sparse == True:
             # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a
@@ -1617,9 +1614,6 @@ class FEModel3D():
             
             # Check to see if the physical member is active for the given load combination
             if phys_member.active[combo_name] == True:
-
-                # Subdivide the physical member into sub-members at each internal node
-                phys_member.descritize()
 
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
@@ -1856,7 +1850,7 @@ class FEModel3D():
             return m11, m12, m21, m22
 
     def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True):
-        '''
+        """
         Performs first-order static analysis.
         
         Iterations are performed if tension-only members or
@@ -1878,7 +1872,7 @@ class FEModel3D():
             matrices often contain many zero terms. The sparse solver can offer faster solutions
             for such matrices. Using the sparse solver on dense matrices may lead to slower
             solution times.
-        '''
+        """
 
         if log:
             print('+-----------+')
@@ -1898,10 +1892,9 @@ class FEModel3D():
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
-
-        # Initialize all physical members
+        
+        # Activate all physical members for all load combinations
         for phys_member in self.Members.values():
-            phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
                 phys_member.active[combo_name] = True
         
@@ -2155,13 +2148,12 @@ class FEModel3D():
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
-
-        # Initialize all physical members
+        
+        # Activate all physical members for all load combinations
         for phys_member in self.Members.values():
-            phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
                 phys_member.active[combo_name] = True
-
+        
         # Assign an internal ID to all nodes and elements in the model
         self._renumber()
 
@@ -2275,7 +2267,7 @@ class FEModel3D():
         self.solution = 'Linear'
 
     def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
-        '''
+        """
         Performs second order (P-Delta) analysis.
 
         Parameters
@@ -2295,7 +2287,7 @@ class FEModel3D():
             matrices often contain many zero terms. The sparse solver can offer faster solutions
             for such matrices. Using the sparse solver on dense matrices may lead to slower
             solution times.
-        '''
+        """
         
         if log:
             print('+--------------------+')
@@ -2317,13 +2309,12 @@ class FEModel3D():
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
                 spring.active[combo_name] = True
-
-        # Initialize all physical members
+                
+        # Activate all physical members for all load combinations
         for phys_member in self.Members.values():
-            phys_member.descritized = False
             for combo_name in self.LoadCombos.keys():
                 phys_member.active[combo_name] = True
-                
+               
         # Assign an internal ID to all nodes and elements in the model
         self._renumber()
         
@@ -2383,7 +2374,7 @@ class FEModel3D():
                     if sparse == True:
 
                         K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
-                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)     # Geometric stiffness matrix
+                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)                      # Geometric stiffness matrix
                         
                         # The stiffness matrices are currently `lil` format which is great for
                         # memory, but slow for mathematical operations. They will be converted to
@@ -2396,8 +2387,8 @@ class FEModel3D():
 
                     else:
 
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)       # Initial stiffness matrix
-                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)  # Geometric stiffness matrix
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
+                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)              # Geometric stiffness matrix
                         
                         K11 = K11 + Kg11
                         K12 = K12 + Kg12
@@ -2426,39 +2417,40 @@ class FEModel3D():
                         # Return out of the method if 'K' is singular and provide an error message
                         raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
 
+
                 D = zeros((len(self.Nodes)*6, 1))
 
                 for node in self.Nodes.values():
-                
-                    if D2_indices.count(node.ID*6 + 0) == 1:
-                        D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
+                    
+                    if node.ID*6 + 0 in D2_indices:
+                        D[(node.ID*6 + 0, 0)] = D2[D2_indices.index(node.ID*6 + 0), 0]
                     else:
-                        D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
+                        D[(node.ID*6 + 0, 0)] = D1[D1_indices.index(node.ID*6 + 0), 0]
 
-                    if D2_indices.count(node.ID*6 + 1) == 1:
-                        D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
+                    if node.ID*6 + 1 in D2_indices:
+                        D[(node.ID*6 + 1, 0)] = D2[D2_indices.index(node.ID*6 + 1), 0]
                     else:
-                        D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
+                        D[(node.ID*6 + 1, 0)] = D1[D1_indices.index(node.ID*6 + 1), 0]
 
-                    if D2_indices.count(node.ID*6 + 2) == 1:
-                        D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
+                    if node.ID*6 + 2 in D2_indices:
+                        D[(node.ID*6 + 2, 0)] = D2[D2_indices.index(node.ID*6 + 2), 0]
                     else:
-                        D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
+                        D[(node.ID*6 + 2, 0)] = D1[D1_indices.index(node.ID*6 + 2), 0]
 
-                    if D2_indices.count(node.ID*6 + 3) == 1:
-                        D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
+                    if node.ID*6 + 3 in D2_indices:
+                        D[(node.ID*6 + 3, 0)] = D2[D2_indices.index(node.ID*6 + 3), 0]
                     else:
-                        D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
+                        D[(node.ID*6 + 3, 0)] = D1[D1_indices.index(node.ID*6 + 3), 0]
 
-                    if D2_indices.count(node.ID*6 + 4) == 1:
-                        D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
+                    if node.ID*6 + 4 in D2_indices:
+                        D[(node.ID*6 + 4, 0)] = D2[D2_indices.index(node.ID*6 + 4), 0]
                     else:
-                        D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
+                        D[(node.ID*6 + 4, 0)] = D1[D1_indices.index(node.ID*6 + 4), 0]
 
-                    if D2_indices.count(node.ID*6 + 5) == 1:
-                        D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
+                    if node.ID*6 + 5 in D2_indices:
+                        D[(node.ID*6 + 5, 0)] = D2[D2_indices.index(node.ID*6 + 5), 0]
                     else:
-                        D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0])
+                        D[(node.ID*6 + 5, 0)] = D1[D1_indices.index(node.ID*6 + 5), 0]
 
                 # Save the global displacement vector
                 self._D[combo.name] = D
@@ -2580,6 +2572,8 @@ class FEModel3D():
                         if phys_member.tension_only == True and phys_member.max_axial(combo.name) > 0:
                             
                             phys_member.active[combo.name] = False
+                            for member in phys_member.sub_members.values():
+                                member.active[combo.name] = False
                             convergence_TC = False
 
                             # Reset the P-Delta analysis for the new geometry
@@ -2590,6 +2584,8 @@ class FEModel3D():
                         elif phys_member.comp_only == True and phys_member.min_axial(combo.name) < 0:
                             
                             phys_member.active[combo.name] = False
+                            for member in phys_member.sub_members.values():
+                                member.active[combo.name] = False
                             convergence_TC = False
 
                             # Reset the P-Delta analysis for the new geometry
@@ -2628,7 +2624,7 @@ class FEModel3D():
                     # Check for convergence
                     # Note: if the shape of K11 is (0, 0) then all degrees of freedom are fully
                     # restrained, and P-Delta analysis automatically converges
-                    if K11.shape == (0, 0) or abs(1 - nanmax(divide(prev_results, D1))) <= tol:
+                    if K11.shape == (0, 0) or abs(nanmax(divide(D1, prev_results)) - 1) <= tol:
                         convergence_PD = True
                         if log: print('- P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')
                     # Check for divergence
