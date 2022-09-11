@@ -418,14 +418,6 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.rel_deflection(Direction, x_mod, combo_name)
 
-    def _segment_member(self, combo_name='Combo 1'):
-        """
-        Divides the element up into mathematically continuous segments along each axis
-        """
-
-        for member in self.sub_members.values():
-            member._segment_member(combo_name)
-
     def find_member(self, x):
         """
         Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's
