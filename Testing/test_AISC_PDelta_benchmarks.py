@@ -18,14 +18,17 @@ class Test_AISC_Benchmark(unittest.TestCase):
     """
 
     def setUp(self):
+
         # Suppress printed output temporarily
         sys.stdout = StringIO()
 
     def tearDown(self):
+        
         # Reset the print function to normal
         sys.stdout = sys.__stdout__
 
     def test_AISC_Benchmark(self):
+
         # Create the cantilever model
         cantilever = FEModel3D()
 

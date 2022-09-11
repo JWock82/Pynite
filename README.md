@@ -65,8 +65,9 @@ PyNite depends on the following packages:
 
 v0.0.67
 * Added physical members. Members now automatically detect internal nodes.
-* Deprecated old method names for member results. You may have some errors show up if you are still trying to get member results using the old method names.
+* Refactoring: deprecated old method names for member results. You may now have some errors show up if you still try to get member results using the old method names.
 * Bug fix for P-Delta analysis. Global displacements were correct, but member internal forces were neglecting the geometric stiffness matrix. The impact of this bug was minimal, since the strain induced by correct global displacements was still being considered prior to this update. You should see a slight change to member P-Delta results.
+* Code simplification for P-Delta analysis.
 
 v0.0.66
 * Code simplification and bug fix for merging duplicate nodes.

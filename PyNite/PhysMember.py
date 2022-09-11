@@ -23,6 +23,9 @@ class PhysMember(Member3D):
         Subdivides the physical member into sub-members at each node along the physical member
         """
 
+        # Clear out any old sub_members
+        self.sub_members = {}
+
         # Start a new list of nodes along the member
         int_nodes = []
 
