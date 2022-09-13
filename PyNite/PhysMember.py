@@ -68,15 +68,12 @@ class PhysMember(Member3D):
             # Generate the sub-member's name (physical member name + a, b, c, etc.)
             name = self.name + chr(i+97)
 
+            # Find the i and j nodes for the sub-member, and their positions along the physical
+            # member's local x-axis
             i_node = int_nodes[i][0]
             j_node = int_nodes[i+1][0]
             xi = int_nodes[i][1]
             xj = int_nodes[i+1][1]
-
-            # Find the start and end points of the sub-member in the physical member's
-            # local coordinate system
-            x1_mem = ((i_node.X - Xi)**2 + (i_node.Y - Yi)**2 + (i_node.Z - Zi)**2)**0.5
-            x2_mem = ((j_node.X - Xi)**2 + (j_node.Y - Yi)**2 + (j_node.Z - Zi)**2)**0.5
 
             # Create a new sub-member
             new_sub_member = Member3D(name, i_node, j_node, self.E, self.G, self.Iy, self.Iz, self.J, self.A, self.model, self.auxNode, self.tension_only, self.comp_only)
@@ -100,7 +97,7 @@ class PhysMember(Member3D):
                 x2_load = dist_load[4]
 
                 # Determine if the distributed load should be applied to this segment
-                if x1_load <= x2_mem and x2_load > x1_mem: 
+                if x1_load <= xj and x2_load > xi: 
                     
                     direction = dist_load[0]
                     w1 = dist_load[1]
@@ -111,17 +108,17 @@ class PhysMember(Member3D):
                     w = lambda x: (w2 - w1)/(x2_load - x1_load)*(x - x1_load) + w1
 
                     # Chop up the distributed load for the sub-member
-                    if x1_load > x1_mem:
-                        x1 = x1_load - x1_mem
+                    if x1_load > xi:
+                        x1 = x1_load - xi
                     else:
                         x1 = 0
-                        w1 = w(x1_mem)
+                        w1 = w(xi)
                     
-                    if x2_load < x2_mem:
-                        x2 = x2_load - x1_mem
+                    if x2_load < xj:
+                        x2 = x2_load - xi
                     else:
-                        x2 = x2_mem
-                        w2 = w(x2_mem)
+                        x2 = xj
+                        w2 = w(xj)
 
                     # Add the load to the sub-member
                     new_sub_member.DistLoads.append([direction, w1, w2, x1, x2, case])
@@ -135,9 +132,9 @@ class PhysMember(Member3D):
                 case = pt_load[3]
 
                 # Determine if the point load should be applied to this segment
-                if x >= x1_mem and x < x2_mem or isclose(x, self.L()):
+                if x >= xi and x < xj or isclose(x, self.L()):
 
-                    x = x - x1_mem
+                    x = x - xi
                     
                     # Add the load to the sub-member
                     new_sub_member.PtLoads.append([direction, P, x, case])
