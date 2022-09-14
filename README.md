@@ -12,6 +12,9 @@
 
 An easy to use elastic 3D structural engineering finite element analysis library for Python.
 
+# Installation
+The easiest way to install Pynite is with pip: `pip install PyNiteFEA`
+
 # Current Capabilities
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
