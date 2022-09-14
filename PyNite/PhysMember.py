@@ -117,7 +117,7 @@ class PhysMember(Member3D):
                     if x2_load < xj:
                         x2 = x2_load - xi
                     else:
-                        x2 = xj
+                        x2 = xj - xi
                         w2 = w(xj)
 
                     # Add the load to the sub-member

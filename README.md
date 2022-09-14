@@ -64,6 +64,9 @@ PyNite depends on the following packages:
 
 # What's New?
 
+v0.0.68
+* Bug fix for member distributed loads on physical members. Added a unit test to check for this error going forward. This bug only affected physical members (new as of v0.0.67) that had distributed loads and internal nodes.
+
 v0.0.67
 * Added physical members. Members now automatically detect internal nodes and subdivide themselves and their loads.
 * Refactoring: deprecated old method names for member results. You may now have some errors show up if you still try to get member results using the old method names.
