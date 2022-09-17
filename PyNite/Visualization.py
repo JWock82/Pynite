@@ -36,14 +36,6 @@ class Renderer():
         self.window = vtk.vtkRenderWindow()
         self.window.SetWindowName('PyNite - Simple Finite Element Analysis in Python')
         self.window.AddRenderer(self.renderer)
-        
-        # Set up the interactor. The interactor style determines how user
-        # interactions affect the view. The trackball camera style behaves much
-        # like popular commercial CAD programs.
-        self.interactor = vtk.vtkRenderWindowInteractor()
-        style = vtk.vtkInteractorStyleTrackballCamera()
-        self.interactor.SetInteractorStyle(style)
-        self.interactor.SetRenderWindow(self.window)
 
     @property
     def window_width(self):
@@ -117,14 +109,22 @@ class Renderer():
         # Render the window
         window.Render()
 
-        # Start the interactor. Code execution will pause here until the user closes the window.
+        # Handle user interaction if requested by the user
         if interact == True:
-
-            self.interactor.Start()
+        
+            # Set up an interactor. The interactor style determines how user interactions affect the
+            # view. The trackball camera style behaves much like popular commercial CAD programs.
+            interactor = vtk.vtkRenderWindowInteractor()
+            style = vtk.vtkInteractorStyleTrackballCamera()
+            interactor.SetInteractorStyle(style)
+            interactor.SetRenderWindow(self.window)
+            
+            # Start the interactor. Code execution will pause here until the user closes the window.
+            interactor.Start()
             
             # Finalize the render window once the user closes out of it. I don't understand everything
             # this does, but I've found screenshots will cause the program to crash if this line is
-            # omitted.
+            # omitted. I have noticed it will shut down the interactor.
             window.Finalize()
 
         # Return the window
@@ -144,7 +144,7 @@ class Renderer():
         interact : bool
             Suppresses interacting with the window if set to `False`. This can be used to capture a
             screenshot without pausing the program for the user to interact. Default is `True`.
-        reset_camera : bool
+        reset_camera : boolju
             Resets the camera if set to `True`. Default is `True`.
         """
 

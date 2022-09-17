@@ -5,6 +5,7 @@ MIT License
 Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
+import enum
 import unittest
 from PyNite import FEModel3D
 import math
@@ -20,14 +21,16 @@ class Test_AISC_Benchmark(unittest.TestCase):
     def setUp(self):
 
         # Suppress printed output temporarily
-        sys.stdout = StringIO()
+        # sys.stdout = StringIO()
+        pass
 
     def tearDown(self):
         
         # Reset the print function to normal
-        sys.stdout = sys.__stdout__
+        # sys.stdout = sys.__stdout__
+        pass
 
-    def test_AISC_Benchmark(self):
+    def test_AISC_benchmark_old(self):
 
         # Create the cantilever model
         cantilever = FEModel3D()
@@ -83,3 +86,69 @@ class Test_AISC_Benchmark(unittest.TestCase):
         # Compare the calculation results
         self.assertAlmostEqual(calculated_moment/Mmax, 1.0, 1)
         self.assertAlmostEqual(calculated_displacement/(ymax*12), 1.0, 1)
+    
+    def test_AISC_benchmark_case1(self):
+
+        column = FEModel3D()
+
+        column.add_node('N1', 0, 0, 0)
+        column.add_node('N2', 0, 28, 0)
+        
+        column.add_node('N3', 0, 28*1/4, 0)
+        column.add_node('N4', 0, 28*1/2, 0)
+        column.add_node('N5', 0, 28*3/4, 0)
+
+        column.def_support('N1', True, True, True, False, True, False)
+        column.def_support('N2', True, False, True, False, False, False)
+
+        E = 29000*12**2  # ksf
+        G = 11200*12**2  # ksf
+        Iy = 51.4/12**4  # ft^4
+        Iz = 484/12**4   # ft^4
+        A = 14.1/12**2   # in^2
+        J = 1.45/12**4   # in^4
+
+        column.add_member('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
+        
+        column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P1')
+        column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P2')
+        column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P3')
+        column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P4')
+
+        column.add_node_load('N2', 'FY', -150, 'P2')
+        column.add_node_load('N2', 'FY', -300, 'P3')
+        column.add_node_load('N2', 'FY', -450, 'P4')
+
+        column.add_load_combo('Combo 1', {'P1':1})
+        column.add_load_combo('Combo 2', {'P2':1})
+        column.add_load_combo('Combo 3', {'P3':1})
+        column.add_load_combo('Combo 4', {'P4':1})
+
+        # from PyNite.Visualization import Renderer
+        # renderer = Renderer(column)
+        # renderer.annotation_size = 1
+        # renderer.combo_name = 'Combo 2'
+        # renderer.render_model()
+
+        column.analyze_PDelta()
+
+        Mmid_calculated = []
+        dmid_calculated = []
+        for combo in column.LoadCombos.values():
+            Mmid_calculated.append(-column.Members['M1'].moment('Mz', 14, combo.name)*12)
+            dmid_calculated.append(-column.Members['M1'].deflection('dy', 14, combo.name)*12)
+
+        # Expected results per AISC
+        Mmid_expected = [235, 269, 313, 375]
+        dmid_expected = [0.197, 0.224, 0.261, 0.311]
+
+        # Check that results are within 1% of expected results
+        for i, val in enumerate(Mmid_calculated):
+            self.assertAlmostEqual(Mmid_calculated[i]/Mmid_expected[i], 1, 2)
+            self.assertAlmostEqual(dmid_calculated[i]/dmid_expected[i], 1, 2)
+
+        
+
+
+
+
