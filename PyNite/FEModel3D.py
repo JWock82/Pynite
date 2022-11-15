@@ -1172,8 +1172,7 @@ class FEModel3D():
         for node in self.Nodes.values():
             
             # Unknown displacement DX
-            if ((node.support_DX == False and node.EnforcedDX == None)
-            or  node.spring_DX[0] != None):
+            if node.support_DX==False and node.EnforcedDX == None:
                 D1_indices.append(node.ID*6 + 0)
             # Known displacement DX
             elif node.EnforcedDX != None:
@@ -1185,8 +1184,7 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement DY
-            if ((node.support_DY == False and node.EnforcedDY == None) 
-            or  node.spring_DY[0] != None):
+            if node.support_DY == False and node.EnforcedDY == None:
                 D1_indices.append(node.ID*6 + 1)
             # Known displacement DY
             elif node.EnforcedDY != None:
@@ -1198,8 +1196,7 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement DZ
-            if ((node.support_DZ == False and node.EnforcedDZ == None)
-            or  node.spring_DZ[0] != None):
+            if node.support_DZ == False and node.EnforcedDZ == None:
                 D1_indices.append(node.ID*6 + 2)
             # Known displacement DZ
             elif node.EnforcedDZ != None:
@@ -1211,8 +1208,7 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement RX
-            if ((node.support_RX == False and node.EnforcedRX == None)
-            or  node.spring_RX[0] != None):
+            if node.support_RX == False and node.EnforcedRX == None:
                 D1_indices.append(node.ID*6 + 3)
             # Known displacement RX
             elif node.EnforcedRX != None:
@@ -1224,8 +1220,7 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement RY
-            if ((node.support_RY == False and node.EnforcedRY == None)
-            or  node.spring_RY[0] != None):
+            if node.support_RY == False and node.EnforcedRY == None:
                 D1_indices.append(node.ID*6 + 4)
             # Known displacement RY
             elif node.EnforcedRY != None:
@@ -1237,8 +1232,7 @@ class FEModel3D():
                 D2.append(0.0)
 
             # Unknown displacement RZ
-            if ((node.support_RZ == False and node.EnforcedRZ == None)
-            or  node.spring_RZ[0] != None):
+            if node.support_RZ == False and node.EnforcedRZ == None:
                 D1_indices.append(node.ID*6 + 5)
             # Known displacement RZ
             elif node.EnforcedRZ != None:
