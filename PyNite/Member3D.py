@@ -10,9 +10,13 @@ import warnings
 
 # %%
 class Member3D():
-    '''
+    """
     A class representing a 3D frame element in a finite element model.
-    '''
+
+    Most users will not need to interface with this class directly. Rather, the physical member
+    class, which inherits from this class and stitches together a seires of colinear `Member3D`
+    objects will be more useful.
+    """
 
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows
     # us to defer importing it until it's actually needed.
@@ -21,9 +25,9 @@ class Member3D():
 #%%
     def __init__(self, name, i_node, j_node, E, G, Iy, Iz, J, A, model, auxNode=None,
                  tension_only=False, comp_only=False):
-        '''
+        """
         Initializes a new member.
-        '''
+        """
         self.name = name    # A unique name for the member given by the user
         self.ID = None      # Unique index number for the member assigned by the program
         self.i_node = i_node  # The element's i-node
@@ -59,16 +63,16 @@ class Member3D():
 
 #%%
     def L(self):
-        '''
+        """
         Returns the length of the member.
-        '''
+        """
 
         # Return the distance between the two nodes
         return self.i_node.distance(self.j_node)
 
 #%%
     def _aux_list(self):
-        '''
+        """
         Builds lists of unreleased and released degree of freedom indices for the member.
 
         Returns
@@ -77,7 +81,7 @@ class Member3D():
             A list of the indices for the unreleased DOFs
         R2_indices : list
             A list of the indices for the released DOFs
-        '''
+        """
 
         R1_indices = []
         R2_indices = []
@@ -91,9 +95,9 @@ class Member3D():
 
 #%%
     def k(self):
-        '''
+        """
         Returns the condensed (and expanded) local stiffness matrix for the member.
-        '''
+        """
 
         # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
@@ -117,9 +121,9 @@ class Member3D():
 
 #%%
     def _k_unc(self):
-        '''
+        """
         Returns the uncondensed local stiffness matrix for the member.
-        '''
+        """
 
         # Get the properties needed to form the local stiffness matrix
         E = self.E
@@ -149,14 +153,14 @@ class Member3D():
 
 #%%
     def kg(self, P=0):
-        '''
+        """
         Returns the condensed (expanded) local geometric stiffness matrix for the member.
 
         Parameters
         ----------
         P : number, optional
             The axial force acting on the member (compression = +, tension = -)
-        '''
+        """
 
         # Get the properties needed to form the local geometric stiffness matrix
         Ip = self.Iy + self.Iz
@@ -205,14 +209,14 @@ class Member3D():
     
 #%%
     def fer(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the condensed (and expanded) local fixed end reaction vector for the member for the given load combination.
 
         Parameters
         ----------
         combo : LoadCombo
             The load combination to construct the fixed end reaction vector for.
-        '''
+        """
         
         # Get the lists of unreleased and released degree of freedom indices
         R1_indices, R2_indices = self._aux_list()
@@ -238,10 +242,10 @@ class Member3D():
     
 #%%
     def _fer_unc(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the member's local fixed end reaction vector, ignoring the effects of end releases.
         Needed to apply the slope-deflection equation properly.
-        '''
+        """
         
         # Initialize the fixed end reaction vector
         fer = zeros((12,1))
@@ -317,9 +321,9 @@ class Member3D():
 
 #%%
     def _partition(self, unp_matrix):
-        '''
+        """
         Partitions a matrix into sub-matrices based on unreleased and released degree of freedom indices.
-        '''
+        """
 
         # Create auxiliary lists of released/unreleased DOFs
         R1_indices, R2_indices = self._aux_list()
@@ -338,14 +342,14 @@ class Member3D():
 
 #%%   
     def f(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the member's local end force vector for the given load combination.
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to calculate the local end force vector for (not the load combination itself).
-        '''
+        """
         
         # Calculate and return the member's local end force vector
         if self.model.solution == 'P-Delta':
@@ -372,9 +376,9 @@ class Member3D():
 #%%  
     # Transformation matrix
     def T(self):
-        '''
+        """
         Returns the transformation matrix for the member.
-        '''
+        """
 
         x1 = self.i_node.X
         x2 = self.j_node.X
@@ -487,9 +491,9 @@ class Member3D():
 
 #%%
     def F(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the member's global end force vector for the given load combination.
-        '''
+        """
         
         # Calculate and return the global force vector
         return matmul(inv(self.T()), self.f(combo_name))
@@ -497,14 +501,14 @@ class Member3D():
 #%% 
     # Global fixed end reaction vector
     def FER(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the global fixed end reaction vector
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to calculate the fixed end reaction vector for (not the load combination itself).
-        '''
+        """
         
         # Calculate and return the fixed end reaction vector
         return matmul(inv(self.T()), self.fer(combo_name))
@@ -678,7 +682,7 @@ class Member3D():
     
 #%%
     def plot_shear(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Plots the shear diagram for the member
         
         Parameters
@@ -687,7 +691,7 @@ class Member3D():
             The direction to plot the shear for.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -857,7 +861,7 @@ class Member3D():
 
 #%%
     def plot_moment(self, Direction, combo_name='Combo 1'):
-        '''
+        """
         Plots the moment diagram for the member
         
         Parameters
@@ -866,7 +870,7 @@ class Member3D():
             The direction to plot the moment for.
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -926,14 +930,14 @@ class Member3D():
 
 #%%
     def max_torque(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the maximum torsional moment in the member.
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -978,14 +982,14 @@ class Member3D():
 
 #%%
     def plot_torque(self, combo_name='Combo 1'):
-        '''
+        """
         Plots the axial force diagram for the member.
         
         Paramters
         ---------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1044,14 +1048,14 @@ class Member3D():
 
 #%%
     def max_axial(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the maximum axial force in the member
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1070,14 +1074,14 @@ class Member3D():
     
 #%%
     def min_axial(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the minimum axial force in the member.
         
         Paramters
         ---------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1096,14 +1100,14 @@ class Member3D():
     
 #%%
     def plot_axial(self, combo_name='Combo 1'):
-        '''
+        """
         Plots the axial force diagram for the member.
         
         Parameters
         ----------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
-        '''
+        """
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
