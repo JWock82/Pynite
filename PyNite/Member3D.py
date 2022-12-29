@@ -5,10 +5,9 @@ from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
 from PyNite.BeamSegY import BeamSegY
 import PyNite.FixedEndReactions
-from PyNite.LoadCombo import LoadCombo
 import warnings
 
-# %%
+#%%
 class Member3D():
     """
     A class representing a 3D frame element in a finite element model.

@@ -8,6 +8,7 @@ from numpy import seterr
 from numpy.linalg import solve
 
 from PyNite.Node3D import Node3D
+from PyNite.Material import Material
 from PyNite.PhysMember import PhysMember
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
@@ -25,19 +26,21 @@ class FEModel3D():
         Creates a new 3D finite element model.
         """
         
-        self.Nodes = {}      # A dictionary of the structure's nodes
-        self.AuxNodes = {}   # A dictionary of the structure's auxiliary nodes
-        self.Springs = {}    # A dictionary of the structure's springs
-        self.Members = {}    # A dictionary of the structure's physical members
-        self.Quads = {}      # A dictionary of the structure's quadiralterals
-        
-        self.Plates = {}     # A dictionary of the structure's rectangular
+        self.Nodes = {}      # A dictionary of the model's nodes
+        self.AuxNodes = {}   # A dictionary of the model's auxiliary nodes
+
+        self.Materials = {}  # A dictionary of the model's materials
+
+        self.Springs = {}    # A dictionary of the model's springs
+        self.Members = {}    # A dictionary of the model's physical members
+        self.Quads = {}      # A dictionary of the model's quadiralterals
+        self.Plates = {}     # A dictionary of the model's rectangular
                              # plates
         
-        self._D = {}         # A dictionary of the structure's nodal
+        self._D = {}         # A dictionary of the model's nodal
                              # displacements by load combination
                              
-        self.LoadCombos = {} # A dictionary of the structure's load
+        self.LoadCombos = {} # A dictionary of the model's load
                              # combinations
         
         self.solution = None  # Indicates the solution type for the latest run of the model
@@ -186,6 +189,24 @@ class FEModel3D():
         
         #Return the node name
         return name 
+
+    def add_material(self, name, E, G, nu, rho):
+        """
+        Adds a new material to the model.
+
+        Parameters
+        ----------
+        name : string
+            A unique user-defined name for the material
+        E : number
+            The modulus of elasticity of the material
+        G : number
+            The shear modulus of elasticity of the material
+        nu : number
+            Poisson's ratio of the material
+        rho : number
+            The density of the material
+        """
 
     def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
         """
