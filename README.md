@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/JWock82/PyNite/raw/master/Resources/website_logo_solid_background.png" width=40% align="center"/>
+  <img src="https://github.com/JWock82/PyNite/raw/master/Resources/Full//Logo//No//Buffer.png" width=40% align="center"/>
   <br>
   <h1>Simple Finite Element Analysis in Python</h1>
 </div>
