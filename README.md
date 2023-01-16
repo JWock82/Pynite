@@ -75,6 +75,8 @@ Here's a list of projects that run on PyNite:
 
 v0.0.69
 * Bug fix for rotational springs. Exceptions were being thrown due to an inconsistent variable name.
+* Cleared out old branches from the repository that were no longer being used.
+* Updated CI to check against python 3.10 and 3.11. Removed CI for python 3.6 as it's no longer supported by the latest version of github actions.
 * Subtle changes to the logo to make it look a little more "pythonic".
 * Bug fix for rendering screenshots. The ability to interact with the render window was being disabled after the first screenshot had been taken, forcing subsequent screenshots to use the same view as the first one.
 
