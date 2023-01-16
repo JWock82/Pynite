@@ -65,6 +65,12 @@ PyNite depends on the following packages:
 * jupyterlab: Only needed if you want to view the derivations used to build PyNite.
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
+# Example Projects
+Here's a list of projects that run on PyNite:
+
+* Building Code (https://building-code.herokuapp.com/) - This one is my personal side project.
+* Standard Solver (https://www.standardsolver.com/)
+
 # What's New?
 
 v0.0.69
@@ -104,9 +110,3 @@ v0.0.62
 * Added a method called `rename` to the `FEModel3D` class for quickly renaming all the nodes and elements in the model in sequential order.
 * Added a `last_node` and `last_element` attribute to the `mesh` class. These methods can be used to get the name of the last node or element in a mesh.
 * Improved the reliability of the `add_mesh` method. It now can handle adding meshes containing node and element names already defined in the model. It automatically resolves the duplicate names.
-
-# Example Projects
-Here's a list of projects that run on PyNite:
-
-* Building Code (https://building-code.herokuapp.com/) - This one is my personal side project.
-* Standard Solver (https://www.standardsolver.com/)
