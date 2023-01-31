@@ -741,7 +741,7 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
-        L = self.L
+        L = self.L()
         x_arr = linspace(0, L, n_points)
         y_arr = array(
             [self.shear(Direction, x, combo_name) for x in x_arr]
@@ -947,7 +947,7 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
-        L = self.L
+        L = self.L()
         x_arr = linspace(0, L, n_points)
         y_arr = array(
             [self.moment(Direction, x, combo_name) for x in x_arr]
@@ -1087,7 +1087,7 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
-        L = self.L
+        L = self.L()
         x_arr = linspace(0, L, n_points)
         y_arr = array(
             [self.torque(x, combo_name) for x in x_arr]
@@ -1225,7 +1225,7 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
-        L = self.L
+        L = self.L()
         x_arr = linspace(0, L, n_points)
         y_arr = array(
             [self.axial(x, combo_name) for x in x_arr]
@@ -1415,7 +1415,7 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
-        L = self.L
+        L = self.L()
         x_arr = linspace(0, L, n_points)
         y_arr = array(
             [self.deflection(Direction, x, combo_name) for x in x_arr]
@@ -1439,13 +1439,12 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
         """
-
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
         
-        d = self.d(self.model.LoadCombos[combo_name])
+        d = self.d(combo_name)
         dyi = d[1,0]
         dyj = d[7,0]
         dzi = d[2,0]
@@ -1536,7 +1535,7 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
-        L = self.L
+        L = self.L()
         x_arr = linspace(0, L, n_points)
         y_arr = array(
             [self.rel_deflection(Direction, x, combo_name) for x in x_arr]
