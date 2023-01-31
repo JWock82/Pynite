@@ -1076,7 +1076,7 @@ class Member3D():
         Parameters
         ----------
         Direction : string
-            The direction to plot the shear for.
+            The direction to plot the torque for.
         n_points: int
             The number of points in the array to generate over the full length of the member.
         combo_name : string
