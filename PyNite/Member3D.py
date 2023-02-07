@@ -1,5 +1,5 @@
 # %%
-from numpy import array, zeros, matrix, add, subtract, matmul, insert, cross, divide
+from numpy import array, zeros, matrix, add, subtract, matmul, insert, cross, divide, linspace
 from numpy.linalg import inv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
@@ -680,16 +680,20 @@ class Member3D():
         return Vmin
     
 #%%
-    def plot_shear(self, Direction, combo_name='Combo 1'):
+    def plot_shear(self, Direction, combo_name='Combo 1', n_points=20):
         """
         Plots the shear diagram for the member
         
         Parameters
         ----------
         Direction : string
-            The direction to plot the shear for.
+            The direction in which to find the moment. Must be one of the following:
+                'Fy' = Shear acting on the local y-axis.
+                'Fz' = Shear acting on the local z-axis.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
+        n_points: int
+            The number of points used to generate the plot
         """
         
         # Segment the member if necessary
@@ -706,13 +710,7 @@ class Member3D():
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        x = []
-        V = []
-        
-        # Calculate the shear diagram
-        for i in range(21):
-            x.append(self.L()/20*i)
-            V.append(self.shear(Direction, self.L()/20*i, combo_name))
+        x, V = self.shear_array(Direction, n_points, combo_name)
 
         Member3D.__plt.plot(x, V)
         Member3D.__plt.ylabel('Shear')
@@ -720,6 +718,36 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()    
         
+
+    def shear_array(self, Direction, n_points: int, combo_name='Combo 1'):
+        """
+        Returns the array of the shear in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction to plot the shear for. Must be one of the following:
+                'Fy' = Shear acting on the local y-axis.
+                'Fz' = Shear acting on the local z-axis.
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        
+        # Segment the member if necessary
+        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+            self._segment_member(combo_name)
+            self.__solved_combo = self.model.LoadCombos[combo_name]
+
+        L = self.L()
+        x_arr = linspace(0, L, n_points)
+        y_arr = array(
+            [self.shear(Direction, x, combo_name) for x in x_arr]
+        )
+        return array([x_arr, y_arr])
+
+
 #%%
     def moment(self, Direction, x, combo_name='Combo 1'):
         """
@@ -859,16 +887,20 @@ class Member3D():
         return Mmin
 
 #%%
-    def plot_moment(self, Direction, combo_name='Combo 1'):
+    def plot_moment(self, Direction, combo_name='Combo 1', n_points=20):
         """
         Plots the moment diagram for the member
         
         Parameters
         ----------
         Direction : string
-            The direction to plot the moment for.
+            The direction in which to plot the moment. Must be one of the following:
+                'My' = Moment about the local y-axis.
+                'Mz' = moment about the local z-axis.
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
+        n_points: int
+            The number of points used to generate the plot
         """
         
         # Segment the member if necessary
@@ -885,20 +917,41 @@ class Member3D():
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        x = []
-        M = []
-        
-        # Calculate the moment diagram
-        for i in range(21):
-            
-            x.append(self.L()/20*i)
-            M.append(self.moment(Direction, self.L()/20*i, combo_name))
+        x, M = self.moment_array(Direction, n_points, combo_name)
 
         Member3D.__plt.plot(x, M)
         Member3D.__plt.ylabel('Moment')
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
+
+
+    def moment_array(self, Direction, n_points, combo_name='Combo 1'):
+        """
+        Returns the array of the moment in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the moment. Must be one of the following:
+                'My' = Moment about the local y-axis.
+                'Mz' = moment about the local z-axis.
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        # Segment the member if necessary
+        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+            self._segment_member(combo_name)
+            self.__solved_combo = self.model.LoadCombos[combo_name]
+
+        L = self.L()
+        x_arr = linspace(0, L, n_points)
+        y_arr = array(
+            [self.moment(Direction, x, combo_name) for x in x_arr]
+        )
+        return array([x_arr, y_arr])
        
 #%%
     def torque(self, x, combo_name='Combo 1'):
@@ -980,14 +1033,16 @@ class Member3D():
         return Tmin
 
 #%%
-    def plot_torque(self, combo_name='Combo 1'):
+    def plot_torque(self, combo_name='Combo 1', n_points=20):
         """
-        Plots the axial force diagram for the member.
+        Plots the torque diagram for the member.
         
         Paramters
         ---------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
+        n_points: int
+            The number of points used to generate the plot
         """
         
         # Segment the member if necessary
@@ -1004,19 +1059,39 @@ class Member3D():
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        x = []
-        T = []
-        
-        # Calculate the torsional moment diagram
-        for i in range(21):
-            x.append(self.L()/20*i)
-            T.append(self.Torsion(self.L()/20*i, combo_name))
+        x, T = self.torque_array(n_points, combo_name)
 
         Member3D.__plt.plot(x, T)
         Member3D.__plt.ylabel('Torsional Moment (Warping Torsion Not Included)') # Torsion results are for pure torsion. Torsional warping has not been considered
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
-        Member3D.__plt.show()   
+        Member3D.__plt.show()
+
+
+    def torque_array(self, n_points, combo_name='Combo 1'):
+        """
+        Returns the array of the torque in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction to plot the torque for.
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        # Segment the member if necessary
+        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+            self._segment_member(combo_name)
+            self.__solved_combo = self.model.LoadCombos[combo_name]
+
+        L = self.L()
+        x_arr = linspace(0, L, n_points)
+        y_arr = array(
+            [self.torque(x, combo_name) for x in x_arr]
+        )
+        return array([x_arr, y_arr])
         
 #%%
     def axial(self, x, combo_name='Combo 1'):
@@ -1098,7 +1173,7 @@ class Member3D():
         return Pmin
     
 #%%
-    def plot_axial(self, combo_name='Combo 1'):
+    def plot_axial(self, combo_name='Combo 1', n_points=20):
         """
         Plots the axial force diagram for the member.
         
@@ -1106,6 +1181,8 @@ class Member3D():
         ----------
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
+        n_points: int
+            The number of points used to generate the plot
         """
         
         # Segment the member if necessary
@@ -1122,19 +1199,37 @@ class Member3D():
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        x = []
-        P = []
-        
-        # Calculate the axial force diagram
-        for i in range(21):
-            x.append(self.L()/20*i)
-            P.append(self.axial(self.L()/20*i, combo_name))
+        x, P = self.axial_array(n_points, combo_name)
 
         Member3D.__plt.plot(x, P)
         Member3D.__plt.ylabel('Axial Force')
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()    
+
+
+    def axial_array(self, n_points, combo_name='Combo 1'):
+        """
+        Returns the array of the axial force in the member for the given direction
+        
+        Parameters
+        ----------
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        # Segment the member if necessary
+        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+            self._segment_member(combo_name)
+            self.__solved_combo = self.model.LoadCombos[combo_name]
+
+        L = self.L()
+        x_arr = linspace(0, L, n_points)
+        y_arr = array(
+            [self.axial(x, combo_name) for x in x_arr]
+        )
+        return array([x_arr, y_arr])
                         
 #%%
     def deflection(self, Direction, x, combo_name='Combo 1'):
@@ -1261,7 +1356,7 @@ class Member3D():
         return dmin
               
 #%%
-    def plot_deflection(self, Direction, combo_name='Combo 1'):
+    def plot_deflection(self, Direction, combo_name='Combo 1', n_points=20):
         """
         Plots the deflection diagram for the member
         
@@ -1271,6 +1366,8 @@ class Member3D():
             The direction in which to plot the deflection.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
+        n_points: int
+            The number of points used to generate the plot
         """
         
         # Segment the member if necessary
@@ -1287,20 +1384,43 @@ class Member3D():
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        x = []
-        d = []
-        
-        # Calculate the deflection diagram
-        for i in range(21):
-            
-            x.append(self.L()/20*i)
-            d.append(self.deflection(Direction, self.L()/20*i, combo_name))
+        x, d = self.deflection_array(Direction, n_points, combo_name)
 
         Member3D.__plt.plot(x, d)
         Member3D.__plt.ylabel('Deflection')
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
+
+
+    def deflection_array(self, Direction, n_points, combo_name='Combo 1'):
+        """
+        Returns the array of the deflection in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the deflection. Must be one of the following:
+                'dx' = Deflection in the local x-axis.
+                'dy' = Deflection in the local y-axis.
+                'dz' = Deflection in the local z-axis.
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        # Segment the member if necessary
+        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+            self._segment_member(combo_name)
+            self.__solved_combo = self.model.LoadCombos[combo_name]
+
+        L = self.L()
+        x_arr = linspace(0, L, n_points)
+        y_arr = array(
+            [self.deflection(Direction, x, combo_name) for x in x_arr]
+        )
+        return array([x_arr, y_arr])
+
     
 #%%
     def rel_deflection(self, Direction, x, combo_name='Combo 1'):
@@ -1312,19 +1432,18 @@ class Member3D():
         Direction : string
             The direction in which to find the relative deflection. Must be one of the following:
                 'dy' = Deflection in the local y-axis
-                'dz' = Deflection in the local x-axis
+                'dz' = Deflection in the local z-axis
         x : number
             The location at which to find the relative deflection
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
         """
-
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
         
-        d = self.d(self.model.LoadCombos[combo_name])
+        d = self.d(combo_name)
         dyi = d[1,0]
         dyj = d[7,0]
         dzi = d[2,0]
@@ -1360,7 +1479,7 @@ class Member3D():
                 return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
 
 #%%
-    def plot_rel_deflection(self, Direction, combo_name='Combo 1'):
+    def plot_rel_deflection(self, Direction, combo_name='Combo 1', n_points=20):
         """
         Plots the deflection diagram for the member
         
@@ -1386,20 +1505,41 @@ class Member3D():
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        x = []
-        d_relative = []
-        
-        # Calculate the relative deflection diagram
-        for i in range(21):
-            
-            x.append(self.L()/20*i)
-            d_relative.append(self.RelativeDeflection(Direction, self.L()/20*i, combo_name))
+        x, d_relative = self.rel_deflection_array(Direction, n_points, combo_name)
 
         Member3D.__plt.plot(x, d_relative)
         Member3D.__plt.ylabel('Relative Deflection')
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
-        Member3D.__plt.show()   
+        Member3D.__plt.show()
+
+
+    def rel_deflection_array(self, Direction, n_points, combo_name='Combo 1'):
+        """
+        Returns the array of the relative deflection in the member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to find the relative deflection. Must be one of the following:
+                'dy' = Deflection in the local y-axis
+                'dz' = Deflection in the local z-axis
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        """
+        # Segment the member if necessary
+        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+            self._segment_member(combo_name)
+            self.__solved_combo = self.model.LoadCombos[combo_name]
+
+        L = self.L()
+        x_arr = linspace(0, L, n_points)
+        y_arr = array(
+            [self.rel_deflection(Direction, x, combo_name) for x in x_arr]
+        )
+        return array([x_arr, y_arr])
         
 #%%
     def _segment_member(self, combo_name='Combo 1'):

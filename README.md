@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/JWock82/PyNite/raw/master/Resources/website_logo_solid_background.png" width=40% align="center"/>
+  <img src="https://github.com/JWock82/PyNite/raw/master/Resources/Full Logo No Buffer.png" width=40% align="center"/>
   <br>
   <h1>Simple Finite Element Analysis in Python</h1>
 </div>
@@ -65,9 +65,20 @@ PyNite depends on the following packages:
 * jupyterlab: Only needed if you want to view the derivations used to build PyNite.
 * sympy: Only needed if you want to view the derivations used to build PyNite.
 
+# Example Projects
+Here's a list of projects that run on PyNite:
+
+* Building Code (https://building-code.herokuapp.com/) - This one is my personal side project.
+* Standard Solver (https://www.standardsolver.com/)
+* Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
+
 # What's New?
 
 v0.0.69
+* Bug fix for rotational springs. Exceptions were being thrown due to an inconsistent variable name.
+* Cleared out old branches from the repository that were no longer being used.
+* Updated CI to check against python 3.10 and 3.11. Removed CI for python 3.6 as it's no longer supported by the latest version of github actions.
+* Subtle changes to the logo to make it look a little more "pythonic".
 * Bug fix for rendering screenshots. The ability to interact with the render window was being disabled after the first screenshot had been taken, forcing subsequent screenshots to use the same view as the first one.
 
 v0.0.68
@@ -103,9 +114,3 @@ v0.0.62
 * Added a method called `rename` to the `FEModel3D` class for quickly renaming all the nodes and elements in the model in sequential order.
 * Added a `last_node` and `last_element` attribute to the `mesh` class. These methods can be used to get the name of the last node or element in a mesh.
 * Improved the reliability of the `add_mesh` method. It now can handle adding meshes containing node and element names already defined in the model. It automatically resolves the duplicate names.
-
-# Example Projects
-Here's a list of projects that run on PyNite:
-
-* Building Code (https://building-code.herokuapp.com/) - This one is my personal side project.
-* Standard Solver (https://www.standardsolver.com/)
