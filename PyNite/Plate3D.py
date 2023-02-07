@@ -59,7 +59,7 @@ class Plate3D():
             self.E = self.model.Materials(material).E
             self.nu = self.model.Materials(material).nu
         except:
-            raise KeyError('Please define the material ' + material + ' before assigning it to plates.')
+            raise KeyError('Please define the material ' + str(material) + ' before assigning it to plates.')
     
     def width(self):
         """

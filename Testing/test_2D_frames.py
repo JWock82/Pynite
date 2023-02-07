@@ -23,11 +23,13 @@ class Test_2D_Frame(unittest.TestCase):
         sys.stdout = sys.__stdout__
 
     def test_XY_gravity_load(self):
+        
         # A First Course in the Finite Element Method, 4th Edition
         # Daryl L. Logan
         # Problem 5.30
         # Units for this model are kips and inches
         frame = FEModel3D()
+
         # Define the nodes
         frame.add_node('N1', 0, 0, 0)
         frame.add_node('N2', 0, 30*12, 0)
@@ -35,26 +37,32 @@ class Test_2D_Frame(unittest.TestCase):
         frame.add_node('N4', 35*12, 40*12, 0)
         frame.add_node('N5', 50*12, 30*12, 0)
         frame.add_node('N6', 50*12, 0, 0)
+
         # Define the supports
         frame.def_support('N1', True, True, True, True, True, True)
         frame.def_support('N6', True, True, True, True, True, True)
+
+        # Define materials
+        frame.add_material('Steel', 30000, 250, 0.5, 490/1000/12**3)
+
         # Create members (all members will have the same properties in this example)
         J = 250
         Iy = 250
         Iz = 200
-        E = 30000
-        G = 250
         A = 12
-        frame.add_member('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-        frame.add_member('M2', 'N2', 'N3', E, G, Iy, Iz, J, A)
-        frame.add_member('M3', 'N3', 'N4', E, G, Iy, Iz, J, A)
-        frame.add_member('M4', 'N4', 'N5', E, G, Iy, Iz, J, A)
-        frame.add_member('M5', 'N5', 'N6', E, G, Iy, Iz, J, A)
+        frame.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M2', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M3', 'N3', 'N4', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M4', 'N4', 'N5', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M5', 'N5', 'N6', 'Steel', Iy, Iz, J, A)
+
         # Add nodal loads
         frame.add_node_load('N3', 'FY', -30)
         frame.add_node_load('N4', 'FY', -30)
+
         # Analyze the model
         frame.analyze()
+
         # subTest context manager prints which portion fails, if any
         correct_values = [('N1', {'RxnFX': 11.6877,
                                   'RxnFY': 30,
@@ -62,6 +70,7 @@ class Test_2D_Frame(unittest.TestCase):
                           ('N6', {'RxnFX': -11.6877,
                                   'RxnFY': 30,
                                   'RxnMZ': 1810.0745})]
+
         for name, values in correct_values:
             with self.subTest(node=name):
                 node = frame.Nodes[name]
