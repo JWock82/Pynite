@@ -736,7 +736,7 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
+        # Segment the member into segments with mathematically continuous loads if not already done
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
@@ -747,7 +747,6 @@ class Member3D():
             [self.shear(Direction, x, combo_name) for x in x_arr]
         )
         return array([x_arr, y_arr])
-
 
 #%%
     def moment(self, Direction, x, combo_name='Combo 1'):
@@ -1068,7 +1067,6 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
 
-
     def torque_array(self, n_points, combo_name='Combo 1'):
         """
         Returns the array of the torque in the member for the given direction
@@ -1094,7 +1092,6 @@ class Member3D():
         )
         return array([x_arr, y_arr])
         
-#%%
     def axial(self, x, combo_name='Combo 1'):
         """
         Returns the axial force at a point along the member's length.
@@ -1121,7 +1118,6 @@ class Member3D():
                 lastIndex = len(self.SegmentsZ) - 1
                 return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
 
-#%%
     def max_axial(self, combo_name='Combo 1'):
         """
         Returns the maximum axial force in the member
@@ -1147,7 +1143,6 @@ class Member3D():
         
         return Pmax
     
-#%%
     def min_axial(self, combo_name='Combo 1'):
         """
         Returns the minimum axial force in the member.
@@ -1173,7 +1168,6 @@ class Member3D():
         
         return Pmin
     
-#%%
     def plot_axial(self, combo_name='Combo 1', n_points=20):
         """
         Plots the axial force diagram for the member.
@@ -1208,7 +1202,6 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()    
 
-
     def axial_array(self, n_points, combo_name='Combo 1'):
         """
         Returns the array of the axial force in the member for the given direction
@@ -1232,7 +1225,6 @@ class Member3D():
         )
         return array([x_arr, y_arr])
                         
-#%%
     def deflection(self, Direction, x, combo_name='Combo 1'):
         """
         Returns the deflection at a point along the member's length.
@@ -1296,7 +1288,6 @@ class Member3D():
                 lastIndex = len(self.SegmentsY) - 1
                 return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1) 
 
-#%%
     def max_deflection(self, Direction, combo_name='Combo 1'):
         """
         Returns the maximum deflection in the member.
@@ -1326,7 +1317,6 @@ class Member3D():
         # Return the largest value
         return dmax
     
-#%%
     def min_deflection(self, Direction, combo_name='Combo 1'):
         """
         Returns the minimum deflection in the member.
@@ -1356,7 +1346,6 @@ class Member3D():
         # Return the smallest value
         return dmin
               
-#%%
     def plot_deflection(self, Direction, combo_name='Combo 1', n_points=20):
         """
         Plots the deflection diagram for the member
@@ -1393,7 +1382,6 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
 
-
     def deflection_array(self, Direction, n_points, combo_name='Combo 1'):
         """
         Returns the array of the deflection in the member for the given direction
@@ -1422,8 +1410,6 @@ class Member3D():
         )
         return array([x_arr, y_arr])
 
-    
-#%%
     def rel_deflection(self, Direction, x, combo_name='Combo 1'):
         """
         Returns the relative deflection at a point along the member's length
@@ -1479,7 +1465,6 @@ class Member3D():
                 lastIndex = len(self.SegmentsY) - 1
                 return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
 
-#%%
     def plot_rel_deflection(self, Direction, combo_name='Combo 1', n_points=20):
         """
         Plots the deflection diagram for the member
@@ -1514,7 +1499,6 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
 
-
     def rel_deflection_array(self, Direction, n_points, combo_name='Combo 1'):
         """
         Returns the array of the relative deflection in the member for the given direction
@@ -1542,7 +1526,6 @@ class Member3D():
         )
         return array([x_arr, y_arr])
         
-#%%
     def _segment_member(self, combo_name='Combo 1'):
         """
         Divides the element up into mathematically continuous segments along each axis
