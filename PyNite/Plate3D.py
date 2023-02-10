@@ -1,4 +1,4 @@
-from numpy import zeros, matrix, array, matmul, cross, add
+from numpy import zeros, array, matmul, cross, add
 from numpy.linalg import inv, norm, det
 from PyNite.LoadCombo import LoadCombo
 
@@ -519,7 +519,7 @@ class Plate3D():
         yn = ym
 
         # Calculate the [C] coefficient matrix
-        C = matrix([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
+        C = array([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
                     [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
                     [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
                     
@@ -567,7 +567,7 @@ class Plate3D():
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
         # Return the plate bending constants
-        return inv(self._C())*d
+        return inv(self._C()) @ d
 
     def moment(self, x, y, combo_name='Combo 1'):
         """
@@ -611,19 +611,19 @@ class Plate3D():
         a = self._a(combo_name)
 
         # Calculate the derivatives of the plate moments needed to compute shears
-        dMx_dx = (Db*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+        dMx_dx = (Db*array([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
                              [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
                              [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[0]
 
-        dMxy_dy = (Db*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+        dMxy_dy = (Db*array([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
                               [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
                               [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[2]
         
-        dMy_dy = (Db*matrix([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+        dMy_dy = (Db*array([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
                              [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
                              [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]])*a)[1]
 
-        dMxy_dx = (Db*matrix([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+        dMxy_dx = (Db*array([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
                               [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
                               [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]])*a)[2]
         
@@ -632,7 +632,7 @@ class Plate3D():
         Qy = (dMy_dy + dMxy_dx)[0, 0]
 
         # Return internal shears
-        return matrix([[Qx], 
+        return array([[Qx], 
                        [Qy]])
 
     def membrane(self, x, y, combo_name='Combo 1'):

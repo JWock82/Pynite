@@ -1,5 +1,5 @@
 # %%
-from numpy import array, zeros, matrix, add, subtract, matmul, insert, cross, divide, linspace
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace
 from numpy.linalg import inv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
@@ -135,7 +135,7 @@ class Member3D():
         L = self.L()
         
         # Create the uncondensed local stiffness matrix
-        k = matrix([[A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0],
+        k = array([[A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0],
                     [0,      12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2,  0,      -12*E*Iz/L**3, 0,             0,      0,            6*E*Iz/L**2],
                     [0,      0,             12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0,            0,      0,             -12*E*Iy/L**3, 0,      -6*E*Iy/L**2, 0],
                     [0,      0,             0,             G*J/L,  0,            0,            0,      0,             0,             -G*J/L, 0,            0],
@@ -168,7 +168,7 @@ class Member3D():
         L = self.L()
         
         # Create the uncondensed local geometric stiffness matrix
-        kg = matrix([[0, 0,    0,     0,     0,         0,         0, 0,     0,    0,     0,         0],
+        kg = array([[0, 0,    0,     0,     0,         0,         0, 0,     0,    0,     0,         0],
                      [0, 6/5,  0,     0,     0,         L/10,      0, -6/5,  0,    0,     0,         L/10],
                      [0, 0,    6/5,   0,     -L/10,     0,         0, 0,     -6/5, 0,     -L/10,     0],
                      [0, 0,    0,     Ip/A,  0,         0,         0, 0,     0,    -Ip/A, 0,         0],
@@ -464,7 +464,7 @@ class Member3D():
                 y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
 
         # Create the direction cosines matrix
-        dirCos = matrix([x, y, z])
+        dirCos = array([x, y, z])
       
         # Build the transformation matrix
         transMatrix = zeros((12, 12))
