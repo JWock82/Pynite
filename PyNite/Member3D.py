@@ -31,8 +31,9 @@ class Member3D():
         self.ID = None        # Unique index number for the member assigned by the program
         self.i_node = i_node  # The element's i-node
         self.j_node = j_node  # The element's j-node
-        self.E = material.E   # The modulus of elasticity of the element
-        self.G = material.G   # The shear modulus of the element
+        self.material = material  # The element's material
+        self.E = model.Materials[material].E   # The modulus of elasticity of the element
+        self.G = model.Materials[material].G   # The shear modulus of the element
         self.Iy = Iy          # The y-axis moment of inertia
         self.Iz = Iz          # The z-axis moment of inertia
         self.J = J            # The torsional constant

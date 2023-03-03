@@ -56,8 +56,8 @@ class Plate3D():
 
         # Get material properties for the plate from the model
         try:
-            self.E = self.model.Materials(material).E
-            self.nu = self.model.Materials(material).nu
+            self.E = self.model.Materials[material].E
+            self.nu = self.model.Materials[material].nu
         except:
             raise KeyError('Please define the material ' + str(material) + ' before assigning it to plates.')
     

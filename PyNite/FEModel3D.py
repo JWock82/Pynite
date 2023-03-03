@@ -15,6 +15,7 @@ from PyNite.Member3D import Member3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
+from PyNite.Mesh import RectangleMesh, AnnulusMesh
 # %%
 class FEModel3D():
     """
@@ -36,6 +37,7 @@ class FEModel3D():
         self.Quads = {}      # A dictionary of the model's quadiralterals
         self.Plates = {}     # A dictionary of the model's rectangular
                              # plates
+        self.Meshes = {}     # A dictionary of the model's meshes
         
         self._D = {}         # A dictionary of the model's nodal
                              # displacements by load combination
@@ -208,6 +210,27 @@ class FEModel3D():
             The density of the material
         """
 
+        # Name the material or check it doesn't already exist
+        if name:
+            if name in self.Materials:
+                raise NameError(f"Material name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "M" + str(len(self.Materials))
+            count = 1
+            while name in self.Materials: 
+                name = "M" + str(len(self.Materials) + count)
+                count += 1
+                
+        # Create a new material
+        new_material = Material(name, E, G, nu, rho)
+        
+        # Add the new material to the list
+        self.Materials[name] = new_material
+        
+        # Flag the model as unsolved
+        self.solution = None
+
     def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
         """
         Adds a new spring to the model.
@@ -256,7 +279,7 @@ class FEModel3D():
                               ks, self.LoadCombos, tension_only=tension_only,
                               comp_only=comp_only)
         
-        # Add the new member to the list
+        # Add the new spring to the list
         self.Springs[name] = new_spring
         
         # Flag the model as unsolved
@@ -265,7 +288,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
+    def add_member(self, name, i_node, j_node, material, Iy, Iz, J, A, auxNode=None,
                    tension_only=False, comp_only=False):
         '''
         Adds a new physical member to the model. The member name will be returned.
@@ -278,10 +301,8 @@ class FEModel3D():
             The name of the i-node (start node).
         j_node : string
             The name of the j-node (end node).
-        E : number
-            The modulus of elasticity of the member.
-        G : number
-            The shear modulus of the member.
+        material : string
+            The name of the material of the member.
         Iy : number
             The moment of inertia of the member about its local y-axis.
         Iz : number
@@ -313,10 +334,10 @@ class FEModel3D():
                 
         # Create a new member
         if auxNode == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], E, G, Iy, Iz, J,
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J,
                                     A, model=self, tension_only=tension_only, comp_only=comp_only)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], E, G, Iy, Iz, J,
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J,
                                     A, self.GetAuxNode(auxNode), model=self,
                                     tension_only=tension_only, comp_only=comp_only)
         
@@ -441,6 +462,140 @@ class FEModel3D():
         
         # Add the new member to the list
         self.Quads[name] = newQuad
+
+        # Flag the model as unsolved
+        self.solution = None
+        
+        #Return the quad name
+        return name
+
+    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1, 
+            ky_mod=1, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None,
+            element_type='Quad'):
+        """
+        Adds a rectangular mesh of elements to the model.
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the mesh.
+        width : number
+            The overall width of the mesh measured along its local
+            x-axis.
+        height : number
+            The overall height of the mesh measured along its local
+            y-axis.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for in-plane stiffness in the
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for in-plane stiffness in the
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the regtangular mesh's local coordinate
+            system. The default is [0, 0, 0].
+        plane : string, optional
+            The plane the mesh will be parallel to. Options are 'XY',
+            'YZ', and 'XZ'. The default is 'XY'.
+        x_control : list, optional
+            A list of control points along the mesh's local x-axis work
+            into the mesh.
+        y_control : list, optional
+            A list of control points along the mesh's local y-axis work
+            into the mesh.
+        element_type : string, optional
+            The type of element to make the mesh out of. Either 'Quad'
+            or 'Rect'. The default is 'Quad'.
+        """
+        
+        # Name the mesh or check it doesn't already exist
+        if name:
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "MSH" + str(len(self.Meshes))
+            count = 1
+            while name in self.Meshes: 
+                name = "MSH" + str(len(self.Meshes) + count)
+                count += 1
+        
+        # Create a new rectangle mesh
+        start_node = 'N' + str(len(self.Nodes.values()))
+        if element_type == 'Rect':
+            start_element = 'R' + str(len(self.Plates.values()))
+        else:
+            start_element = 'Q' + str(len(self.Quads.values()))
+        new_mesh = RectangleMesh(mesh_size, width, height, thickness, material, self, kx_mod,
+                                 ky_mod, origin, plane, x_control, y_control, start_node,
+                                 start_element, element_type=element_type)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
+
+        # Flag the model as unsolved
+        self.solution = None
+        
+        #Return the quad name
+        return name
+    
+    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1, 
+            ky_mod=1, origin=[0, 0, 0], axis='Y', element_type='Quad'):
+        """
+        Adds a mesh of quadrilaterals forming an annulus (a donut).
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the mesh.
+        mesh_size : number
+            The target mesh size
+        outer_radius : number
+            The radius to the outside of the annulus.
+        inner_radius : number
+            The radius to the inside of the annulus.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for radial stiffness in the
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for meridional stiffness in the
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the mesh. The default is [0, 0, 0].
+        axis : string, optional
+            The global axis about which the mesh will be generated. The default is 'Y'.
+        """
+        
+        # Name the mesh or check it doesn't already exist
+        if name:
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "MSH" + str(len(self.Meshes))
+            count = 1
+            while name in self.Meshes: 
+                name = "MSH" + str(len(self.Meshes) + count)
+                count += 1
+        
+        # Create a new rectangle mesh
+        start_node = 'N' + str(len(self.Nodes.values()))
+        start_element = 'Q' + str(len(self.Quads.values()))
+        new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material, self,
+                               kx_mod, ky_mod, origin, axis, start_node, start_element)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
 
         # Flag the model as unsolved
         self.solution = None
@@ -1903,6 +2058,11 @@ class FEModel3D():
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
         
+        # Generate all meshes
+        for mesh in self.Meshes.values():
+            if mesh.generated == False:
+                mesh.generate()
+
         # Activate all springs and members for all load combinations
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
@@ -2158,6 +2318,11 @@ class FEModel3D():
         if self.LoadCombos == {}:
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
+                
+        # Generate all meshes
+        for mesh in self.Meshes.values():
+            if mesh.generated == False:
+                mesh.generate()
         
         # Activate all springs for all load combinations
         for spring in self.Springs.values():
@@ -2315,10 +2480,14 @@ class FEModel3D():
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
-
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
-    
+                
+        # Generate all meshes
+        for mesh in self.Meshes.values():
+            if mesh.generated == False:
+                mesh.generate()
+        
         # Activate all springs for all load combinations. They can be turned inactive
         # during the course of the tension/compression-only analysis
         for spring in self.Springs.values():

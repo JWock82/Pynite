@@ -23,7 +23,8 @@ class Test_Unstable(unittest.TestCase):
         # Reset the print function to normal
         sys.stdout = sys.__stdout__
         
-    def test_unstable_supports(self):    
+    def test_unstable_supports(self):
+
         # This test checks the PyNite's ability to detect unstable support conditions
         # Units used in this test are inches, and kips
         MomentFrame = FEModel3D()
@@ -34,14 +35,17 @@ class Test_Unstable(unittest.TestCase):
         MomentFrame.add_node("N3", 15*12, 12*12, 0)
         MomentFrame.add_node("N4", 15*12, 0*12, 0)
 
+        # Add a material
+        MomentFrame.add_material('Steel', 29000, 11400, 0.5, 490/1000/12**3)
+
         # Add columns with the following properties:
-        # E = 29000 ksi, G = 11400 ksi, Iy = 100 in^4, Iz = 150 in^4, J = 250 in^4, A = 10 in^2
-        MomentFrame.add_member("M1", "N1", "N2", 29000, 11400, 100, 150, 250, 10)
-        MomentFrame.add_member("M2", "N4", "N3", 29000, 11400, 100, 150, 250, 10)
+        # Iy = 100 in^4, Iz = 150 in^4, J = 250 in^4, A = 10 in^2
+        MomentFrame.add_member("M1", "N1", "N2", 'Steel', 100, 150, 250, 10)
+        MomentFrame.add_member("M2", "N4", "N3", 'Steel', 100, 150, 250, 10)
 
         # Add a beam with the following properties:
-        # E = 29000 ksi, G = 11400 ksi, Iy = 100 in^4, Iz = 250 in^4, J = 250 in^4, A = 15 in^2
-        MomentFrame.add_member("M3", "N2", "N3", 29000, 11400, 100, 250, 250, 15)
+        # Iy = 100 in^4, Iz = 250 in^4, J = 250 in^4, A = 15 in^2
+        MomentFrame.add_member("M3", "N2", "N3", 'Steel', 100, 250, 250, 15)
 
         # Pin the ends of the columns
         MomentFrame.def_releases('M1', Dzi=True)
