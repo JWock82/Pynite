@@ -73,6 +73,8 @@ Here's a list of projects that run on PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.70
+* Array output of member force diagrams and displacement diagrams has been added.
 
 v0.0.69
 * Bug fix for rotational springs. Exceptions were being thrown due to an inconsistent variable name.
@@ -108,9 +110,3 @@ v0.0.65
 v0.0.63 thru v0.0.64
 * Fixed the `add_mesh` method. It was not working properly after version 0.0.62.
 * Made stability checks optional. Stability checks add significant solve time. If you are confident your model is stable, you can skip the stability check by toggling `check_stability` to `False` in your call to your analysis command.
-
-v0.0.62
-* PyNite now checks for nodal instabilities when analyzing a model. If nodal instabilities are found, PyNite will output the unstable nodes and directions to the console, and will throw an exception.
-* Added a method called `rename` to the `FEModel3D` class for quickly renaming all the nodes and elements in the model in sequential order.
-* Added a `last_node` and `last_element` attribute to the `mesh` class. These methods can be used to get the name of the last node or element in a mesh.
-* Improved the reliability of the `add_mesh` method. It now can handle adding meshes containing node and element names already defined in the model. It automatically resolves the duplicate names.
