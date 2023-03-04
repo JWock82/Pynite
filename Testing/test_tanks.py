@@ -127,14 +127,12 @@ class Test_Tanks(unittest.TestCase):
         mesh_size = 2       # Desired mesh size (ft)
         center = [0, 0, 0]  # Origin (X, Y, Z)
         axis = 'Y'          # Axis of revolution
-        n_o = 'N1'          # Start node ID
-        e_o = 'Q1'          # Start element ID
 
-
-        tank_mesh = CylinderMesh(mesh_size, R, H, t, 'Concrete', 1, 1, center, axis, n_o, e_o,
-                                 element_type='Rect')
-                                 
-        tank_model.add_mesh(tank_mesh)
+        # Add a cylinder mesh to the model
+        tank_model.add_cylinder_mesh('MSH1', mesh_size, R, H, t, 'Concrete', 1, 1, center, axis, element_type='Rect')
+        
+        # Generate the mesh prior to running so we can work with it
+        tank_model.Meshes['MSH1'].generate()
 
         # Add hydrostatic loads to the elements
         for element in tank_model.Plates.values():

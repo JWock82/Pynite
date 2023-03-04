@@ -15,7 +15,7 @@ from PyNite.Member3D import Member3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
-from PyNite.Mesh import RectangleMesh, AnnulusMesh
+from PyNite.Mesh import RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
 # %%
 class FEModel3D():
     """
@@ -541,7 +541,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
         
-        #Return the quad name
+        #Return the mesh's name
         return name
     
     def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1, 
@@ -600,7 +600,135 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
         
-        #Return the quad name
+        #Return the mesh's name
+        return name
+
+    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,
+                          material, kx_mod=1, ky_mod=1, origin=[0, 0, 0], axis='Y'):
+        """
+        Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by
+        a horizontal plane).
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the mesh.
+        mesh_size : number
+            The target mesh size
+        large_radius : number
+            The larger of the two end radii.
+        small_radius : number
+            The smaller of the two end radii.
+        height : number
+            The height of the frustrum.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for radial stiffness in each
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for meridional stiffness in each
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the mesh. The default is [0, 0, 0].
+        axis : string, optional
+            The global axis about which the mesh will be generated. The default is 'Y'.
+        """
+        
+        # Name the mesh or check it doesn't already exist
+        if name:
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "MSH" + str(len(self.Meshes))
+            count = 1
+            while name in self.Meshes: 
+                name = "MSH" + str(len(self.Meshes) + count)
+                count += 1
+        
+        # Create a new rectangle mesh
+        start_node = 'N' + str(len(self.Nodes.values()))
+        start_element = 'Q' + str(len(self.Quads.values()))
+        new_mesh = AnnulusMesh(mesh_size, large_radius, small_radius, thickness, material, self,
+                               kx_mod, ky_mod, origin, axis, start_node, start_element)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
+
+        # Flag the model as unsolved
+        self.solution = None
+        
+        #Return the mesh's name
+        return name
+    
+    def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material, kx_mod=1,
+                          ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None,
+                          element_type='Quad'):
+        """
+        Adds a mesh of elements forming a cylinder.
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the mesh.
+        mesh_size : number
+            The target mesh size
+        radius : number
+            The radius of the cylinder.
+        height : number
+            The height of the cylinder.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for hoop stiffness in each
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for meridional stiffness in each
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the mesh. The default is [0, 0, 0].
+        axis : string, optional
+            The global axis about which the mesh will be generated. The default is 'Y'.
+        num_elements : number
+            The number of elements to use to form the perimeter of each course. This is typically
+            only used if you are trying to match the nodes to another mesh's nodes. If set to
+            `None` the program will automatically calculate the number of elements to use based on
+            the mesh size. The default is None.
+        """
+        
+        # Name the mesh or check it doesn't already exist
+        if name:
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "MSH" + str(len(self.Meshes))
+            count = 1
+            while name in self.Meshes: 
+                name = "MSH" + str(len(self.Meshes) + count)
+                count += 1
+        
+        # Create a new cylinder mesh
+        start_node = 'N' + str(len(self.Nodes.values()))
+        start_element = 'Q' + str(len(self.Quads.values()))
+        new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material, self,
+                               kx_mod, ky_mod, origin, axis, start_node, start_element,
+                               num_elements, element_type)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
+
+        # Flag the model as unsolved
+        self.solution = None
+        
+        #Return the mesh's name
         return name
 
     def add_mesh(self, mesh, rename=True):

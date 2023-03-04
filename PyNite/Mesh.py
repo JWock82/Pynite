@@ -1085,7 +1085,7 @@ class AnnulusTransRingMesh(Mesh):
 #%%
 class FrustrumMesh(AnnulusMesh):
     """
-    A mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane at the top and bottom).
+    A mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
     """
 
     def __init__(self, mesh_size, large_radius, small_radius, height, thickness, material, model, kx_mod=1, ky_mod=1,
@@ -1158,9 +1158,8 @@ class CylinderMesh(Mesh):
     """
 
     def __init__(self, mesh_size, radius, height, thickness, material, model, kx_mod=1, ky_mod=1,
-                 center=[0, 0, 0],
-                 axis='Y', start_node='N1', start_element='Q1', num_elements=None,
-                 element_type='Quad'):
+                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1',
+                 num_elements=None, element_type='Quad'):
 
         super().__init__(thickness, material, model, kx_mod, ky_mod, start_node, start_element)
 
@@ -1173,7 +1172,7 @@ class CylinderMesh(Mesh):
         else:
             self.num_elements = num_elements
         
-        self.center = center
+        self.origin = origin
         self.axis = axis
 
         self.element_type = element_type
@@ -1191,7 +1190,7 @@ class CylinderMesh(Mesh):
 
         radius = self.radius
         h = self.h
-        y = self.center[1]
+        y = self.origin[1]
         n = int(self.start_node[1:])
         q = int(self.start_element[1:])
 
