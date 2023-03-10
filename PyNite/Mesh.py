@@ -690,32 +690,26 @@ class AnnulusMesh(Mesh):
 
         super().__init__(thickness, material, model, kx_mod, ky_mod, start_node, start_element)
 
-        self.r1 = inner_radius
-        self.r2 = outer_radius
+        self.inner_radius = inner_radius
+        self.outer_radius = outer_radius
         self.mesh_size = mesh_size
         self.origin = origin
         self.axis = axis
 
         self.num_quads_inner = None
         self.num_quads_outer = None
-
-        self.generate()
+        
+        # self.generate()
     
     def generate(self):
         
-        thickness = self.thickness
-        E = self.E
-        nu = self.nu
-        kx_mod = self.kx_mod
-        ky_mod = self.ky_mod
-
         mesh_size = self.mesh_size
-        r_outer = self.r2
-        r_inner = self.r1
+        r_outer = self.outer_radius
+        r_inner = self.inner_radius
         n = int(self.start_node[1:])
         q = int(self.start_element[1:])
 
-        circumf = 2*pi*r_inner                                 # Circumference of the ring at the inner radius
+        circumf = 2*pi*r_inner           # Circumference of the ring at the inner radius
         n_circ = int(circumf/mesh_size)  # Number of times `mesh_size` fits in the circumference
         self.num_quads_outer = n_circ
 
@@ -737,14 +731,14 @@ class AnnulusMesh(Mesh):
         
             # Create a mesh of nodes for the ring
             if transition == True:
-                ring = AnnulusTransRingMesh(r_inner + h_rad, r_inner, n_circ, thickness, E, nu, kx_mod, ky_mod,
+                ring = AnnulusTransRingMesh(r_inner + h_rad, r_inner, n_circ, self.thickness, self.material, self.model, self.kx_mod, self.ky_mod,
                                             self.origin, self.axis, 'N' + str(n), 'Q' + str(q))
                 n += 3*n_circ
                 q += 4*n_circ
                 n_circ *= 3
                 self.num_quads_outer = n_circ
             else:
-                ring = AnnulusRingMesh(r_inner + h_rad, r_inner, n_circ, thickness, E, nu, kx_mod, ky_mod, self.origin,
+                ring = AnnulusRingMesh(r_inner + h_rad, r_inner, n_circ, self.thickness, self.material, self.model, self.kx_mod, self.ky_mod, self.origin,
                                        self.axis, 'N' + str(n), 'Q' + str(q))
                 n += n_circ
                 q += n_circ
@@ -793,8 +787,8 @@ class AnnulusRingMesh(Mesh):
         super().__init__(thickness, material, model, kx_mod, ky_mod, start_node=start_node,
                          start_element=start_element)
 
-        self.r1 = inner_radius
-        self.r2 = outer_radius
+        self.inner_radius = inner_radius
+        self.outer_radius = outer_radius
         self.n = num_quads
         self.Xo = origin[0]
         self.Yo = origin[1]
@@ -809,8 +803,8 @@ class AnnulusRingMesh(Mesh):
 
         n = self.n  # Number of plates in the initial ring
 
-        r1 = self.r1  # The inner radius of the ring
-        r2 = self.r2  # The outer radius of the ring
+        inner_radius = self.inner_radius  # The inner radius of the ring
+        outer_radius = self.outer_radius  # The outer radius of the ring
 
         Xo = self.Xo  # Global X-coordinate of the center of the ring
         Yo = self.Yo  # Global Y-coordinate of the center of the ring
@@ -837,16 +831,16 @@ class AnnulusRingMesh(Mesh):
             if i <= n:
                 angle = theta*(i - 1)
                 if axis == 'Y':
-                    x = Xo + r1*cos(angle)
+                    x = Xo + inner_radius*cos(angle)
                     y = Yo
-                    z = Zo + r1*sin(angle)
+                    z = Zo + inner_radius*sin(angle)
                 elif axis == 'X':
                     x = Xo
-                    y = Yo + r1*sin(angle)
-                    z = Zo + r1*cos(angle)
+                    y = Yo + inner_radius*sin(angle)
+                    z = Zo + inner_radius*cos(angle)
                 elif axis == 'Z':
-                    x = Xo + r1*sin(angle)
-                    y = Yo + r1*cos(angle)
+                    x = Xo + inner_radius*sin(angle)
+                    y = Yo + inner_radius*cos(angle)
                     z = Zo
                 else:
                     raise Exception('Invalid axis specified for AnnulusRingMesh.')
@@ -855,16 +849,16 @@ class AnnulusRingMesh(Mesh):
             else:
                 angle = theta*((i - n) - 1)
                 if axis == 'Y':
-                    x = Xo + r2*cos(angle)
+                    x = Xo + outer_radius*cos(angle)
                     y = Yo 
-                    z = Zo + r2*sin(angle)
+                    z = Zo + outer_radius*sin(angle)
                 elif axis == 'X':
                     x = Xo
-                    y = Yo + r2*sin(angle)
-                    z = Zo + r2*cos(angle)
+                    y = Yo + outer_radius*sin(angle)
+                    z = Zo + outer_radius*cos(angle)
                 elif axis == 'Z':
-                    x = Xo + r2*sin(angle)
-                    y = Yo + r2*cos(angle)
+                    x = Xo + outer_radius*sin(angle)
+                    y = Yo + outer_radius*cos(angle)
                     z = Zo
                 else:
                     raise Exception('Invalid axis specified for AnnulusRingMesh.')
@@ -925,8 +919,8 @@ class AnnulusTransRingMesh(Mesh):
         super().__init__(thickness, material, model, kx_mod, ky_mod, start_node=start_node,
                          start_element=start_element)
 
-        self.r1 = inner_radius
-        self.r2 = (inner_radius + outer_radius)/2
+        self.inner_radius = inner_radius
+        self.outer_radius = (inner_radius + outer_radius)/2
         self.r3 = outer_radius
         self.n = num_inner_quads
         self.Xo = origin[0]
@@ -941,8 +935,8 @@ class AnnulusTransRingMesh(Mesh):
 
         n = self.n  # Number of plates in the outside of the ring (coarse mesh)
 
-        r1 = self.r1  # The inner radius of the ring
-        r2 = self.r2  # The center radius of the ring
+        inner_radius = self.inner_radius  # The inner radius of the ring
+        outer_radius = self.outer_radius  # The center radius of the ring
         r3 = self.r3  # The outer radius of the ring
 
         Xo = self.Xo  # Global X-coordinate of the center of the ring
@@ -972,16 +966,16 @@ class AnnulusTransRingMesh(Mesh):
             if i <= n:
                 angle = theta1*(i - 1)
                 if axis == 'Y':
-                    x = Xo + r1*cos(angle)
+                    x = Xo + inner_radius*cos(angle)
                     y = Yo
-                    z = Zo + r1*sin(angle)
+                    z = Zo + inner_radius*sin(angle)
                 elif axis == 'X':
                     x = Xo
-                    y = Yo + r1*sin(angle)
-                    z = Zo + r1*cos(angle)
+                    y = Yo + inner_radius*sin(angle)
+                    z = Zo + inner_radius*cos(angle)
                 elif axis == 'Z':
-                    x = Xo + r1*sin(angle)
-                    y = Yo + r1*cos(angle)
+                    x = Xo + inner_radius*sin(angle)
+                    y = Yo + inner_radius*cos(angle)
                     z = Zo
                 else:
                     raise Exception('Invalid axis specified for AnnulusTransRingMesh.')
@@ -995,16 +989,16 @@ class AnnulusTransRingMesh(Mesh):
                 else:
                     angle += 2*theta2
                 if axis == 'Y':
-                    x = Xo + r2*cos(angle)
+                    x = Xo + outer_radius*cos(angle)
                     y = Yo 
-                    z = Zo + r2*sin(angle)
+                    z = Zo + outer_radius*sin(angle)
                 elif axis == 'X':
                     x = Xo
-                    y = Yo + r2*sin(angle)
-                    z = Zo + r2*cos(angle)
+                    y = Yo + outer_radius*sin(angle)
+                    z = Zo + outer_radius*cos(angle)
                 elif axis == 'Z':
-                    x = Xo + r2*sin(angle)
-                    y = Yo + r2*cos(angle)
+                    x = Xo + outer_radius*sin(angle)
+                    y = Yo + outer_radius*cos(angle)
                     z = Zo
             # Generate the outer radius of nodes
             else:
@@ -1094,10 +1088,16 @@ class FrustrumMesh(AnnulusMesh):
         # Create an annulus mesh
         super().__init__(mesh_size, large_radius, small_radius, thickness, material, model, kx_mod,
                          ky_mod, origin, axis, start_node, start_element)
+        
+        self.height = height
+    
+    def generate(self):
 
-        Xo = origin[0]
-        Yo = origin[1]
-        Zo = origin[2]
+        super().generate()
+        
+        Xo = self.origin[0]
+        Yo = self.origin[1]  # Not used
+        Zo = self.origin[2]
 
         # Adjust the cooridnates of each node to make a frustrum
         for node in self.nodes.values():
@@ -1105,12 +1105,12 @@ class FrustrumMesh(AnnulusMesh):
             Y = node.Y
             Z = node.Z
             r = ((X - Xo)**2 + (Z - Zo)**2)**0.5
-            if axis == 'Y':
-                node.Y += (r - large_radius)/(large_radius - small_radius)*height
-            elif axis == 'X':
-                node.X += (r - large_radius)/(large_radius - small_radius)*height
-            elif axis == 'Z':
-                node.Z += (r - large_radius)/(large_radius - small_radius)*height
+            if self.axis == 'Y':
+                node.Y += (r - self.outer_radius)/(self.outer_radius - self.inner_radius)*self.height
+            elif self.axis == 'X':
+                node.X += (r - self.outer_radius)/(self.outer_radius - self.inner_radius)*self.height
+            elif self.axis == 'Z':
+                node.Z += (r - self.outer_radius)/(self.outer_radius - self.inner_radius)*self.height
             else:
                 raise Exception('Invalid axis specified for frustrum mesh.')
 
@@ -1209,13 +1209,13 @@ class CylinderMesh(Mesh):
         
             # Create a mesh of nodes for the ring
             if self.axis == 'Y':
-                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, 1, 1, [0, y, 0],
+                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [0, y, 0],
                                         self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'X':
-                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, 1, 1, [y, 0, 0],
+                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [y, 0, 0],
                                         self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'Z':
-                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, 1, 1, [0, 0, y],
+                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [0, 0, y],
                                         self.axis, 'N' + str(n), 'Q' + str(q), element_type)
 
             n += num_elements

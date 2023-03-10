@@ -653,8 +653,8 @@ class FEModel3D():
         # Create a new rectangle mesh
         start_node = 'N' + str(len(self.Nodes.values()))
         start_element = 'Q' + str(len(self.Quads.values()))
-        new_mesh = AnnulusMesh(mesh_size, large_radius, small_radius, thickness, material, self,
-                               kx_mod, ky_mod, origin, axis, start_node, start_element)
+        new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material,
+                                self, kx_mod, ky_mod, origin, axis, start_node, start_element)
 
         # Add the new mesh to the `Meshes` dictionary
         self.Meshes[name] = new_mesh
