@@ -396,10 +396,11 @@ class FEModel3D():
                 count += 1
         
         # Create a new plate
-        newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, material, kx_mod, ky_mod, self.LoadCombos)
+        new_plate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
+                           self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
         
         # Add the new plate to the list
-        self.Plates[name] = newPlate
+        self.Plates[name] = new_plate
 
         # Flag the model as unsolved
         self.solution = None
@@ -454,10 +455,11 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newQuad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, material, kx_mod, ky_mod, self.LoadCombos)
+        new_quad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
+                         self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
         
         # Add the new member to the list
-        self.Quads[name] = newQuad
+        self.Quads[name] = new_quad
 
         # Flag the model as unsolved
         self.solution = None
