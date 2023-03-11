@@ -33,9 +33,12 @@ for i in range(num_nodes):
         # Spring supports at all other locations
         boef.def_support_spring('N' + str(i + 1), 'DY', ks, '-')
 
-# Define member material properties (W8x35)
+# Define member material properties
 E = 29000   # ksi
 G = 11200   # ksi
+boef.add_material('Steel', E, G, 0.3, 490/1000/12**3)
+
+# Define section properties (W8x35)
 A = 10.3    # in^2
 Iz = 127    # in^4 (strong axis)
 Iy = 42.6   # in^4 (weak axis)
