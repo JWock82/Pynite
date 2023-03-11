@@ -44,12 +44,17 @@ class TestMemberInternalResults(unittest.TestCase):
         J = 400/12**4
         Iy = 200/12**4
         Iz = 200/12**4
-        E = 29000*144
-        G = 11200*144
         A = 12/12**2
 
+        # Define a material
+        E = 29000*144  # ksf
+        G = 11200*144  # ksf
+        nu = 0.3
+        rho = 0.490  # pcf
+        beam.add_material('Steel', E, G, nu, rho)
+
         # Create the beam
-        beam.add_member('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
+        beam.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
 
         # Add a mid-span node
         beam.add_node('N3', 5, 0, 0)

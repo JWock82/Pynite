@@ -35,13 +35,18 @@ class Test_AISC_Benchmark(unittest.TestCase):
         # Create the cantilever model
         cantilever = FEModel3D()
 
-        # Define the column and its properties
+        # Define the column and its section properties
         L = 20 # ft
         H = 5 # kips lateral load
         P = 100 # kips axial load
+        I = 100/12**4 # moment of inertia (ft^4)
+
+        # Define a material
         G = 11200*12**2 # shear modulus (ksf)
         E = 29000*12**2 # modulus of elasticity (ksf)
-        I = 100/12**4 # moment of inertia (ft^4)
+        nu = 0.3
+        rho = 0.490  # kcf
+        cantilever.add_material('Steel', E, G, nu, rho)
 
         # Add nodes along the length of the column to capture P-little-delta effects
         num_nodes = 6
@@ -50,7 +55,7 @@ class Test_AISC_Benchmark(unittest.TestCase):
             cantilever.add_node('N' + str(i+1), 0, i*L/(num_nodes - 1), 0)
         
         # Add the member
-        cantilever.add_member('M1', 'N1', 'N6', E, G, I, I, 200/12**4, 10/12**2)
+        cantilever.add_member('M1', 'N1', 'N6', 'Steel', I, I, 200/12**4, 10/12**2)
 
         # Add a fixed support at the base of the column
         cantilever.def_support('N1', True, True, True, True, True, True)
@@ -101,14 +106,20 @@ class Test_AISC_Benchmark(unittest.TestCase):
         column.def_support('N1', True, True, True, False, True, False)
         column.def_support('N2', True, False, True, False, False, False)
 
+        # Define a material
         E = 29000*12**2  # ksf
         G = 11200*12**2  # ksf
+        nu = 0.3
+        rho = 0.490  # kcf
+        column.add_material('Steel', E, G, nu, rho)
+
+        # Define section properties
         Iy = 51.4/12**4  # ft^4
         Iz = 484/12**4   # ft^4
         A = 14.1/12**2   # in^2
         J = 1.45/12**4   # in^4
 
-        column.add_member('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
+        column.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
         
         column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P1')
         column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P2')

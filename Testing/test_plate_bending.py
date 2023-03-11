@@ -83,21 +83,28 @@ class Test_Plates(unittest.TestCase):
 
     def test_hydrostatic_plate(self):
 
-        # Establish problem parameters
+        # Create the model
+        plate_model = FEModel3D()
+
+        # Define geometry
         t = 1  # ft
-        E = 57000*math.sqrt(4500)*12**2  # psf
-        nu = 1/6
         mesh_size = 1  # ft
         a = 10  # ft
         b = 15  # ft
+
+        # Define a material
+        E = 57000*math.sqrt(4500)*12**2  # psf
+        G = 0.4*E  # psf
+        nu = 1/6
+        rho = 150  # psf
+        plate_model.add_material('Concrete', E, G, nu, rho)
         
         # Generate the mesh of plates
-        plate_mesh = RectangleMesh(mesh_size, a, b, t, E, nu, kx_mod=1, ky_mod=1, element_type='Rect')
-        plate_mesh.generate()
-
-        # Create the model and add the plates
-        plate_model = FEModel3D()
-        plate_model.add_mesh(plate_mesh)
+        plate_model.add_rectangle_mesh('MSH1', mesh_size, a, b, t, 'Concrete', kx_mod=1, ky_mod=1,
+                                       element_type='Rect')
+        
+        # Generate the mesh
+        plate_model.Meshes['MSH1'].generate()
 
         # Add supports to the sides and base of the wall
         for node in plate_model.Nodes.values():
@@ -130,42 +137,46 @@ class Test_Plates(unittest.TestCase):
     
     def test_hydrostatic_quad(self):
 
-        # Establish problem parameters
+        # Create the model
+        quad_model = FEModel3D()
+
+        # Define geometry
         t = 1  # ft
-        E = 57000*math.sqrt(4500)*12**2  # psf
-        nu = 1/6
         mesh_size = 1  # ft
         a = 10  # ft
         b = 15  # ft
-        
-        # Generate the mesh of plates
-        plate_mesh = RectangleMesh(mesh_size, a, b, t, E, nu, kx_mod=1, ky_mod=1,
-                                   element_type='Quad')
-        plate_mesh.generate()
 
-        # Create the model and add the plates
-        plate_model = FEModel3D()
-        plate_model.add_mesh(plate_mesh)
+        # Define a material
+        E = 57000*math.sqrt(4500)*12**2  # psf
+        G = 0.4*E  # psf
+        nu = 1/6
+        rho = 150  # psf
+        quad_model.add_material('Concrete', E, G, nu, rho)
+        
+        # Generate the mesh of quads
+        quad_model.add_rectangle_mesh('MSH1', mesh_size, a, b, t, 'Concrete', kx_mod=1, ky_mod=1,
+                                      element_type='Quad')
+        quad_model.Meshes['MSH1'].generate()
 
         # Add supports to the sides and base of the wall
-        for node in plate_model.Nodes.values():
+        for node in quad_model.Nodes.values():
             if node.X == 0 or node.X == a or node.Y == 0:
-                plate_model.def_support(node.name, True, True, True, True, True, True)
+                quad_model.def_support(node.name, True, True, True, True, True, True)
         
         # Add hydrostatic loads to the elements
-        for element in plate_model.Quads.values():
+        for element in quad_model.Quads.values():
             Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
-            plate_model.add_quad_surface_pressure(element.name, p, 'Hydrostatic')
+            quad_model.add_quad_surface_pressure(element.name, p, 'Hydrostatic')
         
         # Add a load combination to the model
-        plate_model.add_load_combo('F', {'Hydrostatic': 1.0})
+        quad_model.add_load_combo('F', {'Hydrostatic': 1.0})
         
         # Analyze the model
-        plate_model.analyze()
+        quad_model.analyze()
 
         # Get the maximum deflection in the model at the top of the wall
-        DZ_calcd = max([node.DZ['F'] for node in plate_model.Nodes.values() if node.Y == b])
+        DZ_calcd = max([node.DZ['F'] for node in quad_model.Nodes.values() if node.Y == b])
         
         # Find the maximum deflection at the top of the wall from Timoshenko's Table 45
         q = 62.4*b
