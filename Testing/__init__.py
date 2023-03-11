@@ -17,7 +17,7 @@ test_suite = unittest.TestLoader().discover("Testing", pattern='test_*.py')
 # and send the proper exit code.
 result = unittest.TextTestRunner().run(test_suite)
 
-# Send the proper exit code for Travis-CI to read
+# Send the proper exit code for GitHub Actions CI to read
 if result.wasSuccessful():
     exit(0)
 else:
