@@ -44,9 +44,10 @@ class Test_Spring_Supports(unittest.TestCase):
             else:
                 boef.def_support_spring('N' + str(i + 1), 'DY', 22.5, '-')
 
-        # Define member material properties
-        E = 29000   # ksi
-        G = 11200   # ksi
+        # Define a material
+        boef.add_material('Steel', 29000, 11200, 0.3, 490/1000/12**3)
+
+        # Define section properties
         A = 10.3    # in^2
         Iz = 128.5  # in^4 (strong axis)
         Iy = 42.6   # in^4 (weak axis)
@@ -56,7 +57,7 @@ class Test_Spring_Supports(unittest.TestCase):
         for i in range(16):
 
             # Add the members
-            boef.add_member('M' + str(i + 1), 'N' + str(i + 1), 'N' + str(i + 2), E, G, Iy, Iz, J, A)
+            boef.add_member('M' + str(i + 1), 'N' + str(i + 1), 'N' + str(i + 2), 'Steel', Iy, Iz, J, A)
         
         # Add a point load at midspan
         boef.add_node_load('N9', 'FY', -40)

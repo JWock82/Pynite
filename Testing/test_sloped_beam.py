@@ -38,16 +38,17 @@ class Test_2D_Frame(unittest.TestCase):
         beam.def_support('N1', True, True, True, True, True, True)
         beam.def_support('N2', True, True, True, True, True, True)
 
+        # Define a material
+        beam.add_material('Steel', 29000*144, 11200*144, 0.3, 490/1000)
+
         # Define beam section proerties
         J = 400/12**4
         Iy = 200/12**4
         Iz = 200/12**4
-        E = 29000*144
-        G = 11200*144
         A = 12/12**2
 
         # Create the beam
-        beam.add_member('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
+        beam.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
         
         # Hinge the ends of the beam
         beam.def_releases('M1', False, False, False, False, True, True, False, False, False, False, True, True)

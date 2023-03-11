@@ -26,9 +26,13 @@ class TestShearWalls(unittest.TestCase):
 
         sw = FEModel3D()
 
+        # Add a material
         E = 57000*(4000)**0.5/1000*12**2
         nu = 0.17
         G = E/(2*(1 + nu))
+        sw.add_material('Concrete', E, G, nu, 0.150)
+
+        # Define section properties
         t = 1
         L = 10
         H = 20
@@ -36,10 +40,8 @@ class TestShearWalls(unittest.TestCase):
         I = t*L**3/12
 
         mesh_size = 1
-        mesh = RectangleMesh(mesh_size, L, H, t, E, nu, element_type='Quad')
-        mesh.generate()
-
-        sw.add_mesh(mesh)
+        sw.add_rectangle_mesh('MSH1', mesh_size, L, H, t, 'Concrete', element_type='Quad')
+        sw.Meshes['MSH1'].generate()
 
         V = 1000
         for node in sw.Nodes.values():
@@ -63,9 +65,13 @@ class TestShearWalls(unittest.TestCase):
 
         sw = FEModel3D()
 
+        # Add a material
         E = 57000*(4000)**0.5/1000*12**2
         nu = 0.17
         G = E/(2*(1 + nu))
+        sw.add_material('Concrete', E, G, nu, 0.150)
+
+        # Define section properties
         t = 1
         L = 10
         H = 20
@@ -73,10 +79,8 @@ class TestShearWalls(unittest.TestCase):
         I = t*L**3/12
 
         mesh_size = 1
-        mesh = RectangleMesh(mesh_size, L, H, t, E, nu, element_type='Rect')
-        mesh.generate()
-
-        sw.add_mesh(mesh)
+        sw.add_rectangle_mesh('MSH1', mesh_size, L, H, t, 'Concrete', element_type='Rect')
+        sw.Meshes['MSH1'].generate()
 
         V = 1000
         for node in sw.Nodes.values():
@@ -100,9 +104,13 @@ class TestShearWalls(unittest.TestCase):
 
         sw = FEModel3D()
 
+        # Define a material
         E = 57000*(4000)**0.5/1000*12**2
         nu = 0.17
         G = E/(2*(1 + nu))
+        sw.add_material('Concrete', E, G, nu, 0.150)
+
+        # Define geometry and section properties
         t = 1
         L = 10
         H = 20
@@ -110,10 +118,8 @@ class TestShearWalls(unittest.TestCase):
         I = 0.35*t*L**3/12
 
         mesh_size = 1
-        mesh = RectangleMesh(mesh_size, L, H, t, E, nu, ky_mod=0.35, element_type='Rect')
-        mesh.generate()
-
-        sw.add_mesh(mesh)
+        sw.add_rectangle_mesh('MSH1', mesh_size, L, H, t, 'Concrete', ky_mod=0.35, element_type='Rect')
+        sw.Meshes['MSH1'].generate()
 
         V = 1000
         for node in sw.Nodes.values():
@@ -141,10 +147,15 @@ class TestShearWalls(unittest.TestCase):
         # isn't nearly as accurate as the finite element method, so some differences
         # in the final results are expected.
 
+        # Create a finite element model
+        model = FEModel3D()
+
         # Set material properties for the wall (2 ksi masonry)
         f_m = 2000        # Masonry compressive strength (psi)
         E = 900*f_m/1000  # Masonry modulus of elasticity (ksi)
         nu = 0.17         # Poisson's ratio for masonry
+        rho = 78/1000/12**2/7.625  # Masonry unit weight (kip/in^3)
+        model.add_material('Masonry', E, 0.4*E, nu, rho)
 
         # Choose a desired mesh size. The program will try to stick to this as best as it can.
         mesh_size = 6  # in
@@ -157,29 +168,23 @@ class TestShearWalls(unittest.TestCase):
         # Generate the rectangular mesh
         # The effects of cracked masonry can be modeled by adjusting the `ky_mod` factor. For this example
         # uncracked masonry will be used to match the textbook problem.
-        mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
-                            plane='XY', start_node='N1', start_element='R1', element_type='Rect')
+        model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Masonry', kx_mod=1, ky_mod=1,
+                                 origin=[0, 0, 0], plane='XY', element_type='Rect')
 
         # Add a 4' wide x 12' tall door opening to the mesh
-        mesh.add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
+        model.Meshes['MSH1'].add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
 
         # Add a 4' wide x 4' tall window opening to the mesh
-        mesh.add_rect_opening(name='Window 1', x_left=8*12, y_bott=8*12, width=4*12, height=4*12)
+        model.Meshes['MSH1'].add_rect_opening(name='Window 1', x_left=8*12, y_bott=8*12, width=4*12, height=4*12)
 
         # Add another 4' wide x 4' tall window opening to the mesh
-        mesh.add_rect_opening(name='Window 2', x_left=14*12, y_bott=8*12, width=4*12, height=4*12)
+        model.Meshes['MSH1'].add_rect_opening(name='Window 2', x_left=14*12, y_bott=8*12, width=4*12, height=4*12)
 
         # Add another 4' wide x 12' tall door opening to the mesh
-        mesh.add_rect_opening(name='Door 2', x_left=20*12, y_bott=0*12, width=4*12, height=12*12)
+        model.Meshes['MSH1'].add_rect_opening(name='Door 2', x_left=20*12, y_bott=0*12, width=4*12, height=12*12)
 
         # Generate the mesh now that we've defined all the openings
-        mesh.generate()
-
-        # Create a finite element model
-        model = FEModel3D()
-
-        # Add the mesh to the model
-        model.add_mesh(mesh)
+        model.Meshes['MSH1'].generate()
 
         # Shear at the top of the wall
         V = 100  # kip
