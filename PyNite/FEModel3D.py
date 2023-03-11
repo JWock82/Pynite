@@ -350,7 +350,7 @@ class FEModel3D():
         # Return the member name
         return name
 
-    def add_plate(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
+    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1, ky_mod=1):
         """
         Adds a new rectangular plate to the model.
 
@@ -373,11 +373,9 @@ class FEModel3D():
         n_node : string
             The name of the n-node.
         t : number
-            The thickness of the plate.
-        E : number
-            The modulus of elasticity of the plate.
-        nu : number
-            Posson's ratio for the plate.
+            The thickness of the element.
+        material : string
+            The name of the material for the element.
         kx_mod : number
             Stiffness modification factor for in-plane stiffness in the element's local
             x-direction. Default value is 1.0 (no modification).
@@ -398,7 +396,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new plate
-        newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, kx_mod, ky_mod, self.LoadCombos)
+        newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, material, kx_mod, ky_mod, self.LoadCombos)
         
         # Add the new plate to the list
         self.Plates[name] = newPlate
@@ -409,7 +407,7 @@ class FEModel3D():
         # Return the plate name
         return name
 
-    def add_quad(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
+    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1, ky_mod=1):
         """
         Adds a new quadrilateral to the model.
 
@@ -433,11 +431,9 @@ class FEModel3D():
         n_node : string
             The name of the n-node.
         t : number
-            The thickness of the quadrilateral.
-        E : number
-            The modulus of elasticity of the quadrilateral.
-        nu : number
-            Posson's ratio for the quadrilateral.
+            The thickness of the element.
+        material : string
+            The name of the material for the element.
         kx_mod : number
             Stiffness modification factor for in-plane stiffness in the element's local
             x-direction. Default value is 1.0 (no modification).
@@ -458,7 +454,7 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newQuad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, kx_mod, ky_mod, self.LoadCombos)
+        newQuad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, material, kx_mod, ky_mod, self.LoadCombos)
         
         # Add the new member to the list
         self.Quads[name] = newQuad
