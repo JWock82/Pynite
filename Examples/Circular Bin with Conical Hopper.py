@@ -26,6 +26,9 @@ model.add_material('Steel', E, G, nu, 490)
 
 # Add the conical hopper mesh to the model
 model.add_frustrum_mesh('MSH1', mesh_size, r_shell, r_hopper, h_hopper, t, 'Steel', kx_mod, ky_mod, center, axis)
+
+# Generate the mesh. The mesh would automatically be generated during analysis, but we want to
+# manipulate it now so we'll generate it in advance.
 model.Meshes['MSH1'].generate()
 
 # Determine how many elements make up the circumference at the top of the hopper. This will

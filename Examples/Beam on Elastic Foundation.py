@@ -45,7 +45,7 @@ Iy = 42.6   # in^4 (weak axis)
 J = 0.769   # in^4
 
 # Define the member
-boef.add_member('M1', 'N1', 'N' + str(num_nodes), E, G, Iy, Iz, J, A)
+boef.add_member('M1', 'N1', 'N' + str(num_nodes), 'Steel', Iy, Iz, J, A)
 
 # In the next few lines no load case or load combination is being specified. When this is the case,
 # PyNite internally creates a default load case ('Case 1') and a default load combination

@@ -23,7 +23,10 @@ class Mesh():
         self.last_element = None            # The name of the last element in the mesh
         self.nodes = {}                     # A dictionary containing the nodes in the mesh
         self.elements = {}                  # A dictionary containing the elements in the mesh
-        self.generated = False              # A flag indicating whether the mesh has been generated
+        self._is_generated = False          # A flag indicating whether the mesh has been generated
+    
+    def is_generated(self):
+        return self._is_generated
     
     def generate(self):
         """
@@ -603,7 +606,7 @@ class RectangleMesh(Mesh):
                 self.model.Plates[element.name] = element
 
         # Flag the mesh as generated
-        self.generated = True
+        self._is_generated = True
 
     def node_local_coords(self, node):
         """
@@ -650,7 +653,7 @@ class RectangleMesh(Mesh):
         self.y_control.append(y_bott + height)
 
         # Flag the mesh as not generated yet
-        self.generated = False
+        self._is_generated = False
 
 #%%
 class RectOpening():
@@ -773,7 +776,7 @@ class AnnulusMesh(Mesh):
                 self.model.Plates[element.name] = element
         
         # Flag the mesh as generated
-        self.generated = True
+        self._is_generated = True
 
 #%%
 class AnnulusRingMesh(Mesh):
@@ -897,7 +900,7 @@ class AnnulusRingMesh(Mesh):
                 self.model.Plates[element.name] = element
         
         # Flag the mesh as generated
-        self.generated = True
+        self._is_generated = True
 
 #%%
 class AnnulusTransRingMesh(Mesh):
@@ -1074,7 +1077,7 @@ class AnnulusTransRingMesh(Mesh):
                 self.model.Plates[element.name] = element
         
         # Flag the mesh as generated
-        self.generated = True
+        self._is_generated = True
 
 #%%
 class FrustrumMesh(AnnulusMesh):
@@ -1251,7 +1254,7 @@ class CylinderMesh(Mesh):
                 self.model.Plates[element.name] = element
         
         # Flag the mesh as generated
-        self.generated = True
+        self._is_generated = True
 
 #%%
 class CylinderRingMesh(Mesh):
@@ -1434,4 +1437,4 @@ class CylinderRingMesh(Mesh):
                 self.model.Plates[element.name] = element
             
         # Flag the mesh as generated
-        self.generated = True
+        self._is_generated = True

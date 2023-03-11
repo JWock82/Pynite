@@ -27,7 +27,9 @@ model.add_material('Concrete', E, 0.4*E, 0.17, 150)
 # Add the mesh to the model
 model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Concrete', 1, 1, [0, 0, 0], 'XY', element_type='Quad')
 
-# Generate the nodes and elements in the mesh so that we can add loads to them
+# PyNite automatically generates each mesh when it analyzes. Sometimes it's convenient to generate
+# the nodes and elements in the mesh in advance so that we can manipulate the mesh prior to
+# analysis.
 model.Meshes['MSH1'].generate()
 
 # Step through each quadrilateral in the model

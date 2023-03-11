@@ -15,7 +15,7 @@ from PyNite.Member3D import Member3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
-from PyNite.Mesh import RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
+from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
 # %%
 class FEModel3D():
     """
@@ -23,27 +23,35 @@ class FEModel3D():
     """
 
     def __init__(self):
+
         """
         Creates a new 3D finite element model.
         """
         
-        self.Nodes = {}      # A dictionary of the model's nodes
-        self.AuxNodes = {}   # A dictionary of the model's auxiliary nodes
+        # Initialize the model's various dictionaries. The dictionaries will be prepopulated with
+        # the data types they store, and then those types will be removed. This will give us the
+        # ability to get type-based hints when using the dictionaries.
 
-        self.Materials = {}  # A dictionary of the model's materials
-
-        self.Springs = {}    # A dictionary of the model's springs
-        self.Members = {}    # A dictionary of the model's physical members
-        self.Quads = {}      # A dictionary of the model's quadiralterals
-        self.Plates = {}     # A dictionary of the model's rectangular
-                             # plates
-        self.Meshes = {}     # A dictionary of the model's meshes
-        
-        self._D = {}         # A dictionary of the model's nodal
-                             # displacements by load combination
-                             
-        self.LoadCombos = {} # A dictionary of the model's load
-                             # combinations
+        self.Nodes = {str:Node3D}          # A dictionary of the model's nodes
+        self.Nodes.pop(str)
+        self.AuxNodes = {str:Node3D}       # A dictionary of the model's auxiliary nodes
+        self.AuxNodes.pop(str)
+        self.Materials = {str:Material}    # A dictionary of the model's materials
+        self.Materials.pop(str)
+        self.Springs = {str:Spring3D}      # A dictionary of the model's springs
+        self.Springs.pop(str)
+        self.Members = {str:PhysMember}    # A dictionary of the model's physical members
+        self.Members.pop(str)
+        self.Quads = {str:Quad3D}          # A dictionary of the model's quadiralterals
+        self.Quads.pop(str)
+        self.Plates = {str:Plate3D}        # A dictionary of the model's rectangular plates
+        self.Plates.pop(str)
+        self.Meshes = {str:Mesh}           # A dictionary of the model's meshes
+        self.Meshes.pop(str)         
+        self.LoadCombos = {str:LoadCombo}  # A dictionary of the model's load combinations
+        self.LoadCombos.pop(str)
+        self._D = {str:[]}                 # A dictionary of the model's nodal displacements by load combination
+        self._D.pop(str)
         
         self.solution = None  # Indicates the solution type for the latest run of the model
 
@@ -2186,7 +2194,7 @@ class FEModel3D():
         
         # Generate all meshes
         for mesh in self.Meshes.values():
-            if mesh.generated == False:
+            if mesh.is_generated == False:
                 mesh.generate()
 
         # Activate all springs and members for all load combinations
@@ -2447,7 +2455,7 @@ class FEModel3D():
                 
         # Generate all meshes
         for mesh in self.Meshes.values():
-            if mesh.generated == False:
+            if mesh.is_generated == False:
                 mesh.generate()
         
         # Activate all springs for all load combinations
@@ -2611,7 +2619,7 @@ class FEModel3D():
                 
         # Generate all meshes
         for mesh in self.Meshes.values():
-            if mesh.generated == False:
+            if mesh.is_generated == False:
                 mesh.generate()
         
         # Activate all springs for all load combinations. They can be turned inactive

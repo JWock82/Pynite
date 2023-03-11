@@ -24,13 +24,18 @@ frame.def_support('N4', True, True, True, True, True, True)
 J = 100
 Iy = 200
 Iz = 1000
-E = 30000
-G = 10000
 A = 100
 
-frame.add_member('M12', 'N1', 'N2', E, G, Iy, Iz, J, A)
-frame.add_member('M23', 'N2', 'N3', E, G, Iy, Iz, J, A)
-frame.add_member('M34', 'N3', 'N4', E, G, Iy, Iz, J, A)
+# Define a material
+E = 30000
+G = 10000
+nu = 0.3
+rho = 2.836e-4
+frame.add_material('Steel', E, G, nu, rho)
+
+frame.add_member('M12', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+frame.add_member('M23', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
+frame.add_member('M34', 'N3', 'N4', 'Steel', Iy, Iz, J, A)
 
 # Add nodal loads
 frame.add_node_load('N2', 'FY', -5)

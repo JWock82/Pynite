@@ -5,9 +5,15 @@ from PyNite.FEModel3D import FEModel3D
 from PyNite.Mesh import RectangleMesh
 from PyNite.Visualization import render_model
 
+# Create a finite element model
+model = FEModel3D()
+
 # Set material properties for the wall (4500 psi concrete)
 E = 57000*(4500)**0.5*12**2  # psf
+G = 0.4*E
 nu = 0.17
+rho = 150  # pcf
+model.add_material('Concrete', E, G, nu, rho)
 
 # Choose a mesh size
 mesh_size = 1
@@ -27,19 +33,12 @@ HL = 12.5  # ft
 #    deformations), rectangular plate elements will produce better plate corner stress results.
 # 2. It'd be nice to have the mesh hit the liquid level, so we'll add a control point at the
 #    liquid level to the list of control points along the mesh's local y-axis.
-mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
-                     plane='XY', y_control=[HL], start_node='N1', start_element='R1',
-                     element_type='Rect')
+model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Concrete', kx_mod=1, ky_mod=1,
+                         origin=[0, 0, 0], plane='XY', y_control=[HL], element_type='Rect')
 
-# Generate the mesh. Rectangle meshes won't generate unless you tell them to.
-# This allows you to add openings to them before meshing.
-mesh.generate()
-
-# Create a finite element model
-model = FEModel3D()
-
-# Add the mesh to the model
-model.add_mesh(mesh)
+# Generate the mesh prior to analysis. This step is optional, but it allows you to work with it to
+# it before analyzing.
+model.Meshes['MSH1'].generate()
 
 # Step through each quadrilateral and rectangular plate in the model
 for element in list(model.Quads.values()) + list(model.Plates.values()):
@@ -51,7 +50,7 @@ for element in list(model.Quads.values()) + list(model.Plates.values()):
     if Yavg < HL:
 
         # Add hydrostatic loads to the element
-        if mesh.element_type == 'Rect':
+        if model.Meshes['MSH1'].element_type == 'Rect':
             model.add_plate_surface_pressure(element.name, 62.4*(HL - Yavg), case='F')
         else:
             model.add_quad_surface_pressure(element.name, 62.4*(HL - Yavg), case='F')
