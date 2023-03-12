@@ -16,6 +16,7 @@ from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
 from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
+
 # %%
 class FEModel3D():
     """
@@ -25,7 +26,7 @@ class FEModel3D():
     def __init__(self):
 
         """
-        Creates a new 3D finite element model.
+        Returns a new 3D finite element model.
         """
         
         # Initialize the model's various dictionaries. The dictionaries will be prepopulated with
@@ -736,75 +737,6 @@ class FEModel3D():
         
         #Return the mesh's name
         return name
-
-    def add_mesh(self, mesh, rename=True):
-        """
-        Adds a predefined mesh to the model.
-
-        Parameters
-        ----------
-        mesh : Mesh
-            A mesh object.
-        rename : bool
-            When set to `True`, all nodes and elements in the model will be renamed prior to
-            merging the mesh into the model. It's recommended to leave this value at its default of
-            `True`. Setting this value to `False` can cause problems if node or element names in
-            the mesh are already being used by the model.
-        """
-
-        # rename all the nodes and elements currently in the model
-        if rename: self.rename()
-
-        # Add the mesh's nodes to the finite element model
-        for node in mesh.nodes.values():
-
-            # Check to see if this node's name already exists in the `Nodes` dictionary
-            if not node.name in self.Nodes.keys():
-                # Add the node to the `Nodes` dictionary
-                self.Nodes[node.name] = node
-            else:
-                # Get the next available node name and rename the node
-                new_name = 'N' + str(len(self.Nodes) + 1)
-                node.name = new_name
-                self.Nodes[new_name] = node
-        
-        # Determine what type of elements are in the mesh from the mesh's first element
-        element_type = list(mesh.elements.values())[0].type
-
-        # Add the mesh's elements to the finite element model
-        for element in mesh.elements.values():
-
-            # Check the element type
-            if element_type == 'Rect':
-                
-                # Check to see if this element's name already exists  in the `Plates` dictionary
-                if not element.name in self.Plates.keys():
-                    # Add the element to the `Plates` dictionary
-                    self.Plates[element.name] = element
-                else:
-                    # Get the next available element name and rename the element
-                    new_name = 'P' + str(len(self.Plates) + 1)
-                    element.name = new_name
-                    self.Plates[new_name] = element
-
-            elif element_type == 'Quad':
-                
-                # Check to see if this element's name already exists  in the `Quads` dictionary
-                if not element.name in self.Quads.keys():
-                    # Add the element to the `Quads` dictionary
-                    self.Quads[element.name] = element
-                else:
-                    # Get the next available element name and rename the element
-                    new_name = 'Q' + str(len(self.Quads) + 1)
-                    element.name = new_name
-                    self.Quads[new_name] = element
-
-        # Attach the model's load combinations to each element from the mesh
-        for element in mesh.elements.values():
-            element.LoadCombos = self.LoadCombos
-        
-        # Flag the model as unsolved
-        self.solution = None
 
     def merge_duplicate_nodes(self, tolerance=0.001):
         """
@@ -3398,6 +3330,45 @@ class FEModel3D():
         # Number each quadrilateral in the model
         for id, quad in enumerate(self.Quads.values()):
             quad.ID = id
+    
+    def _unique_node_name(self):
+        """
+        Returns the next available unique node name
+        """
+
+        # Get the next available node name
+        node_name = 'N' + str(len(self.Nodes) + 1)
+        while node_name in self.Nodes.keys():
+            node_name = 'N' + str(len(self.Nodes) + 1)
+        
+        # Return the next available node name
+        return node_name
+    
+    def _unique_plate_name(self):
+        """
+        Returns the next available unique plate name
+        """
+
+        # Get the next available plate name
+        plate_name = 'P' + str(len(self.Plates) + 1)
+        while plate_name in self.Plates.keys():
+            plate_name = 'P' + str(len(self.Plates) + 1)
+
+        # Return the next available plate name
+        return plate_name
+    
+    def _unique_quad_name(self):
+        """
+        Returns the next available unique quad name
+        """
+
+        # Get the next available quad name
+        quad_name = 'Q' + str(len(self.Quads) + 1)
+        while quad_name in self.Quads.keys():
+            quad_name = 'Q' + str(len(self.Quads) + 1)
+
+        # Return the next available quad name
+        return quad_name
     
     def rename(self):
         """
