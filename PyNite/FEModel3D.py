@@ -742,9 +742,6 @@ class FEModel3D():
         """
         Removes duplicate nodes from the model and returns a list of the removed node names.
 
-        Note that supports may be lost if they are on a duplicate that is deleted. It's recommended
-        to add supports to the model after removing duplicate nodes.
-
         Parameters
         ----------
         tolerance : number
