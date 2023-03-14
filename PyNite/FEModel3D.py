@@ -477,8 +477,8 @@ class FEModel3D():
         return name
 
     def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1, 
-            ky_mod=1, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None,
-            element_type='Quad'):
+            ky_mod=1, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None,
+            start_element = None, element_type='Quad'):
         """
         Adds a rectangular mesh of elements to the model.
 
@@ -516,28 +516,34 @@ class FEModel3D():
         y_control : list, optional
             A list of control points along the mesh's local y-axis work
             into the mesh.
+        start_node : string, optional
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string, optional
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
         element_type : string, optional
-            The type of element to make the mesh out of. Either 'Quad'
-            or 'Rect'. The default is 'Quad'.
+            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
+            'Quad'.
         """
         
-        # Name the mesh or check it doesn't already exist
+        # Check if a mesh name has been provided
         if name:
+            # Check that the mesh name isn't already being used
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Rename the mesh if necessary
         else:
-            # As a guess, start with the length of the dictionary
-            name = "MSH" + str(len(self.Meshes))
-            count = 1
-            while name in self.Meshes: 
-                name = "MSH" + str(len(self.Meshes) + count)
-                count += 1
+            name = self._unique_name(self.Meshes, 'MSH')
         
-        # Create a new rectangle mesh
-        start_node = 'N' + str(len(self.Nodes.values()))
-        if element_type == 'Rect':
-            start_element = 'R' + str(len(self.Plates.values()))
-        else:
-            start_element = 'Q' + str(len(self.Quads.values()))
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if element_type == 'Rect' and start_element is None:
+            start_element = self._unique_name(self.Plates, 'R')
+        elif element_type == 'Quad' and start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
+        
+        # Create the mesh
         new_mesh = RectangleMesh(mesh_size, width, height, thickness, material, self, kx_mod,
                                  ky_mod, origin, plane, x_control, y_control, start_node,
                                  start_element, element_type=element_type)
@@ -552,7 +558,7 @@ class FEModel3D():
         return name
     
     def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1, 
-            ky_mod=1, origin=[0, 0, 0], axis='Y', element_type='Quad'):
+            ky_mod=1, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
         """
         Adds a mesh of quadrilaterals forming an annulus (a donut).
 
@@ -582,22 +588,29 @@ class FEModel3D():
             The origin of the mesh. The default is [0, 0, 0].
         axis : string, optional
             The global axis about which the mesh will be generated. The default is 'Y'.
+        start_node : string, optional
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string, optional
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
         """
         
-        # Name the mesh or check it doesn't already exist
+        # Check if a mesh name has been provided
         if name:
+            # Check that the mesh name doesn't already exist
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Give the mesh a new name if necessary
         else:
-            # As a guess, start with the length of the dictionary
-            name = "MSH" + str(len(self.Meshes))
-            count = 1
-            while name in self.Meshes: 
-                name = "MSH" + str(len(self.Meshes) + count)
-                count += 1
+            name = self._unique_name(self.Meshes, 'MSH')
+
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
         
-        # Create a new rectangle mesh
-        start_node = 'N' + str(len(self.Nodes.values()))
-        start_element = 'Q' + str(len(self.Quads.values()))
+        # Create a new mesh
         new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element)
 
@@ -611,7 +624,8 @@ class FEModel3D():
         return name
 
     def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,
-                          material, kx_mod=1, ky_mod=1, origin=[0, 0, 0], axis='Y'):
+                          material, kx_mod=1, ky_mod=1, origin=[0, 0, 0], axis='Y',
+                          start_node=None, start_element=None):
         """
         Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by
         a horizontal plane).
@@ -644,22 +658,29 @@ class FEModel3D():
             The origin of the mesh. The default is [0, 0, 0].
         axis : string, optional
             The global axis about which the mesh will be generated. The default is 'Y'.
+        start_node : string, optional
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string, optional
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
         """
         
-        # Name the mesh or check it doesn't already exist
+        # Check if a name has been provided
         if name:
+            # Check that the mesh name doesn't already exist
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Give the mesh a new name if necessary
         else:
-            # As a guess, start with the length of the dictionary
-            name = "MSH" + str(len(self.Meshes))
-            count = 1
-            while name in self.Meshes: 
-                name = "MSH" + str(len(self.Meshes) + count)
-                count += 1
+            name = self._unique_name(self.Meshes, 'MSH')
+
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
         
-        # Create a new rectangle mesh
-        start_node = 'N' + str(len(self.Nodes.values()))
-        start_element = 'Q' + str(len(self.Quads.values()))
+        # Create a new mesh
         new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material,
                                 self, kx_mod, ky_mod, origin, axis, start_node, start_element)
 
@@ -673,8 +694,8 @@ class FEModel3D():
         return name
     
     def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material, kx_mod=1,
-                          ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None,
-                          element_type='Quad'):
+                          ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None, start_node=None,
+                          start_element=None, element_type='Quad'):
         """
         Adds a mesh of elements forming a cylinder.
 
@@ -709,22 +730,35 @@ class FEModel3D():
             only used if you are trying to match the nodes to another mesh's nodes. If set to
             `None` the program will automatically calculate the number of elements to use based on
             the mesh size. The default is None.
+        start_node : string
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
+        element_type : string, optional
+            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
+            'Quad'.
+
         """
         
-        # Name the mesh or check it doesn't already exist
+        # Check if a name has been provided
         if name:
+            # Check that the mesh name doesn't already exist
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Give the mesh a new name if necessary
         else:
-            # As a guess, start with the length of the dictionary
-            name = "MSH" + str(len(self.Meshes))
-            count = 1
-            while name in self.Meshes: 
-                name = "MSH" + str(len(self.Meshes) + count)
-                count += 1
+            name = self._unique_name(self.Meshes, 'MSH')
+
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if element_type == 'Rect' and start_element is None:
+            start_element = self._unique_name(self.Plates, 'R')
+        elif element_type == 'Quad' and start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
         
-        # Create a new cylinder mesh
-        start_node = 'N' + str(len(self.Nodes.values()))
-        start_element = 'Q' + str(len(self.Quads.values()))
+        # Create a new mesh
         new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element,
                                num_elements, element_type)
@@ -3328,44 +3362,18 @@ class FEModel3D():
         for id, quad in enumerate(self.Quads.values()):
             quad.ID = id
     
-    def _unique_node_name(self):
+    def _unique_name(self, dictionary, prefix):
         """
-        Returns the next available unique node name
+        Returns the next available unique name for a dictionary of objects
         """
 
-        # Get the next available node name
-        node_name = 'N' + str(len(self.Nodes) + 1)
-        while node_name in self.Nodes.keys():
-            node_name = 'N' + str(len(self.Nodes) + 1)
+        # Select a trial value for the next available name
+        name = prefix + str(len(dictionary) + 1)
+        while name in dictionary.keys():
+            name = prefix + str(len(dictionary) + 1)
         
-        # Return the next available node name
-        return node_name
-    
-    def _unique_plate_name(self):
-        """
-        Returns the next available unique plate name
-        """
-
-        # Get the next available plate name
-        plate_name = 'P' + str(len(self.Plates) + 1)
-        while plate_name in self.Plates.keys():
-            plate_name = 'P' + str(len(self.Plates) + 1)
-
-        # Return the next available plate name
-        return plate_name
-    
-    def _unique_quad_name(self):
-        """
-        Returns the next available unique quad name
-        """
-
-        # Get the next available quad name
-        quad_name = 'Q' + str(len(self.Quads) + 1)
-        while quad_name in self.Quads.keys():
-            quad_name = 'Q' + str(len(self.Quads) + 1)
-
-        # Return the next available quad name
-        return quad_name
+        # Return the next available name
+        return name
     
     def rename(self):
         """
