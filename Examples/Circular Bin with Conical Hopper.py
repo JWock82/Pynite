@@ -44,8 +44,11 @@ model.add_cylinder_mesh('MSH2', mesh_size, r_shell, h_shell, t, 'Steel', kx_mod,
                         axis, num_elements=n_hopper, element_type='Quad')
 
 # The two meshes have overlapping duplicate nodes that need to be merged
-# cProfile.run('model.merge_duplicate_nodes()', sort='cumtime')
 model.merge_duplicate_nodes()
+
+# This next line can be used in place of the prior line to profile the merge code and find
+# innefficiencies
+# cProfile.run('model.merge_duplicate_nodes()', sort='cumtime')  
 
 # Add hydrostatic pressure to each element in the model
 for element in model.Quads.values():
