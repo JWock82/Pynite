@@ -9,8 +9,6 @@
 # problem that element is better suited, as long as the wall does not have significant transverse
 # shear deformations, and the elements are not skewed. See the "Rectangular Tank Wall - 
 # Hydrostatic Loads" example using that element.
-
-E = 57000*(4000)**0.5*12**2  # psf
 t = 1  # ft 
 width = 10  # ft
 height = 20  # ft 
@@ -18,21 +16,21 @@ nu = 0.17
 mesh_size = 1  # ft
 load = 250  # psf
 
-# Create a new rectangular mesh of quadrilaterals
-from PyNite.Mesh import RectangleMesh
-mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
-                     plane='XY', start_node='N1', start_element='Q1', element_type='Quad')
-
-# Generate the mesh. Rectangle meshes won't generate unless you tell them to.
-# This allows you to add openings to them before meshing.
-mesh.generate()
-
 # Create a finite element model
 from PyNite import FEModel3D
 model = FEModel3D()
 
+# Define concrete in the model
+E = 57000*(4000)**0.5*12**2  # psf
+model.add_material('Concrete', E, 0.4*E, 0.17, 150)
+
 # Add the mesh to the model
-model.add_mesh(mesh)
+model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Concrete', 1, 1, [0, 0, 0], 'XY', element_type='Quad')
+
+# PyNite automatically generates each mesh when it analyzes. Sometimes it's convenient to generate
+# the nodes and elements in the mesh in advance so that we can manipulate the mesh prior to
+# analysis.
+model.Meshes['MSH1'].generate()
 
 # Step through each quadrilateral in the model
 for element in model.Quads.values():

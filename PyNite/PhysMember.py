@@ -12,10 +12,10 @@ class PhysMember(Member3D):
     nodes.
     """
 
-    def __init__(self, name, i_node, j_node, E, G, Iy, Iz, J, A, model, aux_node=None,
+    def __init__(self, name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node=None,
                  tension_only=False, comp_only=False):
         
-        super().__init__(name, i_node, j_node, E, G, Iy, Iz, J, A, model, aux_node, tension_only, comp_only)
+        super().__init__(name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node, tension_only, comp_only)
         self.sub_members = {}
 
     def descritize(self):
@@ -76,7 +76,7 @@ class PhysMember(Member3D):
             xj = int_nodes[i+1][1]
 
             # Create a new sub-member
-            new_sub_member = Member3D(name, i_node, j_node, self.E, self.G, self.Iy, self.Iz, self.J, self.A, self.model, self.auxNode, self.tension_only, self.comp_only)
+            new_sub_member = Member3D(name, i_node, j_node, self.material, self.Iy, self.Iz, self.J, self.A, self.model, self.auxNode, self.tension_only, self.comp_only)
             
             # Flag the sub-member as active
             for combo_name in self.model.LoadCombos.keys():

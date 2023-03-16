@@ -14,16 +14,21 @@ braced_frame.add_node('N3', 15*12, 12*12, 0)
 braced_frame.add_node('N4', 15*12, 0*12, 0)
 
 # Define column properties (use W10x33 from the AISC Manual):
-E = 29000 # ksi
-G = 11400 # ksi
 Iy = 36.6 # in^4
 Iz = 171 # in^4
 J = 0.58 # in^4
 A = 9.71 # in^2
 
+# Define a material
+E = 29000 # ksi
+G = 11400 # ksi
+nu = 0.3  # Poisson's ratio
+rho = 0.490/12**2  # Density (kci)
+braced_frame.add_material('Steel', E, G, nu, rho)
+
 # Define the columns
-braced_frame.add_member('Col1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-braced_frame.add_member('Col2', 'N4', 'N3', E, G, Iy, Iz, J, A)
+braced_frame.add_member('Col1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+braced_frame.add_member('Col2', 'N4', 'N3', 'Steel', Iy, Iz, J, A)
 
 # Define beam properties (Use W8x24)
 Iy = 18.3 # in^4
@@ -32,7 +37,7 @@ J = 0.346 # in^4
 A = 7.08 # in^2
 
 # Define the beams
-braced_frame.add_member('Beam', 'N2', 'N3', E, G, Iy, Iz, J, A)
+braced_frame.add_member('Beam', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
 braced_frame.def_releases('Beam', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
 
 # Define the brace properties
@@ -44,9 +49,9 @@ J = 0.0438 # in^4
 A = 1.94 # in^2
 
 # Define the braces
-braced_frame.add_member('Brace1', 'N1', 'N3', E, G, Iy, Iz, J, A,
+braced_frame.add_member('Brace1', 'N1', 'N3', 'Steel', Iy, Iz, J, A,
                       tension_only=True)
-braced_frame.add_member('Brace2', 'N4', 'N2', E, G, Iy, Iz, J, A,
+braced_frame.add_member('Brace2', 'N4', 'N2', 'Steel', Iy, Iz, J, A,
                       tension_only=True)
 
 # Release the brace ends to form an axial member

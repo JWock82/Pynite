@@ -10,10 +10,15 @@ from PyNite.FEModel3D import FEModel3D
 from PyNite.Mesh import RectangleMesh, RectOpening
 from math import isclose
 
+# Create a finite element model
+model = FEModel3D()
+
 # Set material properties for the wall (2 ksi masonry)
 f_m = 2000        # Masonry compressive strength (psi)
 E = 900*f_m/1000  # Masonry modulus of elasticity (ksi)
 nu = 0.17         # Poisson's ratio for masonry
+rho = 0.0000710   # Masonry density (kci)
+model.add_material('Masonry', E, 0.4*E, nu, rho)
 
 # Choose a desired mesh size. The program will try to stick to this as best as it can.
 mesh_size = 6  # in
@@ -26,29 +31,25 @@ t = 8           # Masonry thickness (in)
 # Generate the rectangular mesh
 # The effects of cracked masonry can be modeled by adjusting the `ky_mod` factor. For this example
 # uncracked masonry will be used to match the textbook problem.
-mesh = RectangleMesh(mesh_size, width, height, t, E, nu, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
-                     plane='XY', start_node='N1', start_element='R1', element_type='Rect')
+model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Masonry', kx_mod=1, ky_mod=1,
+                         origin=[0, 0, 0], plane='XY', element_type='Rect')
 
 # Add a 4' wide x 12' tall door opening to the mesh
-mesh.add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
+model.Meshes['MSH1'].add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
 
 # Add a 4' wide x 4' tall window opening to the mesh
-mesh.add_rect_opening(name='Window 1', x_left=8*12, y_bott=8*12, width=4*12, height=4*12)
+model.Meshes['MSH1'].add_rect_opening(name='Window 1', x_left=8*12, y_bott=8*12, width=4*12, height=4*12)
 
 # Add another 4' wide x 4' tall window opening to the mesh
-mesh.add_rect_opening(name='Window 2', x_left=14*12, y_bott=8*12, width=4*12, height=4*12)
+model.Meshes['MSH1'].add_rect_opening(name='Window 2', x_left=14*12, y_bott=8*12, width=4*12, height=4*12)
 
 # Add another 4' wide x 12' tall door opening to the mesh
-mesh.add_rect_opening(name='Door 2', x_left=20*12, y_bott=0*12, width=4*12, height=12*12)
+model.Meshes['MSH1'].add_rect_opening(name='Door 2', x_left=20*12, y_bott=0*12, width=4*12, height=12*12)
 
-# Generate the mesh now that we've defined all the openings
-mesh.generate()
-
-# Create a finite element model
-model = FEModel3D()
-
-# Add the mesh to the model
-model.add_mesh(mesh)
+# Generate the mesh now that we've defined all the openings. Pynite automatically generates all
+# meshes when analyzing, but generating it early with give us the chance to work with it prior to
+# analysis.
+model.Meshes['MSH1'].generate()
 
 # Shear at the top of the wall
 V = 100  # kip

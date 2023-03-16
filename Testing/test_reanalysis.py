@@ -40,11 +40,14 @@ class Test_2D_Frame(unittest.TestCase):
         Iz = 24*30**2/12
         Iy = 30*24**3/12
         J = Iz + Iy
+        A = 24*30
+
+        # Define a material
         E = 57*(4500)**0.5
         G = 0.4*E
-        A = 24*30
+        beam.add_material('Concrete', E, G, 0.17, 0.150/12**2)
         
-        beam.add_member('M1', 'N1', 'N3', E, G, Iy, Iz, J, A)
+        beam.add_member('M1', 'N1', 'N3', 'Concrete', Iy, Iz, J, A)
 
         # Add a member load
         w = 0.100*(10*12)
@@ -66,4 +69,3 @@ class Test_2D_Frame(unittest.TestCase):
         print(d1, d2)
 
         self.assertNotAlmostEqual(d1/d2, 1, 3)
-

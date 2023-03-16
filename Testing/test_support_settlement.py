@@ -38,16 +38,18 @@ class Test_Support_Settlement(unittest.TestCase):
         beam.add_node('C', 40*12, 0, 0)
         beam.add_node('D', 60*12, 0, 0)
 
+        # Add a material
+        beam.add_material('Steel', 29000, 11200, 0.3, 490/1000/12**3)
+
         # Add members
         A = 20
-        E = 29000
-        G = 11400
         Iy = 1000
         Iz = 7800
         J = 8800
-        beam.add_member('AB', 'A', 'B', E, G, Iy, Iz, J, A)
-        beam.add_member('BC', 'B', 'C', E, G, Iy, Iz, J, A)
-        beam.add_member('CD', 'C', 'D', E, G, Iy, Iz, J, A)
+
+        beam.add_member('AB', 'A', 'B', 'Steel', Iy, Iz, J, A)
+        beam.add_member('BC', 'B', 'C', 'Steel', Iy, Iz, J, A)
+        beam.add_member('CD', 'C', 'D', 'Steel', Iy, Iz, J, A)
 
         # Provide supports
         beam.def_support('A', True, True, True, True, False, False)

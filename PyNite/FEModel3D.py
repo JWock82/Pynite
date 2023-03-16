@@ -8,12 +8,15 @@ from numpy import seterr
 from numpy.linalg import solve
 
 from PyNite.Node3D import Node3D
+from PyNite.Material import Material
 from PyNite.PhysMember import PhysMember
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
 from PyNite.Quad3D import Quad3D
 from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
+from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
+
 # %%
 class FEModel3D():
     """
@@ -21,24 +24,35 @@ class FEModel3D():
     """
 
     def __init__(self):
+
         """
-        Creates a new 3D finite element model.
+        Returns a new 3D finite element model.
         """
         
-        self.Nodes = {}      # A dictionary of the structure's nodes
-        self.AuxNodes = {}   # A dictionary of the structure's auxiliary nodes
-        self.Springs = {}    # A dictionary of the structure's springs
-        self.Members = {}    # A dictionary of the structure's physical members
-        self.Quads = {}      # A dictionary of the structure's quadiralterals
-        
-        self.Plates = {}     # A dictionary of the structure's rectangular
-                             # plates
-        
-        self._D = {}         # A dictionary of the structure's nodal
-                             # displacements by load combination
-                             
-        self.LoadCombos = {} # A dictionary of the structure's load
-                             # combinations
+        # Initialize the model's various dictionaries. The dictionaries will be prepopulated with
+        # the data types they store, and then those types will be removed. This will give us the
+        # ability to get type-based hints when using the dictionaries.
+
+        self.Nodes = {str:Node3D}          # A dictionary of the model's nodes
+        self.Nodes.pop(str)
+        self.AuxNodes = {str:Node3D}       # A dictionary of the model's auxiliary nodes
+        self.AuxNodes.pop(str)
+        self.Materials = {str:Material}    # A dictionary of the model's materials
+        self.Materials.pop(str)
+        self.Springs = {str:Spring3D}      # A dictionary of the model's springs
+        self.Springs.pop(str)
+        self.Members = {str:PhysMember}    # A dictionary of the model's physical members
+        self.Members.pop(str)
+        self.Quads = {str:Quad3D}          # A dictionary of the model's quadiralterals
+        self.Quads.pop(str)
+        self.Plates = {str:Plate3D}        # A dictionary of the model's rectangular plates
+        self.Plates.pop(str)
+        self.Meshes = {str:Mesh}           # A dictionary of the model's meshes
+        self.Meshes.pop(str)         
+        self.LoadCombos = {str:LoadCombo}  # A dictionary of the model's load combinations
+        self.LoadCombos.pop(str)
+        self._D = {str:[]}                 # A dictionary of the model's nodal displacements by load combination
+        self._D.pop(str)
         
         self.solution = None  # Indicates the solution type for the latest run of the model
 
@@ -187,6 +201,45 @@ class FEModel3D():
         #Return the node name
         return name 
 
+    def add_material(self, name, E, G, nu, rho):
+        """
+        Adds a new material to the model.
+
+        Parameters
+        ----------
+        name : string
+            A unique user-defined name for the material
+        E : number
+            The modulus of elasticity of the material
+        G : number
+            The shear modulus of elasticity of the material
+        nu : number
+            Poisson's ratio of the material
+        rho : number
+            The density of the material
+        """
+
+        # Name the material or check it doesn't already exist
+        if name:
+            if name in self.Materials:
+                raise NameError(f"Material name '{name}' already exists")
+        else:
+            # As a guess, start with the length of the dictionary
+            name = "M" + str(len(self.Materials))
+            count = 1
+            while name in self.Materials: 
+                name = "M" + str(len(self.Materials) + count)
+                count += 1
+                
+        # Create a new material
+        new_material = Material(name, E, G, nu, rho)
+        
+        # Add the new material to the list
+        self.Materials[name] = new_material
+        
+        # Flag the model as unsolved
+        self.solution = None
+
     def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
         """
         Adds a new spring to the model.
@@ -235,7 +288,7 @@ class FEModel3D():
                               ks, self.LoadCombos, tension_only=tension_only,
                               comp_only=comp_only)
         
-        # Add the new member to the list
+        # Add the new spring to the list
         self.Springs[name] = new_spring
         
         # Flag the model as unsolved
@@ -244,7 +297,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name, i_node, j_node, E, G, Iy, Iz, J, A, auxNode=None,
+    def add_member(self, name, i_node, j_node, material, Iy, Iz, J, A, auxNode=None,
                    tension_only=False, comp_only=False):
         '''
         Adds a new physical member to the model. The member name will be returned.
@@ -257,10 +310,8 @@ class FEModel3D():
             The name of the i-node (start node).
         j_node : string
             The name of the j-node (end node).
-        E : number
-            The modulus of elasticity of the member.
-        G : number
-            The shear modulus of the member.
+        material : string
+            The name of the material of the member.
         Iy : number
             The moment of inertia of the member about its local y-axis.
         Iz : number
@@ -292,10 +343,10 @@ class FEModel3D():
                 
         # Create a new member
         if auxNode == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], E, G, Iy, Iz, J,
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J,
                                     A, model=self, tension_only=tension_only, comp_only=comp_only)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], E, G, Iy, Iz, J,
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J,
                                     A, self.GetAuxNode(auxNode), model=self,
                                     tension_only=tension_only, comp_only=comp_only)
         
@@ -308,7 +359,7 @@ class FEModel3D():
         # Return the member name
         return name
 
-    def add_plate(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
+    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1, ky_mod=1):
         """
         Adds a new rectangular plate to the model.
 
@@ -331,11 +382,9 @@ class FEModel3D():
         n_node : string
             The name of the n-node.
         t : number
-            The thickness of the plate.
-        E : number
-            The modulus of elasticity of the plate.
-        nu : number
-            Posson's ratio for the plate.
+            The thickness of the element.
+        material : string
+            The name of the material for the element.
         kx_mod : number
             Stiffness modification factor for in-plane stiffness in the element's local
             x-direction. Default value is 1.0 (no modification).
@@ -356,10 +405,11 @@ class FEModel3D():
                 count += 1
         
         # Create a new plate
-        newPlate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, kx_mod, ky_mod, self.LoadCombos)
+        new_plate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
+                           self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
         
         # Add the new plate to the list
-        self.Plates[name] = newPlate
+        self.Plates[name] = new_plate
 
         # Flag the model as unsolved
         self.solution = None
@@ -367,7 +417,7 @@ class FEModel3D():
         # Return the plate name
         return name
 
-    def add_quad(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1, ky_mod=1):
+    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1, ky_mod=1):
         """
         Adds a new quadrilateral to the model.
 
@@ -391,11 +441,9 @@ class FEModel3D():
         n_node : string
             The name of the n-node.
         t : number
-            The thickness of the quadrilateral.
-        E : number
-            The modulus of elasticity of the quadrilateral.
-        nu : number
-            Posson's ratio for the quadrilateral.
+            The thickness of the element.
+        material : string
+            The name of the material for the element.
         kx_mod : number
             Stiffness modification factor for in-plane stiffness in the element's local
             x-direction. Default value is 1.0 (no modification).
@@ -416,10 +464,11 @@ class FEModel3D():
                 count += 1
         
         # Create a new member
-        newQuad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node], self.Nodes[n_node], t, E, nu, kx_mod, ky_mod, self.LoadCombos)
+        new_quad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
+                         self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
         
         # Add the new member to the list
-        self.Quads[name] = newQuad
+        self.Quads[name] = new_quad
 
         # Flag the model as unsolved
         self.solution = None
@@ -427,81 +476,305 @@ class FEModel3D():
         #Return the quad name
         return name
 
-    def add_mesh(self, mesh, rename=True):
+    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1, 
+            ky_mod=1, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None,
+            start_element = None, element_type='Quad'):
         """
-        Adds a predefined mesh to the model.
+        Adds a rectangular mesh of elements to the model.
 
         Parameters
         ----------
-        mesh : Mesh
-            A mesh object.
-        rename : bool
-            When set to `True`, all nodes and elements in the model will be renamed prior to
-            merging the mesh into the model. It's recommended to leave this value at its default of
-            `True`. Setting this value to `False` can cause problems if node or element names in
-            the mesh are already being used by the model.
+        name : string
+            A unique name for the mesh.
+        width : number
+            The overall width of the mesh measured along its local
+            x-axis.
+        height : number
+            The overall height of the mesh measured along its local
+            y-axis.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for in-plane stiffness in the
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for in-plane stiffness in the
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the regtangular mesh's local coordinate
+            system. The default is [0, 0, 0].
+        plane : string, optional
+            The plane the mesh will be parallel to. Options are 'XY',
+            'YZ', and 'XZ'. The default is 'XY'.
+        x_control : list, optional
+            A list of control points along the mesh's local x-axis work
+            into the mesh.
+        y_control : list, optional
+            A list of control points along the mesh's local y-axis work
+            into the mesh.
+        start_node : string, optional
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string, optional
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
+        element_type : string, optional
+            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
+            'Quad'.
         """
-
-        # rename all the nodes and elements currently in the model
-        if rename: self.rename()
-
-        # Add the mesh's nodes to the finite element model
-        for node in mesh.nodes.values():
-
-            # Check to see if this node's name already exists in the `Nodes` dictionary
-            if not node.name in self.Nodes.keys():
-                # Add the node to the `Nodes` dictionary
-                self.Nodes[node.name] = node
-            else:
-                # Get the next available node name and rename the node
-                new_name = 'N' + str(len(self.Nodes) + 1)
-                node.name = new_name
-                self.Nodes[new_name] = node
         
-        # Determine what type of elements are in the mesh from the mesh's first element
-        element_type = list(mesh.elements.values())[0].type
-
-        # Add the mesh's elements to the finite element model
-        for element in mesh.elements.values():
-
-            # Check the element type
-            if element_type == 'Rect':
-                
-                # Check to see if this element's name already exists  in the `Plates` dictionary
-                if not element.name in self.Plates.keys():
-                    # Add the element to the `Plates` dictionary
-                    self.Plates[element.name] = element
-                else:
-                    # Get the next available element name and rename the element
-                    new_name = 'P' + str(len(self.Plates) + 1)
-                    element.name = new_name
-                    self.Plates[new_name] = element
-
-            elif element_type == 'Quad':
-                
-                # Check to see if this element's name already exists  in the `Quads` dictionary
-                if not element.name in self.Quads.keys():
-                    # Add the element to the `Quads` dictionary
-                    self.Quads[element.name] = element
-                else:
-                    # Get the next available element name and rename the element
-                    new_name = 'Q' + str(len(self.Quads) + 1)
-                    element.name = new_name
-                    self.Quads[new_name] = element
-
-        # Attach the model's load combinations to each element from the mesh
-        for element in mesh.elements.values():
-            element.LoadCombos = self.LoadCombos
+        # Check if a mesh name has been provided
+        if name:
+            # Check that the mesh name isn't already being used
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Rename the mesh if necessary
+        else:
+            name = self._unique_name(self.Meshes, 'MSH')
         
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if element_type == 'Rect' and start_element is None:
+            start_element = self._unique_name(self.Plates, 'R')
+        elif element_type == 'Quad' and start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
+        
+        # Create the mesh
+        new_mesh = RectangleMesh(mesh_size, width, height, thickness, material, self, kx_mod,
+                                 ky_mod, origin, plane, x_control, y_control, start_node,
+                                 start_element, element_type=element_type)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
+
         # Flag the model as unsolved
         self.solution = None
+        
+        #Return the mesh's name
+        return name
+    
+    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1, 
+            ky_mod=1, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
+        """
+        Adds a mesh of quadrilaterals forming an annulus (a donut).
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the mesh.
+        mesh_size : number
+            The target mesh size
+        outer_radius : number
+            The radius to the outside of the annulus.
+        inner_radius : number
+            The radius to the inside of the annulus.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for radial stiffness in the
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for meridional stiffness in the
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the mesh. The default is [0, 0, 0].
+        axis : string, optional
+            The global axis about which the mesh will be generated. The default is 'Y'.
+        start_node : string, optional
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string, optional
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
+        """
+        
+        # Check if a mesh name has been provided
+        if name:
+            # Check that the mesh name doesn't already exist
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Give the mesh a new name if necessary
+        else:
+            name = self._unique_name(self.Meshes, 'MSH')
+
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
+        
+        # Create a new mesh
+        new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material, self,
+                               kx_mod, ky_mod, origin, axis, start_node, start_element)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
+
+        # Flag the model as unsolved
+        self.solution = None
+        
+        #Return the mesh's name
+        return name
+
+    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,
+                          material, kx_mod=1, ky_mod=1, origin=[0, 0, 0], axis='Y',
+                          start_node=None, start_element=None):
+        """
+        Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by
+        a horizontal plane).
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the mesh.
+        mesh_size : number
+            The target mesh size
+        large_radius : number
+            The larger of the two end radii.
+        small_radius : number
+            The smaller of the two end radii.
+        height : number
+            The height of the frustrum.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for radial stiffness in each
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for meridional stiffness in each
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the mesh. The default is [0, 0, 0].
+        axis : string, optional
+            The global axis about which the mesh will be generated. The default is 'Y'.
+        start_node : string, optional
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string, optional
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
+        """
+        
+        # Check if a name has been provided
+        if name:
+            # Check that the mesh name doesn't already exist
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Give the mesh a new name if necessary
+        else:
+            name = self._unique_name(self.Meshes, 'MSH')
+
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
+        
+        # Create a new mesh
+        new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material,
+                                self, kx_mod, ky_mod, origin, axis, start_node, start_element)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
+
+        # Flag the model as unsolved
+        self.solution = None
+        
+        #Return the mesh's name
+        return name
+    
+    def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material, kx_mod=1,
+                          ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None, start_node=None,
+                          start_element=None, element_type='Quad'):
+        """
+        Adds a mesh of elements forming a cylinder.
+
+        Parameters
+        ----------
+        name : string
+            A unique name for the mesh.
+        mesh_size : number
+            The target mesh size
+        radius : number
+            The radius of the cylinder.
+        height : number
+            The height of the cylinder.
+        thickness : number
+            Element thickness.
+        material : string
+            The name of the element material.
+        kx_mod : number
+            Stiffness modification factor for hoop stiffness in each
+            element's local x-direction. Default value is 1.0 (no
+            modification).
+        ky_mod : number
+            Stiffness modification factor for meridional stiffness in each
+            element's local y-direction. Default value is 1.0 (no
+            modification).
+        origin : list, optional
+            The origin of the mesh. The default is [0, 0, 0].
+        axis : string, optional
+            The global axis about which the mesh will be generated. The default is 'Y'.
+        num_elements : number
+            The number of elements to use to form the perimeter of each course. This is typically
+            only used if you are trying to match the nodes to another mesh's nodes. If set to
+            `None` the program will automatically calculate the number of elements to use based on
+            the mesh size. The default is None.
+        start_node : string
+            The name of the first node in the mesh. If set to `None` the program will use the next
+            available node name. Default is `None`
+        start_element : string
+            The name of the first element in the mesh. If set to `None` the program will use the
+            next available element name. Default is `None`
+        element_type : string, optional
+            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
+            'Quad'.
+
+        """
+        
+        # Check if a name has been provided
+        if name:
+            # Check that the mesh name doesn't already exist
+            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+        # Give the mesh a new name if necessary
+        else:
+            name = self._unique_name(self.Meshes, 'MSH')
+
+        # Identify the starting node and element
+        if start_node is None:
+            start_node = self._unique_name(self.Nodes, 'N')
+        if element_type == 'Rect' and start_element is None:
+            start_element = self._unique_name(self.Plates, 'R')
+        elif element_type == 'Quad' and start_element is None:
+            start_element = self._unique_name(self.Quads, 'Q')
+        
+        # Create a new mesh
+        new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material, self,
+                               kx_mod, ky_mod, origin, axis, start_node, start_element,
+                               num_elements, element_type)
+
+        # Add the new mesh to the `Meshes` dictionary
+        self.Meshes[name] = new_mesh
+
+        # Flag the model as unsolved
+        self.solution = None
+        
+        #Return the mesh's name
+        return name
 
     def merge_duplicate_nodes(self, tolerance=0.001):
         """
         Removes duplicate nodes from the model and returns a list of the removed node names.
-
-        Note that supports may be lost if they are on a duplicate that is deleted. It's recommended
-        to add supports to the model after removing duplicate nodes.
 
         Parameters
         ----------
@@ -1882,6 +2155,11 @@ class FEModel3D():
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
         
+        # Generate all meshes
+        for mesh in self.Meshes.values():
+            if mesh.is_generated == False:
+                mesh.generate()
+
         # Activate all springs and members for all load combinations
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
@@ -2137,6 +2415,11 @@ class FEModel3D():
         if self.LoadCombos == {}:
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
+                
+        # Generate all meshes
+        for mesh in self.Meshes.values():
+            if mesh.is_generated == False:
+                mesh.generate()
         
         # Activate all springs for all load combinations
         for spring in self.Springs.values():
@@ -2294,10 +2577,14 @@ class FEModel3D():
 
         # Ensure there is at least 1 load combination to solve if the user didn't define any
         if self.LoadCombos == {}:
-
             # Create and add a default load combination to the dictionary of load combinations
             self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
-    
+                
+        # Generate all meshes
+        for mesh in self.Meshes.values():
+            if mesh.is_generated == False:
+                mesh.generate()
+        
         # Activate all springs for all load combinations. They can be turned inactive
         # during the course of the tension/compression-only analysis
         for spring in self.Springs.values():
@@ -3074,6 +3361,19 @@ class FEModel3D():
         # Number each quadrilateral in the model
         for id, quad in enumerate(self.Quads.values()):
             quad.ID = id
+    
+    def _unique_name(self, dictionary, prefix):
+        """
+        Returns the next available unique name for a dictionary of objects
+        """
+
+        # Select a trial value for the next available name
+        name = prefix + str(len(dictionary) + 1)
+        while name in dictionary.keys():
+            name = prefix + str(len(dictionary) + 1)
+        
+        # Return the next available name
+        return name
     
     def rename(self):
         """

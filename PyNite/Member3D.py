@@ -5,10 +5,9 @@ from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
 from PyNite.BeamSegY import BeamSegY
 import PyNite.FixedEndReactions
-from PyNite.LoadCombo import LoadCombo
 import warnings
 
-# %%
+#%%
 class Member3D():
     """
     A class representing a 3D frame element in a finite element model.
@@ -23,21 +22,22 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, name, i_node, j_node, E, G, Iy, Iz, J, A, model, auxNode=None,
+    def __init__(self, name, i_node, j_node, material, Iy, Iz, J, A, model, auxNode=None,
                  tension_only=False, comp_only=False):
         """
         Initializes a new member.
         """
-        self.name = name    # A unique name for the member given by the user
-        self.ID = None      # Unique index number for the member assigned by the program
+        self.name = name      # A unique name for the member given by the user
+        self.ID = None        # Unique index number for the member assigned by the program
         self.i_node = i_node  # The element's i-node
         self.j_node = j_node  # The element's j-node
-        self.E = E  # The modulus of elasticity of the element
-        self.G = G  # The shear modulus of the element
-        self.Iy = Iy  # The y-axis moment of inertia
-        self.Iz = Iz  # The z-axis moment of inertia
-        self.J = J  # The torsional constant
-        self.A = A  # The cross-sectional area
+        self.material = material  # The element's material
+        self.E = model.Materials[material].E   # The modulus of elasticity of the element
+        self.G = model.Materials[material].G   # The shear modulus of the element
+        self.Iy = Iy          # The y-axis moment of inertia
+        self.Iz = Iz          # The z-axis moment of inertia
+        self.J = J            # The torsional constant
+        self.A = A            # The cross-sectional area
         self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
         self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')

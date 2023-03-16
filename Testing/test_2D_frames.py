@@ -23,11 +23,13 @@ class Test_2D_Frame(unittest.TestCase):
         sys.stdout = sys.__stdout__
 
     def test_XY_gravity_load(self):
+        
         # A First Course in the Finite Element Method, 4th Edition
         # Daryl L. Logan
         # Problem 5.30
         # Units for this model are kips and inches
         frame = FEModel3D()
+
         # Define the nodes
         frame.add_node('N1', 0, 0, 0)
         frame.add_node('N2', 0, 30*12, 0)
@@ -35,26 +37,32 @@ class Test_2D_Frame(unittest.TestCase):
         frame.add_node('N4', 35*12, 40*12, 0)
         frame.add_node('N5', 50*12, 30*12, 0)
         frame.add_node('N6', 50*12, 0, 0)
+
         # Define the supports
         frame.def_support('N1', True, True, True, True, True, True)
         frame.def_support('N6', True, True, True, True, True, True)
+
+        # Define materials
+        frame.add_material('Steel', 30000, 250, 0.5, 490/1000/12**3)
+
         # Create members (all members will have the same properties in this example)
         J = 250
         Iy = 250
         Iz = 200
-        E = 30000
-        G = 250
         A = 12
-        frame.add_member('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-        frame.add_member('M2', 'N2', 'N3', E, G, Iy, Iz, J, A)
-        frame.add_member('M3', 'N3', 'N4', E, G, Iy, Iz, J, A)
-        frame.add_member('M4', 'N4', 'N5', E, G, Iy, Iz, J, A)
-        frame.add_member('M5', 'N5', 'N6', E, G, Iy, Iz, J, A)
+        frame.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M2', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M3', 'N3', 'N4', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M4', 'N4', 'N5', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M5', 'N5', 'N6', 'Steel', Iy, Iz, J, A)
+
         # Add nodal loads
         frame.add_node_load('N3', 'FY', -30)
         frame.add_node_load('N4', 'FY', -30)
+
         # Analyze the model
         frame.analyze()
+
         # subTest context manager prints which portion fails, if any
         correct_values = [('N1', {'RxnFX': 11.6877,
                                   'RxnFY': 30,
@@ -62,6 +70,7 @@ class Test_2D_Frame(unittest.TestCase):
                           ('N6', {'RxnFX': -11.6877,
                                   'RxnFY': 30,
                                   'RxnMZ': 1810.0745})]
+
         for name, values in correct_values:
             with self.subTest(node=name):
                 node = frame.Nodes[name]
@@ -81,17 +90,19 @@ class Test_2D_Frame(unittest.TestCase):
         # Add supports
         frame.def_support('N1', True, True, True, True, True, False)
         frame.def_support('N4', True, True, True, True, True, False)
+
+        # Define materials
+        frame.add_material('Steel', 29000*12**2, 1111200*12**2, 0.5, 490/1000/12**3)
+
         # Define material and section properties for a W8x24
-        E = 29000*12**2     # ksf
-        G = 1111200*12**2   # ksf
         Iy = 18.3/12**4     # ft^4
         Iz = 82.7/12**4     # ft^4
         J = 0.346/12**4     # ft^4
         A = 5.26/12**2      # in^2
         # Define members
-        frame.add_member('M1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-        frame.add_member('M2', 'N2', 'N3', E, G, Iy, Iz, J, A)
-        frame.add_member('M3', 'N4', 'N3', E, G, Iy, Iz, J, A)
+        frame.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M2', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M3', 'N4', 'N3', 'Steel', Iy, Iz, J, A)
         # Add loads to the frame
         frame.add_member_pt_load('M2', 'Fy', -5, 7.75/2)       # 5 kips @ midspan
         frame.add_member_dist_load('M2', 'Fy', -0.024, -0.024) # W8x24 self-weight
@@ -118,23 +129,28 @@ class Test_2D_Frame(unittest.TestCase):
         # Define the supports
         frame.def_support('N1', True, True, True, True, True, True)
         frame.def_support('N6', True, True, True, True, True, True)
+
+        # Define materials
+        frame.add_material('Steel', 30000, 250, 0.5, 490/1000/12**3)
+
         # Create members (all members will have the same properties in this example)
         J = 250
         Iy = 250
         Iz = 200
-        E = 30000
-        G = 250
         A = 12
-        frame.add_member('M1', 'N1', 'N2', E, G, Iz, Iy, J, A)
-        frame.add_member('M2', 'N2', 'N3', E, G, Iy, Iz, J, A)
-        frame.add_member('M3', 'N3', 'N4', E, G, Iy, Iz, J, A)
-        frame.add_member('M4', 'N4', 'N5', E, G, Iy, Iz, J, A)
-        frame.add_member('M5', 'N5', 'N6', E, G, Iz, Iy, J, A)
+        frame.add_member('M1', 'N1', 'N2', 'Steel', Iz, Iy, J, A)
+        frame.add_member('M2', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M3', 'N3', 'N4', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M4', 'N4', 'N5', 'Steel', Iy, Iz, J, A)
+        frame.add_member('M5', 'N5', 'N6', 'Steel', Iz, Iy, J, A)
+
         # Add nodal loads
         frame.add_node_load('N3', 'FY', -30)
         frame.add_node_load('N4', 'FY', -30)
+
         # Analyze the model
         frame.analyze()
+
         # subTest context manager prints which portion fails, if any
         # Check reactions at N1 and N6
         correct_reactions = [('N1', {'RxnFZ': 11.6877,
@@ -151,6 +167,7 @@ class Test_2D_Frame(unittest.TestCase):
                 self.assertAlmostEqual(node.RxnFZ['Combo 1']/values['RxnFZ'], 1.0, 2)
                 self.assertAlmostEqual(node.RxnFY['Combo 1']/values['RxnFY'], 1.0, 2)
                 self.assertAlmostEqual(node.RxnMX['Combo 1']/values['RxnMX'], 1.0, 2)
+        
         # Check displacements at N3 and N4
         correct_displacements = [('N3', {'DY': -6.666757,
                                          'RX':  0.032}),
@@ -171,14 +188,16 @@ class Test_2D_Frame(unittest.TestCase):
         # Add nodes (14 ft = 168 in apart)
         SimpleBeam.add_node("N1", 0, 0, 0)
         SimpleBeam.add_node("N2", 0, 0, 168)
+
+        # Add a material
+        SimpleBeam.add_material('Steel', 29000, 11400, 0.5, 490/1000/12**3)
+
         # Add a beam with the following properties:
         A = 20
-        E = 29000
-        G = 11400
         Iy = 100
         Iz = 150
         J = 250
-        SimpleBeam.add_member("M1", "N1", "N2", E, G, Iy, Iz, J, A)
+        SimpleBeam.add_member("M1", "N1", "N2", "Steel", Iy, Iz, J, A)
         # Provide simple supports
         SimpleBeam.def_support("N1", True, True, True, False, False, True)
         SimpleBeam.def_support("N2", True, True, True, False, False, False)
@@ -215,17 +234,18 @@ class Test_2D_Frame(unittest.TestCase):
         frame.add_node('D', 12, 0, 24)
         frame.add_node('E', 24, 0, 12)
 
-        E = 29000*12**2
-        G = 11200*12**2
+        # Add a material
+        frame.add_material('Steel', 29000*12**2, 11200*12**2, 0.5, 490/1000)
+
         Iy = 17.3/12**4
         Iz = 204/12**4
         J = 0.3/12**4
         A = 7.65/12**2
 
-        frame.add_member('AC', 'A', 'C', E, G, Iy, Iz, J, A)
-        frame.add_member('BD', 'B', 'D', E, G, Iy, Iz, J, A)
-        frame.add_member('CE', 'C', 'E', E, G, Iy, Iz, J, A)
-        frame.add_member('ED', 'E', 'D', E, G, Iy, Iz, J, A)
+        frame.add_member('AC', 'A', 'C', 'Steel', Iy, Iz, J, A)
+        frame.add_member('BD', 'B', 'D', 'Steel', Iy, Iz, J, A)
+        frame.add_member('CE', 'C', 'E', 'Steel', Iy, Iz, J, A)
+        frame.add_member('ED', 'E', 'D', 'Steel', Iy, Iz, J, A)
 
         frame.def_support('A', support_DX=True, support_DY=True, support_DZ=True)
         frame.def_support('B', support_DX=True, support_DY=True, support_DZ=True)

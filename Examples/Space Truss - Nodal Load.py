@@ -22,16 +22,22 @@ truss.def_support('C', True, True, True, True, True, True)
 truss.def_support('D', True, True, True, True, True, True)
 truss.def_support('E', True, True, True, True, True, True)
 
-# Create members
 # Member properties were not given for this problem, so assumed values will be used
 # To make all the members act rigid, the modulus of elasticity will be set to a very large value
 E = 99999999
-truss.add_member('AB', 'A', 'B', E, 100, 100, 100, 100, 100)
-truss.add_member('AC', 'A', 'C', E, 100, 100, 100, 100, 100)
-truss.add_member('AD', 'A', 'D', E, 100, 100, 100, 100, 100)
-truss.add_member('BC', 'B', 'C', E, 100, 100, 100, 100, 100)
-truss.add_member('BD', 'B', 'D', E, 100, 100, 100, 100, 100)
-truss.add_member('BE', 'B', 'E', E, 100, 100, 100, 100, 100)
+G = 100
+nu = 0.3
+rho = 1
+truss.add_material('Rigid', E, G, nu, rho)
+
+
+# Create members
+truss.add_member('AB', 'A', 'B', 'Rigid', 100, 100, 100, 100)
+truss.add_member('AC', 'A', 'C', 'Rigid', 100, 100, 100, 100)
+truss.add_member('AD', 'A', 'D', 'Rigid', 100, 100, 100, 100)
+truss.add_member('BC', 'B', 'C', 'Rigid', 100, 100, 100, 100)
+truss.add_member('BD', 'B', 'D', 'Rigid', 100, 100, 100, 100)
+truss.add_member('BE', 'B', 'E', 'Rigid', 100, 100, 100, 100)
 
 # Release the moments at the ends of the members to make truss members
 truss.def_releases('AC', False, False, False, False, True, True, \

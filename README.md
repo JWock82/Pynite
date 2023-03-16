@@ -73,6 +73,13 @@ Here's a list of projects that run on PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.71
+* WARNING: This version will require reworking your models to incorporate `Materials`. Be prepared to rework your models before you upgrade. The examples have all been updated to show you how to do this.
+* Added `Material` definitions. This does not change Pynite's behavior much, but it prepares the way for future features.
+* Greatly simplified the process of meshing plates/quads. Meshes can now be generated directly from the `FEModel3D` object.
+* Added data types to the many dictionaries storing data in the `FEModel3D` object. Most development environments will now offer hints when using these dictionaries directly. This makes accessing the results you're interested in more intuitive.
+* Simplified internal code for finding unique names for objects.
+
 v0.0.70
 * Array output of member force diagrams and displacement diagrams has been added.
 

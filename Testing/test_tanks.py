@@ -28,28 +28,27 @@ class Test_Tanks(unittest.TestCase):
         without Prestressing" by PCA.
         """
 
+        # Create a new finite element model
+        tank_model = FEModel3D()
+
         H = 20     # Tank wall height (ft)
         D = 54     # Tank inside diameter (ft)
         R = D/2    # Tank inside radius (ft)
         t = 10/12  # Tank wall thickness (ft)
 
         w = 62.5   # Liquid unit weight (pcf)
-
+        
         fc = 4000                    # Concrete compressive strength (psi)
         E = 57000*(fc)**0.5*(12**2)  # Concrete modulus of elasticity (psf)
         nu = 0.25 #0.17              # Poisson's ratio for concrete
+        tank_model.add_material('Concrete', E, 0.4*E, nu, 150)
 
         mesh_size = 1       # Desired mesh size (ft)
         center = [0, 0, 0]  # Origin (X, Y, Z)
         axis = 'Y'          # Axis of revolution
-        n_o = 'N1'          # Start node ID
-        e_o = 'Q1'          # Start element ID
 
-
-        tank_mesh = CylinderMesh(mesh_size, R, H, t, E, nu, 1, 1, center, axis, n_o, e_o,
-                                 element_type='Quad')
-        tank_model = FEModel3D()
-        tank_model.add_mesh(tank_mesh)
+        tank_model.add_cylinder_mesh('MSH1', mesh_size, R, H, t, 'Concrete', 1, 1, center, axis, element_type='Quad')
+        tank_model.Meshes['MSH1'].generate()
 
         # Add hydrostatic loads to the elements
         for element in tank_model.Quads.values():
@@ -107,6 +106,9 @@ class Test_Tanks(unittest.TestCase):
         without Prestressing" by PCA.
         """
 
+        # Create a new finite element model
+        tank_model = FEModel3D()
+        
         H = 20     # Tank wall height (ft)
         D = 54     # Tank inside diameter (ft)
         R = D/2    # Tank inside radius (ft)
@@ -117,18 +119,17 @@ class Test_Tanks(unittest.TestCase):
         fc = 4000                    # Concrete compressive strength (psi)
         E = 57000*(fc)**0.5*(12**2)  # Concrete modulus of elasticity (psf)
         nu = 0.25 #0.17                    # Poisson's ratio for concrete
+        tank_model.add_material('Concrete', E, 0.4*E, nu, 150)
 
         mesh_size = 2       # Desired mesh size (ft)
         center = [0, 0, 0]  # Origin (X, Y, Z)
         axis = 'Y'          # Axis of revolution
-        n_o = 'N1'          # Start node ID
-        e_o = 'Q1'          # Start element ID
 
-
-        tank_mesh = CylinderMesh(mesh_size, R, H, t, E, nu, 1, 1, center, axis, n_o, e_o,
-                                 element_type='Rect')
-        tank_model = FEModel3D()
-        tank_model.add_mesh(tank_mesh)
+        # Add a cylinder mesh to the model
+        tank_model.add_cylinder_mesh('MSH1', mesh_size, R, H, t, 'Concrete', 1, 1, center, axis, element_type='Rect')
+        
+        # Generate the mesh prior to running so we can work with it
+        tank_model.Meshes['MSH1'].generate()
 
         # Add hydrostatic loads to the elements
         for element in tank_model.Plates.values():

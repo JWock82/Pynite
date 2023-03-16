@@ -1,12 +1,11 @@
 from numpy import zeros, array, matmul, cross, add
 from numpy.linalg import inv, norm, det
-from PyNite.LoadCombo import LoadCombo
 
 #%%
 class Plate3D():
 
-    def __init__(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
-                 LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
+    def __init__(self, name, i_node, j_node, m_node, n_node, t, material, model, kx_mod=1.0,
+                 ky_mod=1.0):
         """
         A rectangular plate element
 
@@ -24,18 +23,16 @@ class Plate3D():
             The plate's n-node
         t : number
             Plate thickness
-        E : number
-            Plate modulus of elasticity
-        nu : number
-            Poisson's ratio
+        material : string
+            The name of the plate material
         kx_mod : number
             Modification factor for stiffness in the plate's local x-direction. Default value is
             1.0, which indicates no stiffness modification (100% stiffness).
         ky_mod : number
             Modification factor for stiffness in the plate's local y-direction. Default value is
             1.0, which indicates no stiffness modification (100% stiffness).
-        LoadCombos : dict {combo_name: LoacCombo}
-            A dictionary of the load combinations used in the model the plate is in
+        model : FEModel3D
+            The model the plate is a part of
         """
 
         self.name = name
@@ -48,13 +45,21 @@ class Plate3D():
         self.n_node = n_node
 
         self.t = t
-        self.E = E
-        self.nu = nu
+        
         self.kx_mod = kx_mod
         self.ky_mod = ky_mod
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
-        self.LoadCombos = LoadCombos
+        
+        # Plates need a link to the model they belong to
+        self.model = model
+
+        # Get material properties for the plate from the model
+        try:
+            self.E = self.model.Materials[material].E
+            self.nu = self.model.Materials[material].nu
+        except:
+            raise KeyError('Please define the material ' + str(material) + ' before assigning it to plates.')
     
     def width(self):
         """
@@ -317,7 +322,7 @@ class Plate3D():
         fer = zeros((12, 1))
 
         # Get the requested load combination
-        combo = self.LoadCombos[combo_name]
+        combo = self.model.LoadCombos[combo_name]
 
         # Initialize the element's surface pressure to zero
         p = 0

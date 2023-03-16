@@ -14,16 +14,21 @@ MomentFrame.add_node('N3', 15*12, 12*12, 0)
 MomentFrame.add_node('N4', 15*12, 0*12, 0)
 
 # Define column properties (use W10x33 from the AISC Manual):
-E = 29000 # ksi
-G = 11400 # ksi
 Iy = 36.6 # in^4
 Iz = 171 # in^4
 J = 0.58 # in^4
 A = 9.71 # in^2
 
+# Define a material
+E = 29000 # ksi
+G = 11200 # ksi
+nu = 0.3  # Poisson's ratio
+rho = 0.490/12**3  # Density (kci)
+MomentFrame.add_material('Steel', E, G, nu, rho)
+
 # Define the columns
-MomentFrame.add_member('Col1', 'N1', 'N2', E, G, Iy, Iz, J, A)
-MomentFrame.add_member('Col2', 'N4', 'N3', E, G, Iy, Iz, J, A)
+MomentFrame.add_member('Col1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+MomentFrame.add_member('Col2', 'N4', 'N3', 'Steel', Iy, Iz, J, A)
 
 # Define beam properties (Use W8x24)
 Iy = 18.3 # in^4
@@ -32,7 +37,7 @@ J = 0.346 # in^4
 A = 7.08 # in^2
 
 # Define the beams
-MomentFrame.add_member('Beam', 'N2', 'N3', E, G, Iy, Iz, J, A)
+MomentFrame.add_member('Beam', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
 
 # Provide fixed supports at the bases of the columns
 MomentFrame.def_support('N1', support_DX=True, support_DY=True, support_DZ=True, support_RX=True, support_RY=True, support_RZ=True)

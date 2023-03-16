@@ -34,68 +34,77 @@ class Test_Plates(unittest.TestCase):
         # Units for this model are pounds and inches
         """
 
-        plModel= FEModel3D()
+        plate_model= FEModel3D()
 
-        plModel.add_node('N1', 0, 0, 0)
-        plModel.add_node('N2', 10, 0, 0)
-        plModel.add_node('N3', 20, 0, 0)
-        plModel.add_node('N4', 0, 10, 0)
-        plModel.add_node('N5', 10, 10, 0)
-        plModel.add_node('N6', 20, 10, 0)
-        plModel.add_node('N7', 0, 20, 0)
-        plModel.add_node('N8', 10, 20, 0)
-        plModel.add_node('N9', 20, 20, 0)
+        plate_model.add_node('N1', 0, 0, 0)
+        plate_model.add_node('N2', 10, 0, 0)
+        plate_model.add_node('N3', 20, 0, 0)
+        plate_model.add_node('N4', 0, 10, 0)
+        plate_model.add_node('N5', 10, 10, 0)
+        plate_model.add_node('N6', 20, 10, 0)
+        plate_model.add_node('N7', 0, 20, 0)
+        plate_model.add_node('N8', 10, 20, 0)
+        plate_model.add_node('N9', 20, 20, 0)
 
-        plModel.add_plate('P1', 'N1', 'N2', 'N5', 'N4', 0.1, 30000000, 0.3)
-        plModel.add_plate('P2', 'N2', 'N3', 'N6', 'N5', 0.1, 30000000, 0.3)
-        plModel.add_plate('P3', 'N4', 'N5', 'N8', 'N7', 0.1, 30000000, 0.3)
-        plModel.add_plate('P4', 'N5', 'N6', 'N9', 'N8', 0.1, 30000000, 0.3)
+        plate_model.add_material('Steel', 30000000, 11200000, 0.3, 0.284)
 
-        plModel.add_node_load('N5', 'FZ', -100)
+        plate_model.add_plate('P1', 'N1', 'N2', 'N5', 'N4', 0.1, 'Steel')
+        plate_model.add_plate('P2', 'N2', 'N3', 'N6', 'N5', 0.1, 'Steel')
+        plate_model.add_plate('P3', 'N4', 'N5', 'N8', 'N7', 0.1, 'Steel')
+        plate_model.add_plate('P4', 'N5', 'N6', 'N9', 'N8', 0.1, 'Steel')
 
-        plModel.def_support('N1', True, True, True, True, True, True)
-        plModel.def_support('N2', True, True, True, True, True, True)
-        plModel.def_support('N3', True, True, True, True, True, True)
-        plModel.def_support('N4', True, True, True, True, True, True)
-        plModel.def_support('N6', True, True, True, True, True, True)
-        plModel.def_support('N7', True, True, True, True, True, True)
-        plModel.def_support('N8', True, True, True, True, True, True)
-        plModel.def_support('N9', True, True, True, True, True, True)
+        plate_model.add_node_load('N5', 'FZ', -100)
 
-        plModel.def_support('N5', True, True, False, False, False, True)
+        plate_model.def_support('N1', True, True, True, True, True, True)
+        plate_model.def_support('N2', True, True, True, True, True, True)
+        plate_model.def_support('N3', True, True, True, True, True, True)
+        plate_model.def_support('N4', True, True, True, True, True, True)
+        plate_model.def_support('N6', True, True, True, True, True, True)
+        plate_model.def_support('N7', True, True, True, True, True, True)
+        plate_model.def_support('N8', True, True, True, True, True, True)
+        plate_model.def_support('N9', True, True, True, True, True, True)
+
+        plate_model.def_support('N5', True, True, False, False, False, True)
 
         # Check to see if the stiffness matrix for each plate is symmetric
-        # print(allclose(plModel.Plates[0].K(), plModel.Plates[0].K().T))
-        # print(allclose(plModel.Plates[1].K(), plModel.Plates[1].K().T))
-        # print(allclose(plModel.Plates[2].K(), plModel.Plates[2].K().T))
-        # print(allclose(plModel.Plates[3].K(), plModel.Plates[3].K().T))
+        # print(allclose(plate_model.Plates[0].K(), plate_model.Plates[0].K().T))
+        # print(allclose(plate_model.Plates[1].K(), plate_model.Plates[1].K().T))
+        # print(allclose(plate_model.Plates[2].K(), plate_model.Plates[2].K().T))
+        # print(allclose(plate_model.Plates[3].K(), plate_model.Plates[3].K().T))
 
         # Check to see if the global stiffness matrix is symmetric
-        # print(allclose(plModel.K(Renumber=True), plModel.K(Renumber=False).T))
+        # print(allclose(plate_model.K(Renumber=True), plate_model.K(Renumber=False).T))
 
-        plModel.analyze(check_statics=True, sparse=False)
+        plate_model.analyze(check_statics=True, sparse=False)
         # Test: displacement of N5 in Z direction
-        calculated_displacement = plModel.Nodes['N5'].DZ['Combo 1']
+        calculated_displacement = plate_model.Nodes['N5'].DZ['Combo 1']
         expected_displacement = -0.0861742424242424
         self.assertAlmostEqual(calculated_displacement/expected_displacement, 1.0, 2)
 
     def test_hydrostatic_plate(self):
 
-        # Establish problem parameters
+        # Create the model
+        plate_model = FEModel3D()
+
+        # Define geometry
         t = 1  # ft
-        E = 57000*math.sqrt(4500)*12**2  # psf
-        nu = 1/6
         mesh_size = 1  # ft
         a = 10  # ft
         b = 15  # ft
+
+        # Define a material
+        E = 57000*math.sqrt(4500)*12**2  # psf
+        G = 0.4*E  # psf
+        nu = 1/6
+        rho = 150  # psf
+        plate_model.add_material('Concrete', E, G, nu, rho)
         
         # Generate the mesh of plates
-        plate_mesh = RectangleMesh(mesh_size, a, b, t, E, nu, kx_mod=1, ky_mod=1, element_type='Rect')
-        plate_mesh.generate()
-
-        # Create the model and add the plates
-        plate_model = FEModel3D()
-        plate_model.add_mesh(plate_mesh)
+        plate_model.add_rectangle_mesh('MSH1', mesh_size, a, b, t, 'Concrete', kx_mod=1, ky_mod=1,
+                                       element_type='Rect')
+        
+        # Generate the mesh
+        plate_model.Meshes['MSH1'].generate()
 
         # Add supports to the sides and base of the wall
         for node in plate_model.Nodes.values():
@@ -128,42 +137,46 @@ class Test_Plates(unittest.TestCase):
     
     def test_hydrostatic_quad(self):
 
-        # Establish problem parameters
+        # Create the model
+        quad_model = FEModel3D()
+
+        # Define geometry
         t = 1  # ft
-        E = 57000*math.sqrt(4500)*12**2  # psf
-        nu = 1/6
         mesh_size = 1  # ft
         a = 10  # ft
         b = 15  # ft
-        
-        # Generate the mesh of plates
-        plate_mesh = RectangleMesh(mesh_size, a, b, t, E, nu, kx_mod=1, ky_mod=1,
-                                   element_type='Quad')
-        plate_mesh.generate()
 
-        # Create the model and add the plates
-        plate_model = FEModel3D()
-        plate_model.add_mesh(plate_mesh)
+        # Define a material
+        E = 57000*math.sqrt(4500)*12**2  # psf
+        G = 0.4*E  # psf
+        nu = 1/6
+        rho = 150  # psf
+        quad_model.add_material('Concrete', E, G, nu, rho)
+        
+        # Generate the mesh of quads
+        quad_model.add_rectangle_mesh('MSH1', mesh_size, a, b, t, 'Concrete', kx_mod=1, ky_mod=1,
+                                      element_type='Quad')
+        quad_model.Meshes['MSH1'].generate()
 
         # Add supports to the sides and base of the wall
-        for node in plate_model.Nodes.values():
+        for node in quad_model.Nodes.values():
             if node.X == 0 or node.X == a or node.Y == 0:
-                plate_model.def_support(node.name, True, True, True, True, True, True)
+                quad_model.def_support(node.name, True, True, True, True, True, True)
         
         # Add hydrostatic loads to the elements
-        for element in plate_model.Quads.values():
+        for element in quad_model.Quads.values():
             Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
-            plate_model.add_quad_surface_pressure(element.name, p, 'Hydrostatic')
+            quad_model.add_quad_surface_pressure(element.name, p, 'Hydrostatic')
         
         # Add a load combination to the model
-        plate_model.add_load_combo('F', {'Hydrostatic': 1.0})
+        quad_model.add_load_combo('F', {'Hydrostatic': 1.0})
         
         # Analyze the model
-        plate_model.analyze()
+        quad_model.analyze()
 
         # Get the maximum deflection in the model at the top of the wall
-        DZ_calcd = max([node.DZ['F'] for node in plate_model.Nodes.values() if node.Y == b])
+        DZ_calcd = max([node.DZ['F'] for node in quad_model.Nodes.values() if node.Y == b])
         
         # Find the maximum deflection at the top of the wall from Timoshenko's Table 45
         q = 62.4*b

@@ -33,16 +33,19 @@ for i in range(num_nodes):
         # Spring supports at all other locations
         boef.def_support_spring('N' + str(i + 1), 'DY', ks, '-')
 
-# Define member material properties (W8x35)
+# Define member material properties
 E = 29000   # ksi
 G = 11200   # ksi
+boef.add_material('Steel', E, G, 0.3, 490/1000/12**3)
+
+# Define section properties (W8x35)
 A = 10.3    # in^2
 Iz = 127    # in^4 (strong axis)
 Iy = 42.6   # in^4 (weak axis)
 J = 0.769   # in^4
 
 # Define the member
-boef.add_member('M1', 'N1', 'N' + str(num_nodes), E, G, Iy, Iz, J, A)
+boef.add_member('M1', 'N1', 'N' + str(num_nodes), 'Steel', Iy, Iz, J, A)
 
 # In the next few lines no load case or load combination is being specified. When this is the case,
 # PyNite internally creates a default load case ('Case 1') and a default load combination

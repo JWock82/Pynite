@@ -6,7 +6,6 @@
 from numpy import array, arccos, dot, cross, matmul, add, zeros
 from numpy.linalg import inv, det, norm
 from math import sin, cos
-from PyNite.LoadCombo import LoadCombo
 
 class Quad3D():
     """
@@ -23,8 +22,8 @@ class Quad3D():
     """
 
 #%%
-    def __init__(self, name, i_node, j_node, m_node, n_node, t, E, nu, kx_mod=1.0, ky_mod=1.0,
-                 LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})}):
+    def __init__(self, name, i_node, j_node, m_node, n_node, t, material, model, kx_mod=1.0,
+                 ky_mod=1.0):
 
         self.name = name
         self.ID = None
@@ -36,13 +35,20 @@ class Quad3D():
         self.n_node = n_node
 
         self.t = t
-        self.E = E
-        self.nu = nu
         self.kx_mod = kx_mod
         self.ky_mod = ky_mod
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
-        self.LoadCombos = LoadCombos
+    
+        # Quads need a link to the model they belong to
+        self.model = model
+
+        # Get material properties for the plate from the model
+        try:
+            self.E = self.model.Materials[material].E
+            self.nu = self.model.Materials[material].nu
+        except:
+            raise KeyError('Please define the material ' + str(material) + ' before assigning it to plates.')
 
 #%%
     def _local_coords(self):
@@ -492,7 +498,7 @@ class Quad3D():
         fer = zeros((12,1))
 
         # Get the requested load combination
-        combo = self.LoadCombos[combo_name]
+        combo = self.model.LoadCombos[combo_name]
 
         # Define the gauss point used for numerical integration
         gp = 1/3**0.5
