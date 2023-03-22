@@ -10,7 +10,13 @@ Welcome to Pynite's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+Pynite provides simple finite element analysis for Python.
 
+Installation
+============
+
+The easiest way to install pynite is via `pip`:
+`$pip install PyNiteFEA``
 
 Indices and tables
 ==================
