@@ -15,7 +15,7 @@ release = '0.0.71'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 import sys
-sys.path.append('..')
+sys.path.append('..//PyNite')
 
 extensions = ['sphinx.ext.autodoc']
 
