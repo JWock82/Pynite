@@ -17,6 +17,7 @@ Installation
 
 The easiest way to install pynite is via `pip`:
 `$pip install PyNiteFEA``
+Be sure to install `PyNiteFEA` rather than `PyNite`.
 
 Indices and tables
 ==================
