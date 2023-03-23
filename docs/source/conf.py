@@ -14,6 +14,9 @@ release = '0.0.71'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+# Import FEModel3D for autodoc to read
+from PyNite import FEModel3D
+
 extensions = ['sphinx.ext.autodoc']
 
 templates_path = ['_templates']

@@ -24,7 +24,7 @@ Be sure to install `PyNiteFEA` rather than `PyNite`.
 The FEModel3D Class
 ===================
 
-.. automodule:: PyNite.FEModel3D
+.. automodule:: FEModel3D
    :members:
 
 Indices and tables
