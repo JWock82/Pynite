@@ -21,8 +21,8 @@ The easiest way to install pynite is via `pip`:
 
 Be sure to install `PyNiteFEA` rather than `PyNite`.
 
-.. autoclass:: FEModel3D.FEModel3D
-   :members: add_node
+.. autoclass:: PyNite.FEModel3D.FEModel3D
+   :members:
 
 Indices and tables
 ==================
