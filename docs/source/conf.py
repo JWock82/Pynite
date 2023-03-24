@@ -27,6 +27,7 @@ extensions = ['sphinx.ext.autodoc']
 templates_path = ['_templates']
 exclude_patterns = []
 
+from PyNite import FEModel3D
 
 
 # -- Options for HTML output -------------------------------------------------
