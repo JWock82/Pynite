@@ -19,8 +19,7 @@ from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, Cylinder
 
 # %%
 class FEModel3D():
-    """
-    A 3D finite element model.
+    """Creates a new 3D finite element model.
     """
 
     def __init__(self):
@@ -93,31 +92,20 @@ class FEModel3D():
         return sorted(list(dict.fromkeys(cases)))
 
     def add_node(self, name, X, Y, Z):
-        """
-        Adds a new node to the model.
+        """Adds a new node to the model.
 
-        Parameters
-        ----------
-        name : string
-            A unique user-defined name for the node. If set to None or "" a
+        Args:
+            name (string): A unique user-defined name for the node. If set to None or "" a
             name will be automatically assigned.
-        X : number
-            The global X-coordinate of the node.
-        Y : number
-            The global Y-coordinate of the node.
-        Z : number
-            The global Z-coordinate of the node.
+            X (number): The node's global X-coordinate.
+            Y (number): The node's global Y-coordinate.
+            Z (number): The node's global Z-coordinate.
 
-        Raises
-        ------
-        NameError
-            Occurs when the specified name already exists in the model.
+        Raises:
+            NameError: Occurs when the specified name already exists in the model.
 
-        Returns
-        -------
-        name : string
-            The name of the node that was added to the model.
-
+        Returns:
+            string: The name of the node added to the model.
         """
         
         # Name the node or check it doesn't already exist
