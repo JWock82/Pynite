@@ -19,12 +19,11 @@ from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, Cylinder
 
 # %%
 class FEModel3D():
-    """Creates a new 3D finite element model.
+    """A 3D finite element model.
     """
 
     def __init__(self):
-        """
-        Returns a new 3D finite element model.
+        """Creates a new 3D finite element model.
         """
         
         # Initialize the model's various dictionaries. The dictionaries will be prepopulated with
@@ -56,8 +55,7 @@ class FEModel3D():
 
     @property
     def LoadCases(self):
-        """
-        Returns a list of all the load cases in the model (in ascending order).
+        """Returns a list of all the load cases in the model (in ascending order).
         """
         
         # Create an empty list of load cases
