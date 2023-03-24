@@ -10,13 +10,10 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-<<<<<<< HEAD
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('...'))
 sys.path.insert(0, os.path.abspath('....'))
 
-=======
->>>>>>> 80022aa057ae92239d2c3b323cc367a06917e498
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
