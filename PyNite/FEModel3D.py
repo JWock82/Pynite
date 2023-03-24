@@ -94,18 +94,18 @@ class FEModel3D():
     def add_node(self, name, X, Y, Z):
         """Adds a new node to the model.
 
-        Args:
-            name (string): A unique user-defined name for the node. If set to None or "" a
-            name will be automatically assigned.
-            X (number): The node's global X-coordinate.
-            Y (number): The node's global Y-coordinate.
-            Z (number): The node's global Z-coordinate.
-
-        Raises:
-            NameError: Occurs when the specified name already exists in the model.
-
-        Returns:
-            string: The name of the node added to the model.
+        :param name: A unique user-defined name for the node. If set to None or "" a name will be
+                     automatically assigned.
+        :type name: string
+        :param X: The node's global X-coordinate.
+        :type X: number
+        :param Y: The node's global Y-coordinate.
+        :type Y: number
+        :param Z: The node's global Z-coordinate.
+        :type Z: number
+        :raises NameError: Occurs when the specified name already exists in the model.
+        :return: The name of the node added to the model.
+        :rtype: string
         """
         
         # Name the node or check it doesn't already exist
