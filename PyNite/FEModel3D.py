@@ -24,7 +24,6 @@ class FEModel3D():
     """
 
     def __init__(self):
-
         """
         Returns a new 3D finite element model.
         """
