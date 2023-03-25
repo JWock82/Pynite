@@ -12,6 +12,8 @@ Welcome to Pynite's documentation!
 
 Pynite provides simple finite element analysis for Python.
 
+This documentation is just getting started. Keep checking back for updates.
+
 Installation
 ============
 
@@ -22,10 +24,10 @@ The easiest way to install pynite is via `pip`:
 
 Be sure to install `PyNiteFEA` rather than `PyNite`.
 
-Building a Model
-================
+Modeling Basics
+===============
 
-You can start a new model using the FEModel3D class:
+You can start a new model using the `FEModel3D`` class:
 ::
 
    from PyNite import FEModel3D
@@ -35,6 +37,9 @@ Once you have a model started you can add elements to it using the dot operator:
 ::
 
    my_model.add_node('N1', 0, 0, 0)
+
+To use PyNite effectively you should become familiar with the methods available within the
+`FEModel3D` class:
 
 .. automodule:: PyNite.FEModel3D
    :members:
