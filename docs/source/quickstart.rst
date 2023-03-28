@@ -5,7 +5,8 @@ Quickstart
 Here's a simple example of how to analyze a simple beam. More examples for other types of models
 are available at https://github.com/JWock82/PyNite/tree/master/Examples.
 
-::
+.. code-block:: python
+
     # Example of a simply supported beam with a uniform distributed load.
     # Units used in this example are inches and kips
     # This example does not use load combinations. The program will create a default load combindation called 'Combo 1'
