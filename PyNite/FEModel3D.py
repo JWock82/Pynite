@@ -131,36 +131,24 @@ class FEModel3D():
         return name
 
     def add_auxnode(self, name, X, Y, Z):
-        """
-        Adds a new auxiliary node to the model.
-        
-        Together with a member's `i` and `j` nodes, an auxiliary node defines
-        the plane in which the member's local z-axis lies, and the side of the
-        member the z-axis point toward. If no auxiliary node is specified for
-        a member, PyNite uses its own default configuration.
+        """Adds a new auxiliary node to the model. Together with a member's `i` and `j` nodes, an
+        auxiliary node defines the plane in which the member's local z-axis lies, and the side of
+        the member the z-axis points toward. If no auxiliary node is specified for a member, PyNite
+        uses its own default configuration.
 
-        Parameters
-        ----------
-        name : string
-            A unique user-defined name for the node. If None or "", a name will be automatically assigned
-        X : number
-            The global X-coordinate of the node.
-        Y : number
-            The global Y-coordinate of the node.
-        Z : number
-            The global Z-coordinate of the node.
-        
-        Raises
-        ------
-        NameError
-            Occurs when the specified name already exists in the model.
-
-        Returns
-        -------
-        name : string
-            The name of the auxiliary node that was added to the model.
-        
-        """
+        :param name: A unique user-defined name for the node. If None or "", a name will be
+                     automatically assigned.
+        :type name: string
+        :param X: The global X-coordinate of the node.
+        :type X: number
+        :param Y: The global Y-coordinate of the node.
+        :type Y: number
+        :param Z: The global Z-coordinate of the node.
+        :type Z: number
+        :raises NameError: Occurs when the specified name already exists in the model.
+        :return: The name of the auxiliary node that was added to the model.
+        :rtype: string
+        """ 
         
         # Name the node or check it doesn't already exist
         if name:
@@ -187,21 +175,19 @@ class FEModel3D():
         return name 
 
     def add_material(self, name, E, G, nu, rho):
-        """
-        Adds a new material to the model.
+        """Adds a new material to the model.
 
-        Parameters
-        ----------
-        name : string
-            A unique user-defined name for the material
-        E : number
-            The modulus of elasticity of the material
-        G : number
-            The shear modulus of elasticity of the material
-        nu : number
-            Poisson's ratio of the material
-        rho : number
-            The density of the material
+        :param name: A unique user-defined name for the material.
+        :type name: string
+        :param E: The modulus of elasticity of the material.
+        :type E: number
+        :param G: The shear modulus of elasticity of the material.
+        :type G: number
+        :param nu: Poisson's ratio of the material.
+        :type nu: number
+        :param rho: The density of the material
+        :type rho: number
+        :raises NameError: Occurs when the specified name already exists in the model.
         """
 
         # Name the material or check it doesn't already exist

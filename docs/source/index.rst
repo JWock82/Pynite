@@ -10,6 +10,9 @@ Welcome to Pynite's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+.. toctree::
+   quickstart
+
 Pynite provides simple finite element analysis for Python.
 
 This documentation is just getting started. Keep checking back for updates.
