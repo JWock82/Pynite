@@ -6,7 +6,7 @@
 Welcome to Pynite's documentation!
 ==================================
 
-.. figure:: <https://github.com/JWock82/PyNite/blob/master/Resources/Full%20Logo%20No%20Buffer.png>
+.. figure:: ../../Resources/Full_Logo_No_Buffer_-_Transparent.png
    :width: 50%
 
    ..
