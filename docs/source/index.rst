@@ -6,9 +6,8 @@
 Welcome to Pynite's documentation!
 ==================================
 
-.. figure:: /img/TransparentLogo.png
+.. figure:: ../img/TransparentLogo.png
    :width: 50%
-
    ..
 
 Pynite provides simple finite element analysis for Python.
