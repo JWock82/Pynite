@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 .. figure:: ../img/TransparentLogo.png
-   :width: 50%
+   :width: 25%
 
 Pynite provides simple finite element analysis for Python.
 
