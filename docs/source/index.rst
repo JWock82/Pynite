@@ -6,19 +6,18 @@
 Welcome to Pynite's documentation!
 ==================================
 
-.. figure:: https://github.com/JWock82/PyNite/blob/master/Resources/Full%20Logo%20No%20Buffer.png
+.. figure:: <https://github.com/JWock82/PyNite/blob/master/Resources/Full%20Logo%20No%20Buffer.png>
    :width: 50%
-   ..
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   ..
 
 Pynite provides simple finite element analysis for Python.
 
 This documentation is just getting started. Keep checking back for updates.
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Contents:
    installation
    quickstart
    FEModel3D

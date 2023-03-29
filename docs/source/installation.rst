@@ -6,6 +6,7 @@ Pynite can be installed via ``pip`` (Python's default package installer). Run th
 from the command line*:
 
 .. code_block:: console
+    
     $ pip install PyNiteFEA
 
 *For engineers who may be new to Python, note that the ``$`` sign is just a placeholder for your
