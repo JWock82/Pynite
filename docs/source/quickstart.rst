@@ -27,7 +27,7 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
     G = 11200       # Shear modulus of elasticity (ksi)
     nu = 0.3        # Poisson's ratio
     rho = 2.836e-4  # Density (kci)
-    beam.add_material('Steel', E,0 G, nu, rho)
+    beam.add_material('Steel', E, G, nu, rho)
 
     # Add a beam with the following properties:
     # Iy = 100 in^4, Iz = 150 in^4, J = 250 in^4, A = 20 in^2
