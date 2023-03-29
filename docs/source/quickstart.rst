@@ -2,7 +2,7 @@
 Quickstart
 ==========
 
-Here's a simple example of how to analyze a simple beam. Many more examples are available at
+Here's a simple example of how to analyze a simple beam. Many more examples are available here:
 `Examples <https://github.com/JWock82/PyNite/tree/master/Examples>`_.
 
 .. code-block:: python
@@ -37,7 +37,7 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
     beam.def_support('N1', True, True, True, False, False, False)
     beam.def_support('N2', True, True, True, True, False, False)
 
-    # Add a uniform load of 200 lbs/ft to the beam (from 0 inches to 168 inches)
+    # Add a uniform load of 200 lbs/ft to the beam (from 0 in to 168 in)
     beam.add_member_dist_load('M1', 'Fy', -200/1000/12, -200/1000/12, 0, 168)
 
     # Alternatively the following line would do apply the load to the full

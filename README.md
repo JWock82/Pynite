@@ -9,6 +9,7 @@
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/PyNite">
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/PyNite)
 ![GitHub](https://img.shields.io/github/license/JWock82/PyNite)
+[![Documentation Status](https://readthedocs.org/projects/pynite/badge/?version=latest)](https://pynite.readthedocs.io/en/latest/?badge=latest)
 
 An easy to use elastic 3D structural engineering finite element analysis library for Python.
 
