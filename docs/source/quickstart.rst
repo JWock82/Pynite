@@ -3,7 +3,7 @@ Quickstart
 ==========
 
 Here's a simple example of how to analyze a simple beam. Many more examples are available at
-`Examples <https://github.com/JWock82/PyNite/tree/master/Examples>`.
+`Examples <https://github.com/JWock82/PyNite/tree/master/Examples>`_.
 
 .. code-block:: python
 
