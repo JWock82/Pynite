@@ -12,10 +12,11 @@ Pynite provides simple finite element analysis for Python.
 This documentation is just getting started. Keep checking back for updates.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
 
 .. toctree::
+   :maxdepth: 1
    installation
    quickstart
    FEModel3D
