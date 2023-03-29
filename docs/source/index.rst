@@ -6,6 +6,10 @@
 Welcome to Pynite's documentation!
 ==================================
 
+.. figure:: https://github.com/JWock82/PyNite/blob/master/Resources/Full%20Logo%20No%20Buffer.png
+   :width: 50%
+   ..
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -17,6 +21,7 @@ This documentation is just getting started. Keep checking back for updates.
 .. toctree::
    installation
    quickstart
+   FEModel3D
 
 Indices and tables
 ==================
