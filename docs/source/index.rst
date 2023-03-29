@@ -8,7 +8,6 @@ PyNite
 ======
 
 .. figure:: ../img/TransparentLogo.png
-   ..
 
 Pynite provides simple finite element analysis for Python.
 
