@@ -3,11 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-======
-PyNite
-======
-
 .. figure:: ../img/TransparentLogo.png
+   :width: 50%
 
 Pynite provides simple finite element analysis for Python.
 
