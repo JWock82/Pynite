@@ -3,11 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Pynite's documentation!
-==================================
+======
+PyNite
+======
 
 .. figure:: ../img/TransparentLogo.png
-   :width: 50%
    ..
 
 Pynite provides simple finite element analysis for Python.
@@ -17,6 +17,8 @@ This documentation is just getting started. Keep checking back for updates.
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+.. toctree::
    installation
    quickstart
    FEModel3D
