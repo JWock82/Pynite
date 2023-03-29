@@ -5,6 +5,7 @@
 
 .. figure:: ../img/TransparentLogo.png
    :width: 25%
+   :align: left
 
 Pynite provides simple finite element analysis for Python.
 
