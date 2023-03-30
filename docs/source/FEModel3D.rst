@@ -35,11 +35,13 @@ example, to retrieve the X-coordinate for the node we just created we could acce
 
     my_model.Nodes['N1'].X
 
-This returns the X coordinate for the node. As you use the dictionaries a good code environment
-can prompt you to know what information is available from the dictionary
+This returns the X coordinate for the node. Notice the "dot" operator above. As you use the
+dictionaries a good code environment can prompt you to see what information is available when you
+use the "dot" operator.
 
 FEModel3D Reference
 ===================
+
 
 .. automodule:: FEModel3D
    :members:
