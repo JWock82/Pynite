@@ -33,6 +33,7 @@ exclude_patterns = []
 
 html_theme = 'alabaster'
 html_theme_options = {
-    "sidebarwidth": "300px"
+    "sidebarwidth": "230px",
+    "navigation_depth": 1
 }
 html_static_path = ['_static']
