@@ -55,7 +55,7 @@ class FEModel3D():
 
     @property
     def LoadCases(self):
-        """Returns a list of all the load cases in the model (in ascending order).
+        """Returns a list of all the load cases in the model (in alphabetical order).
         """
         
         # Create an empty list of load cases
@@ -212,36 +212,26 @@ class FEModel3D():
         self.solution = None
 
     def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
-        """
-        Adds a new spring to the model.
-        
-        Parameters
-        ----------
-        name : string
-            A unique user-defined name for the member. If None or "", a name will be automatically assigned
-        i_node : string
-            The name of the i-node (start node).
-        j_node : string
-            The name of the j-node (end node).
-        ks : number
-            The spring constant (force/displacement).
-        tension_only : bool, optional
-            Indicates if the member is tension-only. Default is False.
-        comp_only : bool, optional
-            Indicates if the member is compression-only. Default is False.
-        
-        Raises
-        ------
-        NameError
-            Occurs when the specified name already exists in the model.
-        
-        Returns
-        -------
-        name : string
-            The name of the spring that was added to the model.
-            
-        """
+        """Adds a new spring to the model.
 
+        :param name: A unique user-defined name for the member. If None or "", a name will be
+                    automatically assigned
+        :type name: string
+        :param i_node: The name of the i-node (start node).
+        :type i_node: string
+        :param j_node: The name of the j-node (end node).
+        :type j_node: string
+        :param ks: The spring constant (force/displacement).
+        :type ks: number
+        :param tension_only: Indicates if the member is tension-only, defaults to False
+        :type tension_only: bool, optional
+        :param comp_only: Indicates if the member is compression-only, defaults to False
+        :type comp_only: bool, optional
+        :raises NameError: Occurs when the specified name already exists in the model.
+        :return: The name of the spring that was added to the model.
+        :rtype: string
+        """ 
+        
         # Name the spring or check it doesn't already exist
         if name:
             if name in self.Springs:
@@ -270,36 +260,37 @@ class FEModel3D():
 
     def add_member(self, name, i_node, j_node, material, Iy, Iz, J, A, auxNode=None,
                    tension_only=False, comp_only=False):
-        '''
-        Adds a new physical member to the model. The member name will be returned.
-        
-        Parameters
-        ----------
-        name : string
-            A unique user-defined name for the member. If None or "", a name will be automatically assigned
-        i_node : string
-            The name of the i-node (start node).
-        j_node : string
-            The name of the j-node (end node).
-        material : string
-            The name of the material of the member.
-        Iy : number
-            The moment of inertia of the member about its local y-axis.
-        Iz : number
-            The moment of inertia of the member about its local z-axis.
-        J : number
-            The polar moment of inertia of the member.
-        A : number
-            The cross-sectional area of the member.
-        auxNode : string, optional
-            The name of the auxialary node used to define the local z-axis.
-            The default is for the program to define the axis instead of
-            using an auxiliary node.
-        tension_only : bool, optional
-            Indicates if the member is tension-only. Default is False.
-        comp_only : bool, optional
-            Indicates if the member is compression-only. Default is False.
-        '''
+        """Adds a new physical member to the model. The member name will be returned.
+
+        :param name: A unique user-defined name for the member. If None or "", a name will be
+                    automatically assigned
+        :type name: string
+        :param i_node: The name of the i-node (start node).
+        :type i_node: string
+        :param j_node: The name of the j-node (end node).
+        :type j_node: string
+        :param material: The name of the material of the member.
+        :type material: string
+        :param Iy: The moment of inertia of the member about its local y-axis.
+        :type Iy: number
+        :param Iz: The moment of inertia of the member about its local z-axis.
+        :type Iz: number
+        :param J: The polar moment of inertia of the member.
+        :type J: number
+        :param A: The cross-sectional area of the member.
+        :type A: number
+        :param auxNode: The name of the auxialary node used to define the local z-axis. The default
+                        is None, in which case the program defines the axis instead of using an
+                        auxiliary node.
+        :type auxNode: string, optional
+        :param tension_only: Indicates if the member is tension-only, defaults to False
+        :type tension_only: bool, optional
+        :param comp_only: Indicates if the member is compression-only, defaults to False
+        :type comp_only: bool, optional
+        :raises NameError: Occurs if the specified name already exists.
+        :return: The name of the member added to the model.
+        :rtype: string
+        """
 
         # Name the member or check it doesn't already exist
         if name:
