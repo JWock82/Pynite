@@ -42,6 +42,5 @@ use the "dot" operator.
 FEModel3D Reference
 ===================
 
-
 .. automodule:: FEModel3D
    :members:
