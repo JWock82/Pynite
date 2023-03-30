@@ -7,6 +7,10 @@
    :width: 40%
    :align: center
 
+=================================
+Welcome to Pynite's documentation
+=================================
+
 Pynite provides simple finite element analysis for Python.
 
 This documentation is just getting started. Keep checking back for updates.
