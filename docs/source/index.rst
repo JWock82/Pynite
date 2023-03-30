@@ -19,7 +19,6 @@ This documentation is just getting started. Keep checking back for updates.
    :maxdepth: 1
    :caption: Contents:
 
-.. toctree::
    installation
    quickstart
    FEModel3D
