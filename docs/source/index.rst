@@ -16,7 +16,7 @@ Pynite provides simple finite element analysis for Python.
 This documentation is just getting started. Keep checking back for updates.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
 .. toctree::
