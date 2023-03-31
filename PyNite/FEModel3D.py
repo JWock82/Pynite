@@ -260,7 +260,7 @@ class FEModel3D():
 
     def add_member(self, name, i_node, j_node, material, Iy, Iz, J, A, auxNode=None,
                    tension_only=False, comp_only=False):
-        """Adds a new physical member to the model. The member name will be returned.
+        """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If None or "", a name will be
                     automatically assigned
@@ -279,7 +279,7 @@ class FEModel3D():
         :type J: number
         :param A: The cross-sectional area of the member.
         :type A: number
-        :param auxNode: The name of the auxialary node used to define the local z-axis. The default
+        :param auxNode: The name of the auxiliary node used to define the local z-axis. The default
                         is None, in which case the program defines the axis instead of using an
                         auxiliary node.
         :type auxNode: string, optional
@@ -321,38 +321,37 @@ class FEModel3D():
         # Return the member name
         return name
 
-    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1, ky_mod=1):
-        """
-        Adds a new rectangular plate to the model.
+    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1.0, ky_mod=1.0):
+        """Adds a new rectangular plate to the model. The plate formulation for in-plane (membrane)
+        stiffness is based on an isoparametric formulation. For bending, it is based on a 12-term
+        polynomial formulation. This element must be rectangular, and must not be used where a
+        thick plate formulation is needed. For a more versatile plate element that can handle
+        distortion and thick plate conditions, consider using the `add_quad` method instead.
 
-        The plate formulation for in-plane (membrane) stiffness is based on an isoparametric
-        formulation. For bending, it is based on a 12-term polynomial formulation. This element
-        must be rectangular, and must not be used where a thick plate formulation is needed. For
-        a more versatile plate element that can handle distortion and thick plate conditions,
-        consider using the `add_quad` method instead.
-        
-        Parameters
-        ----------
-        name : string
-            A unique user-defined name for the plate. If None or "", a name will be automatically assigned
-        i_node : string
-            The name of the i-node.
-        j_node : string
-            The name of the j-node.
-        m_node : string
-            The name of the m-node.
-        n_node : string
-            The name of the n-node.
-        t : number
-            The thickness of the element.
-        material : string
-            The name of the material for the element.
-        kx_mod : number
-            Stiffness modification factor for in-plane stiffness in the element's local
-            x-direction. Default value is 1.0 (no modification).
-        ky_mod : number
-            Stiffness modification factor for in-plane stiffness in the element's local
-            y-direction. Default value is 1.0 (no modification).
+        :param name: A unique user-defined name for the plate. If None or "", a name will be
+                     automatically assigned.
+        :type name: string
+        :param i_node: The name of the i-node.
+        :type i_node: string
+        :param j_node: The name of the j-node.
+        :type j_node: string
+        :param m_node: The name of the m-node.
+        :type m_node: string
+        :param n_node: The name of the n-node.
+        :type n_node: string
+        :param t: The thickness of the element.
+        :type t: number
+        :param material: The name of the material for the element.
+        :type material: string
+        :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
+                       x-direction, defaults to 1 (no modification).
+        :type kx_mod: number, optional
+        :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local
+                       y-direction, defaults to 1 (no modification).
+        :type ky_mod: number, optional
+        :raises NameError: Occurs when the specified name already exists in the model.
+        :return: The name of the element added to the model.
+        :rtype: string
         """
         
         # Name the plate or check it doesn't already exist
@@ -380,38 +379,38 @@ class FEModel3D():
         return name
 
     def add_quad(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1, ky_mod=1):
-        """
-        Adds a new quadrilateral to the model.
+        """Adds a new quadrilateral to the model. The quad formulation for in-plane (membrane)
+        stiffness is based on an isoparametric formulation. For bending, it is based on an MITC4
+        formulation. This element handles distortion relatively well, and is appropriate for thick
+        and thin plates. One limitation with this element is that it does a poor job of reporting
+        corner stresses. Corner forces, however are very accurate. Center stresses are very
+        accurate as well. For cases where corner stress results are important, consider using the
+        `add_plate` method instead.
 
-        The quad formulation for in-plane (membrane) stiffness is based on an isoparametric
-        formulation. For bending, it is based on an MITC4 formulation. This element handles
-        distortion relatively well, and is appropriate for thick and thin plates. One limitation
-        with this element is that it does a poor job of reporting corner stresses. Corner forces,
-        however are very accurate. Center stresses are very accurate as well. For cases where
-        corner stress results are important, consider using the `add_plate` method instead.
-        
-        Parameters
-        ----------
-        name : string
-            A unique user-defined name for the quadrilateral. If None or "", a name will be automatically assigned
-        i_node : string
-            The name of the i-node.
-        j_node : string
-            The name of the j-node.
-        m_node : string
-            The name of the m-node.
-        n_node : string
-            The name of the n-node.
-        t : number
-            The thickness of the element.
-        material : string
-            The name of the material for the element.
-        kx_mod : number
-            Stiffness modification factor for in-plane stiffness in the element's local
-            x-direction. Default value is 1.0 (no modification).
-        ky_mod : number
-            Stiffness modification factor for in-plane stiffness in the element's local
-            y-direction. Default value is 1.0 (no modification).
+        :param name: A unique user-defined name for the quadrilateral. If None or "", a name will
+                     be automatically assigned.
+        :type name: string
+        :param i_node: The name of the i-node.
+        :type i_node: string
+        :param j_node: The name of the j-node.
+        :type j_node: string
+        :param m_node: The name of the m-node.
+        :type m_node: string
+        :param n_node: The name of the n-node.
+        :type n_node: string
+        :param t: The thickness of the element.
+        :type t: number
+        :param material: The name of the material for the element.
+        :type material: string
+        :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
+            x-direction, defaults to 1 (no modification).
+        :type kx_mod: number, optional
+        :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local
+            y-direction, defaults to 1 (no modification).
+        :type ky_mod: number, optional
+        :raises NameError: Occurs when the specified name already exists in the model.
+        :return: The name of the element added to the model.
+        :rtype: string
         """
         
         # Name the quad or check it doesn't already exist
@@ -588,46 +587,44 @@ class FEModel3D():
     def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,
                           material, kx_mod=1, ky_mod=1, origin=[0, 0, 0], axis='Y',
                           start_node=None, start_element=None):
-        """
-        Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by
-        a horizontal plane).
+        """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal
+        plane).
 
-        Parameters
-        ----------
-        name : string
-            A unique name for the mesh.
-        mesh_size : number
-            The target mesh size
-        large_radius : number
-            The larger of the two end radii.
-        small_radius : number
-            The smaller of the two end radii.
-        height : number
-            The height of the frustrum.
-        thickness : number
-            Element thickness.
-        material : string
-            The name of the element material.
-        kx_mod : number
-            Stiffness modification factor for radial stiffness in each
-            element's local x-direction. Default value is 1.0 (no
-            modification).
-        ky_mod : number
-            Stiffness modification factor for meridional stiffness in each
-            element's local y-direction. Default value is 1.0 (no
-            modification).
-        origin : list, optional
-            The origin of the mesh. The default is [0, 0, 0].
-        axis : string, optional
-            The global axis about which the mesh will be generated. The default is 'Y'.
-        start_node : string, optional
-            The name of the first node in the mesh. If set to `None` the program will use the next
-            available node name. Default is `None`
-        start_element : string, optional
-            The name of the first element in the mesh. If set to `None` the program will use the
-            next available element name. Default is `None`
+        :param name: A unique name for the mesh.
+        :type name: string
+        :param mesh_size: The target mesh size
+        :type mesh_size: number
+        :param large_radius: The larger of the two end radii.
+        :type large_radius: number
+        :param small_radius: The smaller of the two end radii.
+        :type small_radius: number
+        :param height: The height of the frustrum.
+        :type height: number
+        :param thickness: The thickness of the elements.
+        :type thickness: number
+        :param material: The name of the element material.
+        :type material: The name of the element's material.
+        :param kx_mod: Stiffness modification factor for radial stiffness in each element's local
+                       x-direction, defaults to 1 (no modification).
+        :type kx_mod: number, optional
+        :param ky_mod: Stiffness modification factor for meridional stiffness in each
+                       element's local y-direction, defaults to 1 (no modification).
+        :type ky_mod: number, optional
+        :param origin: The origin of the mesh, defaults to [0, 0, 0].
+        :type origin: list, optional
+        :param axis: The global axis about which the mesh will be generated, defaults to 'Y'.
+        :type axis: str, optional
+        :param start_node: The name of the first node in the mesh. If set to None the program
+                           will use the next available node name, defaults to None.
+        :type start_node: string, optional
+        :param start_element: The name of the first element in the mesh. If set to `None` the
+                              program will use the next available element name, defaults to None
+        :type start_element: string, optional
+        :raises NameError: Occurs if the specified name already exists.
+        :return: The name of the mesh added to the model.
+        :rtype: string
         """
-        
+                
         # Check if a name has been provided
         if name:
             # Check that the mesh name doesn't already exist
