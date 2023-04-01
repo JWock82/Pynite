@@ -94,7 +94,7 @@ class FEModel3D():
 
         :param name: A unique user-defined name for the node. If set to None or "" a name will be
                      automatically assigned.
-        :type name: string
+        :type name: str
         :param X: The node's global X-coordinate.
         :type X: number
         :param Y: The node's global Y-coordinate.
@@ -103,7 +103,7 @@ class FEModel3D():
         :type Z: number
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the node added to the model.
-        :rtype: string
+        :rtype: str
         """
         
         # Name the node or check it doesn't already exist
@@ -138,7 +138,7 @@ class FEModel3D():
 
         :param name: A unique user-defined name for the node. If None or "", a name will be
                      automatically assigned.
-        :type name: string
+        :type name: str
         :param X: The global X-coordinate of the node.
         :type X: number
         :param Y: The global Y-coordinate of the node.
@@ -147,7 +147,7 @@ class FEModel3D():
         :type Z: number
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the auxiliary node that was added to the model.
-        :rtype: string
+        :rtype: str
         """ 
         
         # Name the node or check it doesn't already exist
@@ -178,7 +178,7 @@ class FEModel3D():
         """Adds a new material to the model.
 
         :param name: A unique user-defined name for the material.
-        :type name: string
+        :type name: str
         :param E: The modulus of elasticity of the material.
         :type E: number
         :param G: The shear modulus of elasticity of the material.
@@ -216,11 +216,11 @@ class FEModel3D():
 
         :param name: A unique user-defined name for the member. If None or "", a name will be
                     automatically assigned
-        :type name: string
+        :type name: str
         :param i_node: The name of the i-node (start node).
-        :type i_node: string
+        :type i_node: str
         :param j_node: The name of the j-node (end node).
-        :type j_node: string
+        :type j_node: str
         :param ks: The spring constant (force/displacement).
         :type ks: number
         :param tension_only: Indicates if the member is tension-only, defaults to False
@@ -229,7 +229,7 @@ class FEModel3D():
         :type comp_only: bool, optional
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the spring that was added to the model.
-        :rtype: string
+        :rtype: str
         """ 
         
         # Name the spring or check it doesn't already exist
@@ -264,13 +264,13 @@ class FEModel3D():
 
         :param name: A unique user-defined name for the member. If None or "", a name will be
                     automatically assigned
-        :type name: string
+        :type name: str
         :param i_node: The name of the i-node (start node).
-        :type i_node: string
+        :type i_node: str
         :param j_node: The name of the j-node (end node).
-        :type j_node: string
+        :type j_node: str
         :param material: The name of the material of the member.
-        :type material: string
+        :type material: str
         :param Iy: The moment of inertia of the member about its local y-axis.
         :type Iy: number
         :param Iz: The moment of inertia of the member about its local z-axis.
@@ -282,14 +282,14 @@ class FEModel3D():
         :param auxNode: The name of the auxiliary node used to define the local z-axis. The default
                         is None, in which case the program defines the axis instead of using an
                         auxiliary node.
-        :type auxNode: string, optional
+        :type auxNode: str, optional
         :param tension_only: Indicates if the member is tension-only, defaults to False
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
         :raises NameError: Occurs if the specified name already exists.
         :return: The name of the member added to the model.
-        :rtype: string
+        :rtype: str
         """
 
         # Name the member or check it doesn't already exist
@@ -330,19 +330,19 @@ class FEModel3D():
 
         :param name: A unique user-defined name for the plate. If None or "", a name will be
                      automatically assigned.
-        :type name: string
+        :type name: str
         :param i_node: The name of the i-node.
-        :type i_node: string
+        :type i_node: str
         :param j_node: The name of the j-node.
-        :type j_node: string
+        :type j_node: str
         :param m_node: The name of the m-node.
-        :type m_node: string
+        :type m_node: str
         :param n_node: The name of the n-node.
-        :type n_node: string
+        :type n_node: str
         :param t: The thickness of the element.
         :type t: number
         :param material: The name of the material for the element.
-        :type material: string
+        :type material: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
                        x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -351,7 +351,7 @@ class FEModel3D():
         :type ky_mod: number, optional
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the element added to the model.
-        :rtype: string
+        :rtype: str
         """
         
         # Name the plate or check it doesn't already exist
@@ -389,19 +389,19 @@ class FEModel3D():
 
         :param name: A unique user-defined name for the quadrilateral. If None or "", a name will
                      be automatically assigned.
-        :type name: string
+        :type name: str
         :param i_node: The name of the i-node.
-        :type i_node: string
+        :type i_node: str
         :param j_node: The name of the j-node.
-        :type j_node: string
+        :type j_node: str
         :param m_node: The name of the m-node.
-        :type m_node: string
+        :type m_node: str
         :param n_node: The name of the n-node.
-        :type n_node: string
+        :type n_node: str
         :param t: The thickness of the element.
         :type t: number
         :param material: The name of the material for the element.
-        :type material: string
+        :type material: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
             x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -410,7 +410,7 @@ class FEModel3D():
         :type ky_mod: number, optional
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the element added to the model.
-        :rtype: string
+        :rtype: str
         """
         
         # Name the quad or check it doesn't already exist
@@ -443,7 +443,7 @@ class FEModel3D():
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
-        :type name: string
+        :type name: str
         :param mesh_size: The desired mesh size.
         :type mesh_size: number
         :param width: The overall width of the rectangular mesh measured along its local x-axis.
@@ -453,7 +453,7 @@ class FEModel3D():
         :param thickness: The thickness of each element in the mesh.
         :type thickness: number
         :param material: The name of the material for elements in the mesh.
-        :type material: string
+        :type material: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
                        x-direction. Defaults to 1.0 (no modification).
         :type kx_mod: float, optional
@@ -586,7 +586,7 @@ class FEModel3D():
         plane).
 
         :param name: A unique name for the mesh.
-        :type name: string
+        :type name: str
         :param mesh_size: The target mesh size
         :type mesh_size: number
         :param large_radius: The larger of the two end radii.
@@ -598,7 +598,7 @@ class FEModel3D():
         :param thickness: The thickness of the elements.
         :type thickness: number
         :param material: The name of the element material.
-        :type material: string
+        :type material: str
         :param kx_mod: Stiffness modification factor for radial stiffness in each element's local
                        x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -611,13 +611,13 @@ class FEModel3D():
         :type axis: str, optional
         :param start_node: The name of the first node in the mesh. If set to None the program
                            will use the next available node name, defaults to None.
-        :type start_node: string, optional
+        :type start_node: str, optional
         :param start_element: The name of the first element in the mesh. If set to `None` the
                               program will use the next available element name, defaults to None
-        :type start_element: string, optional
+        :type start_element: str, optional
         :raises NameError: Occurs if the specified name already exists.
         :return: The name of the mesh added to the model.
-        :rtype: string
+        :rtype: str
         """
 
         # Check if a name has been provided
@@ -655,7 +655,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        name : string
+        name : str
             A unique name for the mesh.
         mesh_size : number
             The target mesh size
@@ -665,7 +665,7 @@ class FEModel3D():
             The height of the cylinder.
         thickness : number
             Element thickness.
-        material : string
+        material : str
             The name of the element material.
         kx_mod : number
             Stiffness modification factor for hoop stiffness in each
@@ -677,20 +677,20 @@ class FEModel3D():
             modification).
         origin : list, optional
             The origin of the mesh. The default is [0, 0, 0].
-        axis : string, optional
+        axis : str, optional
             The global axis about which the mesh will be generated. The default is 'Y'.
         num_elements : number
             The number of elements to use to form the perimeter of each course. This is typically
             only used if you are trying to match the nodes to another mesh's nodes. If set to
             `None` the program will automatically calculate the number of elements to use based on
             the mesh size. The default is None.
-        start_node : string
+        start_node : str
             The name of the first node in the mesh. If set to `None` the program will use the next
             available node name. Default is `None`
-        start_element : string
+        start_element : str
             The name of the first element in the mesh. If set to `None` the program will use the
             next available element name. Default is `None`
-        element_type : string, optional
+        element_type : str, optional
             The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
             'Quad'.
 
@@ -829,7 +829,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        node_name : string
+        node_name : str
             The name of the node to be removed.
         '''
         
@@ -851,7 +851,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        auxnode_name : string
+        auxnode_name : str
             The name of the auxiliary node to be removed
         '''
 
@@ -872,7 +872,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        spring_name : string
+        spring_name : str
             The name of the spring to be removed.
         '''
         
@@ -889,7 +889,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        member_name : string
+        member_name : str
             The name of the member to be removed.
         '''
         
@@ -908,7 +908,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        node_name : string
+        node_name : str
             The name of the node where the support is being defined
         support_DX : bool
             Indicates whether the node is supported against translation in the global X-direction.
@@ -945,13 +945,13 @@ class FEModel3D():
 
         Parameters
         ----------
-        node_name : string
+        node_name : str
             The name of the node to apply the spring support to.
-        dof : string ('DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ')
+        dof : str ('DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ')
             The degree of freedom to apply the spring support to.
         stiffness : number
             The translational or rotational stiffness of the spring support.
-        direction : string or None ('+', '-', None)
+        direction : str or None ('+', '-', None)
             The direction in which the spring can act. '+' allows the spring
             to resist positive displacements. '-' allows the spring to resist
             negative displacements. None allows the spring to act in both
@@ -984,9 +984,9 @@ class FEModel3D():
         '''
         Defines a nodal displacement at a node.
 
-        node_name : string
+        node_name : str
             The name of the node where the nodal displacement is being applied.
-        direction : string
+        direction : str
             The global direction the nodal displacement is being applied in. Displacements are 'DX', 'DY', and 'DZ'. Rotations are 'RX', 'RY', and 'RZ'.
         magnitude : number
             The magnitude of the displacement.
@@ -1021,7 +1021,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        Member : string
+        Member : str
             The name of the member to have its releases modified.
         Dxi : boolean
             Indicates whether the member is released axially at its start.
@@ -1061,11 +1061,11 @@ class FEModel3D():
 
         Parameters
         ----------
-        name : string
+        name : str
             A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
         factors : dictionary
             A dictionary containing load cases and their corresponding factors (e.g. {'D':1.2, 'L':1.6, 'S':0.5}).
-        combo_type : string
+        combo_type : str
             A description of the type of load combination (e.g. 'strength', 'service'). Currently
             this does nothing in the program, and is a placeholder for future features.
         '''
@@ -1085,13 +1085,13 @@ class FEModel3D():
         
         Parameters
         ----------
-        Node : string
+        Node : str
             The name of the node where the load is being applied.
         Direction : {'FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'}
             The global direction the load is being applied in. Forces are 'FX', 'FY', and 'FZ'. Moments are 'MX', 'MY', and 'MZ'.
         P : number
             The numeric value (magnitude) of the load.
-        case : string
+        case : str
             The name of the load case the load belongs to.
         '''
         # Validate the value of Direction
@@ -1109,7 +1109,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        Member : string
+        Member : str
             The name of the member the load is being applied to.
         Direction : {'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'}
             The direction in which the force is to be applied. Note that
@@ -1139,7 +1139,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        Member : string
+        Member : str
             The name of the member the load is being appied to
         Direction : {'Fx', 'Fy', 'Fz'}
             The direction in which the load is to be applied. Note that
@@ -1183,11 +1183,11 @@ class FEModel3D():
 
         Parameters
         ----------
-        plate_name : string
+        plate_name : str
             The name for the rectangular plate to add the surface pressure to.
         pressure : number
             The value for the surface pressure.
-        case : string, optional
+        case : str, optional
             The load case to add the surface pressure to. Default is 'Case 1'.
         
         """
@@ -1207,11 +1207,11 @@ class FEModel3D():
 
         Parameters
         ----------
-        quad_name : string
+        quad_name : str
             The name for the quad to add the surface pressure to.
         pressure : number
             The value for the surface pressure.
-        case : string, optional
+        case : str, optional
             The load case to add the surface pressure to. Default is 'Case 1'.
         
         """
@@ -1274,7 +1274,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        name : string
+        name : str
             The name of the node to be returned.
         '''
         
@@ -1292,7 +1292,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        name : string
+        name : str
             The name of the auxiliary node to be returned.
         '''
         
@@ -1310,7 +1310,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        name : string
+        name : str
             The name of the spring to be returned.
         '''
         
@@ -1328,7 +1328,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        name : string
+        name : str
             The name of the member to be returned.
         '''
 
@@ -1346,7 +1346,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        name : string
+        name : str
             The name of the plate to be returned.
         '''
         
@@ -1364,7 +1364,7 @@ class FEModel3D():
         
         Parameters
         ----------
-        name : string
+        name : str
             The name of the quadrilateral to be returned.
         '''
         
@@ -1483,7 +1483,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        combo_name : string, optional
+        combo_name : str, optional
             The load combination to get the stiffness matrix for. Default is 'Combo 1'.
         log : bool, optional
             Prints updates to the console if set to True. Default is False.
@@ -1805,7 +1805,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        combo_name : string, optional.
+        combo_name : str, optional.
             The name of the load combination to derive the matrix for (not the load combination itself).
         log : bool, optional
             Prints updates to the console if set to True. Default is False.
@@ -1885,7 +1885,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        combo_name : string
+        combo_name : str
             The name of the load combination to get the fixed end reaction vector for (not the load combination itself).
         '''
         
@@ -1985,7 +1985,7 @@ class FEModel3D():
 
         Parameters
         ----------
-        combo_name : string
+        combo_name : str
             The name of the load combination to get the force vector for (not the load combination itself).
         '''
             
@@ -2026,14 +2026,14 @@ class FEModel3D():
         return P
 
     def D(self, combo_name='Combo 1'):
-        '''
-        Returns the global displacement vector for the model.
+        """Returns the global displacement vector for the model.
 
-        Parameters
-        ----------
-        combo_name : string
-            The name of the load combination to get the displacements for (not the load combination itself).
-        '''
+        :param combo_name: The name of the load combination to get the results for. Defaults to
+                           'Combo 1'.
+        :type combo_name: str, optional
+        :return: The global displacement vector for the model
+        :rtype: array
+        """
  
         # Return the global displacement vector
         return self._D[combo_name]
