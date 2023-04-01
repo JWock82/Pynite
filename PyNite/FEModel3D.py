@@ -378,7 +378,7 @@ class FEModel3D():
         # Return the plate name
         return name
 
-    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1, ky_mod=1):
+    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1.0, ky_mod=1.0):
         """Adds a new quadrilateral to the model. The quad formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on an MITC4
         formulation. This element handles distortion relatively well, and is appropriate for thick
@@ -437,55 +437,52 @@ class FEModel3D():
         #Return the quad name
         return name
 
-    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1, 
-            ky_mod=1, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None,
+    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1.0, 
+            ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None,
             start_element = None, element_type='Quad'):
-        """
-        Adds a rectangular mesh of elements to the model.
+        """Adds a rectangular mesh of elements to the model.
 
-        Parameters
-        ----------
-        name : string
-            A unique name for the mesh.
-        width : number
-            The overall width of the mesh measured along its local
-            x-axis.
-        height : number
-            The overall height of the mesh measured along its local
-            y-axis.
-        thickness : number
-            Element thickness.
-        material : string
-            The name of the element material.
-        kx_mod : number
-            Stiffness modification factor for in-plane stiffness in the
-            element's local x-direction. Default value is 1.0 (no
-            modification).
-        ky_mod : number
-            Stiffness modification factor for in-plane stiffness in the
-            element's local y-direction. Default value is 1.0 (no
-            modification).
-        origin : list, optional
-            The origin of the regtangular mesh's local coordinate
-            system. The default is [0, 0, 0].
-        plane : string, optional
-            The plane the mesh will be parallel to. Options are 'XY',
-            'YZ', and 'XZ'. The default is 'XY'.
-        x_control : list, optional
-            A list of control points along the mesh's local x-axis work
-            into the mesh.
-        y_control : list, optional
-            A list of control points along the mesh's local y-axis work
-            into the mesh.
-        start_node : string, optional
-            The name of the first node in the mesh. If set to `None` the program will use the next
-            available node name. Default is `None`
-        start_element : string, optional
-            The name of the first element in the mesh. If set to `None` the program will use the
-            next available element name. Default is `None`
-        element_type : string, optional
-            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
-            'Quad'.
+        :param name: A unique name for the mesh.
+        :type name: string
+        :param mesh_size: The desired mesh size.
+        :type mesh_size: number
+        :param width: The overall width of the rectangular mesh measured along its local x-axis.
+        :type width: number
+        :param height: The overall height of the rectangular mesh measured along its local y-axis.
+        :type height: number
+        :param thickness: The thickness of each element in the mesh.
+        :type thickness: number
+        :param material: The name of the material for elements in the mesh.
+        :type material: string
+        :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
+                       x-direction. Defaults to 1.0 (no modification).
+        :type kx_mod: float, optional
+        :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local
+                       y-direction. Defaults to 1.0 (no modification).
+        :type ky_mod: float, optional
+        :param origin: The origin of the regtangular mesh's local coordinate system. Defaults to [0, 0, 0]
+        :type origin: list, optional
+        :param plane: The plane the mesh will be parallel to. Options are 'XY', 'YZ', and 'XZ'.
+                      Defaults to 'XY'.
+        :type plane: str, optional
+        :param x_control: A list of control points along the mesh's local x-axis to work into the
+                          mesh. Defaults to `None`.
+        :type x_control: list, optional
+        :param y_control: A list of control points along the mesh's local y-axis to work into the
+                          mesh. Defaults to None.
+        :type y_control: list, optional
+        :param start_node: The name of the first node in the mesh. If set to `None` the program
+                           will use the next available node name. Default is `None`.
+        :type start_node: str, optional
+        :param start_element: The name of the first element in the mesh. If set to `None` the
+                              program will use the next available element name. Default is `None`.
+        :type start_element: str, optional
+        :param element_type: They type of element to make the mesh out of. Either 'Quad' or 'Rect'.
+                             Defaults to 'Quad'.
+        :type element_type: str, optional
+        :raises NameError: Occurs when the specified name already exists in the model.
+        :return: The name of the mesh added to the model.
+        :rtype: str
         """
         
         # Check if a mesh name has been provided
@@ -518,43 +515,41 @@ class FEModel3D():
         #Return the mesh's name
         return name
     
-    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1, 
-            ky_mod=1, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
-        """
-        Adds a mesh of quadrilaterals forming an annulus (a donut).
+    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1.0, 
+            ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
+        """Adds a mesh of quadrilaterals forming an annulus (a donut).
 
-        Parameters
-        ----------
-        name : string
-            A unique name for the mesh.
-        mesh_size : number
-            The target mesh size
-        outer_radius : number
-            The radius to the outside of the annulus.
-        inner_radius : number
-            The radius to the inside of the annulus.
-        thickness : number
-            Element thickness.
-        material : string
-            The name of the element material.
-        kx_mod : number
-            Stiffness modification factor for radial stiffness in the
-            element's local x-direction. Default value is 1.0 (no
-            modification).
-        ky_mod : number
-            Stiffness modification factor for meridional stiffness in the
-            element's local y-direction. Default value is 1.0 (no
-            modification).
-        origin : list, optional
-            The origin of the mesh. The default is [0, 0, 0].
-        axis : string, optional
-            The global axis about which the mesh will be generated. The default is 'Y'.
-        start_node : string, optional
-            The name of the first node in the mesh. If set to `None` the program will use the next
-            available node name. Default is `None`
-        start_element : string, optional
-            The name of the first element in the mesh. If set to `None` the program will use the
-            next available element name. Default is `None`
+        :param name: A unique name for the mesh.
+        :type name: str
+        :param mesh_size: The target mesh size.
+        :type mesh_size: float
+        :param outer_radius: The radius to the outside of the annulus.
+        :type outer_radius: float
+        :param inner_radius: The radius to the inside of the annulus.
+        :type inner_radius: float
+        :param thickness: Element thickness.
+        :type thickness: float
+        :param material: The name of the element material.
+        :type material: str
+        :param kx_mod: Stiffness modification factor for radial stiffness in the element's local
+                       x-direction. Default is 1.0 (no modification).
+        :type kx_mod: float, optional
+        :param ky_mod: Stiffness modification factor for meridional stiffness in the element's
+                       local y-direction. Default is 1.0 (no modification).
+        :type ky_mod: float, optional
+        :param origin: The origin of the mesh. The default is [0, 0, 0].
+        :type origin: list, optional
+        :param axis: The global axis about which the mesh will be generated. The default is 'Y'.
+        :type axis: str, optional
+        :param start_node: The name of the first node in the mesh. If set to `None` the program
+                           will use the next available node name. Default is `None`.
+        :type start_node: str, optional
+        :param start_element: The name of the first element in the mesh. If set to `None` the
+                              program will use the next available element name. Default is `None`.
+        :type start_element: str, optional
+        :raises NameError: Occurs if the specified name already exists in the model.
+        :return: The name of the mesh added to the model.
+        :rtype: str
         """
         
         # Check if a mesh name has been provided
@@ -585,7 +580,7 @@ class FEModel3D():
         return name
 
     def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,
-                          material, kx_mod=1, ky_mod=1, origin=[0, 0, 0], axis='Y',
+                          material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y',
                           start_node=None, start_element=None):
         """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal
         plane).
@@ -603,7 +598,7 @@ class FEModel3D():
         :param thickness: The thickness of the elements.
         :type thickness: number
         :param material: The name of the element material.
-        :type material: The name of the element's material.
+        :type material: string
         :param kx_mod: Stiffness modification factor for radial stiffness in each element's local
                        x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -624,7 +619,7 @@ class FEModel3D():
         :return: The name of the mesh added to the model.
         :rtype: string
         """
-                
+
         # Check if a name has been provided
         if name:
             # Check that the mesh name doesn't already exist
