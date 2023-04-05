@@ -1268,128 +1268,15 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def GetNode(self, name):
-        '''
-        Returns the node with the given name.
-        
-        Parameters
-        ----------
-        name : str
-            The name of the node to be returned.
-        '''
-        
-        warnings.warn('`GetNode` will be deleted in a future version of PyNite. Use `Nodes[node_name]` instead.', FutureWarning)
-
-        try:
-            return self.Nodes[name]
-        except:
-            # If the node name is not found
-            raise ValueError(f"Node '{name}' was not found in the model.")
-         
-    def GetAuxNode(self, name):
-        '''
-        Returns the auxiliary node with the given name.
-        
-        Parameters
-        ----------
-        name : str
-            The name of the auxiliary node to be returned.
-        '''
-        
-        warnings.warn('`GetAuxNode` will be deleted in a future version of PyNite. Use `AuxNodes[auxnode_name]` instead.', FutureWarning)
-
-        try:
-            return self.AuxNodes[name]
-        except:
-            # If the auxiliary node name is not found
-            raise ValueError(f"Auxiliary node '{name}' was not found in the model.")
-
-    def GetSpring(self, name):
-        '''
-        Returns the spring with the given name.
-        
-        Parameters
-        ----------
-        name : str
-            The name of the spring to be returned.
-        '''
-        
-        warnings.warn('`GetSpring` will be deleted in a future version of PyNite. Use `Springs[spring_name]` instead.', FutureWarning)
-        
-        try:
-            return self.Springs[name]
-        except:
-            # If the auxiliary node name is not found
-            raise ValueError(f"Spring '{name}' was not found in the model.")
-
-    def GetMember(self, name):
-        '''
-        Returns the member with the given name.
-        
-        Parameters
-        ----------
-        name : str
-            The name of the member to be returned.
-        '''
-
-        warnings.warn('`GetMember` will be deleted in a future version of PyNite. Use `Members[member_name]` instead.', FutureWarning)
-
-        try:
-            return self.Members[name]
-        except:
-            # If the member name is not found
-            raise ValueError(f"Member '{name}' was not found in the model.")
-
-    def GetPlate(self, name):
-        '''
-        Returns the plate with the given name.
-        
-        Parameters
-        ----------
-        name : str
-            The name of the plate to be returned.
-        '''
-        
-        warnings.warn('`GetPlate` will be deleted in a future version of PyNite. Use `Plates[plate_name]` instead.', FutureWarning)
-
-        try:
-            return self.Plates[name]
-        except:
-            # If the plate name is not found
-            raise ValueError(f"Plate '{name}' was not found in the model")
-
-    def GetQuad(self, name):
-        '''
-        Returns the quadrilateral with the given name.
-        
-        Parameters
-        ----------
-        name : str
-            The name of the quadrilateral to be returned.
-        '''
-        
-        warnings.warn('`GetQuad` will be deleted in a future version of PyNite. Use `Quads[quad_name]` instead.', FutureWarning)
-        
-        try:
-            return self.Quads[name]
-        except:
-            # If the quad name is not found
-            raise ValueError(f"Quad '{name}' was not found in the model")
-
     def _aux_list(self):
-        '''
-        Builds a list with known nodal displacements and with the positions in global stiffness matrix of known 
-        and unknown nodal displacements
+        """Builds a list with known nodal displacements and with the positions in global stiffness
+           matrix of known and unknown nodal displacements
 
-        Returns
-        -------
-        D1_indices : number
-            A list of the global matrix indices for the unknown nodal displacements
-        D2_indices : number
-            A list of the global matrix indices for the known nodal displacements
-        D2 : number
-            A list of the known nodal displacements
-        '''
+        :return: A list of the global matrix indices for the unknown nodal displacements (D1_indices). A
+                 list of the global matrix indices for the known nodal displacements (D2_indices). A list
+                 of the known nodal displacements (D2).
+        :rtype: list, list, list
+        """
 
         D1_indices = [] # A list of the indices for the unknown nodal displacements
         D2_indices = [] # A list of the indices for the known nodal displacements
