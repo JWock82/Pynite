@@ -39,6 +39,20 @@ This returns the X coordinate for the node. Notice the "dot" operator above. As 
 dictionaries a good code environment can prompt you to see what information is available when you
 use the "dot" operator.
 
+Avaliable dictionaries are:
+
+.. code-block:: python
+
+    my_model.Nodes
+    my_model.AuxNodes
+    my_model.Members
+    my_model.Springs
+    my_model.Plates
+    my_model.Quads
+    my_model.Materials
+    my_model.LoadCombos
+    my_model.Meshes
+
 FEModel3D Reference
 ===================
 

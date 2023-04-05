@@ -901,29 +901,30 @@ class FEModel3D():
         self.solution = None
         
     def def_support(self, node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False):
-        """
-        Defines the support conditions at a node.
-        
-        Nodes will default to fully unsupported unless specified otherwise.
-        
-        Parameters
-        ----------
-        node_name : str
-            The name of the node where the support is being defined
-        support_DX : bool
-            Indicates whether the node is supported against translation in the global X-direction.
-        support_DY : bool
-            Indicates whether the node is supported against translation in the global Y-direction.
-        support_DZ : bool
-            Indicates whether the node is supported against translation in the global Z-direction.
-        support_RX : bool
-            Indicates whether the node is supported against rotation about the global X-axis.
-        support_RY : bool
-            Indicates whether the node is supported against rotation about the global Y-axis.
-        support_RZ : bool
-            Indicates whether the node is supported against rotation about the global Z-axis.
-            
-        """
+        """Defines the support conditions at a node. Nodes will default to fully unsupported
+           unless specified otherwise.
+
+        :param node_name: The name of the node where the support is being defined.
+        :type node_name: str
+        :param support_DX: Indicates whether the node is supported against translation in the
+                           global X-direction. Defaults to False.
+        :type support_DX: bool, optional
+        :param support_DY: Indicates whether the node is supported against translation in the
+                           global Y-direction. Defaults to False.
+        :type support_DY: bool, optional
+        :param support_DZ: Indicates whether the node is supported against translation in the
+                           global Z-direction. Defaults to False.
+        :type support_DZ: bool, optional
+        :param support_RX: Indicates whether the node is supported against rotation about the
+                           global X-axis. Defaults to False.
+        :type support_RX: bool, optional
+        :param support_RY: Indicates whether the node is supported against rotation about the
+                           global Y-axis. Defaults to False.
+        :type support_RY: bool, optional
+        :param support_RZ: Indicates whether the node is supported against rotation about the
+                           global Z-axis. Defaults to False.
+        :type support_RZ: bool, optional
+        """            
         
         # Get the node to be supported
         node = self.Nodes[node_name]
