@@ -745,11 +745,11 @@ class FEModel3D():
         node_remove_list = []
 
         # Initialize a dictionary marking where each node is used
-        node_lookup = {node: [] for node in self.Nodes.values()}
+        node_lookup = {node_name: [] for node_name in self.Nodes.keys()}
         element_dicts = ('Springs', 'Members', 'Plates', 'Quads')
         node_types = ('i_node', 'j_node', 'm_node', 'n_node')
 
-        # Step through each dictionary of elements in the model (springs, member, plates, quads)
+        # Step through each dictionary of elements in the model (springs, members, plates, quads)
         for element_dict in element_dicts:
 
             # Step through each element in the dictionary
@@ -764,25 +764,27 @@ class FEModel3D():
 
                     # Determine if the node exists on the element
                     if node:
-
-                        # Add the element to the list of elements attached to the node
-                        node_lookup[node].append((element, node_type))
+                        try:
+                            # Add the element to the list of elements attached to the node
+                            node_lookup[node.name].append((element, node_type))
+                        except:
+                            raise Exception('Error removing duplicate nodes. Unable to find ' + node.name + ' in the model.')
 
         # Make a copy of the `Nodes` dictionary
         temp = list(self.Nodes.values())
 
-        # Step through each node in the `Nodes` dictionary
+        # Step through each node in the copy of the `Nodes` dictionary
         for i, node_1 in enumerate(temp):
 
             # Skip iteration if `node_1` has already been removed
-            if node_lookup[node_1] is None:
+            if node_lookup[node_1.name] is None:
                 continue
 
             # There is no need to check `node_1` against itself
             for node_2 in temp[i + 1:]:
 
                 # Skip iteration if node_2 has already been removed
-                if node_lookup[node_2] is None:
+                if node_lookup[node_2.name] is None:
                     continue
 
                 # Calculate the distance between nodes
@@ -790,14 +792,14 @@ class FEModel3D():
                     continue
 
                 # Overwrite node_2
-                for element, node_type in node_lookup[node_2]:
+                for element, node_type in node_lookup[node_2.name]:
                     setattr(element, node_type, node_1)
 
                 # Mark `node_2` for removal from the `Nodes` dictionary
                 node_remove_list.append(node_2.name)
 
                 # Flag `node_2` as not used
-                node_lookup[node_2] = None
+                node_lookup[node_2.name] = None
 
                 # Merge any boundary conditions
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
@@ -3211,8 +3213,10 @@ class FEModel3D():
 
         # Select a trial value for the next available name
         name = prefix + str(len(dictionary) + 1)
+        i = 1
         while name in dictionary.keys():
-            name = prefix + str(len(dictionary) + 1)
+            name = prefix + str(len(dictionary) + i)
+            i += 1
         
         # Return the next available name
         return name

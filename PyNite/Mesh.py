@@ -600,9 +600,9 @@ class RectangleMesh(Mesh):
             self.model.Nodes[node.name] = node
         
         for element in self.elements.values():
-            if element.type == 'Quad':
+            if element.type.upper() == 'QUAD':
                 self.model.Quads[element.name] = element
-            else:
+            elif element_type.upper() == 'RECT':
                 self.model.Plates[element.name] = element
 
         # Flag the mesh as generated
