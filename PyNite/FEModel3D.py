@@ -491,15 +491,15 @@ class FEModel3D():
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Rename the mesh if necessary
         else:
-            name = self._unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.Meshes, 'MSH')
         
         # Identify the starting node and element
         if start_node is None:
-            start_node = self._unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.Nodes, 'N')
         if element_type == 'Rect' and start_element is None:
-            start_element = self._unique_name(self.Plates, 'R')
+            start_element = self.unique_name(self.Plates, 'R')
         elif element_type == 'Quad' and start_element is None:
-            start_element = self._unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.Quads, 'Q')
         
         # Create the mesh
         new_mesh = RectangleMesh(mesh_size, width, height, thickness, material, self, kx_mod,
@@ -558,13 +558,13 @@ class FEModel3D():
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Give the mesh a new name if necessary
         else:
-            name = self._unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.Meshes, 'MSH')
 
         # Identify the starting node and element
         if start_node is None:
-            start_node = self._unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.Nodes, 'N')
         if start_element is None:
-            start_element = self._unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
         new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material, self,
@@ -626,13 +626,13 @@ class FEModel3D():
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Give the mesh a new name if necessary
         else:
-            name = self._unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.Meshes, 'MSH')
 
         # Identify the starting node and element
         if start_node is None:
-            start_node = self._unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.Nodes, 'N')
         if start_element is None:
-            start_element = self._unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
         new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material,
@@ -702,15 +702,15 @@ class FEModel3D():
             if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Give the mesh a new name if necessary
         else:
-            name = self._unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.Meshes, 'MSH')
 
         # Identify the starting node and element
         if start_node is None:
-            start_node = self._unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.Nodes, 'N')
         if element_type == 'Rect' and start_element is None:
-            start_element = self._unique_name(self.Plates, 'R')
+            start_element = self.unique_name(self.Plates, 'R')
         elif element_type == 'Quad' and start_element is None:
-            start_element = self._unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
         new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material, self,
@@ -763,12 +763,9 @@ class FEModel3D():
                     node = getattr(element, node_type, None)
 
                     # Determine if the node exists on the element
-                    if node:
-                        try:
-                            # Add the element to the list of elements attached to the node
-                            node_lookup[node.name].append((element, node_type))
-                        except:
-                            raise Exception('Error removing duplicate nodes. Unable to find ' + node.name + ' in the model.')
+                    if node is not None:
+                        # Add the element to the list of elements attached to the node
+                        node_lookup[node.name].append((element, node_type))
 
         # Make a copy of the `Nodes` dictionary
         temp = list(self.Nodes.values())
@@ -791,9 +788,21 @@ class FEModel3D():
                 if self.Nodes[node_1.name].distance(self.Nodes[node_2.name]) > tolerance:
                     continue
 
-                # Overwrite node_2
+                # Replace references to `node_2` in each element with references to `node_1`
                 for element, node_type in node_lookup[node_2.name]:
                     setattr(element, node_type, node_1)
+
+                # Replace references to `node_2` in each mesh with references to `node_1`
+                for mesh in self.Meshes.values():
+
+                    if node_2.name in mesh.nodes.keys():
+                        mesh.nodes[node_2.name] = node_1
+
+                    for element in mesh.elements.values():
+                        if element.i_node is node_2: element.i_node = node_1
+                        if element.j_node is node_2: element.j_node = node_1
+                        if element.m_node is node_2: element.m_node = node_1
+                        if element.n_node is node_2: element.n_node = node_1
 
                 # Mark `node_2` for removal from the `Nodes` dictionary
                 node_remove_list.append(node_2.name)
@@ -3178,7 +3187,7 @@ class FEModel3D():
     
     def _renumber(self):
         """
-        Assigns noe and element ID numbers to be used internally by the program. Numbers are
+        Assigns node and element ID numbers to be used internally by the program. Numbers are
         assigned according to the order in which they occur in each dictionary.
         """
         
@@ -3206,9 +3215,15 @@ class FEModel3D():
         for id, quad in enumerate(self.Quads.values()):
             quad.ID = id
     
-    def _unique_name(self, dictionary, prefix):
-        """
-        Returns the next available unique name for a dictionary of objects
+    def unique_name(self, dictionary, prefix):
+        """Returns the next available unique name for a dictionary of objects.
+
+        :param dictionary: The dictionary to get a unique name for.
+        :type dictionary: dict
+        :param prefix: The prefix to use for the unique name.
+        :type prefix: str
+        :return: A unique name for the dictionary.
+        :rtype: str
         """
 
         # Select a trial value for the next available name

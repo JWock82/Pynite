@@ -23,11 +23,62 @@ class Mesh():
         self.last_element = None            # The name of the last element in the mesh
         self.nodes = {}                     # A dictionary containing the nodes in the mesh
         self.elements = {}                  # A dictionary containing the elements in the mesh
+        self.element_type = 'Quad'          # The type of element used in the mesh
         self._is_generated = False          # A flag indicating whether the mesh has been generated
     
     def is_generated(self):
         return self._is_generated
     
+    def _rename_duplicates(self):
+        """Renames any nodes or elements in the mesh that are already in the model
+        """
+
+        # Initialize lists to track node and element name changes
+        revised_nodes = {}
+        revised_elements = {}
+
+        # Step through each node in the mesh
+        for node in self.nodes.values():
+
+            # Check if this node name is already being used in the model's `Nodes` dictionary
+            if node.name in self.model.Nodes.keys():
+
+                # Come up with a new node name
+                node.name = self.model.unique_name(self.model.Nodes, 'N')
+            
+            # Save the element to the model
+            self.model.Nodes[node.name] = node
+
+            # Prepare to save the element to the mesh
+            revised_nodes[node.name] = node
+            
+        # Step through each element in the mesh
+        for element in self.elements.values():
+
+            # Check if this element name is already being used in the model's `Plates` dictionary
+            if element.name in self.model.Plates.keys():
+
+                # Come up with a new element name
+                element.name = self.model.unique_name(self.model.Plates, 'R')
+
+                # Save the element to the model
+                self.model.Plates[element.name] = element
+
+            # Check if this element name is already being used in the model's `Quads` dictionary
+            elif element.name in self.model.Quads.keys():
+
+                # Come up with a new element name
+                element.name = self.model.unique_name(self.model.Quads, prefix='Q')
+
+                # Save the element to the model
+                self.model.Quads[element.name] = element
+            
+            revised_elements[element.name] = element
+        
+        # Replace the old dictionaries of nodes and elements with the revised dictionaries
+        self.nodes = revised_nodes
+        self.elements = revised_elements
+            
     def generate(self):
         """
         A placeholder to be overwritten by subclasses inheriting from this class
@@ -527,8 +578,8 @@ class RectangleMesh(Mesh):
                                                                     self.nodes['N' + str(n_node + node_offset)],
                                                                     self.thickness, self.material, self.model, self.kx_mod, self.ky_mod)
 
-        # Initialize a list of nodes and associated elements that fall within
-        # opening boundaries that will be deleted
+        # Initialize a list of nodes and associated elements that fall within opening boundaries
+        # that will be deleted
         node_del_list = []
         element_del_list = []
 
@@ -595,15 +646,29 @@ class RectangleMesh(Mesh):
         self.last_node = list(self.nodes.values())[-1]
         self.last_element = list(self.elements.values())[-1]
 
-        # Add the nodes and elements to the model
-        for node in self.nodes.values():
-            self.model.Nodes[node.name] = node
+        print(' ')
+        print('Mesh Check Before Renaming:')
+        print('***************************')
+        print(check_mesh_integrity(self))
+
+        # At this point we have a mesh, but some of the element or node names may already be
+        # being used in the model. Rename any names that are already being used.
+        self._rename_duplicates()
+
+        # Add the nodes to the model
+        for key, node in self.nodes.items():
+            self.model.Nodes[key] = node
         
-        for element in self.elements.values():
-            if element.type.upper() == 'QUAD':
-                self.model.Quads[element.name] = element
-            elif element_type.upper() == 'RECT':
-                self.model.Plates[element.name] = element
+        # Add the elements to the model
+        for key, element in self.elements.items():
+            if element.type == 'Quad':
+                self.model.Quads[key] = element
+            elif element.type == 'Rect':
+                self.model.Plates[key] = element
+        
+        print('Mesh Check After Renaming:')
+        print('**************************')
+        print(check_mesh_integrity(self))
 
         # Flag the mesh as generated
         self._is_generated = True
@@ -765,14 +830,18 @@ class AnnulusMesh(Mesh):
             element.m_node = self.nodes[element.m_node.name]
             element.n_node = self.nodes[element.n_node.name]
         
-        # Add the nodes and elements to the model
+        # Purge any names from the mesh that are already being used by the model.
+        self._rename_duplicates()
+
+        # Add the nodes to the model
         for node in self.nodes.values():
             self.model.Nodes[node.name] = node
         
+        # Add the elements to the model
         for element in self.elements.values():
-            if element.type == 'Quad':
+            if element.type.upper() == 'QUAD':
                 self.model.Quads[element.name] = element
-            else:
+            elif element.type.upper() == 'RECT':
                 self.model.Plates[element.name] = element
         
         # Flag the mesh as generated
@@ -888,15 +957,19 @@ class AnnulusRingMesh(Mesh):
                                                                self.nodes['N' + str(m_node + node_offset)],
                                                                self.nodes['N' + str(n_node + node_offset)],
                                                                self.thickness, self.material, self.model, self.kx_mod, self.ky_mod)
-            
+
+        # Purge any names from the mesh that are already being used by the model.
+        self._rename_duplicates()
+
         # Add the nodes and elements to the model
         for node in self.nodes.values():
             self.model.Nodes[node.name] = node
         
+        # Add the elements to the model
         for element in self.elements.values():
-            if element.type == 'Quad':
+            if element.type.upper() == 'QUAD':
                 self.model.Quads[element.name] = element
-            else:
+            if element.type.upper() == 'RECT':
                 self.model.Plates[element.name] = element
         
         # Flag the mesh as generated
@@ -1066,6 +1139,8 @@ class AnnulusTransRingMesh(Mesh):
                                                                self.nodes['N' + str(n_node + node_offset)],
                                                                self.thickness, self.material, self.model, self.kx_mod, self.ky_mod)
         
+        self._rename_duplicates()
+
         # Add the nodes and elements to the model
         for node in self.nodes.values():
             self.model.Nodes[node.name] = node
@@ -1243,6 +1318,8 @@ class CylinderMesh(Mesh):
             element.m_node = self.nodes[element.m_node.name]
             element.n_node = self.nodes[element.n_node.name]
         
+        self._rename_duplicates()
+
         # Add the nodes and elements to the model
         for node in self.nodes.values():
             self.model.Nodes[node.name] = node
@@ -1426,6 +1503,8 @@ class CylinderRingMesh(Mesh):
                                                       self.nodes['N' + str(n_node + node_offset)],
                                                       self.thickness, self.material, self.model, self.kx_mod, self.ky_mod)
         
+        self._rename_duplicates()
+
         # Add the nodes and elements to the model
         for node in self.nodes.values():
             self.model.Nodes[node.name] = node
@@ -1438,3 +1517,125 @@ class CylinderRingMesh(Mesh):
             
         # Flag the mesh as generated
         self._is_generated = True
+        
+def check_mesh_integrity(mesh, console_log=True):
+    """Runs basic integrity checks to ensure the mesh is in sync with its model. Usually you don't
+    want to run this check unless the mesh has been generated since generating the mesh is what
+    syncs it to the model.
+
+    :param mesh: A mesh of finite elements.
+    :type mesh: Mesh
+    :param console_log: Determines whether the results will be printed to the console or returned
+                        as a list of strings. Defaults to True.
+    :type console_log: bool, optional
+    :return: Any errors discovered by the integrity check
+    :rtype: list
+    """
+
+    # Initialize an empty list for error messages
+    errors = []
+
+    # Check that every element in the mesh is attached at all four nodes to nodes that are in the mesh
+    count = 0
+    for element in mesh.elements.values():
+
+        if (element.i_node not in mesh.nodes.values() or
+            element.j_node not in mesh.nodes.values() or
+            element.m_node not in mesh.nodes.values() or
+            element.n_node not in mesh.nodes.values()):
+
+            count += 1
+    
+    # Prepare the error message
+    if count != 0:
+        errors.append(str(count) + ' elements are attached to nodes that are not in the mesh.')
+
+    # Check that every element in the mesh is attached at all four nodes to nodes that are in the model
+    count = 0
+    for element in mesh.elements.values():
+
+        if (element.i_node not in mesh.model.Nodes.values() or
+            element.j_node not in mesh.model.Nodes.values() or
+            element.m_node not in mesh.model.Nodes.values() or
+            element.n_node not in mesh.model.Nodes.values()):
+
+            count += 1
+    
+    # Prepare the error message
+    if count != 0:
+        errors.append(str(count) + ' elements are attached to nodes that are not in the model.')
+    
+    # Check that each element has 4 unique nodes
+    count = 0
+    for element in mesh.elements.values():
+
+        if (element.i_node is element.j_node or
+            element.i_node is element.m_node or
+            element.i_node is element.n_node or
+            element.j_node is element.m_node or
+            element.j_node is element.n_node or
+            element.m_node is element.n_node):
+
+            count += 1
+        
+    # Prepare the error message
+    if count != 0:
+        errors.append(str(count) + ' elements have duplicate nodes in them.')
+
+    # Check that each element's name in the mesh is in the model
+    count = 0
+    for element in mesh.elements.values():
+        if element.name not in mesh.model.Plates.keys() and element.name not in mesh.model.Quads.keys():
+            count += 1
+    
+    if count != 0:
+        errors.append(str(count) + ' element names in the mesh were not found in the model.')
+    
+    # Check that each element in the mesh is in the model
+    count = 0
+    for element in mesh.elements.values():
+        if element not in mesh.model.Plates.values() and element.name not in mesh.model.Quads.values():
+            count += 1
+    
+    if count != 0:
+        errors.append(str(count) + ' elements in the mesh were not found in the model.')
+
+    # Check that each element in the mesh matches its corresponding element in the model
+    count = 0
+    for element in mesh.elements.values():
+        
+        if mesh.element_type == 'Rect':
+            if element.name not in mesh.model.Plates.keys() or mesh.elements[element.name] is not mesh.model.Plates[element.name]:
+                count +=1
+        elif mesh.element_type == 'Quad':
+            if element.name not in mesh.model.Quads.keys() or mesh.elements[element.name] is not mesh.model.Quads[element.name]:
+                count += 1
+    
+    # Prepare the error message
+    if count != 0:
+        errors.append(str(count) + ' elements in the mesh do not match their respective elements in the model.')
+    
+    # Check that each node in the mesh matches its corresponding node in the model
+    count = 0
+    for node in mesh.nodes.values():
+
+        if node.name not in mesh.model.Nodes.keys() or mesh.nodes[node.name] is not mesh.model.Nodes[node.name]:
+            count += 1
+    
+    # Prepare the error message
+    if count != 0:
+        errors.append(str(count) + ' nodes in the mesh do not match their respective nodes in the model.')
+
+    # TODO: Add more integrity checks and error messages
+
+    # Report if no errors were found
+    if errors == []:
+        errors = ['No errors detected.']
+
+    # Return the error messages
+    if console_log == True:
+        for error in errors:
+            print(error)
+            return ''
+    else:
+        return errors

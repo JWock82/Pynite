@@ -50,7 +50,7 @@ class Plate3D():
         self.ky_mod = ky_mod
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
-        
+
         # Plates need a link to the model they belong to
         self.model = model
 
