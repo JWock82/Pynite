@@ -829,9 +829,6 @@ class AnnulusMesh(Mesh):
             element.j_node = self.nodes[element.j_node.name]
             element.m_node = self.nodes[element.m_node.name]
             element.n_node = self.nodes[element.n_node.name]
-        
-        # Purge any names from the mesh that are already being used by the model.
-        self._rename_duplicates()
 
         # Add the nodes to the model
         for node in self.nodes.values():
@@ -957,9 +954,6 @@ class AnnulusRingMesh(Mesh):
                                                                self.nodes['N' + str(m_node + node_offset)],
                                                                self.nodes['N' + str(n_node + node_offset)],
                                                                self.thickness, self.material, self.model, self.kx_mod, self.ky_mod)
-
-        # Purge any names from the mesh that are already being used by the model.
-        self._rename_duplicates()
 
         # Add the nodes and elements to the model
         for node in self.nodes.values():
@@ -1138,8 +1132,6 @@ class AnnulusTransRingMesh(Mesh):
                                                                self.nodes['N' + str(m_node + node_offset)],
                                                                self.nodes['N' + str(n_node + node_offset)],
                                                                self.thickness, self.material, self.model, self.kx_mod, self.ky_mod)
-        
-        self._rename_duplicates()
 
         # Add the nodes and elements to the model
         for node in self.nodes.values():
@@ -1317,8 +1309,6 @@ class CylinderMesh(Mesh):
             element.j_node = self.nodes[element.j_node.name]
             element.m_node = self.nodes[element.m_node.name]
             element.n_node = self.nodes[element.n_node.name]
-        
-        self._rename_duplicates()
 
         # Add the nodes and elements to the model
         for node in self.nodes.values():
@@ -1503,8 +1493,6 @@ class CylinderRingMesh(Mesh):
                                                       self.nodes['N' + str(n_node + node_offset)],
                                                       self.thickness, self.material, self.model, self.kx_mod, self.ky_mod)
         
-        self._rename_duplicates()
-
         # Add the nodes and elements to the model
         for node in self.nodes.values():
             self.model.Nodes[node.name] = node
