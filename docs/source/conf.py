@@ -10,7 +10,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('../../PyNite/FEModel3D'))
+sys.path.insert(0, os.path.abspath('../../PyNite'))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information

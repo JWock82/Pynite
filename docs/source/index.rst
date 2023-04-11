@@ -21,6 +21,7 @@ This documentation is just getting started. Keep checking back for updates.
 
    installation
    quickstart
+   stability
    FEModel3D
 
 Indices and tables
