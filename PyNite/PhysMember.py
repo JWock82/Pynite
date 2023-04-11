@@ -132,7 +132,7 @@ class PhysMember(Member3D):
                 case = pt_load[3]
 
                 # Determine if the point load should be applied to this segment
-                if x >= xi and x < xj or isclose(x, self.L()):
+                if x >= xi and x < xj or (isclose(x, xj) and isclose(xj, self.L())):
 
                     x = x - xi
                     

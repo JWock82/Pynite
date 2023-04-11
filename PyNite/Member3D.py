@@ -782,8 +782,7 @@ class Member3D():
                 
             if isclose(x, self.L()):
                 
-                lastIndex = len(self.SegmentsY) - 1
-                return self.SegmentsY[lastIndex].moment(x - self.SegmentsY[lastIndex].x1)
+                return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1)
                 
         elif Direction == 'Mz':
             
@@ -795,9 +794,7 @@ class Member3D():
                 
             if isclose(x, self.L()):
                 
-                lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].moment(x - self.SegmentsZ[lastIndex].x1)
-                return self.SegmentsZ[lastIndex].Moment(x - self.SegmentsZ[lastIndex].x1)
+                return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1)
         
         else:
             raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
