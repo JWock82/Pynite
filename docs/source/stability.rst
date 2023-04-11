@@ -54,7 +54,9 @@ iteration and the structure collapses (diverging).
 
 The P-Delta analysis feature is one tool PyNite provides to help check for this type of
 instability. Additional considerations are usually necessary to capture this behavior, such as
-material stiffness reductions and notional loads.
+material stiffness reductions and notional loads. P-Delta analysis is but one piece of the overall
+picture, which is usually defined by the material's building code. PyNite's P-Delta analysis passes
+AISC's benchmark tests for a rigorous second-order analysis procedure.
 
 P-Delta analysis and P-little-delta analysis are two different things. PyNite can check both with a
 little help from the user. P-little-delta effects can be captured by forcing PyNite to track
