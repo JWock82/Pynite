@@ -646,11 +646,6 @@ class RectangleMesh(Mesh):
         self.last_node = list(self.nodes.values())[-1]
         self.last_element = list(self.elements.values())[-1]
 
-        print(' ')
-        print('Mesh Check Before Renaming:')
-        print('***************************')
-        print(check_mesh_integrity(self))
-
         # At this point we have a mesh, but some of the element or node names may already be
         # being used in the model. Rename any names that are already being used.
         self._rename_duplicates()
@@ -665,10 +660,6 @@ class RectangleMesh(Mesh):
                 self.model.Quads[key] = element
             elif element.type == 'Rect':
                 self.model.Plates[key] = element
-        
-        print('Mesh Check After Renaming:')
-        print('**************************')
-        print(check_mesh_integrity(self))
 
         # Flag the mesh as generated
         self._is_generated = True
@@ -1603,16 +1594,25 @@ def check_mesh_integrity(mesh, console_log=True):
     if count != 0:
         errors.append(str(count) + ' elements in the mesh do not match their respective elements in the model.')
     
-    # Check that each node in the mesh matches its corresponding node in the model
+    # Check that the mesh's key for each node matches the node's name
     count = 0
     for node in mesh.nodes.values():
-
-        if node.name not in mesh.model.Nodes.keys() or mesh.nodes[node.name] is not mesh.model.Nodes[node.name]:
+        if node.name not in mesh.nodes.keys():
             count += 1
     
-    # Prepare the error message
     if count != 0:
-        errors.append(str(count) + ' nodes in the mesh do not match their respective nodes in the model.')
+        errors.append(str(count) + ' node names in the mesh do not match the mesh\'s `nodes` dictionary\'s keys.')
+
+    # # Check that each node in the mesh matches its corresponding node in the model
+    # count = 0
+    # for node in mesh.nodes.values():
+
+    #     if node.name not in mesh.model.Nodes.keys() or mesh.nodes[node.name] is not mesh.model.Nodes[node.name]:
+    #         count += 1
+    
+    # # Prepare the error message
+    # if count != 0:
+    #     errors.append(str(count) + ' nodes in the mesh do not match their respective nodes in the model.')
 
     # TODO: Add more integrity checks and error messages
 

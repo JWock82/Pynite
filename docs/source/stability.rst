@@ -4,18 +4,19 @@ Stability
 
 Perhaps the trickiest part of finite element modeling is making sure a model is stable. That may
 sound trivial, but in finite element analysis it is nuanced. If you are getting "singularity"
-errors in your model, it may not be as stable as you think it is.
+errors in your model, it may not be as stable as you think it is. Remember that just because a
+model is static does not mean it is stable.
 
 Degrees of Freedom
 ==================
-In 3 dimensions there are six "degrees of freedom" for motion to occur in. An object can translate
+In 3 dimensions there are 6 "degrees of freedom" for motion to occur in. An object can translate
 in either the X, Y or Z direction, and it can rotate about the X, Y or Z axis. These 3 translations
-and three rotations together sum to 6 degrees of freedom. For an object to be stable, all degrees
+and 3 rotations together sum to 6 degrees of freedom. For an object to be stable, all 6 degrees
 of freedom need to be stabilized
 
 Instability Type 1: Rigid Body Motion
 =====================================
-Rigid body motion occurs when the entire structure can move as a unit in one of the six degrees of
+Rigid body motion occurs when the entire structure can move as a unit in one of the 6 degrees of
 freedom. This occurs when there is insufficient support for the structure. When rigid body motion
 occurs, the stiffness matrix is "singular", and unsolvable. Adding supports can eliminate this type
 of singularity.
@@ -28,14 +29,14 @@ nodal (local) level need to be constrained. These types of instabilities also sh
 "singularities" in the stiffness matrix.
 
 Consider a truss with multiple hinged-ended members framing into a node. What's to stop the node
-from spinning if all the members its attached to are hinged? The correct way to model this joint
+from spinning if all the members it's attached to are hinged? The correct way to model this joint
 would be to leave one of the member ends at the node unhinged. Rotations at the node would be then
 enter that member. It may be that there are no rotations at the node, but the degree of freedom
 still needs to be tethered to a member (or a support) to make the node stable.
 
 When selecting which member to tether the rotation to, consider what the connection looks like in
 real life. If you were to apply a moment to the joint, where would it go? Unless you're dealing with
-true pins, it will likely go somewhere. Even true pins are not frictionless (I've never seen them
+true pins, it will go somewhere. Even true pins are not frictionless (I've never seen them
 perpetually rotating in the real world), and you may as well pick which member you want to assign
 stray forces at that degree of freedom to.
 
@@ -45,12 +46,12 @@ Once the Type 1 and Type 2 instabilities are rooted out of your model, there may
 instability lurking quietly inside it. These types of instabilities often go unnoticed by the
 engineer because the program is able to solve the system of equations without a singularity.
 
-Most material codes recognize that a first-order analysis
-is often not enough. As a structure deforms under load, the geometry changes, making the analysis
-results incomplete. This requires us to re-analyze the structure under the deformed geometry. The
-process is iterative until one of two things happens: either (1) the additional deflections become
-smaller on each iteration and insignificant (converging), or (2) the additional deflections increase with each
-iteration and the structure collapses (diverging).
+Most material codes recognize that a first-order analysis is often not enough. As a structure
+deforms under load, the geometry changes, making the analysis results invalid. This requires us to
+reanalyze the structure under the new deformed geometry. The process is iterative until one of two
+things happens: either (1) the additional deflections become smaller on each iteration and
+eventually insignificant (convergence), or (2) the additional deflections increase with each
+iteration and the structure collapses (divergence).
 
 The P-Delta analysis feature is one tool PyNite provides to help check for this type of
 instability. Additional considerations are usually necessary to capture this behavior, such as

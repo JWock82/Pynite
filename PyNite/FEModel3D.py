@@ -741,9 +741,6 @@ class FEModel3D():
             A list of th enames of the nodes that were removed.
         """
 
-        # Initialize a list of nodes to be removed from the `Nodes` dictionary
-        node_remove_list = []
-
         # Initialize a dictionary marking where each node is used
         node_lookup = {node_name: [] for node_name in self.Nodes.keys()}
         element_dicts = ('Springs', 'Members', 'Plates', 'Quads')
@@ -767,71 +764,78 @@ class FEModel3D():
                         # Add the element to the list of elements attached to the node
                         node_lookup[node.name].append((element, node_type))
 
-        # Make a copy of the `Nodes` dictionary
-        temp = list(self.Nodes.values())
+        # Make a list of the names of each node in the model
+        node_names = list(self.Nodes.keys())
+
+        # Make a list of nodes to be removed from the model
+        remove_list = []
 
         # Step through each node in the copy of the `Nodes` dictionary
-        for i, node_1 in enumerate(temp):
+        for i, node_1_name in enumerate(node_names):
 
             # Skip iteration if `node_1` has already been removed
-            if node_lookup[node_1.name] is None:
+            if node_lookup[node_1_name] is None:
                 continue
 
             # There is no need to check `node_1` against itself
-            for node_2 in temp[i + 1:]:
+            for node_2_name in node_names[i + 1:]:
 
                 # Skip iteration if node_2 has already been removed
-                if node_lookup[node_2.name] is None:
+                if node_lookup[node_2_name] is None:
                     continue
 
                 # Calculate the distance between nodes
-                if self.Nodes[node_1.name].distance(self.Nodes[node_2.name]) > tolerance:
+                if self.Nodes[node_1_name].distance(self.Nodes[node_2_name]) > tolerance:
                     continue
 
                 # Replace references to `node_2` in each element with references to `node_1`
-                for element, node_type in node_lookup[node_2.name]:
-                    setattr(element, node_type, node_1)
+                for element, node_type in node_lookup[node_2_name]:
+                    setattr(element, node_type, self.Nodes[node_1_name])
 
-                # Replace references to `node_2` in each mesh with references to `node_1`
-                for mesh in self.Meshes.values():
-
-                    if node_2.name in mesh.nodes.keys():
-                        mesh.nodes[node_2.name] = node_1
-
-                    for element in mesh.elements.values():
-                        if element.i_node is node_2: element.i_node = node_1
-                        if element.j_node is node_2: element.j_node = node_1
-                        if element.m_node is node_2: element.m_node = node_1
-                        if element.n_node is node_2: element.n_node = node_1
-
-                # Mark `node_2` for removal from the `Nodes` dictionary
-                node_remove_list.append(node_2.name)
-
-                # Flag `node_2` as not used
-                node_lookup[node_2.name] = None
+                # Flag `node_2` as no longer used
+                node_lookup[node_2_name] = None
 
                 # Merge any boundary conditions
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:
-                    if getattr(node_2, dof) == True:
-                        setattr(node_1, dof, True)
+                    if getattr(self.Nodes[node_2_name], dof) == True:
+                        setattr(self.Nodes[node_1_name], dof, True)
                 
                 # Merge any spring supports
                 spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
                 for dof in spring_cond:
-                    value = getattr(node_2, dof)
+                    value = getattr(self.Nodes[node_2_name], dof)
                     if value != [None, None, None]:
-                        setattr(node_1, dof, value)
+                        setattr(self.Nodes[node_1_name], dof, value)
+                
+                # Fix the mesh labels
+                for mesh in self.Meshes.values():
 
-        # Delete the duplicate nodes from the model
-        for name in node_remove_list:
-            self.Nodes.pop(name)
+                    # Fix the nodes in the mesh
+                    if node_2_name in mesh.nodes.keys():
+
+                        # Attach the correct node to the mesh
+                        mesh.nodes[node_2_name] = self.Nodes[node_1_name]
+
+                        # Fix the dictionary key
+                        mesh.nodes[node_1_name] = mesh.nodes.pop(node_2_name)
+
+                    # Fix the elements in the mesh
+                    for element in mesh.elements.values():
+                        if node_2_name == element.i_node.name: element.i_node = self.Nodes[node_1_name]
+                        if node_2_name == element.j_node.name: element.j_node = self.Nodes[node_1_name]
+                        if node_2_name == element.m_node.name: element.m_node = self.Nodes[node_1_name]
+                        if node_2_name == element.n_node.name: element.n_node = self.Nodes[node_1_name]
+                    
+                # Add the node to the `remove` list
+                remove_list.append(node_2_name)
+
+        # Remove `node_2` from the model's `Nodes` dictionary
+        for node_name in remove_list:
+            self.Nodes.pop(node_name)
         
         # Flag the model as unsolved
         self.solution = None
-
-        # Return a list of the names of nodes that were removed from the model
-        return node_remove_list
 
     def delete_node(self, node_name):
         '''
