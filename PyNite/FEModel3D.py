@@ -1,6 +1,8 @@
 # %%
 from os import rename
 import warnings
+from math import isclose
+
 from matplotlib.pyplot import get
 
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
@@ -3082,7 +3084,7 @@ class FEModel3D():
                 supported = node.support_RZ
 
             # Check if the degree of freedom on this diagonal is unstable
-            if K[i, i] == 0 and not supported:
+            if isclose(K[i, i], 0) and not supported:
 
                 # Flag the model as unstable
                 unstable = True
@@ -3096,7 +3098,7 @@ class FEModel3D():
                 if i%6 == 5: direction = 'for rotation about the global Z axis.'
 
                 # Print a message to the console
-                print('* Nodal instability detected: node' + node.name + 'is unstable for' + direction)
+                print('* Nodal instability detected: node ' + node.name + ' is unstable ' + direction)
 
         if unstable:
             raise Exception('Unstable node(s). See console output for details.')
@@ -3232,7 +3234,7 @@ class FEModel3D():
 
         # Select a trial value for the next available name
         name = prefix + str(len(dictionary) + 1)
-        i = 1
+        i = 2
         while name in dictionary.keys():
             name = prefix + str(len(dictionary) + i)
             i += 1

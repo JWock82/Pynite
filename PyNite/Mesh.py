@@ -46,33 +46,39 @@ class Mesh():
                 # Come up with a new node name
                 node.name = self.model.unique_name(self.model.Nodes, 'N')
             
-            # Save the element to the model
+            # Save the node to the model
             self.model.Nodes[node.name] = node
 
-            # Prepare to save the element to the mesh
+            # Add this node to the mesh's new/replacement `nodes` dictionary
             revised_nodes[node.name] = node
             
         # Step through each element in the mesh
         for element in self.elements.values():
 
-            # Check if this element name is already being used in the model's `Plates` dictionary
-            if element.name in self.model.Plates.keys():
+            # Check which type of element this is
+            if element.type == 'Rect':
 
-                # Come up with a new element name
-                element.name = self.model.unique_name(self.model.Plates, 'R')
+                # Check if this element name is already being used in the model's `Plates` dictionary
+                if element.name in self.model.Plates.keys():
+
+                    # Come up with a new element name
+                    element.name = self.model.unique_name(self.model.Plates, 'R')
 
                 # Save the element to the model
                 self.model.Plates[element.name] = element
 
-            # Check if this element name is already being used in the model's `Quads` dictionary
-            elif element.name in self.model.Quads.keys():
+            elif element.type == 'Quad':
 
-                # Come up with a new element name
-                element.name = self.model.unique_name(self.model.Quads, prefix='Q')
+                # Check if this element name is already being used in the model's `Quads` dictionary
+                if element.name in self.model.Quads.keys():
+
+                    # Come up with a new element name
+                    element.name = self.model.unique_name(self.model.Quads, prefix='Q')
 
                 # Save the element to the model
                 self.model.Quads[element.name] = element
             
+            # Add this element to the mesh's new/replacement `elements` dictionary
             revised_elements[element.name] = element
         
         # Replace the old dictionaries of nodes and elements with the revised dictionaries
