@@ -31,7 +31,7 @@ nodal (local) level need to be constrained. These types of instabilities also sh
 Consider a truss with multiple hinged-ended members framing into a node. What's to stop the node
 from spinning if all the members it's attached to are hinged? The correct way to model this joint
 would be to leave one of the member ends at the node unhinged. Rotations at the node would be then
-enter that member. It may be that there are no rotations at the node, but the degree of freedom
+be restrained by that member. It may be that there are no rotations at the node, but the degree of freedom
 still needs to be tethered to a member (or a support) to make the node stable.
 
 When selecting which member to tether the rotation to, consider what the connection looks like in
@@ -39,6 +39,14 @@ real life. If you were to apply a moment to the joint, where would it go? Unless
 true pins, it will go somewhere. Even true pins are not frictionless (I've never seen them
 perpetually rotating in the real world), and you may as well pick which member you want to assign
 stray forces at that degree of freedom to.
+
+Pynite can help you isolate these types of instabilities by passing the `check_stability=True` to
+any of the analysis methods (see below for an example). Note that this does slow down analysis, so
+you usually only want to do this when you are debugging a model.
+
+.. code-block:: python
+
+    my_model.analyze(check_stability=True)
 
 Instability Type 3: Second Order Effects
 ========================================

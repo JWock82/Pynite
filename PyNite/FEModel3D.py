@@ -1379,28 +1379,23 @@ class FEModel3D():
         return D1_indices, D2_indices, D2
                
     def K(self, combo_name='Combo 1', log=False, check_stability=True, sparse=True):
-        """
-        Returns the model's global stiffness matrix.
+        """Returns the model's global stiffness matrix. The stiffness matrix will be returned in
+           scipy's sparse lil format, which reduces memory usage and can be easily converted to
+           other formats.
 
-        The stiffness matrix will be returned in scipy's sparse lil format,
-        which reduces memory usage and can be easily converted to other
-        formats.
-
-        Parameters
-        ----------
-        combo_name : str, optional
-            The load combination to get the stiffness matrix for. Default is 'Combo 1'.
-        log : bool, optional
-            Prints updates to the console if set to True. Default is False.
-        sparse : bool, optional
-            Returns a sparse matrix if set to True, and a dense matrix
-            otherwise. Default is True
-        
-        Returns
-        -------
-        K : ndarray or coo_matrix
-            The global stiffness matrix for the structure.
-        """
+        :param combo_name: The load combination to get the stiffness matrix for. Defaults to 'Combo 1'.
+        :type combo_name: str, optional
+        :param log: Prints updates to the console if set to True. Defaults to False.
+        :type log: bool, optional
+        :param check_stability: Causes Pynite to check for instabilities if set to True. Defaults
+                                to True. Set to False if you want the model to run faster.
+        :type check_stability: bool, optional
+        :param sparse: Returns a sparse matrix if set to True, and a dense matrix otherwise.
+                       Defaults to True.
+        :type sparse: bool, optional
+        :return: The global stiffness matrix for the structure.
+        :rtype: ndarray or coo_matrix
+        """           
         
         # Determine if a sparse matrix has been requested
         if sparse == True:
@@ -1785,14 +1780,14 @@ class FEModel3D():
         return Kg
       
     def FER(self, combo_name='Combo 1'):
-        '''
-        Assembles and returns the global fixed end reaction vector.
+        """Assembles and returns the global fixed end reaction vector for any given load combo.
 
-        Parameters
-        ----------
-        combo_name : str
-            The name of the load combination to get the fixed end reaction vector for (not the load combination itself).
-        '''
+        :param combo_name: The name of the load combination to get the fixed end reaction vector
+                           for. Defaults to 'Combo 1'.
+        :type combo_name: str, optional
+        :return: The fixed end reaction vector
+        :rtype: array
+        """        
         
         # Initialize a zero vector to hold all the terms
         FER = zeros((len(self.Nodes) * 6, 1))
