@@ -1,12 +1,14 @@
 =======
 Members
 =======
+
 All members in Pynite are beam-column elements, meaning they can handle axial and transverse loads.
 By default all members are also "physical members", meaning they automatically segment themselves
 at any internal nodes.
 
 Local Coordinate System
 =======================
+
 Each member starts at its i-node and ends at its j-node. The local x-axis for the member is defined
 by a vector going from the i-node to the j-node.
 
@@ -20,6 +22,7 @@ other words, the local y-axis is always perpendicular to the member and to the l
 
 End Releases
 ============
+
 End releases can be applied to each end of a member to simulate pinned connections. End releases
 can be applied using the ```FEmodel3D.def_release()``` method. See below for an example. By
 applying rotational end releases to both ends of a member you can simulate two-way truss members.

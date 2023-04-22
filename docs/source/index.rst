@@ -21,7 +21,7 @@ This documentation is just getting started. Keep checking back for updates.
 
    installation
    quickstart
-   members
+   member
    stability
    FEModel3D
 
