@@ -6,6 +6,31 @@ All members in Pynite are beam-column elements, meaning they can handle axial an
 By default all members are also "physical members", meaning they automatically segment themselves
 at any internal nodes.
 
+Creating a New Member
+=====================
+
+To create a new member use the ```FEModel3D.add_member()``` method. First we'll set up some
+material and section properties:
+
+.. code-block:: python
+
+    # Define a few section properties (W12x26)
+    Iy = 17.3  # (in**4) Weak axis moment of inertia
+    Iz = 204   # (in**4) Strong axis moment of inertia
+    J = 0.300  # (in**4) Torsional constant
+    A = 7.65   # (in**2) Cross-sectional area
+
+    # Define a new material (steel)
+    E = 29000  # (ksi) Modulus of elasticity
+    G = 11400  # (ksi) Shear modulus
+    nu = 0.30  # Poisson's ratio
+    rho = 0.000283  # (kci) Density
+    my_model.add_material('Steel', E, G, nu, rho)
+
+    # Add a member name 'M1' starting at node 'N1' and ending at node 'N2'
+    # made from a previously defined material named 'Steel'
+    my_model.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+
 Local Coordinate System
 =======================
 
@@ -42,3 +67,11 @@ applying rotational end releases to both ends of a member you can simulate two-w
 
 Note that in the code above, ```Dxi``` stands for displacement in the local x direction at the
 i-node, ```Rjz```` stands for rotation about the local z axis at the j-node, and so forth.
+
+In most cases you will only release the rotations about the local y and/or z-axes. Releasing torsion
+about the local x-axis should only be done at one end (if at all). The same goes for axial releases.
+Releasing Rxi and Rxj simultaneously, or Dxi and Dxj simultaneously will cause an instability in the
+member. You should exercise caution when releasing the shears at the ends of the member too.
+
+Tension/Compression Only Members
+================================
