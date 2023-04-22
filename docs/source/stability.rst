@@ -40,7 +40,7 @@ true pins, it will go somewhere. Even true pins are not frictionless (I've never
 perpetually rotating in the real world), and you may as well pick which member you want to assign
 stray forces at that degree of freedom to.
 
-Pynite can help you isolate these types of instabilities by passing the `check_stability=True` to
+Pynite can help you isolate these types of instabilities by passing `check_stability=True` to
 any of the analysis methods (see below for an example). Note that this does slow down analysis, so
 you usually only want to do this when you are debugging a model.
 
