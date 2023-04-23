@@ -4,7 +4,7 @@ Members
 
 All members in Pynite are beam-column elements, meaning they can handle axial and transverse loads.
 By default all members are also "physical members", meaning they automatically segment themselves
-at any internal nodes.
+at any internal nodes. Transverse shear deformations are not currently considered.
 
 Creating a New Member
 =====================
@@ -44,7 +44,7 @@ The local y-axis is defined as the cross-product of the local z-axis with the lo
 other words, the local y-axis is always perpendicular to the member and to the local z-axis.
 
 .. figure:: ../img/member_local_coord_system.png
-    :width: 40%
+    :width: 75%
     :align: center
 
 End Releases

@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 .. figure:: ../img/TransparentLogo.png
-   :width: 75%
+   :width: 40%
    :align: center
 
 =================================
