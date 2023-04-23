@@ -9,7 +9,7 @@ at any internal nodes.
 Creating a New Member
 =====================
 
-To create a new member use the ```FEModel3D.add_member()``` method. First we'll set up some
+To create a new member use the `FEModel3D.add_member()` method. First we'll set up some
 material and section properties:
 
 .. code-block:: python
@@ -51,7 +51,7 @@ End Releases
 ============
 
 End releases can be applied to each end of a member to simulate pinned connections. End releases
-can be applied using the ```FEmodel3D.def_release()``` method. See below for an example. By
+can be applied using the `FEmodel3D.def_release()` method. See below for an example. By
 applying rotational end releases to both ends of a member you can simulate two-way truss members.
 
 .. code-block:: python
@@ -65,8 +65,8 @@ applying rotational end releases to both ends of a member you can simulate two-w
     # This next line is yet another simple way to do the same thing
     my_model.def_release('M1', 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1)
 
-Note that in the code above, ```Dxi``` stands for displacement in the local x direction at the
-i-node, ```Rjz```` stands for rotation about the local z axis at the j-node, and so forth.
+Note that in the code above, `Dxi` stands for displacement in the local x direction at the
+i-node, `Rjz` stands for rotation about the local z axis at the j-node, and so forth.
 
 In most cases you will only release the rotations about the local y and/or z-axes. Releasing torsion
 about the local x-axis should only be done at one end (if at all). The same goes for axial releases.
@@ -75,3 +75,7 @@ member. You should exercise caution when releasing the shears at the ends of the
 
 Tension/Compression Only Members
 ================================
+
+Members can be changed to tension or compression only by passing `tension_only=True` or
+`comp_only=True` to the `FEModel3D.add_member()` method. When using these types of members be sure
+to perform a non-linear analysis. Do not use the `FEModel3D.analyze_linear()` method.
