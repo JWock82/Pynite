@@ -74,6 +74,10 @@ Here's a list of projects that run on PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.74
+* Bug fix for rectangular meshes with very close control points. The program now checks for mesh
+control points that are for all practical purposes the same and eliminates the duplicates.
+
 v0.0.73
 * Bug fix for merging duplicated plate names when using models with multiple meshes.
 
