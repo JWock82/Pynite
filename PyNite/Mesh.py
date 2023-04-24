@@ -449,9 +449,25 @@ class RectangleMesh(Mesh):
         y_control.append(height)
 
         # Sort the control points and remove duplicate values
-        x_control = sorted(set(x_control))
-        y_control = sorted(set(y_control))
-        
+        x_control = sorted(x_control)
+        y_control = sorted(y_control)
+
+        # Remove any values that are duplicates or near duplicates from `x_control`
+        unique_list = []
+        for i in range(len(x_control) - 1):
+            # Only keep the value at `i` if it's not a duplicate or near duplicate
+            if not isclose(x_control[i], x_control[i+1]):
+                unique_list.append(x_control[i])
+        x_control = unique_list
+
+        # Remove any values that are duplicates or near duplicates from `y_control`
+        unique_list = []
+        for i in range(len(y_control) - 1):
+            # Only keep the value at `i` if it's not a duplicate or near duplicate
+            if not isclose(y_control[i], y_control[i+1]):
+                unique_list.append(y_control[i])
+        y_control = unique_list
+    
         # Each node number will be increased by the offset calculated below
         node_offset = int(self.start_node[1:]) - 1
 
