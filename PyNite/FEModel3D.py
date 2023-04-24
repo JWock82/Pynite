@@ -727,18 +727,11 @@ class FEModel3D():
         return name
 
     def merge_duplicate_nodes(self, tolerance=0.001):
-        """
-        Removes duplicate nodes from the model and returns a list of the removed node names.
+        """Removes duplicate nodes from the model and returns a list of the removed node names.
 
-        Parameters
-        ----------
-        tolerance : number
-            The maximum distance between two nodes in order to consider them duplicates.
-
-        Returns
-        -------
-        remove_list : list
-            A list of th enames of the nodes that were removed.
+        :param tolerance: The maximum distance between two nodes in order to consider them
+                          duplicates. Defaults to 0.001.
+        :type tolerance: float, optional
         """
 
         # Initialize a dictionary marking where each node is used
@@ -838,16 +831,13 @@ class FEModel3D():
         self.solution = None
 
     def delete_node(self, node_name):
-        '''
-        Removes a node from the model. All nodal loads associated with the
-        node and elements attached to the node will also be removed.
-        
-        Parameters
-        ----------
-        node_name : str
-            The name of the node to be removed.
-        '''
-        
+        """Removes a node from the model. All nodal loads associated with the node and elements
+        attached to the node will also be removed.
+
+        :param node_name: The name of the node to be removed.
+        :type node_name: str
+        """
+            
         # Remove the node. Nodal loads are stored within the node, so they
         # will be deleted automatically when the node is deleted.
         self.Nodes.pop(node_name)
@@ -1695,26 +1685,20 @@ class FEModel3D():
         return K    
    
     def Kg(self, combo_name='Combo 1', log=False, sparse=True):
-        """
-        Returns the model's global geometric stiffness matrix.
+        """Returns the model's global geometric stiffness matrix. The model must have a static
+           solution prior to obtaining the geometric stiffness matrix. Stiffness of plates is not
+           included.
 
-        The model must have a static solution prior to obtaining the geometric stiffness matrix.
-        Stiffness of plates is not included.
-
-        Parameters
-        ----------
-        combo_name : str, optional.
-            The name of the load combination to derive the matrix for (not the load combination itself).
-        log : bool, optional
-            Prints updates to the console if set to True. Default is False.
-        sparse : bool, optional
-            Returns a sparse matrix if set to True, and a dense matrix
-            otherwise. Default is True.
-                
-        Returns
-        -------
-        Kg : ndarray or coo_matrix
-            The global geometric stiffness matrix for the structure.
+        :param combo_name: The name of the load combination to derive the matrix for. Defaults to
+                           'Combo 1'.
+        :type combo_name: str, optional
+        :param log: Prints updates to the console if set to `True`. Defaults to `False`.
+        :type log: bool, optional
+        :param sparse: Returns a sparse matrix if set to `True`, and a dense matrix otherwise.
+                       Defaults to `True`.
+        :type sparse: bool, optional
+        :return: The global geometric stiffness matrix for the structure.
+        :rtype: ndarray or coo_matrix
         """
         
         if sparse == True:
