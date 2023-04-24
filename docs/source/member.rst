@@ -79,7 +79,7 @@ Tension/Compression Only Members
 Members can be changed to tension or compression only by passing ``tension_only=True`` or
 ``comp_only=True`` to the ``FEModel3D.add_member()`` method. Here's an example:
 
-.. code_block:: python
+.. code-block:: python
 
     my_model.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A, tension-only=True)
     my_model.add_member('M2', 'N1', 'N2', 'Steel', Iy, Iz, J, A, comp-only=True)
