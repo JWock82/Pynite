@@ -652,51 +652,49 @@ class FEModel3D():
     def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material, kx_mod=1,
                           ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None, start_node=None,
                           start_element=None, element_type='Quad'):
-        """
-        Adds a mesh of elements forming a cylinder.
+        """Adds a mesh of elements forming a cylinder.
 
-        Parameters
-        ----------
-        name : str
-            A unique name for the mesh.
-        mesh_size : number
-            The target mesh size
-        radius : number
-            The radius of the cylinder.
-        height : number
-            The height of the cylinder.
-        thickness : number
-            Element thickness.
-        material : str
-            The name of the element material.
-        kx_mod : number
-            Stiffness modification factor for hoop stiffness in each
-            element's local x-direction. Default value is 1.0 (no
-            modification).
-        ky_mod : number
-            Stiffness modification factor for meridional stiffness in each
-            element's local y-direction. Default value is 1.0 (no
-            modification).
-        origin : list, optional
-            The origin of the mesh. The default is [0, 0, 0].
-        axis : str, optional
-            The global axis about which the mesh will be generated. The default is 'Y'.
-        num_elements : number
-            The number of elements to use to form the perimeter of each course. This is typically
-            only used if you are trying to match the nodes to another mesh's nodes. If set to
-            `None` the program will automatically calculate the number of elements to use based on
-            the mesh size. The default is None.
-        start_node : str
-            The name of the first node in the mesh. If set to `None` the program will use the next
-            available node name. Default is `None`
-        start_element : str
-            The name of the first element in the mesh. If set to `None` the program will use the
-            next available element name. Default is `None`
-        element_type : str, optional
-            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
-            'Quad'.
-
-        """
+        :param name: A unique name for the mesh.
+        :type name: str
+        :param mesh_size: The target mesh size.
+        :type mesh_size: float
+        :param radius: The radius of the cylinder.
+        :type radius: float
+        :param height: The height of the cylinder.
+        :type height: float
+        :param thickness: Element thickness.
+        :type thickness: float
+        :param material: The name of the element material.
+        :type material: str
+        :param kx_mod: Stiffness modification factor for hoop stiffness in each element's local
+                       x-direction. Defaults to 1.0 (no modification).
+        :type kx_mod: int, optional
+        :param ky_mod: Stiffness modification factor for meridional stiffness in each element's
+                       local y-direction. Defaults to 1.0 (no modification).
+        :type ky_mod: int, optional
+        :param origin: The origin [X, Y, Z] of the mesh. Defaults to [0, 0, 0].
+        :type origin: list, optional
+        :param axis: The global axis about which the mesh will be generated. Defaults to 'Y'.
+        :type axis: str, optional
+        :param num_elements: The number of elements to use to form each course of elements. This
+                             is typically only used if you are trying to match the nodes to another
+                             mesh's nodes. If set to `None` the program will automatically
+                             calculate the number of elements to use based on the mesh size.
+                             Defaults to None.
+        :type num_elements: int, optional
+        :param start_node: The name of the first node in the mesh. If set to `None` the program
+                           will use the next available node name. Defaults to `None`.
+        :type start_node: str, optional
+        :param start_element: The name of the first element in the mesh. If set to `None` the
+                              program will use the next available element name. Defaults to `None`.
+        :type start_element: str, optional
+        :param element_type: The type of element to make the mesh out of. Either 'Quad' or 'Rect'.
+                             Defaults to 'Quad'.
+        :type element_type: str, optional
+        :raises NameError: Occurs when the specified mesh name is already being used in the model.
+        :return: The name of the mesh added to the model
+        :rtype: str
+        """            
         
         # Check if a name has been provided
         if name:
