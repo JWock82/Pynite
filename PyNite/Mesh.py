@@ -458,6 +458,7 @@ class RectangleMesh(Mesh):
             # Only keep the value at `i` if it's not a duplicate or near duplicate
             if not isclose(x_control[i], x_control[i+1]):
                 unique_list.append(x_control[i])
+        unique_list.append(x_control[-1])
         x_control = unique_list
 
         # Remove any values that are duplicates or near duplicates from `y_control`
@@ -466,6 +467,7 @@ class RectangleMesh(Mesh):
             # Only keep the value at `i` if it's not a duplicate or near duplicate
             if not isclose(y_control[i], y_control[i+1]):
                 unique_list.append(y_control[i])
+        unique_list.append(y_control[-1])
         y_control = unique_list
     
         # Each node number will be increased by the offset calculated below
