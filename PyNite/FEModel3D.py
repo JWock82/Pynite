@@ -21,7 +21,8 @@ from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, Cylinder
 
 # %%
 class FEModel3D():
-    """A 3D finite element model.
+    """A 3D finite element model object. This object has methods and dictionaries to create, store,
+       and retrieve results from a finite element model.
     """
 
     def __init__(self):
@@ -851,14 +852,11 @@ class FEModel3D():
         self.solution = None
 
     def delete_auxnode(self, auxnode_name):
-        '''
-        Removes an auxiliary node from the model.
+        """Removes an auxiliary node from the model.
 
-        Parameters
-        ----------
-        auxnode_name : str
-            The name of the auxiliary node to be removed
-        '''
+        :param auxnode_name: The name of the auxiliary node to be removed.
+        :type auxnode_name: str
+        """
 
         # Remove the auxiliary node
         self.AuxNodes.pop(auxnode_name)
@@ -872,14 +870,11 @@ class FEModel3D():
         self.solution = None
 
     def delete_spring(self, spring_name):
-        '''
-        Removes a spring from the model.
-        
-        Parameters
-        ----------
-        spring_name : str
-            The name of the spring to be removed.
-        '''
+        """Removes a spring from the model.
+
+        :param spring_name: The name of the spring to be removed.
+        :type spring_name: str
+        """
         
         # Remove the spring
         self.Springs.pop(spring_name)
@@ -888,15 +883,12 @@ class FEModel3D():
         self.solution = None
 
     def delete_member(self, member_name):
-        '''
-        Removes a member from the model. All member loads associated with the
-        member will also be removed.
-        
-        Parameters
-        ----------
-        member_name : str
-            The name of the member to be removed.
-        '''
+        """Removes a member from the model. All member loads associated with the member will also
+           be removed.
+
+        :param member_name: The name of the member to be removed.
+        :type member_name: str
+        """
         
         # Remove the member. Member loads are stored within the member, so they
         # will be deleted automatically when the member is deleted.
@@ -1086,20 +1078,20 @@ class FEModel3D():
         self.solution = None
 
     def add_node_load(self, Node, Direction, P, case='Case 1'):
-        '''
-        Adds a nodal load to the model.
+        """Adds a nodal load to the model.
+
+        :param Node: The name of the node where the load is being applied.
+        :type Node: str
+        :param Direction: The global direction the load is being applied in. Forces are `'FX'`,
+                          `'FY'`, and `'FZ'`. Moments are `'MX'`, `'MY'`, and `'MZ'`.
+        :type Direction: str
+        :param P: The numeric value (magnitude) of the load.
+        :type P: float
+        :param case: The name of the load case the load belongs to. Defaults to 'Case 1'.
+        :type case: str, optional
+        :raises ValueError: Occurs when an invalid load direction was specified.
+        """
         
-        Parameters
-        ----------
-        Node : str
-            The name of the node where the load is being applied.
-        Direction : {'FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'}
-            The global direction the load is being applied in. Forces are 'FX', 'FY', and 'FZ'. Moments are 'MX', 'MY', and 'MZ'.
-        P : number
-            The numeric value (magnitude) of the load.
-        case : str
-            The name of the load case the load belongs to.
-        '''
         # Validate the value of Direction
         if Direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
             raise ValueError(f"Direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {Direction} was given.")
@@ -1110,24 +1102,24 @@ class FEModel3D():
         self.solution = None
 
     def add_member_pt_load(self, Member, Direction, P, x, case='Case 1'):
-        '''
-        Adds a member point load to the model.
-        
-        Parameters
-        ----------
-        Member : str
-            The name of the member the load is being applied to.
-        Direction : {'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'}
-            The direction in which the force is to be applied. Note that
-            typical beam sign convention is used. Transverse forces acting
-            toward the beam are positive. Moments are positive if they act
-            counter-clockwise relative to the beam's local coordinate system.
-            Torsional point loads follow the right hand rule for sign convention.
-        P : number
-            The numeric value (magnitude) of the load.
-        x : number
-            The load's location along the member's local x-axis.
-        '''
+        """Adds a member point load to the model.
+
+        :param Member: The name of the member the load is being applied to.
+        :type Member: str
+        :param Direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
+                          `'Fy'`, `'Fz'`, `'Mx'`, `'My'`, `'Mz'`, `'FX'`, `'FY'`, `'FZ'`, `'MX'`, `'MY'`, or `'MZ'`.
+                          Note that lower-case notation indicates use of the beam's local
+                          coordinate system, while upper-case indicates use of the model's globl
+                          coordinate system.
+        :type Direction: str
+        :param P: The numeric value (magnitude) of the load.
+        :type P: float
+        :param x: The load's location along the member's local x-axis.
+        :type x: float
+        :param case: The load case to categorize the load under. Defaults to 'Case 1'.
+        :type case: str, optional
+        :raises ValueError: Occurs when an invalid load direction has been specified.
+        """            
 
         # Validate the value of Direction
         if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', 'MZ'):
@@ -1140,28 +1132,31 @@ class FEModel3D():
         self.solution = None
 
     def add_member_dist_load(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
-        '''
-        Adds a member distributed load to the model.
-        
-        Parameters
-        ----------
-        Member : str
-            The name of the member the load is being appied to
-        Direction : {'Fx', 'Fy', 'Fz'}
-            The direction in which the load is to be applied. Note that
-            typical beam sign convention is used. Forces acting toward the beam
-            are positive.
-        w1 : number
-            The starting value (magnitude) of the load.
-        w2 : number
-            The ending value (magnitude) of the load.
-        x1 : number
-            The load's start location along the member's local x-axis. If this argument
-            is not specified, the start of the member will be used.
-        x2 : number
-            The load's end location along the member's local x-axis. If this argument
-            is not specified, the end of the member will be used.
-        '''
+        """Adds a member distributed load to the model.
+
+        :param Member: The name of the member the load is being appied to.
+        :type Member: str
+        :param Direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
+                          `'Fy'`, `'Fz'`, `'FX'`, `'FY'`, or `'FZ'`.
+                          Note that lower-case notation indicates use of the beam's local
+                          coordinate system, while upper-case indicates use of the model's globl
+                          coordinate system.
+        :type Direction: str
+        :param w1: The starting value (magnitude) of the load.
+        :type w1: float
+        :param w2: The ending value (magnitude) of the load.
+        :type w2: float
+        :param x1: The load's start location along the member's local x-axis. If this argument is
+                   not specified, the start of the member will be used. Defaults to `None`
+        :type x1: float, optional
+        :param x2: The load's end location along the member's local x-axis. If this argument is not
+                   specified, the end of the member will be used. Defaults to `None`.
+        :type x2: float, optional
+        :param case: _description_, defaults to 'Case 1'
+        :type case: str, optional
+        :raises ValueError: Occurs when an invalid load direction has been specified.
+        """
+       
         # Validate the value of Direction
         if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'):
             raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', or 'FZ'. {Direction} was given.")
@@ -1232,9 +1227,8 @@ class FEModel3D():
         self.solution = None
 
     def delete_loads(self):
-        '''
-        Deletes all loads from the model along with any results based on the loads.
-        '''
+        """Deletes all loads from the model along with any results based on the loads.
+        """
 
         # Delete the member loads and the calculated internal forces
         for member in self.Members.values():
@@ -1862,14 +1856,14 @@ class FEModel3D():
         return FER
     
     def P(self, combo_name='Combo 1'):
-        '''
-        Assembles and returns the global nodal force vector.
+        """Assembles and returns the global nodal force vector.
 
-        Parameters
-        ----------
-        combo_name : str
-            The name of the load combination to get the force vector for (not the load combination itself).
-        '''
+        :param combo_name: The name of the load combination to get the force vector for. Defaults
+                           to 'Combo 1'.
+        :type combo_name: str, optional
+        :return: The global nodal force vector.
+        :rtype: array
+        """
             
         # Initialize a zero vector to hold all the terms
         P = zeros((len(self.Nodes)*6, 1))
