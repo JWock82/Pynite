@@ -21,6 +21,7 @@ This documentation is just getting started. Keep checking back for updates.
 
    installation
    quickstart
+   load_combo
    member
    stability
    FEModel3D

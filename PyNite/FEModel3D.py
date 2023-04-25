@@ -1179,19 +1179,17 @@ class FEModel3D():
         self.solution = None
 
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
-        """
-        Adds a surface pressure to the rectangular plate element.
-
-        Parameters
-        ----------
-        plate_name : str
-            The name for the rectangular plate to add the surface pressure to.
-        pressure : number
-            The value for the surface pressure.
-        case : str, optional
-            The load case to add the surface pressure to. Default is 'Case 1'.
+        """Adds a surface pressure to the rectangular plate element.
         
-        """
+
+        :param plate_name: The name for the rectangular plate to add the surface pressure to.
+        :type plate_name: str
+        :param pressure: The value (magnitude) for the surface pressure.
+        :type pressure: float
+        :param case: The load case to add the surface pressure to. Defaults to 'Case 1'.
+        :type case: str, optional
+        :raises Exception: Occurs when an invalid plate name has been specified.
+        """   
 
         # Add the surface pressure to the rectangle
         if plate_name in self.Plates.keys():
@@ -1203,18 +1201,15 @@ class FEModel3D():
         self.solution = None
 
     def add_quad_surface_pressure(self, quad_name, pressure, case='Case 1'):
-        """
-        Adds a surface pressure to the quadrilateral element.
+        """Adds a surface pressure to the quadrilateral element.
 
-        Parameters
-        ----------
-        quad_name : str
-            The name for the quad to add the surface pressure to.
-        pressure : number
-            The value for the surface pressure.
-        case : str, optional
-            The load case to add the surface pressure to. Default is 'Case 1'.
-        
+        :param quad_name: The name for the quad to add the surface pressure to.
+        :type quad_name: str
+        :param pressure: The value (magnitude) for the surface pressure.
+        :type pressure: float
+        :param case: The load case to add the surface pressure to. Defaults to 'Case 1'.
+        :type case: str, optional
+        :raises Exception: Occurs when an invalid quad name has been specified.
         """
 
         # Add the surface pressure to the quadrilateral
