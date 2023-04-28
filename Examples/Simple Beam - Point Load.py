@@ -73,6 +73,5 @@ print('Minimum Deflection:', simple_beam.Members['M1'].min_deflection('dy', '1.2
 # wiki under "Generating PDF Reports" to prevent errors. The report will be output to the PyNite
 # folder unless the 'output_path' variable below is modified.
 
-# from PyNite import Reporting
-# Reporting.CreateReport(simple_beam, output_filepath='.//PyNite Report.pdf', plates=False, plate_corner_forces=False, \
-#                        plate_center_forces=False, plate_corner_membrane=False, plate_center_membrane=False)
+from PyNite import Reporting
+Reporting.create_report(simple_beam, output_filepath='./Pynite Report.pdf', node_table=False, plate_table=False, plate_corner_forces=False, plate_center_forces=False, plate_corner_membrane=False, plate_center_membrane=False)
