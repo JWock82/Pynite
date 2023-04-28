@@ -8,12 +8,12 @@
    :align: center
 
 =================================
-Welcome to Pynite's documentation
+Welcome to Pynite's Documentation
 =================================
 
 Pynite provides simple finite element analysis for Python.
 
-This documentation is just getting started. Keep checking back for updates.
+This documentation is just getting started and is a little bare at the moment. Keep checking back for updates.
 
 .. toctree::
    :maxdepth: 1

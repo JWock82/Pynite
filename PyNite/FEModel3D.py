@@ -582,11 +582,8 @@ class FEModel3D():
         #Return the mesh's name
         return name
 
-    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,
-                          material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y',
-                          start_node=None, start_element=None):
-        """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal
-        plane).
+    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
+        """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
 
         :param name: A unique name for the mesh.
         :type name: str
@@ -602,18 +599,15 @@ class FEModel3D():
         :type thickness: number
         :param material: The name of the element material.
         :type material: str
-        :param kx_mod: Stiffness modification factor for radial stiffness in each element's local
-                       x-direction, defaults to 1 (no modification).
+        :param kx_mod: Stiffness modification factor for radial stiffness in each element's local x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
-        :param ky_mod: Stiffness modification factor for meridional stiffness in each
-                       element's local y-direction, defaults to 1 (no modification).
+        :param ky_mod: Stiffness modification factor for meridional stiffness in each element's local y-direction, defaults to 1 (no modification).
         :type ky_mod: number, optional
         :param origin: The origin of the mesh, defaults to [0, 0, 0].
         :type origin: list, optional
         :param axis: The global axis about which the mesh will be generated, defaults to 'Y'.
         :type axis: str, optional
-        :param start_node: The name of the first node in the mesh. If set to None the program
-                           will use the next available node name, defaults to None.
+        :param start_node: The name of the first node in the mesh. If set to None the program will use the next available node name, defaults to None.
         :type start_node: str, optional
         :param start_element: The name of the first element in the mesh. If set to `None` the
                               program will use the next available element name, defaults to None
@@ -832,8 +826,7 @@ class FEModel3D():
         self.solution = None
 
     def delete_node(self, node_name):
-        """Removes a node from the model. All nodal loads associated with the node and elements
-        attached to the node will also be removed.
+        """Removes a node from the model. All nodal loads associated with the node and elements attached to the node will also be removed.
 
         :param node_name: The name of the node to be removed.
         :type node_name: str
@@ -1910,19 +1903,17 @@ class FEModel3D():
         return self._D[combo_name]
 
     def _partition(self, unp_matrix, D1_indices, D2_indices):
-        '''
-        Partitions a matrix (or vector) into submatrices (or subvectors) based on degree of freedom
-        boundary conditions.
+        """Partitions a matrix (or vector) into submatrices (or subvectors) based on degree of freedom boundary conditions.
 
-        Parameters
-        ----------
-        unp_matrix : ndarray or lil_matrix
-            The unpartitioned matrix (or vector) to be partitioned.
-        D1_indices : list
-            A list of the indices for degrees of freedom that have unknown displacements.
-        D2_indices : list
-            A list of the indices for degrees of freedom that have known displacements.
-        '''
+        :param unp_matrix: The unpartitioned matrix (or vector) to be partitioned.
+        :type unp_matrix: ndarray or lil_matrix
+        :param D1_indices: A list of the indices for degrees of freedom that have unknown displacements.
+        :type D1_indices: list
+        :param D2_indices: A list of the indices for degrees of freedom that have known displacements.
+        :type D2_indices: list
+        :return: Partitioned submatrices (or subvectors) based on degree of freedom boundary conditions.
+        :rtype: array, array, array, array
+        """
 
         # Determine if this is a 1D vector or a 2D matrix
 
@@ -1942,28 +1933,20 @@ class FEModel3D():
             return m11, m12, m21, m22
 
     def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True):
-        """
-        Performs first-order static analysis.
-        
-        Iterations are performed if tension-only members or
-        compression-only members are present.
+        """Performs first-order static analysis. Iterations are performed if tension-only members or compression-only members are present.
 
-
-        Parameters
-        ----------
-        log : bool, optional
-            Prints the analysis log to the console if set to True. Default is False.
-        check_statics : bool, optional
-            When set to True, causes a statics check to be performed
-        max_iter : number, optional
-            The maximum number of iterations to try to get convergence
-            for tension/compression-only analysis.
-        sparse : bool, optional
-            Indicates whether the sparse matrix solver should be used. A matrix can be considered
-            sparse or dense depening on how many zero terms there are. Structural stiffness
-            matrices often contain many zero terms. The sparse solver can offer faster solutions
-            for such matrices. Using the sparse solver on dense matrices may lead to slower
-            solution times.
+        :param log: Prints the analysis log to the console if set to True. Default is False.
+        :type log: bool, optional
+        :param check_stability: When set to `True`, checks for nodal instabilities. This slows down analysis a little. Default is `True`.
+        :type check_stability: bool, optional
+        :param check_statics: When set to `True`, causes a statics check to be performed
+        :type check_statics: bool, optional
+        :param max_iter: The maximum number of iterations to try to get convergence for tension/compression-only analysis. Defaults to 30.
+        :type max_iter: int, optional
+        :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times.
+        :type sparse: bool, optional
+        :raises Exception: _description_
+        :raises Exception: _description_
         """
 
         if log:
