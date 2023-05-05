@@ -265,8 +265,7 @@ class FEModel3D():
                    tension_only=False, comp_only=False):
         """Adds a new physical member to the model.
 
-        :param name: A unique user-defined name for the member. If None or "", a name will be
-                    automatically assigned
+        :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
         :type name: str
         :param i_node: The name of the i-node (start node).
         :type i_node: str
@@ -282,9 +281,7 @@ class FEModel3D():
         :type J: number
         :param A: The cross-sectional area of the member.
         :type A: number
-        :param auxNode: The name of the auxiliary node used to define the local z-axis. The default
-                        is None, in which case the program defines the axis instead of using an
-                        auxiliary node.
+        :param auxNode: The name of the auxiliary node used to define the local z-axis. The default is ``None``, in which case the program defines the axis instead of using an auxiliary node.
         :type auxNode: str, optional
         :param tension_only: Indicates if the member is tension-only, defaults to False
         :type tension_only: bool, optional
@@ -308,12 +305,9 @@ class FEModel3D():
                 
         # Create a new member
         if auxNode == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J,
-                                    A, model=self, tension_only=tension_only, comp_only=comp_only)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J, A, model=self, tension_only=tension_only, comp_only=comp_only)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J,
-                                    A, model=self, auxnode=self.GetAuxNode(auxNode),
-                                    tension_only=tension_only, comp_only=comp_only)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J, A, model=self, auxnode=self.AuxNodes[auxNode], tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
         self.Members[name] = new_member
@@ -441,8 +435,7 @@ class FEModel3D():
         return name
 
     def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1.0, 
-            ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None,
-            start_element = None, element_type='Quad'):
+            ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
@@ -457,31 +450,23 @@ class FEModel3D():
         :type thickness: number
         :param material: The name of the material for elements in the mesh.
         :type material: str
-        :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
-                       x-direction. Defaults to 1.0 (no modification).
+        :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local x-direction. Defaults to 1.0 (no modification).
         :type kx_mod: float, optional
-        :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local
-                       y-direction. Defaults to 1.0 (no modification).
+        :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local y-direction. Defaults to 1.0 (no modification).
         :type ky_mod: float, optional
         :param origin: The origin of the regtangular mesh's local coordinate system. Defaults to [0, 0, 0]
         :type origin: list, optional
-        :param plane: The plane the mesh will be parallel to. Options are 'XY', 'YZ', and 'XZ'.
-                      Defaults to 'XY'.
+        :param plane: The plane the mesh will be parallel to. Options are 'XY', 'YZ', and 'XZ'. Defaults to 'XY'.
         :type plane: str, optional
-        :param x_control: A list of control points along the mesh's local x-axis to work into the
-                          mesh. Defaults to `None`.
+        :param x_control: A list of control points along the mesh's local x-axis to work into the mesh. Defaults to `None`.
         :type x_control: list, optional
-        :param y_control: A list of control points along the mesh's local y-axis to work into the
-                          mesh. Defaults to None.
+        :param y_control: A list of control points along the mesh's local y-axis to work into the mesh. Defaults to None.
         :type y_control: list, optional
-        :param start_node: The name of the first node in the mesh. If set to `None` the program
-                           will use the next available node name. Default is `None`.
+        :param start_node: The name of the first node in the mesh. If set to `None` the program will use the next available node name. Default is `None`.
         :type start_node: str, optional
-        :param start_element: The name of the first element in the mesh. If set to `None` the
-                              program will use the next available element name. Default is `None`.
+        :param start_element: The name of the first element in the mesh. If set to `None` the program will use the next available element name. Default is `None`.
         :type start_element: str, optional
-        :param element_type: They type of element to make the mesh out of. Either 'Quad' or 'Rect'.
-                             Defaults to 'Quad'.
+        :param element_type: They type of element to make the mesh out of. Either 'Quad' or 'Rect'. Defaults to 'Quad'.
         :type element_type: str, optional
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the mesh added to the model.
