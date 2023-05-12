@@ -45,10 +45,10 @@ Example:
 .. code-block:: python
 
     # Import the reporting module
-    import Reporting
+    from PyNite import Reporting
     
     # Create the report
-    Reporting.create_report(my_model, output_filepath='C:/Users/MyName/Documents/My Report.pdf')
+    Reporting.create_report(my_model, output_filepath='./My Report.pdf')
 
 Reporting Reference
 ===================
