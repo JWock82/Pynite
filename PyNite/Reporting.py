@@ -2,6 +2,7 @@
 from jinja2 import Environment, PackageLoader
 import pdfkit
 
+
 # Determine the filepath to the local PyNite installation
 from pathlib import Path
 path = Path(__file__).parent

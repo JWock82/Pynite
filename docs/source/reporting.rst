@@ -54,4 +54,3 @@ Reporting Reference
 ===================
 
 .. automodule:: PyNite.Reporting
-   .. automethod:: create_report
