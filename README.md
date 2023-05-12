@@ -42,7 +42,7 @@ As I've gotten into the structural engineering profession, I've found there's a 
 
 4. Improvement: PyNite is getting better at what it does. Each new feature provides leverage to build upon previous features in more elaborate ways. Key to improvement is (a) maintaining the core features that other features rely on, and (b) adding new features that are solid stepping stones to other features. Improvement most often happens by getting the small and simple things right incrementally, rather than with sweeping overhauls all at once.
 
-5. Collaboration: The intent is to keep PyNite free and open source. This will encourage future development and contributions. Keeping it open source will allow anyone to inspect and improve the code it runs on. If you see an area you can help PyNite improve in you are encouraged to contribute. Please follow the contributing guidelines given in this repository.
+5. Collaboration: I am looking for additional collaborators willing to help the project succeed for years to come. If you are experienced with Python, familiar with Pynite (or are willing to become familiar with it), and if you would like to help improve the project for everyone, please reach out.
 
 # Support
 Whether you just need help getting started with PyNite, or are looking to build something more complex, there are a few resources available:
