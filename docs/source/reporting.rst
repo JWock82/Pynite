@@ -53,7 +53,5 @@ Example:
 Reporting Reference
 ===================
 
-See below for a list of all the reporting options you can choose from when creating a report.
-
 .. automodule:: PyNite.Reporting
-   :members:
+   .. automethod:: create_report
