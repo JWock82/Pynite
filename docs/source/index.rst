@@ -25,6 +25,7 @@ This documentation is just getting started and is a little bare at the moment. K
    member
    stability
    FEModel3D
+   reporting
 
 Indices and tables
 ==================
