@@ -17,7 +17,7 @@ Configuring ``wkhtmltopdf`` on Windows
 
 Once ``wkhtmltopdf`` is installed, you'll need to set your environment PATH variable to include the path to ``wkhtmltopdf.exe``. This step ensures PDFKit can find and use ``wkhtmltopdf``. On Windows this can generally be done by going to ``Control Panel -> System & Security -> System -> Advanced System Settings -> Environment Variables``. On Windows 10 you can also just type "env" in the search bar to bring it up.
 
-From there you can edit the "Path" variable to include the file path to the folder containing ``wkhtmltopdf.exe``. The path you need to add will most likely be "C:\Program Files\wkhtmltopdf\bin" or something similar, depending on where you installed it.
+From there you can edit the "Path" variable to include the file path to the folder containing ``wkhtmltopdf.exe``. The path you need to add will most likely be "C:\\Program Files\\wkhtmltopdf\\bin" or something similar, depending on where you installed it.
 
 Configuring ``wkhtmltopdf`` on Other Operating Systems
 ======================================================
@@ -27,7 +27,7 @@ I've only ever done this for Windows, so for other operating systems I recommend
 Generating & Customizing Reports
 ================================
 
-Generate reports by importing the ``Reporting`` module and then calling the `create_report` method. By default, the report prints everything, but it can be customized by setting the various keyword arguments in the ``create_report`` method to ``False``. Also by default, the PDF report is saved in the ``Pynite`` folder unless another filepath is specified using the ``output_filepath`` argument.
+Generate reports by importing the ``Reporting`` module and then calling the ``create_report`` method. By default, the report prints everything, but it can be customized by setting the various keyword arguments in the ``create_report`` method to ``False``. Also by default, the PDF report is saved in the ``Pynite`` folder unless another filepath is specified using the ``output_filepath`` argument.
 
 Syntax:
 
