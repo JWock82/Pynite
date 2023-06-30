@@ -22,6 +22,7 @@ This documentation is just getting started and is a little bare at the moment. K
    installation
    quickstart
    load_combo
+   node
    member
    stability
    FEModel3D
