@@ -74,6 +74,9 @@ Here's a list of projects that run on PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.75
+* Bug fix & improvements for PDF printing capabilities. Methods used to print PDF's had fallen behind updates to the rest of the program. It should be fixed now. The way PDF's are printed has changed slightly. Examples have been updated to demonstrate this and the documentation on readthedocs has been updated as well: (https://pynite.readthedocs.io/en/latest/reporting.html).
+
 v0.0.74
 * Bug fix for rectangular meshes with very close control points. The program now checks for mesh
 control points that are for all practical purposes the same and eliminates the duplicates.
