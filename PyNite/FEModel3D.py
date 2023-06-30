@@ -434,8 +434,7 @@ class FEModel3D():
         #Return the quad name
         return name
 
-    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1.0, 
-            ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
+    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
@@ -990,40 +989,35 @@ class FEModel3D():
         self.solution = None
 
     def def_releases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
-        '''
-        Defines member end releases.
-        
-        All member end releases will default to unreleased unless specified otherwise.
-        
-        Parameters
-        ----------
-        Member : str
-            The name of the member to have its releases modified.
-        Dxi : boolean
-            Indicates whether the member is released axially at its start.
-        Dyi : boolean
-            Indicates whether the member is released for shear in the local y-axis at its start.
-        Dzi : boolean
-            Indicates whether the member is released for shear in the local z-axis at its start.
-        Rxi : boolean
-            Indicates whether the member is released for torsion at its start.
-        Ryi : boolean
-            Indicates whether the member is released for moment about the local y-axis at its start.
-        Rzi : boolean
-            Indicates whether the member is released for moment about the local z-axis at its start.
-        Dxj : boolean
-            Indicates whether the member is released axially at its end.
-        Dyj : boolean
-            Indicates whether the member is released for shear in the local y-axis at its end.
-        Dzj : boolean
-            Indicates whether the member is released for shear in the local z-axis.
-        Rxj : boolean
-            Indicates whether the member is released for torsion at its end.
-        Ryj : boolean
-            Indicates whether the member is released for moment about the local y-axis at its end.
-        Rzj : boolean
-            Indicates whether the member is released for moment about the local z-axis at its end.
-        '''
+        """Defines member end realeses for a member. All member end releases will default to unreleased unless specified otherwise.
+
+        :param Member: The name of the member to have its releases modified.
+        :type Member: str
+        :param Dxi: Indicates whether the member is released axially at its start. Defaults to False.
+        :type Dxi: bool, optional
+        :param Dyi: Indicates whether the member is released for shear in the local y-axis at its start. Defaults to False.
+        :type Dyi: bool, optional
+        :param Dzi: Indicates whether the member is released for shear in the local z-axis at its start. Defaults to False.
+        :type Dzi: bool, optional
+        :param Rxi: Indicates whether the member is released for torsion at its start. Defaults to False.
+        :type Rxi: bool, optional
+        :param Ryi: Indicates whether the member is released for moment about the local y-axis at its start. Defaults to False.
+        :type Ryi: bool, optional
+        :param Rzi: Indicates whether the member is released for moment about the local z-axis at its start. Defaults to False.
+        :type Rzi: bool, optional
+        :param Dxj: Indicates whether the member is released axially at its end. Defaults to False.
+        :type Dxj: bool, optional
+        :param Dyj: Indicates whether the member is released for shear in the local y-axis at its end. Defaults to False.
+        :type Dyj: bool, optional
+        :param Dzj: Indicates whether the member is released for shear in the local z-axis. Defaults to False.
+        :type Dzj: bool, optional
+        :param Rxj: Indicates whether the member is released for torsion at its end. Defaults to False.
+        :type Rxj: bool, optional
+        :param Ryj: Indicates whether the member is released for moment about the local y-axis at its end. Defaults to False.
+        :type Ryj: bool, optional
+        :param Rzj: Indicates whether the member is released for moment about the local z-axis at its end. Defaults to False.
+        :type Rzj: bool, optional
+        """
         
         # Apply the end releases to the member
         self.Members[Member].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
@@ -1032,19 +1026,15 @@ class FEModel3D():
         self.solution = None
 
     def add_load_combo(self, name, factors, combo_type='strength'):
-        '''
-        Adds a load combination to the model
+        """Adds a load combination to the model.
 
-        Parameters
-        ----------
-        name : str
-            A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
-        factors : dictionary
-            A dictionary containing load cases and their corresponding factors (e.g. {'D':1.2, 'L':1.6, 'S':0.5}).
-        combo_type : str
-            A description of the type of load combination (e.g. 'strength', 'service'). Currently
-            this does nothing in the program, and is a placeholder for future features.
-        '''
+        :param name: A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
+        :type name: str
+        :param factors: A dictionary containing load cases and their corresponding factors (e.g. {'D':1.2, 'L':1.6, 'S':0.5}).
+        :type factors: dict
+        :param combo_type: A description of the type of load combination (e.g. 'strength', 'service'). This has no effect on the analysis. It can be used to mark special combinations for easier filtering through them later on. Defaults to 'service'.
+        :type combo_type: str, optional
+        """            
 
         # Create a new load combination object
         new_combo = LoadCombo(name, combo_type, factors)

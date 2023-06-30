@@ -25,8 +25,8 @@ model. For example, to add a node to the model we can simply use the ``add_node`
 
 The methods available through the ``FEModel3D`` object are documented below.
 
-As you create your model, the FEModel3D object organizes and stores the information you give it.
-This information is stored primarily in "dictionaries". You can access these dictionaries and
+As you create your model, the ``FEModel3D`` object organizes and stores the information you give it.
+This information is stored primarily in Python `dictionaries`. You can access these dictionaries and
 retrieve information from them if you recall the name of the object stored in the dictionary. For
 example, to retrieve the X-coordinate for the node we just created we could access it in the
 ``Nodes`` dictionary as follows:
