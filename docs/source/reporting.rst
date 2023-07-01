@@ -10,7 +10,7 @@ In order to use Pynite's reporting features you'll need to install the following
 * PDFKit - ``PDFKit`` converts HTML files to PDF files via ``wkhtmltopdf`` (see discussion on ``wkhtmltopdf`` below).
 * Jinja2 - ``Jinja2`` is a templating engine used for creating HTML files using Python.
 
-You'll also need to install ``wkhtmltopdf``, which is a program, rather than a Python library. Installers for various operating systems can be freely downloaded here: [download wkhtmltopdf](https://wkhtmltopdf.org/downloads.html).
+You'll also need to install ``wkhtmltopdf``, which is a program, rather than a Python library. Installers for various operating systems can be freely downloaded here: `download wkhtmltopdf <https://wkhtmltopdf.org/downloads.html>`_.
 
 Configuring ``wkhtmltopdf`` on Windows
 ======================================
@@ -22,7 +22,7 @@ From there you can edit the "Path" variable to include the file path to the fold
 Configuring ``wkhtmltopdf`` on Other Operating Systems
 ======================================================
 
-I've only ever done this for Windows, so for other operating systems I recommend going to the PDFKit documentation on PyPI here: [PDFKit on PyPI](https://pypi.org/project/pdfkit/). It explains PKFKit configuration options that "should" work, thought I've never done it myself. Good luck!
+I've only ever done this for Windows, so for other operating systems I recommend going to the PDFKit documentation on PyPI here: `PDFKit on PyPI <https://pypi.org/project/pdfkit/>`_. It explains PKFKit configuration options that "should" work, thought I've never done it myself. Good luck!
 
 Generating & Customizing Reports
 ================================
