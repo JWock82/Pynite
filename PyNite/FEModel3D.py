@@ -915,23 +915,19 @@ class FEModel3D():
         self.solution = None
 
     def def_support_spring(self, node_name, dof, stiffness, direction=None):
-        """
-        Defines a spring support at a node.
+        """Defines a spring support at a node.
 
-        Parameters
-        ----------
-        node_name : str
-            The name of the node to apply the spring support to.
-        dof : str ('DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ')
-            The degree of freedom to apply the spring support to.
-        stiffness : number
-            The translational or rotational stiffness of the spring support.
-        direction : str or None ('+', '-', None)
-            The direction in which the spring can act. '+' allows the spring
-            to resist positive displacements. '-' allows the spring to resist
-            negative displacements. None allows the spring to act in both
-            directions. Default is None.
-        """
+        :param node_name: The name of the node to apply the spring support to.
+        :type node_name: str
+        :param dof: The degree of freedom to apply the spring support to.
+        :type dof: str ('DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ')
+        :param stiffness: The translational or rotational stiffness of the spring support.
+        :type stiffness: float
+        :param direction: The direction in which the spring can act. '+' allows the spring to resist positive displacements. '-' allows the spring to resist negative displacements. None allows the spring to act in both directions. Default is None.
+        :type direction: str or None ('+', '-', None), optional
+        :raises ValueError: Occurs when an invalid support spring direction has been specified.
+        :raises ValueError: Occurs when an invalid support spring degree of freedom has been specified.
+        """        
         
         if dof in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             if direction in ('+', '-', None):
@@ -2165,26 +2161,18 @@ class FEModel3D():
         self.solution = 'Linear TC'
 
     def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True):
-        '''
-        Performs first-order static analysis.
-        
-        This analysis procedure is much faster since it only assembles the global stiffness matrix
-        once, rather than once for each load combination. It is not appropriate when non-linear
-        behavior such as tension/compression only analysis or P-Delta analysis are required.
+        """Performs first-order static analysis. This analysis procedure is much faster since it only assembles the global stiffness matrix once, rather than once for each load combination. It is not appropriate when non-linear behavior such as tension/compression only analysis or P-Delta analysis are required.
 
-        Parameters
-        ----------
-        log : bool, optional
-            Prints the analysis log to the console if set to True. Default is False.
-        check_statics : bool, optional
-            When set to True, causes a statics check to be performed
-        sparse : bool, optional
-            Indicates whether the sparse matrix solver should be used. A matrix can be considered
-            sparse or dense depening on how many zero terms there are. Structural stiffness
-            matrices often contain many zero terms. The sparse solver can offer faster solutions
-            for such matrices. Using the sparse solver on dense matrices may lead to slower
-            solution times.
-        '''
+        :param log: Prints the analysis log to the console if set to True. Default is False.
+        :type log: bool, optional
+        :param check_stability: When set to True, checks the stiffness matrix for any unstable degrees of freedom and reports them back to the console. This does add to the solution time. Defaults to True.
+        :type check_stability: bool, optional
+        :param check_statics: When set to True, causes a statics check to be performed. Defaults to False.
+        :type check_statics: bool, optional
+        :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times. Be sure ``scipy`` is installed to use the sparse solver. Default is True.
+        :type sparse: bool, optional
+        :raises Exception: Occurs when a singular stiffness matrix is found. This indicates an unstable structure has been modeled.
+        """
 
         if log:
             print('+-------------------+')
@@ -2328,26 +2316,20 @@ class FEModel3D():
         self.solution = 'Linear'
 
     def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
-        """
-        Performs second order (P-Delta) analysis.
+        """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
-        Parameters
-        ----------
-        log : bool, optional
-            Prints updates to the console if set to True. Default is False.
-        max_iter : number
-            The maximum number of iterations permitted. If this value is exceeded the program will
-            report divergence.
-        tol : number
-            The deflection tolerance (as a percentage) between iterations that will be used to
-            define whether the model has converged (e.g. 0.01 = deflections must converge within 1%
-            between iterations).
-        sparse : bool, optional
-            Indicates whether the sparse matrix solver should be used. A matrix can be considered
-            sparse or dense depening on how many zero terms there are. Structural stiffness
-            matrices often contain many zero terms. The sparse solver can offer faster solutions
-            for such matrices. Using the sparse solver on dense matrices may lead to slower
-            solution times.
+        :param log: Prints updates to the console if set to True. Default is False.
+        :type log: bool, optional
+        :param check_stability: When set to True, checks the stiffness matrix for any unstable degrees of freedom and reports them back to the console. This does add to the solution time. Defaults to True.
+        :type check_stability: bool, optional
+        :param max_iter: The maximum number of iterations permitted. If this value is exceeded the program will report divergence. Defaults to 30.
+        :type max_iter: int, optional
+        :param tol: The deflection tolerance (as a percentage) between iterations that will be used to define whether the model has converged (e.g. 0.01 = deflections must converge within 1% between iterations).
+        :type tol: float, optional
+        :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times. Be sure ``scipy`` is installed to use the sparse solver. Default is True.
+        :type sparse: bool, optional
+        :raises ValueError: Occurs when there is a singularity in the stiffness matrix, which indicates an unstable structure.
+        :raises Exception: Occurs when a model fails to converge.
         """
         
         if log:
