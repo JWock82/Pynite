@@ -5,7 +5,10 @@ Installation
 Pynite can be installed via ``pip`` (Python's default package installer). Run the following commands from the command line interface:
 
 .. code-block:: console
+
     $ pip install PyNiteFEA
+
+.. figure:: ../img/pip_installation_example.png
 
 Be sure to install ``PyNiteFEA`` rather than ``PyNite``. The second one is a different package that
 has nothing to do with finite element analysis.
@@ -15,14 +18,13 @@ For engineers who may be new to Python, the ``$`` symbol in the line above repre
 To get the most out of 'Pynite' you can use the following commands to install a few more optional dependences. A list of what each of these dependencies does for `Pynite` can be found below:
 
 .. code-block:: console
+
     $ pip install matplotlib
     $ pip install vtk
     $ pip install scipy
     $ pip install pdfkit
 
 It is recommended to at least install `scipy` if you choose not to install all the optional dependencies. This will allow you to still use the sparse matrix solver which is usually faster and uses less memory. By default `Pynite` uses the sparse solver, so if you don't install `scipy` you'll need to pass the parameter ``sparse=False`` to the solver when you go to analyze, otherwise the program will throw an exception.
-
-.. figure:: ../img/pip_installation_example.png
 
 Dependencies
 ============
