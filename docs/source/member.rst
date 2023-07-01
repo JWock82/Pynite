@@ -50,9 +50,7 @@ other words, the local y-axis is always perpendicular to the member and to the l
 End Releases
 ============
 
-End releases can be applied to each end of a member to simulate pinned connections. End releases
-can be applied using the ``FEmodel3D.def_release()`` method. See below for an example. By
-applying rotational end releases to both ends of a member you can simulate two-way truss members.
+End releases can be applied to each end of a member to simulate pinned connections or other end conditions. End releases can be applied using the ``FEmodel3D.def_release()`` method. See below for an example. By applying rotational end releases to both ends of a member you can simulate two-way truss members.
 
 .. code-block:: python
 

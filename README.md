@@ -53,13 +53,18 @@ Whether you just need help getting started with PyNite, or are looking to build 
 * If you're looking for more direct guidance on using PyNite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com to discuss options.
 
 # Example Projects
-Here's a list of projects that run on PyNite:
+Here's a list of projects that use PyNite:
 
 * Building Code (https://building-code.herokuapp.com/) - This one is my personal side project.
 * Standard Solver (https://www.standardsolver.com/)
+* Civils.ai (https://civils.ai/1/free-3D-finite-element-structural-analysis)
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.76
+* `matplotlib` is now an optional dependency. You'll only need to install it if you want to view plots for members.
+* Documentation for installation has been improved.
+
 v0.0.75
 * Bug fix & improvements for PDF printing capabilities. Methods used to print PDF's had fallen behind updates to the rest of the program. It should be fixed now. The way PDF's are printed has changed slightly. Examples have been updated to demonstrate this and the documentation on readthedocs has been updated as well: (https://pynite.readthedocs.io/en/latest/reporting.html).
 
@@ -104,17 +109,3 @@ v0.0.66
 * Code simplification and bug fix for merging duplicate nodes.
 * When nodes are merged, support conditions for the deleted node are now assigned to the remaining node.
 * Added a linear solver for faster analysis of simple models. If you don't need P-Delta analysis or tension/compression-only analysis this solver saves time by only assembling the global stiffness matrix once.
-
-v0.0.65
-* Improved the `merge_duplicate_nodes` method. It seemed to be working, but it was hard to follow, and there may have been cases where it didn't work as expected. Simplified the code for this method to make it clear what it was doing, and to make it more efficient. Added comments explaining each step.
-* Screenshot size is now adjustable when rendering.
-* Fixed a bug for `RectangleMesh` where it could not be used repeatedly.
-* Refactoring: changed `Name` to `name` throughout code. For example, `Node3D.Name` is now `Node3D.name`.
-* Fixed obsolete method names that had not been updated.
-* Scalar bar text size can now be controlled. It had strange behavior before. It would change with the window size (until the window size was too small).
-* More work on the new `Renderer` class. This class is being built to give the user more control over the appearance and behavior of renderings.
-* Bug fix for nodal springs applied in the 'RY' and 'RZ' direction. Exceptions were being thrown in some cases.
-
-v0.0.63 thru v0.0.64
-* Fixed the `add_mesh` method. It was not working properly after version 0.0.62.
-* Made stability checks optional. Stability checks add significant solve time. If you are confident your model is stable, you can skip the stability check by toggling `check_stability` to `False` in your call to your analysis command.
