@@ -21,11 +21,11 @@ This documentation is just getting started and is a little bare at the moment. K
 
    installation
    quickstart
+   FEModel3D
    load_combo
    node
    member
    stability
-   FEModel3D
    reporting
 
 Indices and tables

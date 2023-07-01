@@ -21,11 +21,11 @@ setuptools.setup(
     ],
     install_requires=[
         'numpy',
-        'matplotlib',
         'PrettyTable'
     ],
     extras_require = {
         'Sparse Solver': ['scipy'],
+        'Plotting': ['matplotlib'],
         'Visualization':  ['vtk'],
         'Visualization Screenshots': ['IPython'],
         'Reporting': ['pdfkit', 'Jinja2'],
