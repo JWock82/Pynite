@@ -14,7 +14,9 @@
 An easy to use elastic 3D structural engineering finite element analysis library for Python.
 
 # Installation
-The easiest way to install Pynite is with pip: `pip install PyNiteFEA`
+The easiest way to install Pynite is with pip: `pip install PyniteFEA`
+
+For a more detailed discussion on installation options and dependencies see https://pynite.readthedocs.io/en/latest/installation.html
 
 # Current Capabilities
 * 3D static analysis of elastic structures.
@@ -49,22 +51,6 @@ Whether you just need help getting started with PyNite, or are looking to build 
 * The examples in the "Examples" folder in this repository cover a variety of simple problems. The comments in the examples provide additional guidance on how PyNite works.
 * Documentation is a work in progress and can be found on readthedocs here: https://pynite.readthedocs.io/en/latest/index.html.
 * If you're looking for more direct guidance on using PyNite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com to discuss options.
-
-# Dependencies
-PyNite depends on the following packages:
-## Required Dependencies
-* numpy: used for matrix algebra and dense matrix solver
-* matplotlib: used for plotting member diagrams
-* PrettyTable : used to format tabular output
-
-## Optional Dependencies
-* scipy: Used for sparse matrix solver to improve solution speed and memory management. In most cases you'll want to install scipy. 
-* VTK: Used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. VTK is published by Kitware. I've noticed Kitware takes a little time updating VTK to be compatible anytime a new version of Python is released. If you're having trouble installing VTK, you can see which versions of Python are supported by visiting https://pypi.org/project/vtk/#files. VTK does not need to be installed if you don't plan to use the visualization tools built into PyNite.
-* PDFKit: Used for generating pdf reports. In order to generate pdf reports, PDFKit requires you to have wkhtmltopdf installed on your computer. This is a free program available for download at https://wkhtmltopdf.org/downloads.html. Once installed, you'll need to help PyNite find it. On Windows, this can be done by setting your PATH environment variable to include the path to "wkhtmltopdf.exe" after installation. For example, mine is installed at "C:\Program Files\wkhtmltopdf\bin"
-* IPython: Used for displaying screenshots from VTK.
-* jinja2: Used for templating reports into HTML prior to HTML-to-pdf conversion.
-* jupyterlab: Only needed if you want to view the derivations used to build PyNite.
-* sympy: Only needed if you want to view the derivations used to build PyNite.
 
 # Example Projects
 Here's a list of projects that run on PyNite:
