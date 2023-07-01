@@ -3,8 +3,6 @@ from os import rename
 import warnings
 from math import isclose
 
-from matplotlib.pyplot import get
-
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
 from numpy import seterr
 from numpy.linalg import solve

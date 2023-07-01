@@ -7,12 +7,10 @@ from PyNite.LoadCombo import LoadCombo
 
 # %%
 class Spring3D():
-    '''
-    A class representing a 3D spring element in a finite element model.
-    '''
+    """A class representing a 3D spring element in a finite element model.
+    """
 
-    # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows
-    # us to defer importing it until it's actually needed.
+    # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
     __plt = None
 
 #%%

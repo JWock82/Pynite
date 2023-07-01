@@ -362,9 +362,7 @@ class Mesh():
 #%%
 class RectangleMesh(Mesh):
 
-    def __init__(self, mesh_size, width, height, thickness, material, model, kx_mod=1, ky_mod=1, origin=[0, 0, 0],
-                 plane='XY', x_control=None, y_control=None, start_node='N1', start_element='Q1',
-                 element_type='Quad'):
+    def __init__(self, mesh_size, width, height, thickness, material, model, kx_mod=1, ky_mod=1, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node='N1', start_element='Q1', element_type='Quad'):
         """
         A rectangular mesh of elements.
 
