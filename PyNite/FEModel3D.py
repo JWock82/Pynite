@@ -956,16 +956,17 @@ class FEModel3D():
         self.solution = None
 
     def def_node_disp(self, node_name, direction, magnitude): 
-        '''
-        Defines a nodal displacement at a node.
+        """Defines a nodal displacement at a node.
 
-        node_name : str
-            The name of the node where the nodal displacement is being applied.
-        direction : str
-            The global direction the nodal displacement is being applied in. Displacements are 'DX', 'DY', and 'DZ'. Rotations are 'RX', 'RY', and 'RZ'.
-        magnitude : number
-            The magnitude of the displacement.
-        '''
+        :param node_name: The name of the node where the nodal displacement is being applied.
+        :type node_name: str
+        :param direction: The global direction the nodal displacement is being applied in. Displacements are 'DX', 'DY', and 'DZ'. Rotations are 'RX', 'RY', and 'RZ'.
+        :type direction: str
+        :param magnitude: The magnitude of the displacement.
+        :type magnitude: float
+        :raises ValueError: _description_
+        """
+            
         # Validate the value of Direction
         if direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             raise ValueError(f"Direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {direction} was given.")
