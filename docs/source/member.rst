@@ -85,3 +85,40 @@ Members can be changed to tension or compression only by passing ``tension_only=
 Tension-only and compression-only analysis is an iterative process. When using these types of
 members be sure to perform a non-linear analysis. Do not use the ``FEModel3D.analyze_linear()``
 method.
+
+Member Results
+==============
+
+Once your model is solved you can access members and their results from the ``Members`` dictionary in the ``FEModel3D`` class. Below are some examples.
+
+Shear Results:
+
+.. code-block:: python
+
+    # Get the maximum strong-axis shear from member 'M1' for load combination '1.4D'
+    my_model.Members['M1'].max_shear('Fy', '1.4D')
+
+    # Get the minimum weak-axis shear from member 'M3' for load combination '1.2D+1.6L'
+    my_model.Members['M3'].min_shear('Fz', '1.2D+1.6L')
+
+    # Get the strong axis shear 5 units from the start of member 'M2' for load combination '1.2D+1.6S'
+    my_model.Members['M2'].shear('Fz', 5, '1.2D+1.6S')
+
+    # Plot the strong axis shear diagram for member 'M1' for load combination '1.4D' using 100 points
+    my_model.plot_shear('Fz', '1.4D', 100)
+
+Moment Results:
+
+.. code-block:: python
+
+    # Get the maximum strong-axis moment from member 'M1' for load combination '1.4D'
+    my_model.Members['M1'].max_moment('Mz', '1.4D')
+
+    # Get the minimum weak-axis moment from member 'M3' for load combination '1.2D+1.6L'
+    my_model.Members['M3'].min_moment('My', '1.2D+1.6L')
+
+    # Get the strong axis moment 5 units from the start of member 'M2' for load combination '1.2D+1.6S'
+    my_model.Members['M2'].moment('Mz', 5, '1.2D+1.6S')
+
+    # Plot the strong axis moment diagram for member 'M1' for load combination '1.4D' using 100 points
+    my_model.plot_moment('Mz', '1.4D', 100)
