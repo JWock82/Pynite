@@ -305,7 +305,7 @@ class FEModel3D():
         if auxNode == None:
             new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J, A, model=self, tension_only=tension_only, comp_only=comp_only)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J, A, model=self, auxnode=self.AuxNodes[auxNode], tension_only=tension_only, comp_only=comp_only)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J, A, model=self, aux_node=self.AuxNodes[auxNode], tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the list
         self.Members[name] = new_member
