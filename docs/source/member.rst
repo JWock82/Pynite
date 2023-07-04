@@ -122,3 +122,21 @@ Moment Results:
 
     # Plot the strong axis moment diagram for member 'M1' for load combination '1.4D' using 100 points
     my_model.plot_moment('Mz', '1.4D', 100)
+
+Deflection Results:
+
+.. code-block:: python
+
+    # Get the maximum strong-axis deflection from member 'M1' for load combination 'D'
+    my_model.Members['M1'].max_deflection('dy', 'D')
+
+    # Get the minimum weak-axis deflection from member 'M3' for load combination 'D+L'
+    my_model.Members['M3'].min_deflection('dz', 'D+L')
+
+    # Get the strong axis defletion 5 units from the start of member 'M2' for load combination 'D+S'
+    my_model.Members['M2'].deflection('dy', 5, 'D+S')
+
+    # Plot the strong axis deflection diagram for member 'M1' for load combination 'D' using 100 points
+    my_model.plot_deflection('dz', 'D', 100)
+
+Similar methods can be used to obtain results for axial forces and torques.
