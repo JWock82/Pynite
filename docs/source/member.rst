@@ -102,10 +102,10 @@ Shear Results:
     my_model.Members['M3'].min_shear('Fz', '1.2D+1.6L')
 
     # Get the strong axis shear 5 units from the start of member 'M2' for load combination '1.2D+1.6S'
-    my_model.Members['M2'].shear('Fz', 5, '1.2D+1.6S')
+    my_model.Members['M2'].shear('Fy', 5, '1.2D+1.6S')
 
     # Plot the strong axis shear diagram for member 'M1' for load combination '1.4D' using 100 points
-    my_model.plot_shear('Fz', '1.4D', 100)
+    my_model.plot_shear('Fy', '1.4D', 100)
 
 Moment Results:
 
@@ -137,6 +137,6 @@ Deflection Results:
     my_model.Members['M2'].deflection('dy', 5, 'D+S')
 
     # Plot the strong axis deflection diagram for member 'M1' for load combination 'D' using 100 points
-    my_model.plot_deflection('dz', 'D', 100)
+    my_model.plot_deflection('dy', 'D', 100)
 
 Similar methods can be used to obtain results for axial forces and torques.
