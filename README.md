@@ -61,6 +61,10 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.77
+* Simplified P-Delta convergence checks
+* Fixed P-Delta bug introduced in v0.0.76
+  
 v0.0.76
 * Simplified P-Delta convergence checks
 * Allowed tension/compression-only support springs to reactivate after being deactivated. Erroneous deflections were being reported on very flexible models that experienced a lot of movement with T/C support springs.
