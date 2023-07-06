@@ -2065,7 +2065,6 @@ class FEModel3D():
                 for node in self.Nodes.values():
                     
                     # Check convergence of tension/compression-only spring supports and activate/deactivate them as necessary
-
                     if node.spring_DX[1] is not None:
                         if ((node.spring_DX[1] == '-' and node.DX[combo.name] > 0)
                         or (node.spring_DX[1] == '+' and node.DX[combo.name] < 0)):
@@ -2562,40 +2561,82 @@ class FEModel3D():
                     
                     # Check convergence of tension/compression-only spring supports and activate/deactivate them as necessary
                     if node.spring_DX[1] is not None:
-                        if (node.spring_DX[1] == '-' and node.DX[combo.name] > 0) or (node.spring_DX[1] == '+' and node.DX[combo.name] < 0):
+                        if ((node.spring_DX[1] == '-' and node.DX[combo.name] > 0)
+                        or (node.spring_DX[1] == '+' and node.DX[combo.name] < 0)):
+                            # Check if the spring is switching from active to inactive
+                            if node.spring_DX[2] == True: convergence = False
+                            # Make sure the spring is innactive
                             node.spring_DX[2] = False
-                            convergence_TC = False
-                        else:
+                        elif ((node.spring_DX[1] == '-' and node.DX[combo.name] < 0)
+                        or (node.spring_DX[1] == '+' and node.DX[combo.name] > 0)):
+                            # Check if the spring is switching from inactive to active
+                            if node.spring_DX[2] == False: convergence = False
+                            # Make sure the spring is active
                             node.spring_DX[2] = True
                     if node.spring_DY[1] is not None:
-                        if (node.spring_DY[1] == '-' and node.DY[combo.name] > 0) or (node.spring_DY[1] == '+' and node.DY[combo.name] < 0):
+                        if ((node.spring_DY[1] == '-' and node.DY[combo.name] > 0)
+                        or (node.spring_DY[1] == '+' and node.DY[combo.name] < 0)):
+                            # Check if the spring is switching from active to inactive
+                            if node.spring_DY[2] == True: convergence = False
+                            # Make sure the spring is innactive
                             node.spring_DY[2] = False
-                            convergence_TC = False
-                        else:
+                        elif ((node.spring_DY[1] == '-' and node.DY[combo.name] < 0)
+                        or (node.spring_DY[1] == '+' and node.DY[combo.name] > 0)):
+                            # Check if the spring is switching from inactive to active
+                            if node.spring_DY[2] == False: convergence = False
+                            # Make sure the spring is active
                             node.spring_DY[2] = True
                     if node.spring_DZ[1] is not None:
-                        if (node.spring_DZ[1] == '-' and node.DZ[combo.name] > 0) or (node.spring_DZ[1] == '+' and node.DZ[combo.name] < 0):
+                        if ((node.spring_DZ[1] == '-' and node.DZ[combo.name] > 0)
+                        or (node.spring_DZ[1] == '+' and node.DZ[combo.name] < 0)):
+                            # Check if the spring is switching from active to inactive
+                            if node.spring_DZ[2] == True: convergence = False
+                            # Make sure the spring is innactive
                             node.spring_DZ[2] = False
-                            convergence_TC = False
-                        else:
+                        elif ((node.spring_DZ[1] == '-' and node.DZ[combo.name] < 0)
+                        or (node.spring_DZ[1] == '+' and node.DZ[combo.name] > 0)):
+                            # Check if the spring is switching from inactive to active
+                            if node.spring_DZ[2] == False: convergence = False
+                            # Make sure the spring is active
                             node.spring_DZ[2] = True
                     if node.spring_RX[1] is not None:
-                        if (node.spring_RX[1] == '-' and node.RX[combo.name] > 0) or (node.spring_RX[1] == '+' and node.RX[combo.name] < 0):
+                        if ((node.spring_RX[1] == '-' and node.RX[combo.name] > 0)
+                        or (node.spring_RX[1] == '+' and node.RX[combo.name] < 0)):
+                            # Check if the spring is switching from active to inactive
+                            if node.spring_RX[2] == True: convergence = False
+                            # Make sure the spring is innactive
                             node.spring_RX[2] = False
-                            convergence_TC = False
-                        else:
+                        elif ((node.spring_RX[1] == '-' and node.RX[combo.name] < 0)
+                        or (node.spring_RX[1] == '+' and node.RX[combo.name] > 0)):
+                            # Check if the spring is switching from inactive to active
+                            if node.spring_RX[2] == False: convergence = False
+                            # Make sure the spring is active
                             node.spring_RX[2] = True
                     if node.spring_RY[1] is not None:
-                        if (node.spring_RY[1] == '-' and node.RY[combo.name] > 0) or (node.spring_RY[1] == '+' and node.RY[combo.name] < 0):
+                        if ((node.spring_RY[1] == '-' and node.RY[combo.name] > 0)
+                        or (node.spring_RY[1] == '+' and node.RY[combo.name] < 0)):
+                            # Check if the spring is switching from active to inactive
+                            if node.spring_RY[2] == True: convergence = False
+                            # Make sure the spring is innactive
                             node.spring_RY[2] = False
-                            convergence_TC = False
-                        else:
+                        elif ((node.spring_RY[1] == '-' and node.RY[combo.name] < 0)
+                        or (node.spring_RY[1] == '+' and node.RY[combo.name] > 0)):
+                            # Check if the spring is switching from inactive to active
+                            if node.spring_RY[2] == False: convergence = False
+                            # Make sure the spring is active
                             node.spring_RY[2] = True
                     if node.spring_RZ[1] is not None:
-                        if (node.spring_RZ[1] == '-' and node.RZ[combo.name] > 0) or (node.spring_RZ[1] == '+' and node.RZ[combo.name] < 0):
+                        if ((node.spring_RZ[1] == '-' and node.RZ[combo.name] > 0)
+                        or (node.spring_RZ[1] == '+' and node.RZ[combo.name] < 0)):
+                            # Check if the spring is switching from active to inactive
+                            if node.spring_RZ[2] == True: convergence = False
+                            # Make sure the spring is innactive
                             node.spring_RZ[2] = False
-                            convergence_TC = False
-                        else:
+                        elif ((node.spring_RZ[1] == '-' and node.RZ[combo.name] < 0)
+                        or (node.spring_RZ[1] == '+' and node.RZ[combo.name] > 0)):
+                            # Check if the spring is switching from inactive to active
+                            if node.spring_RZ[2] == False: convergence = False
+                            # Make sure the spring is active
                             node.spring_RZ[2] = True
 
                 # Check for tension/compression-only springs that need to be deactivated
