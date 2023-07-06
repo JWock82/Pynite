@@ -62,6 +62,7 @@ Here's a list of projects that use PyNite:
 
 # What's New?
 v0.0.76
+* Allowed tension/compression-only support springs to reactivate after being deactivated. Erroneous deflections were being reported on very flexible models that experienced a lot of movement with T/C support springs.
 * `matplotlib` is now an optional dependency. You'll only need to install it if you want to view plots for members.
 * Documentation for installation has been improved.
 
