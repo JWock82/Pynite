@@ -2522,48 +2522,36 @@ class FEModel3D():
                         if (node.spring_DX[1] == '-' and node.DX[combo.name] > 0) or (node.spring_DX[1] == '+' and node.DX[combo.name] < 0):
                             node.spring_DX[2] = False
                             convergence_TC = False
-                            iter_count_PD = 0
-                            convergence_PD = False
                         else:
                             node.spring_DX[2] = True
                     if node.spring_DY[1] is not None:
                         if (node.spring_DY[1] == '-' and node.DY[combo.name] > 0) or (node.spring_DY[1] == '+' and node.DY[combo.name] < 0):
                             node.spring_DY[2] = False
                             convergence_TC = False
-                            iter_count_PD = 0
-                            convergence_PD = False
                         else:
                             node.spring_DY[2] = True
                     if node.spring_DZ[1] is not None:
                         if (node.spring_DZ[1] == '-' and node.DZ[combo.name] > 0) or (node.spring_DZ[1] == '+' and node.DZ[combo.name] < 0):
                             node.spring_DZ[2] = False
                             convergence_TC = False
-                            iter_count_PD = 0
-                            convergence_PD = False
                         else:
                             node.spring_DZ[2] = True
                     if node.spring_RX[1] is not None:
                         if (node.spring_RX[1] == '-' and node.RX[combo.name] > 0) or (node.spring_RX[1] == '+' and node.RX[combo.name] < 0):
                             node.spring_RX[2] = False
                             convergence_TC = False
-                            iter_count_PD = 0
-                            convergence_PD = False
                         else:
                             node.spring_RX[2] = True
                     if node.spring_RY[1] is not None:
                         if (node.spring_RY[1] == '-' and node.RY[combo.name] > 0) or (node.spring_RY[1] == '+' and node.RY[combo.name] < 0):
                             node.spring_RY[2] = False
                             convergence_TC = False
-                            iter_count_PD = 0
-                            convergence_PD = False
                         else:
                             node.spring_RY[2] = True
                     if node.spring_RZ[1] is not None:
                         if (node.spring_RZ[1] == '-' and node.RZ[combo.name] > 0) or (node.spring_RZ[1] == '+' and node.RZ[combo.name] < 0):
                             node.spring_RZ[2] = False
                             convergence_TC = False
-                            iter_count_PD = 0
-                            convergence_PD = False
                         else:
                             node.spring_RZ[2] = True
 
@@ -2580,19 +2568,11 @@ class FEModel3D():
                             spring.active[combo.name] = False
                             convergence_TC = False
 
-                            # Reset the P-Delta analysis for the new geometry
-                            iter_count_PD = 0
-                            convergence_PD = False
-
                         # Check if compression-only conditions exist
                         elif spring.comp_only == True and spring.axial(combo.name) < 0:
                             
                             spring.active[combo.name] = False
                             convergence_TC = False
-
-                            # Reset the P-Delta analysis for the new geometry
-                            iter_count_PD = 0
-                            convergence_PD = False
                 
                 # Check for tension/compression-only members that need to be deactivated
                 if log: print('- Checking for tension/compression-only member convergence')
@@ -2609,10 +2589,6 @@ class FEModel3D():
                                 member.active[combo.name] = False
                             convergence_TC = False
 
-                            # Reset the P-Delta analysis for the new geometry
-                            iter_count_PD = 0
-                            convergence_PD = False
-
                         # Check if compression-only conditions exist
                         elif phys_member.comp_only == True and phys_member.min_axial(combo.name) < 0:
                             
@@ -2620,10 +2596,6 @@ class FEModel3D():
                             for member in phys_member.sub_members.values():
                                 member.active[combo.name] = False
                             convergence_TC = False
-
-                            # Reset the P-Delta analysis for the new geometry
-                            iter_count_PD = 0
-                            convergence_PD = False
                 
                 # Report on convergence of tension/compression only analysis
                 if convergence_TC == False:
@@ -2635,6 +2607,10 @@ class FEModel3D():
                     
                     # Increment the tension/compression-only iteration count
                     iter_count_TC += 1
+
+                    # Reset the P-Delta analysis since the T/C analysis didn't converge
+                    convergence_PD = False
+                    iter_count_PD = 0
 
                 else:
                     if log: print('- Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
