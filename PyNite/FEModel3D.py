@@ -2521,37 +2521,49 @@ class FEModel3D():
                     if node.spring_DX[1] is not None:
                         if (node.spring_DX[1] == '-' and node.DX[combo.name] > 0) or (node.spring_DX[1] == '+' and node.DX[combo.name] < 0):
                             node.spring_DX[2] = False
-                            convergence = False
+                            convergence_TC = False
+                            iter_count_PD = 0
+                            convergence_PD = False
                         else:
                             node.spring_DX[2] = True
                     if node.spring_DY[1] is not None:
                         if (node.spring_DY[1] == '-' and node.DY[combo.name] > 0) or (node.spring_DY[1] == '+' and node.DY[combo.name] < 0):
                             node.spring_DY[2] = False
-                            convergence = False
+                            convergence_TC = False
+                            iter_count_PD = 0
+                            convergence_PD = False
                         else:
                             node.spring_DY[2] = True
                     if node.spring_DZ[1] is not None:
                         if (node.spring_DZ[1] == '-' and node.DZ[combo.name] > 0) or (node.spring_DZ[1] == '+' and node.DZ[combo.name] < 0):
                             node.spring_DZ[2] = False
-                            convergence = False
+                            convergence_TC = False
+                            iter_count_PD = 0
+                            convergence_PD = False
                         else:
                             node.spring_DZ[2] = True
                     if node.spring_RX[1] is not None:
                         if (node.spring_RX[1] == '-' and node.RX[combo.name] > 0) or (node.spring_RX[1] == '+' and node.RX[combo.name] < 0):
                             node.spring_RX[2] = False
-                            convergence = False
+                            convergence_TC = False
+                            iter_count_PD = 0
+                            convergence_PD = False
                         else:
                             node.spring_RX[2] = True
                     if node.spring_RY[1] is not None:
                         if (node.spring_RY[1] == '-' and node.RY[combo.name] > 0) or (node.spring_RY[1] == '+' and node.RY[combo.name] < 0):
                             node.spring_RY[2] = False
-                            convergence = False
+                            convergence_TC = False
+                            iter_count_PD = 0
+                            convergence_PD = False
                         else:
                             node.spring_RY[2] = True
                     if node.spring_RZ[1] is not None:
                         if (node.spring_RZ[1] == '-' and node.RZ[combo.name] > 0) or (node.spring_RZ[1] == '+' and node.RZ[combo.name] < 0):
                             node.spring_RZ[2] = False
-                            convergence = False
+                            convergence_TC = False
+                            iter_count_PD = 0
+                            convergence_PD = False
                         else:
                             node.spring_RZ[2] = True
 
