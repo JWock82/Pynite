@@ -23,6 +23,7 @@ class Renderer():
         self.annotation_size = 5
         self.deformed_shape = False
         self.deformed_scale = 30
+        self.render_nodes = True
         self.render_loads = True
         self.color_map = None
         self.combo_name = 'Combo 1'
@@ -64,6 +65,9 @@ class Renderer():
     def set_deformed_scale(self, scale=30):
         self.deformed_scale = scale
     
+    def set_render_nodes(self, render_nodes=True):
+        self.render_nodes = render_nodes
+
     def set_render_loads(self, render_loads=True):
         self.render_loads = render_loads
     
@@ -208,15 +212,18 @@ class Renderer():
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
         
-        # Create a visual node for each node in the model
-        vis_nodes = []
-        for node in self.model.Nodes.values():
-            vis_nodes.append(VisNode(node, self.annotation_size))
-        
-        # Create a visual auxiliary node for each auxiliary node in the model
-        vis_aux_nodes = []
-        for aux_node in self.model.AuxNodes.values():
-            vis_aux_nodes.append(VisNode(aux_node, self.annotation_size, color='red'))
+        # Check if nodes are to be rendered
+        if self.render_nodes == True:
+
+            # Create a visual node for each node in the model
+            vis_nodes = []
+            for node in self.model.Nodes.values():
+                vis_nodes.append(VisNode(node, self.annotation_size))
+            
+            # Create a visual auxiliary node for each auxiliary node in the model
+            vis_aux_nodes = []
+            for aux_node in self.model.AuxNodes.values():
+                vis_aux_nodes.append(VisNode(aux_node, self.annotation_size, color='red'))
         
         # Create a visual spring for each spring in the model
         vis_springs = []
@@ -262,52 +269,55 @@ class Renderer():
                 # Set the text to follow the camera as the user interacts. This will
                 # require a reset of the camera (see below)
                 vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
-
-        # Combine the polydata from each node
-
-        # Create an append filter for combining node polydata
-        node_polydata = vtk.vtkAppendPolyData()
-
-        for vis_node in vis_nodes:
+        
+        # Check if nodes are to be rendered
+        if self.render_nodes == True:
             
-            # Add the node's polydata
-            node_polydata.AddInputData(vis_node.polydata.GetOutput())
+            # Combine the polydata from each node
 
-            if self.labels == True:
+            # Create an append filter for combining node polydata
+            node_polydata = vtk.vtkAppendPolyData()
+
+            for vis_node in vis_nodes:
                 
-                # Add the actor for the node label
-                renderer.AddActor(vis_node.lblActor)
+                # Add the node's polydata
+                node_polydata.AddInputData(vis_node.polydata.GetOutput())
+
+                if self.labels == True:
+                    
+                    # Add the actor for the node label
+                    renderer.AddActor(vis_node.lblActor)
+                
+                    # Set the text to follow the camera as the user interacts. This will
+                    # require a reset of the camera (see below)
+                    vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
             
-                # Set the text to follow the camera as the user interacts. This will
-                # require a reset of the camera (see below)
-                vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
-        
-        # Update the node polydata in the append filter
-        node_polydata.Update()
-        
-        # Create a mapper and actor for the nodes
-        node_mapper = vtk.vtkPolyDataMapper()
-        node_mapper.SetInputConnection(node_polydata.GetOutputPort())
-        node_actor = vtk.vtkActor()
-        node_actor.SetMapper(node_mapper)
-        
-        # Add the node actor to the renderer
-        renderer.AddActor(node_actor)
+            # Update the node polydata in the append filter
+            node_polydata.Update()
+            
+            # Create a mapper and actor for the nodes
+            node_mapper = vtk.vtkPolyDataMapper()
+            node_mapper.SetInputConnection(node_polydata.GetOutputPort())
+            node_actor = vtk.vtkActor()
+            node_actor.SetMapper(node_mapper)
+            
+            # Add the node actor to the renderer
+            renderer.AddActor(node_actor)
 
-        # Add actors for each auxiliary node
-        for vis_aux_node in vis_aux_nodes:
-        
-            # Add the actor for the auxiliary node
-            renderer.AddActor(vis_aux_node.actor)
+            # Add actors for each auxiliary node
+            for vis_aux_node in vis_aux_nodes:
+            
+                # Add the actor for the auxiliary node
+                renderer.AddActor(vis_aux_node.actor)
 
-            if self.labels == True:
-                
-                # Add the actor for the auxiliary node label
-                renderer.AddActor(vis_aux_node.lblActor)
-        
-                # Set the text to follow the camera as the user interacts. This will
-                # require a reset of the camera (see below)
-                vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
+                if self.labels == True:
+                    
+                    # Add the actor for the auxiliary node label
+                    renderer.AddActor(vis_aux_node.lblActor)
+            
+                    # Set the text to follow the camera as the user interacts. This will
+                    # require a reset of the camera (see below)
+                    vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
 
         # Render the deformed shape if requested
         if self.deformed_shape == True:
@@ -1475,11 +1485,14 @@ def _DeformedShape(model, renderer, scale_factor, annotation_size, combo_name):
     # Create an append filter to add all the shape polydata to
     append_filter = vtk.vtkAppendPolyData()
     
-    # Add the deformed nodes to the append filter
-    for node in model.Nodes.values():
+    # Check if nodes are to be rendered
+    if renderer.render_nodes == True:
         
-        vis_node = VisDeformedNode(node, scale_factor, annotation_size, combo_name)
-        append_filter.AddInputData(vis_node.source.GetOutput())
+        # Add the deformed nodes to the append filter
+        for node in model.Nodes.values():
+            
+            vis_node = VisDeformedNode(node, scale_factor, annotation_size, combo_name)
+            append_filter.AddInputData(vis_node.source.GetOutput())
         
     # Add the springs to the append filter
     for spring in model.Springs.values():
