@@ -1203,7 +1203,7 @@ class CylinderMesh(Mesh):
     A mesh of quadrilaterals forming a cylinder.
 
     The mesh is formed with the local y-axis of the elements pointed toward
-    the base of the 
+    the base of the cylinder 
 
     Parameters
     ----------
@@ -1240,40 +1240,53 @@ class CylinderMesh(Mesh):
         The type of element to use for the mesh: 'Quad' or 'Rect'
     """
 
-    def __init__(self, mesh_size, radius, height, thickness, material, model, kx_mod=1, ky_mod=1,
-                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1',
-                 num_elements=None, element_type='Quad'):
+    def __init__(self, mesh_size, radius, height, thickness, material, model, kx_mod=1, ky_mod=1,origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1', num_elements=None, element_type='Quad'):
 
+        # Inherit properties and methods from the parent `Mesh` class
         super().__init__(thickness, material, model, kx_mod, ky_mod, start_node, start_element)
 
+        # Define a few new additional class properties related to cylinders
         self.radius = radius
         self.h = height
         self.mesh_size = mesh_size
-
-        if num_elements == None:
-            self.num_elements = int(round(2*pi*radius/mesh_size, 0))
-        else:
-            self.num_elements = num_elements
-        
         self.origin = origin
         self.axis = axis
 
+        # Check if the user has requested a specific number of elements for each course of plates. This can be useful for ensuring the mesh matches up with other meshes.
+        if num_elements == None:
+            # Calculate the number of elements if the user hasn't specified
+            self.num_elements = int(round(2*pi*radius/mesh_size, 0))
+        else:
+            # Use the user specified number of elements
+            self.num_elements = num_elements
+
+        # Check which type of element the user has requested (rectangular plate or quad)
         self.element_type = element_type
 
+        # Generate the mesh
         self.generate()
     
     def generate(self):
         
+        # Get the mesh thickness and the material name
         thickness = self.thickness
         material = self.material
 
         mesh_size = self.mesh_size  # Desired mesh size
-        num_elements = self.num_elements  # Number of quadrilaterals in the ring
-        n = self.num_elements
+        num_elements = self.num_elements  # Number of quadrilaterals in each course of the ring
+        n = self.num_elements  # Total number of elements in the mesh (initialized for a single ring at the moment)
 
         radius = self.radius
         h = self.h
-        y = self.origin[1]
+
+        # Set the cylinder base's local y-coordinate
+        if self.axis == 'Y':
+            y = self.origin[1]  
+        elif self.axis == 'X':
+            y = self.origin[0]  
+        elif self.axis == 'Z':
+             y = self.origin[2]
+
         n = int(self.start_node[1:])
         q = int(self.start_element[1:])
 
@@ -1292,31 +1305,23 @@ class CylinderMesh(Mesh):
         
             # Create a mesh of nodes for the ring
             if self.axis == 'Y':
-                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [0, y, 0],
-                                        self.axis, 'N' + str(n), 'Q' + str(q), element_type)
+                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [0, y, 0], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'X':
-                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [y, 0, 0],
-                                        self.axis, 'N' + str(n), 'Q' + str(q), element_type)
+                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [y, 0, 0], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
             elif self.axis == 'Z':
-                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [0, 0, y],
-                                        self.axis, 'N' + str(n), 'Q' + str(q), element_type)
+                ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [0, 0, y], self.axis, 'N' + str(n), 'Q' + str(q), element_type)
 
             n += num_elements
             q += num_elements
         
-            # Add the newly generated nodes and elements to the overall mesh. Note that if duplicate
-            # keys exist, the `.update()` method will overwrite them with the newly generated key value
-            # pairs. This works in our favor by automatically eliminating duplicate nodes at the shared
-            # boundaries between rings.
+            # Add the newly generated nodes and elements to the overall mesh. Note that if duplicate keys exist, the `.update()` method will overwrite them with the newly generated key value pairs. This works in our favor by automatically eliminating duplicate nodes at the shared boundaries between rings.
             self.nodes.update(ring.nodes)
             self.elements.update(ring.elements)
 
             # Prepare to move to the next ring
             y += h_y
         
-        # After calling the `.update()` method some elements are still attached to the duplicate
-        # nodes that are no longer in the dictionary. Attach these plates to the nodes that are
-        # still in the dictionary instead. 
+        # After calling the `.update()` method some elements are still attached to the duplicate nodes that are no longer in the dictionary. Attach these plates to the nodes that are still in the dictionary instead. 
         for element in self.elements.values():
             element.i_node = self.nodes[element.i_node.name]
             element.j_node = self.nodes[element.j_node.name]
