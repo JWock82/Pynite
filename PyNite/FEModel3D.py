@@ -1946,7 +1946,7 @@ class FEModel3D():
                 #Check if specific combos and if this combo is selected
                 if combos is not None and combo_name in combos:
                     spring.active[combo_name] = True
-                else:
+                elif combos is None:
                     spring.active[combo_name] = True                
         
         # Activate all physical members for all load combinations
@@ -1955,7 +1955,7 @@ class FEModel3D():
                 #Check if specific combos and if this combo is selected
                 if combos is not None and combo_name in combos:
                     phys_member.active[combo_name] = True
-                else:
+                elif combos is None:
                     phys_member.active[combo_name] = True
         
         # Assign an internal ID to all nodes and elements in the model
@@ -2255,7 +2255,7 @@ class FEModel3D():
                 #Check if specific combos and if this combo is selected
                 if combos is not None and combo_name in combos:
                     spring.active[combo_name] = True
-                else:
+                elif combos is None:
                     spring.active[combo_name] = True                
         
         # Activate all physical members for all load combinations
@@ -2264,7 +2264,7 @@ class FEModel3D():
                 #Check if specific combos and if this combo is selected
                 if combos is not None and combo_name in combos:
                     phys_member.active[combo_name] = True
-                else:
+                elif combos is None:
                     phys_member.active[combo_name] = True
         
         # Assign an internal ID to all nodes and elements in the model
@@ -2427,7 +2427,7 @@ class FEModel3D():
                 #Check if specific combos and if this combo is selected
                 if combos is not None and combo_name in combos:
                     spring.active[combo_name] = True
-                else:
+                elif combos is None:
                     spring.active[combo_name] = True                
         
         # Activate all physical members for all load combinations
@@ -2436,7 +2436,7 @@ class FEModel3D():
                 #Check if specific combos and if this combo is selected
                 if combos is not None and combo_name in combos:
                     phys_member.active[combo_name] = True
-                else:
+                elif combos is None:
                     phys_member.active[combo_name] = True
                
         # Assign an internal ID to all nodes and elements in the model
