@@ -1968,11 +1968,12 @@ class FEModel3D():
         D2 = atleast_2d(D2).T
 
         # Step through each load combination
-        for combo in self.LoadCombos.values():
-            
+        for combo_name,combo in self.LoadCombos.items():
+
             #Check if specific combos and if this combo is selected
-            if combos is not None and combo not in combos:
-                continue
+            if combos is not None and combo_name not in combos:
+                continue     
+
 
             if log:
                 print('')
@@ -2284,10 +2285,10 @@ class FEModel3D():
             K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
         # Step through each load combination
-        for combo in self.LoadCombos.values():
+        for combo_name,combo in self.LoadCombos.items():
 
             #Check if specific combos and if this combo is selected
-            if combos is not None and combo not in combos:
+            if combos is not None and combo_name not in combos:
                 continue            
 
             if log:
@@ -2449,11 +2450,11 @@ class FEModel3D():
         D2 = array(D2, ndmin=2).T
 
         # Step through each load combination
-        for combo in self.LoadCombos.values():
+        for combo_name,combo in self.LoadCombos.items():
 
             #Check if specific combos and if this combo is selected
-            if combos is not None and combo not in combos:
-                continue               
+            if combos is not None and combo_name not in combos:
+                continue   
             
             if log:
                 print('')
@@ -2805,11 +2806,12 @@ class FEModel3D():
         for node in self.Nodes.values():
             
             # Step through each load combination
-            for combo in self.LoadCombos.values():
+            for combo_name,combo in self.LoadCombos.items():
 
                 #Check if specific combos and if this combo is selected
-                if combos is not None and combo not in combos:
+                if combos is not None and combo_name not in combos:
                     continue
+
                 
                 # Initialize reactions for this node and load combination
                 node.RxnFX[combo.name] = 0.0
@@ -3127,9 +3129,10 @@ class FEModel3D():
         statics_table.field_names = ['Load Combination', 'Sum FX', 'Sum RX', 'Sum FY', 'Sum RY', 'Sum FZ', 'Sum RZ', 'Sum MX', 'Sum RMX', 'Sum MY', 'Sum RMY', 'Sum MZ', 'Sum RMZ']
 
         # Step through each load combination
-        for combo in self.LoadCombos.values():
+        for combo_name,combo in self.LoadCombos.items():
 
-            if combos is not None and combo not in combos:
+            #Check if specific combos and if this combo is selected
+            if combos is not None and combo_name not in combos:
                 continue
 
             # Initialize force and moment summations to zero
