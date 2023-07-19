@@ -1902,7 +1902,7 @@ class FEModel3D():
             m22 = unp_matrix[D2_indices, :][:, D2_indices]
             return m11, m12, m21, m22
 
-    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True):
+    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True,combos:list=None):
         """Performs first-order static analysis. Iterations are performed if tension-only members or compression-only members are present.
 
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -1917,6 +1917,8 @@ class FEModel3D():
         :type sparse: bool, optional
         :raises Exception: _description_
         :raises Exception: _description_
+        :param combos: provide a subset of combos for analysis that will be run. If None or no input is provided all combos will be run.
+        :type combos: list, optional 
         """
 
         if log:
@@ -1941,12 +1943,20 @@ class FEModel3D():
         # Activate all springs and members for all load combinations
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
-                spring.active[combo_name] = True
+                #Check if specific combos and if this combo is selected
+                if combos is not None and combo_name in combos:
+                    spring.active[combo_name] = True
+                else:
+                    spring.active[combo_name] = True                
         
         # Activate all physical members for all load combinations
         for phys_member in self.Members.values():
             for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True
+                #Check if specific combos and if this combo is selected
+                if combos is not None and combo_name in combos:
+                    phys_member.active[combo_name] = True
+                else:
+                    phys_member.active[combo_name] = True
         
         # Assign an internal ID to all nodes and elements in the model
         self._renumber()
@@ -1959,6 +1969,10 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
+            
+            #Check if specific combos and if this combo is selected
+            if combos is not None and combo not in combos:
+                continue
 
             if log:
                 print('')
@@ -2186,7 +2200,7 @@ class FEModel3D():
                 iter_count += 1
 
         # Calculate reactions
-        self._calc_reactions()
+        self._calc_reactions(combos=combos)
 
         if log:
             print('')     
@@ -2195,12 +2209,12 @@ class FEModel3D():
 
         # Check statics if requested
         if check_statics == True:
-            self._check_statics()
+            self._check_statics(combos=combos)
         
         # Flag the model as solved
         self.solution = 'Linear TC'
 
-    def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True):
+    def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True, combos=None):
         """Performs first-order static analysis. This analysis procedure is much faster since it only assembles the global stiffness matrix once, rather than once for each load combination. It is not appropriate when non-linear behavior such as tension/compression only analysis or P-Delta analysis are required.
 
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -2212,6 +2226,8 @@ class FEModel3D():
         :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times. Be sure ``scipy`` is installed to use the sparse solver. Default is True.
         :type sparse: bool, optional
         :raises Exception: Occurs when a singular stiffness matrix is found. This indicates an unstable structure has been modeled.
+        :param combos: provide a subset of combos for analysis that will be run. If None or no input is provided all combos will be run.
+        :type combos: list, optional 
         """
 
         if log:
@@ -2233,15 +2249,23 @@ class FEModel3D():
             if mesh.is_generated == False:
                 mesh.generate()
         
-        # Activate all springs for all load combinations
+        # Activate all springs and members for all load combinations
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
-                spring.active[combo_name] = True
+                #Check if specific combos and if this combo is selected
+                if combos is not None and combo_name in combos:
+                    spring.active[combo_name] = True
+                else:
+                    spring.active[combo_name] = True                
         
         # Activate all physical members for all load combinations
         for phys_member in self.Members.values():
             for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True
+                #Check if specific combos and if this combo is selected
+                if combos is not None and combo_name in combos:
+                    phys_member.active[combo_name] = True
+                else:
+                    phys_member.active[combo_name] = True
         
         # Assign an internal ID to all nodes and elements in the model
         self._renumber()
@@ -2261,6 +2285,10 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
+
+            #Check if specific combos and if this combo is selected
+            if combos is not None and combo not in combos:
+                continue            
 
             if log:
                 print('')
@@ -2341,7 +2369,7 @@ class FEModel3D():
                 node.RZ[combo.name] = D[node.ID*6 + 5, 0]
 
         # Calculate reactions
-        self._calc_reactions()
+        self._calc_reactions(combos=combos)
 
         if log:
             print('')     
@@ -2350,12 +2378,12 @@ class FEModel3D():
 
         # Check statics if requested
         if check_statics == True:
-            self._check_statics()
+            self._check_statics(combos=combos)
         
         # Flag the model as solved
         self.solution = 'Linear'
 
-    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
+    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True,combos=None):
         """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
         :param log: Prints updates to the console if set to True. Default is False.
@@ -2370,6 +2398,8 @@ class FEModel3D():
         :type sparse: bool, optional
         :raises ValueError: Occurs when there is a singularity in the stiffness matrix, which indicates an unstable structure.
         :raises Exception: Occurs when a model fails to converge.
+        :param combos: provide a subset of combos for analysis that will be run. If None or no input is provided all combos will be run.
+        :type combos: list, optional 
         """
         
         if log:
@@ -2391,16 +2421,23 @@ class FEModel3D():
             if mesh.is_generated == False:
                 mesh.generate()
         
-        # Activate all springs for all load combinations. They can be turned inactive
-        # during the course of the tension/compression-only analysis
+        # Activate all springs and members for all load combinations
         for spring in self.Springs.values():
             for combo_name in self.LoadCombos.keys():
-                spring.active[combo_name] = True
-                
+                #Check if specific combos and if this combo is selected
+                if combos is not None and combo_name in combos:
+                    spring.active[combo_name] = True
+                else:
+                    spring.active[combo_name] = True                
+        
         # Activate all physical members for all load combinations
         for phys_member in self.Members.values():
             for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True
+                #Check if specific combos and if this combo is selected
+                if combos is not None and combo_name in combos:
+                    phys_member.active[combo_name] = True
+                else:
+                    phys_member.active[combo_name] = True
                
         # Assign an internal ID to all nodes and elements in the model
         self._renumber()
@@ -2413,6 +2450,10 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
+
+            #Check if specific combos and if this combo is selected
+            if combos is not None and combo not in combos:
+                continue               
             
             if log:
                 print('')
@@ -2735,7 +2776,7 @@ class FEModel3D():
                 iter_count_PD += 1
         
         # Calculate reactions
-        self._calc_reactions()
+        self._calc_reactions(combos=combos)
 
         if log:
             print('')
@@ -2745,7 +2786,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-    def _calc_reactions(self, log=False):
+    def _calc_reactions(self, log=False,combos=None):
         """
         Calculates reactions internally once the model is solved.
 
@@ -2753,6 +2794,8 @@ class FEModel3D():
         ----------
         log : bool, optional
             Prints updates to the console if set to True. Default is False.
+        combos: list, optional
+            Selects which combos to evaluate
         """
 
         # Print a status update to the console
@@ -2763,6 +2806,10 @@ class FEModel3D():
             
             # Step through each load combination
             for combo in self.LoadCombos.values():
+
+                #Check if specific combos and if this combo is selected
+                if combos is not None and combo not in combos:
+                    continue
                 
                 # Initialize reactions for this node and load combination
                 node.RxnFX[combo.name] = 0.0
@@ -3058,14 +3105,14 @@ class FEModel3D():
 
         return
     
-    def _check_statics(self):
+    def _check_statics(self,combos=None):
         '''
         Checks static equilibrium and prints results to the console.
 
         Parameters
         ----------
-        precision : number
-            The number of decimal places to carry the results to.
+        combos: list, optional
+            Selects which combos to evaluate
         '''
 
         print('+----------------+')
@@ -3081,6 +3128,9 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in self.LoadCombos.values():
+
+            if combos is not None and combo not in combos:
+                continue
 
             # Initialize force and moment summations to zero
             SumFX, SumFY, SumFZ = 0.0, 0.0, 0.0
