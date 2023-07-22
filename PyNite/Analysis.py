@@ -180,7 +180,7 @@ def _check_TC_convergence(model, combo_name='Combo 1', log=True):
     # Return whether the TC analysis has converged
     return convergence
 
-def _calc_reactions(model, log=False):
+def _calc_reactions(model, log=False, combo_tags=None):
     """
     Calculates reactions internally once the model is solved.
 
@@ -193,11 +193,17 @@ def _calc_reactions(model, log=False):
     # Print a status update to the console
     if log: print('- Calculating reactions')
 
+    # Identify which load combinations to evaluate
+    if combo_tags is None:
+        combo_list = model.LoadCombos.values()
+    else:
+        combo_list = [combo for combo in model.LoadCombos.values() if combo.combo_tag in combo_tags]
+
     # Calculate the reactions node by node
     for node in model.Nodes.values():
         
         # Step through each load combination
-        for combo in model.LoadCombos.values():
+        for combo in combo_list:
             
             # Initialize reactions for this node and load combination
             node.RxnFX[combo.name] = 0.0
@@ -440,7 +446,7 @@ def _calc_reactions(model, log=False):
                 RZ = node.RZ[combo.name]
                 node.RxnMZ[combo.name] += k*RZ
 
-def _check_statics(model):
+def _check_statics(model, combo_tags=None):
     '''
     Checks static equilibrium and prints results to the console.
 
@@ -461,8 +467,14 @@ def _check_statics(model):
     statics_table = PrettyTable()
     statics_table.field_names = ['Load Combination', 'Sum FX', 'Sum RX', 'Sum FY', 'Sum RY', 'Sum FZ', 'Sum RZ', 'Sum MX', 'Sum RMX', 'Sum MY', 'Sum RMY', 'Sum MZ', 'Sum RMZ']
 
+    # Identify which load combinations to evaluate
+    if combo_tags is None:
+        combo_list = model.LoadCombos.values()
+    else:
+        combo_list = [combo for combo in model.LoadCombos.values() if combo.combo_tag in combo_tags]
+
     # Step through each load combination
-    for combo in model.LoadCombos.values():
+    for combo in combo_list:
 
         # Initialize force and moment summations to zero
         SumFX, SumFY, SumFZ = 0.0, 0.0, 0.0

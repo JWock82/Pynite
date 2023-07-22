@@ -1021,19 +1021,19 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def add_load_combo(self, name, factors, combo_type='strength'):
+    def add_load_combo(self, name, factors, combo_tag='strength'):
         """Adds a load combination to the model.
 
         :param name: A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
         :type name: str
         :param factors: A dictionary containing load cases and their corresponding factors (e.g. {'D':1.2, 'L':1.6, 'S':0.5}).
         :type factors: dict
-        :param combo_type: A description of the type of load combination (e.g. 'strength', 'service'). This has no effect on the analysis. It can be used to mark special combinations for easier filtering through them later on. Defaults to 'service'.
-        :type combo_type: str, optional
+        :param combo_tag: A description of the type of load combination (e.g. 'strength', 'service'). This has no effect on the analysis. It can be used to mark special combinations for easier filtering through them later on. Defaults to 'service'.
+        :type combo_tag: str, optional
         """            
 
         # Create a new load combination object
-        new_combo = LoadCombo(name, combo_type, factors)
+        new_combo = LoadCombo(name, combo_tag, factors)
 
         # Add the load combination to the dictionary of load combinations
         self.LoadCombos[name] = new_combo
@@ -1903,7 +1903,7 @@ class FEModel3D():
             m22 = unp_matrix[D2_indices, :][:, D2_indices]
             return m11, m12, m21, m22
 
-    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True):
+    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None):
         """Performs first-order static analysis. Iterations are performed if tension-only members or compression-only members are present.
 
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -1958,8 +1958,17 @@ class FEModel3D():
         # Convert D2 from a list to a vector
         D2 = atleast_2d(D2).T
 
+        # Identify which load combinations to evaluate
+        if combo_tags is None:
+            combo_list = self.LoadCombos.values()
+        else:
+            combo_list = []
+            for combo in self.LoadCombos.values():
+                if any([tag in combo.combo_tags for tag in combo_tags]):
+                    combo_list.append(combo)
+
         # Step through each load combination
-        for combo in self.LoadCombos.values():
+        for combo in combo_list:
 
             if log:
                 print('')
@@ -2070,7 +2079,7 @@ class FEModel3D():
                 iter_count += 1
 
         # Calculate reactions
-        Analysis._calc_reactions(self)
+        Analysis._calc_reactions(self, log, combo_tags)
 
         if log:
             print('')     
@@ -2079,12 +2088,12 @@ class FEModel3D():
 
         # Check statics if requested
         if check_statics == True:
-            Analysis._check_statics(self)
+            Analysis._check_statics(self, combo_tags)
         
         # Flag the model as solved
         self.solution = 'Linear TC'
 
-    def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True):
+    def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True, combo_tags=None):
         """Performs first-order static analysis. This analysis procedure is much faster since it only assembles the global stiffness matrix once, rather than once for each load combination. It is not appropriate when non-linear behavior such as tension/compression only analysis or P-Delta analysis are required.
 
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -2137,14 +2146,24 @@ class FEModel3D():
         D2 = atleast_2d(D2).T
 
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
+        # Note that for linear analysis the stiffness matrix can be obtained for any load combination, as it's the same for all of them
         combo_name = list(self.LoadCombos.keys())[0]
         if sparse == True:
             K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
         else:
             K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
+        # Identify which load combinations to evaluate
+        if combo_tags is None:
+            combo_list = self.LoadCombos.values()
+        else:
+            combo_list = []
+            for combo in self.LoadCombos.values():
+                if any([tag in combo.combo_tags for tag in combo_tags]):
+                    combo_list.append(combo)
+
         # Step through each load combination
-        for combo in self.LoadCombos.values():
+        for combo in combo_list:
 
             if log:
                 print('')
@@ -2225,7 +2244,7 @@ class FEModel3D():
                 node.RZ[combo.name] = D[node.ID*6 + 5, 0]
 
         # Calculate reactions
-        Analysis._calc_reactions(self)
+        Analysis._calc_reactions(self, log, combo_tags)
 
         if log:
             print('')     
@@ -2234,12 +2253,12 @@ class FEModel3D():
 
         # Check statics if requested
         if check_statics == True:
-            Analysis._check_statics(self)
+            Analysis._check_statics(self, combo_tags)
         
         # Flag the model as solved
         self.solution = 'Linear'
 
-    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True):
+    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, tol=0.01, sparse=True, combo_tags=None):
         """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
         :param log: Prints updates to the console if set to True. Default is False.
@@ -2295,8 +2314,17 @@ class FEModel3D():
         # Convert D2 from a list to a matrix
         D2 = array(D2, ndmin=2).T
 
+        # Identify which load combinations to evaluate
+        if combo_tags is None:
+            combo_list = self.LoadCombos.values()
+        else:
+            combo_list = []
+            for combo in self.LoadCombos.values():
+                if any([tag in combo.combo_tags for tag in combo_tags]):
+                    combo_list.append(combo)
+
         # Step through each load combination
-        for combo in self.LoadCombos.values():
+        for combo in combo_list:
             
             if log:
                 print('')
@@ -2493,7 +2521,7 @@ class FEModel3D():
                 iter_count_PD += 1
         
         # Calculate reactions
-        Analysis._calc_reactions(self)
+        Analysis._calc_reactions(self, log, combo_tags)
 
         if log:
             print('')
