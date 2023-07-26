@@ -267,6 +267,7 @@ class Renderer():
             renderer.AddActor(vis_member.actor)
 
             if self.labels == True:
+                
                 # Add the actor for the member label
                 renderer.AddActor(vis_member.lblActor)
             
@@ -304,6 +305,10 @@ class Renderer():
             node_mapper.SetInputConnection(node_polydata.GetOutputPort())
             node_actor = vtk.vtkActor()
             node_actor.SetMapper(node_mapper)
+
+            # While the `VisNode` object we created earlier does store the color information for the node, it will be lost when we combine all the `VisNode` objects into one object. We need to re-adjust the color of the nodes here.
+            if self.theme == 'print':
+                node_actor.GetProperty().SetColor(0, 0, 0) # black
             
             # Add the node actor to the renderer
             renderer.AddActor(node_actor)
@@ -325,7 +330,7 @@ class Renderer():
 
         # Render the deformed shape if requested
         if self.deformed_shape == True:
-            _DeformedShape(self.model, renderer, self.deformed_scale, self.annotation_size, self.combo_name)
+            _DeformedShape(self.model, renderer, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
 
         # Render the loads if requested
         if (self.combo_name != None or self.case != None) and self.render_loads != False:
@@ -335,15 +340,20 @@ class Renderer():
         if self.model.Quads or self.model.Plates:
             _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale,
                             self.color_map, self.scalar_bar, self.scalar_bar_text_size,
-                            self.combo_name)
+                            self.combo_name, self.theme)
 
-        # Set the window's background to gray
-        renderer.SetBackground(0/255, 0/255, 128/255)
+        # Set the window's background color
+        if self.theme == 'default':
+            renderer.SetBackground(0/255, 0/255, 128/255)  # Blue
+        elif self.theme == 'print':
+            renderer.SetBackground(255, 255, 255)  # White
         
         # Reset the camera
         if reset_camera: renderer.ResetCamera()
 
-# %%
+#%%
+# The code in this section will be deprecated at some point
+
 def RenderModel(model, annotation_size=5, deformed_shape=False, deformed_scale=30,
                 render_loads=True, color_map=None, combo_name='Combo 1', case=None, labels=True,
                 screenshot=None):
@@ -524,7 +534,7 @@ def render_model(model, annotation_size=5, deformed_shape=False, deformed_scale=
 
     # Render the deformed shape if requested
     if deformed_shape == True:
-        _DeformedShape(model, renderer, deformed_scale, annotation_size, combo_name)
+        _DeformedShape(model, renderer, deformed_scale, annotation_size, combo_name, render_nodes=True, theme=theme)
 
     # Render the loads if requested
     if (combo_name != None or case != None) and render_loads != False:
@@ -579,6 +589,7 @@ def render_model(model, annotation_size=5, deformed_shape=False, deformed_scale=
             writer.SetFileName(screenshot)
             writer.Write()
 
+#%%
 # Converts a node object into a node for the viewer
 class VisNode():
 
@@ -847,6 +858,9 @@ class VisNode():
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(self.polydata.GetOutputPort())
         self.actor = vtk.vtkActor()
+        
+        # Set the mapper for the node's actor
+        self.actor.SetMapper(mapper)
       
         # Add color to the actors
         if color == 'red':
@@ -858,9 +872,6 @@ class VisNode():
         elif color == 'black':
             self.actor.GetProperty().SetColor(0, 0, 0)  # Black
             self.lblActor.GetProperty().SetColor(0, 0, 0)  # Black
-        
-        # Set the mapper for the node's actor
-        self.actor.SetMapper(mapper)
 
 class VisSpring():
     
@@ -1327,7 +1338,7 @@ class VisAreaLoad():
     Creates an area load for the viewer
     '''
     
-    def __init__(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5):
+    def __init__(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5, theme='default'):
         '''
         Constructor
         '''
@@ -1357,6 +1368,12 @@ class VisAreaLoad():
       
         # Add a label
         self.label_actor = ptLoads[0].lblActor
+
+        # Add color to the area load label
+        if theme == 'print':
+            self.label_actor.GetProperty().SetColor(255, 0, 0)  # red
+        elif theme == 'default':
+            self.label_actor.GetProperty().SetColor(0, 255, 0)  # green
 
 def _PerpVector(v):
     '''
@@ -1473,7 +1490,7 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
             if node.contour != []:
                 node.contour = sum(node.contour)/len(node.contour)
 
-def _DeformedShape(model, renderer, scale_factor, annotation_size, combo_name, color=None):
+def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_name, render_nodes=True, theme='default'):
     '''
     Renders the deformed shape of a model.
     
@@ -1501,7 +1518,7 @@ def _DeformedShape(model, renderer, scale_factor, annotation_size, combo_name, c
     append_filter = vtk.vtkAppendPolyData()
     
     # Check if nodes are to be rendered
-    if renderer.render_nodes == True:
+    if render_nodes == True:
         
         # Add the deformed nodes to the append filter
         for node in model.Nodes.values():
@@ -1531,10 +1548,10 @@ def _DeformedShape(model, renderer, scale_factor, annotation_size, combo_name, c
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(append_filter.GetOutputPort())
     actor = vtk.vtkActor()
-    if color is None: actor.GetProperty().SetColor(255, 255, 0)  # Yellow
-    elif color == 'black': actor.GetProperty().SetColor(0, 0, 0)  # Black
+    if theme == 'default': actor.GetProperty().SetColor(255, 255, 0)  # Yellow
+    elif theme == 'print': actor.GetProperty().SetColor(0, 0, 0)  # Black
     actor.SetMapper(mapper)
-    renderer.AddActor(actor)
+    vtk_renderer.AddActor(actor)
 
 def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='default'):
 
@@ -1715,7 +1732,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
           
                 # Create an area load and get its data
-                area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
           
                 # Add the area load's arrows to the overall load polydata
                 polydata.AddInputData(area_load.polydata.GetOutput())
@@ -1757,23 +1774,33 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
     load_mapper = vtk.vtkPolyDataMapper()
     load_mapper.SetInputConnection(polydata.GetOutputPort())
     load_actor = vtk.vtkActor()
-    if theme != 'print': load_actor.GetProperty().SetColor(0, 255, 0)  # Green
-    else: load_actor.GetProperty().SetColor(0, 0, 0)  # Black
     load_actor.SetMapper(load_mapper)
+
+    # Colorize the loads
+    if theme == 'default':
+        load_actor.GetProperty().SetColor(0, 255, 0)  # Green
+    elif theme == 'print':
+        load_actor.GetProperty().SetColor(255, 0, 0)  # Red
+
+    # Add the load actor to the renderer
     renderer.AddActor(load_actor)
     
     # Set up an actor and a mapper for the area load polygons
     polygon_mapper = vtk.vtkPolyDataMapper()
     polygon_mapper.SetInputData(polygon_polydata)
     polygon_actor = vtk.vtkActor()
-    if theme != 'print': polygon_actor.GetProperty().SetColor(0, 255, 0)  # Green
-    else: polygon_actor.GetProperty().SetColor(128, 128, 128)  # Grey
+
     # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
     polygon_actor.SetMapper(polygon_mapper)
     renderer.AddActor(polygon_actor)
+    
+    # Set the color of the area load polygons
+    if theme == 'default':
+        polygon_actor.GetProperty().SetColor(0, 255, 0)  # Green
+    elif theme == 'print':
+        polygon_actor.GetProperty().SetColor(255, 0, 0)  # Red
 
-def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar,
-                    scalar_bar_text_size, combo_name):
+def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, scalar_bar_text_size, combo_name, theme='default'):
   
     # Create a new `vtkCellArray` object to store the elements
     plates = vtk.vtkCellArray()
@@ -1781,7 +1808,7 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
     # Create a `vtkPoints` object to store the coordinates of the corners of the elements
     plate_points = vtk.vtkPoints()
     
-    # Create 2 lists to store plate results
+    # Create 2 lists to store plate result
     # `results` will store the results in a Python iterable list
     # `plate_results` will store the results in a `vtkDoubleArray` for VTK
     results = []
@@ -1907,6 +1934,11 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
             scalar_text = vtk.vtkTextProperty()
             scalar_text.SetFontSize(max(int(scalar_bar_text_size), 1))
             scalar_text.SetBold(1)
+
+            # The `vtkTextProperty` object is white by default
+            if theme == 'print':
+                scalar_text.SetColor(255, 255, 255)  # Black
+            
             scalar.SetLabelTextProperty(scalar_text)
 
             scalar.SetMaximumWidthInPixels(100)
