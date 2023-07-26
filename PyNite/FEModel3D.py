@@ -1021,19 +1021,19 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def add_load_combo(self, name, factors, combo_tag='strength'):
+    def add_load_combo(self, name, factors, combo_tags='strength'):
         """Adds a load combination to the model.
 
         :param name: A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
         :type name: str
         :param factors: A dictionary containing load cases and their corresponding factors (e.g. {'D':1.2, 'L':1.6, 'S':0.5}).
         :type factors: dict
-        :param combo_tag: A description of the type of load combination (e.g. 'strength', 'service'). This has no effect on the analysis. It can be used to mark special combinations for easier filtering through them later on. Defaults to 'service'.
-        :type combo_tag: str, optional
+        :param combo_tags: A description of the type of load combination (e.g. 'strength', 'service'). This has no effect on the analysis. It can be used to mark special combinations for easier filtering through them later on. Defaults to 'service'.
+        :type combo_tags: str, optional
         """            
 
         # Create a new load combination object
-        new_combo = LoadCombo(name, combo_tag, factors)
+        new_combo = LoadCombo(name, combo_tags, factors)
 
         # Add the load combination to the dictionary of load combinations
         self.LoadCombos[name] = new_combo
