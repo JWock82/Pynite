@@ -1021,15 +1021,15 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def add_load_combo(self, name, factors, combo_tags='strength'):
+    def add_load_combo(self, name, factors, combo_tags=None):
         """Adds a load combination to the model.
 
         :param name: A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
         :type name: str
         :param factors: A dictionary containing load cases and their corresponding factors (e.g. {'D':1.2, 'L':1.6, 'S':0.5}).
         :type factors: dict
-        :param combo_tags: A description of the type of load combination (e.g. 'strength', 'service'). This has no effect on the analysis. It can be used to mark special combinations for easier filtering through them later on. Defaults to 'service'.
-        :type combo_tags: str, optional
+        :param combo_tags: A list of tags used to categorize load combinations. Default is `None`. This can be useful for filtering results later on, or for limiting analysis to only those combinations with certain tags. This feature is provided for convenience. It is not necessary to use tags.
+        :type combo_tags: list, optional
         """            
 
         # Create a new load combination object
@@ -1964,7 +1964,7 @@ class FEModel3D():
         else:
             combo_list = []
             for combo in self.LoadCombos.values():
-                if any([tag in combo.combo_tags for tag in combo_tags]):
+                if any(tag in combo.combo_tags for tag in combo_tags):
                     combo_list.append(combo)
 
         # Step through each load combination
@@ -2159,7 +2159,7 @@ class FEModel3D():
         else:
             combo_list = []
             for combo in self.LoadCombos.values():
-                if any([tag in combo.combo_tags for tag in combo_tags]):
+                if any(tag in combo.combo_tags for tag in combo_tags):
                     combo_list.append(combo)
 
         # Step through each load combination
@@ -2320,7 +2320,7 @@ class FEModel3D():
         else:
             combo_list = []
             for combo in self.LoadCombos.values():
-                if any([tag in combo.combo_tags for tag in combo_tags]):
+                if any(tag in combo.combo_tags for tag in combo_tags):
                     combo_list.append(combo)
 
         # Step through each load combination

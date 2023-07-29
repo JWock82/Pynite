@@ -197,7 +197,10 @@ def _calc_reactions(model, log=False, combo_tags=None):
     if combo_tags is None:
         combo_list = model.LoadCombos.values()
     else:
-        combo_list = [combo for combo in model.LoadCombos.values() if combo.combo_tags in combo_tags]
+        combo_list = []
+        for combo in model.LoadCombos.values():
+            if any(tag in combo.combo_tags for tag in combo_tags):
+                combo_list.append(combo)
 
     # Calculate the reactions node by node
     for node in model.Nodes.values():
@@ -471,7 +474,10 @@ def _check_statics(model, combo_tags=None):
     if combo_tags is None:
         combo_list = model.LoadCombos.values()
     else:
-        combo_list = [combo for combo in model.LoadCombos.values() if combo.combo_tags in combo_tags]
+        combo_list = []
+        for combo in model.LoadCombos.values():
+            if any(tag in combo.combo_tags for tag in combo_tags):
+                combo_list.append(combo)
 
     # Step through each load combination
     for combo in combo_list:
