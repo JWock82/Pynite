@@ -1208,7 +1208,7 @@ class CylinderMesh(Mesh):
     Parameters
     ----------
     mesh_size : number
-        The desired mesh size. This value will only be used to mesh vertically if `num_elements` is
+        The desired mesh element edge size. This value will only be used to mesh vertically if `num_elements` is
         specified. Otherwise it will be used to mesh the circumference too.
     radius : number
         The radius of the cylinder to the element centers
@@ -1273,7 +1273,14 @@ class CylinderMesh(Mesh):
 
         radius = self.radius
         h = self.h
-        y = self.origin[1]
+
+        if self.axis == 'Y':
+            y = self.origin[1]
+        elif self.axis == 'X':
+            y = self.origin[0]
+        elif self.axis== 'Z':
+            y = self.origin[2]        
+
         n = int(self.start_node[1:])
         q = int(self.start_element[1:])
 
@@ -1283,12 +1290,17 @@ class CylinderMesh(Mesh):
         if num_elements == None:
             num_elements = int(2*pi/mesh_size)
 
+        #Remaining height to be meshed
+        height = h - y                  
+        
+        #Number of times the plate height fits in the remaining unmeshed height, resulting at least one element
+        n_vert = max(int(abs(height)/mesh_size),1)
+        
+        #Element height in the vertical direction
+        h_y = height/n_vert    
+
         # Mesh the cylinder from the bottom toward the top
         while round(y, 10) < round(h, 10):
-            
-            height = h - y                  # Remaining height to be meshed
-            n_vert = int(height/mesh_size)  # Number of times the plate height fits in the remaining unmeshed height
-            h_y = height/n_vert             # Element height in the vertical direction
         
             # Create a mesh of nodes for the ring
             if self.axis == 'Y':
