@@ -1950,7 +1950,7 @@ class FEModel3D():
                 phys_member.active[combo_name] = True
         
         # Assign an internal ID to all nodes and elements in the model
-        self._renumber()
+        Analysis._renumber(self)
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2137,7 +2137,7 @@ class FEModel3D():
                 phys_member.active[combo_name] = True
         
         # Assign an internal ID to all nodes and elements in the model
-        self._renumber()
+        Analysis._renumber(self)
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2306,7 +2306,7 @@ class FEModel3D():
                 phys_member.active[combo_name] = True
                
         # Assign an internal ID to all nodes and elements in the model
-        self._renumber()
+        Analysis._renumber(self)
         
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2530,36 +2530,6 @@ class FEModel3D():
         
         # Flag the model as solved
         self.solution = 'P-Delta'
-       
-    def _renumber(self):
-        """
-        Assigns node and element ID numbers to be used internally by the program. Numbers are
-        assigned according to the order in which they occur in each dictionary.
-        """
-        
-        # Number each node in the model
-        for id, node in enumerate(self.Nodes.values()):
-            node.ID = id
-        
-        # Number each spring in the model
-        for id, spring in enumerate(self.Springs.values()):
-            spring.ID = id
-
-        # Descritize all the physical members and number each member in the model
-        id = 0
-        for phys_member in self.Members.values():
-            phys_member.descritize()
-            for member in phys_member.sub_members.values():
-                member.ID = id
-                id += 1
-        
-        # Number each plate in the model
-        for id, plate in enumerate(self.Plates.values()):
-            plate.ID = id
-        
-        # Number each quadrilateral in the model
-        for id, quad in enumerate(self.Quads.values()):
-            quad.ID = id
     
     def unique_name(self, dictionary, prefix):
         """Returns the next available unique name for a dictionary of objects.

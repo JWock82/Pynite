@@ -1,5 +1,8 @@
 from math import isclose
 
+def _prepare_model(model):
+    pass
+
 def _check_stability(model, K):
     """
     Identifies nodal instabilities in a model's stiffness matrix.
@@ -543,3 +546,33 @@ def _check_statics(model, combo_tags=None):
     # Print the static check table
     print(statics_table)
     print('')
+
+def _renumber(model):
+    """
+    Assigns node and element ID numbers to be used internally by the program. Numbers are
+    assigned according to the order in which they occur in each dictionary.
+    """
+    
+    # Number each node in the model
+    for id, node in enumerate(model.Nodes.values()):
+        node.ID = id
+    
+    # Number each spring in the model
+    for id, spring in enumerate(model.Springs.values()):
+        spring.ID = id
+
+    # Descritize all the physical members and number each member in the model
+    id = 0
+    for phys_member in model.Members.values():
+        phys_member.descritize()
+        for member in phys_member.sub_members.values():
+            member.ID = id
+            id += 1
+    
+    # Number each plate in the model
+    for id, plate in enumerate(model.Plates.values()):
+        plate.ID = id
+    
+    # Number each quadrilateral in the model
+    for id, quad in enumerate(model.Quads.values()):
+        quad.ID = id
