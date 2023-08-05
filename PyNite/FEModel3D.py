@@ -1924,33 +1924,13 @@ class FEModel3D():
             print('+-----------+')
             print('| Analyzing |')
             print('+-----------+')
-
+        
         # Import `scipy` features if the sparse solver is being used
         if sparse == True:
             from scipy.sparse.linalg import spsolve
 
-        # Ensure there is at least 1 load combination to solve if the user didn't define any
-        if self.LoadCombos == {}:
-            # Create and add a default load combination to the dictionary of load combinations
-            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
-        
-        # Generate all meshes
-        for mesh in self.Meshes.values():
-            if mesh.is_generated == False:
-                mesh.generate()
-
-        # Activate all springs and members for all load combinations
-        for spring in self.Springs.values():
-            for combo_name in self.LoadCombos.keys():
-                spring.active[combo_name] = True
-        
-        # Activate all physical members for all load combinations
-        for phys_member in self.Members.values():
-            for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True
-        
-        # Assign an internal ID to all nodes and elements in the model
-        Analysis._renumber(self)
+        # Prepare the model for analysis
+        Analysis._prepare_model(self)
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2111,33 +2091,13 @@ class FEModel3D():
             print('+-------------------+')
             print('| Analyzing: Linear |')
             print('+-------------------+')
-
+        
         # Import `scipy` features if the sparse solver is being used
         if sparse == True:
             from scipy.sparse.linalg import spsolve
 
-        # Ensure there is at least 1 load combination to solve if the user didn't define any
-        if self.LoadCombos == {}:
-            # Create and add a default load combination to the dictionary of load combinations
-            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
-                
-        # Generate all meshes
-        for mesh in self.Meshes.values():
-            if mesh.is_generated == False:
-                mesh.generate()
-        
-        # Activate all springs for all load combinations
-        for spring in self.Springs.values():
-            for combo_name in self.LoadCombos.keys():
-                spring.active[combo_name] = True
-        
-        # Activate all physical members for all load combinations
-        for phys_member in self.Members.values():
-            for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True
-        
-        # Assign an internal ID to all nodes and elements in the model
-        Analysis._renumber(self)
+        # Prepare the model for analysis
+        Analysis._prepare_model(self)
 
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
@@ -2284,29 +2244,8 @@ class FEModel3D():
         if sparse == True:
             from scipy.sparse.linalg import spsolve
 
-        # Ensure there is at least 1 load combination to solve if the user didn't define any
-        if self.LoadCombos == {}:
-            # Create and add a default load combination to the dictionary of load combinations
-            self.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
-                
-        # Generate all meshes
-        for mesh in self.Meshes.values():
-            if mesh.is_generated == False:
-                mesh.generate()
-        
-        # Activate all springs for all load combinations. They can be turned inactive
-        # during the course of the tension/compression-only analysis
-        for spring in self.Springs.values():
-            for combo_name in self.LoadCombos.keys():
-                spring.active[combo_name] = True
-                
-        # Activate all physical members for all load combinations
-        for phys_member in self.Members.values():
-            for combo_name in self.LoadCombos.keys():
-                phys_member.active[combo_name] = True
-               
-        # Assign an internal ID to all nodes and elements in the model
-        Analysis._renumber(self)
+        # Prepare the model for analysis
+        Analysis._prepare_model(self)
         
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = self._aux_list()
