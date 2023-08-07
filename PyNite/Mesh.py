@@ -1290,18 +1290,13 @@ class CylinderMesh(Mesh):
         if num_elements == None:
             num_elements = int(2*pi/mesh_size)
 
-        #Remaining height to be meshed
-        height = h - y                  
-        
-        #Number of times the plate height fits in the remaining unmeshed height, resulting at least one element
-        n_vert = max(int(abs(height)/mesh_size),1)
-        
-        #Element height in the vertical direction
-        h_y = height/n_vert    
-
         # Mesh the cylinder from the bottom toward the top
         while round(y, 10) < round(h, 10):
-        
+
+            height = h - y  #Remaining height to be meshed
+            # Number of times the plate height fits in the remaining unmeshed height, resulting at least one element
+            n_vert = max(int(abs(height)/mesh_size),1)
+            h_y = height/n_vert             # Element height in the vertical direction
             # Create a mesh of nodes for the ring
             if self.axis == 'Y':
                 ring = CylinderRingMesh(radius, h_y, num_elements, thickness, material, self.model, 1, 1, [0, y, 0],
