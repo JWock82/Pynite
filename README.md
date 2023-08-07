@@ -61,6 +61,15 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.80
+* Refactored/simplified analysis code. Much of it has been moved to a new `Analysis` file that eliminated redundant code.
+* Load combination tags have replaced `combo_type`. You can now use a list of tags to tag your load combinations for easier categorization.
+* You no longer have to run all load combinations. You can now run select combos based on their tags.
+
+v0.0.79
+* Added the option to turn off nodes during visualization.
+* Bug fix for meshing cylinders about the global X or Z axis.
+
 v0.0.78
 * Corrections to tension/compression only support springs. v0.0.76 and v0.0.77 were not working as expected. 3rd time's a charm.
 
@@ -97,24 +106,3 @@ v0.0.71
 
 v0.0.70
 * Array output of member force diagrams and displacement diagrams has been added.
-
-v0.0.69
-* Bug fix for rotational springs. Exceptions were being thrown due to an inconsistent variable name.
-* Cleared out old branches from the repository that were no longer being used.
-* Updated CI to check against python 3.10 and 3.11. Removed CI for python 3.6 as it's no longer supported by the latest version of github actions.
-* Subtle changes to the logo to make it look a little more "pythonic".
-* Bug fix for rendering screenshots. The ability to interact with the render window was being disabled after the first screenshot had been taken, forcing subsequent screenshots to use the same view as the first one.
-
-v0.0.68
-* Bug fix for member distributed loads on physical members. Added a unit test to check for this error going forward. This bug only affected physical members (new as of v0.0.67) that had distributed loads and internal nodes.
-
-v0.0.67
-* Added physical members. Members now automatically detect internal nodes and subdivide themselves and their loads.
-* Refactoring: deprecated old method names for member results. You may now have some errors show up if you still try to get member results using the old method names.
-* Bug fix for P-Delta analysis. Global displacements were correct, but member internal forces were neglecting the geometric stiffness matrix. The impact of this bug was minimal, since the strain induced by correct global displacements was still being considered prior to this update. You should see a slight change to member P-Delta results.
-* Code simplification for P-Delta analysis.
-
-v0.0.66
-* Code simplification and bug fix for merging duplicate nodes.
-* When nodes are merged, support conditions for the deleted node are now assigned to the remaining node.
-* Added a linear solver for faster analysis of simple models. If you don't need P-Delta analysis or tension/compression-only analysis this solver saves time by only assembling the global stiffness matrix once.

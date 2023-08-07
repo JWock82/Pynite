@@ -22,6 +22,6 @@ must be checked is dead loads factored by 1.2 acting simultaneously with live lo
     # Assume 'D' and 'L' are names previously specified for load cases
     my_model.add_load_combo('Vertical Loads', {'D':1.2, 'L':1.6})
 
-Load combinations can also be passed a 3rd optional argument named ``combo_type``. This has no effect on
+Load combinations can also be passed a 3rd optional argument named ``combo_tags``. This has no effect on
 the analysis, but it can be used to categorize load combinations (e.g. 'strength' or 'service') for
 easier filtering of results later on.
