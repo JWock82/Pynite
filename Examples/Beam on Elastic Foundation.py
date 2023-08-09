@@ -62,7 +62,7 @@ else:
 # Analyze the model. PyNite's standard solver is most appropriate or this model since there are
 # non-linear features (compression-only springs) but no large axial forces that would cause P-Delta
 # effects.
-boef.analyze(check_statics=True)
+boef.analyze(log=True, check_statics=True)
 
 # Render the mdoel with the deformed shape using PyNite's buit-in renderer
 from PyNite.Visualization import Renderer
