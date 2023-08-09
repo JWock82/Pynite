@@ -733,6 +733,9 @@ class Quad3D():
         Internal shear force per unit length of the quad element.
         '''
 
+        assert r >= -1 and r <= 1, "r must be between -1,1"
+        assert s >= -1 and s <= 1, "s must be between -1,1"
+
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
@@ -783,6 +786,9 @@ class Quad3D():
         Internal moment per unit length of the quad element.
         '''
 
+        assert r >= -1 and r <= 1, "r must be between -1,1"
+        assert s >= -1 and s <= 1, "s must be between -1,1"        
+
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
@@ -817,7 +823,27 @@ class Quad3D():
 
 #%%
     def membrane(self, r=0, s=0, combo_name='Combo 1'):
+        '''
+        Returns the interal stresses at any point in the quad element.
+
+        Internal stresses are reported as a 2D array [[Sx], [Sy], [Txy]] at the
+        specified location in the (r, s) natural coordinate system. The general assumption of shear elements is that Sz is 0, so it not returned.
+
+        Parameters
+        ----------
+        r : number
+            The r-coordinate. Default is 0.
+        s : number
+            The s-coordinate. Default is 0.
         
+        Returns
+        -------
+        Internal stresses Sx,Sy,Txy of the quad element at the input position
+        '''
+
+        assert r >= -1 and r <= 1, "r must be between -1,1"
+        assert s >= -1 and s <= 1, "s must be between -1,1"
+
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
