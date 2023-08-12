@@ -65,6 +65,7 @@ v0.0.80
 * Refactored/simplified analysis code. Much of it has been moved to a new `Analysis` file that eliminated redundant code.
 * Load combination tags have replaced `combo_type`. You can now use a list of tags to tag your load combinations for easier categorization.
 * You no longer have to run all load combinations. You can now run select combos based on their tags.
+* Started basic documentation for plates.
 
 v0.0.79
 * Added the option to turn off nodes during visualization.
