@@ -1,6 +1,6 @@
 from math import isclose
 from PyNite.LoadCombo import LoadCombo
-from numpy import zeros
+from numpy import atleast_2d, zeros
 
 def _prepare_model(model):
     """Prepares a model for analysis by ensuring at least one load combination is defined, generating all meshes that have not already been generated, activating all non-linear members, and internally numbering all nodes and elements.
@@ -652,6 +652,98 @@ def _check_statics(model, combo_tags=None):
     # Print the static check table
     print(statics_table)
     print('')
+    
+def _partition_D(model):
+    """Builds a list with known nodal displacements and with the positions in global stiffness
+        matrix of known and unknown nodal displacements
+
+    :return: A list of the global matrix indices for the unknown nodal displacements (D1_indices). A
+                list of the global matrix indices for the known nodal displacements (D2_indices). A list
+                of the known nodal displacements (D2).
+    :rtype: list, list, list
+    """
+
+    D1_indices = [] # A list of the indices for the unknown nodal displacements
+    D2_indices = [] # A list of the indices for the known nodal displacements
+    D2 = []         # A list of the values of the known nodal displacements (D != None)
+
+    # Create the auxiliary table
+    for node in model.Nodes.values():
+        
+        # Unknown displacement DX
+        if node.support_DX==False and node.EnforcedDX == None:
+            D1_indices.append(node.ID*6 + 0)
+        # Known displacement DX
+        elif node.EnforcedDX != None:
+            D2_indices.append(node.ID*6 + 0)
+            D2.append(node.EnforcedDX)
+        # Support at DX
+        else:
+            D2_indices.append(node.ID*6 + 0)
+            D2.append(0.0)
+
+        # Unknown displacement DY
+        if node.support_DY == False and node.EnforcedDY == None:
+            D1_indices.append(node.ID*6 + 1)
+        # Known displacement DY
+        elif node.EnforcedDY != None:
+            D2_indices.append(node.ID*6 + 1)
+            D2.append(node.EnforcedDY)
+        # Support at DY
+        else:
+            D2_indices.append(node.ID*6 + 1)
+            D2.append(0.0)
+
+        # Unknown displacement DZ
+        if node.support_DZ == False and node.EnforcedDZ == None:
+            D1_indices.append(node.ID*6 + 2)
+        # Known displacement DZ
+        elif node.EnforcedDZ != None:
+            D2_indices.append(node.ID*6 + 2)
+            D2.append(node.EnforcedDZ)
+        # Support at DZ
+        else:
+            D2_indices.append(node.ID*6 + 2)
+            D2.append(0.0)
+
+        # Unknown displacement RX
+        if node.support_RX == False and node.EnforcedRX == None:
+            D1_indices.append(node.ID*6 + 3)
+        # Known displacement RX
+        elif node.EnforcedRX != None:
+            D2_indices.append(node.ID*6 + 3)
+            D2.append(node.EnforcedRX)
+        # Support at RX
+        else:
+            D2_indices.append(node.ID*6 + 3)
+            D2.append(0.0)
+
+        # Unknown displacement RY
+        if node.support_RY == False and node.EnforcedRY == None:
+            D1_indices.append(node.ID*6 + 4)
+        # Known displacement RY
+        elif node.EnforcedRY != None:
+            D2_indices.append(node.ID*6 + 4)
+            D2.append(node.EnforcedRY)
+        # Support at RY
+        else:
+            D2_indices.append(node.ID*6 + 4)
+            D2.append(0.0)
+
+        # Unknown displacement RZ
+        if node.support_RZ == False and node.EnforcedRZ == None:
+            D1_indices.append(node.ID*6 + 5)
+        # Known displacement RZ
+        elif node.EnforcedRZ != None:
+            D2_indices.append(node.ID*6 + 5)
+            D2.append(node.EnforcedRZ)
+        # Support at RZ
+        else:
+            D2_indices.append(node.ID*6 + 5)
+            D2.append(0.0)
+
+    # Return the indices and the known displacements
+    return D1_indices, D2_indices, D2
 
 def _renumber(model):
     """
