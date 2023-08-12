@@ -1,5 +1,6 @@
 from math import isclose
 from PyNite.LoadCombo import LoadCombo
+from numpy import zeros
 
 def _prepare_model(model):
     """Prepares a model for analysis by ensuring at least one load combination is defined, generating all meshes that have not already been generated, activating all non-linear members, and internally numbering all nodes and elements.
@@ -83,6 +84,83 @@ def _check_stability(model, K):
         raise Exception('Unstable node(s). See console output for details.')
 
     return
+
+def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
+    """Stores calculated displacements from the solver into the model's displacement vector `_D` and into each node object in the model.
+
+    :param model: The finite element model being evaluated.
+    :type model: FEModel3D
+    :param D1: An array of calculated displacements
+    :type D1: array
+    :param D2: An array of enforced displacements
+    :type D2: array
+    :param D1_indices: A list of the degree of freedom indices for each displacement in D1
+    :type D1_indices: list
+    :param D2_indices: A list of the degree of freedom indices for each displacement in D2
+    :type D2_indices: list
+    :param combo: The load combination to store the displacements for
+    :type combo: LoadCombo
+    """
+    
+    D = zeros((len(model.Nodes)*6, 1))
+
+    # Step through each node in the model
+    for node in model.Nodes.values():
+        
+        if node.ID*6 + 0 in D2_indices:
+            # Get the enforced displacement
+            D[(node.ID*6 + 0, 0)] = D2[D2_indices.index(node.ID*6 + 0), 0]
+        else:
+            # Get the calculated displacement
+            D[(node.ID*6 + 0, 0)] = D1[D1_indices.index(node.ID*6 + 0), 0]
+
+        if node.ID*6 + 1 in D2_indices:
+            # Get the enforced displacement
+            D[(node.ID*6 + 1, 0)] = D2[D2_indices.index(node.ID*6 + 1), 0]
+        else:
+            # Get the calculated displacement
+            D[(node.ID*6 + 1, 0)] = D1[D1_indices.index(node.ID*6 + 1), 0]
+
+        if node.ID*6 + 2 in D2_indices:
+            # Get the enforced displacement
+            D[(node.ID*6 + 2, 0)] = D2[D2_indices.index(node.ID*6 + 2), 0]
+        else:
+            # Get the calculated displacement
+            D[(node.ID*6 + 2, 0)] = D1[D1_indices.index(node.ID*6 + 2), 0]
+
+        if node.ID*6 + 3 in D2_indices:
+            # Get the enforced rotation
+            D[(node.ID*6 + 3, 0)] = D2[D2_indices.index(node.ID*6 + 3), 0]
+        else:
+            # Get the calculated rotation
+            D[(node.ID*6 + 3, 0)] = D1[D1_indices.index(node.ID*6 + 3), 0]
+
+        if node.ID*6 + 4 in D2_indices:
+            # Get the enforced rotation
+            D[(node.ID*6 + 4, 0)] = D2[D2_indices.index(node.ID*6 + 4), 0]
+        else:
+            # Get the calculated rotation
+            D[(node.ID*6 + 4, 0)] = D1[D1_indices.index(node.ID*6 + 4), 0]
+
+        if node.ID*6 + 5 in D2_indices:
+            # Get the enforced rotation
+            D[(node.ID*6 + 5, 0)] = D2[D2_indices.index(node.ID*6 + 5), 0]
+        else:
+            # Get the calculated rotation
+            D[(node.ID*6 + 5, 0)] = D1[D1_indices.index(node.ID*6 + 5), 0]
+
+    # Save the global displacement vector to the model
+    model._D[combo.name] = D
+
+    # Store the calculated global nodal displacements into each node object
+    for node in model.Nodes.values():
+
+        node.DX[combo.name] = D[node.ID*6 + 0, 0]
+        node.DY[combo.name] = D[node.ID*6 + 1, 0]
+        node.DZ[combo.name] = D[node.ID*6 + 2, 0]
+        node.RX[combo.name] = D[node.ID*6 + 3, 0]
+        node.RY[combo.name] = D[node.ID*6 + 4, 0]
+        node.RZ[combo.name] = D[node.ID*6 + 5, 0]
 
 def _check_TC_convergence(model, combo_name='Combo 1', log=True):
     

@@ -2000,52 +2000,8 @@ class FEModel3D():
                         # Return out of the method if 'K' is singular and provide an error message
                         raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
 
-                # Form the global displacement vector, D, from D1 and D2
-                D = zeros((len(self.Nodes)*6, 1))
-
-                for node in self.Nodes.values():
-
-                    if D2_indices.count(node.ID*6 + 0) == 1:
-                        D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
-                    else:
-                        D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
-
-                    if D2_indices.count(node.ID*6 + 1) == 1:
-                        D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
-                    else:
-                        D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
-
-                    if D2_indices.count(node.ID*6 + 2) == 1:
-                        D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
-                    else:
-                        D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
-
-                    if D2_indices.count(node.ID*6 + 3) == 1:
-                        D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
-                    else:
-                        D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
-
-                    if D2_indices.count(node.ID*6 + 4) == 1:
-                        D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
-                    else:
-                        D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
-
-                    if D2_indices.count(node.ID*6 + 5) == 1:
-                        D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
-                    else:
-                        D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
-
-                # Save the global displacement vector
-                self._D[combo.name] = D
-
-                # Store the calculated global nodal displacements into each node
-                for node in self.Nodes.values():
-                    node.DX[combo.name] = D[node.ID*6 + 0, 0]
-                    node.DY[combo.name] = D[node.ID*6 + 1, 0]
-                    node.DZ[combo.name] = D[node.ID*6 + 2, 0]
-                    node.RX[combo.name] = D[node.ID*6 + 3, 0]
-                    node.RY[combo.name] = D[node.ID*6 + 4, 0]
-                    node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+                # Store the calculated displacements to the model and the nodes in the model
+                Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
                 
                 # Check for tension/compression-only convergence
                 convergence = Analysis._check_TC_convergence(self, combo.name, log=log)
@@ -2156,52 +2112,8 @@ class FEModel3D():
                     # Return out of the method if 'K' is singular and provide an error message
                     raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
 
-            # Form the global displacement vector, D, from D1 and D2
-            D = zeros((len(self.Nodes)*6, 1))
-
-            for node in self.Nodes.values():
-
-                if D2_indices.count(node.ID*6 + 0) == 1:
-                    D.itemset((node.ID*6 + 0, 0), D2[D2_indices.index(node.ID*6 + 0), 0])
-                else:
-                    D.itemset((node.ID*6 + 0, 0), D1[D1_indices.index(node.ID*6 + 0), 0]) 
-
-                if D2_indices.count(node.ID*6 + 1) == 1:
-                    D.itemset((node.ID*6 + 1, 0), D2[D2_indices.index(node.ID*6 + 1), 0])
-                else:
-                    D.itemset((node.ID*6 + 1, 0), D1[D1_indices.index(node.ID*6 + 1), 0]) 
-
-                if D2_indices.count(node.ID*6 + 2) == 1:
-                    D.itemset((node.ID*6 + 2, 0), D2[D2_indices.index(node.ID*6 + 2), 0])
-                else:
-                    D.itemset((node.ID*6 + 2, 0), D1[D1_indices.index(node.ID*6 + 2), 0]) 
-
-                if D2_indices.count(node.ID*6 + 3) == 1:
-                    D.itemset((node.ID*6 + 3, 0), D2[D2_indices.index(node.ID*6 + 3), 0])
-                else:
-                    D.itemset((node.ID*6 + 3, 0), D1[D1_indices.index(node.ID*6 + 3), 0]) 
-
-                if D2_indices.count(node.ID*6 + 4) == 1:
-                    D.itemset((node.ID*6 + 4, 0), D2[D2_indices.index(node.ID*6 + 4), 0])
-                else:
-                    D.itemset((node.ID*6 + 4, 0), D1[D1_indices.index(node.ID*6 + 4), 0]) 
-
-                if D2_indices.count(node.ID*6 + 5) == 1:
-                    D.itemset((node.ID*6 + 5, 0), D2[D2_indices.index(node.ID*6 + 5), 0])
-                else:
-                    D.itemset((node.ID*6 + 5, 0), D1[D1_indices.index(node.ID*6 + 5), 0]) 
-
-            # Save the global displacement vector
-            self._D[combo.name] = D
-
-            # Store the calculated global nodal displacements into each node
-            for node in self.Nodes.values():
-                node.DX[combo.name] = D[node.ID*6 + 0, 0]
-                node.DY[combo.name] = D[node.ID*6 + 1, 0]
-                node.DZ[combo.name] = D[node.ID*6 + 2, 0]
-                node.RX[combo.name] = D[node.ID*6 + 3, 0]
-                node.RY[combo.name] = D[node.ID*6 + 4, 0]
-                node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+            # Store the calculated displacements to the model and the nodes in the model
+            Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
 
         # Calculate reactions
         Analysis._calc_reactions(self, log, combo_tags)
@@ -2354,65 +2266,8 @@ class FEModel3D():
                         # Return out of the method if 'K' is singular and provide an error message
                         raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
 
-                D = zeros((len(self.Nodes)*6, 1))
-
-                # Step through each node in the model
-                for node in self.Nodes.values():
-                    
-                    if node.ID*6 + 0 in D2_indices:
-                        # Get the enforced displacement
-                        D[(node.ID*6 + 0, 0)] = D2[D2_indices.index(node.ID*6 + 0), 0]
-                    else:
-                        # Get the calculated displacement
-                        D[(node.ID*6 + 0, 0)] = D1[D1_indices.index(node.ID*6 + 0), 0]
-
-                    if node.ID*6 + 1 in D2_indices:
-                        # Get the enforced displacement
-                        D[(node.ID*6 + 1, 0)] = D2[D2_indices.index(node.ID*6 + 1), 0]
-                    else:
-                        # Get the calculated displacement
-                        D[(node.ID*6 + 1, 0)] = D1[D1_indices.index(node.ID*6 + 1), 0]
-
-                    if node.ID*6 + 2 in D2_indices:
-                        # Get the enforced displacement
-                        D[(node.ID*6 + 2, 0)] = D2[D2_indices.index(node.ID*6 + 2), 0]
-                    else:
-                        # Get the calculated displacement
-                        D[(node.ID*6 + 2, 0)] = D1[D1_indices.index(node.ID*6 + 2), 0]
-
-                    if node.ID*6 + 3 in D2_indices:
-                        # Get the enforced rotation
-                        D[(node.ID*6 + 3, 0)] = D2[D2_indices.index(node.ID*6 + 3), 0]
-                    else:
-                        # Get the calculated rotation
-                        D[(node.ID*6 + 3, 0)] = D1[D1_indices.index(node.ID*6 + 3), 0]
-
-                    if node.ID*6 + 4 in D2_indices:
-                        # Get the enforced rotation
-                        D[(node.ID*6 + 4, 0)] = D2[D2_indices.index(node.ID*6 + 4), 0]
-                    else:
-                        # Get the calculated rotation
-                        D[(node.ID*6 + 4, 0)] = D1[D1_indices.index(node.ID*6 + 4), 0]
-
-                    if node.ID*6 + 5 in D2_indices:
-                        # Get the enforced rotation
-                        D[(node.ID*6 + 5, 0)] = D2[D2_indices.index(node.ID*6 + 5), 0]
-                    else:
-                        # Get the calculated rotation
-                        D[(node.ID*6 + 5, 0)] = D1[D1_indices.index(node.ID*6 + 5), 0]
-
-                # Save the global displacement vector
-                self._D[combo.name] = D
-
-                # Store the calculated global nodal displacements into each node
-                for node in self.Nodes.values():
-
-                    node.DX[combo.name] = D[node.ID*6 + 0, 0]
-                    node.DY[combo.name] = D[node.ID*6 + 1, 0]
-                    node.DZ[combo.name] = D[node.ID*6 + 2, 0]
-                    node.RX[combo.name] = D[node.ID*6 + 3, 0]
-                    node.RY[combo.name] = D[node.ID*6 + 4, 0]
-                    node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+                # Store the calculated displacements to the model and the nodes in the model
+                Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
                 
                 # Assume the model has converged (to be checked below)
                 convergence_TC = Analysis._check_TC_convergence(self, combo.name, log)
