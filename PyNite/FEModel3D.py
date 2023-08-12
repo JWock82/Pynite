@@ -1843,9 +1843,6 @@ class FEModel3D():
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
-        # Convert D2 from a list to a vector
-        D2 = atleast_2d(D2).T
-
         # Identify which load combinations to evaluate
         combo_list = Analysis._identify_combos(self, combo_tags)
 
@@ -1960,9 +1957,6 @@ class FEModel3D():
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
-        # Convert D2 from a list to a vector
-        D2 = atleast_2d(D2).T
-
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
         # Note that for linear analysis the stiffness matrix can be obtained for any load combination, as it's the same for all of them
         combo_name = list(self.LoadCombos.keys())[0]
@@ -2057,9 +2051,6 @@ class FEModel3D():
         
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
-
-        # Convert D2 from a list to a matrix
-        D2 = array(D2, ndmin=2).T
 
         # Identify which load combinations to evaluate
         combo_list = Analysis._identify_combos(self, combo_tags)

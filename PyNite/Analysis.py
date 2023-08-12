@@ -1,6 +1,6 @@
 from math import isclose
 from PyNite.LoadCombo import LoadCombo
-from numpy import atleast_2d, zeros
+from numpy import array, atleast_2d, zeros
 
 def _prepare_model(model):
     """Prepares a model for analysis by ensuring at least one load combination is defined, generating all meshes that have not already been generated, activating all non-linear members, and internally numbering all nodes and elements.
@@ -763,6 +763,12 @@ def _partition_D(model):
         else:
             D2_indices.append(node.ID*6 + 5)
             D2.append(0.0)
+    
+    # Legacy code on the next line. I will leave it here until the line that follows has been proven over time.
+    # D2 = atleast_2d(D2)
+    
+    # Convert D2 from a list to a matrix
+    D2 = array(D2, ndmin=2).T
 
     # Return the indices and the known displacements
     return D1_indices, D2_indices, D2
