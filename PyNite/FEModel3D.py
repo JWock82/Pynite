@@ -1847,13 +1847,7 @@ class FEModel3D():
         D2 = atleast_2d(D2).T
 
         # Identify which load combinations to evaluate
-        if combo_tags is None:
-            combo_list = self.LoadCombos.values()
-        else:
-            combo_list = []
-            for combo in self.LoadCombos.values():
-                if any(tag in combo.combo_tags for tag in combo_tags):
-                    combo_list.append(combo)
+        combo_list = Analysis._identify_combos(self, combo_tags)
 
         # Step through each load combination
         for combo in combo_list:
@@ -1978,13 +1972,7 @@ class FEModel3D():
             K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
         # Identify which load combinations to evaluate
-        if combo_tags is None:
-            combo_list = self.LoadCombos.values()
-        else:
-            combo_list = []
-            for combo in self.LoadCombos.values():
-                if any(tag in combo.combo_tags for tag in combo_tags):
-                    combo_list.append(combo)
+        combo_list = Analysis._identify_combos(self, combo_tags)
 
         # Step through each load combination
         for combo in combo_list:
@@ -2074,13 +2062,7 @@ class FEModel3D():
         D2 = array(D2, ndmin=2).T
 
         # Identify which load combinations to evaluate
-        if combo_tags is None:
-            combo_list = self.LoadCombos.values()
-        else:
-            combo_list = []
-            for combo in self.LoadCombos.values():
-                if any(tag in combo.combo_tags for tag in combo_tags):
-                    combo_list.append(combo)
+        combo_list = Analysis._identify_combos(self, combo_tags)
 
         # Step through each load combination
         for combo in combo_list:

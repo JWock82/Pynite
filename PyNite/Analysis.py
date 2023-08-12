@@ -32,6 +32,28 @@ def _prepare_model(model):
     # Assign an internal ID to all nodes and elements in the model. This number is different from the name used by the user to identify nodes and elements.
     _renumber(model)
 
+def _identify_combos(model, combo_tags):
+    """Returns a list of load combinations that are to be run based on tags given by the user.
+
+    :param model: The model being analyzed.
+    :type model: FEModel3D
+    :param combo_tags: A list of tags used for the load combinations to be evaluated.
+    :type combo_tags: list
+    :return: A list containing the load combinations to be analyzed.
+    :rtype: list
+    """
+    
+    # Identify which load combinations to evaluate
+    if combo_tags is None:
+        combo_list = model.LoadCombos.values()
+    else:
+        combo_list = []
+        for combo in model.LoadCombos.values():
+            if any(tag in combo.combo_tags for tag in combo_tags):
+                combo_list.append(combo)
+    
+    return combo_list
+
 def _check_stability(model, K):
     """
     Identifies nodal instabilities in a model's stiffness matrix.
