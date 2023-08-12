@@ -14,7 +14,9 @@ Plates in Pynite can capture both out-of-plane (bending & shear) behavior and in
 
 ``Quad`` plate elements do not have to be rectangular. They can be generic quadrilaterals. These elements are isoparametric elements based on the popular MITC4 formulation, and are well suited to thick and thin plates. Out-of-plane bending stresses calculated for these elements are very accurate at the plate centers, but at the corners they tend to report center stresses. Pynite helps minimize this problem by "smoothing" plate stress results when displaying contours, which averages stresses from all plates connecting at a node. Smoothing does not help much at fixed supports, where there is no adjacent plate to average stresses with. Another workaround is to remember that while plate corner *stresses* are rough estimates for the MITC4 element, plate corner *forces* are highly accurate. One can obtain the plate corner stresses from the corner forces by dividing by 1/2 of the plate's edge length.
 
-In-plane forces (tension, compression, and in-plane shear) are accurate for both elements. The formulations for both the ``Rect`` element and the ``Quad`` element is based on an isoparametric formulation that is pretty accurate.
+In-Plane (Membrane) Stresses
+============================
+In-plane stresses (tension, compression, and in-plane shear) are accurate for both elements. The formulations for both the ``Rect`` element and the ``Quad`` element is based on an isoparametric formulation that is pretty accurate.
 
 Orthotropic behavior
 ====================
