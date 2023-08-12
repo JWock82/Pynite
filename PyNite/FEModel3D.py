@@ -2279,7 +2279,7 @@ class FEModel3D():
             divergence_TC = False  # Tracks tension/compression-only divergence
             divergence_PD = False  # Tracks P-Delta divergence
 
-            # Iterate until convergence or divergence occurs
+            # Iterate until either convergence or divergence occurs
             while ((convergence_TC == False or convergence_PD == False) 
                   and (divergence_TC == False and divergence_PD == False)):
 
@@ -2288,7 +2288,7 @@ class FEModel3D():
                     print('- Beginning tension/compression-only iteration #' + str(iter_count_TC))
                     print('- Beginning P-Delta iteration #' + str(iter_count_PD))
 
-                # On the first iteration, get all the partitioned global matrices
+                # On the first iteration we will ignore the geometric stiffness since it is a function of axial loads that we have not yet calculated
                 if iter_count_PD == 1:
 
                     if sparse == True:
@@ -2304,8 +2304,7 @@ class FEModel3D():
                     FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
                     P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
 
-                # On subsequent iterations, recalculate the stiffness matrix to account for P-Delta
-                # effects
+                # On subsequent iterations we will add the geometric stiffness to account for P-Delta effects
                 else:
 
                     # Calculate the partitioned global stiffness matrices
@@ -2355,39 +2354,51 @@ class FEModel3D():
                         # Return out of the method if 'K' is singular and provide an error message
                         raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
 
-
                 D = zeros((len(self.Nodes)*6, 1))
 
+                # Step through each node in the model
                 for node in self.Nodes.values():
                     
                     if node.ID*6 + 0 in D2_indices:
+                        # Get the enforced displacement
                         D[(node.ID*6 + 0, 0)] = D2[D2_indices.index(node.ID*6 + 0), 0]
                     else:
+                        # Get the calculated displacement
                         D[(node.ID*6 + 0, 0)] = D1[D1_indices.index(node.ID*6 + 0), 0]
 
                     if node.ID*6 + 1 in D2_indices:
+                        # Get the enforced displacement
                         D[(node.ID*6 + 1, 0)] = D2[D2_indices.index(node.ID*6 + 1), 0]
                     else:
+                        # Get the calculated displacement
                         D[(node.ID*6 + 1, 0)] = D1[D1_indices.index(node.ID*6 + 1), 0]
 
                     if node.ID*6 + 2 in D2_indices:
+                        # Get the enforced displacement
                         D[(node.ID*6 + 2, 0)] = D2[D2_indices.index(node.ID*6 + 2), 0]
                     else:
+                        # Get the calculated displacement
                         D[(node.ID*6 + 2, 0)] = D1[D1_indices.index(node.ID*6 + 2), 0]
 
                     if node.ID*6 + 3 in D2_indices:
+                        # Get the enforced rotation
                         D[(node.ID*6 + 3, 0)] = D2[D2_indices.index(node.ID*6 + 3), 0]
                     else:
+                        # Get the calculated rotation
                         D[(node.ID*6 + 3, 0)] = D1[D1_indices.index(node.ID*6 + 3), 0]
 
                     if node.ID*6 + 4 in D2_indices:
+                        # Get the enforced rotation
                         D[(node.ID*6 + 4, 0)] = D2[D2_indices.index(node.ID*6 + 4), 0]
                     else:
+                        # Get the calculated rotation
                         D[(node.ID*6 + 4, 0)] = D1[D1_indices.index(node.ID*6 + 4), 0]
 
                     if node.ID*6 + 5 in D2_indices:
+                        # Get the enforced rotation
                         D[(node.ID*6 + 5, 0)] = D2[D2_indices.index(node.ID*6 + 5), 0]
                     else:
+                        # Get the calculated rotation
                         D[(node.ID*6 + 5, 0)] = D1[D1_indices.index(node.ID*6 + 5), 0]
 
                 # Save the global displacement vector
