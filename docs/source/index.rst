@@ -25,6 +25,7 @@ This documentation is just getting started and is a little bare at the moment. K
    load_combo
    node
    member
+   plate
    stability
    reporting
 
