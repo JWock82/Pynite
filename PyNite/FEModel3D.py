@@ -1843,7 +1843,7 @@ class FEModel3D():
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
-        # Identify which load combinations to evaluate
+        # Identify which load combinations have the tags the user has given
         combo_list = Analysis._identify_combos(self, combo_tags)
 
         # Step through each load combination
@@ -1965,7 +1965,7 @@ class FEModel3D():
         else:
             K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
-        # Identify which load combinations to evaluate
+        # Identify which load combinations have the tags the user has given
         combo_list = Analysis._identify_combos(self, combo_tags)
 
         # Step through each load combination
@@ -2052,7 +2052,7 @@ class FEModel3D():
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
-        # Identify which load combinations to evaluate
+        # Identify which load combinations have the tags the user has given
         combo_list = Analysis._identify_combos(self, combo_tags)
 
         # Step through each load combination
