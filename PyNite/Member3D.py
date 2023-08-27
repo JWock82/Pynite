@@ -207,6 +207,13 @@ class Member3D():
         # Return the local geomtric stiffness matrix, with end releases applied
         return kg_Condensed
     
+    def km(self, combo_name='Combo 1'):
+
+        ke = self.k()
+        f = self.f() - self.fer(combo_name)
+        Gi = self.section.G(f[0], f[4], f[5])
+        Gj = self.section.G(f[6], f[10], f[11])
+        
 #%%
     def fer(self, combo_name='Combo 1'):
         """
