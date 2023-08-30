@@ -1,5 +1,5 @@
 # %%
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack
 from numpy.linalg import inv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
@@ -22,8 +22,8 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, name, i_node, j_node, material, Iy, Iz, J, A, model, auxNode=None,
-                 tension_only=False, comp_only=False):
+    def __init__(self, name, i_node, j_node, material, model, Iy, Iz, J, A, auxNode=None,
+                 tension_only=False, comp_only=False, section=None):
         """
         Initializes a new member.
         """
@@ -34,10 +34,19 @@ class Member3D():
         self.material = material  # The element's material
         self.E = model.Materials[material].E   # The modulus of elasticity of the element
         self.G = model.Materials[material].G   # The shear modulus of the element
-        self.Iy = Iy          # The y-axis moment of inertia
-        self.Iz = Iz          # The z-axis moment of inertia
-        self.J = J            # The torsional constant
-        self.A = A            # The cross-sectional area
+
+        # Section properties
+        if self.section is None:
+            self.A = A            # The cross-sectional area
+            self.Iy = Iy          # The y-axis moment of inertia
+            self.Iz = Iz          # The z-axis moment of inertia
+            self.J = J            # The torsional constant
+        else:
+            self.A = section.A
+            self.Iy = section.Iy
+            self.Iz = section.Iz
+            self.J = section.J
+        
         self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
         self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
@@ -208,12 +217,63 @@ class Member3D():
         return kg_Condensed
     
     def km(self, combo_name='Combo 1'):
+        """Returns the local plastic reduction matrix for the element.
 
+        :param combo_name: The name of the load combination to get the plastic reduction matrix for. Defaults to 'Combo 1'.
+        :type combo_name: str, optional
+        :return: The plastic reduction matrix for the element
+        :rtype: array
+        """
+
+        # Get the elastic local stiffness matrix
         ke = self.k()
+
+        # Get the total end forces applied to the element
         f = self.f() - self.fer(combo_name)
-        Gi = self.section.G(f[0], f[4], f[5])
-        Gj = self.section.G(f[6], f[10], f[11])
+
+        # Get the gradient to the failure surface at at each end of the element
+        if self.section is None:
+            raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
+        else:
+            Gi = self.section.G(f[0], f[4], f[5])
+            Gj = self.section.G(f[6], f[10], f[11])
+
+        # Expand the gradients for a 12 degree of freedom element
+        zeros_array = zeros((6, 1))
+        Gi = vstack(Gi, zeros_array)
+        Gj = vstack(zeros_array, Gj)
+        G = hstack(Gi, Gj)
+
+        # Calculate the plastic reduction matrix for each end of the element
+        return -ke @ G @ inv(G.T() @ ke @ G) @ G.T() @ ke
+
+        # Combine and return the plastic reduction matrices
+        return kmi + kmj
+    
+    def lamb(self, combo_name='Combo 1'):
+
+        # Get the elastic local stiffness matrix
+        ke = self.k()
+
+        # Get the total end forces applied to the element
+        f = self.f() - self.fer(combo_name)
+        d = self.d(combo_name)
+
+        # Get the gradient to the failure surface at at each end of the element
+        if self.section is None:
+            raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
+        else:
+            Gi = self.section.G(f[0], f[4], f[5])
+            Gj = self.section.G(f[6], f[10], f[11])
         
+        # Expand the gradients for a 12 degree of freedom element
+        zeros_array = zeros((6, 1))
+        Gi = vstack(Gi, zeros_array)
+        Gj = vstack(zeros_array, Gj)
+        G = hstack(Gi, Gj)
+
+        return inv(G.T() @ ke @ G) @ G.T() @ ke @ d
+
 #%%
     def fer(self, combo_name='Combo 1'):
         """

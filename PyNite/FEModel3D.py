@@ -9,6 +9,7 @@ from numpy.linalg import solve
 
 from PyNite.Node3D import Node3D
 from PyNite.Material import Material
+from PyNite.Section import Section
 from PyNite.PhysMember import PhysMember
 from PyNite.Spring3D import Spring3D
 from PyNite.Member3D import Member3D
@@ -38,6 +39,8 @@ class FEModel3D():
         self.AuxNodes.pop(str)
         self.Materials = {str:Material}    # A dictionary of the model's materials
         self.Materials.pop(str)
+        self.Sections = {str:Section}      # A dictonary of the model's cross-sections
+        self.Sections.pop(str)
         self.Springs = {str:Spring3D}      # A dictionary of the model's springs
         self.Springs.pop(str)
         self.Members = {str:PhysMember}    # A dictionary of the model's physical members
@@ -213,6 +216,19 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
+    def add_section(self, name, section):
+        """Adds a cross-section to the model.
+
+        :param name: A unique name for the cross-section.
+        :type name: string
+        :param section: A 'PyNite' `Section` object.
+        :type section: Section
+        """
+        if name not in self.Sections.keys():
+            self.Sections[name] = section
+        else:
+            raise Exception('Cross-section name ' + name + ' already exists in the model.')
+
     def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
         """Adds a new spring to the model.
 
@@ -260,8 +276,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name, i_node, j_node, material, Iy, Iz, J, A, auxNode=None,
-                   tension_only=False, comp_only=False):
+    def add_member(self, name, i_node, j_node, material, Iy=None, Iz=None, J=None, A=None, aux_node=None, tension_only=False, comp_only=False, section=None):
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -281,12 +296,14 @@ class FEModel3D():
         :param A: The cross-sectional area of the member.
         :type A: number
         :param auxNode: The name of the auxiliary node used to define the local z-axis. The default is ``None``, in which case the program defines the axis instead of using an auxiliary node.
-        :type auxNode: str, optional
+        :type aux_node: str, optional
         :param tension_only: Indicates if the member is tension-only, defaults to False
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
         :raises NameError: Occurs if the specified name already exists.
+        :param section: The name of the cross section to use for section properties. If section is `None` the user must provide `Iy`, `Iz`, `A`, and `J`. If section is not `None` any values of `Iy`, `Iz`, `A`, and `J` will be ignored and the cross-section's values will be used instead.
+        :type section: string
         :return: The name of the member added to the model.
         :rtype: str
         """
@@ -303,10 +320,10 @@ class FEModel3D():
                 count += 1
                 
         # Create a new member
-        if auxNode == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J, A, model=self, tension_only=tension_only, comp_only=comp_only)
+        if aux_node == None:
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section=section)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, Iy, Iz, J, A, model=self, aux_node=self.AuxNodes[auxNode], tension_only=tension_only, comp_only=comp_only)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section=section)
         
         # Add the new member to the list
         self.Members[name] = new_member

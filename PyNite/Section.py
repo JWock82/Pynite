@@ -3,13 +3,14 @@ import numpy as np
 
 class Section():
 
-    def __init__(self, name, A, Iy, Iz, J):
+    def __init__(self, name, A, Iy, Iz, J, material):
         
         self.name = name
         self.A = A
         self.Iy = Iy
         self.Iz = Iz
         self.J = J
+        self.material = material
     
     def Phi(self):
         pass
@@ -19,22 +20,22 @@ class Section():
 
 class SteelSection(Section):
 
-    def __init__(self, name, A, Iy, Iz, J, Zy, Zz, Fy):
+    def __init__(self, name, A, Iy, Iz, J, Zy, Zz, material):
 
         # Basic section properties
-        super().__init__(name, A, Iy, Iz, J)
+        super().__init__(name, A, Iy, Iz, J, material)
 
         # Additional section properties for steel
         self.ry = (Iy/A)**0.5
         self.rz = (Iz/A)**0.5
         self.Zy = Zy
         self.Zz = Zz
-        self.Fy = Fy
+        self.Fy = material.fy
         
         # Plastic strengths for material nonlinearity
-        self.Py = Fy*A
-        self.Mpy = Fy*Zy
-        self.Mpz = Fy*Zz
+        self.Py = self.Fy*A
+        self.Mpy = self.Fy*Zy
+        self.Mpz = self.Fy*Zz
     
     def Phi(self, fx, my, mz):
         """A method used to determine whether the cross section is elastic or plastic. Values less than 1 indicate the section is elastic.
