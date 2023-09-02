@@ -1639,6 +1639,80 @@ class FEModel3D():
         # Return the global geometric stiffness matrix
         return Kg
       
+    def Km(self, combo_name='Combo 1', log=False, sparse=True):
+       
+        # Determine if a sparse matrix has been requested
+        if sparse == True:
+            # The plastic reduction matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index. We'll build the matrix from three lists.
+            row = []
+            col = []
+            data = []
+        else:
+            # Initialize a dense matrix of zeros
+            Km = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
+
+        # Add stiffness terms for each physical member in the model
+        if log: print('- Calculating the plastic reduction matrix')
+        for phys_member in self.Members.values():
+            
+            # Check to see if the physical member is active for the given load combination
+            if phys_member.active[combo_name] == True:
+
+                # Step through each sub-member in the physical member and add terms
+                for member in phys_member.sub_members.values():
+                    
+                    # Get the member's global plastic reduction matrix
+                    # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                    member_Km = member.Km()
+
+                    # Step through each term in the member's plastic reduction matrix
+                    # 'a' & 'b' below are row/column indices in the member's matrix
+                    # 'm' & 'n' are corresponding row/column indices in the structure's global matrix
+                    for a in range(12):
+                    
+                        # Determine if index 'a' is related to the i-node or j-node
+                        if a < 6:
+                            # Find the corresponding index 'm' in the global plastic reduction matrix
+                            m = member.i_node.ID*6 + a
+                        else:
+                            # Find the corresponding index 'm' in the global plastic reduction matrix
+                            m = member.j_node.ID*6 + (a-6)
+                        
+                        for b in range(12):
+                        
+                            # Determine if index 'b' is related to the i-node or j-node
+                            if b < 6:
+                                # Find the corresponding index 'n' in the global plastic reduction matrix
+                                n = member.i_node.ID*6 + b
+                            else:
+                                # Find the corresponding index 'n' in the global plastic reduction matrix
+                                n = member.j_node.ID*6 + (b-6)
+                        
+                            # Now that 'm' and 'n' are known, place the term in the global plastic reduction matrix
+                            if sparse == True:
+                                row.append(m)
+                                col.append(n)
+                                data.append(member_Km[a, b])
+                            else:
+                                Km[m, n] += member_Km[a, b]
+
+        if sparse:
+            # The plastic reduction matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index.
+            from scipy.sparse import coo_matrix
+            row = array(row)
+            col = array(col)
+            data = array(data)
+            Km = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
+
+        # Check that there are no nodal instabilities
+        # if check_stability:
+        #     if log: print('- Checking nodal stability')
+        #     if sparse: Analysis._check_stability(self, Km.tocsr())
+        #     else: Analysis._check_stability(self, Km)
+
+        # Return the global plastic reduction matrix
+        return Km 
+
     def FER(self, combo_name='Combo 1'):
         """Assembles and returns the global fixed end reaction vector for any given load combo.
 
@@ -2233,6 +2307,113 @@ class FEModel3D():
         
         # Flag the model as solved
         self.solution = 'P-Delta'
+    
+    def analyze_pushover(self, load_pattern='Combo 1', log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None):
+
+        if log:
+            print('+---------------------+')
+            print('| Analyzing: Pushover |')
+            print('+---------------------+')
+        
+        # Import `scipy` features if the sparse solver is being used
+        if sparse == True:
+            from scipy.sparse.linalg import spsolve
+
+        # Prepare the model for analysis
+        Analysis._prepare_model(self)
+
+        # Get the auxiliary list used to determine how the matrices will be partitioned
+        D1_indices, D2_indices, D2 = Analysis._partition_D(self)
+
+        # Identify which load combinations have the tags the user has given
+        combo_list = Analysis._identify_combos(self, combo_tags)
+
+        # Step through each load combination
+        for combo in combo_list:
+
+            if log:
+                print('')
+                print('- Analyzing load combination ' + combo.name)
+
+            # Keep track of the number of iterations
+            iter_count = 1
+            convergence = False
+            divergence = False
+
+            # Track whether a collapse mechanism has formed
+            mechanism = False
+
+            while mechanism == False:
+
+                # Iterate until convergence or divergence occurs
+                while convergence == False and divergence == False:
+                    
+                    # Check for tension/compression-only divergence
+                    if iter_count > max_iter:
+                        divergence = True
+                        raise Exception('Model diverged during tension/compression-only analysis')
+                    
+                    # Get the partitioned global stiffness matrix K11, K12, K21, K22
+                    if sparse == True:
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+                    else:
+                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+
+                    # Get the partitioned global fixed end reaction vector
+                    FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
+
+                    # Get the partitioned global nodal force vector       
+                    P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)          
+
+                    # Calculate the global displacement vector
+                    if log: print('- Calculating global displacement vector')
+                    if K11.shape == (0, 0):
+                        # All displacements are known, so D1 is an empty vector
+                        D1 = []
+                    else:
+                        try:
+                            # Calculate the unknown displacements D1
+                            if sparse == True:
+                                # The partitioned stiffness matrix is in `lil` format, which is great
+                                # for memory, but slow for mathematical operations. The stiffness
+                                # matrix will be converted to `csr` format for mathematical operations.
+                                # The `@` operator performs matrix multiplication on sparse matrices.
+                                D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
+                                D1 = D1.reshape(len(D1), 1)
+                            else:
+                                D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                        except:
+                            # If 'K' is singular a collapse mechanism has formed
+                            mechanism = True
+
+                    # Store the calculated displacements to the model and the nodes in the model
+                    Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
+                    
+                    # Check for tension/compression-only convergence
+                    convergence = Analysis._check_TC_convergence(self, combo.name, log=log)
+
+                    if convergence == False:
+                        if log: print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
+                    else:
+                        if log: print('- Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
+
+                    # Keep track of the number of tension/compression only iterations
+                    iter_count += 1
+
+        # Calculate reactions
+        Analysis._calc_reactions(self, log, combo_tags)
+
+        if log:
+            print('')     
+            print('- Analysis complete')
+            print('')
+
+        # Check statics if requested
+        if check_statics == True:
+            Analysis._check_statics(self, combo_tags)
+        
+        # Flag the model as solved
+        self.solution = 'Pushover'
     
     def unique_name(self, dictionary, prefix):
         """Returns the next available unique name for a dictionary of objects.
