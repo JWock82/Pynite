@@ -216,11 +216,13 @@ class Member3D():
         # Return the local geomtric stiffness matrix, with end releases applied
         return kg_Condensed
     
-    def km(self, combo_name='Combo 1'):
+    def km(self, combo_name='Combo 1', push_combo='Push'):
         """Returns the local plastic reduction matrix for the element.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
+        :param push_combo: The name of the load combination that defines the pushover load. Defaults to 'Push 1'.
+        :type push_combo: str, optional
         :return: The plastic reduction matrix for the element
         :rtype: array
         """
@@ -228,8 +230,11 @@ class Member3D():
         # Get the elastic local stiffness matrix
         ke = self.k()
 
-        # Get the total end forces applied to the element
-        f = self.f() - self.fer(combo_name)
+        # Get the end forces applied to the element
+        f = self.f(combo_name) - self.fer(combo_name)
+        
+        # Add the end forces applied by the pushover combination
+        f += self.f(push_combo) - self.fer(push_combo)
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
@@ -545,18 +550,41 @@ class Member3D():
 #%%
     # Member global stiffness matrix
     def K(self):
+        """Returns the global elastic stiffness matrix for the member.
+
+        :return: The global elastic stiffness matrix for the member.
+        :rtype: array
+        """
         
         # Calculate and return the stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.k()), self.T())
 
-#%%
-    # Member global geometric stiffness matrix
-    def Kg(self, P=0):
+    def Kg(self, P=0.0):
+        """Returns the global geometric stiffness matrix for the member. Used for P-Delta analysis.
+
+        :param P: Member axial load. Defaults to 0.
+        :type P: float, optional
+        :return: The global geometric stiffness matrix for the member.
+        :rtype: array
+        """
         
         # Calculate and return the geometric stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.kg(P)), self.T())
 
-#%%
+    def Km(self, combo_name, push_combo):
+        """Returns the global plastic reduction matrix for the member. Used to modify member behavior for plastic hinges at the ends.
+
+        :param combo_name: The name of the load combination to get the plastic reduction matrix for.
+        :type combo_name: string
+        :param push_combo: The name of the load combination used to define the pushover load.
+        :type push_combo: string
+        :return: The global plastic reduction matrix for the member.
+        :rtype: array
+        """
+
+        # Calculate and return the plastic reduction matrix in global coordinates
+        return matmul(matmul(inv(self.T()), self.km(combo_name, push_combo)), self.T())
+    
     def F(self, combo_name='Combo 1'):
         """
         Returns the member's global end force vector for the given load combination.
@@ -565,8 +593,6 @@ class Member3D():
         # Calculate and return the global force vector
         return matmul(inv(self.T()), self.f(combo_name))
     
-#%% 
-    # Global fixed end reaction vector
     def FER(self, combo_name='Combo 1'):
         """
         Returns the global fixed end reaction vector
