@@ -36,12 +36,14 @@ class Member3D():
         self.G = model.Materials[material].G   # The shear modulus of the element
 
         # Section properties
-        if self.section is None:
+        if section is None:
+            self.section = None
             self.A = A            # The cross-sectional area
             self.Iy = Iy          # The y-axis moment of inertia
             self.Iz = Iz          # The z-axis moment of inertia
             self.J = J            # The torsional constant
         else:
+            self.section = section
             self.A = section.A
             self.Iy = section.Iy
             self.Iz = section.Iz

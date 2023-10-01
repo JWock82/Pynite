@@ -3,8 +3,7 @@ from os import rename
 import warnings
 from math import isclose
 
-from numpy import array, zeros, matmul, divide, subtract, atleast_2d, nanmax
-from numpy import seterr
+from numpy import array, zeros, matmul, divide, subtract, atleast_2d
 from numpy.linalg import solve
 
 from PyNite.Node3D import Node3D
@@ -1911,7 +1910,7 @@ class FEModel3D():
             print('+-----------+')
             print('| Analyzing |')
             print('+-----------+')
-        
+
         # Import `scipy` features if the sparse solver is being used
         if sparse == True:
             from scipy.sparse.linalg import spsolve
@@ -1947,15 +1946,15 @@ class FEModel3D():
                 
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
                 if sparse == True:
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+                    K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
                 else:
-                    K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+                    K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
 
                 # Get the partitioned global fixed end reaction vector
-                FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
+                FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
                 # Get the partitioned global nodal force vector       
-                P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)          
+                P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)          
 
                 # Calculate the global displacement vector
                 if log: print('- Calculating global displacement vector')
@@ -2040,9 +2039,9 @@ class FEModel3D():
         # Note that for linear analysis the stiffness matrix can be obtained for any load combination, as it's the same for all of them
         combo_name = list(self.LoadCombos.keys())[0]
         if sparse == True:
-            K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
         else:
-            K11, K12, K21, K22 = self._partition(self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
         # Identify which load combinations have the tags the user has given
         combo_list = Analysis._identify_combos(self, combo_tags)
@@ -2055,10 +2054,10 @@ class FEModel3D():
                 print('- Analyzing load combination ' + combo.name)
 
             # Get the partitioned global fixed end reaction vector
-            FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)
+            FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
             # Get the partitioned global nodal force vector       
-            P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)          
+            P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)          
 
             # Calculate the global displacement vector
             if log: print('- Calculating global displacement vector')
@@ -2136,154 +2135,15 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in combo_list:
-            
-            if log:
-                print('')
-                print('- Analyzing load combination ' + combo.name)
 
-            iter_count_TC = 1    # Tracks tension/compression-only iterations
-            iter_count_PD = 1    # Tracks P-Delta iterations
-            prev_results = None  # Used to store results from the previous iteration
+            # Get the partitioned global fixed end reaction vector
+            FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
-            convergence_TC = False  # Tracks tension/compression-only convergence
-            convergence_PD = False  # Tracks P-Delta convergence
+            # Get the partitioned global nodal force vector       
+            P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
-            divergence_TC = False  # Tracks tension/compression-only divergence
-            divergence_PD = False  # Tracks P-Delta divergence
-
-            # Iterate until either convergence or divergence occurs
-            while ((convergence_TC == False or convergence_PD == False) 
-                  and (divergence_TC == False and divergence_PD == False)):
-
-                # Inform the user which iteration we're on
-                if log:
-                    print('- Beginning tension/compression-only iteration #' + str(iter_count_TC))
-                    print('- Beginning P-Delta iteration #' + str(iter_count_PD))
-
-                # On the first iteration we will ignore the geometric stiffness since it is a function of axial loads that we have not yet calculated
-                if iter_count_PD == 1:
-
-                    if sparse == True:
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
-                    else:
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
-                                                       
-                    # Check that the structure is stable
-                    if log: print('- Checking stability')
-                    Analysis._check_stability(self, K11)
-
-                    # Assemble the force matrices
-                    FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
-                    P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
-
-                # On subsequent iterations we will add the geometric stiffness to account for P-Delta effects
-                else:
-
-                    # Calculate the partitioned global stiffness matrices
-                    if sparse == True:
-
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)  # Initial stiffness matrix
-                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)                      # Geometric stiffness matrix
-                        
-                        # The stiffness matrices are currently `lil` format which is great for
-                        # memory, but slow for mathematical operations. They will be converted to
-                        # `csr` format. The `+` operator performs matrix addition on `csr`
-                        # matrices.
-                        K11 = K11.tocsr() + Kg11.tocsr()
-                        K12 = K12.tocsr() + Kg12.tocsr()
-                        K21 = K21.tocsr() + Kg21.tocsr()
-                        K22 = K22.tocsr() + Kg22.tocsr()
-
-                    else:
-
-                        K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)  # Initial stiffness matrix
-                        Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)              # Geometric stiffness matrix
-                        
-                        K11 = K11 + Kg11
-                        K12 = K12 + Kg12
-                        K21 = K21 + Kg21
-                        K22 = K22 + Kg22
-
-                # Calculate the global displacement vector
-                if log: print('- Calculating the global displacement vector')
-                if K11.shape == (0, 0):
-                    # All displacements are known, so D1 is an empty vector
-                    D1 = []
-                else:
-                    try:
-                        # Calculate the unknown displacements D1
-                        if sparse == True:
-                            # The partitioned stiffness matrix is already in `csr` format. The `@`
-                            # operator performs matrix multiplication on sparse matrices.
-                            D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
-                            D1 = D1.reshape(len(D1), 1)
-                        else:
-                            # The partitioned stiffness matrix is in `csr` format. It will be
-                            # converted to a 2D dense array for mathematical operations.
-                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
-
-                    except:
-                        # Return out of the method if 'K' is singular and provide an error message
-                        raise ValueError('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-
-                # Store the calculated displacements to the model and the nodes in the model
-                Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
-                
-                # Assume the model has converged (to be checked below)
-                convergence_TC = Analysis._check_TC_convergence(self, combo.name, log)
-                
-                # Report on convergence of tension/compression only analysis
-                if convergence_TC == False:
-                    
-                    if log:
-                        print('- Tension/compression-only analysis did not converge on this iteration')
-                        print('- Stiffness matrix will be adjusted')
-                        print('- P-Delta analysis will be restarted')
-                    
-                    # Increment the tension/compression-only iteration count
-                    iter_count_TC += 1
-
-                    # Reset the P-Delta analysis since the T/C analysis didn't converge
-                    convergence_PD = False
-                    iter_count_PD = 0
-
-                else:
-                    if log: print('- Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
-                
-                # Check for divergence in the tension/compression-only analysis
-                if iter_count_TC > max_iter:
-                    divergence_TC = True
-                    raise Exception('- Model diverged during tension/compression-only analysis')
-
-                # Check for P-Delta convergence
-                if iter_count_PD > 1:
-                
-                    # Print a status update for the user
-                    if log: print('- Checking for P-Delta convergence')
-
-                    # Temporarily disable error messages for invalid values.
-                    # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
-                    seterr(invalid='ignore')
-
-                    # Check for convergence
-                    # Note: if the shape of K11 is (0, 0) then all degrees of freedom are fully
-                    # restrained, and P-Delta analysis automatically converges
-                    if K11.shape == (0, 0) or abs(nanmax(divide(D1, prev_results)) - 1) <= tol:
-                        convergence_PD = True
-                        if log: print('- P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')
-                    # Check for divergence
-                    elif iter_count_PD > max_iter:
-                        divergence_PD = True
-                        if log: print('- P-Delta analysis failed to converge after ' + str(max_iter) + ' iteration(s)')
-
-                    # Turn invalid value warnings back on
-                    seterr(invalid='warn') 
-
-                # Save the results for the next iteration
-                prev_results = D1
-
-                # Increment the P-Delta iteration count
-                iter_count_PD += 1
+            # Run the P-Delta analysis for this load combination
+            Analysis._run_PDelta2(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter, tol, True)
         
         # Calculate reactions
         Analysis._calc_reactions(self, log, combo_tags)
@@ -2364,25 +2224,25 @@ class FEModel3D():
                         if sparse == True:
 
                             # Initial stiffness matrix
-                            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+                            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
 
                             # Plastic reduction matrix
-                            Km11, Km12, Km21, Km22 = self._partition(self.Km(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  
+                            Km11, Km12, Km21, Km22 = Analysis._partition(self, self.Km(combo.name, log, sparse).tolil(), D1_indices, D2_indices)  
                         else:
 
                             # Initial stiffness matrix
-                            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+                            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
 
                             # Plastic reduction matrix
-                            Km11, Km12, Km21, Km22 = self._partition(self.Km(combo.name, log, sparse), D1_indices, D2_indices)
+                            Km11, Km12, Km21, Km22 = Analysis._partition(self, self.Km(combo.name, log, sparse), D1_indices, D2_indices)
                                                         
                         # Check that the structure is stable
                         if log: print('- Checking stability')
                         Analysis._check_stability(self, K11 + Km11)
 
                         # Assemble the force matrices
-                        FER1, FER2 = self._partition(self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
-                        P1, P2 = self._partition(self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
+                        FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)  # Fixed end reactions
+                        P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)        # Nodal forces
 
                     # On subsequent iterations we will add the geometric stiffness to account for P-Delta effects.
                     else:
@@ -2391,13 +2251,13 @@ class FEModel3D():
                         if sparse == True:
 
                             # Initial stiffness matrix
-                            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+                            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
 
                             # Geometric stiffness matrix
-                            Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)
+                            Kg11, Kg12, Kg21, Kg22 = Analysis._partition(self, self.Kg(combo.name, log, sparse), D1_indices, D2_indices)
 
                             # Plastic reduction matrix
-                            Km11, Km12, Km21, Km22 = self._partition(self.Km(combo.name, log, sparse), D1_indices, D2_indices)
+                            Km11, Km12, Km21, Km22 = Analysis._partition(self, self.Km(combo.name, log, sparse), D1_indices, D2_indices)
                             
                             # The stiffness matrices are currently `lil` format which is great for memory, but slow for mathematical operations. They will be converted to `csr` format. The `+` operator performs matrix addition on `csr` matrices.
                             K11 = K11.tocsr() + Kg11.tocsr() + Km11.tocsr()
@@ -2408,13 +2268,13 @@ class FEModel3D():
                         else:
 
                             # Initial stiffness matrix
-                            K11, K12, K21, K22 = self._partition(self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+                            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
 
                             # Geometric stiffness matrix
-                            Kg11, Kg12, Kg21, Kg22 = self._partition(self.Kg(combo.name, log, sparse), D1_indices, D2_indices)
+                            Kg11, Kg12, Kg21, Kg22 = Analysis._partition(self, self.Kg(combo.name, log, sparse), D1_indices, D2_indices)
 
                             # Plastic reduction matrix
-                            Km11, Km12, Km21, Km22 = self._partition(self.Km(combo.name, log, sparse), D1_indices, D2_indices)
+                            Km11, Km12, Km21, Km22 = Analysis._partition(self, self.Km(combo.name, log, sparse), D1_indices, D2_indices)
                             
                             K11 = K11 + Kg11 + Km11
                             K12 = K12 + Kg12 + Km12

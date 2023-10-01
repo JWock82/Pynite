@@ -99,9 +99,9 @@ class Test_AISC_Benchmark(unittest.TestCase):
         column.add_node('N1', 0, 0, 0)
         column.add_node('N2', 0, 28, 0)
         
-        column.add_node('N3', 0, 28*1/4, 0)
+        # column.add_node('N3', 0, 28*1/4, 0)
         column.add_node('N4', 0, 28*1/2, 0)
-        column.add_node('N5', 0, 28*3/4, 0)
+        # column.add_node('N5', 0, 28*3/4, 0)
 
         column.def_support('N1', True, True, True, False, True, False)
         column.def_support('N2', True, False, True, False, False, False)
@@ -116,8 +116,8 @@ class Test_AISC_Benchmark(unittest.TestCase):
         # Define section properties
         Iy = 51.4/12**4  # ft^4
         Iz = 484/12**4   # ft^4
-        A = 14.1/12**2   # in^2
-        J = 1.45/12**4   # in^4
+        A = 14.1/12**2   # ft^2
+        J = 1.45/12**4   # ft^4
 
         column.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
         
@@ -157,6 +157,70 @@ class Test_AISC_Benchmark(unittest.TestCase):
         for i, val in enumerate(Mmid_calculated):
             self.assertAlmostEqual(Mmid_calculated[i]/Mmid_expected[i], 1, 2)
             self.assertAlmostEqual(dmid_calculated[i]/dmid_expected[i], 1, 2)
+    
+    def test_AISC_benchmark_case2(self):
+
+        column = FEModel3D()
+
+        column.add_node('N1', 0, 0, 0)
+        column.add_node('N2', 0, 28, 0)
+        
+        # Add an internal node to capture P-little-delta effects
+        column.add_node('N4', 0, 28*1/2, 0)
+
+        column.def_support('N1', True, True, True, True, True, True)
+
+        # Define a material
+        E = 29000*12**2  # ksf
+        G = 11200*12**2  # ksf
+        nu = 0.3
+        rho = 0.490  # kcf
+        column.add_material('Steel', E, G, nu, rho)
+
+        # Define section properties
+        Iy = 51.4/12**4  # ft^4
+        Iz = 484/12**4   # ft^4
+        A = 14.1/12**2   # ft^2
+        J = 1.45/12**4   # ft^4
+
+        column.add_member('M1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
+        
+        column.add_node_load('N2', 'FX', 1, case='P1')
+        column.add_node_load('N2', 'FX', 1, case='P2')
+        column.add_node_load('N2', 'FX', 1, case='P3')
+        column.add_node_load('N2', 'FX', 1, case='P4')
+
+        column.add_node_load('N2', 'FY', -100, 'P2')
+        column.add_node_load('N2', 'FY', -150, 'P3')
+        column.add_node_load('N2', 'FY', -200, 'P4')
+
+        column.add_load_combo('Combo 1', {'P1':1})
+        column.add_load_combo('Combo 2', {'P2':1})
+        column.add_load_combo('Combo 3', {'P3':1})
+        column.add_load_combo('Combo 4', {'P4':1})
+
+        # from PyNite.Visualization import Renderer
+        # renderer = Renderer(column)
+        # renderer.annotation_size = 1
+        # renderer.combo_name = 'Combo 2'
+        # renderer.render_model()
+
+        column.analyze_PDelta()
+
+        Mbase_calculated = []
+        dtip_calculated = []
+        for combo in column.LoadCombos.values():
+            Mbase_calculated.append(-column.Members['M1'].moment('Mz', 0, combo.name)*12)
+            dtip_calculated.append(-column.Members['M1'].deflection('dy', 28, combo.name)*12)
+
+        # Expected results per AISC
+        Mbase_expected = [-336, -469, -598, -848]
+        dtip_expected = [0.901, 1.33, 1.75, 2.56]
+
+        # Check that results are within 1% of expected results
+        for i, val in enumerate(Mbase_calculated):
+            self.assertLessEqual(abs(Mbase_calculated[i]/Mbase_expected[i] - 1), 0.03)
+            self.assertLessEqual(abs(dtip_calculated[i]/dtip_expected[i] - 1), 0.05)
 
         
 
