@@ -402,7 +402,7 @@ def _run_PDelta2(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=Tr
             # Increment the tension/compression-only iteration count
             iter_count_TC += 1
 
-            # Undo the last iteration of the P-Delta analysis since the T/C analysis didn't converge
+            # Undo the last iteration of the analysis since the T/C analysis didn't converge
             _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
             iter_count_PD = 0
 

@@ -50,7 +50,7 @@ class Test_2D_Frame(unittest.TestCase):
         beam.add_member('M1', 'N1', 'N3', 'Concrete', Iy, Iz, J, A)
 
         # Add a member load
-        w = 0.100*(10*12)
+        w = -0.100*(10*12)
         beam.add_member_dist_load('M1', 'FY', w, w)
 
         # Analyze the model
@@ -66,6 +66,6 @@ class Test_2D_Frame(unittest.TestCase):
 
         d2 = beam.Members['M1'].min_deflection('dy')
 
-        print(d1, d2)
+        # print(d1, d2)
 
         self.assertNotAlmostEqual(d1/d2, 1, 3)

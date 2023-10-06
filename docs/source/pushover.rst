@@ -7,7 +7,7 @@ Pushover analysis is a powerful way to consider nonlinear behavior in a structur
 Here's how it works, step by step, in Pynite:
 
 1. Run a load combination using a simple linear-elastic analysis.
-2. Perform tension-only and compression-only iterations and P-Delta analysis with the load we've just applied to capture geometric nonlinear effects in the load combination.
+2. Perform P-Delta analysis and tension/compression-only analysis with the load we've just applied to capture geometric nonlinear effects in the load combination.
 3. Apply a user-defined fraction of the pushover load and adjust the stiffness matrix for inelastic effects at member ends.
 4. Repeat steps 2 and 3 until the full pushover load has been applied.
 5. Repeat steps 2 and 3, but without any additional pushover load, until the displacements converge (or diverge).
