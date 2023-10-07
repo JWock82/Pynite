@@ -61,6 +61,9 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.81
+* Bug fix for multiple support springs at a single node. The program was only considering the effects of one spring at the node, whichever came first in this list: DX, DY, DZ, RX, RY, RZ. This has been remedied.
+
 v0.0.80
 * Refactored/simplified analysis code. Much of it has been moved to a new `Analysis` file that eliminated redundant code.
 * Load combination tags have replaced `combo_type`. You can now use a list of tags to tag your load combinations for easier categorization.
