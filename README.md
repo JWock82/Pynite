@@ -62,7 +62,7 @@ Here's a list of projects that use PyNite:
 
 # What's New?
 v0.0.81
-* Bug fix for multiple support springs at a single node. The program was only considering the effects of one spring at the node, whichever came first in this list: DX, DY, DZ, RX, RY, RZ. This has been remedied.
+* Bug fix for multiple support springs at a single node. When calculating reactions, the program was only considering the effects of one spring at the node, whichever came first in this list: DX, DY, DZ, RX, RY, RZ. This only affected reaction calculations, and has been remedied.
 
 v0.0.80
 * Refactored/simplified analysis code. Much of it has been moved to a new `Analysis` file that eliminated redundant code.
