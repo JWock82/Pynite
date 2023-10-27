@@ -1,3 +1,5 @@
+# Matrix Structural Analysis, 2nd Ed, Problem 8.6
+
 from PyNite import FEModel3D
 from PyNite.Section import SteelSection
 
@@ -23,17 +25,32 @@ plastic_beam.add_node('N3', 24*12, 0, 0)
 
 # Add supports
 plastic_beam.def_support('N1', True, True, True, True, True, True)
-plastic_beam.def_support('N2', False, True, True, False, False, False)
+plastic_beam.def_support('N3', False, True, True, False, False, False)
 
 # Add a member
-plastic_beam.add_member('M1', 'N1', 'N2', 'A992', section='W12x65')
+plastic_beam.add_member('M1', 'N1', 'N3', 'Stl_A992', section='W12x65')
 
 # Add a load
-plastic_beam.add_node_load('N2', 'FY', 0.3, 'Push')
+plastic_beam.add_node_load('N3', 'FY', -0.0001, 'D')
+plastic_beam.add_node_load('N2', 'FY', -0.3, 'Push')
 plastic_beam.add_node_load('N3', 'FX', -1, 'Push')
 
 # Add a load combination
-plastic_beam.add_load_combo('Pushover', {'Push':1})
+plastic_beam.add_load_combo('1.4D', {'D':1.4})
+plastic_beam.add_load_combo('Pushover', {'Push':0.1})
 
-# Analysis the model
-plastic_beam.analyze_pushover(True, True, True, 'Pushover', 1.02, 20, 30, True)
+# Analyze the model
+plastic_beam.analyze_pushover(log=True, check_stability=False, push_combo='Pushover', max_iter=30, tol=0.01, sparse=True, combo_tags=None)
+
+# Plot the moment diagram
+plastic_beam.Members['M1'].plot_shear('Fy', '1.4D')
+plastic_beam.Members['M1'].plot_moment('Mz', '1.4D')
+plastic_beam.Members['M1'].plot_deflection('dy', '1.4D')
+
+# Render the model
+from PyNite.Visualization import Renderer
+rndr = Renderer(plastic_beam)
+rndr.combo_name = '1.4D'
+rndr.render_loads = True
+rndr.deformed_shape = True
+rndr.render_model()

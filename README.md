@@ -61,6 +61,16 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.81
+* Static nonlinear pushover analysis has been added! See the documentation on `readthedocs` for information on how to use it.
+* `Sections` have been introduced to allow for member stresses to be tracked by the program during nonlinear analysis. This opens the door for other useful features down the line too. Use of `Sections` is optional, and only required for pushover analysis.
+* P-Delta analysis code has been greatly simplified. Performance has also been improved, as redundant iterations are no longer being performed.
+* Better documentation for P-Delta analysis.
+* Corrections to unit tests that weren't working properly. Added another AISC Benchmark unit test for P-Delta analysis. This should help safeguard the program against some types of bugs being introduced going forward.
+
+v0.0.81
+* Bug fix for multiple support springs at a single node. When calculating reactions, the program was only considering the effects of one spring at the node, whichever came first in this list: DX, DY, DZ, RX, RY, RZ. This only affected reaction calculations, and has been remedied.
+
 v0.0.80
 * Refactored/simplified analysis code. Much of it has been moved to a new `Analysis` file that eliminated redundant code.
 * Load combination tags have replaced `combo_type`. You can now use a list of tags to tag your load combinations for easier categorization.

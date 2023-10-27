@@ -15,7 +15,7 @@ class PhysMember(Member3D):
     def __init__(self, name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node=None,
                  tension_only=False, comp_only=False, section=None):
         
-        super().__init__(name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node, tension_only, comp_only, section=None)
+        super().__init__(name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node, tension_only, comp_only, section)
         self.sub_members = {}
 
     def descritize(self):

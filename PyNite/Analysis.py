@@ -33,26 +33,32 @@ def _prepare_model(model):
     # Assign an internal ID to all nodes and elements in the model. This number is different from the name used by the user to identify nodes and elements.
     _renumber(model)
 
-def _identify_combos(model, combo_tags):
+def _identify_combos(model, combo_tags=None):
     """Returns a list of load combinations that are to be run based on tags given by the user.
 
     :param model: The model being analyzed.
     :type model: FEModel3D
-    :param combo_tags: A list of tags used for the load combinations to be evaluated.
-    :type combo_tags: list
+    :param combo_tags: A list of tags used for the load combinations to be evaluated. Defaults to `None` in which case all load combinations will be added to the list of load combinations to be run.
+    :type combo_tags: list, optional
     :return: A list containing the load combinations to be analyzed.
     :rtype: list
     """
     
     # Identify which load combinations to evaluate
     if combo_tags is None:
+        # Evaluate all load combinations if not tags have been provided
         combo_list = model.LoadCombos.values()
     else:
+        # Initialize the list of load combinations to be evaluated
         combo_list = []
+        # Step through each load combination in the model
         for combo in model.LoadCombos.values():
-            if any(tag in combo.combo_tags for tag in combo_tags):
+            # Check if this load combination is tagged with any of the tags we're looking for
+            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags):
+                # Add the load combination to the list of load combinations to be evaluated
                 combo_list.append(combo)
     
+    # Return the list of load combinations to be evaluated
     return combo_list
 
 def _check_stability(model, K):
@@ -108,179 +114,7 @@ def _check_stability(model, K):
 
     return
 
-def _run_PDelta(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False, max_iter=30, tol=0.01, first_step=True):
-    """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
-
-    :param combo_name: The name of the load combination to evaluate P-Delta effects for.
-    :type combo_name: string
-    :param log: Prints updates to the console if set to True. Default is False.
-    :type log: bool, optional
-    :param check_stability: When set to True, checks the stiffness matrix for any unstable degrees of freedom and reports them back to the console. This does add to the solution time. Defaults to True.
-    :type check_stability: bool, optional
-    :param max_iter: The maximum number of iterations permitted. If this value is exceeded the program will report divergence. Defaults to 30.
-    :type max_iter: int, optional
-    :param tol: The deflection tolerance (as a percentage) between iterations that will be used to define whether the model has converged (e.g. 0.01 = deflections must converge within 1% between iterations).
-    :type tol: float, optional
-    :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times. Be sure ``scipy`` is installed to use the sparse solver. Default is True.
-    :type sparse: bool, optional
-    :param check_stability: Indicates whether nodal stability should be checked. This slows down the analysis considerably, but can be useful for small models or for debugging. Default is `False`.
-    :type check_stability: bool, optional
-    :param first_step: Indicates whether this P-Delta analysis is the first load step. Usually this should be set to `True`, unless this is a subsequent step of an analysis using multiple load steps. Default is True.
-    :type first_step: bool, optional
-    :raises ValueError: Occurs when there is a singularity in the stiffness matrix, which indicates an unstable structure.
-    :raises Exception: Occurs when a model fails to converge.
-    """
-    # Import `scipy` features if the sparse solver is being used
-    if sparse == True:
-        from scipy.sparse.linalg import spsolve
-
-    iter_count_TC = 1    # Tracks tension/compression-only iterations
-    iter_count_PD = 1    # Tracks P-Delta iterations
-    prev_results = None  # Used to store results from the previous iteration
-
-    convergence_TC = False  # Tracks tension/compression-only convergence
-    convergence_PD = False  # Tracks P-Delta convergence
-
-    divergence_TC = False  # Tracks tension/compression-only divergence
-    divergence_PD = False  # Tracks P-Delta divergence
-
-    # Iterate until either convergence or divergence occurs
-    while ((convergence_TC == False or convergence_PD == False) 
-            and (divergence_TC == False and divergence_PD == False)):
-
-        # Inform the user which iteration we're on
-        if log:
-            print('- Beginning P-Delta iteration #' + str(iter_count_PD))
-            print('- Beginning tension/compression-only iteration #' + str(iter_count_TC))
-
-        # Calculate the partitioned global stiffness matrices
-        if sparse == True:
-
-            # Calculate the initial stiffness matrix
-            K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
-
-            # Calculate the geometric stiffness matrix
-            if iter_count_PD == 1 and first_step:
-                # For the first iteration of the first load step P=0
-                Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, True), D1_indices, D2_indices)
-            else:
-                # For subsequent iterations P will be calculated based on member end displacements
-                Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
-            
-            # The stiffness matrices are currently `lil` format which is great for
-            # memory, but slow for mathematical operations. They will be converted to
-            # `csr` format. The `+` operator performs matrix addition on `csr`
-            # matrices.
-            K11 = K11.tocsr() + Kg11.tocsr()
-            K12 = K12.tocsr() + Kg12.tocsr()
-            K21 = K21.tocsr() + Kg21.tocsr()
-            K22 = K22.tocsr() + Kg22.tocsr()
-
-        else:
-
-            # Initial stiffness matrix
-            K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
-            
-            # Geometric stiffness matrix
-            if iter_count_PD == 1:
-                Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, True), D1_indices, D2_indices)
-            else:
-                Kg11, Kg12, Kg21, Kg22 = _partition(model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
-            
-            K11 = K11 + Kg11
-            K12 = K12 + Kg12
-            K21 = K21 + Kg21
-            K22 = K22 + Kg22
-
-        # Calculate the changes to the global displacement vector
-        if log: print('- Calculating changes to the global displacement vector')
-        if K11.shape == (0, 0):
-            # All displacements are known, so D1 is an empty vector
-            Delta_D1 = []
-        else:
-            try:
-                # Calculate the change in the displacements Delta_D1
-                if sparse == True:
-                    # The partitioned stiffness matrix is already in `csr` format. The `@`
-                    # operator performs matrix multiplication on sparse matrices.
-                    Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
-                    Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
-                else:
-                    # The partitioned stiffness matrix is in `csr` format. It will be
-                    # converted to a 2D dense array for mathematical operations.
-                    Delta_D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
-
-            except:
-                # Return out of the method if 'K' is singular and provide an error message
-                raise ValueError('The stiffness matrix is singular, which indicates that the structure is unstable.')
-
-        # Sum the calculated displacements
-        if first_step:
-            _store_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
-        else:
-            _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
-        
-        # Check whether the tension/compression-only analysis has converged and deactivate any members that are showing forces they can't hold
-        convergence_TC = _check_TC_convergence(model, combo_name, log)
-        
-        # Report on convergence of tension/compression only analysis
-        if convergence_TC == False:
-            
-            if log:
-                print('- Tension/compression-only analysis did not converge on this iteration')
-                print('- Stiffness matrix will be adjusted')
-                print('- P-Delta analysis will be restarted')
-            
-            # Increment the tension/compression-only iteration count
-            iter_count_TC += 1
-
-            # Reset/undo the P-Delta analysis since the T/C analysis didn't converge
-            _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
-            convergence_PD = False
-            iter_count_PD = 0
-
-        else:
-            if log: print('- Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
-        
-        # Check for divergence in the tension/compression-only analysis
-        if iter_count_TC > max_iter:
-            divergence_TC = True
-            raise Exception('- Model diverged during tension/compression-only analysis')
-
-        # Check for P-Delta convergence
-        if iter_count_PD > 1:
-        
-            # Print a status update for the user
-            if log: print('- Checking for P-Delta convergence')
-
-            # Temporarily disable error messages for invalid values.
-            # We'll be dealing with some 'nan' values due to division by zero at supports with zero deflection.
-            seterr(invalid='ignore')
-
-            # Check for convergence
-            # Note: if the shape of K11 is (0, 0) then all degrees of freedom are fully
-            # restrained, and P-Delta analysis automatically converges
-            if K11.shape == (0, 0) or abs(nanmax(divide(Delta_D1, prev_results)) - 1) <= tol:
-                convergence_PD = True
-                if log: print('- P-Delta analysis converged after ' + str(iter_count_PD) + ' iteration(s)')
-            # Check for divergence
-            elif iter_count_PD > max_iter:
-                divergence_PD = True
-                if log: print('- P-Delta analysis failed to converge after ' + str(max_iter) + ' iteration(s)')
-
-            # Turn invalid value warnings back on
-            seterr(invalid='warn') 
-
-        # Save the results for the next iteration
-        prev_results = Delta_D1
-
-        # Increment the P-Delta iteration count
-        iter_count_PD += 1
-    
-    # Flag the model as solved
-    model.solution = 'P-Delta'
-
-def _run_PDelta2(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False, max_iter=30, tol=0.01, first_step=True):
+def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False, max_iter=30, tol=0.01, first_step=True):
     """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
     :param combo_name: The name of the load combination to evaluate P-Delta effects for.
@@ -419,6 +253,74 @@ def _run_PDelta2(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=Tr
     
     # Flag the model as solved
     model.solution = 'P-Delta'
+
+def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False):
+
+    # Calculate the partitioned global stiffness matrices
+    if sparse == True:
+
+        from scipy.sparse.linalg import spsolve
+        
+        # Calculate the initial stiffness matrix
+        K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+
+        # Calculate the geometric stiffness matrix
+        # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
+        Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False).tolil(), D1_indices, D2_indices)
+
+        # Calculate the stiffness reduction matrix
+        Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse).tolil(), D1_indices, D2_indices)
+        
+        # The stiffness matrices are currently `lil` format which is great for
+        # memory, but slow for mathematical operations. They will be converted to
+        # `csr` format. The `+` operator performs matrix addition on `csr`
+        # matrices.
+        K11 = K11.tocsr() + Kg11.tocsr() + Km11.tocsr()
+        K12 = K12.tocsr() + Kg12.tocsr() + Km12.tocsr()
+        K21 = K21.tocsr() + Kg21.tocsr() + Km21.tocsr()
+        K22 = K22.tocsr() + Kg22.tocsr() + Km22.tocsr()
+
+    else:
+
+        # Initial stiffness matrix
+        K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+        
+        # Geometric stiffness matrix
+        # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
+        Kg11, Kg12, Kg21, Kg22 = _partition(model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
+        
+        # Calculate the stiffness reduction matrix
+        Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse), D1_indices, D2_indices)
+        
+        K11 = K11 + Kg11 + Km11
+        K12 = K12 + Kg12 + Km12
+        K21 = K21 + Kg21 + Km21
+        K22 = K22 + Kg22 + Km22
+    
+    # Calculate the changes to the global displacement vector
+    if log: print('- Calculating changes to the global displacement vector')
+    if K11.shape == (0, 0):
+        # All displacements are known, so D1 is an empty vector
+        Delta_D1 = []
+    else:
+        try:
+            # Calculate the change in the displacements Delta_D1
+            if sparse == True:
+                # The partitioned stiffness matrix is already in `csr` format. The `@`
+                # operator performs matrix multiplication on sparse matrices.
+                Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
+                Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
+            else:
+                # The partitioned stiffness matrix is in `csr` format. It will be
+                # converted to a 2D dense array for mathematical operations.
+                Delta_D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+
+        except:
+            # Return out of the method if 'K' is singular and provide an error message
+            raise ValueError('The structure is unstable. Unable to proceed any further with analysis.')
+
+    # Sum the calculated displacements
+    _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
 
 def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
     """Stores calculated displacements from the solver into the model's displacement vector `_D` and into each node object in the model.
@@ -715,13 +617,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
     if log: print('- Calculating reactions')
 
     # Identify which load combinations to evaluate
-    if combo_tags is None:
-        combo_list = model.LoadCombos.values()
-    else:
-        combo_list = []
-        for combo in model.LoadCombos.values():
-            if any(tag in combo.combo_tags for tag in combo_tags):
-                combo_list.append(combo)
+    combo_list = _identify_combos(model, combo_tags)
 
     # Calculate the reactions node by node
     for node in model.Nodes.values():
@@ -933,42 +829,43 @@ def _calc_reactions(model, log=False, combo_tags=None):
                                 node.RxnMZ[combo.name] -= load[1]*factor
             
             # Calculate reactions due to active spring supports at the node
-            elif node.spring_DX[0] != None and node.spring_DX[2] == True:
-                sign = node.spring_DX[1]
-                k = node.spring_DX[0]
-                if sign != None: k = float(sign + str(k))
-                DX = node.DX[combo.name]
-                node.RxnFX[combo.name] += k*DX
-            elif node.spring_DY[0] != None and node.spring_DY[2] == True:
-                sign = node.spring_DY[1]
-                k = node.spring_DY[0]
-                if sign != None: k = float(sign + str(k))
-                DY = node.DY[combo.name]
-                node.RxnFY[combo.name] += k*DY
-            elif node.spring_DZ[0] != None and node.spring_DZ[2] == True:
-                sign = node.spring_DZ[1]
-                k = node.spring_DZ[0]
-                if sign != None: k = float(sign + str(k))
-                DZ = node.DZ[combo.name]
-                node.RxnFZ[combo.name] += k*DZ
-            elif node.spring_RX[0] != None and node.spring_RX[2] == True:
-                sign = node.spring_RX[1]
-                k = node.spring_RX[0]
-                if sign != None: k = float(sign + str(k))
-                RX = node.RX[combo.name]
-                node.RxnMX[combo.name] += k*RX
-            elif node.spring_RY[0] != None and node.spring_RY[2] == True:
-                sign = node.spring_RY[1]
-                k = node.spring_RY[0]
-                if sign != None: k = float(sign + str(k))
-                RY = node.RY[combo.name]
-                node.RxnMY[combo.name] += k*RY
-            elif node.spring_RZ[0] != None and node.spring_RZ[2] == True:
-                sign = node.spring_RZ[1]
-                k = node.spring_RZ[0]
-                if sign != None: k = float(sign + str(k))
-                RZ = node.RZ[combo.name]
-                node.RxnMZ[combo.name] += k*RZ
+            else:
+                if node.spring_DX[0] != None and node.spring_DX[2] == True:
+                    sign = node.spring_DX[1]
+                    k = node.spring_DX[0]
+                    if sign != None: k = float(sign + str(k))
+                    DX = node.DX[combo.name]
+                    node.RxnFX[combo.name] += k*DX
+                if node.spring_DY[0] != None and node.spring_DY[2] == True:
+                    sign = node.spring_DY[1]
+                    k = node.spring_DY[0]
+                    if sign != None: k = float(sign + str(k))
+                    DY = node.DY[combo.name]
+                    node.RxnFY[combo.name] += k*DY
+                if node.spring_DZ[0] != None and node.spring_DZ[2] == True:
+                    sign = node.spring_DZ[1]
+                    k = node.spring_DZ[0]
+                    if sign != None: k = float(sign + str(k))
+                    DZ = node.DZ[combo.name]
+                    node.RxnFZ[combo.name] += k*DZ
+                if node.spring_RX[0] != None and node.spring_RX[2] == True:
+                    sign = node.spring_RX[1]
+                    k = node.spring_RX[0]
+                    if sign != None: k = float(sign + str(k))
+                    RX = node.RX[combo.name]
+                    node.RxnMX[combo.name] += k*RX
+                if node.spring_RY[0] != None and node.spring_RY[2] == True:
+                    sign = node.spring_RY[1]
+                    k = node.spring_RY[0]
+                    if sign != None: k = float(sign + str(k))
+                    RY = node.RY[combo.name]
+                    node.RxnMY[combo.name] += k*RY
+                if node.spring_RZ[0] != None and node.spring_RZ[2] == True:
+                    sign = node.spring_RZ[1]
+                    k = node.spring_RZ[0]
+                    if sign != None: k = float(sign + str(k))
+                    RZ = node.RZ[combo.name]
+                    node.RxnMZ[combo.name] += k*RZ
 
 def _check_statics(model, combo_tags=None):
     '''

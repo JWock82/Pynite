@@ -1,5 +1,5 @@
 # %%
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose
 from numpy.linalg import inv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
@@ -218,44 +218,56 @@ class Member3D():
         # Return the local geomtric stiffness matrix, with end releases applied
         return kg_Condensed
     
-    def km(self, combo_name='Combo 1', push_combo='Push'):
+    def km(self, combo_name='Combo 1', push_combo='Push', step_num=1):
         """Returns the local plastic reduction matrix for the element.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
         :param push_combo: The name of the load combination that defines the pushover load. Defaults to 'Push 1'.
         :type push_combo: str, optional
+        :param step_num: The pushover load step to consider for calculating the plastic reduciton matrix. Default is 1.
+        :type step_num: int, optional
         :return: The plastic reduction matrix for the element
         :rtype: array
         """
 
+        # Get the total end forces applied to the element
+        f = self.f(combo_name) - self.fer(combo_name) - self.fer(push_combo)*step_num
+        
         # Get the elastic local stiffness matrix
         ke = self.k()
 
-        # Get the end forces applied to the element
-        f = self.f(combo_name) - self.fer(combo_name)
-        
-        # Add the end forces applied by the pushover combination
-        f += self.f(push_combo) - self.fer(push_combo)
+        # Calculate the member axial force - used to determine the geometric stiffness. This axial force is based on the latest results from the last iteration performed and stored in the model's displacements.
+        d = self.d(combo_name)
+        P = self.E*self.A/self.L()*(d[6, 0] - d[0, 0])
+
+        # Get the geometric local stiffness matrix
+        kg = self.kg(P)
+
+        # Get the total elastic local stiffness matrix
+        ke = add(ke, kg)
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
             raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
         else:
-            Gi = self.section.G(f[0], f[4], f[5])
-            Gj = self.section.G(f[6], f[10], f[11])
+            # TODO: Note that we have assumed that `f` is based on the total load acting on the member at this load step, rather than just the change in load for this load step. This seems appropriate, since G is the gradient to the yield surface, and where we are heading along that surface depends on the total load applied, rather than a part of the total load. Need to verify this works correctly with test cases.
+            Gi = self.section.G(f[0, 0], f[4, 0], f[5, 0])
+            Gj = self.section.G(f[6, 0], f[10, 0], f[11, 0])
 
         # Expand the gradients for a 12 degree of freedom element
         zeros_array = zeros((6, 1))
-        Gi = vstack(Gi, zeros_array)
-        Gj = vstack(zeros_array, Gj)
-        G = hstack(Gi, Gj)
+        Gi = vstack((Gi, zeros_array))
+        Gj = vstack((zeros_array, Gj))
+        G = hstack((Gi, Gj))
 
         # Calculate the plastic reduction matrix for each end of the element
-        return -ke @ G @ inv(G.T() @ ke @ G) @ G.T() @ ke
-
-        # Combine and return the plastic reduction matrices
-        return kmi + kmj
+        # TODO: Note that `ke` below already accounts for P-Delta effects and any member end releases which should spill into `km`. I believe end releases will resolve themselves because of this. We'll see how this tests when we get to testing. If it causes problems when end releases are applied we may need to adjust our calculation of G when end releases are present.
+        # Check that G is not a zero matrix, which indicates no plastic behavior
+        if allclose(G, 0, atol=1e-14):
+            return zeros((12, 12))
+        else:
+            return -ke @ G @ inv(G.T @ ke @ G) @ G.T @ ke
     
     def lamb(self, combo_name='Combo 1'):
 
@@ -573,19 +585,21 @@ class Member3D():
         # Calculate and return the geometric stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.kg(P)), self.T())
 
-    def Km(self, combo_name, push_combo):
+    def Km(self, combo_name, push_combo, step_num):
         """Returns the global plastic reduction matrix for the member. Used to modify member behavior for plastic hinges at the ends.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for.
         :type combo_name: string
         :param push_combo: The name of the load combination used to define the pushover load.
         :type push_combo: string
+        :param step_num: The load step (1, 2, 3, ...etc) to use to determine the current load from the pushover combo.
+        :type step_num: int
         :return: The global plastic reduction matrix for the member.
         :rtype: array
         """
 
         # Calculate and return the plastic reduction matrix in global coordinates
-        return matmul(matmul(inv(self.T()), self.km(combo_name, push_combo)), self.T())
+        return matmul(matmul(inv(self.T()), self.km(combo_name, push_combo, step_num)), self.T())
     
     def F(self, combo_name='Combo 1'):
         """
