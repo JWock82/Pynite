@@ -32,25 +32,26 @@ plastic_beam.add_member('M1', 'N1', 'N3', 'Stl_A992', section='W12x65')
 
 # Add a load
 plastic_beam.add_node_load('N3', 'FY', -0.0001, 'D')
-plastic_beam.add_node_load('N2', 'FY', -0.3, 'Push')
-plastic_beam.add_node_load('N3', 'FX', -1, 'Push')
+plastic_beam.add_node_load('N2', 'FY', -0.3*259.3, 'Push')
+plastic_beam.add_node_load('N3', 'FX', -1*259.3, 'Push')
 
 # Add a load combination
 plastic_beam.add_load_combo('1.4D', {'D':1.4})
-plastic_beam.add_load_combo('Pushover', {'Push':0.1})
+plastic_beam.add_load_combo('Pushover', {'Push':0.05})
 
 # Analyze the model
 plastic_beam.analyze_pushover(log=True, check_stability=False, push_combo='Pushover', max_iter=30, tol=0.01, sparse=True, combo_tags=None)
 
 # Plot the moment diagram
-plastic_beam.Members['M1'].plot_shear('Fy', '1.4D')
-plastic_beam.Members['M1'].plot_moment('Mz', '1.4D')
-plastic_beam.Members['M1'].plot_deflection('dy', '1.4D')
+# plastic_beam.Members['M1'].plot_shear('Fy', '1.4D')
+# plastic_beam.Members['M1'].plot_moment('Mz', '1.4D')
+# plastic_beam.Members['M1'].plot_deflection('dy', '1.4D')
 
 # Render the model
-from PyNite.Visualization import Renderer
-rndr = Renderer(plastic_beam)
-rndr.combo_name = '1.4D'
-rndr.render_loads = True
-rndr.deformed_shape = True
-rndr.render_model()
+# from PyNite.Visualization import Renderer
+# rndr = Renderer(plastic_beam)
+# rndr.combo_name = '1.4D'
+# rndr.render_loads = True
+# rndr.deformed_shape = True
+# rndr.deformed_scale = 100
+# rndr.render_model()
