@@ -18,7 +18,7 @@ class Section():
         pass
 
     def G(self, fx, my, mz):
-        """Returns the gradient to the yield surface at a given point
+        """Returns the gradient to the yield surface at a given point using numerical differentiation. This is a default solution. For a better solution, overwrite this method with a more precies one in the material/shape specific child class that inherits from this class.
         """
         
         # Small increment for numerical differentiation
@@ -75,7 +75,37 @@ class SteelSection(Section):
 
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
+    
+    def G(self, fx, my, mz):
+        """Returns the gradient to the material's yield surface for the given load. Used to construct the plastic reduction matrix for nonlinear behavior.
 
+        :param fx: Axial force at the cross-section.
+        :type fx: float
+        :param my: y-axis (weak) moment at the cross-section.
+        :type my: float
+        :param mz: z-axis (strong) moment at the cross-section.
+        :type mz: float
+        :return: The gradient to the material's yield surface at the cross-section.
+        :rtype: array
+        """
+        
+        # Plastic strengths for material nonlinearity
+        Py = self.fy*self.A
+        Mpy = self.fy*self.Zy
+        Mpz = self.fy*self.Zz
+
+        # Partial derivatives of Phi
+        dPhi_dfx = 18*fx**5*my**2/(Mpy**2*Py**6) + 2*fx/Py**2 + 7.0*fx*mz**2/(Mpz**2*Py**2)
+        dPhi_dmy = 6*fx**6*my/(Mpy**2*Py**6) + 2*my/Mpy**2 + 9.0*my*mz**4/(Mpy**2*Mpz**4)
+        dPhi_dmz = 7.0*fx**2*mz/(Mpz**2*Py**2) + 2*mz/Mpz**2 + 18.0*my**2*mz**3/(Mpy**2*Mpz**4)
+        
+        # Return the gradient
+        return np.array([[dPhi_dfx],
+                         [0],
+                         [0],
+                         [0],
+                         [dPhi_dmy],
+                         [dPhi_dmz]])
 
 # test_section = SteelSection('W8x31', 9.13, 37.1, 110, 0.536, 14.1, 30.4, 50)
 # print(test_section.G(15, 30, 50))

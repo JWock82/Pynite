@@ -231,13 +231,13 @@ class Member3D():
         :rtype: array
         """
 
-        # Get the total end forces applied to the element
+        # Get the total elastic end forces applied to the element
         f = self.f(combo_name) - self.fer(combo_name) - self.fer(push_combo)*step_num
         
         # Get the elastic local stiffness matrix
         ke = self.k()
 
-        # Calculate the member axial force - used to determine the geometric stiffness. This axial force is based on the latest results from the last iteration performed and stored in the model's displacements.
+        # Calculate the elastic member axial force - used to determine the geometric stiffness. This axial force is based on the latest results from the last iteration performed and stored in the model's displacements.
         d = self.d(combo_name)
         P = self.E*self.A/self.L()*(d[6, 0] - d[0, 0])
 
@@ -251,7 +251,7 @@ class Member3D():
         if self.section is None:
             raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
         else:
-            # TODO: Note that we have assumed that `f` is based on the total load acting on the member at this load step, rather than just the change in load for this load step. This seems appropriate, since G is the gradient to the yield surface, and where we are heading along that surface depends on the total load applied, rather than a part of the total load. Need to verify this works correctly with test cases.
+            # TODO: Note that we have assumed that `f` is based on the total elastic load acting on the member at this load step, rather than just the change in load for this load step. This seems appropriate, since G is the gradient to the yield surface, and where we are heading along that surface depends on the total load applied, rather than a part of the total load. Need to verify this works correctly with test cases.
             Gi = self.section.G(f[0, 0], f[4, 0], f[5, 0])
             Gj = self.section.G(f[6, 0], f[10, 0], f[11, 0])
 
@@ -428,13 +428,12 @@ class Member3D():
 
 #%%   
     def f(self, combo_name='Combo 1'):
-        """
-        Returns the member's local end force vector for the given load combination.
+        """Returns the member's local end force vector for the given load combination.
 
-        Parameters
-        ----------
-        combo_name : string
-            The name of the load combination to calculate the local end force vector for (not the load combination itself).
+        :param combo_name: The load combination to get the local end for vector for. Defaults to 'Combo 1'.
+        :type combo_name: str, optional
+        :return: The member's local end force vector for the given load combination.
+        :rtype: array
         """
         
         # Calculate and return the member's local end force vector

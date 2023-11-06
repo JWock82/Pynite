@@ -2158,7 +2158,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
     
-    def analyze_pushover(self, log=False, check_stability=True, push_combo='Combo 1', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
+    def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Combo 1', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
 
         if log:
             print('+---------------------+')
@@ -2223,6 +2223,10 @@ class FEModel3D():
             # Solve the current load combination without the pushover load applied
             Analysis._PDelta_step(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter, tol, first_step=True)
 
+            # Delete this next line used for debugging
+            fx, my, mz = self.Members['M1'].f(combo.name)[0, 0], self.Members['M1'].f(combo.name)[4, 0], self.Members['M1'].f(combo.name)[5, 0]
+            dummy = 1
+
             # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
             while load_factor <= 1:
                 
@@ -2232,6 +2236,9 @@ class FEModel3D():
 
                 # Run the next pushover load step
                 Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
+
+                # Delete this next line used for debugging
+                fx, my, mz = self.Members['M1'].f(combo.name)[0, 0], self.Members['M1'].f(combo.name)[4, 0], self.Members['M1'].f(combo.name)[5, 0]
 
                 # Move on to the next load step
                 load_factor += load_step
