@@ -830,6 +830,10 @@ def _calc_reactions(model, log=False, combo_tags=None):
             
             # Calculate reactions due to active spring supports at the node
             else:
+<<<<<<< HEAD
+=======
+                
+>>>>>>> 74d30fad512dae3ed27fe6ce9e116990238b5085
                 if node.spring_DX[0] != None and node.spring_DX[2] == True:
                     sign = node.spring_DX[1]
                     k = node.spring_DX[0]
