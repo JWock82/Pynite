@@ -61,7 +61,7 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v0.0.81
+v0.0.81 - in progress
 * I've started work on nonlinear pushover analysis. This has proven to be a challenging feature to implement, and still has a long way to go. However, in the process of working on pushover analaysis I identified several inneficiencies in the analysis code and fixed them. This update includes those changes, and brings the "work-in-progress" pushover code into the main branch of the project. I decided to merge the pushover branch into to the master branch because critical parts of the analysis code were diverging from the master branch, making it harder to accept pull requests from other users. In the future I'll be working on branches in smaller pieces to avoid this problem.
 * `Sections` have been introduced to allow for member stresses to be tracked by the program during nonlinear analysis in the future. This opens the door for other useful features down the line too. Use of `Sections` is optional, and will only required for pushover analysis when that feature is implemented. You do not need to use this feature yet.
 * P-Delta analysis code has been greatly simplified. Performance has also been improved, as redundant iterations are no longer being performed.
