@@ -62,13 +62,11 @@ Here's a list of projects that use PyNite:
 
 # What's New?
 v0.0.81
-* Static nonlinear pushover analysis has been added! See the documentation on `readthedocs` for information on how to use it.
-* `Sections` have been introduced to allow for member stresses to be tracked by the program during nonlinear analysis. This opens the door for other useful features down the line too. Use of `Sections` is optional, and only required for pushover analysis.
+* Started work on nonlinear pushover analysis. Started documentation too. Still unready for production with a long way to go, but I wanted to get it committed because a lot of analysis code has been simplified in the process of working toward pushover analysis.
+* `Sections` have been introduced to allow for member stresses to be tracked by the program during nonlinear analysis. This opens the door for other useful features down the line too. Use of `Sections` is optional, and will only required for pushover analysis when that feature is implemented.
 * P-Delta analysis code has been greatly simplified. Performance has also been improved, as redundant iterations are no longer being performed.
 * Better documentation for P-Delta analysis.
 * Corrections to unit tests that weren't working properly. Added another AISC Benchmark unit test for P-Delta analysis. This should help safeguard the program against some types of bugs being introduced going forward.
-
-v0.0.81
 * Bug fix for multiple support springs at a single node. When calculating reactions, the program was only considering the effects of one spring at the node, whichever came first in this list: DX, DY, DZ, RX, RY, RZ. This only affected reaction calculations, and has been remedied.
 
 v0.0.80
