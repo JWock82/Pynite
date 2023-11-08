@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../../PyNite'))
 project = 'Pynite'
 copyright = '2023, D. Craig Brinck, SE'
 author = 'D. Craig Brinck, SE'
-release = '0.0.71'
+release = '0.0.81'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
