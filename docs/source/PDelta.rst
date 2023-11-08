@@ -1,5 +1,5 @@
 ====================
-P-(U+0394) and P-(U+03B4) Analysis
+P-:math:`{\Delta}` and P-:math:`{\delta}` Analysis
 ====================
 
 When a structure is loaded, it displaces. Once a structure has displaced, the forces act on a geometry that is different than the geometry that was initially analyzed. Secondary forces develop due to eccentricities created by these displacements. These secondary forces are known collectively as P-(U+0394) and P-(U+03B4) effects.
