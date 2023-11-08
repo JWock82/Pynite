@@ -12,7 +12,7 @@ There are traditionally 2 types of procedures used to run P-(U+0394) analysis:
 
 P-(U+03B4) effects can be captured by modeling additional nodes along the members length. This forces the analysis to track member internal displacements at the nodes during analysis. In most cases only 2 or 3 intermediate nodes are required. AISC has published an good engineering journal article discussing this method.
 
-The procedure Pynite uses is as follows:
+Pynite can perform perform P-(U+0394) analysis, and with the use of internal nodes P-(U+034F) analysis. It's important to note that in Pynite P-(U+0394) and P-(U+034F) effects are not considered for plates. The procedure Pynite uses is as follows:
 
 1. Run a load combination using a simple linear-elastic analysis in order to calculate member axial loads.
 2. Perform tension-only and compression-only iterations. If tension/compression-only analysis did not converge, undo the analysis, deactivate/reactivate members as needed, and go back to step 1.

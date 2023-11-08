@@ -50,31 +50,12 @@ you usually only want to do this when you are debugging a model.
 
 Instability Type 3: Second Order Effects
 ========================================
-Once the Type 1 and Type 2 instabilities are rooted out of your model, there may be a third type of
-instability lurking quietly inside it. These types of instabilities often go unnoticed by the
-engineer because the program is able to solve the system of equations without a singularity.
+Once the Type 1 and Type 2 instabilities are rooted out of your model, there may be a third type of instability lurking quietly inside it. These types of instabilities often go unnoticed by the engineer because the program is able to solve the system of equations without a singularity.
 
-Most material codes recognize that a first-order analysis is often not enough. As a structure
-deforms under load, the geometry changes, making the analysis results invalid. This requires us to
-reanalyze the structure under the new deformed geometry. The process is iterative until one of two
-things happens: either (1) the additional deflections become smaller on each iteration and
-eventually insignificant (convergence), or (2) the additional deflections increase with each
-iteration and the structure collapses (divergence).
+Most material codes recognize that a first-order analysis is often not enough. As a structure deforms under load, the geometry changes, making the analysis results invalid. This requires us to reanalyze the structure under the new deformed geometry.
 
-The P-Delta analysis feature is one tool PyNite provides to help check for this type of
-instability. Additional considerations are usually necessary to capture this behavior, such as
-material stiffness reductions and notional loads. P-Delta analysis is but one piece of the overall
-picture, which is usually defined by the material's building code. PyNite's P-Delta analysis passes
-AISC's benchmark tests for a rigorous second-order analysis procedure.
+The P-(U+0394) analysis feature is one tool PyNite provides to help check for this type of instability. Additional considerations are usually necessary to capture this behavior, such as material stiffness reductions and notional loads. P-Delta analysis is but one piece of the overall picture, which is usually defined by the material's building code. You can read more about P-(U+0394) :doc:`here <page_b>`.
 
-P-Delta analysis and P-little-delta analysis are two different things. PyNite can check both with a
-little help from the user. P-little-delta effects can be captured by forcing PyNite to track
-intermediate member deflections by placing intermediate nodes along the member's length. There are
-many papers and technical discussions about how many nodes are necessary. Three is often sufficient.
+P-Delta analysis and P-little-delta analysis are two different things. PyNite can check both with a little help from the user. P-little-delta effects can be captured by forcing PyNite to track intermediate member deflections by placing intermediate nodes along the member's length. There are many papers and technical discussions about how many nodes are necessary. Three is often sufficient.
 
-Second order effects are usually only critical for models with slender members, or members with
-high axial loads in the presence of bending moments. If you don't have these types of features in
-your model, second order effects may be negligible. Consult your building code for specific
-criteria in making this determination. Either way, running a P-Delta analysis can help identify
-erorrs in the model you may have been unaware of. A model that cannot pass a P-Delta analysis is
-often something you don't really want to build.
+Second order effects are usually only critical for models with slender members, or members with high axial loads in the presence of bending moments. If you don't have these types of features in your model, second order effects may be negligible. Consult your building code for specific criteria in making this determination. Either way, running a P-Delta analysis can help identify erorrs in the model you may have been unaware of. A model that cannot pass a P-Delta analysis is often something you don't really want to build.
