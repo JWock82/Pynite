@@ -1,10 +1,10 @@
 ====================
-P-:math:`\\Delta` and P-:math:`\\delta` Analysis
+P-:math:`\Delta` and P-:math:`\delta` Analysis
 ====================
 
 When a structure is loaded, it displaces. Once a structure has displaced, the forces act on a geometry that is different than the geometry that was initially analyzed. Secondary forces develop due to eccentricities created by these displacements. These secondary forces are known collectively as P-(U+0394) and P-(U+03B4) effects.
 
-P-(U+0394) effects are secondary forces that develop due to the displacements of nodes in the model, while P-(U+03B4) effects are secondary forces that develop due to member displacements.
+P-:math:`\Delta` effects are secondary forces that develop due to the displacements of nodes in the model, while P-(U+03B4) effects are secondary forces that develop due to member displacements.
 
 There are traditionally 2 types of procedures used to run P-(U+0394) analysis:
 1. The iterative procedure - A basic analysis is rerun considering the effects of the displaced goemetry, leading to further displacements. These further displacements require further iterations until the displacements either converge or diverge.
