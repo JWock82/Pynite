@@ -223,12 +223,13 @@ class FEModel3D():
         :param section: A 'PyNite' `Section` object.
         :type section: Section
         """
+
+        # Check if the section name has already been used
         if name not in self.Sections.keys():
-
-            # Story the section in the section's dictionary
+            # Store the section in the `Sections` dictionary
             self.Sections[name] = section
-
         else:
+            # Stop execution and notify the user that the section name is already being used
             raise Exception('Cross-section name ' + name + ' already exists in the model.')
 
     def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
@@ -278,7 +279,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name, i_node, j_node, material, Iy=None, Iz=None, J=None, A=None, aux_node=None, tension_only=False, comp_only=False, section=None):
+    def add_member(self, name, i_node, j_node, material, Iy=None, Iz=None, J=None, A=None, aux_node=None, tension_only=False, comp_only=False, section_name=None):
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -304,7 +305,7 @@ class FEModel3D():
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
         :raises NameError: Occurs if the specified name already exists.
-        :param section: The cross section to use for section properties. If section is `None` the user must provide `Iy`, `Iz`, `A`, and `J`. If section is not `None` any values of `Iy`, `Iz`, `A`, and `J` will be ignored and the cross-section's values will be used instead.
+        :param section_name: The name of the cross section to use for section properties. If section is `None` the user must provide `Iy`, `Iz`, `A`, and `J`. If section is not `None` any values of `Iy`, `Iz`, `A`, and `J` will be ignored and the cross-section's values will be used instead.
         :type section: string
         :return: The name of the member added to the model.
         :rtype: str
@@ -323,9 +324,9 @@ class FEModel3D():
                 
         # Create a new member
         if aux_node == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section=section)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section=section)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         
         # Add the new member to the list
         self.Members[name] = new_member

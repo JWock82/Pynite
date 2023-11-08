@@ -23,7 +23,7 @@ class Member3D():
 
 #%%
     def __init__(self, name, i_node, j_node, material, model, Iy, Iz, J, A, auxNode=None,
-                 tension_only=False, comp_only=False, section=None):
+                 tension_only=False, comp_only=False, section_name=None):
         """
         Initializes a new member.
         """
@@ -36,18 +36,18 @@ class Member3D():
         self.G = model.Materials[material].G   # The shear modulus of the element
 
         # Section properties
-        if section is None:
+        if section_name is None:
             self.section = None
             self.A = A            # The cross-sectional area
             self.Iy = Iy          # The y-axis moment of inertia
             self.Iz = Iz          # The z-axis moment of inertia
             self.J = J            # The torsional constant
         else:
-            self.section = section
-            self.A = section.A
-            self.Iy = section.Iy
-            self.Iz = section.Iz
-            self.J = section.J
+            self.section = model.Sections[section_name]
+            self.A = model.Sections[section_name].A
+            self.Iy = model.Sections[section_name].Iy
+            self.Iz = model.Sections[section_name].Iz
+            self.J = model.Sections[section_name].J
         
         self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')

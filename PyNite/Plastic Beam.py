@@ -28,7 +28,7 @@ plastic_beam.def_support('N1', True, True, True, True, True, True)
 plastic_beam.def_support('N3', False, True, True, False, False, False)
 
 # Add a member
-plastic_beam.add_member('M1', 'N1', 'N3', 'Stl_A992', section='W12x65')
+plastic_beam.add_member('M1', 'N1', 'N3', 'Stl_A992', section_name='W12x65')
 
 # Add a load
 plastic_beam.add_node_load('N3', 'FY', -0.0001, 'D')
@@ -40,7 +40,7 @@ plastic_beam.add_load_combo('1.4D', {'D':1.4})
 plastic_beam.add_load_combo('Pushover', {'Push':0.05})
 
 # Analyze the model
-plastic_beam.analyze_pushover(log=True, check_stability=False, push_combo='Pushover', max_iter=30, tol=0.01, sparse=True, combo_tags=None)
+plastic_beam._not_ready_yet_analyze_pushover(log=True, check_stability=False, push_combo='Pushover', max_iter=30, tol=0.01, sparse=True, combo_tags=None)
 
 # Plot the moment diagram
 # plastic_beam.Members['M1'].plot_shear('Fy', '1.4D')
