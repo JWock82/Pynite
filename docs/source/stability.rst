@@ -50,10 +50,10 @@ you usually only want to do this when you are debugging a model.
 
 Instability Type 3: Second Order Effects
 ========================================
-Once the Type 1 and Type 2 instabilities are rooted out of your model, there may be a third type of instability lurking quietly inside it. These types of instabilities often go unnoticed by the engineer because the program is able to solve the system of equations without a singularity.
+Once the Type 1 and Type 2 instabilities are rooted out of your model, there may be a third type of instability lurking quietly inside it. These types of instabilities can go unnoticed without careful attention to the analysis procedure.
 
 Most material codes recognize that a first-order analysis is often not enough. As a structure deforms under load, the geometry changes, making the analysis results invalid. This requires us to reanalyze the structure under the new deformed geometry.
 
-The P-:math:`\Delta` analysis feature is one tool PyNite provides to help check for this type of instability. P-:math:`\Delta` analysis is but one piece of the overall picture, which is usually defined by the material's building code. Additional considerations are usually necessary to capture this behavior, such as P-:math:`\delta` analysis, material stiffness reductions and notional loads. See :doc:`PDelta` for more information.
+The P-:math:`\Delta` analysis feature is one tool PyNite provides to help check for this type of instability. P-:math:`\Delta` analysis is but one piece of the overall picture, which is usually defined by the material's building code. Additional considerations are usually necessary to capture this behavior, such as P-:math:`\delta` analysis, material stiffness reductions and notional loads. Note also that Pynite only performs P-:math:`\Delta` analysis for members. P-:math:`\Delta` effects are not considered for plates. See :doc:`PDelta` for more information.
 
 Second order effects are usually only critical for models with slender members, or members with high axial loads in the presence of bending moments. If you don't have these types of features in your model, second order effects may be negligible. Consult your building code for specific criteria in making this determination. Either way, running a P-Delta analysis can help identify erorrs in the model you may have been unaware of. A model that cannot pass a P-Delta analysis is often something you don't really want to build.
