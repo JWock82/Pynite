@@ -12,7 +12,21 @@ There are traditionally 2 types of procedures used to run P-:math:`\Delta` analy
 
 P-:math:`\delta` effects can be captured by modeling additional nodes along the members length. This forces the analysis to track member internal displacements at the nodes during analysis. In most cases only 2 or 3 intermediate nodes are required. AISC has published an good engineering journal article discussing this method.
 
-Pynite can perform perform P-:math:`\Delta` analysis, and with the use of internal nodes P-(U+034F) analysis. It's important to note that in Pynite P-:math:`\Delta` and P-(U+034F) effects are not considered for plates. The procedure Pynite uses is as follows:
+Procedure
+=========
+
+Pynite can perform perform P-:math:`\Delta` analysis, and with the use of internal nodes added along members P-:math:`\delta` analysis. Please note that in Pynite P-:math:`\Delta` and P-:math:`\delta` effects are not considered for plates.
+
+To run a P-:math:`\Delta` analysis use the ``FEModel3D.anapyze_PDelta()`` method as follows:
+
+.. code-block:: python
+
+    # Run a P-Delta analysis on `my_model`
+    my_model.analyze_PDelta()
+
+For a more detailed description of the options available for P-:math:`\Delta` analysis see the :doc:`FEModel3D </FEModel3D>` documentation.
+
+The procedure Pynite uses is as follows:
 
 1. Run a load combination using a simple linear-elastic analysis in order to calculate member axial loads.
 2. Perform tension-only and compression-only iterations. If tension/compression-only analysis did not converge, undo the analysis, deactivate/reactivate members as needed, and go back to step 1.
@@ -20,7 +34,10 @@ Pynite can perform perform P-:math:`\Delta` analysis, and with the use of intern
 4. Perform tension-only and compression-only iterations. If tension/compression-only analysis did not converge, undo the P-:math:`\Delta` analysis, deactivate/reactivate members as needed, and go back to step 3.
 5. Go back to step 1 for the next load combination. Repeat until all applicable load combinations have been evaluated.
 
-AISC has provided benchmark tests found in AISC 360-16 commentary C2.1 that can be used as a guage to test a program's P-:math:`\Delta` and P-:math:`\delta` analysis capabilities. Pynite's P-:math:`\Delta` and P-:math:`\delta` analysis pass the AISC benchmark tests when a single intermediate node is introduced at the midpoint of the members to pick up P-:math:`\delta` effects.
+Validation
+==========
+
+AISC has provided benchmark tests found in AISC 360-16 commentary C2.1 that can be used as a guage to test a program's P-:math:`\Delta` and P-:math:`\delta` analysis capabilities. Pynite's P-:math:`\Delta` and P-:math:`\delta` analysis pass the AISC benchmark tests when a single intermediate node is introduced at the midpoint of the members to pick up P-:math:`\delta` effects. The number of nodes necessary to model P-:math:`\delta` effects may vary from one model to the next.
 
 Limitations
 ===========

@@ -114,7 +114,7 @@ def _check_stability(model, K):
 
     return
 
-def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False, max_iter=30, tol=0.01, first_step=True):
+def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False, max_iter=30, first_step=True):
     """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
     :param combo_name: The name of the load combination to evaluate P-Delta effects for.
@@ -125,8 +125,6 @@ def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=Tr
     :type check_stability: bool, optional
     :param max_iter: The maximum number of iterations permitted. If this value is exceeded the program will report divergence. Defaults to 30.
     :type max_iter: int, optional
-    :param tol: The deflection tolerance (as a percentage) between iterations that will be used to define whether the model has converged (e.g. 0.01 = deflections must converge within 1% between iterations).
-    :type tol: float, optional
     :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times. Be sure ``scipy`` is installed to use the sparse solver. Default is True.
     :type sparse: bool, optional
     :param check_stability: Indicates whether nodal stability should be checked. This slows down the analysis considerably, but can be useful for small models or for debugging. Default is `False`.
