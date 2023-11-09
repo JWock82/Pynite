@@ -44,3 +44,5 @@ Limitations
 *Note that P-:math:`\Delta` and P-:math:`\delta` analysis is just one part of an overall second-order analysis. See the building code for additional requirements that may be applicable, such as stiffness reductions and notional loads.
 
 *Loads are applied in a single load step. This is sufficient for most common cases.
+
+*P-:math:`\Delta` effects are not considered for plate elements.
