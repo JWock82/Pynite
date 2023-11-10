@@ -28,6 +28,9 @@ extensions = ['sphinx.ext.autodoc']
 # Control how class names are displayed
 autoclass_content = 'class'
 
+# autodoc settings
+autodoc_mock_imports = ['numpy']  # Mock the numpy import
+
 templates_path = ['_templates']
 exclude_patterns = []
 
