@@ -12,8 +12,8 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../PyNite'))
 
-from PyNite import FEModel3D
-import numpy
+# autodoc settings
+autodoc_mock_imports = ['numpy']  # Mock the numpy import
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
