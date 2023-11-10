@@ -11,11 +11,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../PyNite'))
-sys.path.insert(0, os.path.abspath('../../PyNite/FEModel3D'))
-
-# autodoc settings
-autodoc_mock_imports = ['numpy']  # Mock the numpy import
-from PyNite import FEModel3D
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -29,6 +24,9 @@ release = '0.0.81'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = ['sphinx.ext.autodoc']
+
+# Control how class names are displayed
+autoclass_content = 'class'
 
 templates_path = ['_templates']
 exclude_patterns = []

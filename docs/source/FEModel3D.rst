@@ -54,5 +54,5 @@ Avaliable dictionaries are:
 FEModel3D Reference
 ===================
 
-.. autoclass:: FEModel3D
+.. autoclass:: PyNite.FEModel3D
    :members:
