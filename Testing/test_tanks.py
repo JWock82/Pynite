@@ -160,17 +160,13 @@ class Test_Tanks(unittest.TestCase):
         My_max_Tim = (1 - 1/(beta*H))*w*R*H*t/(12*(1 - nu**2))**0.5
         Qy_max_Tim = -(w*R*H*t)/(12*(1 - nu**2))**0.5*(2*beta - 1/H)
 
-        # My_max = max([element.moment(element.width()/2, element.height())[1, 0] for element in tank_model.Plates.values()])
         My_max = tank_model.Meshes['MSH1'].max_moment('My')
-        # My_min = min([element.moment(element.width()/2, element.height()/2)[1, 0] for element in tank_model.Plates.values()])
         My_min = tank_model.Meshes['MSH1'].min_moment('My')
-        # Sx = max([element.membrane(element.width()/2, element.height()/2)[0, 0] for element in tank_model.Plates.values()])*t
-        Sx = tank_model.Meshes['MSH1'].max_shear('Qx')*t
+        Sx = max([element.membrane(element.width()/2, element.height()/2)[0, 0] for element in tank_model.Plates.values()])*t
 
-        # Check that the PyNite calculated values are within 5% of expected
-        # values.
-        self.assertLess(abs(1 - My_max/My_max_PCA), 0.05, 'Failed plate cylinder flexure test.')
-        self.assertLess(abs(1 - My_min/My_min_PCA), 0.05, 'Failed plate cylinder flexure test.')
+        # Check that the PyNite calculated values are within 8% of expected values. With a finer mesh the results are known to converge even closer, but 8% allows the model to run faster.
+        self.assertLess(abs(1 - My_max/My_max_PCA), 0.08, 'Failed plate cylinder flexure test.')
+        self.assertLess(abs(1 - My_min/My_min_PCA), 0.08, 'Failed plate cylinder flexure test.')
         self.assertGreater(My_max, 0, 'Failed plate cylinder sign convention test')
         self.assertLess(abs(1 - Sx/20000), 0.05, 'Failed plate cylinder hoop tension test.')
 
