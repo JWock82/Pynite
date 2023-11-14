@@ -61,7 +61,7 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v0.0.81 - in progress
+v0.0.82
 * `Sections` have been introduced to allow for member stresses to be tracked by the program during nonlinear analysis in the future. This opens the door for other useful features down the line too. Use of `Sections` is optional, and will only required for pushover analysis when that feature is implemented. You do not need to use this feature yet.
 * P-Delta analysis code has been greatly simplified. Performance has also been improved, as redundant iterations are no longer being performed. Removed the `tol` parameter as it is unecessary when using a geometric stiffness matrix instead of an iterative procedure.
 * Better documentation for P-Delta analysis.
