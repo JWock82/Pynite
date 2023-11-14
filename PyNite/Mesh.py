@@ -135,11 +135,11 @@ class Mesh():
                 xm, ym = 1, 1
                 xn, yn = -1, 1
 
-            # Step through each load combination the element utilizes
-            for load_combo in element.LoadCombos.values():
+            # Step through each load combination in the model
+            for load_combo in self.model.LoadCombos.values():
 
                 # Determine if this load combination should be evaluated
-                if combo == None or load_combo.name == combo:
+                if combo is None or load_combo.name == combo:
                     
                     # Find the maximum shear in the element, checking each corner and the center
                     # of the element
@@ -202,10 +202,10 @@ class Mesh():
                 xn, yn = -1, 1
 
             # Step through each load combination the element utilizes
-            for load_combo in element.LoadCombos.values():
+            for load_combo in self.model.LoadCombos.values():
 
                 # Determine if this load combination should be evaluated
-                if combo == None or load_combo.name == combo:
+                if combo is None or load_combo.name == combo:
                     
                     # Find the minimum shear in the element, checking each corner and the center
                     # of the element
@@ -270,10 +270,10 @@ class Mesh():
                 xn, yn = -1, 1
 
             # Step through each load combination the element utilizes
-            for load_combo in element.LoadCombos.values():
+            for load_combo in self.model.LoadCombos.values():
 
                 # Determine if this load combination should be evaluated
-                if combo == None or load_combo.name == combo:
+                if combo is None or load_combo.name == combo:
                     
                     # Find the maximum moment in the element, checking each corner and the center
                     # of the element
@@ -338,10 +338,10 @@ class Mesh():
                 xn, yn = -1, 1
 
             # Step through each load combination the element utilizes
-            for load_combo in element.LoadCombos.values():
+            for load_combo in self.model.LoadCombos.values():
 
                 # Determine if this load combination should be evaluated
-                if combo == None or load_combo.name == combo:
+                if combo is None or load_combo.name == combo:
                     
                     # Find the minimum moment in the element, checking each corner and the center
                     # of the element

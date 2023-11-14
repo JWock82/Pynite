@@ -102,8 +102,7 @@ class Test_Tanks(unittest.TestCase):
 
     def test_PCA_7_rect(self):
         """
-        Tests against the example from Section 7 of "Circular Concrete Tanks
-        without Prestressing" by PCA.
+        Tests against the example from Section 7 of "Circular Concrete Tanks without Prestressing" by PCA.
         """
 
         # Create a new finite element model
@@ -161,9 +160,12 @@ class Test_Tanks(unittest.TestCase):
         My_max_Tim = (1 - 1/(beta*H))*w*R*H*t/(12*(1 - nu**2))**0.5
         Qy_max_Tim = -(w*R*H*t)/(12*(1 - nu**2))**0.5*(2*beta - 1/H)
 
-        My_max = max([element.moment(element.width()/2, element.height())[1, 0] for element in tank_model.Plates.values()])
-        My_min = min([element.moment(element.width()/2, element.height()/2)[1, 0] for element in tank_model.Plates.values()])
-        Sx = max([element.membrane(element.width()/2, element.height()/2)[0, 0] for element in tank_model.Plates.values()])*t
+        # My_max = max([element.moment(element.width()/2, element.height())[1, 0] for element in tank_model.Plates.values()])
+        My_max = tank_model.Meshes['MSH1'].max_moment('My')
+        # My_min = min([element.moment(element.width()/2, element.height()/2)[1, 0] for element in tank_model.Plates.values()])
+        My_min = tank_model.Meshes['MSH1'].min_moment('My')
+        # Sx = max([element.membrane(element.width()/2, element.height()/2)[0, 0] for element in tank_model.Plates.values()])*t
+        Sx = tank_model.Meshes['MSH1'].max_shear('Qx')*t
 
         # Check that the PyNite calculated values are within 5% of expected
         # values.
