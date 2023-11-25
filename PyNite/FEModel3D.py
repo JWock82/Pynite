@@ -2193,7 +2193,7 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in combo_list:
-
+            
             # Skip the pushover combo
             if combo.name == push_combo:
                 continue
@@ -2202,6 +2202,11 @@ class FEModel3D():
                 print('')
                 print('- Analyzing load combination ' + combo.name)
             
+            # Reset nonlinear material member end forces to zero
+            for member in self.Members.values():
+                member._fxi, member._myi, member._mzi = 0, 0, 0
+                member._fxj, member._myj, member._mzj = 0, 0, 0
+
             # Get the pushover load step and initialize the load factor
             load_step = list(self.LoadCombos[push_combo].factors.values())[0]
             load_factor = load_step
@@ -2220,13 +2225,14 @@ class FEModel3D():
             P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
 
             # Solve the current load combination without the pushover load applied
-            Analysis._PDelta_step(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter, tol, first_step=True)
+            Analysis._PDelta_step(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter, first_step=True)
 
-            # Delete this next line used for debugging
-            fx, my, mz = self.Members['M1'].f(combo.name)[0, 0], self.Members['M1'].f(combo.name)[4, 0], self.Members['M1'].f(combo.name)[5, 0]
-            dummy = 1
+            # Since a P-Delta analysis was just run, we'll need to correct the solution to flag it
+            # as 'pushover' instead of 'PDelta'
+            self.solution = 'pushover'
 
-            # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
+            # Apply the pushover load in steps, summing deformations as we go, until the full
+            # pushover load has been analyzed
             while load_factor <= 1:
                 
                 # Inform the user which pushover load step we're on
@@ -2236,8 +2242,14 @@ class FEModel3D():
                 # Run the next pushover load step
                 Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
 
-                # Delete this next line used for debugging
-                fx, my, mz = self.Members['M1'].f(combo.name)[0, 0], self.Members['M1'].f(combo.name)[4, 0], self.Members['M1'].f(combo.name)[5, 0]
+                # Update nonlinear material member end forces for each member
+                for member in self.Members.values():
+                    member._fxi = member.f(combo.name, push_combo, step_num)[0, 0]
+                    member._myi = member.f(combo.name, push_combo, step_num)[4, 0]
+                    member._mzi = member.f(combo.name, push_combo, step_num)[5, 0]
+                    member._fxj = member.f(combo.name, push_combo, step_num)[6, 0]
+                    member._myj = member.f(combo.name, push_combo, step_num)[10, 0]
+                    member._mzj = member.f(combo.name, push_combo, step_num)[11, 0]
 
                 # Move on to the next load step
                 load_factor += load_step
