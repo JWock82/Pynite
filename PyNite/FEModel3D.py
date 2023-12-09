@@ -1644,12 +1644,12 @@ class FEModel3D():
         # Return the global geometric stiffness matrix
         return Kg
       
-    def Km(self, combo_name='Combo 1', push_combo='Pushover', step_num=1, log=False, sparse=True):
+    def Km(self, combo_name='Combo 1', push_combo='Push', step_num=1, log=False, sparse=True):
         """Calculates the structure's global plastic reduction matrix, which is used for nonlinear inelastic analysis.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
-        :param push_combo: The name of the load combination that contains the pushover load definition. Defaults to 'Pushover'.
+        :param push_combo: The name of the load combination that contains the pushover load definition. Defaults to 'Push'.
         :type push_combo: str, optional
         :param step_num: The load step used to generate the plastic reduction matrix. Defaults to 1.
         :type step_num: int, optional
@@ -2157,7 +2157,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
     
-    def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Combo 1', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
+    def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
 
         if log:
             print('+---------------------+')
@@ -2229,7 +2229,7 @@ class FEModel3D():
 
             # Since a P-Delta analysis was just run, we'll need to correct the solution to flag it
             # as 'pushover' instead of 'PDelta'
-            self.solution = 'pushover'
+            self.solution = 'Pushover'
 
             # Apply the pushover load in steps, summing deformations as we go, until the full
             # pushover load has been analyzed

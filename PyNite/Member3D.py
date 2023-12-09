@@ -227,7 +227,7 @@ class Member3D():
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
-        :param push_combo: The name of the load combination that defines the pushover load. Defaults to 'Push 1'.
+        :param push_combo: The name of the load combination that defines the pushover load. Defaults to 'Push'.
         :type push_combo: str, optional
         :param step_num: The pushover load step to consider for calculating the plastic reduciton matrix. Default is 1.
         :type step_num: int, optional
@@ -238,9 +238,8 @@ class Member3D():
         # Get the elastic local stiffness matrix
         ke = self.k()
 
-        # Calculate the elastic member axial force - used to determine the geometric stiffness. This axial force is based on the latest results from the last iteration performed and stored in the model's displacements.
-        d = self.d(combo_name)
-        P = self.E*self.A/self.L()*(d[6, 0] - d[0, 0])
+        # Get the member's axial force
+        P = self._fxj - self._fxi
 
         # Get the geometric local stiffness matrix
         kg = self.kg(P)
