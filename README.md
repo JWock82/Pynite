@@ -61,7 +61,7 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v0.0.82
+v0.0.83
 * Fixed a bug in P-Delta analysis member moment calculations. Global results were correct, but member internal moments were neglecting the P-little delta effect. The result was correct moments at nodal locations, but incorrect results in between. This issue has been resolved.
 
 v0.0.82
