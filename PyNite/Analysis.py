@@ -10,7 +10,7 @@ def _prepare_model(model):
     :type model: FEModel3D
     """
     
-    # Reset any nodal displacement
+    # Reset any nodal displacements
     model._D = {}
     for node in model.Nodes.values():
         node.DX = {}

@@ -58,7 +58,6 @@ class BeamSegZ():
     
     """
 
-#%%
     def __init__(self):
         """
         Constructor
@@ -80,17 +79,14 @@ class BeamSegZ():
         self.EI = None # Flexural stiffness of the beam segment
         self.EA = None # Axial stiffness of the beam segment
 
-#%%
     # Returns the length of the segment
     def Length(self):
-        
         """
         Returns the length of the segment
         """
         
         return self.x2 - self.x1
 
-#%% 
     # Returns the shear force at a location 'x' on the segment
     def Shear(self, x):
         
@@ -101,19 +97,20 @@ class BeamSegZ():
         
         return V1 + w1*x + x**2*(-w1 + w2)/(2*L)
 
-#%% 
     # Returns the moment at a location on the segment
     def moment(self, x):
         
         V1 = self.V1
         M1 = self.M1
+        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
+        delta1 = self.delta1
+        delta = self.deflection(x)
         L = self.Length()
         
-        return M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
+        return M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L) + P1*(delta - delta1)
 
-#%%
     # Returns the axial force at a location on the segment
     def axial(self, x):
         
@@ -124,8 +121,6 @@ class BeamSegZ():
         
         return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
 
-    
-#%%
     def Torsion(self):
         """
         Returns the torsional moment in the segment.
@@ -135,7 +130,6 @@ class BeamSegZ():
         # This can be updated in the future for distributed torsional forces
         return self.T1
     
-#%%
     def Slope(self, x):
         """
         Returns the slope at a point on the segment
@@ -168,7 +162,6 @@ class BeamSegZ():
         
         return theta1 - (M1*x - V1*x**2/2 - w1*x**3/6 + x**4*(w1 - w2)/(24*L))/(EI)
 
-#%%
     # Returns the deflection at a location on the segment
     def deflection(self, x):
         
@@ -183,7 +176,6 @@ class BeamSegZ():
         
         return delta1 + theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
-#%%
     def AxialDeflection(self, x):
 
         delta_x1 = self.delta_x1
@@ -195,7 +187,6 @@ class BeamSegZ():
 
         return delta_x1 - 1/EA*(P1*x + p1*x**2/2 + (p2 - p1)*x**3/(6*L))
 
-#%%
     # Returns the maximum shear in the segment
     def max_shear(self):
         
@@ -223,7 +214,6 @@ class BeamSegZ():
         # Return the maximum shear
         return max(V1, V2, V3)
 
-#%%
     # Returns the minimum shear in the segment
     def min_shear(self):
         
@@ -251,7 +241,6 @@ class BeamSegZ():
         # Return the minimum shear
         return min(V1, V2, V3)
     
-#%%
     # Returns the maximum moment in the segment
     def max_moment(self):
         
@@ -297,7 +286,6 @@ class BeamSegZ():
         # Return the maximum moment
         return max(M1, M2, M3, M4)
 
-#%%
     # Returns the minimum moment in the segment
     def min_moment(self):
         
@@ -343,7 +331,6 @@ class BeamSegZ():
         # Return the minimum moment
         return min(M1, M2, M3, M4)
 
-#%%
     # Returns the maximum axial force in the segment
     def max_axial(self):
         
@@ -371,7 +358,6 @@ class BeamSegZ():
         # Return the maximum axial force
         return max(P1, P2, P3)
 
-#%%
     # Returns the minimum axial force in the segment
     def min_axial(self):
         
@@ -399,7 +385,6 @@ class BeamSegZ():
         # Return the minimum axial force
         return min(P1, P2, P3)
 
-#%%
     def MaxTorsion(self):
         """
         Returns the maximum torsional moment in the segment.
@@ -410,7 +395,6 @@ class BeamSegZ():
         # This can be updated in the future for distributed torsional forces
         return self.T1
 
-#%%
     def MinTorsion(self):
         """
         Returns the minimum torsional moment in the segment.

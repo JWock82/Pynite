@@ -17,11 +17,14 @@ class BeamSegY(BeamSegZ):
 
         V1 = self.V1
         M1 = self.M1
+        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
+        delta1 = self.delta1
+        delta = self.deflection(x)
         L = self.Length()
         
-        return M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L)
+        return M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L) + P1*(delta - delta)
 
     
 #%%
