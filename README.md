@@ -61,6 +61,9 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.85
+* Changed member moment diagrams to no longer include P-little-delta effects in non-P-Delta analyses. This leads to consistent moment diagrams across members for simple analysis methods. Before, even when P-Delta effects weren't being calculated, P-little-delta effects were included in member moment diagrams, leading to member moment diagrams that didn't quite match up across joints on non-P-Delta models with significant P-Delta effects.
+
 v0.0.83 & v0.0.84
 * Fixed a bug in P-Delta analysis member moment calculations. Global results were correct, but member internal moments were neglecting the P-little delta effect. The result was correct moments at nodal locations, but incorrect results in between. This issue has been resolved.
 
@@ -95,27 +98,3 @@ v0.0.76
 * Allowed tension/compression-only support springs to reactivate after being deactivated. Erroneous deflections were being reported on very flexible models that experienced a lot of movement with T/C support springs.
 * `matplotlib` is now an optional dependency. You'll only need to install it if you want to view plots for members.
 * Documentation for installation has been improved.
-
-v0.0.75
-* Bug fix & improvements for PDF printing capabilities. Methods used to print PDF's had fallen behind updates to the rest of the program. It should be fixed now. The way PDF's are printed has changed slightly. Examples have been updated to demonstrate this and the documentation on readthedocs has been updated as well: (https://pynite.readthedocs.io/en/latest/reporting.html).
-
-v0.0.74
-* Bug fix for rectangular meshes with very close control points. The program now checks for mesh
-control points that are for all practical purposes the same and eliminates the duplicates.
-
-v0.0.73
-* Bug fix for merging duplicated plate names when using models with multiple meshes.
-
-v0.0.72
-* Bug fix for point loads at the ends of physical members. These point loads were erroneously being applied at the end of all segments of the physical member. This error was introduced with the new physical member feature late last year. Prior to that this error did not exist.
-* Improvements to plate meshing: (1) Rectangular meshes now automatically renumber nodes and elements to avoid duplicating names that are already in the model. This feature is only available for rectangular meshes at the moment. For other types of meshes you'll need to manually specify the start node and start element for numbering. (2) Meshes also now automatically stay in sync with the model. A node moved in the model will automatically reflect back on the mesh. Changes to elements in the model will automatically be reflected in the mesh. The program used to lose track of this. Once the mesh was generated it was "one and done" and no more.
-
-v0.0.71
-* WARNING: This version will require reworking your models to incorporate `Materials`. Be prepared to rework your models before you upgrade. The examples have all been updated to show you how to do this.
-* Added `Material` definitions. This does not change Pynite's behavior much, but it prepares the way for future features.
-* Greatly simplified the process of meshing plates/quads. Meshes can now be generated directly from the `FEModel3D` object.
-* Added data types to the many dictionaries storing data in the `FEModel3D` object. Most development environments will now offer hints when using these dictionaries directly. This makes accessing the results you're interested in more intuitive.
-* Simplified internal code for finding unique names for objects.
-
-v0.0.70
-* Array output of member force diagrams and displacement diagrams has been added.
