@@ -880,19 +880,27 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
         
+        # Determine if a P-Delta analysis has been run
+        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            # Include P-little-delta effects in the moment results
+            P_delta = True
+        else:
+            # Do not include P-little delta effects in the moment results
+            P_delta = False
+
         # Check which axis is of interest
         if Direction == 'My':
             
             # Check which segment 'x' falls on
             for segment in self.SegmentsY:
-                
+
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return segment.moment(x - segment.x1)
+                    return segment.moment(x - segment.x1, P_delta)
                 
             if isclose(x, self.L()):
                 
-                return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1)
+                return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1, P_delta)
                 
         elif Direction == 'Mz':
             
@@ -900,11 +908,11 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return segment.moment(x - segment.x1)
+                    return segment.moment(x - segment.x1, P_delta)
                 
             if isclose(x, self.L()):
                 
-                return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1)
+                return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1, P_delta)
         
         else:
             raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
@@ -923,6 +931,14 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
         """
+
+        # Determine if a P-Delta analysis has been run
+        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            # Include P-little-delta effects in the moment results
+            P_delta = True
+        else:
+            # Do not include P-little delta effects in the moment results
+            P_delta = False
         
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -931,7 +947,7 @@ class Member3D():
         
         if Direction == 'Mz':
             
-            Mmax = self.SegmentsZ[0].moment(0)
+            Mmax = self.SegmentsZ[0].moment(0, P_delta)
 
             for segment in self.SegmentsZ:
                 
@@ -941,7 +957,7 @@ class Member3D():
                     
         if Direction == 'My':
             
-            Mmax = self.SegmentsY[0].moment(0)
+            Mmax = self.SegmentsY[0].moment(0, P_delta)
 
             for segment in self.SegmentsY:
                 
@@ -971,25 +987,29 @@ class Member3D():
             self._segment_member(combo_name)   
             self.__solved_combo = self.model.LoadCombos[combo_name]
         
+        # Determine if a P-Delta analysis has been run
+        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            # Include P-little-delta effects in the moment results
+            P_delta = True
+        else:
+            # Do not include P-little delta effects in the moment results
+            P_delta = False
+
         if Direction == 'Mz':
             
-            Mmin = self.SegmentsZ[0].moment(0)
+            Mmin = self.SegmentsZ[0].moment(0, P_delta)
 
             for segment in self.SegmentsZ:
                 
-                if segment.min_moment() < Mmin:
-                    
-                    Mmin = segment.min_moment()
+                if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
                     
         if Direction == 'My':
             
-            Mmin = self.SegmentsY[0].moment(0)
+            Mmin = self.SegmentsY[0].moment(0, P_delta)
 
             for segment in self.SegmentsY:
                 
-                if segment.min_moment() < Mmin:
-                    
-                    Mmin = segment.min_moment()
+                if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
         
         return Mmin
 

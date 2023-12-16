@@ -5,7 +5,7 @@ class BeamSegY(BeamSegZ):
 
 #%% 
     # Returns the moment at a location on the segment
-    def moment(self, x):
+    def moment(self, x, P_delta=False):
         '''
         Returns the moment at a location on the segment.
 
@@ -24,10 +24,13 @@ class BeamSegY(BeamSegZ):
         delta = self.deflection(x)
         L = self.Length()
         
-        return M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L) + P1*(delta - delta)
+        M = M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L)
+        
+        if P_delta == True:
+            M += P1*(delta - delta1)
+        
+        return M
 
-    
-#%%
     def Slope(self, x):
         """
         Returns the slope at a point on the segment
@@ -78,7 +81,7 @@ class BeamSegY(BeamSegZ):
     
 #%%
     # Returns the maximum moment in the segment
-    def max_moment(self):
+    def max_moment(self, P_delta=False):
         
         w1 = self.w1
         w2 = self.w2
@@ -124,7 +127,7 @@ class BeamSegY(BeamSegZ):
 
 #%%
     # Returns the minimum moment in the segment
-    def min_moment(self):
+    def min_moment(self, P_delta=False):
         
         w1 = self.w1
         w2 = self.w2
@@ -160,10 +163,11 @@ class BeamSegY(BeamSegZ):
             x2 = 0
     
         # Find the moment at each location of interest
-        M1 = self.moment(x1)
-        M2 = self.moment(x2)
-        M3 = self.moment(x3)
-        M4 = self.moment(x4)
+        M1 = self.moment(x1, P_delta)
+        M2 = self.moment(x2, P_delta)
+        M3 = self.moment(x3, P_delta)
+        M4 = self.moment(x4, P_delta)
     
         # Return the minimum moment
         return min(M1, M2, M3, M4)
+    
