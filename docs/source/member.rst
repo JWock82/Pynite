@@ -43,7 +43,9 @@ member.
 The local y-axis is defined as the cross-product of the local z-axis with the local x-axis. In
 other words, the local y-axis is always perpendicular to the member and to the local z-axis.
 
-.. figure:: ../img/member_local_coord_system.png
+Positive sign conventions are shown below.
+
+.. figure:: ../img/sign_convention.png
     :width: 75%
     :align: center
 
