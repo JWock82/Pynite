@@ -55,10 +55,8 @@ class BeamSegY(BeamSegZ):
         EI = self.EI
         
         if P_delta == True:
-            # return theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 + P1*delta_1 - P1*delta_x) + x**4*(w1 - w2)/(24*L))/(EI)
             return theta_1 + (-V1*x**2/2 - w1*x**3/6 + x*(-M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
         else:
-            # return theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/(EI)
             return theta_1 + (-V1*x**2/2 - w1*x**3/6 + x*(-M1) + x**4*(w1 - w2)/(24*L))/EI
 
 #%%
@@ -72,6 +70,7 @@ class BeamSegY(BeamSegZ):
         w2 = self.w2
         theta_1 = self.theta1
         delta_1 = self.delta1
+        d_delta = 1
         L = self.Length()
         EI = self.EI
     
