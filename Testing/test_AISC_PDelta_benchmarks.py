@@ -166,7 +166,8 @@ class Test_AISC_Benchmark(unittest.TestCase):
         column.add_node('N2', 0, 28, 0)
         
         # Add an internal node to capture P-little-delta effects
-        column.add_node('N4', 0, 28*1/2, 0)
+        column.add_node('N4', 0, 28*1/3, 0)
+        column.add_node('N5', 0, 28*2/3, 0)
 
         column.def_support('N1', True, True, True, True, True, True)
 
@@ -221,9 +222,3 @@ class Test_AISC_Benchmark(unittest.TestCase):
         for i, val in enumerate(Mbase_calculated):
             self.assertLessEqual(abs(Mbase_calculated[i]/Mbase_expected[i] - 1), 0.03)
             self.assertLessEqual(abs(dtip_calculated[i]/dtip_expected[i] - 1), 0.05)
-
-        
-
-
-
-

@@ -103,17 +103,20 @@ class BeamSegZ():
         V1 = self.V1
         M1 = self.M1
         P1 = self.P1
+        Px = self.axial(x)
         w1 = self.w1
         w2 = self.w2
-        delta1 = self.delta1
-        delta = self.deflection(x)
+        delta_1 = self.delta1
+        delta_x = self.deflection(x)
         L = self.Length()
         
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
+        # Include the P-little-delta moment if a P-Delta analysis was run
         if P_delta == True:
-            M += P1*(delta - delta1)
+            M += P1*(delta_x - delta_1)
         
+        # Return the computed moment
         return M
 
     # Returns the axial force at a location on the segment
@@ -135,51 +138,87 @@ class BeamSegZ():
         # This can be updated in the future for distributed torsional forces
         return self.T1
     
-    def Slope(self, x):
+    def slope(self, x, P_delta=False):
+        """Returns the slope of the elastic curve at any point `x` along the segment.
+
+        :param x: Location (relative to start of segment) where slope is to be calculated.
+        :type x: float
+        :param P_delta: Indicates whether P-little-delta effects should be included in the calculation. Generally only used when a P-Delta analysis has been run. Defaults to False.
+        :type P_delta: bool, optional
+        :return: The slope of the elastic curve (radians) at location `x`.
+        :rtype: float
         """
-        Returns the slope at a point on the segment
-        
-        Parameters
-        ----------
-        x : number
-          Location (relative to start of segment) where slope is to be calculated
-        EI : number
-          Flexural stiffness of the segment
-        
-        Returns
-        -------
-        Slope : number
-          The slope of the segment (radians) at location "x"
-        
-        Notes
-        -----
-        Any unit system may be used as long as the units are consistent with each other
-        
-        """  
         
         V1 = self.V1
         M1 = self.M1
+        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
-        theta1 = self.theta1
+        delta_1 = self.delta1
+        delta_x = self.deflection(x, P_delta)
+        theta_1 = self.theta1
         L = self.Length()
         EI = self.EI
+
+        theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
+        theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
+
+        if P_delta == True:
+            theta_x -= x*(-P1*delta_1 + P1*delta_x)/EI
         
-        return theta1 - (M1*x - V1*x**2/2 - w1*x**3/6 + x**4*(w1 - w2)/(24*L))/(EI)
+        # TODO: This is an old equation left for reference. Delete it after the new equation has been proved over time.
+        # return theta_1 - (M1*x - V1*x**2/2 - w1*x**3/6 + x**4*(w1 - w2)/(24*L))/(EI)
+        
+        # Return the calculated slope
+        return theta_x
 
     # Returns the deflection at a location on the segment
-    def deflection(self, x):
+    def deflection(self, x, P_delta=False):
         
         V1 = self.V1
         M1 = self.M1
+        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
-        theta1 = self.theta1
-        delta1 = self.delta1
+        theta_1 = self.theta1
+        delta_1 = self.delta1
+        d_delta = 1
         L = self.Length()
         EI = self.EI
         
-        return delta1 + theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**5*(-w1 + w2)/(120*EI*L)
+        # Iteration is required to calculate P-little-delta effects
+        if P_delta == True:
+
+            # Initialize the deflection at `x` to match the deflection at the start of the segment
+            delta_x = delta_1
+
+            # Iterate until we reach a deflection convergence of 1%
+            while d_delta > 0.01: 
+                
+                # Save the deflection value from the last iteration
+                delta_last = delta_x
+
+                # Compute the deflection
+                # delta_x = delta1 + theta1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
+                delta_x = delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
+                
+                # Check the change in deflection between iterations
+                if delta_last != 0:
+                    d_delta = abs(delta_x/delta_last - 1)
+                else:
+                    # Members with no relative deflection after at least one iteration need no further iterations
+                    if delta_1 - delta_x == 0:
+                        break
+            
+            # Return the calculated deflection
+            return delta_x
+        
+        # Non-P-delta solutions are not iterative
+        else:
+
+            # Return the calcuated deflection
+            # return delta1 + theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**5*(-w1 + w2)/(120*EI*L)
+            return delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
     def AxialDeflection(self, x):
 

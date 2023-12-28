@@ -61,6 +61,9 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.86
+* Fine-tuned P-$\delta$ effects. P-$\delta$ effects are now included in member internal slope and deflection calculations.
+
 v0.0.85
 * Changed member moment diagrams to no longer include P-little-delta effects in non-P-Delta analyses. This leads to consistent moment diagrams across members for simple analysis methods. Before, even when P-Delta effects weren't being calculated, P-little-delta effects were included in member moment diagrams, leading to member moment diagrams that didn't quite match up across joints on non-P-Delta models with significant P-Delta effects.
 

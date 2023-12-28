@@ -1374,6 +1374,11 @@ class Member3D():
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
         
+        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            P_delta = True
+        else:
+            P_delta = False
+
         # Check which axis is of interest
         if Direction == 'dx':
             
@@ -1395,12 +1400,12 @@ class Member3D():
                 
                 if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
                     
-                    return segment.deflection(x - segment.x1)
+                    return segment.deflection(x - segment.x1, P_delta)
                 
             if isclose(x, self.L()):
                 
                 lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1)
+                return self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1, P_delta)
                 
         elif Direction == 'dz':
             
@@ -1721,10 +1726,8 @@ class Member3D():
         d = self.d(combo_name)           # Member local displacement vector
         
         # Get the local deflections and calculate the slope at the start of the member
-        # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used,
-        #         so slope-deflection has been applied to solve for it.
-        # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what PyNite uses for moments about
-        #         the local y-axis, so a negative value has been applied to those values specifically.
+        # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used, so slope-deflection has been applied to solve for it.
+        # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what PyNite uses for moments about the local y-axis, so a negative value has been applied to those values specifically.
         m1z = f[5, 0]       # local z-axis moment at start of member
         m2z = f[11, 0]      # local z-axis moment at end of member
         m1y = -f[4, 0]      # local y-axis moment at start of member
@@ -1765,10 +1768,10 @@ class Member3D():
             
             # Initialize the slope and displacement at the start of the segment
             if i > 0: # The first segment has already been initialized
-                SegmentsZ[i].theta1 = SegmentsZ[i-1].Slope(SegmentsZ[i-1].Length())
+                SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].Length())
                 SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].Length())
                 SegmentsZ[i].delta_x1 = SegmentsZ[i-1].AxialDeflection(SegmentsZ[i-1].Length())
-                SegmentsY[i].theta1 = SegmentsY[i-1].Slope(SegmentsY[i-1].Length())
+                SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].Length())
                 SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].Length())
                 SegmentsY[i].delta_x1 = SegmentsY[i-1].AxialDeflection(SegmentsY[i-1].Length())
                 

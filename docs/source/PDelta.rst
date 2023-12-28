@@ -37,7 +37,7 @@ The procedure Pynite uses is as follows:
 Validation
 ==========
 
-AISC has provided benchmark tests found in AISC 360-16 commentary C2.1 that can be used as a guage to test a program's P-:math:`\Delta` and P-:math:`\delta` analysis capabilities. Pynite's P-:math:`\Delta` and P-:math:`\delta` analysis pass the AISC benchmark tests when a single intermediate node is introduced at the midpoint of the members to pick up P-:math:`\delta` effects. The number of nodes necessary to model P-:math:`\delta` effects may vary from one model to the next.
+AISC has provided benchmark tests found in AISC 360-16 commentary C2.1 that can be used as a guage to test a program's P-:math:`\Delta` and P-:math:`\delta` analysis capabilities. Pynite's P-:math:`\Delta` and P-:math:`\delta` analysis pass the AISC benchmark tests when two intermediate nodes are introduced at the third points of the members to pick up P-:math:`\delta` effects. The number of nodes necessary to model P-:math:`\delta` effects may vary from one model to the next.
 
 Limitations
 ===========
