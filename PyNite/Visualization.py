@@ -8,9 +8,11 @@ from numpy.linalg import norm
 import vtk
 
 class Renderer():
-    """
-    This class is not in use yet. Future visualization code will use this
-    class to allow for more efficient building and rebuilding of visual models.
+    """Used to render finite element models.
+
+    :raises Exception: _description_
+    :return: _description_
+    :rtype: _type_
     """
 
     scalar = None
