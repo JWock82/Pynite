@@ -9,10 +9,6 @@ import vtk
 
 class Renderer():
     """Used to render finite element models.
-
-    :raises Exception: _description_
-    :return: _description_
-    :rtype: _type_
     """
 
     scalar = None
