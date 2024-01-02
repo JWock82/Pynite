@@ -20,7 +20,7 @@ The `Renderer` object
     my_rndr = Renderer(my_model)
 
 
-`Renderer` options
+`Renderer` Options
 ==================
 
 The ``Renderer`` object has some default properties you may wish to change. Below are examples of these options:
@@ -55,3 +55,7 @@ You can also create a PNG screenshot using ``screenshot``
     my_rndr.screeenshot()
 
 This will render your model to the window, where you can position it as you like. Once you close out of the window, `Pynite` will output a screenshot in PNG format. This is very helpful when working in `Jupyter`.
+
+.. autoclass:: Visualization.Renderer
+   :members:
+   :undoc-members:
