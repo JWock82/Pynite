@@ -831,7 +831,7 @@ class FEModel3D():
                         mesh.nodes[node_2_name] = n1
 
                         # Fix the dictionary key
-                        print(f'{mesh} rmv {node_2_name} -> {node_1_name}')
+                        #print(f'{mesh} rmv {node_2_name} -> {node_1_name}')
                         mesh.nodes[node_1_name] = mesh.nodes.pop(node_2_name)
 
                     # Fix the elements in the mesh
