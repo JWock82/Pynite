@@ -5,8 +5,8 @@ The CPU solver is the next best option, and is available on all platforms via nu
 """
 import os
 try:
-    if os.environ['PYNITE_GPU'] != 'True':
-        raise ImportError(f'PYNITE_GPU environment variable not set to True')
+    if os.environ.get('PYNITE_GPU',None) != 'True':
+        raise ImportError(f'PYNITE_GPU environment variable not set to `True`')
     
     import torch
     import numpy
