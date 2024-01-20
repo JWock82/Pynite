@@ -300,7 +300,8 @@ class Member3D():
         Gj = vstack(zeros_array, Gj)
         G = hstack(Gi, Gj)
 
-        return inv(G.T() @ ke @ G) @ G.T() @ ke @ d_delta
+        #return inv(G.T() @ ke @ G) @ G.T() @ ke @ d_delta
+        pass
 
 #%%
     def fer(self, combo_name='Combo 1'):
