@@ -48,14 +48,14 @@ Once you've got your settings the way you want them, you can render your model u
 
     my_rndr.render_model()
 
-You can also create a PNG screenshot using ``screenshot``
+You can also create a screenshot using ``screenshot``
 
 .. code-block:: python
 
     my_rndr.screeenshot()
 
-This will render your model to the window, where you can position it as you like. Once you close out of the window, `Pynite` will output a screenshot in PNG format. This is very helpful when working in `Jupyter`.
+This will render your model to the window, where you can position it as you like. Once you close out of the window, `Pynite` will output a screenshot in one of several formats (see documentation below). This is very helpful when working in `Jupyter`.
 
-.. autoclass:: Visualization.Renderer
+.. autoclass:: PyNite.Visualization.Renderer
    :members:
    :undoc-members:
