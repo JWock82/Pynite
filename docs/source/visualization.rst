@@ -56,5 +56,5 @@ You can also create a screenshot using ``screenshot``
 
 This will render your model to the window, where you can position it as you like. Once you close out of the window, `Pynite` will output a screenshot in one of several formats (see documentation below). This is very helpful when working in `Jupyter`.
 
-.. autoclass:: PyNite.Visualization
+.. autoclass:: PyNite.Visualization.Renderer
    :members:
