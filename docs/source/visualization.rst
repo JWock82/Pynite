@@ -58,3 +58,4 @@ This will render your model to the window, where you can position it as you like
 
 .. autoclass:: PyNite.Visualization.Renderer
    :members:
+   :undoc-members:

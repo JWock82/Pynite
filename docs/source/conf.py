@@ -10,7 +10,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('../../PyNite'))
+# sys.path.insert(0, os.path.abspath('../../PyNite'))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -29,7 +29,7 @@ extensions = ['sphinx.ext.autodoc']
 autoclass_content = 'class'
 
 # autodoc settings
-autodoc_mock_imports = ['numpy', 'PyNite.Visualization.Renderer']  # Mock the numpy import
+autodoc_mock_imports = ['numpy', 'IPython']  # Mock the `numpy` and `IPython` imports
 
 templates_path = ['_templates']
 exclude_patterns = []
