@@ -40,7 +40,7 @@ exclude_patterns = []
 # html_theme = 'alabaster'
 html_theme = 'bizstyle'
 html_theme_options = {
-    "sidebarwidth": "350px",
+    "sidebarwidth": "300px",
     "navigation_depth": 1
 }
 html_static_path = ['_static']
