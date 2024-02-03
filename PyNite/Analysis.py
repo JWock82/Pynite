@@ -334,7 +334,7 @@ def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices
             except:
                 # Return out of the method if 'K' is singular and provide an error message
                 raise ValueError('The structure is unstable. Unable to proceed any further with analysis.')
-            
+
         # Step through each member in the model
         for member in model.Members.values():
                         
@@ -359,17 +359,17 @@ def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices
         # Undo the last loadstep if plastic load reversal was discovered. We'll rerun it with the corresponding gradients set to zero vectors.
         if run_step == True:
             _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
-            
+    
     # Sum the calculated displacements
     _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
 
     # Flag the model as solved
     model.solution = 'Pushover'
 
-def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
-    """Stores calculated displacements from the solver into the model's displacement vector `_D` and into each node object in the model.
+def _unpartition_disp(model, D1, D2, D1_indices, D2_indices):
+    """Unpartitions displacements from the solver and returns them as a global displacement vector
 
-    :param model: The finite element model being evaluated.
+    :param model: The finite element model being evaluated
     :type model: FEModel3D
     :param D1: An array of calculated displacements
     :type D1: array
@@ -379,8 +379,8 @@ def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
     :type D1_indices: list
     :param D2_indices: A list of the degree of freedom indices for each displacement in D2
     :type D2_indices: list
-    :param combo: The load combination to store the displacements for
-    :type combo: LoadCombo
+    :return: Global displacement matrix
+    :rtype: array
     """
     
     D = zeros((len(model.Nodes)*6, 1))
@@ -429,8 +429,31 @@ def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
         else:
             # Get the calculated rotation
             D[(node.ID*6 + 5, 0)] = D1[D1_indices.index(node.ID*6 + 5), 0]
+    
+    # Return the displacement vector
+    return D
 
-    # Save the global displacement vector to the model
+def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
+    """Stores calculated displacements from the solver into the model's displacement vector `_D` and into each node object in the model
+
+    :param model: The finite element model being evaluated.
+    :type model: FEModel3D
+    :param D1: An array of calculated displacements
+    :type D1: array
+    :param D2: An array of enforced displacements
+    :type D2: array
+    :param D1_indices: A list of the degree of freedom indices for each displacement in D1
+    :type D1_indices: list
+    :param D2_indices: A list of the degree of freedom indices for each displacement in D2
+    :type D2_indices: list
+    :param combo: The load combination to store the displacements for
+    :type combo: LoadCombo
+    """
+    
+    # The raw results from the solver are partitioned. Unpartition them.
+    D = _unpartition_disp(model, D1, D2, D1_indices, D2_indices)
+    
+    # Store the displacements in the model's global displacement vector
     model._D[combo.name] = D
 
     # Store the calculated global nodal displacements into each node object
@@ -460,54 +483,10 @@ def _sum_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
     :type combo: LoadCombo
     """
     
-    Delta_D = zeros((len(model.Nodes)*6, 1))
+    # The raw results from the solver are partitioned. Unpartition them.
+    Delta_D = _unpartition_disp(model, Delta_D1, Delta_D2, D1_indices, D2_indices)
 
-    # Step through each node in the model
-    for node in model.Nodes.values():
-        
-        if node.ID*6 + 0 in D2_indices:
-            # Get the enforced displacement
-            Delta_D[(node.ID*6 + 0, 0)] = Delta_D2[D2_indices.index(node.ID*6 + 0), 0]
-        else:
-            # Get the calculated displacement
-            Delta_D[(node.ID*6 + 0, 0)] = Delta_D1[D1_indices.index(node.ID*6 + 0), 0]
-
-        if node.ID*6 + 1 in D2_indices:
-            # Get the enforced displacement
-            Delta_D[(node.ID*6 + 1, 0)] = Delta_D2[D2_indices.index(node.ID*6 + 1), 0]
-        else:
-            # Get the calculated displacement
-            Delta_D[(node.ID*6 + 1, 0)] = Delta_D1[D1_indices.index(node.ID*6 + 1), 0]
-
-        if node.ID*6 + 2 in D2_indices:
-            # Get the enforced displacement
-            Delta_D[(node.ID*6 + 2, 0)] = Delta_D2[D2_indices.index(node.ID*6 + 2), 0]
-        else:
-            # Get the calculated displacement
-            Delta_D[(node.ID*6 + 2, 0)] = Delta_D1[D1_indices.index(node.ID*6 + 2), 0]
-
-        if node.ID*6 + 3 in D2_indices:
-            # Get the enforced rotation
-            Delta_D[(node.ID*6 + 3, 0)] = Delta_D2[D2_indices.index(node.ID*6 + 3), 0]
-        else:
-            # Get the calculated rotation
-            Delta_D[(node.ID*6 + 3, 0)] = Delta_D1[D1_indices.index(node.ID*6 + 3), 0]
-
-        if node.ID*6 + 4 in D2_indices:
-            # Get the enforced rotation
-            Delta_D[(node.ID*6 + 4, 0)] = Delta_D2[D2_indices.index(node.ID*6 + 4), 0]
-        else:
-            # Get the calculated rotation
-            Delta_D[(node.ID*6 + 4, 0)] = Delta_D1[D1_indices.index(node.ID*6 + 4), 0]
-
-        if node.ID*6 + 5 in D2_indices:
-            # Get the enforced rotation
-            Delta_D[(node.ID*6 + 5, 0)] = Delta_D2[D2_indices.index(node.ID*6 + 5), 0]
-        else:
-            # Get the calculated rotation
-            Delta_D[(node.ID*6 + 5, 0)] = Delta_D1[D1_indices.index(node.ID*6 + 5), 0]
-
-    # Sum the load step's global displacement vector to the model's global displacement vector
+    # Sum the load step's global displacement vector with the model's global displacement vector
     model._D[combo.name] += Delta_D
 
     # Sum the load step's calculated global nodal displacements to each node object's global displacement
