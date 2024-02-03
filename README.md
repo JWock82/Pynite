@@ -91,13 +91,3 @@ v0.0.79
 
 v0.0.78
 * Corrections to tension/compression only support springs. v0.0.76 and v0.0.77 were not working as expected. 3rd time's a charm.
-
-v0.0.77
-* Simplified P-Delta convergence checks
-* Fixed P-Delta bug introduced in v0.0.76
-  
-v0.0.76
-* Simplified P-Delta convergence checks
-* Allowed tension/compression-only support springs to reactivate after being deactivated. Erroneous deflections were being reported on very flexible models that experienced a lot of movement with T/C support springs.
-* `matplotlib` is now an optional dependency. You'll only need to install it if you want to view plots for members.
-* Documentation for installation has been improved.
