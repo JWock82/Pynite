@@ -29,7 +29,7 @@ extensions = ['sphinx.ext.autodoc']
 autoclass_content = 'class'
 
 # autodoc settings
-autodoc_mock_imports = ['numpy', 'IPython', 'vtk']  # Mock the `numpy`, `IPython`, and `vtk` imports
+autodoc_mock_imports = ['numpy', 'IPython', 'vtk', 'pdfkit']  # Mock import dependencies
 
 templates_path = ['_templates']
 exclude_patterns = []
