@@ -38,9 +38,9 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # html_theme = 'alabaster'
-html_theme = 'classic'
+html_theme = 'bizstyle'
 html_theme_options = {
-    "sidebarwidth": "230px",
+    "sidebarwidth": "350px",
     "navigation_depth": 1
 }
 html_static_path = ['_static']
