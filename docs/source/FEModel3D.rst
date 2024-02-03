@@ -51,8 +51,8 @@ Avaliable dictionaries are:
 * ``my_model.LoadCombos``  A dictionary containing all the load combinations in the model
 * ``my_model.Meshes``      A dictionary containing all the meshes in the model
 
-FEModel3D Reference
-===================
+FEModel3D Class Reference
+=========================
 
 .. autoclass:: PyNite.FEModel3D
    :members:

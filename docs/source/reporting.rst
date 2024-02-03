@@ -50,5 +50,7 @@ Example:
     # Create the report
     Reporting.create_report(my_model, output_filepath='./My Report.pdf')
 
+Reporting Class Reference
+=========================
 .. automodule:: PyNite.Reporting
     :members: create_report
