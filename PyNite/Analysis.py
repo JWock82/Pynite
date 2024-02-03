@@ -335,11 +335,14 @@ def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices
                 # Return out of the method if 'K' is singular and provide an error message
                 raise ValueError('The structure is unstable. Unable to proceed any further with analysis.')
 
+        # Unpartition the displacement results from the analysis step
+        Delta_D = _unpartition_disp(model, Delta_D1, D2, D1_indices, D2_indices)
+
         # Step through each member in the model
         for member in model.Members.values():
                         
             # Check for plastic load reversal at the i-node in this load step
-            if member.i_reversal == False and member.lamb(combo_name, push_combo, step_num)[0, 1] < 0:
+            if member.i_reversal == False and member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 1] < 0:
 
                 # Flag the member as having plastic load reversal at the i-node
                 i_reversal = True
@@ -348,7 +351,7 @@ def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices
                 run_step = True
 
             # Check for plastic load reversal at the j-node in this load step
-            if member.j_reversal == False and member.lamb(combo_name, push_combo, step_num)[1, 1] < 0:
+            if member.j_reversal == False and member.lamb(Delta_D, combo_name, push_combo, step_num)[1, 1] < 0:
 
                 # Flag the member as having plastic load reversal at the j-node
                 j_reversal = True
