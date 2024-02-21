@@ -61,6 +61,9 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.88
+* Reorganized physical member code to match member code more consistently.
+
 v0.0.87
 * Fine-tuned P-$\delta$ effects. P-$\delta$ effects are now included in member internal slope and deflection calculations.
 

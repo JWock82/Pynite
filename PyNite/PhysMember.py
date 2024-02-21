@@ -15,7 +15,7 @@ class PhysMember(Member3D):
     def __init__(self, name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node=None,
                  tension_only=False, comp_only=False, section_name=None):
         
-        super().__init__(name, i_node, j_node, material, model, Iy, Iz, J, A, aux_node, tension_only, comp_only, section_name)
+        super().__init__(name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node, tension_only, comp_only, section_name)
         self.sub_members = {}
 
     def descritize(self):
@@ -41,6 +41,7 @@ class PhysMember(Member3D):
         # Step through each node in the model
         for node in self.model.Nodes.values():
 
+            # Check each node in the model (except the i and j-nodes)
             if node is not self.i_node and node is not self.j_node:
 
                 # Create a vector from the i-node to the current node
