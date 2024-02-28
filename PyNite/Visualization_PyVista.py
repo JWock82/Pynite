@@ -34,7 +34,7 @@ class Renderer:
 
         self.plotter = pv.Plotter()
         self.plotter.set_background('white')  # Setting background color
-        self.plotter.add_logo_widget('./Resources/Full Logo No Buffer - Transparent.png')
+        # self.plotter.add_logo_widget('./Resources/Full Logo No Buffer - Transparent.png')
         # self.plotter.view_isometric()
         self.plotter.view_xy()
         self.plotter.show_axes()
