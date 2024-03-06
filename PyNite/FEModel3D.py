@@ -1115,11 +1115,11 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_dist_load(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
+    def add_member_dist_load(self, member_name, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
         """Adds a member distributed load to the model.
 
-        :param Member: The name of the member the load is being appied to.
-        :type Member: str
+        :param member_name: The name of the member the load is being appied to.
+        :type member_name: str
         :param Direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
                           `'Fy'`, `'Fz'`, `'FX'`, `'FY'`, or `'FZ'`.
                           Note that lower-case notation indicates use of the beam's local
@@ -1152,15 +1152,35 @@ class FEModel3D():
             start = x1
         
         if x2 == None:
-            end = self.Members[Member].L()
+            end = self.Members[member_name].L()
         else:
             end = x2
 
         # Add the distributed load to the member
-        self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
+        self.Members[member_name].DistLoads.append((Direction, w1, w2, start, end, case))
         
         # Flag the model as unsolved
         self.solution = None
+
+    def add_member_self_weight(self, global_direction, factor, case='Case 1'):
+        """Adds self weight to all members in the model. Note that this only works for members. Plate and Quad elements will be ignored by this command.
+
+        :param global_direction: The global direction to apply the member load in: 'FX', 'FY', or 'FZ'.
+        :type global_direction: string
+        :param factor: A factor to apply to the member self-weight. Can be used to account for items like connections.
+        :type factor: float
+        :param case: The load case to apply the self-weight to. Defaults to 'Case 1'
+        :type case: str, optional
+        """
+
+        # Step through each member in the model
+        for member in self.Members.values():
+
+            # Calculate the self weight of the member
+            self_weight = factor*member.material.rho*member.A
+
+            # Add the self-weight load to the member
+            self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case)
 
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         """Adds a surface pressure to the rectangular plate element.
