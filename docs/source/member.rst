@@ -88,6 +88,11 @@ Tension-only and compression-only analysis is an iterative process. When using t
 members be sure to perform a non-linear analysis. Do not use the ``FEModel3D.analyze_linear()``
 method.
 
+Member loads
+============
+
+Pynite supports member distributed loads and member point loads. It can also calculate self-weight for members (note that self-weight is not supported for plate elements at this time). Distributed loads can be full length or partial length, and can vary linearly in magnitude. Loads can be applied in member local (`'Fx'`, `'Fy'`, `'Fz'`, `'Mx'`, `'My'`, `'Mz'`) or model global coordinate directions (`'FX'`, `'FY'`, `'FZ'`, `'MX'`, `'MY'`, `'MZ'`).
+
 Member Results
 ==============
 
