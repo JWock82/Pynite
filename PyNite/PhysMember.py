@@ -12,7 +12,7 @@ class PhysMember(Member3D):
     nodes.
     """
 
-    def __init__(self, name, i_node, j_node, material, Iy, Iz, J, A, model, aux_node=None,
+    def __init__(self, name, i_node, j_node, material, model, Iy, Iz, J, A, aux_node=None,
                  tension_only=False, comp_only=False, section_name=None):
         
         super().__init__(name, i_node, j_node, material, model, Iy, Iz, J, A, aux_node, tension_only, comp_only, section_name)

@@ -973,7 +973,7 @@ def _check_statics(model, combo_tags=None):
             SumRFZ += RFZ
             SumRMX += RMX - RFY*Z + RFZ*Y
             SumRMY += RMY + RFX*Z - RFZ*X
-            SumRMZ += RMZ - RFX*Y + RFY*X   
+            SumRMZ += RMZ - RFX*Y + RFY*X 
 
         # Add the results to the table
         statics_table.add_row([combo.name, '{:.3g}'.format(SumFX), '{:.3g}'.format(SumRFX),
