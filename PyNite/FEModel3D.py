@@ -1167,7 +1167,7 @@ class FEModel3D():
 
         :param global_direction: The global direction to apply the member load in: 'FX', 'FY', or 'FZ'.
         :type global_direction: string
-        :param factor: A factor to apply to the member self-weight. Can be used to account for items like connections.
+        :param factor: A factor to apply to the member self-weight. Can be used to account for items like connections, or to switch the direction of the self-weight load.
         :type factor: float
         :param case: The load case to apply the self-weight to. Defaults to 'Case 1'
         :type case: str, optional
@@ -1181,6 +1181,8 @@ class FEModel3D():
 
             # Add the self-weight load to the member
             self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case)
+        
+        # No need to flag the model as unsolved. That has already been taken care of by our call to `add_member_dist_load`
 
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         """Adds a surface pressure to the rectangular plate element.
