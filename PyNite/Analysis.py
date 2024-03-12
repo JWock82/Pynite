@@ -672,12 +672,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         spring_F = spring.F(combo.name)
 
-                        node.RxnFX[combo.name] += spring_F[0, 0]
-                        node.RxnFY[combo.name] += spring_F[1, 0]
-                        node.RxnFZ[combo.name] += spring_F[2, 0]
-                        node.RxnMX[combo.name] += spring_F[3, 0]
-                        node.RxnMY[combo.name] += spring_F[4, 0]
-                        node.RxnMZ[combo.name] += spring_F[5, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += spring_F[0, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += spring_F[1, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += spring_F[2, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += spring_F[3, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += spring_F[4, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += spring_F[5, 0]
 
                     elif spring.j_node == node and spring.active[combo.name] == True:
                     
@@ -685,12 +685,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         spring_F = spring.F(combo.name)
                     
-                        node.RxnFX[combo.name] += spring_F[6, 0]
-                        node.RxnFY[combo.name] += spring_F[7, 0]
-                        node.RxnFZ[combo.name] += spring_F[8, 0]
-                        node.RxnMX[combo.name] += spring_F[9, 0]
-                        node.RxnMY[combo.name] += spring_F[10, 0]
-                        node.RxnMZ[combo.name] += spring_F[11, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += spring_F[6, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += spring_F[7, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += spring_F[8, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += spring_F[9, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += spring_F[10, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += spring_F[11, 0]
 
                 # Step through each physical member in the model
                 for phys_member in model.Members.values():
@@ -704,12 +704,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             member_F = member.F(combo.name)
 
-                            node.RxnFX[combo.name] += member_F[0, 0]
-                            node.RxnFY[combo.name] += member_F[1, 0]
-                            node.RxnFZ[combo.name] += member_F[2, 0]
-                            node.RxnMX[combo.name] += member_F[3, 0]
-                            node.RxnMY[combo.name] += member_F[4, 0]
-                            node.RxnMZ[combo.name] += member_F[5, 0]
+                            if node.support_DX: node.RxnFX[combo.name] += member_F[0, 0]
+                            if node.support_DY: node.RxnFY[combo.name] += member_F[1, 0]
+                            if node.support_DZ: node.RxnFZ[combo.name] += member_F[2, 0]
+                            if node.support_RX: node.RxnMX[combo.name] += member_F[3, 0]
+                            if node.support_RY: node.RxnMY[combo.name] += member_F[4, 0]
+                            if node.support_RZ: node.RxnMZ[combo.name] += member_F[5, 0]
 
                         elif member.j_node == node and phys_member.active[combo.name] == True:
                         
@@ -717,12 +717,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             member_F = member.F(combo.name)
                         
-                            node.RxnFX[combo.name] += member_F[6, 0]
-                            node.RxnFY[combo.name] += member_F[7, 0]
-                            node.RxnFZ[combo.name] += member_F[8, 0]
-                            node.RxnMX[combo.name] += member_F[9, 0]
-                            node.RxnMY[combo.name] += member_F[10, 0]
-                            node.RxnMZ[combo.name] += member_F[11, 0]
+                            if node.support_DX: node.RxnFX[combo.name] += member_F[6, 0]
+                            if node.support_DY: node.RxnFY[combo.name] += member_F[7, 0]
+                            if node.support_DZ: node.RxnFZ[combo.name] += member_F[8, 0]
+                            if node.support_RX: node.RxnMX[combo.name] += member_F[9, 0]
+                            if node.support_RY: node.RxnMY[combo.name] += member_F[10, 0]
+                            if node.support_RZ: node.RxnMZ[combo.name] += member_F[11, 0]
 
                 # Sum the plate forces at the node
                 for plate in model.Plates.values():
@@ -733,12 +733,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
                 
-                        node.RxnFX[combo.name] += plate_F[0, 0]
-                        node.RxnFY[combo.name] += plate_F[1, 0]
-                        node.RxnFZ[combo.name] += plate_F[2, 0]
-                        node.RxnMX[combo.name] += plate_F[3, 0]
-                        node.RxnMY[combo.name] += plate_F[4, 0]
-                        node.RxnMZ[combo.name] += plate_F[5, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += plate_F[0, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += plate_F[1, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += plate_F[2, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += plate_F[3, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += plate_F[4, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += plate_F[5, 0]
 
                     elif plate.j_node == node:
 
@@ -746,12 +746,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
                 
-                        node.RxnFX[combo.name] += plate_F[6, 0]
-                        node.RxnFY[combo.name] += plate_F[7, 0]
-                        node.RxnFZ[combo.name] += plate_F[8, 0]
-                        node.RxnMX[combo.name] += plate_F[9, 0]
-                        node.RxnMY[combo.name] += plate_F[10, 0]
-                        node.RxnMZ[combo.name] += plate_F[11, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += plate_F[6, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += plate_F[7, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += plate_F[8, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += plate_F[9, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += plate_F[10, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += plate_F[11, 0]
 
                     elif plate.m_node == node:
 
@@ -759,12 +759,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
                 
-                        node.RxnFX[combo.name] += plate_F[12, 0]
-                        node.RxnFY[combo.name] += plate_F[13, 0]
-                        node.RxnFZ[combo.name] += plate_F[14, 0]
-                        node.RxnMX[combo.name] += plate_F[15, 0]
-                        node.RxnMY[combo.name] += plate_F[16, 0]
-                        node.RxnMZ[combo.name] += plate_F[17, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += plate_F[12, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += plate_F[13, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += plate_F[14, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += plate_F[15, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += plate_F[16, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += plate_F[17, 0]
 
                     elif plate.n_node == node:
 
@@ -772,12 +772,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
                 
-                        node.RxnFX[combo.name] += plate_F[18, 0]
-                        node.RxnFY[combo.name] += plate_F[19, 0]
-                        node.RxnFZ[combo.name] += plate_F[20, 0]
-                        node.RxnMX[combo.name] += plate_F[21, 0]
-                        node.RxnMY[combo.name] += plate_F[22, 0]
-                        node.RxnMZ[combo.name] += plate_F[23, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += plate_F[18, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += plate_F[19, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += plate_F[20, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += plate_F[21, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += plate_F[22, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += plate_F[23, 0]
 
                 # Sum the quad forces at the node
                 for quad in model.Quads.values():
@@ -788,12 +788,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         quad_F = quad.F(combo.name)
 
-                        node.RxnFX[combo.name] += quad_F[0, 0]
-                        node.RxnFY[combo.name] += quad_F[1, 0]
-                        node.RxnFZ[combo.name] += quad_F[2, 0]
-                        node.RxnMX[combo.name] += quad_F[3, 0]
-                        node.RxnMY[combo.name] += quad_F[4, 0]
-                        node.RxnMZ[combo.name] += quad_F[5, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += quad_F[0, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += quad_F[1, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += quad_F[2, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += quad_F[3, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += quad_F[4, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += quad_F[5, 0]
 
                     elif quad.n_node == node:
 
@@ -801,12 +801,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         quad_F = quad.F(combo.name)
                 
-                        node.RxnFX[combo.name] += quad_F[6, 0]
-                        node.RxnFY[combo.name] += quad_F[7, 0]
-                        node.RxnFZ[combo.name] += quad_F[8, 0]
-                        node.RxnMX[combo.name] += quad_F[9, 0]
-                        node.RxnMY[combo.name] += quad_F[10, 0]
-                        node.RxnMZ[combo.name] += quad_F[11, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += quad_F[6, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += quad_F[7, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += quad_F[8, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += quad_F[9, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += quad_F[10, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += quad_F[11, 0]
 
                     elif quad.i_node == node:
 
@@ -814,12 +814,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         quad_F = quad.F(combo.name)
                 
-                        node.RxnFX[combo.name] += quad_F[12, 0]
-                        node.RxnFY[combo.name] += quad_F[13, 0]
-                        node.RxnFZ[combo.name] += quad_F[14, 0]
-                        node.RxnMX[combo.name] += quad_F[15, 0]
-                        node.RxnMY[combo.name] += quad_F[16, 0]
-                        node.RxnMZ[combo.name] += quad_F[17, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += quad_F[12, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += quad_F[13, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += quad_F[14, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += quad_F[15, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += quad_F[16, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += quad_F[17, 0]
 
                     elif quad.j_node == node:
 
@@ -827,12 +827,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         quad_F = quad.F(combo.name)
                 
-                        node.RxnFX[combo.name] += quad_F[18, 0]
-                        node.RxnFY[combo.name] += quad_F[19, 0]
-                        node.RxnFZ[combo.name] += quad_F[20, 0]
-                        node.RxnMX[combo.name] += quad_F[21, 0]
-                        node.RxnMY[combo.name] += quad_F[22, 0]
-                        node.RxnMZ[combo.name] += quad_F[23, 0]
+                        if node.support_DX: node.RxnFX[combo.name] += quad_F[18, 0]
+                        if node.support_DY: node.RxnFY[combo.name] += quad_F[19, 0]
+                        if node.support_DZ: node.RxnFZ[combo.name] += quad_F[20, 0]
+                        if node.support_RX: node.RxnMX[combo.name] += quad_F[21, 0]
+                        if node.support_RY: node.RxnMY[combo.name] += quad_F[22, 0]
+                        if node.support_RZ: node.RxnMZ[combo.name] += quad_F[23, 0]
                 
                 # Sum the joint loads applied to the node
                 for load in node.NodeLoads:
@@ -841,17 +841,17 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         
                         if load[2] == case:
 
-                            if load[0] == 'FX':
+                            if load[0] == 'FX' and node.support_DX:
                                 node.RxnFX[combo.name] -= load[1]*factor
-                            elif load[0] == 'FY':
+                            elif load[0] == 'FY' and node.support_DY:
                                 node.RxnFY[combo.name] -= load[1]*factor
-                            elif load[0] == 'FZ':
+                            elif load[0] == 'FZ' and node.support_DZ:
                                 node.RxnFZ[combo.name] -= load[1]*factor
-                            elif load[0] == 'MX':
+                            elif load[0] == 'MX' and node.support_RX:
                                 node.RxnMX[combo.name] -= load[1]*factor
-                            elif load[0] == 'MY':
+                            elif load[0] == 'MY' and node.support_RY:
                                 node.RxnMY[combo.name] -= load[1]*factor
-                            elif load[0] == 'MZ':
+                            elif load[0] == 'MZ' and node.support_RZ:
                                 node.RxnMZ[combo.name] -= load[1]*factor
             
             # Calculate any reactions due to active spring supports at the node
