@@ -241,10 +241,9 @@ class Renderer:
         labels = [node.name for node in self.model.Nodes.values()]
         self.plotter.add_point_labels(label_points, labels, italic=False, bold=False, font_size=24, text_color='grey', font_family=None, shadow=False, show_points=True, point_color=None, point_size=None, name=None, shape_color=None, shape=None, fill_shape=True, margin=3, shape_opacity=1.0, pickable=False, render_points_as_spheres=True, tolerance=0.001, reset_camera=None, always_visible=False, render=True)
 
-        # Create a visual spring for each spring in the model
-        # vis_springs = []
-        # for spring in self.model.Springs.values():
-        #     vis_springs.append(VisSpring(spring, self.model.Nodes, self.annotation_size))    
+        # Render the springs
+        for spring in self.model.Springs.values():
+            self.plot_spring(spring, self.annotation_size, 'grey')  
     
         # Create a visual member for each member in the model
         # vis_members = []
@@ -259,28 +258,6 @@ class Renderer:
         labels = [member.name for member in self.model.Members.values()]
         self.plotter.add_point_labels(label_points, labels, italic=False, bold=False, font_size=24, text_color='grey', font_family=None, shadow=False, show_points=False, point_color=None, point_size=None, name=None, shape_color=None, shape=None, fill_shape=True, margin=3, shape_opacity=1.0, pickable=False, render_points_as_spheres=True, tolerance=0.001, reset_camera=None, always_visible=False, render=True)
 
-        # Add actors for each spring
-        # for vis_spring in vis_springs:
-        
-        #     # Add the spring
-        #     self.plotter.add_mesh(vis_spring.mesh)
-
-        #     if self.labels == True:
-
-        #         # Add the actor for the spring label
-        #         self.plotter.add_mesh(vis_spring.text_mesh)  
-
-        # Add actors for each member
-        # for vis_member in vis_members:
-            
-        #     # Add the actor for the member
-        #     self.plotter.add_mesh(vis_member.mesh)
-
-        #     if self.labels == True:
-                
-        #         # Add the actor for the member label
-        #         self.plotter.add_mesh(vis_member.text_mesh)
-
         # Render the deformed shape if requested
         if self.deformed_shape == True:
 
@@ -291,6 +268,10 @@ class Renderer:
             # Render deformed members
             for member in self.model.Members.values():
                 self.plot_deformed_member(member, self.deformed_scale)
+            
+            # Render deformed springs
+            for spring in self.model.Springs.values():
+                self.plot_deformed_spring(spring, self.deformed_scale, self.combo_name)
 
             # _DeformedShape(self.model, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
 
@@ -660,6 +641,31 @@ class Renderer:
                 line = pv.Line(D_plot[i], D_plot[i+1])
                 self.plotter.add_mesh(line, color='red', line_width=2)
     
+    def plot_deformed_spring(self, spring, scale_factor, combo_name='Combo 1'):
+
+        # Determine if the spring is active for the load combination
+        if spring.active[combo_name]:
+        
+            # Generate points for the deformed spring
+            points = []
+
+            # Get the spring's i-node and j-node
+            i_node = spring.i_node
+            j_node = spring.j_node
+            
+            Xi = i_node.X + i_node.DX[combo_name]*scale_factor
+            Yi = i_node.Y + i_node.DY[combo_name]*scale_factor
+            Zi = i_node.Z + i_node.DZ[combo_name]*scale_factor
+            points.append([Xi, Yi, Zi])
+            
+            Xj = j_node.X + j_node.DX[combo_name]*scale_factor
+            Yj = j_node.Y + j_node.DY[combo_name]*scale_factor
+            Zj = j_node.Z + j_node.DZ[combo_name]*scale_factor
+            points.append([Xj, Yj, Zj])
+            
+            # Create a PyVista Line object from the points
+            self.spring_mesh = pv.Line(points)
+
     def plot_pt_load(self, position, direction, length, label_text=None, annotation_size=5, color=None):
 
         # Create a unit vector in the direction of the 'direction' vector
@@ -699,125 +705,6 @@ class Renderer:
         
         # Plot the point load
         self.plotter.add_mesh(polydata)                                
-
-# class VisDeformedSpring():
-    
-#     def __init__(self, spring, nodes, scale_factor, combo_name='Combo 1'):
-
-#         # Determine if this spring is active for each load combination
-#         self.active = spring.active
-        
-#         # Generate a line source for the spring
-#         self.source = vtk.vtkLineSource()
-        
-#         # Find the deformed position of the local i-node
-#         # Step through each node
-#         for node in nodes.values():
-      
-#             # Check to see if the current node is the i-node
-#             if node.name == spring.i_node.name:
-#                 Xi = node.X + node.DX[combo_name]*scale_factor
-#                 Yi = node.Y + node.DY[combo_name]*scale_factor
-#                 Zi = node.Z + node.DZ[combo_name]*scale_factor
-#                 self.source.SetPoint1(Xi, Yi, Zi)
-        
-#             # Check to see if the current node is the i-node
-#             if node.name == spring.j_node.name:
-#                 Xj = node.X + node.DX[combo_name]*scale_factor
-#                 Yj = node.Y + node.DY[combo_name]*scale_factor
-#                 Zj = node.Z + node.DZ[combo_name]*scale_factor
-#                 self.source.SetPoint2(Xj, Yj, Zj)
-        
-#         self.source.Update()
-    
-class VisPtLoad():
-    '''
-    Creates a point load for the viewer
-    '''
-    
-    def __init__(self, position, direction, length, label_text=None, annotation_size=5, color=None):
-        '''
-        Constructor.
-      
-        Parameters
-        ----------
-        position : tuple
-          A tuple of X, Y and Z coordinates for the point of the load arrow: (X, Y, Z).
-        direction : tuple
-          A tuple indicating the direction vector for the load arrow: (i, j, k).
-        length : number
-          The length of the load arrow.
-        tip_length : number
-          The height of the arrow head.
-        label_text : string
-          Text that will show up at the tail of the arrow. If set to 'None' no text will be displayed.
-        '''
-      
-        # Create a unit vector in the direction of the 'direction' vector
-        unitVector = direction/norm(direction)
-      
-        # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
-        self.polydata = vtk.vtkAppendPolyData()
-      
-        # Determine if the load is positive or negative
-        if length == 0:
-            sign = 1
-        else:
-            sign = abs(length)/length
-      
-        # Generate the tip of the load arrow
-        tip_length = abs(length)/4
-        radius = abs(length)/16
-        tip = vtk.vtkConeSource()
-        tip.SetCenter(position[0] - tip_length*sign*0.5*unitVector[0], \
-                      position[1] - tip_length*sign*0.5*unitVector[1], \
-                      position[2] - tip_length*sign*0.5*unitVector[2])
-        tip.SetDirection([direction[0]*sign, direction[1]*sign, direction[2]*sign])
-        tip.SetHeight(tip_length)
-        tip.SetRadius(radius)
-        tip.Update()
-      
-        # Add the arrow tip to the append filter
-        self.polydata.AddInputData(tip.GetOutput())
-        
-        # Create the shaft
-        shaft = vtk.vtkLineSource()
-        shaft.SetPoint1(position)
-        shaft.SetPoint2((position[0]-length*unitVector[0], position[1]-length*unitVector[1], position[2]-length*unitVector[2]))
-        shaft.Update()
-      
-        # Copy and append the shaft data to the append filter
-        self.polydata.AddInputData(shaft.GetOutput())
-        self.polydata.Update()
-      
-        # Create a mapper and actor
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(self.polydata.GetOutputPort())
-        self.actor = vtk.vtkActor()
-        if color is None: self.actor.GetProperty().SetColor(0, 255, 0) # Green
-        elif color == 'black': self.actor.GetProperty().SetColor(0, 0, 0)  # Black
-        self.actor.SetMapper(mapper)
-      
-        # Create the label if needed
-        if label_text != None:
-      
-            # Create the label and set its text
-            self.label = vtk.vtkVectorText()
-            self.label.SetText(label_text)
-        
-            # Set up a mapper for the label
-            lblMapper = vtk.vtkPolyDataMapper()
-            lblMapper.SetInputConnection(self.label.GetOutputPort())
-        
-            # Set up an actor for the label
-            self.lblActor = vtk.vtkFollower()
-            self.lblActor.SetMapper(lblMapper)
-            self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
-            self.lblActor.SetPosition(position[0] - (length - 0.6*annotation_size)*unitVector[0], \
-                                      position[1] - (length - 0.6*annotation_size)*unitVector[1], \
-                                      position[2] - (length - 0.6*annotation_size)*unitVector[2])
-            if color is None: self.lblActor.GetProperty().SetColor(0, 255, 0)  # Green
-            elif color == 'black': self.lblActor.GetProperty().SetColor(0, 0, 0)  # Black
 
 # class VisDistLoad():
 #     '''
