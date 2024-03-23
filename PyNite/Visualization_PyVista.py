@@ -38,6 +38,10 @@ class Renderer:
         self.plotter.view_xy()
         self.plotter.show_axes()
 
+        # Initialize load labels
+        self._load_label_points = []
+        self._load_labels = []
+
     @property
     def window_width(self):
         return self.plotter.window_size[0]
@@ -211,6 +215,10 @@ class Renderer:
 
         # Clear out the old plot (if any)
         self.plotter.clear()
+
+        # Clear out internally stored load labels (if any)
+        self._load_label_points = []
+        self._load_labels = []
         
         # Check if nodes are to be rendered
         if self.render_nodes == True:
@@ -651,7 +659,47 @@ class Renderer:
             for i in range(len(D_plot)-1):
                 line = pv.Line(D_plot[i], D_plot[i+1])
                 self.plotter.add_mesh(line, color='red', line_width=2)
-                                  
+    
+    def plot_pt_load(self, position, direction, length, label_text=None, annotation_size=5, color=None):
+
+        # Create a unit vector in the direction of the 'direction' vector
+        unitVector = direction / norm(direction)
+        
+        # Determine if the load is positive or negative
+        if length == 0:
+            sign = 1
+        else:
+            sign = abs(length)/length
+
+        # Generate the tip of the load arrow
+        tip_length = abs(length) / 4
+        radius = abs(length) / 16
+        tip = pv.Cone(center=(position[0] - tip_length*sign*unitVector[0]/2,
+                              position[1] - tip_length*sign*unitVector[1]/2,
+                              position[2] - tip_length*sign*unitVector[2]/2),
+                              direction=(direction[0]*sign, direction[1]*sign, direction[2]*sign),
+                              height=tip_length,
+                              radius=radius)
+
+        # Create a polydata object to store the tip
+        polydata = pv.PolyData(tip)
+
+        # Create the shaft (you'll need to specify the second point)
+        X_tail = position[0] - unitVector[0]*length
+        Y_tail = position[1] - unitVector[1]*length
+        Z_tail = position[2] - unitVector[2]*length
+        shaft = pv.Line(pointa=position, pointb=(X_tail, Y_tail, Z_tail))
+        
+        # Save the data necessary to create the load's label
+        self._load_labels.append(label_text)
+        self._load_label_points.append([X_tail, Y_tail, Z_tail])
+        
+        # Add the shaft to the polydata object
+        polydata += shaft
+        
+        # Plot the point load
+        self.plotter.add_mesh(polydata)                                
+
 # class VisDeformedSpring():
     
 #     def __init__(self, spring, nodes, scale_factor, combo_name='Combo 1'):
@@ -682,95 +730,95 @@ class Renderer:
         
 #         self.source.Update()
     
-# class VisPtLoad():
-#     '''
-#     Creates a point load for the viewer
-#     '''
+class VisPtLoad():
+    '''
+    Creates a point load for the viewer
+    '''
     
-#     def __init__(self, position, direction, length, label_text=None, annotation_size=5, color=None):
-#         '''
-#         Constructor.
+    def __init__(self, position, direction, length, label_text=None, annotation_size=5, color=None):
+        '''
+        Constructor.
       
-#         Parameters
-#         ----------
-#         position : tuple
-#           A tuple of X, Y and Z coordinates for the point of the load arrow: (X, Y, Z).
-#         direction : tuple
-#           A tuple indicating the direction vector for the load arrow: (i, j, k).
-#         length : number
-#           The length of the load arrow.
-#         tip_length : number
-#           The height of the arrow head.
-#         label_text : string
-#           Text that will show up at the tail of the arrow. If set to 'None' no text will be displayed.
-#         '''
+        Parameters
+        ----------
+        position : tuple
+          A tuple of X, Y and Z coordinates for the point of the load arrow: (X, Y, Z).
+        direction : tuple
+          A tuple indicating the direction vector for the load arrow: (i, j, k).
+        length : number
+          The length of the load arrow.
+        tip_length : number
+          The height of the arrow head.
+        label_text : string
+          Text that will show up at the tail of the arrow. If set to 'None' no text will be displayed.
+        '''
       
-#         # Create a unit vector in the direction of the 'direction' vector
-#         unitVector = direction/norm(direction)
+        # Create a unit vector in the direction of the 'direction' vector
+        unitVector = direction/norm(direction)
       
-#         # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
-#         self.polydata = vtk.vtkAppendPolyData()
+        # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
+        self.polydata = vtk.vtkAppendPolyData()
       
-#         # Determine if the load is positive or negative
-#         if length == 0:
-#             sign = 1
-#         else:
-#             sign = abs(length)/length
+        # Determine if the load is positive or negative
+        if length == 0:
+            sign = 1
+        else:
+            sign = abs(length)/length
       
-#         # Generate the tip of the load arrow
-#         tip_length = abs(length)/4
-#         radius = abs(length)/16
-#         tip = vtk.vtkConeSource()
-#         tip.SetCenter(position[0] - tip_length*sign*0.5*unitVector[0], \
-#                       position[1] - tip_length*sign*0.5*unitVector[1], \
-#                       position[2] - tip_length*sign*0.5*unitVector[2])
-#         tip.SetDirection([direction[0]*sign, direction[1]*sign, direction[2]*sign])
-#         tip.SetHeight(tip_length)
-#         tip.SetRadius(radius)
-#         tip.Update()
+        # Generate the tip of the load arrow
+        tip_length = abs(length)/4
+        radius = abs(length)/16
+        tip = vtk.vtkConeSource()
+        tip.SetCenter(position[0] - tip_length*sign*0.5*unitVector[0], \
+                      position[1] - tip_length*sign*0.5*unitVector[1], \
+                      position[2] - tip_length*sign*0.5*unitVector[2])
+        tip.SetDirection([direction[0]*sign, direction[1]*sign, direction[2]*sign])
+        tip.SetHeight(tip_length)
+        tip.SetRadius(radius)
+        tip.Update()
       
-#         # Add the arrow tip to the append filter
-#         self.polydata.AddInputData(tip.GetOutput())
+        # Add the arrow tip to the append filter
+        self.polydata.AddInputData(tip.GetOutput())
         
-#         # Create the shaft
-#         shaft = vtk.vtkLineSource()
-#         shaft.SetPoint1(position)
-#         shaft.SetPoint2((position[0]-length*unitVector[0], position[1]-length*unitVector[1], position[2]-length*unitVector[2]))
-#         shaft.Update()
+        # Create the shaft
+        shaft = vtk.vtkLineSource()
+        shaft.SetPoint1(position)
+        shaft.SetPoint2((position[0]-length*unitVector[0], position[1]-length*unitVector[1], position[2]-length*unitVector[2]))
+        shaft.Update()
       
-#         # Copy and append the shaft data to the append filter
-#         self.polydata.AddInputData(shaft.GetOutput())
-#         self.polydata.Update()
+        # Copy and append the shaft data to the append filter
+        self.polydata.AddInputData(shaft.GetOutput())
+        self.polydata.Update()
       
-#         # Create a mapper and actor
-#         mapper = vtk.vtkPolyDataMapper()
-#         mapper.SetInputConnection(self.polydata.GetOutputPort())
-#         self.actor = vtk.vtkActor()
-#         if color is None: self.actor.GetProperty().SetColor(0, 255, 0) # Green
-#         elif color == 'black': self.actor.GetProperty().SetColor(0, 0, 0)  # Black
-#         self.actor.SetMapper(mapper)
+        # Create a mapper and actor
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(self.polydata.GetOutputPort())
+        self.actor = vtk.vtkActor()
+        if color is None: self.actor.GetProperty().SetColor(0, 255, 0) # Green
+        elif color == 'black': self.actor.GetProperty().SetColor(0, 0, 0)  # Black
+        self.actor.SetMapper(mapper)
       
-#         # Create the label if needed
-#         if label_text != None:
+        # Create the label if needed
+        if label_text != None:
       
-#             # Create the label and set its text
-#             self.label = vtk.vtkVectorText()
-#             self.label.SetText(label_text)
+            # Create the label and set its text
+            self.label = vtk.vtkVectorText()
+            self.label.SetText(label_text)
         
-#             # Set up a mapper for the label
-#             lblMapper = vtk.vtkPolyDataMapper()
-#             lblMapper.SetInputConnection(self.label.GetOutputPort())
+            # Set up a mapper for the label
+            lblMapper = vtk.vtkPolyDataMapper()
+            lblMapper.SetInputConnection(self.label.GetOutputPort())
         
-#             # Set up an actor for the label
-#             self.lblActor = vtk.vtkFollower()
-#             self.lblActor.SetMapper(lblMapper)
-#             self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
-#             self.lblActor.SetPosition(position[0] - (length - 0.6*annotation_size)*unitVector[0], \
-#                                       position[1] - (length - 0.6*annotation_size)*unitVector[1], \
-#                                       position[2] - (length - 0.6*annotation_size)*unitVector[2])
-#             if color is None: self.lblActor.GetProperty().SetColor(0, 255, 0)  # Green
-#             elif color == 'black': self.lblActor.GetProperty().SetColor(0, 0, 0)  # Black
-      
+            # Set up an actor for the label
+            self.lblActor = vtk.vtkFollower()
+            self.lblActor.SetMapper(lblMapper)
+            self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
+            self.lblActor.SetPosition(position[0] - (length - 0.6*annotation_size)*unitVector[0], \
+                                      position[1] - (length - 0.6*annotation_size)*unitVector[1], \
+                                      position[2] - (length - 0.6*annotation_size)*unitVector[2])
+            if color is None: self.lblActor.GetProperty().SetColor(0, 255, 0)  # Green
+            elif color == 'black': self.lblActor.GetProperty().SetColor(0, 0, 0)  # Black
+
 # class VisDistLoad():
 #     '''
 #     Creates a distributed load for the viewer
