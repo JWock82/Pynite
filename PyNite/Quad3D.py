@@ -22,7 +22,7 @@ class Quad3D():
     """
 
 #%%
-    def __init__(self, name, i_node, j_node, m_node, n_node, t, material, model, kx_mod=1.0,
+    def __init__(self, name, i_node, j_node, m_node, n_node, t, material_name, model, kx_mod=1.0,
                  ky_mod=1.0):
 
         self.name = name
@@ -45,10 +45,10 @@ class Quad3D():
 
         # Get material properties for the plate from the model
         try:
-            self.E = self.model.Materials[material].E
-            self.nu = self.model.Materials[material].nu
+            self.E = self.model.Materials[material_name].E
+            self.nu = self.model.Materials[material_name].nu
         except:
-            raise KeyError('Please define the material ' + str(material) + ' before assigning it to plates.')
+            raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
 
 #%%
     def _local_coords(self):

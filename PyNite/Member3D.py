@@ -22,7 +22,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, name, i_node, j_node, material, model, Iy, Iz, J, A, auxNode=None,
+    def __init__(self, name, i_node, j_node, material_name, model, Iy, Iz, J, A, auxNode=None,
                  tension_only=False, comp_only=False, section_name=None):
         """
         Initializes a new member.
@@ -31,9 +31,9 @@ class Member3D():
         self.ID = None        # Unique index number for the member assigned by the program
         self.i_node = i_node  # The element's i-node
         self.j_node = j_node  # The element's j-node
-        self.material = material  # The element's material
-        self.E = model.Materials[material].E   # The modulus of elasticity of the element
-        self.G = model.Materials[material].G   # The shear modulus of the element
+        self.material_name = material_name  # The element's material
+        self.E = model.Materials[material_name].E   # The modulus of elasticity of the element
+        self.G = model.Materials[material_name].G   # The shear modulus of the element
 
         # Section properties
         if section_name is None:

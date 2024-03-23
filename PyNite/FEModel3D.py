@@ -279,7 +279,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name, i_node, j_node, material, Iy=None, Iz=None, J=None, A=None, aux_node=None, tension_only=False, comp_only=False, section_name=None):
+    def add_member(self, name, i_node, j_node, material_name, Iy=None, Iz=None, J=None, A=None, aux_node=None, tension_only=False, comp_only=False, section_name=None):
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -288,7 +288,7 @@ class FEModel3D():
         :type i_node: str
         :param j_node: The name of the j-node (end node).
         :type j_node: str
-        :param material: The name of the material of the member.
+        :param material_name: The name of the material of the member.
         :type material: str
         :param Iy: The moment of inertia of the member about its local y-axis.
         :type Iy: number
@@ -324,9 +324,9 @@ class FEModel3D():
                 
         # Create a new member
         if aux_node == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section_name=section_name)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material_name, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section_name=section_name)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material_name, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         
         # Add the new member to the list
         self.Members[name] = new_member
@@ -337,7 +337,7 @@ class FEModel3D():
         # Return the member name
         return name
 
-    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1.0, ky_mod=1.0):
+    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material_name, kx_mod=1.0, ky_mod=1.0):
         """Adds a new rectangular plate to the model. The plate formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on a 12-term
         polynomial formulation. This element must be rectangular, and must not be used where a
@@ -357,8 +357,8 @@ class FEModel3D():
         :type n_node: str
         :param t: The thickness of the element.
         :type t: number
-        :param material: The name of the material for the element.
-        :type material: str
+        :param material_name: The name of the material for the element.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
                        x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -383,7 +383,7 @@ class FEModel3D():
         
         # Create a new plate
         new_plate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
-                           self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
+                           self.Nodes[n_node], t, material_name, self, kx_mod, ky_mod)
         
         # Add the new plate to the list
         self.Plates[name] = new_plate
@@ -394,7 +394,7 @@ class FEModel3D():
         # Return the plate name
         return name
 
-    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1.0, ky_mod=1.0):
+    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material_name, kx_mod=1.0, ky_mod=1.0):
         """Adds a new quadrilateral to the model. The quad formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on an MITC4
         formulation. This element handles distortion relatively well, and is appropriate for thick
@@ -416,8 +416,8 @@ class FEModel3D():
         :type n_node: str
         :param t: The thickness of the element.
         :type t: number
-        :param material: The name of the material for the element.
-        :type material: str
+        :param material_name: The name of the material for the element.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
             x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -442,7 +442,7 @@ class FEModel3D():
         
         # Create a new member
         new_quad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
-                         self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
+                         self.Nodes[n_node], t, material_name, self, kx_mod, ky_mod)
         
         # Add the new member to the list
         self.Quads[name] = new_quad
@@ -453,7 +453,7 @@ class FEModel3D():
         #Return the quad name
         return name
 
-    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
+    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material_name, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
@@ -466,8 +466,8 @@ class FEModel3D():
         :type height: number
         :param thickness: The thickness of each element in the mesh.
         :type thickness: number
-        :param material: The name of the material for elements in the mesh.
-        :type material: str
+        :param material_name: The name of the material for elements in the mesh.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local x-direction. Defaults to 1.0 (no modification).
         :type kx_mod: float, optional
         :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local y-direction. Defaults to 1.0 (no modification).
@@ -508,7 +508,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create the mesh
-        new_mesh = RectangleMesh(mesh_size, width, height, thickness, material, self, kx_mod,
+        new_mesh = RectangleMesh(mesh_size, width, height, thickness, material_name, self, kx_mod,
                                  ky_mod, origin, plane, x_control, y_control, start_node,
                                  start_element, element_type=element_type)
 
@@ -521,7 +521,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
     
-    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1.0, 
+    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material_name, kx_mod=1.0, 
             ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
         """Adds a mesh of quadrilaterals forming an annulus (a donut).
 
@@ -535,8 +535,8 @@ class FEModel3D():
         :type inner_radius: float
         :param thickness: Element thickness.
         :type thickness: float
-        :param material: The name of the element material.
-        :type material: str
+        :param material_name: The name of the element material.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for radial stiffness in the element's local
                        x-direction. Default is 1.0 (no modification).
         :type kx_mod: float, optional
@@ -573,7 +573,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
-        new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material, self,
+        new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material_name, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element)
 
         # Add the new mesh to the `Meshes` dictionary
@@ -585,7 +585,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
 
-    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
+    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,material_name, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
         """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
 
         :param name: A unique name for the mesh.
@@ -600,8 +600,8 @@ class FEModel3D():
         :type height: number
         :param thickness: The thickness of the elements.
         :type thickness: number
-        :param material: The name of the element material.
-        :type material: str
+        :param material_name: The name of the element material.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for radial stiffness in each element's local x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
         :param ky_mod: Stiffness modification factor for meridional stiffness in each element's local y-direction, defaults to 1 (no modification).
@@ -635,7 +635,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
-        new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material,
+        new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material_name,
                                 self, kx_mod, ky_mod, origin, axis, start_node, start_element)
 
         # Add the new mesh to the `Meshes` dictionary
@@ -647,7 +647,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
     
-    def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material, kx_mod=1,
+    def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material_name, kx_mod=1,
                           ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None, start_node=None,
                           start_element=None, element_type='Quad'):
         """Adds a mesh of elements forming a cylinder.
@@ -662,8 +662,8 @@ class FEModel3D():
         :type height: float
         :param thickness: Element thickness.
         :type thickness: float
-        :param material: The name of the element material.
-        :type material: str
+        :param material_name: The name of the element material.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for hoop stiffness in each element's local
                        x-direction. Defaults to 1.0 (no modification).
         :type kx_mod: int, optional
@@ -711,7 +711,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
-        new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material, self,
+        new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material_name, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element,
                                num_elements, element_type)
 
@@ -1177,7 +1177,7 @@ class FEModel3D():
         for member in self.Members.values():
 
             # Calculate the self weight of the member
-            self_weight = factor*member.material.rho*member.A
+            self_weight = factor*self.Materials[member.material_name].rho*member.A
 
             # Add the self-weight load to the member
             self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case)
