@@ -3,8 +3,7 @@ from json import load
 import warnings
 
 from IPython.display import Image
-from numpy import array, empty, append, cross, zeros
-from numpy.linalg import norm
+import numpy as np
 import pyvista as pv
 
 class Renderer:
@@ -442,7 +441,7 @@ class Renderer:
     def plot_spring(self, spring, size, color='grey'):
         
         # Create points for the line source
-        points = zeros((2, 3))  # 2 points in 3D
+        points = np.zeros((2, 3))  # 2 points in 3D
         line = pv.Line(points)
 
         # Step through each node in the model and find the position of the i-node and j-node
@@ -464,11 +463,11 @@ class Renderer:
 
         # Add some color
         if color is None:
-            actor.point_data["color"] = array([255, 0, 255])  # Magenta
-            lblActor.point_data["color"] = array([255, 0, 255])
+            actor.point_data["color"] = np.array([255, 0, 255])  # Magenta
+            lblActor.point_data["color"] = np.array([255, 0, 255])
         elif color == 'black':
-            actor.point_data["color"] = array([0, 0, 0])  # Black
-            lblActor.point_data["color"] = array([0, 0, 0])
+            actor.point_data["color"] = np.array([0, 0, 0])  # Black
+            lblActor.point_data["color"] = np.array([0, 0, 0])
 
         # Plot the actors
         plotter = pv.Plotter()
@@ -542,8 +541,8 @@ class Renderer:
             i+=1
 
         # Add the vertices and the faces to our lists
-        plate_vertices = array(plate_vertices)
-        plate_faces = array(plate_faces)
+        plate_vertices = np.array(plate_vertices)
+        plate_faces = np.array(plate_faces)
 
         # Create a new PyVista dataset to store plate data
         plate_polydata = pv.PolyData(plate_vertices, plate_faces)
@@ -552,7 +551,7 @@ class Renderer:
         if color_map:
             
             plate_polydata = plate_polydata.separate_cells()
-            plate_polydata['Contours'] = array(plate_results)
+            plate_polydata['Contours'] = np.array(plate_results)
             
             # Add the scalar bar for the contours
             if scalar_bar:
@@ -583,9 +582,9 @@ class Renderer:
             L = member.L() # Member length
             T = member.T() # Member local transformation matrix
         
-            cos_x = array([T[0, 0:3]]) # Direction cosines of local x-axis
-            cos_y = array([T[1, 0:3]]) # Direction cosines of local y-axis
-            cos_z = array([T[2, 0:3]]) # Direction cosines of local z-axis
+            cos_x = np.array([T[0, 0:3]]) # Direction cosines of local x-axis
+            cos_y = np.array([T[1, 0:3]]) # Direction cosines of local y-axis
+            cos_z = np.array([T[2, 0:3]]) # Direction cosines of local z-axis
 
             # Find the initial position of the local i-node
             Xi = member.i_node.X
@@ -593,34 +592,34 @@ class Renderer:
             Zi = member.i_node.Z
         
             # Calculate the local y-axis displacements at 20 points along the member's length
-            DY_plot = empty((0, 3))
+            DY_plot = np.empty((0, 3))
             for i in range(20):
                     
                 # Calculate the local y-direction displacement
                 dy_tot = member.deflection('dy', L / 19 * i, self.combo_name)
             
                 # Calculate the scaled displacement in global coordinates
-                DY_plot = append(DY_plot, dy_tot * cos_y * scale_factor, axis=0)
+                DY_plot = np.append(DY_plot, dy_tot * cos_y * scale_factor, axis=0)
         
             # Calculate the local z-axis displacements at 20 points along the member's length
-            DZ_plot = empty((0, 3)) 
+            DZ_plot = np.empty((0, 3)) 
             for i in range(20):
                     
                 # Calculate the local z-direction displacement
                 dz_tot = member.deflection('dz', L / 19 * i, self.combo_name)
             
                 # Calculate the scaled displacement in global coordinates
-                DZ_plot = append(DZ_plot, dz_tot * cos_z * scale_factor, axis=0)
+                DZ_plot = np.append(DZ_plot, dz_tot * cos_z * scale_factor, axis=0)
         
             # Calculate the local x-axis displacements at 20 points along the member's length
-            DX_plot = empty((0, 3)) 
+            DX_plot = np.empty((0, 3)) 
             for i in range(20):
                     
                 # Displacements in local coordinates
                 dx_tot = [[Xi, Yi, Zi]] + (L / 19 * i + member.deflection('dx', L / 19 * i, self.combo_name) * scale_factor) * cos_x
                     
                 # Magnified displacements in global coordinates
-                DX_plot = append(DX_plot, dx_tot, axis=0)
+                DX_plot = np.append(DX_plot, dx_tot, axis=0)
             
             # Sum the component displacements to obtain overall displacement
             D_plot = DY_plot + DZ_plot + DX_plot
@@ -655,10 +654,10 @@ class Renderer:
             # Create a PyVista Line object from the points
             self.spring_mesh = pv.Line(points)
 
-    def plot_pt_load(self, position, direction, length, label_text=None, annotation_size=5, color=None):
+    def plot_pt_load(self, position, direction, length, label_text=None, color=None):
 
         # Create a unit vector in the direction of the 'direction' vector
-        unitVector = direction / norm(direction)
+        unitVector = direction / np.linalg.norm(direction)
         
         # Determine if the load is positive or negative
         if length == 0:
@@ -686,14 +685,74 @@ class Renderer:
         shaft = pv.Line(pointa=position, pointb=(X_tail, Y_tail, Z_tail))
         
         # Save the data necessary to create the load's label
-        self._load_labels.append(label_text)
-        self._load_label_points.append([X_tail, Y_tail, Z_tail])
+        if label_text is not None:
+            self._load_labels.append(label_text)
+            self._load_label_points.append([X_tail, Y_tail, Z_tail])
         
         # Add the shaft to the polydata object
         polydata += shaft
         
         # Plot the point load
         self.plotter.add_mesh(polydata)                                
+
+    def plot_dist_load(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5, color=None):
+
+        # Calculate the length of the distributed load
+        load_length = ((position2[0] - position1[0])**2 + (position2[1] - position1[1])**2 + (position2[2] - position1[2])**2)**0.5
+
+        # Find the direction cosines for the line the load acts on
+        line_dir_cos = [(position2[0] - position1[0])/load_length,
+                        (position2[1] - position1[1])/load_length,
+                        (position2[2] - position1[2])/load_length]
+
+        # Find the direction cosines for the direction the load acts in
+        dir_dir_cos = direction/np.linalg.norm(direction)
+
+        # Create point loads at intervals roughly equal to 75% of the load's largest length
+        # Add text labels to the first and last load arrow
+        if load_length > 0:
+            num_steps = int(round(0.75 * load_length/max(abs(length1), abs(length2)), 0))
+        else:
+            num_steps = 0
+
+        num_steps = max(num_steps, 1)
+        step = load_length/num_steps
+        pt_loads = []
+
+        for i in range(num_steps + 1):
+
+            # Calculate the position (X, Y, Z) of this load arrow's point
+            position = (position1[0] + i*step*line_dir_cos[0],
+                        position1[1] + i*step*line_dir_cos[1],
+                        position1[2] + i*step*line_dir_cos[2])
+
+            # Determine the length of this load arrow
+            length = length1 + (length2 - length1)/load_length*i*step
+
+            # Determine the label's text
+            if i == 0:
+                label_text = label_text1
+            elif i == num_steps:
+                label_text = label_text2
+            else:
+                label_text = None
+
+            # Plot the load arrow
+            self.plot_pt_load(position, dir_dir_cos, length, label_text)
+
+        # Draw a line between the first and last load arrow's tails (using cylinder here for better visualization)
+        tail_line = Cylinder(radius=annotation_size / 2, height=load_length)
+        tail_line.translate(position1 - length1 * dir_dir_cos)
+        tail_line.direction = dir_dir_cos
+
+        # Combine all geometry into a single PolyData object
+        self.mesh = PolyDataCollection(pt_loads + [tail_line])
+
+        # Set color
+        if color is None:
+            self.mesh.set_colors([0, 255, 0])  # Green
+        elif color == 'black':
+            self.mesh.set_colors([0, 0, 0])  # Black
 
 # class VisDistLoad():
 #     '''
@@ -712,7 +771,7 @@ class Renderer:
 #         lineDirCos = [(position2[0]-position1[0])/loadLength, (position2[1]-position1[1])/loadLength, (position2[2]-position1[2])/loadLength]
       
 #         # Find the direction cosines for the direction the load acts in
-#         dirDirCos = direction/norm(direction)
+#         dirDirCos = direction/np.linalg.norm(direction)
       
 #         # Create point loads at intervals roughly equal to 75% of the load's largest length (magnitude)
 #         # Add text labels to the first and last load arrow
@@ -795,10 +854,10 @@ class Renderer:
 #         self.polydata = vtk.vtkAppendPolyData()
         
 #         # Find a vector perpendicular to the directional unit vector
-#         v1 = direction/norm(direction)  # v1 = The directional unit vector for the moment
+#         v1 = direction/np.linalg.norm(direction)  # v1 = The directional unit vector for the moment
 #         v2 = _PerpVector(v1)             # v2 = A unit vector perpendicular to v1
-#         v3 = cross(v1, v2)
-#         v3 = v3/norm(v3)                # v3 = A unit vector perpendicular to v1 and v2
+#         v3 = np.cross(v1, v2)
+#         v3 = v3/np.linalg.norm(v3)                # v3 = A unit vector perpendicular to v1 and v2
       
 #         # Generate an arc for the moment
 #         Xc, Yc, Zc = center
@@ -816,7 +875,7 @@ class Renderer:
 #         cone_radius = radius/8
 #         tip = vtk.vtkConeSource()
 #         tip.SetCenter(arc.GetPoint1()[0], arc.GetPoint1()[1], arc.GetPoint1()[2])
-#         tip.SetDirection(cross(v1, v2))
+#         tip.SetDirection(np.cross(v1, v2))
 #         tip.SetHeight(tip_length)
 #         tip.SetRadius(cone_radius)
 #         tip.Update()
@@ -857,7 +916,7 @@ class Renderer:
 #         ptLoads.append(VisPtLoad(position3, direction, length, label_text, annotation_size=annotation_size))
       
 #         # Find the direction cosines for the direction the load acts in
-#         dirDirCos = direction/norm(direction)
+#         dirDirCos = direction/np.linalg.norm(direction)
       
 #         # Find the positions of the tails of all the arrows at the corners of the area load. This is
 #         # where we will place the polygon.
@@ -909,7 +968,7 @@ def _PerpVector(v):
         k2 = -(i*i2+j*j2)/k
     
     # Return the unit vector
-    return [i2, j2, k2]/norm([i2, j2, k2])
+    return [i2, j2, k2]/np.linalg.norm([i2, j2, k2])
 
 def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 
