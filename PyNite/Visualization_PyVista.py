@@ -244,11 +244,6 @@ class Renderer:
         # Render the springs
         for spring in self.model.Springs.values():
             self.plot_spring(spring, self.annotation_size, 'grey')  
-    
-        # Create a visual member for each member in the model
-        # vis_members = []
-        # for member in self.model.Members.values():
-        #     vis_members.append(VisMember(member, self.model.Nodes, self.annotation_size, self.theme))
         
         for member in self.model.Members.values():
             self.plot_member(member)
@@ -282,12 +277,6 @@ class Renderer:
         # Render the plates and quads, if present
         if self.model.Quads or self.model.Plates:
             self.plot_plates(self.deformed_shape, self.deformed_scale, self.color_map, self.scalar_bar, self.scalar_bar_text_size, self.combo_name, self.theme)
-
-        # Set the window's background color
-        # if self.theme == 'default':
-        #     renderer.SetBackground(0, 0, 128)  # Blue
-        # elif self.theme == 'print':
-        #     renderer.SetBackground(255, 255, 255)  # White
             
         # Reset the camera if requested by the user
         if reset_camera:
@@ -1002,50 +991,6 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
             # Prevent divide by zero errors for nodes with no contour values
             if node.contour != []:
                 node.contour = sum(node.contour)/len(node.contour)
-
-# def _DeformedShape(model, scale_factor, annotation_size, combo_name, render_nodes=True, theme='default'):
-#     '''
-#     Renders the deformed shape of a model.
-    
-#     Parameters
-#     ----------
-#     model : FEModel3D
-#         Finite element model to be rendered.
-#     scale_factor : number
-#         The scale factor to apply to the model deformations.
-#     annotation_size : number
-#         Controls the height of text displayed with the model. The units used for `annotation_size` are
-#         the same as those used for lengths in the model. Sizes of other objects (such as nodes) are
-#         related to this value.
-#     combo_name : string
-#         The load case used for rendering the deflected shape.
-    
-#     Returns
-#     -------
-#     None.
-#     '''
-    
-#     # Create an empty PolyData
-#     polydata = pv.PolyData()
-        
-#     # Add the springs to the PolyData
-#     for spring in model.Springs.values():
-#         # Only add the spring if it is active for the given load combination
-#         if spring.active[combo_name]:
-#             vis_spring = VisDeformedSpring(spring, model.Nodes, scale_factor, combo_name)
-#             polydata += vis_spring.source.GetOutput()
-            
-#     # Adjust the color
-#     if theme == 'default':
-#         color = [255, 255, 0]  # Yellow
-#     elif theme == 'print':
-#         color = [26, 26, 26]  # Dark Grey
-#     else:
-#         color = [255, 255, 255]  # White
-    
-#     # Create a PyVista actor for the PolyData
-#     actor = pv.PolyData(polydata).plot(color=color)
-
 
 # def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='default'):
 
