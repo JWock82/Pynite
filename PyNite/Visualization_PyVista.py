@@ -238,6 +238,7 @@ class Renderer:
         # Render node labels
         label_points = [[node.X, node.Y, node.Z] for node in self.model.Nodes.values()]
         labels = [node.name for node in self.model.Nodes.values()]
+        
         self.plotter.add_point_labels(label_points, labels, italic=False, bold=False, font_size=24, text_color='grey', font_family=None, shadow=False, show_points=True, point_color=None, point_size=None, name=None, shape_color=None, shape=None, fill_shape=True, margin=3, shape_opacity=1.0, pickable=False, render_points_as_spheres=True, tolerance=0.001, reset_camera=None, always_visible=False, render=True)
 
         # Render the springs
@@ -741,12 +742,12 @@ class Renderer:
             self.plot_pt_load(position, dir_dir_cos, length, label_text)
 
         # Draw a line between the first and last load arrow's tails (using cylinder here for better visualization)
-        tail_line = Cylinder(radius=annotation_size / 2, height=load_length)
+        tail_line = pv.Cylinder(radius=annotation_size / 2, height=load_length)
         tail_line.translate(position1 - length1 * dir_dir_cos)
         tail_line.direction = dir_dir_cos
 
         # Combine all geometry into a single PolyData object
-        self.mesh = PolyDataCollection(pt_loads + [tail_line])
+        self.mesh = pv.PolyDataCollection(pt_loads + [tail_line])
 
         # Set color
         if color is None:
