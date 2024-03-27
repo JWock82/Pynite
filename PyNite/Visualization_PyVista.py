@@ -287,7 +287,11 @@ class Renderer:
         
         # Render the plates and quads, if present
         if self.model.Quads or self.model.Plates:
-            self.plot_plates(self.deformed_shape, self.deformed_scale, self.color_map, self.scalar_bar, self.scalar_bar_text_size, self.combo_name, self.theme)
+            self.plot_plates(self.deformed_shape, self.deformed_scale, self.color_map, self.combo_name)
+        
+        # Determine whether to show or hide the scalar bar
+        if self._scalar_bar != True:
+            self.plotter.scalar_bar.VisibilityOff()
             
         # Reset the camera if requested by the user
         if reset_camera:
@@ -474,7 +478,7 @@ class Renderer:
         # Add the line to the plotter
         self.plotter.add_mesh(line)
             
-    def plot_plates(self, deformed_shape, deformed_scale, color_map, scalar_bar, scalar_bar_text_size, combo_name, theme='default'):
+    def plot_plates(self, deformed_shape, deformed_scale, color_map, combo_name):
         
         # Start a list of vertices
         plate_vertices = []
@@ -553,10 +557,11 @@ class Renderer:
             plate_polydata['Contours'] = np.array(plate_results)
             
             # Add the scalar bar for the contours
-            if scalar_bar:
+            if self._scalar_bar == True:
                 self.plotter.add_mesh(plate_polydata, scalars='Contours', show_edges=True)
             else:
                 self.plotter.add_mesh(plate_polydata)
+
         else:
             self.plotter.add_mesh(plate_polydata)
       
