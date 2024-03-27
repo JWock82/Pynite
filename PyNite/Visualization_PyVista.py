@@ -250,15 +250,19 @@ class Renderer:
 
         # Render the springs
         for spring in self.model.Springs.values():
-            self.plot_spring(spring, self.annotation_size, 'grey')  
+            self.plot_spring(spring, self.annotation_size, 'grey')
         
+        # Render the spring labels
+        self.plotter.add_point_labels(self._spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None)
+        
+        # Render the members
         for member in self.model.Members.values():
             self.plot_member(member)
 
         # Render the member labels
         label_points = [[(member.i_node.X+member.j_node.X)/2, (member.i_node.Y+member.j_node.Y)/2, (member.i_node.Z+member.j_node.Z)/2] for member in self.model.Members.values()]
         labels = [member.name for member in self.model.Members.values()]
-        self.plotter.add_point_labels(label_points, labels, italic=False, bold=False, font_size=24, text_color='grey', font_family=None, shadow=False, show_points=False, point_color=None, point_size=None, name=None, shape_color=None, shape=None, fill_shape=True, margin=3, shape_opacity=1.0, pickable=False, render_points_as_spheres=True, tolerance=0.001, reset_camera=None, always_visible=False, render=True)
+        self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
 
         # Render the deformed shape if requested
         if self.deformed_shape == True:
@@ -628,26 +632,22 @@ class Renderer:
 
         # Determine if the spring is active for the load combination
         if spring.active[combo_name]:
-        
-            # Generate points for the deformed spring
-            points = []
 
             # Get the spring's i-node and j-node
             i_node = spring.i_node
             j_node = spring.j_node
             
+            # Calculate the deformed positions of the spring's end points
             Xi = i_node.X + i_node.DX[combo_name]*scale_factor
             Yi = i_node.Y + i_node.DY[combo_name]*scale_factor
             Zi = i_node.Z + i_node.DZ[combo_name]*scale_factor
-            points.append([Xi, Yi, Zi])
             
             Xj = j_node.X + j_node.DX[combo_name]*scale_factor
             Yj = j_node.Y + j_node.DY[combo_name]*scale_factor
             Zj = j_node.Z + j_node.DZ[combo_name]*scale_factor
-            points.append([Xj, Yj, Zj])
             
-            # Create a PyVista Line object from the points
-            self.spring_mesh = pv.Line(points)
+            # Plot a line for the deformed spring
+            self.plotter.add_mesh = pv.Line((Xi, Yi, Zi), (Xj, Yj, Zj))
 
     def plot_pt_load(self, position, direction, length, label_text=None, color=None):
 
