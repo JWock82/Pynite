@@ -281,7 +281,8 @@ class Renderer:
 
             # _DeformedShape(self.model, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
 
-        # # Render the loads if requested
+        # Render the loads if requested
+        self._calc_max_loads()
         # if (self.combo_name != None or self.case != None) and self.render_loads != False:
         #     _RenderLoads(self.model, renderer, self.annotation_size, self.combo_name, self.case, self.theme)
         
@@ -887,6 +888,154 @@ class Renderer:
             self.label_actor.actor.property.color = 'red'
         elif theme == 'default':
             self.label_actor.actor.property.color = 'green'
+    
+    def _calc_max_loads(self):
+
+        max_pt_load = 0
+        max_moment = 0
+        max_dist_load = 0
+        max_area_load = 0
+        
+        # Find the requested load combination or load case
+        if self.case == None:
+        
+            # Step through each node
+            for node in self.model.Nodes.values():
+        
+                # Step through each nodal load to find the largest one
+                for load in node.NodeLoads:
+                
+                    # Find the largest loads in the load combination
+                    if load[2] in self.model.LoadCombos[self.combo_name].factors:
+                        if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
+                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]]) > max_pt_load:
+                                max_pt_load = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]])
+                        else:
+                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]]) > max_moment:
+                                max_moment = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]])
+        
+            # Step through each member
+            for member in self.model.Members.values():
+        
+                # Step through each member point load
+                for load in member.PtLoads:
+                    
+                    # Find and store the largest point load and moment in the load combination
+                    if load[3] in self.model.LoadCombos[self.combo_name].factors:
+            
+                        if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
+                        or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
+                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]]) > max_pt_load:
+                                max_pt_load = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]])
+                        else:
+                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]]) > max_moment:
+                                max_moment = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]])
+        
+                # Step through each member distributed load
+                for load in member.DistLoads:
+            
+                    #Find and store the largest distributed load in the load combination
+                    if load[5] in self.model.LoadCombos[self.combo_name].factors:
+            
+                        if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[5]]) > max_dist_load:
+                            max_dist_load = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[5]])
+                        if abs(load[2]*self.model.LoadCombos[self.combo_name].factors[load[5]]) > max_dist_load:
+                            max_dist_load = abs(load[2]*self.model.LoadCombos[self.combo_name].factors[load[5]])
+        
+            # Step through each plate
+            for plate in self.model.Plates.values():
+        
+                # Step through each plate load
+                for load in plate.pressures:
+            
+                    if load[1] in self.model.LoadCombos[self.combo_name].factors:
+                        if abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]]) > max_area_load:
+                            max_area_load = abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]])
+        
+            # Step through each quad
+            for quad in self.model.Quads.values():
+        
+                # Step through each plate load
+                for load in quad.pressures:
+            
+                    # Check to see if the load case is in the requested load combination
+                    if load[1] in self.model.LoadCombos[self.combo_name].factors:
+                        if abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]]) > max_area_load:
+                            max_area_load = abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]])
+        
+        # Behavior if case has been specified
+        else:
+            
+            # Step through each node
+            for node in self.model.Nodes.values():
+        
+                # Step through each nodal load to find the largest one
+                for load in node.NodeLoads:
+                
+                    # Find the largest loads in the load case
+                    if load[2] == self.case:
+                        if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
+                            if abs(load[1]) > max_pt_load:
+                                max_pt_load = abs(load[1])
+                        else:
+                            if abs(load[1]) > max_moment:
+                                max_moment = abs(load[1])
+        
+            # Step through each member
+            for member in self.model.Members.values():
+        
+                # Step through each member point load
+                for load in member.PtLoads:
+                
+                    # Find and store the largest point load and moment in the load case
+                    if load[3] == self.case:
+                
+                        if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
+                        or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
+                            if abs(load[1]) > max_pt_load:
+                                max_pt_load = abs(load[1])
+                        else:
+                            if abs(load[1]) > max_moment:
+                                max_moment = abs(load[1])
+            
+                # Step through each member distributed load
+                for load in member.DistLoads:
+            
+                    # Find and store the largest distributed load in the load case
+                    if load[5] == self.case:
+                
+                        if abs(load[1]) > max_dist_load:
+                            max_dist_load = abs(load[1])
+                        if abs(load[2]) > max_dist_load:
+                            max_dist_load = abs(load[2])
+                
+                # Step through each plate
+                for plate in self.model.Plates.values():
+            
+                    # Step through each plate load
+                    for load in plate.pressures:
+            
+                        if load[1] == self.case:
+                
+                            if abs(load[0]) > max_area_load:
+                                max_area_load = abs(load[0])
+            
+            # Step through each quad
+            for quad in self.model.Quads.values():
+        
+                # Step through each plate load
+                for load in quad.pressures:
+            
+                    if load[1] == self.case:
+            
+                        if abs(load[0]) > max_area_load:
+                            max_area_load = abs(load[0])
+            
+        # Store the maximum loads in the load combination or load case
+        self._max_pt_load = max_pt_load
+        self._max_moment = max_moment
+        self._max_dist_load = max_dist_load
+        self._max_area_load = max_area_load
 
     # class VisAreaLoad():
     #     '''
@@ -1056,7 +1205,7 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 #     polygon_polydata = vtk.vtkPolyData()
     
 #     # Get the maximum load magnitudes that will be used to normalize the display scale
-#     max_pt_load, max_moment, max_dist_load, max_area_load = _MaxLoads(model, combo_name, case)
+#     max_pt_load, max_moment, max_dist_load, max_area_load = _max_loads(model, combo_name, case)
     
 #     # Display the requested load combination, or 'Combo 1' if no load combo or case has been
 #     # specified
@@ -1287,148 +1436,3 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 #         polygon_actor.GetProperty().SetColor(0/255, 255/255, 0/255)  # Green
 #     elif theme == 'print':
 #         polygon_actor.GetProperty().SetColor(255/255, 0/255, 0/255)  # Red
-
-def _MaxLoads(model, combo_name=None, case=None):
-
-    max_pt_load = 0
-    max_moment = 0
-    max_dist_load = 0
-    max_area_load = 0
-    
-    # Find the requested load combination or load case
-    if case == None:
-    
-        # Step through each node
-        for node in model.Nodes.values():
-      
-            # Step through each nodal load to find the largest one
-            for load in node.NodeLoads:
-              
-                # Find the largest loads in the load combination
-                if load[2] in model.LoadCombos[combo_name].factors:
-                    if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_pt_load:
-                            max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
-                    else:
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_moment:
-                            max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
-    
-        # Step through each member
-        for member in model.Members.values():
-      
-            # Step through each member point load
-            for load in member.PtLoads:
-                
-                # Find and store the largest point load and moment in the load combination
-                if load[3] in model.LoadCombos[combo_name].factors:
-          
-                    if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
-                    or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_pt_load:
-                            max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
-                    else:
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_moment:
-                            max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
-      
-            # Step through each member distributed load
-            for load in member.DistLoads:
-        
-                #Find and store the largest distributed load in the load combination
-                if load[5] in model.LoadCombos[combo_name].factors:
-          
-                    if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
-                        max_dist_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
-                    if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
-                        max_dist_load = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
-      
-        # Step through each plate
-        for plate in model.Plates.values():
-      
-            # Step through each plate load
-            for load in plate.pressures:
-        
-                if load[1] in model.LoadCombos[combo_name].factors:
-                    if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-                        max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
-      
-        # Step through each quad
-        for quad in model.Quads.values():
-      
-            # Step through each plate load
-            for load in quad.pressures:
-        
-                # Check to see if the load case is in the requested load combination
-                if load[1] in model.LoadCombos[combo_name].factors:
-                    if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-                        max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
-      
-    # Behavior if case has been specified
-    else:
-        
-        # Step through each node
-        for node in model.Nodes.values():
-      
-            # Step through each nodal load to find the largest one
-            for load in node.NodeLoads:
-              
-                # Find the largest loads in the load case
-                if load[2] == case:
-                    if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-                        if abs(load[1]) > max_pt_load:
-                            max_pt_load = abs(load[1])
-                    else:
-                        if abs(load[1]) > max_moment:
-                            max_moment = abs(load[1])
-      
-        # Step through each member
-        for member in model.Members.values():
-      
-            # Step through each member point load
-            for load in member.PtLoads:
-              
-                # Find and store the largest point load and moment in the load case
-                if load[3] == case:
-            
-                    if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
-                    or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
-                        if abs(load[1]) > max_pt_load:
-                            max_pt_load = abs(load[1])
-                    else:
-                        if abs(load[1]) > max_moment:
-                            max_moment = abs(load[1])
-        
-            # Step through each member distributed load
-            for load in member.DistLoads:
-          
-                # Find and store the largest distributed load in the load case
-                if load[5] == case:
-            
-                    if abs(load[1]) > max_dist_load:
-                        max_dist_load = abs(load[1])
-                    if abs(load[2]) > max_dist_load:
-                        max_dist_load = abs(load[2])
-            
-            # Step through each plate
-            for plate in model.Plates.values():
-          
-                # Step through each plate load
-                for load in plate.pressures:
-          
-                    if load[1] == case:
-            
-                        if abs(load[0]) > max_area_load:
-                            max_area_load = abs(load[0])
-          
-        # Step through each quad
-        for quad in model.Quads.values():
-      
-            # Step through each plate load
-            for load in quad.pressures:
-        
-                if load[1] == case:
-          
-                    if abs(load[0]) > max_area_load:
-                        max_area_load = abs(load[0])
-        
-    # Return the maximum loads in the load combination or load case
-    return max_pt_load, max_moment, max_dist_load, max_area_load
