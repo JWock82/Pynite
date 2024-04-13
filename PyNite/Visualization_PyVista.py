@@ -246,14 +246,17 @@ class Renderer:
         label_points = [[node.X, node.Y, node.Z] for node in self.model.Nodes.values()]
         labels = [node.name for node in self.model.Nodes.values()]
         
-        self.plotter.add_point_labels(label_points, labels, italic=False, bold=False, font_size=24, text_color='grey', font_family=None, shadow=False, show_points=True, point_color=None, point_size=None, name=None, shape_color=None, shape=None, fill_shape=True, margin=3, shape_opacity=1.0, pickable=False, render_points_as_spheres=True, tolerance=0.001, reset_camera=None, always_visible=False, render=True)
+        self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
 
-        # Render the springs
-        for spring in self.model.Springs.values():
-            self.plot_spring(spring, self.annotation_size, 'grey')
-        
-        # Render the spring labels
-        self.plotter.add_point_labels(self._spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None)
+        # Check if there are springs in the model
+        if self.model.Springs:
+
+            # Render the springs
+            for spring in self.model.Springs.values():
+                self.plot_spring(spring, self.annotation_size, 'grey')
+            
+            # Render the spring labels
+            self.plotter.add_point_labels(self._spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None, render_points_as_spheres=False)
         
         # Render the members
         for member in self.model.Members.values():
@@ -322,7 +325,8 @@ class Renderer:
             self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y, node.Z),
                                           x_length=self.annotation_size*2,
                                           y_length=self.annotation_size*2,
-                                          z_length=self.annotation_size*2), color=color)
+                                          z_length=self.annotation_size*2),
+                                  color=color)
         
         # Check for a pinned support
         elif node.support_DX and node.support_DY and node.support_DZ and not node.support_RX and not node.support_RY and not node.support_RZ:
@@ -331,7 +335,8 @@ class Renderer:
             self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y - self.annotation_size, node.Z),
                                           direction=(0, 1, 0),
                                           height=self.annotation_size*2,
-                                          radius=self.annotation_size*2), color=color)
+                                          radius=self.annotation_size*2),
+                                  color=color)
 
         # Other support conditions
         else:
@@ -345,7 +350,8 @@ class Renderer:
 
                 # Line showing support direction
                 self.plotter.add_mesh(pv.Line((node.X - self.annotation_size, node.Y, node.Z),
-                                              (node.X + self.annotation_size, node.Y, node.Z)), color=color)
+                                              (node.X + self.annotation_size, node.Y, node.Z)),
+                                      color=color)
 
                 # Cones at both ends
                 self.plotter.add_mesh(pv.Cone(center=(node.X - self.annotation_size, node.Y,
@@ -687,7 +693,7 @@ class Renderer:
     def plot_pt_load(self, position, direction, length, label_text=None, color='green'):
 
         # Create a unit vector in the direction of the 'direction' vector
-        unitVector = direction / np.linalg.norm(direction)
+        unitVector = direction/np.linalg.norm(direction)
         
         # Determine if the load is positive or negative
         if length == 0:
@@ -783,8 +789,10 @@ class Renderer:
     def plot_moment(self, center, direction, radius, label_text=None, color=None):
 
         # Find a vector perpendicular to the direction vector
-        v1 = direction / direction.magnitude()  # v1: directional unit vector
-        v2 = pv.random.unit_vector(direction=None, orthogonal_to=v1)  # v2: unit vector perpendicular to v1
+        v1 = direction/np.linalg.norm(direction)  # v1: directional unit vector
+        v2 = _PerpVector(v1)        # v2 = unit vector perpendicular to v1
+        v3 = np.cross(v1, v2)
+        v3 = v3/np.linalg.norm(v3)  # v3 = A unit vector perpendicular to v1 and v2
 
         # Generate an arc for the moment
         arc = pv.Arc(center=center, radius=radius, starting_angle=0, ending_angle=180, 
@@ -1089,16 +1097,18 @@ class Renderer:
                     else:
                         sign = 1
                     
+                    # Determine the direction of this load
+                    if load[0] == 'FX' or load[0] == 'MX': direction = (sign*1, 0, 0)
+                    elif load[0] == 'FY' or load[0] == 'MY': direction = (0, sign*1, 0)
+                    elif load[0] == 'FZ' or load[0] == 'MZ': direction = (0, 0, sign*1)
+
                     # Display the load
                     if load[0] in {'FX', 'FY', 'FZ'}:
-                        if load[0] == 'FX': direction = (sign*1, 0, 0)
-                        elif load[0] == 'FY': direction = (0, sign*1, 0)
-                        elif load[0] == 'FZ': direction = (0, 0, sign*1)
                         self.plot_pt_load((node.X, node.Y, node.Z), direction,
                                           load_value/max_pt_load*5*self.annotation_size,
                                           str(load_value), 'green')
                     elif load[0] in {'MX', 'MY', 'MZ'}:
-                        self.plot_moment((node.X, node.Y, node.Z), load[0], load_value/max_moment, str(load_value), 'green')
+                        self.plot_moment((node.X, node.Y, node.Z), direction, load_value/max_moment, str(load_value), 'green')
         
         # # Step through each member
         # for member in model.Members.values():
