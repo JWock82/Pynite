@@ -725,7 +725,7 @@ class Renderer:
             self._load_label_points.append([X_tail, Y_tail, Z_tail])
         
         # Plot the shaft
-        self.plotter.add_mesh(shaft, color=color)                         
+        self.plotter.add_mesh(shaft, line_width=2, color=color)                         
 
     def plot_dist_load(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5, color=None):
 
@@ -773,7 +773,7 @@ class Renderer:
             self.plot_pt_load(position, dir_dir_cos, length, label_text)
 
         # Draw a line between the first and last load arrow's tails (using cylinder here for better visualization)
-        tail_line = pv.Cylinder(radius=annotation_size / 2, height=load_length)
+        tail_line = pv.Cylinder(radius=annotation_size/2, height=load_length)
         tail_line.translate(position1 - length1 * dir_dir_cos)
         tail_line.direction = dir_dir_cos
 
@@ -788,28 +788,25 @@ class Renderer:
 
     def plot_moment(self, center, direction, radius, label_text=None, color='green'):
 
-        # Find a vector perpendicular to the direction vector
-        v1 = direction/np.linalg.norm(direction)  # v1: directional unit vector
+        # Convert the direction vector into a unit vector
+        v1 = direction/np.linalg.norm(direction)
 
         # Find any vector perpendicular to the moment direction vector. This will serve as a
-        # vector from the center of the arc pointing to one end of the arc.
+        # vector from the center of the arc pointing to the tail of the moment arc.
         v2 = _PerpVector(v1)
-
-        # Find the vector perpendicular to both `v1` and `v2`. This will serve as a vector from the
-        # center of the arc pointing to another end of the arc.
-        v3 = np.cross(v1, v2)
-        v3 = v3/np.linalg.norm(v3)
         
+        # Generate the arc for the moment
         arc = pv.CircularArcFromNormal(center, resolution=20, normal=v1, angle=215, polar=v2*radius)
         
         # Add the arc to the plot
-        self.plotter.add_mesh(arc, color=color)
+        self.plotter.add_mesh(arc, line_width=2, color=color)
 
         # Generate the arrow tip at the end of the arc
         tip_length = radius/4
         cone_radius = radius/16
-        cone_direction = np.cross(v1, arc.center - arc.points[-1])
-        tip = pv.Cone(center=arc.points[-1], direction=cone_direction, height=tip_length, radius=cone_radius)
+        cone_direction = -np.cross(v1, arc.center - arc.points[-1])
+        tip = pv.Cone(center=arc.points[-1], direction=cone_direction, height=tip_length,
+                      radius=cone_radius)
 
         # Add the tip to the plot
         self.plotter.add_mesh(tip, color=color)
@@ -1038,7 +1035,7 @@ class Renderer:
                                           load_value/max_pt_load*5*self.annotation_size,
                                           str(load_value), 'green')
                     elif load[0] in {'MX', 'MY', 'MZ'}:
-                        self.plot_moment((node.X, node.Y, node.Z), direction, abs(load_value/max_moment)*5*self.annotation_size, str(load_value), 'green')
+                        self.plot_moment((node.X, node.Y, node.Z), direction, abs(load_value/max_moment)*2.5*self.annotation_size, str(load_value), 'green')
         
         # # Step through each member
         # for member in model.Members.values():
