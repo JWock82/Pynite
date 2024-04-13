@@ -282,9 +282,10 @@ class Renderer:
             # _DeformedShape(self.model, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
 
         # Render the loads if requested
-        self._calc_max_loads()
-        # if (self.combo_name != None or self.case != None) and self.render_loads != False:
-        #     _RenderLoads(self.model, renderer, self.annotation_size, self.combo_name, self.case, self.theme)
+        if (self.combo_name != None or self.case != None) and self.render_loads != False:
+
+            # Plot the loads
+            self.plot_loads()
         
         # Render the plates and quads, if present
         if self.model.Quads or self.model.Plates:
@@ -653,9 +654,9 @@ class Renderer:
             Zj = j_node.Z + j_node.DZ[combo_name]*scale_factor
             
             # Plot a line for the deformed spring
-            self.plotter.add_mesh = pv.Line((Xi, Yi, Zi), (Xj, Yj, Zj))
+            self.plotter.add_mesh(pv.Line((Xi, Yi, Zi), (Xj, Yj, Zj)))
 
-    def plot_pt_load(self, position, direction, length, label_text=None, color=None):
+    def plot_pt_load(self, position, direction, length, label_text=None, color='green'):
 
         # Create a unit vector in the direction of the 'direction' vector
         unitVector = direction / np.linalg.norm(direction)
@@ -673,11 +674,10 @@ class Renderer:
                               position[1] - tip_length*sign*unitVector[1]/2,
                               position[2] - tip_length*sign*unitVector[2]/2),
                               direction=(direction[0]*sign, direction[1]*sign, direction[2]*sign),
-                              height=tip_length,
-                              radius=radius)
+                              height=tip_length, radius=radius)
 
-        # Create a polydata object to store the tip
-        polydata = pv.PolyData(tip)
+        # Plot the tip
+        self.plotter.add_mesh(tip, color=color)
 
         # Create the shaft (you'll need to specify the second point)
         X_tail = position[0] - unitVector[0]*length
@@ -690,11 +690,8 @@ class Renderer:
             self._load_labels.append(label_text)
             self._load_label_points.append([X_tail, Y_tail, Z_tail])
         
-        # Add the shaft to the polydata object
-        polydata += shaft
-        
-        # Plot the point load
-        self.plotter.add_mesh(polydata)                                
+        # Plot the shaft
+        self.plotter.add_mesh(shaft, color=color)                         
 
     def plot_dist_load(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5, color=None):
 
@@ -755,8 +752,7 @@ class Renderer:
         elif color == 'black':
             self.mesh.set_colors([0, 0, 0])  # Black
 
-    def plot_moment(self, center, direction, radius, label_text=None, annotation_size=5, 
-                    color=None):
+    def plot_moment(self, center, direction, radius, label_text=None, color=None):
 
         # Find a vector perpendicular to the direction vector
         v1 = direction / direction.magnitude()  # v1: directional unit vector
@@ -777,8 +773,8 @@ class Renderer:
 
         # Create the text label
         if label_text:
-            text_pos = center + (radius + 0.25 * annotation_size) * v2
-            label = pv.Text(text=label_text, position=text_pos, text_scale=annotation_size)
+            text_pos = center + (radius + 0.25 * self.annotation_size) * v2
+            label = pv.Text(text=label_text, position=text_pos, text_scale=self.annotation_size)
             self.mesh.append(label)
 
         # Set color
@@ -1031,12 +1027,169 @@ class Renderer:
                         if abs(load[0]) > max_area_load:
                             max_area_load = abs(load[0])
             
-        # Store the maximum loads in the load combination or load case
-        self._max_pt_load = max_pt_load
-        self._max_moment = max_moment
-        self._max_dist_load = max_dist_load
-        self._max_area_load = max_area_load
+        # Return the maximum loads for the load combo or load case
+        return max_pt_load, max_moment, max_dist_load, max_area_load
 
+    def plot_loads(self):
+      
+        # Get the maximum load magnitudes that will be used to normalize the display scale
+        max_pt_load, max_moment, max_dist_load, max_area_load = self._calc_max_loads()
+        
+        # Display the requested load combination, or 'Combo 1' if no load combo or case has been
+        # specified
+        if self.case is None:
+            # Store model.LoadCombos[combo].factors under a simpler name for use below
+            load_factors = self.model.LoadCombos[self.combo_name].factors
+        else:
+            # Set up a load combination dictionary that represents the load case
+            load_factors = {self.case: 1}
+        
+        # Step through each node
+        for node in self.model.Nodes.values():
+        
+            # Step through and display each nodal load
+            for load in node.NodeLoads:
+            
+                # Determine if this load is part of the requested LoadCombo or case
+                if load[2] in load_factors:
+                
+                    # Calculate the factored value for this load and it's sign (positive or
+                    # negative)
+                    load_value = load[1]*load_factors[load[2]]
+                    if load_value != 0:
+                        sign = load_value/abs(load_value)
+                    else:
+                        sign = 1
+                    
+                    # Display the load
+                    if load[0] in {'FX', 'FY', 'FZ'}:
+                        if load[0] == 'FX': direction = (sign*1, 0, 0)
+                        elif load[0] == 'FY': direction = (0, sign*1, 0)
+                        elif load[0] == 'FZ': direction = (0, 0, sign*1)
+                        self.plot_pt_load((node.X, node.Y, node.Z), direction,
+                                          load_value/max_pt_load, str(load_value), 'green')
+                    elif load[0] in {'MX', 'MY', 'MZ'}:
+                        self.plot_moment((node.X, node.Y, node.Z), load[0], load_value/max_moment, str(load_value), 'green')
+        
+        # # Step through each member
+        # for member in model.Members.values():
+        
+        #     # Get the direction cosines for the member's local axes
+        #     dir_cos = member.T()[0:3, 0:3]
+        
+        #     # Get the starting point for the member
+        #     x_start, y_start, z_start = member.i_node.X, member.i_node.Y, member.i_node.Z
+        
+        #     # Step through each member point load
+        #     for load in member.PtLoads:
+        
+        #         # Determine if this load is part of the requested load combination
+        #         if load[3] in load_factors:
+            
+        #             # Calculate the factored value for this load and it's sign (positive or negative)
+        #             load_value = load[1]*load_factors[load[3]]
+        #             sign = load_value/abs(load_value)
+            
+        #             # Calculate the load's location in 3D space
+        #             x = load[2]
+        #             position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
+            
+        #             # Display the load
+        #             if load[0] in {'Fx', 'Fy', 'Fz', 'MX', 'MY', 'MZ', 'FX', 'FY', 'FZ'}:
+        #                 ptLoad = VisPtLoad(position, load[0], load_value, max_pt_load, annotation_size)
+                    
+        #             polydata += ptLoad.polydata
+        #             renderer.add_actor(ptLoad.lblActor)
+        #             ptLoad.lblActor.camera = renderer.camera
+        
+        #     # Step through each member distributed load
+        #     for load in member.DistLoads:
+        
+        #         # Determine if this load is part of the requested load combination
+        #         if load[5] in load_factors:
+            
+        #             # Calculate the factored value for this load and it's sign (positive or negative)
+        #             w1 = load[1]*load_factors[load[5]]
+        #             w2 = load[2]*load_factors[load[5]]
+            
+        #             # Calculate the loads location in 3D space
+        #             x1 = load[3]
+        #             x2 = load[4]
+        #             position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
+        #             position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
+                    
+        #             # Display the load
+        #             if load[0] in {'Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'}:
+        #                 distLoad = VisDistLoad(position1, position2, load[0], w1, w2, max_dist_load, annotation_size)
+                
+        #             polydata += distLoad.polydata
+        #             renderer.add_actor(distLoad.lblActors[0])
+        #             renderer.add_actor(distLoad.lblActors[1])
+        #             distLoad.lblActors[0].camera = renderer.camera
+        #             distLoad.lblActors[1].camera = renderer.camera
+        
+        # # Step through each plate
+        # for plate in list(model.Plates.values()) + list(model.Quads.values()):
+        
+        #     # Get the direction cosines for the plate's local z-axis
+        #     dir_cos = plate.T()[0:3, 0:3]
+        #     dir_cos = dir_cos[2]
+        
+        #     # Step through each plate load
+        #     for load in plate.pressures:
+        
+        #         # Determine if this load is part of the requested load combination
+        #         if load[1] in load_factors:
+            
+        #             # Calculate the factored value for this load
+        #             load_value = load[0]*load_factors[load[1]]
+                    
+        #             # Find the sign for this load. Intercept any divide by zero errors
+        #             if load[0] == 0:
+        #                 sign = 1
+        #             else:
+        #                 sign = abs(load[0])/load[0]
+            
+        #             # Find the position of the load's 4 corners
+        #             position0 = [plate.i_node.X, plate.i_node.Y, plate.i_node.Z]
+        #             position1 = [plate.j_node.X, plate.j_node.Y, plate.j_node.Z]
+        #             position2 = [plate.m_node.X, plate.m_node.Y, plate.m_node.Z]
+        #             position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
+            
+        #             # Create an area load and get its data
+        #             area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value), max_area_load, annotation_size, theme)
+                    
+        #             polydata += area_load.polydata
+            
+        #             # Add the load label
+        #             renderer.add_actor(area_load.label_actor)
+            
+        #             # Set the text to follow the camera as the user interacts
+        #             area_load.label_actor.camera = renderer.camera
+            
+        # # Set up an actor for the loads
+        # load_actor = pv.PolyData(polydata)
+        
+        # # Colorize the loads
+        # if theme == 'default':
+        #     load_actor['colors'] = np.array([[0, 255, 0]]) / 255.0  # Green
+        # elif theme == 'print':
+        #     load_actor['colors'] = np.array([[255, 0, 0]]) / 255.0  # Red
+
+        # # Add the load actor to the renderer
+        # renderer.add_actor(load_actor)
+        
+        # # Plot the polygons
+        # polygon_actor = pv.PolyData(polygon_polydata)
+
+        # # Set the color of the area load polygons
+        # if theme == 'default':
+        #     polygon_actor['colors'] = np.array([[0, 255, 0]]) / 255.0  # Green
+        # elif theme == 'print':
+        #     polygon_actor['colors'] = np.array([[255, 0, 0]]) / 255.0  # Red
+        # renderer.add_actor(polygon_actor)
+
+#%%
     # class VisAreaLoad():
     #     '''
     #     Creates an area load for the viewer
@@ -1190,249 +1343,249 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
             if node.contour != []:
                 node.contour = sum(node.contour)/len(node.contour)
 
-# def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='default'):
+def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='default'):
 
-#     # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
-#     # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
-#     # becomes very slow when a large number of actors are used.
-#     polydata = vtk.vtkAppendPolyData()
+    # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
+    # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
+    # becomes very slow when a large number of actors are used.
+    polydata = vtk.vtkAppendPolyData()
     
-#     # Polygons are treated as cells in VTK. Create a cell array to store all the area load polygons
-#     # in. We'll also create a list of points to store the polygon points in. The polydata for these
-#     # polygons will be stored separately from the other load data.
-#     polygons = vtk.vtkCellArray()
-#     polygon_points = vtk.vtkPoints()
-#     polygon_polydata = vtk.vtkPolyData()
+    # Polygons are treated as cells in VTK. Create a cell array to store all the area load polygons
+    # in. We'll also create a list of points to store the polygon points in. The polydata for these
+    # polygons will be stored separately from the other load data.
+    polygons = vtk.vtkCellArray()
+    polygon_points = vtk.vtkPoints()
+    polygon_polydata = vtk.vtkPolyData()
     
-#     # Get the maximum load magnitudes that will be used to normalize the display scale
-#     max_pt_load, max_moment, max_dist_load, max_area_load = _max_loads(model, combo_name, case)
+    # Get the maximum load magnitudes that will be used to normalize the display scale
+    max_pt_load, max_moment, max_dist_load, max_area_load = _max_loads(model, combo_name, case)
     
-#     # Display the requested load combination, or 'Combo 1' if no load combo or case has been
-#     # specified
-#     if case == None:
-#         # Store model.LoadCombos[combo].factors under a simpler name for use below
-#         load_factors = model.LoadCombos[combo_name].factors
-#     else:
-#         # Set up a load combination dictionary that represents the load case
-#         load_factors = {case: 1}
+    # Display the requested load combination, or 'Combo 1' if no load combo or case has been
+    # specified
+    if case == None:
+        # Store model.LoadCombos[combo].factors under a simpler name for use below
+        load_factors = model.LoadCombos[combo_name].factors
+    else:
+        # Set up a load combination dictionary that represents the load case
+        load_factors = {case: 1}
     
-#     # Step through each node
-#     for node in model.Nodes.values():
+    # Step through each node
+    for node in model.Nodes.values():
     
-#         # Step through and display each nodal load
-#         for load in node.NodeLoads:
+        # Step through and display each nodal load
+        for load in node.NodeLoads:
           
-#             # Determine if this load is part of the requested LoadCombo or case
-#             if load[2] in load_factors:
+            # Determine if this load is part of the requested LoadCombo or case
+            if load[2] in load_factors:
               
-#                 # Calculate the factored value for this load and it's sign (positive or negative)
-#                 load_value = load[1]*load_factors[load[2]]
-#                 if load_value != 0:
-#                     sign = load_value/abs(load_value)
-#                 else:
-#                     sign = 1
+                # Calculate the factored value for this load and it's sign (positive or negative)
+                load_value = load[1]*load_factors[load[2]]
+                if load_value != 0:
+                    sign = load_value/abs(load_value)
+                else:
+                    sign = 1
                 
-#                 # Display the load
-#                 if load[0] == 'FX':
-#                     ptLoad = VisPtLoad((node.X - 0.6*annotation_size*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'FY':
-#                     ptLoad = VisPtLoad((node.X, node.Y - 0.6*annotation_size*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'FZ':
-#                     ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*annotation_size*sign), [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'MX':
-#                     ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'MY':
-#                     ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'MZ':
-#                     ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                # Display the load
+                if load[0] == 'FX':
+                    ptLoad = VisPtLoad((node.X - 0.6*annotation_size*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'FY':
+                    ptLoad = VisPtLoad((node.X, node.Y - 0.6*annotation_size*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'FZ':
+                    ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*annotation_size*sign), [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'MX':
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'MY':
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'MZ':
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
                 
-#                 polydata.AddInputData(ptLoad.polydata.GetOutput())
-#                 renderer.AddActor(ptLoad.lblActor)
-#                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+                polydata.AddInputData(ptLoad.polydata.GetOutput())
+                renderer.AddActor(ptLoad.lblActor)
+                ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
     
-#     # Step through each member
-#     for member in model.Members.values():
+    # Step through each member
+    for member in model.Members.values():
     
-#         # Get the direction cosines for the member's local axes
-#         dir_cos = member.T()[0:3, 0:3]
+        # Get the direction cosines for the member's local axes
+        dir_cos = member.T()[0:3, 0:3]
       
-#         # Get the starting point for the member
-#         x_start, y_start, z_start = member.i_node.X, member.i_node.Y, member.i_node.Z
+        # Get the starting point for the member
+        x_start, y_start, z_start = member.i_node.X, member.i_node.Y, member.i_node.Z
       
-#         # Step through each member point load
-#         for load in member.PtLoads:
+        # Step through each member point load
+        for load in member.PtLoads:
       
-#             # Determine if this load is part of the requested load combination
-#             if load[3] in load_factors:
+            # Determine if this load is part of the requested load combination
+            if load[3] in load_factors:
         
-#                 # Calculate the factored value for this load and it's sign (positive or negative)
-#                 load_value = load[1]*load_factors[load[3]]
-#                 sign = load_value/abs(load_value)
+                # Calculate the factored value for this load and it's sign (positive or negative)
+                load_value = load[1]*load_factors[load[3]]
+                sign = load_value/abs(load_value)
           
-#                 # Calculate the load's location in 3D space
-#                 x = load[2]
-#                 position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
+                # Calculate the load's location in 3D space
+                x = load[2]
+                position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
           
-#                 # Display the load
-#                 if load[0] == 'Fx':
-#                     ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'Fy':
-#                     ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'Fz':
-#                     ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'Mx':
-#                     ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'My':
-#                     ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'Mz':
-#                     ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'FX':
-#                     ptLoad = VisPtLoad(position, [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'FY':
-#                     ptLoad = VisPtLoad(position, [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'FZ':
-#                     ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'MX':
-#                     ptLoad = VisMoment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'MY':
-#                     ptLoad = VisMoment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
-#                 elif load[0] == 'MZ':
-#                     ptLoad = VisMoment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                # Display the load
+                if load[0] == 'Fx':
+                    ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'Fy':
+                    ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'Fz':
+                    ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'Mx':
+                    ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'My':
+                    ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'Mz':
+                    ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'FX':
+                    ptLoad = VisPtLoad(position, [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'FY':
+                    ptLoad = VisPtLoad(position, [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'FZ':
+                    ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'MX':
+                    ptLoad = VisMoment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'MY':
+                    ptLoad = VisMoment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
+                elif load[0] == 'MZ':
+                    ptLoad = VisMoment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size)
             
-#                 polydata.AddInputData(ptLoad.polydata.GetOutput())
-#                 renderer.AddActor(ptLoad.lblActor)
-#                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+                polydata.AddInputData(ptLoad.polydata.GetOutput())
+                renderer.AddActor(ptLoad.lblActor)
+                ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
     
-#         # Step through each member distributed load
-#         for load in member.DistLoads:
+        # Step through each member distributed load
+        for load in member.DistLoads:
     
-#             # Determine if this load is part of the requested load combination
-#             if load[5] in load_factors:
+            # Determine if this load is part of the requested load combination
+            if load[5] in load_factors:
         
-#                 # Calculate the factored value for this load and it's sign (positive or negative)
-#                 w1 = load[1]*load_factors[load[5]]
-#                 w2 = load[2]*load_factors[load[5]]
+                # Calculate the factored value for this load and it's sign (positive or negative)
+                w1 = load[1]*load_factors[load[5]]
+                w2 = load[2]*load_factors[load[5]]
           
-#                 # Calculate the loads location in 3D space
-#                 x1 = load[3]
-#                 x2 = load[4]
-#                 position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
-#                 position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
+                # Calculate the loads location in 3D space
+                x1 = load[3]
+                x2 = load[4]
+                position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
+                position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
                 
-#                 # Display the load
-#                 if load[0] == 'Fx':
-#                     distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
-#                 elif load[0] == 'Fy':
-#                     distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
-#                 elif load[0] == 'Fz':
-#                     distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
-#                 elif load[0] == 'FX':
-#                     distLoad = VisDistLoad(position1, position2, [1, 0, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
-#                 elif load[0] == 'FY':
-#                     distLoad = VisDistLoad(position1, position2, [0, 1, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
-#                 elif load[0] == 'FZ':
-#                     distLoad = VisDistLoad(position1, position2, [0, 0, 1], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                # Display the load
+                if load[0] == 'Fx':
+                    distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                elif load[0] == 'Fy':
+                    distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                elif load[0] == 'Fz':
+                    distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                elif load[0] == 'FX':
+                    distLoad = VisDistLoad(position1, position2, [1, 0, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                elif load[0] == 'FY':
+                    distLoad = VisDistLoad(position1, position2, [0, 1, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                elif load[0] == 'FZ':
+                    distLoad = VisDistLoad(position1, position2, [0, 0, 1], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
                
-#                 polydata.AddInputData(distLoad.polydata.GetOutput())
-#                 renderer.AddActor(distLoad.lblActors[0])
-#                 renderer.AddActor(distLoad.lblActors[1])
-#                 distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
-#                 distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())   
+                polydata.AddInputData(distLoad.polydata.GetOutput())
+                renderer.AddActor(distLoad.lblActors[0])
+                renderer.AddActor(distLoad.lblActors[1])
+                distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
+                distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())   
     
-#     # Step through each plate
-#     i = 0
-#     for plate in list(model.Plates.values()) + list(model.Quads.values()):
+    # Step through each plate
+    i = 0
+    for plate in list(model.Plates.values()) + list(model.Quads.values()):
     
-#         # Get the direction cosines for the plate's local z-axis
-#         dir_cos = plate.T()[0:3, 0:3]
-#         dir_cos = dir_cos[2]
+        # Get the direction cosines for the plate's local z-axis
+        dir_cos = plate.T()[0:3, 0:3]
+        dir_cos = dir_cos[2]
       
-#         # Step through each plate load
-#         for load in plate.pressures:
+        # Step through each plate load
+        for load in plate.pressures:
       
-#             # Determine if this load is part of the requested load combination
-#             if load[1] in load_factors:
+            # Determine if this load is part of the requested load combination
+            if load[1] in load_factors:
         
-#                 # Calculate the factored value for this load
-#                 load_value = load[0]*load_factors[load[1]]
+                # Calculate the factored value for this load
+                load_value = load[0]*load_factors[load[1]]
                 
-#                 # Find the sign for this load. Intercept any divide by zero errors
-#                 if load[0] == 0:
-#                     sign = 1
-#                 else:
-#                     sign = abs(load[0])/load[0]
+                # Find the sign for this load. Intercept any divide by zero errors
+                if load[0] == 0:
+                    sign = 1
+                else:
+                    sign = abs(load[0])/load[0]
           
-#                 # Find the position of the load's 4 corners
-#                 position0 = [plate.i_node.X, plate.i_node.Y, plate.i_node.Z]
-#                 position1 = [plate.j_node.X, plate.j_node.Y, plate.j_node.Z]
-#                 position2 = [plate.m_node.X, plate.m_node.Y, plate.m_node.Z]
-#                 position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
+                # Find the position of the load's 4 corners
+                position0 = [plate.i_node.X, plate.i_node.Y, plate.i_node.Z]
+                position1 = [plate.j_node.X, plate.j_node.Y, plate.j_node.Z]
+                position2 = [plate.m_node.X, plate.m_node.Y, plate.m_node.Z]
+                position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
           
-#                 # Create an area load and get its data
-#                 area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                # Create an area load and get its data
+                area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
           
-#                 # Add the area load's arrows to the overall load polydata
-#                 polydata.AddInputData(area_load.polydata.GetOutput())
+                # Add the area load's arrows to the overall load polydata
+                polydata.AddInputData(area_load.polydata.GetOutput())
           
-#                 # Add the 4 points at the corners of this area load to the list of points
-#                 polygon_points.InsertNextPoint(area_load.p0[0], area_load.p0[1], area_load.p0[2])
-#                 polygon_points.InsertNextPoint(area_load.p1[0], area_load.p1[1], area_load.p1[2])
-#                 polygon_points.InsertNextPoint(area_load.p2[0], area_load.p2[1], area_load.p2[2])
-#                 polygon_points.InsertNextPoint(area_load.p3[0], area_load.p3[1], area_load.p3[2])
+                # Add the 4 points at the corners of this area load to the list of points
+                polygon_points.InsertNextPoint(area_load.p0[0], area_load.p0[1], area_load.p0[2])
+                polygon_points.InsertNextPoint(area_load.p1[0], area_load.p1[1], area_load.p1[2])
+                polygon_points.InsertNextPoint(area_load.p2[0], area_load.p2[1], area_load.p2[2])
+                polygon_points.InsertNextPoint(area_load.p3[0], area_load.p3[1], area_load.p3[2])
           
-#                 # Create a polygon based on the four points we just defined.
-#                 # The 1st number in `SetId()` is the local point id
-#                 # The 2nd number in `SetId()` is the global point id
-#                 polygon = vtk.vtkPolygon()
-#                 polygon.GetPointIds().SetNumberOfIds(4)
-#                 polygon.GetPointIds().SetId(0, i*4)
-#                 polygon.GetPointIds().SetId(1, i*4 + 1)
-#                 polygon.GetPointIds().SetId(2, i*4 + 2)
-#                 polygon.GetPointIds().SetId(3, i*4 + 3)
+                # Create a polygon based on the four points we just defined.
+                # The 1st number in `SetId()` is the local point id
+                # The 2nd number in `SetId()` is the global point id
+                polygon = vtk.vtkPolygon()
+                polygon.GetPointIds().SetNumberOfIds(4)
+                polygon.GetPointIds().SetId(0, i*4)
+                polygon.GetPointIds().SetId(1, i*4 + 1)
+                polygon.GetPointIds().SetId(2, i*4 + 2)
+                polygon.GetPointIds().SetId(3, i*4 + 3)
           
-#                 # Add the polygon to the list of polygons
-#                 polygons.InsertNextCell(polygon)
+                # Add the polygon to the list of polygons
+                polygons.InsertNextCell(polygon)
                 
-#                 # Add the load label
-#                 renderer.AddActor(area_load.label_actor)
+                # Add the load label
+                renderer.AddActor(area_load.label_actor)
           
-#                 # Set the text to follow the camera as the user interacts
-#                 area_load.label_actor.SetCamera(renderer.GetActiveCamera())
+                # Set the text to follow the camera as the user interacts
+                area_load.label_actor.SetCamera(renderer.GetActiveCamera())
           
-#                 # `i` keeps track of the next polygon's ID. We've just added a polygon, so `i` needs to
-#                 # go up 1.
-#                 i += 1
+                # `i` keeps track of the next polygon's ID. We've just added a polygon, so `i` needs to
+                # go up 1.
+                i += 1
         
-#                 # Create polygon polydata from all the points and polygons we just defined
-#                 polygon_polydata.SetPoints(polygon_points)
-#                 polygon_polydata.SetPolys(polygons)
+                # Create polygon polydata from all the points and polygons we just defined
+                polygon_polydata.SetPoints(polygon_points)
+                polygon_polydata.SetPolys(polygons)
     
-#     # Set up an actor and mapper for the loads
-#     load_mapper = vtk.vtkPolyDataMapper()
-#     load_mapper.SetInputConnection(polydata.GetOutputPort())
-#     load_actor = vtk.vtkActor()
-#     load_actor.SetMapper(load_mapper)
+    # Set up an actor and mapper for the loads
+    load_mapper = vtk.vtkPolyDataMapper()
+    load_mapper.SetInputConnection(polydata.GetOutputPort())
+    load_actor = vtk.vtkActor()
+    load_actor.SetMapper(load_mapper)
 
-#     # Colorize the loads
-#     if theme == 'default':
-#         load_actor.GetProperty().SetColor(0/255, 255/255, 0/255)  # Green
-#     elif theme == 'print':
-#         load_actor.GetProperty().SetColor(255/255, 0/255, 0/255)  # Red
+    # Colorize the loads
+    if theme == 'default':
+        load_actor.GetProperty().SetColor(0/255, 255/255, 0/255)  # Green
+    elif theme == 'print':
+        load_actor.GetProperty().SetColor(255/255, 0/255, 0/255)  # Red
 
-#     # Add the load actor to the renderer
-#     renderer.AddActor(load_actor)
+    # Add the load actor to the renderer
+    renderer.AddActor(load_actor)
     
-#     # Set up an actor and a mapper for the area load polygons
-#     polygon_mapper = vtk.vtkPolyDataMapper()
-#     polygon_mapper.SetInputData(polygon_polydata)
-#     polygon_actor = vtk.vtkActor()
+    # Set up an actor and a mapper for the area load polygons
+    polygon_mapper = vtk.vtkPolyDataMapper()
+    polygon_mapper.SetInputData(polygon_polydata)
+    polygon_actor = vtk.vtkActor()
 
-#     # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
-#     polygon_actor.SetMapper(polygon_mapper)
-#     renderer.AddActor(polygon_actor)
+    # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
+    polygon_actor.SetMapper(polygon_mapper)
+    renderer.AddActor(polygon_actor)
     
-#     # Set the color of the area load polygons
-#     if theme == 'default':
-#         polygon_actor.GetProperty().SetColor(0/255, 255/255, 0/255)  # Green
-#     elif theme == 'print':
-#         polygon_actor.GetProperty().SetColor(255/255, 0/255, 0/255)  # Red
+    # Set the color of the area load polygons
+    if theme == 'default':
+        polygon_actor.GetProperty().SetColor(0/255, 255/255, 0/255)  # Green
+    elif theme == 'print':
+        polygon_actor.GetProperty().SetColor(255/255, 0/255, 0/255)  # Red
