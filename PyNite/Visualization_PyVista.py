@@ -236,11 +236,11 @@ class Renderer:
 
             # Plot each node in the model
             for node in self.model.Nodes.values():
-                self.plot_node(node, self.annotation_size, color)
+                self.plot_node(node, color)
             
             # Plot each auxiliary node in the model
             for aux_node in self.model.AuxNodes.values():
-                self.plot_node(aux_node, self.annotation_size, color)
+                self.plot_node(aux_node, color)
         
         # Render node labels
         label_points = [[node.X, node.Y, node.Z] for node in self.model.Nodes.values()]
@@ -302,7 +302,7 @@ class Renderer:
         if reset_camera:
             self.plotter.reset_camera()
     
-    def plot_node(self, node, size, color='grey'):
+    def plot_node(self, node, color='grey'):
         """Adds a node to the plotter
 
         :param node: node
@@ -320,127 +320,152 @@ class Renderer:
             
             # Create a cube using PyVista
             self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y, node.Z),
-                                          x_length=size*2,
-                                          y_length=size*2,
-                                          z_length=size*2))
+                                          x_length=self.annotation_size*2,
+                                          y_length=self.annotation_size*2,
+                                          z_length=self.annotation_size*2), color=color)
         
         # Check for a pinned support
         elif node.support_DX and node.support_DY and node.support_DZ and not node.support_RX and not node.support_RY and not node.support_RZ:
             
             # Create a cone using PyVista's Cone function
-            self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y-size, node.Z),
+            self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y - self.annotation_size, node.Z),
                                           direction=(0, 1, 0),
-                                          height=size*2,
-                                          radius=size*2))
+                                          height=self.annotation_size*2,
+                                          radius=self.annotation_size*2), color=color)
 
         # Other support conditions
         else:
 
             # Generate a sphere for the node
-            #sphere = pv.Sphere(center=(X, Y, Z), radius=size/2)
-            #self.plotter.add_mesh(sphere, name='Node: '+node.name)
+            sphere = pv.Sphere(center=(X, Y, Z), radius=0.4*self.annotation_size)
+            self.plotter.add_mesh(sphere, name='Node: '+node.name, color=color)
             
             # Restrained against X translation
             if node.support_DX:
 
                 # Line showing support direction
-                self.plotter.add_mesh(pv.Line((node.X-size, node.Y, node.Z),
-                                              (node.X+size, node.Y, node.Z)))
+                self.plotter.add_mesh(pv.Line((node.X - self.annotation_size, node.Y, node.Z),
+                                              (node.X + self.annotation_size, node.Y, node.Z)), color=color)
 
                 # Cones at both ends
-                self.plotter.add_mesh(pv.Cone(center=(node.X-size, node.Y, node.Z),
-                                        direction=(1, 0, 0),
-                                        height=size*0.6,
-                                        radius=size*0.3))
-                self.plotter.add_mesh(pv.Cone(center=(node.X+size, node.Y, node.Z),
-                                        direction=(-1, 0, 0),
-                                        height=size*0.6,
-                                        radius=size*0.3))
+                self.plotter.add_mesh(pv.Cone(center=(node.X - self.annotation_size, node.Y,
+                                                      node.Z),
+                                              direction=(1, 0, 0), height=self.annotation_size*0.6,
+                                              radius=self.annotation_size*0.3),
+                                      color=color)
+                self.plotter.add_mesh(pv.Cone(center=(node.X + self.annotation_size, node.Y,
+                                                      node.Z),
+                                              direction=(-1, 0, 0),
+                                              height=self.annotation_size*0.6,
+                                              radius=self.annotation_size*0.3),
+                                      color=color)
             
             # Restrained against Y translation
             if node.support_DY:
 
                 # Line showing support direction
-                self.plotter.add_mesh(pv.Line((node.X, node.Y-size, node.Z),
-                                              (node.X, node.Y+size, node.Z)))
+                self.plotter.add_mesh(pv.Line((node.X, node.Y - self.annotation_size, node.Z),
+                                              (node.X, node.Y + self.annotation_size, node.Z)),
+                                      color=color)
 
                 # Cones at both ends
-                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y-size, node.Z),
-                                              direction=(0, 1, 0),
-                                              height=size*0.6,
-                                              radius=size*0.3))
-                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y+size, node.Z),
-                                              direction=(0, -1, 0),
-                                              height=size*0.6,
-                                              radius=size*0.3))
+                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y - self.annotation_size,
+                                                      node.Z), direction=(0, 1, 0),
+                                                      height=self.annotation_size*0.6,
+                                                      radius=self.annotation_size*0.3),
+                                      color=color)
+                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y + self.annotation_size,
+                                                      node.Z),
+                                                      direction=(0, -1, 0),
+                                                      height=self.annotation_sizesize*0.6,
+                                                      radius=self.annotation_size*0.3),
+                                      color=color)
             
             # Restrained against Z translation
             if node.support_DZ:
 
                 # Line showing support direction
-                self.plotter.add_mesh(pv.Line((node.X, node.Y, node.Z-size),
-                                              (node.X, node.Y, node.Z+size)))
+                self.plotter.add_mesh(pv.Line((node.X, node.Y, node.Z-self.annotation_size),
+                                              (node.X, node.Y, node.Z+self.annotation_size)),
+                                      color=color)
 
                 # Cones at both ends
-                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y, node.Z-size),
+                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y, node.Z-self.annotation_size),
                                               direction=(0, 0, 1),
-                                              height=size*0.6,
-                                              radius=size*0.3))
-                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y, node.Z+size),
+                                              height=self.annotation_size*0.6,
+                                              radius=self.annotation_size*0.3),
+                                      color=color)
+                self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y, node.Z+self.annotation_size),
                                               direction=(0, 0, -1),
-                                              height=size*0.6,
-                                              radius=size*0.3))
+                                              height=self.annotation_size*0.6,
+                                              radius=self.annotation_size*0.3),
+                                      color=color)
             
             # Restrained against X rotation
             if node.support_RX:
 
                 # Line showing support direction
-                self.plotter.add_mesh(pv.Line((node.X-1.6*size, node.Y, node.Z),
-                                              (node.X+1.6*size, node.Y, node.Z)))
+                self.plotter.add_mesh(pv.Line((node.X-1.6*self.annotation_size, node.Y, node.Z),
+                                              (node.X+1.6*self.annotation_size, node.Y, node.Z)),
+                                      color=color)
 
                 # Cubes at both ends
-                self.plotter.add_mesh(pv.Cube(center=(node.X-1.9*size, node.Y, node.Z),
-                                              x_length=size*0.6,
-                                              y_length=size*0.6,
-                                              z_length=size*0.6))
-                self.plotter.add_mesh(pv.Cube(center=(node.X+1.9 *size, node.Y, node.Z),
-                                              x_length=size*0.6,
-                                              y_length=size*0.6,
-                                              z_length=size*0.6))
+                self.plotter.add_mesh(pv.Cube(center=(node.X-1.9*self.annotation_size, node.Y,
+                                                      node.Z),
+                                              x_length=self.annotation_size*0.6,
+                                              y_length=self.annotation_size*0.6,
+                                              z_length=self.annotation_size*0.6),
+                                      color=color)
+                self.plotter.add_mesh(pv.Cube(center=(node.X+1.9 *self.annotation_size, node.Y,
+                                                      node.Z),
+                                              x_length=self.annotation_size*0.6,
+                                              y_length=self.annotation_size*0.6,
+                                              z_length=self.annotation_size*0.6),
+                                      color=color)
 
             # Restrained against rotation about the Y-axis
             if node.support_RY:
 
                 # Line showing support direction
-                self.plotter.add_mesh(pv.Line((node.X, node.Y-1.6*size, node.Z),
-                                              (node.X, node.Y+1.6*size, node.Z)))
+                self.plotter.add_mesh(pv.Line((node.X, node.Y-1.6*self.annotation_size, node.Z),
+                                              (node.X, node.Y+1.6*self.annotation_size, node.Z)),
+                                      color=color)
 
                 # Cubes at both ends
-                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y-1.9*size, node.Z),
-                                              x_length=size*0.6,
-                                              y_length=size*0.6,
-                                              z_length=size*0.6))
-                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y+1.9*size, node.Z),
-                                              x_length=size*0.6,
-                                              y_length=size*0.6,
-                                              z_length=size*0.6))
+                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y-1.9*self.annotation_size,
+                                                      node.Z),
+                                              x_length=self.annotation_size*0.6,
+                                              y_length=self.annotation_size*0.6,
+                                              z_length=self.annotation_size*0.6),
+                                      color=color)
+                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y+1.9*self.annotation_size,
+                                                      node.Z),
+                                              x_length=self.annotation_size*0.6,
+                                              y_length=self.annotation_size*0.6,
+                                              z_length=self.annotation_size*0.6),
+                                      color=color)
             
             # Restrained against rotation about the Z-axis
             if node.support_RZ:
 
                 # Line showing support direction
-                self.plotter.add_mesh(pv.Line((node.X, node.Y, node.Z-1.6*size),
-                                              (node.X, node.Y, node.Z+1.6*size)))
+                self.plotter.add_mesh(pv.Line((node.X, node.Y, node.Z-1.6*self.annotation_size),
+                                              (node.X, node.Y, node.Z+1.6*self.annotation_size)),
+                                      color=color)
 
                 # Cubes at both ends
-                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y, node.Z-1.9*size),
-                                              x_length=size*0.6,
-                                              y_length=size*0.6,
-                                              z_length=size*0.6))
-                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y, node.Z+1.9*size),
-                                              x_length=size*0.6,
-                                              y_length=size*0.6,
-                                              z_length=size*0.6))
+                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y,
+                                                      node.Z-1.9*self.annotation_size),
+                                              x_length=self.annotation_size*0.6,
+                                              y_length=self.annotation_size*0.6,
+                                              z_length=self.annotation_size*0.6),
+                                      color=color)
+                self.plotter.add_mesh(pv.Cube(center=(node.X, node.Y,
+                                                      node.Z+1.9*self.annotation_size),
+                                              x_length=self.annotation_size*0.6,
+                                              y_length=self.annotation_size*0.6,
+                                              z_length=self.annotation_size*0.6),
+                                      color=color)
 
     def plot_member(self, member, theme='default'):
     
@@ -570,7 +595,7 @@ class Renderer:
         else:
             self.plotter.add_mesh(plate_polydata)
       
-    def plot_deformed_node(self, node, scale_factor):
+    def plot_deformed_node(self, node, scale_factor, color='grey'):
 
         # Calculate the node's deformed position
         newX = node.X + scale_factor * (node.DX[self.combo_name])
@@ -578,10 +603,10 @@ class Renderer:
         newZ = node.Z + scale_factor * (node.DZ[self.combo_name])
 
         # Generate a sphere source for the node in its deformed position
-        sphere = pv.Sphere(radius=0.6 * self.annotation_size, center=[newX, newY, newZ])
+        sphere = pv.Sphere(radius=0.4*self.annotation_size, center=[newX, newY, newZ])
 
         # Add the mesh to the plotter
-        self.plotter.add_mesh(sphere)
+        self.plotter.add_mesh(sphere, color=color)
   
     def plot_deformed_member(self, member, scale_factor):
         
