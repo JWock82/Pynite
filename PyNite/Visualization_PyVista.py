@@ -790,31 +790,33 @@ class Renderer:
 
         # Find a vector perpendicular to the direction vector
         v1 = direction/np.linalg.norm(direction)  # v1: directional unit vector
-        v2 = _PerpVector(v1)        # v2 = unit vector perpendicular to v1
-        v3 = np.cross(v1, v2)
-        v3 = v3/np.linalg.norm(v3)  # v3 = A unit vector perpendicular to v1 and v2
 
-        # Generate an arc for the moment
-        # arc = pv.Arc(center=center, radius=radius, starting_angle=0, ending_angle=180, resolution=20, normal=v2)
+        # Find any vector perpendicular to the moment direction vector. This will serve as a
+        # vector from the center of the arc pointing to one end of the arc.
+        v2 = _PerpVector(v1)
+
+        # Find the vector perpendicular to both `v1` and `v2`. This will serve as a vector from the
+        # center of the arc pointing to another end of the arc.
+        v3 = np.cross(v1, v2)
+        v3 = v3/np.linalg.norm(v3)
         
-        arc = pv.CircularArcFromNormal(center, resolution=20, normal=v3, angle=215)
+        arc = pv.CircularArcFromNormal(center, resolution=20, normal=v1, angle=215, polar=v2*radius)
         
         # Add the arc to the plot
         self.plotter.add_mesh(arc, color=color)
 
         # Generate the arrow tip at the end of the arc
-        tip_length = radius/2
-        cone_radius = radius/8
-        tip = pv.Cone(center=arc.points[-1], direction=np.cross(v1, v2), height=tip_length, radius=cone_radius)
-        # tip = pv.Cone(radius=cone_radius, height=tip_length, origin=arc.points[-1])
-        # tip.rotate(axis=v2, angle=90)  # Rotate for proper orientation
+        tip_length = radius/4
+        cone_radius = radius/16
+        cone_direction = np.cross(v1, arc.center - arc.points[-1])
+        tip = pv.Cone(center=arc.points[-1], direction=cone_direction, height=tip_length, radius=cone_radius)
 
         # Add the tip to the plot
         self.plotter.add_mesh(tip, color=color)
 
         # Create the text label
         if label_text:
-            text_pos = center + (radius + 0.25 * self.annotation_size) * v2
+            text_pos = center + (radius + 0.25*self.annotation_size)*v2
             self._load_label_points.append(text_pos)
             self._load_labels.append(label_text)
 
