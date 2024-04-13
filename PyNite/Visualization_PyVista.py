@@ -298,8 +298,8 @@ class Renderer:
             self.plot_plates(self.deformed_shape, self.deformed_scale, self.color_map, self.combo_name)
         
         # Determine whether to show or hide the scalar bar
-        if self._scalar_bar != True:
-            self.plotter.scalar_bar.VisibilityOff()
+        # if self._scalar_bar == False:
+        #     self.plotter.scalar_bar.VisibilityOff()
             
         # Reset the camera if requested by the user
         if reset_camera:
@@ -786,7 +786,7 @@ class Renderer:
         elif color == 'black':
             self.mesh.set_colors([0, 0, 0])  # Black
 
-    def plot_moment(self, center, direction, radius, label_text=None, color=None):
+    def plot_moment(self, center, direction, radius, label_text=None, color='green'):
 
         # Find a vector perpendicular to the direction vector
         v1 = direction/np.linalg.norm(direction)  # v1: directional unit vector
@@ -795,100 +795,28 @@ class Renderer:
         v3 = v3/np.linalg.norm(v3)  # v3 = A unit vector perpendicular to v1 and v2
 
         # Generate an arc for the moment
-        arc = pv.Arc(center=center, radius=radius, starting_angle=0, ending_angle=180, 
-                    resolution=20, normal=v2)
+        # arc = pv.Arc(center=center, radius=radius, starting_angle=0, ending_angle=180, resolution=20, normal=v2)
+        
+        arc = pv.CircularArcFromNormal(center, resolution=20, normal=v3, angle=215)
+        
+        # Add the arc to the plot
+        self.plotter.add_mesh(arc, color=color)
 
         # Generate the arrow tip at the end of the arc
-        tip_length = radius / 2
-        cone_radius = radius / 8
-        tip = pv.Cone(radius=cone_radius, height=tip_length, origin=arc.points[-1])
-        tip.rotate(axis=v2, angle=90)  # Rotate for proper orientation
+        tip_length = radius/2
+        cone_radius = radius/8
+        tip = pv.Cone(center=arc.points[-1], direction=np.cross(v1, v2), height=tip_length, radius=cone_radius)
+        # tip = pv.Cone(radius=cone_radius, height=tip_length, origin=arc.points[-1])
+        # tip.rotate(axis=v2, angle=90)  # Rotate for proper orientation
 
-        # Combine the moment body and tip
-        self.mesh = arc + tip
+        # Add the tip to the plot
+        self.plotter.add_mesh(tip, color=color)
 
         # Create the text label
         if label_text:
             text_pos = center + (radius + 0.25 * self.annotation_size) * v2
-            label = pv.Text(text=label_text, position=text_pos, text_scale=self.annotation_size)
-            self.mesh.append(label)
-
-        # Set color
-        if color is None:
-            self.mesh.actor.property.color = 'green'  # Green
-        elif color == 'black':
-            self.mesh.actor.property.color = 'black'  # Black
-
-    # class VisMoment():
-    #     '''
-    #     Creates a concentrated moment for the viewer
-    #     '''
-        
-    #     def __init__(self, center, direction, radius, label_text=None, annotation_size=5, color=None):
-    #         '''
-    #         Constructor.
-        
-    #         Parameters
-    #         ----------
-    #         center : tuple
-    #           A tuple of X, Y and Z coordinates for center of the moment: (X, Y, Z).
-    #         direction : tuple
-    #           A tuple indicating the direction vector for the moment: (i, j, k).
-    #         radius : number
-    #           The radius of the moment.
-    #         tip_length : number
-    #           The height of the arrow head.
-    #         label_text : string
-    #           Text that will show up at the tail of the moment. If set to 'None' no text will be displayed.
-    #         '''
-        
-    #         # Create an append filter to store load polydata in
-    #         self.polydata = vtk.vtkAppendPolyData()
-            
-    #         # Find a vector perpendicular to the directional unit vector
-    #         v1 = direction/np.linalg.norm(direction)  # v1 = The directional unit vector for the moment
-    #         v2 = _PerpVector(v1)             # v2 = A unit vector perpendicular to v1
-    #         v3 = np.cross(v1, v2)
-    #         v3 = v3/np.linalg.norm(v3)                # v3 = A unit vector perpendicular to v1 and v2
-        
-    #         # Generate an arc for the moment
-    #         Xc, Yc, Zc = center
-    #         arc = vtk.vtkArcSource()
-    #         arc.SetCenter(Xc, Yc, Zc)
-    #         arc.SetPoint1(Xc + v2[0]*radius, Yc + v2[1]*radius, Zc + v2[2]*radius)
-    #         arc.SetPoint2(Xc + v3[0]*radius, Yc + v3[1]*radius, Zc + v3[2]*radius)
-    #         arc.SetNegative(True)
-    #         arc.SetResolution(20)
-    #         arc.Update()
-    #         self.polydata.AddInputData(arc.GetOutput())
-        
-    #         # Generate the arrow tip at the end of the arc
-    #         tip_length = radius/2
-    #         cone_radius = radius/8
-    #         tip = vtk.vtkConeSource()
-    #         tip.SetCenter(arc.GetPoint1()[0], arc.GetPoint1()[1], arc.GetPoint1()[2])
-    #         tip.SetDirection(np.cross(v1, v2))
-    #         tip.SetHeight(tip_length)
-    #         tip.SetRadius(cone_radius)
-    #         tip.Update()
-    #         self.polydata.AddInputData(tip.GetOutput())
-        
-    #         # Update the polydata one last time now that we're done appending items to it
-    #         self.polydata.Update()
-        
-    #         # Create the text label
-    #         label = vtk.vtkVectorText()
-    #         label.SetText(label_text)
-    #         lblMapper = vtk.vtkPolyDataMapper()
-    #         lblMapper.SetInputConnection(label.GetOutputPort())
-    #         self.lblActor = vtk.vtkFollower()
-    #         self.lblActor.SetMapper(lblMapper)
-    #         self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
-    #         self.lblActor.SetPosition(Xc + v3[0]*(radius + 0.25*annotation_size), \
-    #                                   Yc + v3[1]*(radius + 0.25*annotation_size), \
-    #                                   Zc + v3[2]*(radius + 0.25*annotation_size))
-    #         if color is None: self.lblActor.GetProperty().SetColor(0, 255, 0)  # Green
-    #         elif color == 'black': self.lblActor.GetProperty().SetColor(0, 0, 0)  # Black
+            self._load_label_points.append(text_pos)
+            self._load_labels.append(label_text)
 
     def plot_area_load(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5, theme='default'):
 
@@ -1108,7 +1036,7 @@ class Renderer:
                                           load_value/max_pt_load*5*self.annotation_size,
                                           str(load_value), 'green')
                     elif load[0] in {'MX', 'MY', 'MZ'}:
-                        self.plot_moment((node.X, node.Y, node.Z), direction, load_value/max_moment, str(load_value), 'green')
+                        self.plot_moment((node.X, node.Y, node.Z), direction, abs(load_value/max_moment)*5*self.annotation_size, str(load_value), 'green')
         
         # # Step through each member
         # for member in model.Members.values():
