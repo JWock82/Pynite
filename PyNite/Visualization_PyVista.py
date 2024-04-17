@@ -383,7 +383,7 @@ class Renderer:
                 self.plotter.add_mesh(pv.Cone(center=(node.X, node.Y + self.annotation_size,
                                                       node.Z),
                                                       direction=(0, -1, 0),
-                                                      height=self.annotation_sizesize*0.6,
+                                                      height=self.annotation_size*0.6,
                                                       radius=self.annotation_size*0.3),
                                       color=color)
             
@@ -773,18 +773,10 @@ class Renderer:
             self.plot_pt_load(position, dir_dir_cos, length, label_text)
 
         # Draw a line between the first and last load arrow's tails (using cylinder here for better visualization)
-        tail_line = pv.Cylinder(radius=annotation_size/2, height=load_length)
-        tail_line.translate(position1 - length1 * dir_dir_cos)
-        tail_line.direction = dir_dir_cos
+        tail_line = pv.Line(position1 - dir_dir_cos*length1, position2 - dir_dir_cos*length2)
 
         # Combine all geometry into a single PolyData object
-        self.mesh = pv.PolyDataCollection(pt_loads + [tail_line])
-
-        # Set color
-        if color is None:
-            self.mesh.set_colors([0, 255, 0])  # Green
-        elif color == 'black':
-            self.mesh.set_colors([0, 0, 0])  # Black
+        self.plotter.add_mesh(tail_line, color=color)
 
     def plot_moment(self, center, direction, radius, label_text=None, color='green'):
 
@@ -1037,62 +1029,84 @@ class Renderer:
                     elif load[0] in {'MX', 'MY', 'MZ'}:
                         self.plot_moment((node.X, node.Y, node.Z), direction, abs(load_value/max_moment)*2.5*self.annotation_size, str(load_value), 'green')
         
-        # # Step through each member
-        # for member in model.Members.values():
+        # Step through each member
+        for member in self.model.Members.values():
         
-        #     # Get the direction cosines for the member's local axes
-        #     dir_cos = member.T()[0:3, 0:3]
+            # Get the direction cosines for the member's local axes
+            dir_cos = member.T()[0:3, 0:3]
         
-        #     # Get the starting point for the member
-        #     x_start, y_start, z_start = member.i_node.X, member.i_node.Y, member.i_node.Z
+            # Get the starting point for the member
+            x_start, y_start, z_start = member.i_node.X, member.i_node.Y, member.i_node.Z
         
-        #     # Step through each member point load
-        #     for load in member.PtLoads:
+            # Step through each member point load
+            for load in member.PtLoads:
         
-        #         # Determine if this load is part of the requested load combination
-        #         if load[3] in load_factors:
+                # Determine if this load is part of the requested load combination
+                if load[3] in load_factors:
             
-        #             # Calculate the factored value for this load and it's sign (positive or negative)
-        #             load_value = load[1]*load_factors[load[3]]
-        #             sign = load_value/abs(load_value)
+                    # Calculate the factored value for this load and it's sign (positive or negative)
+                    load_value = load[1]*load_factors[load[3]]
+                    sign = load_value/abs(load_value)
             
-        #             # Calculate the load's location in 3D space
-        #             x = load[2]
-        #             position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
+                    # Calculate the load's location in 3D space
+                    x = load[2]
+                    position = [x_start + dir_cos[0, 0]*x, y_start + dir_cos[0, 1]*x, z_start + dir_cos[0, 2]*x]
             
-        #             # Display the load
-        #             if load[0] in {'Fx', 'Fy', 'Fz', 'MX', 'MY', 'MZ', 'FX', 'FY', 'FZ'}:
-        #                 ptLoad = VisPtLoad(position, load[0], load_value, max_pt_load, annotation_size)
+                    # Display the load
+                    if load[0] == 'Fx':
+                        self.plot_pt_load(position, dir_cos[0, :], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                    elif load[0] == 'Fy':
+                        self.plot_pt_load(position, dir_cos[1, :], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                    elif load[0] == 'Fz':
+                        self.plot_pt_load(position, dir_cos[2, :], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                    elif load[0] == 'Mx':
+                        self.plot_moment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
+                    elif load[0] == 'My':
+                        self.plot_moment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
+                    elif load[0] == 'Mz':
+                        self.plot_moment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
+                    elif load[0] == 'FX':
+                        self.plot_pt_load(position, [1, 0, 0], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                    elif load[0] == 'FY':
+                        self.plot_pt_load(position, [0, 1, 0], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                    elif load[0] == 'FZ':
+                        self.plot_pt_load(position, [0, 0, 1], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                    elif load[0] == 'MX':
+                        self.plot_moment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
+                    elif load[0] == 'MY':
+                        self.plot_moment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
+                    elif load[0] == 'MZ':
+                        self.plot_moment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
+        
+            # Step through each member distributed load
+            for load in member.DistLoads:
+        
+                # Determine if this load is part of the requested load combination
+                if load[5] in load_factors:
+            
+                    # Calculate the factored value for this load and it's sign (positive or negative)
+                    w1 = load[1]*load_factors[load[5]]
+                    w2 = load[2]*load_factors[load[5]]
+            
+                    # Calculate the loads location in 3D space
+                    x1 = load[3]
+                    x2 = load[4]
+                    position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
+                    position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
                     
-        #             polydata += ptLoad.polydata
-        #             renderer.add_actor(ptLoad.lblActor)
-        #             ptLoad.lblActor.camera = renderer.camera
-        
-        #     # Step through each member distributed load
-        #     for load in member.DistLoads:
-        
-        #         # Determine if this load is part of the requested load combination
-        #         if load[5] in load_factors:
-            
-        #             # Calculate the factored value for this load and it's sign (positive or negative)
-        #             w1 = load[1]*load_factors[load[5]]
-        #             w2 = load[2]*load_factors[load[5]]
-            
-        #             # Calculate the loads location in 3D space
-        #             x1 = load[3]
-        #             x2 = load[4]
-        #             position1 = [x_start + dir_cos[0, 0]*x1, y_start + dir_cos[0, 1]*x1, z_start + dir_cos[0, 2]*x1]
-        #             position2 = [x_start + dir_cos[0, 0]*x2, y_start + dir_cos[0, 1]*x2, z_start + dir_cos[0, 2]*x2]
-                    
-        #             # Display the load
-        #             if load[0] in {'Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'}:
-        #                 distLoad = VisDistLoad(position1, position2, load[0], w1, w2, max_dist_load, annotation_size)
-                
-        #             polydata += distLoad.polydata
-        #             renderer.add_actor(distLoad.lblActors[0])
-        #             renderer.add_actor(distLoad.lblActors[1])
-        #             distLoad.lblActors[0].camera = renderer.camera
-        #             distLoad.lblActors[1].camera = renderer.camera
+                    # Display the load
+                    if load[0] in {'Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'}:
+
+                        # Determine the load direction
+                        if load[0] == 'Fx': direction = dir_cos[0, :]
+                        elif load[0] == 'Fy': direction = dir_cos[1, :]
+                        elif load[0] == 'Fz': direction = dir_cos[2, :]
+                        elif load[0] == 'FX': direction = [1, 0, 0]
+                        elif load[0] == 'FY': direction = [0, 1, 0]
+                        elif load[0] == 'FZ': direction = [0, 0, 1]
+
+                        # Plot the distributed load
+                        self.plot_dist_load(position1, position2, direction, w1/max_dist_load*5*self.annotation_size, w2/max_dist_load*5*self.annotation_size, str(w1), str(w2), self.annotation_size, 'green')
         
         # # Step through each plate
         # for plate in list(model.Plates.values()) + list(model.Quads.values()):
