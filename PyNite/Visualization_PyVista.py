@@ -727,7 +727,7 @@ class Renderer:
         # Plot the shaft
         self.plotter.add_mesh(shaft, line_width=2, color=color)                         
 
-    def plot_dist_load(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5, color=None):
+    def plot_dist_load(self, position1, position2, direction, length1, length2, label_text1, label_text2, color='green'):
 
         # Calculate the length of the distributed load
         load_length = ((position2[0] - position1[0])**2 + (position2[1] - position1[1])**2 + (position2[2] - position1[2])**2)**0.5
@@ -749,7 +749,6 @@ class Renderer:
 
         num_steps = max(num_steps, 1)
         step = load_length/num_steps
-        pt_loads = []
 
         for i in range(num_steps + 1):
 
@@ -770,7 +769,7 @@ class Renderer:
                 label_text = None
 
             # Plot the load arrow
-            self.plot_pt_load(position, dir_dir_cos, length, label_text)
+            self.plot_pt_load(position, dir_dir_cos, length, label_text, color)
 
         # Draw a line between the first and last load arrow's tails (using cylinder here for better visualization)
         tail_line = pv.Line(position1 - dir_dir_cos*length1, position2 - dir_dir_cos*length2)
@@ -809,10 +808,10 @@ class Renderer:
             self._load_label_points.append(text_pos)
             self._load_labels.append(label_text)
 
-    def plot_area_load(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5, theme='default'):
+    def plot_area_load(self, position0, position1, position2, position3, direction, length, label_text, color='green'):
 
         # Find the direction cosines for the direction the load acts in
-        dir_dir_cos = direction / direction.magnitude()
+        dir_dir_cos = direction / np.linalg.norm(direction)
 
         # Find the positions of the tails of all the arrows at the corners
         self.p0 = position0 - dir_dir_cos * length
@@ -820,26 +819,17 @@ class Renderer:
         self.p2 = position2 - dir_dir_cos * length
         self.p3 = position3 - dir_dir_cos * length
 
-        # Create point loads (for reference, not used in the final mesh)
-        # pt_loads = [
-        #     VisPtLoad(position0, direction, length, label_text, annotation_size=annotation_size),
-        #     VisPtLoad(position1, direction, length, label_text, annotation_size=annotation_size),
-        #     VisPtLoad(position2, direction, length, label_text, annotation_size=annotation_size),
-        #     VisPtLoad(position3, direction, length, label_text, annotation_size=annotation_size),
-        # ]
+        # Plot the area load arrows
+        self.plot_pt_load(position0, dir_dir_cos, length, label_text, color)
+        self.plot_pt_load(position1, dir_dir_cos, length, color=color)
+        self.plot_pt_load(position2, dir_dir_cos, length, color=color)
+        self.plot_pt_load(position3, dir_dir_cos, length, color=color)
 
         # Create the area load polygon (quad)
-        self.mesh = pv.Polygon(points=[self.p0, self.p1, self.p2, self.p3])
+        quad = pv.Quadrilateral([self.p0, self.p1, self.p2, self.p3])
 
-        # Add label to the first corner
-        self.label_actor = pv.Text(text=label_text, position=self.p0 + (0.5 * length) * dir_dir_cos, text_scale=annotation_size)
+        self.plotter.add_mesh(quad, color=color)
 
-        # Set label color based on theme
-        if theme == 'print':
-            self.label_actor.actor.property.color = 'red'
-        elif theme == 'default':
-            self.label_actor.actor.property.color = 'green'
-    
     def _calc_max_loads(self):
 
         max_pt_load = 0
@@ -1108,109 +1098,36 @@ class Renderer:
                         # Plot the distributed load
                         self.plot_dist_load(position1, position2, direction, w1/max_dist_load*5*self.annotation_size, w2/max_dist_load*5*self.annotation_size, str(w1), str(w2), self.annotation_size, 'green')
         
-        # # Step through each plate
-        # for plate in list(model.Plates.values()) + list(model.Quads.values()):
+        # Step through each plate
+        for plate in list(self.model.Plates.values()) + list(self.model.Quads.values()):
         
-        #     # Get the direction cosines for the plate's local z-axis
-        #     dir_cos = plate.T()[0:3, 0:3]
-        #     dir_cos = dir_cos[2]
+            # Get the direction cosines for the plate's local z-axis
+            dir_cos = plate.T()[0:3, 0:3]
+            dir_cos = dir_cos[2]
         
-        #     # Step through each plate load
-        #     for load in plate.pressures:
+            # Step through each plate load
+            for load in plate.pressures:
         
-        #         # Determine if this load is part of the requested load combination
-        #         if load[1] in load_factors:
+                # Determine if this load is part of the requested load combination
+                if load[1] in load_factors:
             
-        #             # Calculate the factored value for this load
-        #             load_value = load[0]*load_factors[load[1]]
+                    # Calculate the factored value for this load
+                    load_value = load[0]*load_factors[load[1]]
                     
-        #             # Find the sign for this load. Intercept any divide by zero errors
-        #             if load[0] == 0:
-        #                 sign = 1
-        #             else:
-        #                 sign = abs(load[0])/load[0]
+                    # Find the sign for this load. Intercept any divide by zero errors
+                    if load[0] == 0:
+                        sign = 1
+                    else:
+                        sign = abs(load[0])/load[0]
             
-        #             # Find the position of the load's 4 corners
-        #             position0 = [plate.i_node.X, plate.i_node.Y, plate.i_node.Z]
-        #             position1 = [plate.j_node.X, plate.j_node.Y, plate.j_node.Z]
-        #             position2 = [plate.m_node.X, plate.m_node.Y, plate.m_node.Z]
-        #             position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
+                    # Find the position of the load's 4 corners
+                    position0 = [plate.i_node.X, plate.i_node.Y, plate.i_node.Z]
+                    position1 = [plate.j_node.X, plate.j_node.Y, plate.j_node.Z]
+                    position2 = [plate.m_node.X, plate.m_node.Y, plate.m_node.Z]
+                    position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
             
-        #             # Create an area load and get its data
-        #             area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value), max_area_load, annotation_size, theme)
-                    
-        #             polydata += area_load.polydata
-            
-        #             # Add the load label
-        #             renderer.add_actor(area_load.label_actor)
-            
-        #             # Set the text to follow the camera as the user interacts
-        #             area_load.label_actor.camera = renderer.camera
-            
-        # # Set up an actor for the loads
-        # load_actor = pv.PolyData(polydata)
-        
-        # # Colorize the loads
-        # if theme == 'default':
-        #     load_actor['colors'] = np.array([[0, 255, 0]]) / 255.0  # Green
-        # elif theme == 'print':
-        #     load_actor['colors'] = np.array([[255, 0, 0]]) / 255.0  # Red
-
-        # # Add the load actor to the renderer
-        # renderer.add_actor(load_actor)
-        
-        # # Plot the polygons
-        # polygon_actor = pv.PolyData(polygon_polydata)
-
-        # # Set the color of the area load polygons
-        # if theme == 'default':
-        #     polygon_actor['colors'] = np.array([[0, 255, 0]]) / 255.0  # Green
-        # elif theme == 'print':
-        #     polygon_actor['colors'] = np.array([[255, 0, 0]]) / 255.0  # Red
-        # renderer.add_actor(polygon_actor)
-
-#%%
-    # class VisAreaLoad():
-    #     '''
-    #     Creates an area load for the viewer
-    #     '''
-        
-    #     def __init__(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5, theme='default'):
-    #         '''
-    #         Constructor
-    #         '''
-        
-    #         # Create a point load for each corner of the area load
-    #         ptLoads = []
-    #         ptLoads.append(VisPtLoad(position0, direction, length, label_text, annotation_size=annotation_size))
-    #         ptLoads.append(VisPtLoad(position1, direction, length, label_text, annotation_size=annotation_size))
-    #         ptLoads.append(VisPtLoad(position2, direction, length, label_text, annotation_size=annotation_size))
-    #         ptLoads.append(VisPtLoad(position3, direction, length, label_text, annotation_size=annotation_size))
-        
-    #         # Find the direction cosines for the direction the load acts in
-    #         dirDirCos = direction/np.linalg.norm(direction)
-        
-    #         # Find the positions of the tails of all the arrows at the corners of the area load. This is
-    #         # where we will place the polygon.
-    #         self.p0 = position0 - dirDirCos*length
-    #         self.p1 = position1 - dirDirCos*length
-    #         self.p2 = position2 - dirDirCos*length
-    #         self.p3 = position3 - dirDirCos*length
-        
-    #         # Combine all geometry into one 'vtkPolyData' object
-    #         self.polydata = vtk.vtkAppendPolyData()
-    #         for arrow in ptLoads:
-    #             self.polydata.AddInputData(arrow.polydata.GetOutput())
-    #         self.polydata.Update()
-        
-    #         # Add a label
-    #         self.label_actor = ptLoads[0].lblActor
-
-    #         # Add color to the area load label
-    #         if theme == 'print':
-    #             self.label_actor.GetProperty().SetColor(255/255, 0/255, 0/255)  # red
-    #         elif theme == 'default':
-    #             self.label_actor.GetProperty().SetColor(0/255, 255/255, 0/255)  # green
+                    # Create an area load and get its data
+                    self.plot_area_load(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*self.annotation_size, str(load_value), color='green')
 
 def _PerpVector(v):
     '''
