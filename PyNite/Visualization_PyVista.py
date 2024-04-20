@@ -246,7 +246,7 @@ class Renderer:
         label_points = [[node.X, node.Y, node.Z] for node in self.model.Nodes.values()]
         labels = [node.name for node in self.model.Nodes.values()]
         
-        self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
+        self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=True, point_color='grey', point_size=5, shape=None, render_points_as_spheres=True)
 
         # Check if there are springs in the model
         if self.model.Springs:
@@ -271,8 +271,8 @@ class Renderer:
         if self.deformed_shape == True:
 
             # Render deformed nodes
-            for node in self.model.Nodes.values():
-                self.plot_deformed_node(node, self.deformed_scale)
+            # for node in self.model.Nodes.values():
+            #     self.plot_deformed_node(node, self.deformed_scale)
             
             # Render deformed members
             for member in self.model.Members.values():
@@ -342,8 +342,8 @@ class Renderer:
         else:
 
             # Generate a sphere for the node
-            sphere = pv.Sphere(center=(X, Y, Z), radius=0.4*self.annotation_size)
-            self.plotter.add_mesh(sphere, name='Node: '+node.name, color=color)
+            # sphere = pv.Sphere(center=(X, Y, Z), radius=0.4*self.annotation_size)
+            # self.plotter.add_mesh(sphere, name='Node: '+ node.name, color=color)
             
             # Restrained against X translation
             if node.support_DX:
@@ -1127,7 +1127,7 @@ class Renderer:
                     position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
             
                     # Create an area load and get its data
-                    self.plot_area_load(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*self.annotation_size, str(load_value), color='green')
+                    self.plot_area_load(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*self.annotation_size, str(round_to_sig_figs(load_value, 3)), color='green')
 
 def _PerpVector(v):
     '''
@@ -1239,3 +1239,44 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
             # Prevent divide by zero errors for nodes with no contour values
             if node.contour != []:
                 node.contour = sum(node.contour)/len(node.contour)
+
+def round_to_sig_figs(number, sig_figs):
+
+    """Rounds a number to a given number of significant figures.
+
+    :param number: The number to round.
+    :type number: float
+    :param sig_figs: The number of significant figures to keep.
+    :type sig_figs: int
+    :raises ValueError: Significant figures cannot be negative.
+    :return: The rounded number.
+    :rtype: float
+    """
+
+    if sig_figs < 0:
+        raise ValueError("Significant figures cannot be negative")
+
+    if number == 0:
+        return 0  # Special case for zero
+
+    # Count the leading zeros (if any)
+    leading_zeros = 0
+    float_str = str(abs(number))
+    for char in float_str:
+        if char == '0':
+            leading_zeros += 1
+        else:
+            break
+
+    # Count the exponent (if scientific notation is used)
+    exponent = 0
+    if 'e' in float_str:
+        exponent = int(float_str.split('e')[-1])
+
+    # Adjust for leading zeros and exponent
+    effective_sig_figs = sig_figs - leading_zeros - (exponent if exponent < 0 else 0)
+
+    # Round the number using the built-in round function
+    rounded_number = round(number, effective_sig_figs)
+
+    return rounded_number
