@@ -194,10 +194,10 @@ class Renderer:
 
         # Show the plotter for interaction
         if interact == True:
-            self.plotter.show(auto_close=False, screenshot=filepath, jupyter_backend='static')
-        else:
-            # Render the model (code execution will pause here until the user closes the window)
-            self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=False, auto_close=None, interactive_update=False, full_screen=None, screenshot=filepath, return_img=False, cpos=None, jupyter_backend='static', return_viewer=False, return_cpos=None, before_close_callback=None)
+            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', auto_close=False)
+        
+        # Render the model (code execution will pause here until the user closes the window)
+        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', screenshot=filepath, jupyter_backend='static')
 
     def update(self, reset_camera=True):
         """
