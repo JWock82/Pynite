@@ -194,10 +194,10 @@ class Renderer:
 
         # Show the plotter for interaction
         if interact == True:
-            self.plotter.show(auto_close=False)
-
-        # Render the model (code execution will pause here until the user closes the window)
-        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=True, auto_close=None, interactive_update=False, full_screen=None, screenshot=filepath, return_img=False, cpos=None, jupyter_backend=None, return_viewer=False, return_cpos=None, before_close_callback=None)
+            self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=True, auto_close=False, interactive_update=False, full_screen=None, screenshot=filepath, return_img=False, cpos=None, jupyter_backend=None, return_viewer=False, return_cpos=None, before_close_callback=None)
+        else:
+            # Render the model (code execution will pause here until the user closes the window)
+            self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=True, auto_close=None, interactive_update=False, full_screen=None, screenshot=filepath, return_img=False, cpos=None, jupyter_backend=None, return_viewer=False, return_cpos=None, before_close_callback=None)
 
     def update(self, reset_camera=True):
         """
@@ -722,7 +722,7 @@ class Renderer:
         
         # Save the data necessary to create the load's label
         if label_text is not None:
-            self._load_labels.append(label_text)
+            self._load_labels.append(sig_fig_round(label_text, 3))
             self._load_label_points.append([X_tail, Y_tail, Z_tail])
         
         # Plot the shaft
@@ -1016,7 +1016,7 @@ class Renderer:
                     if load[0] in {'FX', 'FY', 'FZ'}:
                         self.plot_pt_load((node.X, node.Y, node.Z), direction,
                                           load_value/max_pt_load*5*self.annotation_size,
-                                          str(load_value), 'green')
+                                          load_value, 'green')
                     elif load[0] in {'MX', 'MY', 'MZ'}:
                         self.plot_moment((node.X, node.Y, node.Z), direction, abs(load_value/max_moment)*2.5*self.annotation_size, str(load_value), 'green')
         
@@ -1045,11 +1045,11 @@ class Renderer:
             
                     # Display the load
                     if load[0] == 'Fx':
-                        self.plot_pt_load(position, dir_cos[0, :], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                        self.plot_pt_load(position, dir_cos[0, :], load_value/max_pt_load*5*self.annotation_size, load_value)
                     elif load[0] == 'Fy':
-                        self.plot_pt_load(position, dir_cos[1, :], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                        self.plot_pt_load(position, dir_cos[1, :], load_value/max_pt_load*5*self.annotation_size, load_value)
                     elif load[0] == 'Fz':
-                        self.plot_pt_load(position, dir_cos[2, :], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                        self.plot_pt_load(position, dir_cos[2, :], load_value/max_pt_load*5*self.annotation_size, load_value)
                     elif load[0] == 'Mx':
                         self.plot_moment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
                     elif load[0] == 'My':
@@ -1057,11 +1057,11 @@ class Renderer:
                     elif load[0] == 'Mz':
                         self.plot_moment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
                     elif load[0] == 'FX':
-                        self.plot_pt_load(position, [1, 0, 0], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                        self.plot_pt_load(position, [1, 0, 0], load_value/max_pt_load*5*self.annotation_size, load_value)
                     elif load[0] == 'FY':
-                        self.plot_pt_load(position, [0, 1, 0], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                        self.plot_pt_load(position, [0, 1, 0], load_value/max_pt_load*5*self.annotation_size, load_value)
                     elif load[0] == 'FZ':
-                        self.plot_pt_load(position, [0, 0, 1], load_value/max_pt_load*5*self.annotation_size, str(load_value))
+                        self.plot_pt_load(position, [0, 0, 1], load_value/max_pt_load*5*self.annotation_size, load_value)
                     elif load[0] == 'MX':
                         self.plot_moment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*self.annotation_size, str(load_value))
                     elif load[0] == 'MY':
