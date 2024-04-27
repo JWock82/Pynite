@@ -7,7 +7,9 @@ import numpy as np
 import pyvista as pv
 import math
 
-# pv.set_jupyter_backend(None)
+# Allow for 3D interaction within jupyter notebook using trame
+pv.global_theme.trame.jupyter_extension_enabled = True
+pv.set_jupyter_backend('trame')
 
 class Renderer:
     """Used to render finite element models.
@@ -175,7 +177,7 @@ class Renderer:
         # Render the model (code execution will pause here until the user closes the window)
         self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=True, auto_close=None, interactive_update=False, full_screen=None, screenshot=False, return_img=False, cpos=None, jupyter_backend=None, return_viewer=False, return_cpos=None, before_close_callback=None)
 
-    def screenshot(self, filepath='./Pynite_Image.png', interact=True, reset_camera=True, jupyter_backend=None):
+    def screenshot(self, filepath='./Pynite_Image.png', interact=True, reset_camera=True):
         """Saves a screenshot of the rendered model. Press `q` to capture the screenshot after positioning the view.
 
         :param filepath: The filepath to write the image to. When set to 'jupyter', the resulting plot is placed inline in a jupyter notebook. Defaults to 'jupyter'.
@@ -194,18 +196,10 @@ class Renderer:
         if interact == True:
             # Use `q` for `quit` to take the screenshot. The window will not close until the `X` in
             # the corner of the window is hit.
-            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', auto_close=False, return_viewer=True)
-            #self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=True, jupyter_backend=jupyter_backend)
+            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python')
         else:
             self.plotter.off_screen = True
             self.plotter.screenshot(filename=filepath)
-    
-    def render_jupyter(self, reset_camera=True):
-
-        # Update the plotter with the latest geometry
-        self.update(reset_camera)
-
-        self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', auto_close=False, return_viewer=True, jupyter_backend=None)
 
     def update(self, reset_camera=True):
         """
