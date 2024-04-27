@@ -171,22 +171,18 @@ class Renderer:
         self.update(reset_camera)
 
         # Render the model (code execution will pause here until the user closes the window)
-        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=True, auto_close=None, interactive_update=False, full_screen=None, screenshot=False, return_img=False, cpos=None, jupyter_backend=None, return_viewer=False, return_cpos=None, before_close_callback=None)
+        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=True, auto_close=None, interactive_update=False, full_screen=None, screenshot=False, return_img=False, cpos=None, jupyter_backend= 'html', return_viewer=False, return_cpos=None, before_close_callback=None)
 
-    def screenshot(self, filepath='console', interact=True, reset_camera=True):
-        """
-        Renders the model in a window. When the window is closed a screenshot is captured.
+    def screenshot(self, filepath='./Pynite_Image.png', interact=True, reset_camera=True, jupyter_backend='trame'):
+        """Saves a screenshot of the rendered model. Press `q` to capture the screenshot after positioning the view.
 
-        Parameters
-        ----------
-        filepath : string
-            Sends a screenshot to the specified filepath. The screenshot will be taken when the
-            user closes out of the render window.
-        interact : bool
-            Suppresses interacting with the window if set to `False`. This can be used to capture a
-            screenshot without pausing the program for the user to interact. Default is `True`.
-        reset_camera : bool
-            Resets the camera if set to `True`. Default is `True`.
+        :param filepath: The filepath to write the image to. When set to 'jupyter', the resulting plot is placed inline in a jupyter notebook. Defaults to 'jupyter'.
+        :type filepath: str, optional
+        :param interact: When set to `True` the user can set the scene before the screenshot is taken. Once the scene is set, press 'q' to take the screenshot. Defaults to `True`
+        :type interact: bool, optional
+        :param reset_camera: Resets the plotter's camera. Defaults to `True`
+        :type reset_camera: bool, optional
+        :param jupyter_backend: 
         """
 
         # Update the plotter with the latest geometry
@@ -194,10 +190,13 @@ class Renderer:
 
         # Show the plotter for interaction
         if interact == True:
-            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', auto_close=False)
-        
-        # Render the model (code execution will pause here until the user closes the window)
-        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', screenshot=filepath, jupyter_backend='static')
+            # Use `q` for `quit` to take the screenshot. The window will not close until the `X` in
+            # the corner of the window is hit.
+            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', auto_close=False, return_viewer=True, screenshot=filepath)
+            #self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=True, jupyter_backend=jupyter_backend)
+        else:
+            self.plotter.off_screen = True
+            self.plotter.screenshot(filename=filepath)
 
     def update(self, reset_camera=True):
         """
