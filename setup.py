@@ -32,5 +32,5 @@ setuptools.setup(
         'derivations': ['jupyterlab', 'sympy']
     },
     include_package_data = True,
-    python_requires = '>=3.6',
+    python_requires = '>=3.7',
 )
