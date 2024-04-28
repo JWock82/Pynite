@@ -2,17 +2,3 @@
 matplotlib
 numpy
 prettytable
-
-# For the sparse solver
-scipy
-
-# For visualization in general
-vtk
-
-# For visualization via `VTK`
-Ipython
-
-# For visualization via `Pyvista`
-pyvista[all,trame]
-ipywidgets
-trame_jupyter_extension
