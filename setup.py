@@ -24,12 +24,12 @@ setuptools.setup(
         'PrettyTable'
     ],
     extras_require = {
-        'Sparse Solver': ['scipy'],
-        'Plotting': ['matplotlib'],
-        'Visualization via VTK':  ['vtk', 'IPython'],
-        'Visualization via Pyvista': ['vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets']
-        'Reporting': ['pdfkit', 'Jinja2'],
-        'Reviewing Derivations': ['jupyterlab', 'sympy']
+        'sparse': ['scipy'],
+        'plotting': ['matplotlib'],
+        'vtk':  ['vtk', 'IPython'],
+        'pyvista': ['vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets']
+        'reporting': ['pdfkit', 'Jinja2'],
+        'derivations': ['jupyterlab', 'sympy']
     },
     include_package_data = True,
     python_requires = '>=3.6',

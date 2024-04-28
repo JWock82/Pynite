@@ -1,4 +1,3 @@
 # Minimum requirements
-matplotlib
 numpy
 prettytable
