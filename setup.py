@@ -27,7 +27,7 @@ setuptools.setup(
         'sparse': ['scipy'],
         'plotting': ['matplotlib'],
         'vtk':  ['vtk', 'IPython'],
-        'pyvista': ['vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets']
+        'pyvista': ['vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets'],
         'reporting': ['pdfkit', 'Jinja2'],
         'derivations': ['jupyterlab', 'sympy']
     },
