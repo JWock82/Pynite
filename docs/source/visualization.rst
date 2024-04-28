@@ -1,20 +1,20 @@
-=============
-Visualization
-=============
+=========
+Rendering
+=========
 
-`Pynite` has a built-in ``Visualization`` library to help you visualize your model. This library can be used to produce basic rendererings of the model, loads, the deformed shape, and can help you generate screenshots for use in `Jupyter Notebooks`.
+`Pynite` has a built-in ``Rendering`` library to help you visualize your model. This library can be used to produce basic rendererings of the model, loads, the deformed shape, and can generate interactive plots in `Jupyter Notebooks`.
 
-The ``Visualization`` library relies on `The Visualization Toolkit (VTK)` by `Kitware`. This library was chosen because it is cross-platform, widely used, regularly maintained, and reliable.
+The ``Rendering`` library relies on `Pyvista` which in turn relies on `The Visualization Toolkit (VTK)` by `Kitware`. This library was chosen because it is cross-platform, widely used, regularly maintained, and reliable.
 
 The `Renderer` object
 =====================
 
-`Pynite` uses a ``Renderer`` object in the ``Visualization`` library to do the heavy lifting for you. To create a ``Renderer`` for your model you just create a new instance of the ``Renderer`` class and pass your model to it:
+`Pynite` uses a ``Renderer`` object in the ``Rendering`` library to do the heavy lifting for you. To create a ``Renderer`` for your model you just create a new instance of the ``Renderer`` class and pass your model to it:
 
 .. code-block:: python
 
     # Import the `Renderer` object
-    from Pynite.Visualization import Renderer
+    from Pynite.Rendering import Renderer
 
     # Create a `Renderer` for this model
     my_rndr = Renderer(my_model)
@@ -48,17 +48,15 @@ Once you've got your settings the way you want them, you can render your model u
 
     my_rndr.render_model()
 
-You can also create a screenshot using ``screenshot``
+You can also create a screenshot using ``screenshot``. Pass the ``filepath`` for the screenshot as a string. Use ``interact=True`` if you want to position the screenshot before capturing it, then it ``q`` to capture it. If you close out of the window instead of hitting ``q`` it will capture the original positioning instead (this is a ``Pyvista`` nuance).
 
 .. code-block:: python
 
-    my_rndr.screeenshot()
-
-This will render your model to the window, where you can position it as you like. Once you close out of the window, `Pynite` will output a screenshot in one of several formats (see ``screenshot`` documentation below for options). This is very helpful when working in `Jupyter`.
+    my_rndr.screeenshot(filepath, interact=True)
 
 Renderer Class Reference
 ========================
 
-.. autoclass:: PyNite.Visualization.Renderer
+.. autoclass:: PyNite.Rendering.Renderer
    :members:
    :undoc-members:

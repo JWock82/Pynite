@@ -62,6 +62,7 @@ Here's a list of projects that use PyNite:
 
 # What's New?
 v0.0.94
+* Added rendering via `Pyvista`. This greatly simplified the rendering code and provided a fresh look to the rendereings. Renderings in jupyter are now interactive. Global axes are also now shown in rendereings. To use `Pyvista` instead of `VTK`, use the new `Rendering` library rather than the old `Visualization` library. Rendering via `VTK` directly is still available.
 * Bug fix for member self-weight. The program was throwing exceptions instead of calculating member self-weight. Added a unit test to help prevent this issue from occuring again as code changes.
 * Refactored `material` to be `material_name` in the code. The prior naming convention caused confusion which led to the self-weight bug.
 

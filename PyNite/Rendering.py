@@ -8,7 +8,11 @@ import pyvista as pv
 import math
 
 # Allow for 3D interaction within jupyter notebook using trame
-pv.global_theme.trame.jupyter_extension_enabled = True
+try:
+    pv.global_theme.trame.jupyter_extension_enabled = True
+except:
+    # Ignore the exception that is produced if we are not running the code via jupyter
+    pass
 pv.set_jupyter_backend('trame')
 
 class Renderer:
@@ -158,7 +162,7 @@ class Renderer:
     def scalar_bar_text_size(self, text_size):
         self._scalar_bar_text_size = text_size
 
-    def render_model(self, interact=True, reset_camera=True):
+    def render_model(self, reset_camera=True):
         """
         Renders the model in a window
 
@@ -175,10 +179,10 @@ class Renderer:
         self.update(reset_camera)
 
         # Render the model (code execution will pause here until the user closes the window)
-        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', window_size=None, interactive=True, auto_close=None, interactive_update=False, full_screen=None, screenshot=False, return_img=False, cpos=None, jupyter_backend=None, return_viewer=False, return_cpos=None, before_close_callback=None)
+        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python')
 
     def screenshot(self, filepath='./Pynite_Image.png', interact=True, reset_camera=True):
-        """Saves a screenshot of the rendered model. Press `q` to capture the screenshot after positioning the view.
+        """Saves a screenshot of the rendered model. Press `q` to capture the screenshot after positioning the view. Pressing the close button in the corner of the window will ignore the positioning.
 
         :param filepath: The filepath to write the image to. When set to 'jupyter', the resulting plot is placed inline in a jupyter notebook. Defaults to 'jupyter'.
         :type filepath: str, optional
@@ -186,7 +190,6 @@ class Renderer:
         :type interact: bool, optional
         :param reset_camera: Resets the plotter's camera. Defaults to `True`
         :type reset_camera: bool, optional
-        :param jupyter_backend: 
         """
 
         # Update the plotter with the latest geometry
@@ -196,9 +199,12 @@ class Renderer:
         if interact == True:
             # Use `q` for `quit` to take the screenshot. The window will not close until the `X` in
             # the corner of the window is hit.
-            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python')
+            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=filepath)
         else:
+            # Don't bother showing the image before capturing the screenshot
             self.plotter.off_screen = True
+
+            # Save the screenshot
             self.plotter.screenshot(filename=filepath)
 
     def update(self, reset_camera=True):

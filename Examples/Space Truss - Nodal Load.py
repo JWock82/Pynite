@@ -3,9 +3,9 @@
 # Problem 6.64
 # Units for this model are meters and kilonewtons
 
-# Import 'FEModel3D' and 'Visualization' from 'PyNite'
+# Import 'FEModel3D' and 'Rendering' from 'PyNite'
 from PyNite import FEModel3D
-from PyNite import Visualization
+from PyNite.Rendering import Renderer
 
 # Create a new model
 truss = FEModel3D()
@@ -70,4 +70,8 @@ print('Member BE expected axial force: 112.1 Compression')
 # Render the model for viewing. The text height will be set to 50 mm.
 # Because the members in this example are nearly rigid, there will be virtually no deformation. The deformed shape won't be rendered.
 # The program has created a default load case 'Case 1' and a default load combo 'Combo 1' since we didn't specify any. We'll display 'Case 1'.
-Visualization.render_model(truss, annotation_size=0.05, render_loads=True, case='Case 1')
+renderer = Renderer(truss)
+renderer.annotation_size = 0.05
+renderer.render_loads = True
+renderer.case = 'Case 1'
+renderer.render_model()
