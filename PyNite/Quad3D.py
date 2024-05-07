@@ -3,10 +3,20 @@
 # 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
 # 3. "Finite Element Analysis Fundamentals", Richard H. Gallagher
 
-from numpy import array, arccos, dot, cross, matmul, add, zeros
+from numpy import array, arccos, dot, cross, matmul, add, zeros, any
 from numpy.linalg import inv, det, norm
 from math import sin, cos
 
+def project_vector_onto_plane(v, plane_normal):
+    # Calculate the projection of v onto the normal vector
+    unit_plane_norm = plane_normal / norm(plane_normal)
+    projection_length = dot(v, unit_plane_norm)
+    
+    # Calculate the projected vector
+    projected_vector = v - projection_length * unit_plane_norm
+    
+    return projected_vector
+        
 class Quad3D():
     """
     An isoparametric general quadrilateral element, formulated by superimposing an isoparametric
@@ -37,6 +47,11 @@ class Quad3D():
         self.t = t
         self.kx_mod = kx_mod
         self.ky_mod = ky_mod
+        
+        #Define the quad's local x axis in global coordinates. This will be projected onto the plane of the quad
+        #If this vector is parallel to the plate normal, PyNite will use the default local x axis 'vector_34'
+        #If this value is set to 'None', the default local x-axis vector will be used
+        self.local_x_axis = (1,0,0)
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
     
@@ -44,6 +59,7 @@ class Quad3D():
         self.model = model
 
         # Get material properties for the plate from the model
+        self.material_name = material_name
         try:
             self.E = self.model.Materials[material_name].E
             self.nu = self.model.Materials[material_name].nu
@@ -70,11 +86,16 @@ class Quad3D():
         vector_31 = array([X1 - X3, Y1 - Y3, Z1 - Z3]).T
         vector_34 = array([X4 - X3, Y4 - Y3, Z4 - Z3]).T
 
-        # Define the plate's local x, y, and z axes
-        x_axis = vector_34
-        z_axis = cross(x_axis, vector_32)
+        #Define the plate's local x, y, and z axes
+        z_axis = cross(vector_34, vector_32) #axis normal to plane of quad
+        if self.local_x_axis is None:
+            x_axis = vector_34
+        else:
+            x_axis = project_vector_onto_plane(array(self.local_x_axis).T, z_axis)
+            if not any(x_axis): x_axis = vector_34
+            
         y_axis = cross(z_axis, x_axis)
-
+        
         # Convert the x and y axes into unit vectors
         x_axis = x_axis/norm(x_axis)
         y_axis = y_axis/norm(y_axis)
@@ -766,7 +787,7 @@ class Quad3D():
 #%%   
     def moment(self, r=0, s=0, combo_name='Combo 1'):
         '''
-        Returns the interal moments at any point in the quad element.
+        Returns the internal moments at any point in the quad element.
 
         Internal moments are reported as a 2D array [[Mx], [My], [Mxy]] at the
         specified location in the (r, s) natural coordinate system.
