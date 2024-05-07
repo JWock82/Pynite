@@ -1016,14 +1016,14 @@ class Renderer:
                         sign = 1
                     
                     # Determine the direction of this load
-                    if load[0] == 'FX' or load[0] == 'MX': direction = (sign*1, 0, 0)
-                    elif load[0] == 'FY' or load[0] == 'MY': direction = (0, sign*1, 0)
-                    elif load[0] == 'FZ' or load[0] == 'MZ': direction = (0, 0, sign*1)
+                    if load[0] == 'FX' or load[0] == 'MX': direction = (sign, 0, 0)
+                    elif load[0] == 'FY' or load[0] == 'MY': direction = (0, sign, 0)
+                    elif load[0] == 'FZ' or load[0] == 'MZ': direction = (0, 0, sign)
 
                     # Display the load
                     if load[0] in {'FX', 'FY', 'FZ'}:
                         self.plot_pt_load((node.X, node.Y, node.Z), direction,
-                                          load_value/max_pt_load*5*self.annotation_size,
+                                          abs(load_value/max_pt_load)*5*self.annotation_size,
                                           load_value, 'green')
                     elif load[0] in {'MX', 'MY', 'MZ'}:
                         self.plot_moment((node.X, node.Y, node.Z), direction, abs(load_value/max_moment)*2.5*self.annotation_size, str(load_value), 'green')
@@ -1250,6 +1250,13 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
                 node.contour = sum(node.contour)/len(node.contour)
 
 def sig_fig_round(number, sig_figs):
+    # Check for strings or other convertible data types
+    if not isinstance(number, (float, int)):
+        try:
+            number = float(number)
+        except:
+            raise ValueError(f"{number} is not a number. Ensure that all labels are numeric.")
+
     if number == 0:
         return 0
 

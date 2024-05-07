@@ -29,7 +29,7 @@ This documentation is just getting started and is a little bare at the moment. K
    analysis
    stability
    PDelta
-   visualization
+   rendering
    reporting
 
 Indices and tables
