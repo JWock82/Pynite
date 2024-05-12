@@ -96,9 +96,10 @@ class Quad3D():
             
         y_axis = cross(z_axis, x_axis)
         
-        # Convert the x and y axes into unit vectors
+        # Convert the x, y & z axes into unit vectors
         x_axis = x_axis/norm(x_axis)
         y_axis = y_axis/norm(y_axis)
+        z_axis = z_axis/norm(z_axis)
 
         # Calculate the local (x, y) coordinates for each node
         self.x1 = dot(vector_31, x_axis)
@@ -109,6 +110,11 @@ class Quad3D():
         self.y2 = dot(vector_32, y_axis)
         self.y3 = 0
         self.y4 = dot(vector_34, y_axis)
+        
+        # Store the local axis vectors for use when creating the T matrix
+        self._local_x_vector = x_axis
+        self._local_y_vector = y_axis
+        self._local_z_vector = z_axis
 
 #%%
     def J(self, r, s):
@@ -487,9 +493,6 @@ class Quad3D():
         Returns the quad element's local stiffness matrix.
         '''
 
-        # Recalculate the local coordinate system
-        self._local_coords()
-
         # Sum the bending and membrane stiffness matrices
         return add(self.k_b(), self.k_m())
 
@@ -674,51 +677,10 @@ class Quad3D():
         Returns the coordinate transformation matrix for the quad element.
         '''
 
-        xi = self.i_node.X
-        xj = self.j_node.X
-        yi = self.i_node.Y
-        yj = self.j_node.Y
-        zi = self.i_node.Z
-        zj = self.j_node.Z
-
-        # Calculate the direction cosines for the local x-axis.The local x-axis will run from
-        # the i-node to the j-node
-        x = [xj - xi, yj - yi, zj - zi]
-
-        # Divide the vector by its magnitude to produce a unit x-vector of
-        # direction cosines
-        mag = (x[0]**2 + x[1]**2 + x[2]**2)**0.5
-        x = [x[0]/mag, x[1]/mag, x[2]/mag]
-        
-        # The local y-axis will be in the plane of the plate. Find a vector in
-        # the plate's local xy plane.
-        xn = self.n_node.X
-        yn = self.n_node.Y
-        zn = self.n_node.Z
-        xy = [xn - xi, yn - yi, zn - zi]
-
-        # Find a vector perpendicular to the plate surface to get the
-        # orientation of the local z-axis.
-        z = cross(x, xy)
-        
-        # Divide the z-vector by its magnitude to produce a unit z-vector of
-        # direction cosines.
-        mag = (z[0]**2 + z[1]**2 + z[2]**2)**0.5
-        z = [z[0]/mag, z[1]/mag, z[2]/mag]
-
-        # Calculate the local y-axis as a vector perpendicular to the local z
-        # and x-axes.
-        y = cross(z, x)
-        
-        # Divide the y-vector by its magnitude to produce a unit vector of
-        # direction cosines.
-        mag = (y[0]**2 + y[1]**2 + y[2]**2)**0.5
-        y = [y[0]/mag, y[1]/mag, y[2]/mag]
-
         # Create the direction cosines matrix.
-        dirCos = array([x,
-                        y,
-                        z])
+        dirCos = array([self._local_x_vector,
+                        self._local_y_vector,
+                        self._local_z_vector])
         
         # Build the transformation matrix.
         T = zeros((24, 24))
