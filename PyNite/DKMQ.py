@@ -60,21 +60,20 @@ class DKMQ():
         '''
 
         # Get the global coordinates for each node
-        X1, Y1, Z1 = self.m_node.X, self.m_node.Y, self.m_node.Z
-        X2, Y2, Z2 = self.n_node.X, self.n_node.Y, self.n_node.Z
-        X3, Y3, Z3 = self.i_node.X, self.i_node.Y, self.i_node.Z
-        X4, Y4, Z4 = self.j_node.X, self.j_node.Y, self.j_node.Z
+        X1, Y1, Z1 = self.i_node.X, self.i_node.Y, self.i_node.Z
+        X2, Y2, Z2 = self.j_node.X, self.j_node.Y, self.j_node.Z
+        X3, Y3, Z3 = self.m_node.X, self.m_node.Y, self.m_node.Z
+        X4, Y4, Z4 = self.n_node.X, self.n_node.Y, self.n_node.Z
 
-        # Following Reference 1, Figure 5.26, node 3 will be used as the
-        # origin of the plate's local (x, y) coordinate system. Find the
+        # Node 1 will be used as the origin of the plate's local (x, y) coordinate system. Find the
         # vector from the origin to each node.
-        vector_32 = np.array([X2 - X3, Y2 - Y3, Z2 - Z3]).T
-        vector_31 = np.array([X1 - X3, Y1 - Y3, Z1 - Z3]).T
-        vector_34 = np.array([X4 - X3, Y4 - Y3, Z4 - Z3]).T
+        vector_12 = np.array([X2 - X1, Y2 - Y1, Z2 - Z1]).T
+        vector_13 = np.array([X3 - X1, Y3 - Y1, Z3 - Z1]).T
+        vector_14 = np.array([X4 - X1, Y4 - Y1, Z4 - Z1]).T
 
         # Define the plate's local x, y, and z axes
-        x_axis = vector_34
-        z_axis = np.cross(x_axis, vector_32)
+        x_axis = vector_12
+        z_axis = np.cross(x_axis, vector_13)
         y_axis = np.cross(z_axis, x_axis)
 
         # Convert the x and y axes into unit vectors
@@ -82,14 +81,14 @@ class DKMQ():
         y_axis = y_axis/norm(y_axis)
 
         # Calculate the local (x, y) coordinates for each node
-        self.x1 = np.dot(vector_31, x_axis)
-        self.x2 = np.dot(vector_32, x_axis)
-        self.x3 = 0
-        self.x4 = np.dot(vector_34, x_axis)
-        self.y1 = np.dot(vector_31, y_axis)
-        self.y2 = np.dot(vector_32, y_axis)
-        self.y3 = 0
-        self.y4 = np.dot(vector_34, y_axis)
+        self.x1 = 0
+        self.x2 = np.dot(vector_12, x_axis)
+        self.x3 = np.dot(vector_13, x_axis)
+        self.x4 = np.dot(vector_14, x_axis)
+        self.y1 = 0
+        self.y2 = np.dot(vector_12, y_axis)
+        self.y3 = np.dot(vector_13, y_axis)
+        self.y4 = np.dot(vector_14, y_axis)
 
     def L_k(self, k):
         
@@ -134,7 +133,10 @@ class DKMQ():
         # Equation 74
         return 2/(kappa*(1-self.nu))*(self.t/self.L_k(k))**2
 
-    def N_i(self, i, eta, xi):
+    def N_i(self, i, xi, eta):
+        """
+        Returns the interpolation function for any given coordinate in the natural coordinate system
+        """
 
         if i == 1:
             return 1/4*(1-eta)*(1-xi)
@@ -145,9 +147,9 @@ class DKMQ():
         elif i == 4:
             return 1/4*(1-eta)*(1+xi)
         else:
-            raise Exception('Unable to calculate shape function. Invalid value specifed for i.')
+            raise Exception('Unable to calculate interpolation function. Invalid value specifed for i.')
     
-    def P_k(self, k, eta, xi):
+    def P_k(self, k, xi, eta):
 
         if k == 5:
             return 1/2*(1-eta**2)*(1-xi)
@@ -160,7 +162,7 @@ class DKMQ():
         else:
             raise Exception('Unable to calculate shape function. Invalid value specified for k.')
 
-    def J(self, r, s):
+    def J(self, xi, eta):
         """
         Returns the Jacobian matrix for the element
         """
@@ -169,10 +171,10 @@ class DKMQ():
         x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
 
         # Return the Jacobian matrix
-        return 1/4*np.array([[x1*(s + 1) - x2*(s + 1) + x3*(s - 1) - x4*(s - 1), y1*(s + 1) - y2*(s + 1) + y3*(s - 1) - y4*(s - 1)],
-                             [x1*(r + 1) - x2*(r - 1) + x3*(r - 1) - x4*(r + 1), y1*(r + 1) - y2*(r - 1) + y3*(r - 1) - y4*(r + 1)]])
+        return 1/4*np.array([[x1*(eta - 1) - 1.0*x2*(eta - 1) + x3*(eta + 1) - 1.0*x4*(eta + 1), y1*(eta - 1) - 1.0*y2*(eta - 1) + y3*(eta + 1) - 1.0*y4*(eta + 1)],
+                             [x1*(xi - 1)  - 1.0*x2*(xi + 1)  + x3*(xi + 1)  - 1.0*x4*(xi - 1),  y1*(xi - 1)  - 1.0*y2*(xi + 1)  + y3*(xi + 1)  - 1.0*y4*(xi - 1)]])
 
-    def N_gamma(self, eta, xi):
+    def N_gamma(self, xi, eta):
 
         # Equation 44
         return np.array([1/2*(1-eta),      0,     1/2*(1+eta),      0],
@@ -232,7 +234,75 @@ class DKMQ():
                         [      0,             0,       phi7/(1+phi7),       0      ],
                         [      0,             0,             0,       phi8/(1+phi8)])
     
-    def B_b(self, eta, xi):
+    def B_b_beta(self, xi, eta):
+
+        # Get the inverse of the Jacobian matrix
+        J_inv = inv(self.J(xi, eta))
+
+        # Get the individual terms for the Jacobian inverse
+        j11 = J_inv[0, 0]
+        j12 = J_inv[0, 1]
+        j21 = J_inv[1, 0]
+        j22 = J_inv[1, 1]
+
+        # Derivatives of the interpolation functions
+        N1_xi = 0.25*eta - 0.25
+        N2_xi = 0.25 - 0.25*eta
+        N3_xi = 0.25*eta + 0.25
+        N4_xi = - 0.25*eta - 0.25
+        N1_eta = 0.25*xi - 0.25
+        N2_eta = - 0.25*xi - 0.25
+        N3_eta = 0.25*xi + 0.25
+        N4_eta = 0.25 - 0.25*xi
+
+        N1x = j11*N1_xi + j12*N1_eta
+        N1y = j21*N1_xi + j22*N1_eta
+        N2x = j11*N2_xi + j12*N2_eta
+        N2y = j21*N2_xi + j22*N2_eta
+        N3x = j11*N3_xi + j12*N3_eta
+        N3y = j21*N3_xi + j22*N3_eta
+        N4x = j11*N4_xi + j12*N4_eta
+        N4y = j21*N4_xi + j22*N4_eta
+
+        return np.array([[0, N1x,  0,  0, N2x,  0,  0, N3x,  0,  0, N4x,  0 ],
+                         [0,  0,  N1y, 0,  0,  N2y, 0,  0,  N3y, 0,  0,  N4y],
+                         [0, N1y, N1x, 0, N2y, N2x, 0, N3y, N3x, 0, N4y, N4x]])
+    
+    def B_b_Delta_beta(self, xi, eta):
+
+        # Get the inverse of the Jacobian matrix
+        J_inv = inv(self.J(xi, eta))
+
+        # Get the individual terms for the Jacobian inverse
+        j11 = J_inv[0, 0]
+        j12 = J_inv[0, 1]
+        j21 = J_inv[1, 0]
+        j22 = J_inv[1, 1]
+
+        # Derivatives of the interpolation functions
+        N1_xi = 0.25*eta - 0.25
+        N2_xi = 0.25 - 0.25*eta
+        N3_xi = 0.25*eta + 0.25
+        N4_xi = - 0.25*eta - 0.25
+        N1_eta = 0.25*xi - 0.25
+        N2_eta = - 0.25*xi - 0.25
+        N3_eta = 0.25*xi + 0.25
+        N4_eta = 0.25 - 0.25*xi
+
+        N1x = j11*N1_xi + j12*N1_eta
+        N1y = j21*N1_xi + j22*N1_eta
+        N2x = j11*N2_xi + j12*N2_eta
+        N2y = j21*N2_xi + j22*N2_eta
+        N3x = j11*N3_xi + j12*N3_eta
+        N3y = j21*N3_xi + j22*N3_eta
+        N4x = j11*N4_xi + j12*N4_eta
+        N4y = j21*N4_xi + j22*N4_eta
+
+        return np.array([[0, N1x,  0,  0, N2x,  0,  0, N3x,  0,  0, N4x,  0 ],
+                         [0,  0,  N1y, 0,  0,  N2y, 0,  0,  N3y, 0,  0,  N4y],
+                         [0, N1y, N1x, 0, N2y, N2x, 0, N3y, N3x, 0, N4y, N4x]])
+    
+    def B_b(self, xi, eta):
         """
         Returns the [B] matrix for bending
         """
@@ -240,13 +310,13 @@ class DKMQ():
         # Return the [B] matrix for bending
         return add(self.B_b_beta(), self.B_b_Delta_beta()*self.A_Delta_inv_DKMQ()*self.Au())
 
-    def B_s(self, eta, xi):
+    def B_s(self, xi, eta):
         """
         Returns the [B] matrix for shear
         """
         
         # Return the [B] matrix for shear
-        return inv(self.J(eta, xi))*self.N_gamma(eta, xi)*self.A_gamma()*self.A_phi_Delta()*self.A_u()
+        return inv(self.J(xi, eta))*self.N_gamma(xi, eta)*self.A_gamma()*self.A_phi_Delta()*self.A_u()
 
 #%%
     def B_m(self, r, s):
