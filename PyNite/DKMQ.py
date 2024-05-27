@@ -818,7 +818,7 @@ class DKMQ():
 
 #%%
     def shear(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
-        '''
+        """
         Returns the interal shears at any point in the quad element.
 
         Internal shears are reported as a 2D array [[Qx], [Qy]] at the
@@ -833,8 +833,8 @@ class DKMQ():
         
         Returns
         -------
-        Internal shear force per unit length of the quad element.
-        '''
+        Internal shear force per unit length of the quad element: [[Qx], [Qy]]
+        """
 
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
@@ -879,7 +879,7 @@ class DKMQ():
 
 #%%   
     def moment(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
-        '''
+        """
         Returns the interal moments at any point in the quad element.
 
         Internal moments are reported as a 2D array [[Mx], [My], [Mxy]] at the
@@ -894,8 +894,8 @@ class DKMQ():
         
         Returns
         -------
-        Internal moment per unit length of the quad element.
-        '''
+        Internal moment per unit length of the quad element: [[Mx], [My], [Mxy]]
+        """
 
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
