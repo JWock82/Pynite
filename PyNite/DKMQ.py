@@ -1,4 +1,5 @@
 # References used to derive this element:
+# 1. "A Comparative Formulation of DKMQ, DSQ and MITC4 Quadrilateral Plate Elements with New Numerical Results Based on s-norm Tests", Irwan Katili, 
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
 # 3. "Finite Element Analysis Fundamentals", Richard H. Gallagher
@@ -309,7 +310,7 @@ class DKMQ():
     
     def B_b(self, xi, eta):
         """
-        Returns the [B] matrix for bending
+        Returns the [B_b] matrix for bending
         """
 
         # Return the [B] matrix for bending
@@ -317,7 +318,7 @@ class DKMQ():
 
     def B_s(self, xi, eta):
         """
-        Returns the [B] matrix for shear
+        Returns the [B_s] matrix for shear
         """
         
         # Return the [B] matrix for shear
@@ -334,7 +335,7 @@ class DKMQ():
         dH = np.matmul(inv(self.J(r, s)), 1/4*np.array([[s + 1, -s - 1, s - 1, -s + 1],                 
                                                   [r + 1, -r + 1, r - 1, -r - 1]]))
 
-        # Reference 1, Example 5.5 (page 353)
+        # Reference 2, Example 5.5 (page 353)
         B_m = np.array([[dH[0, 0],    0,     dH[0, 1],    0,     dH[0, 2],    0,     dH[0, 3],    0    ],
                      [   0,     dH[1, 0],    0,     dH[1, 1],    0,     dH[1, 2],    0,     dH[1, 3]],
                      [dH[1, 0], dH[0, 0], dH[1, 1], dH[0, 1], dH[1, 2], dH[0, 2], dH[1, 3], dH[0, 3]]])
@@ -342,7 +343,7 @@ class DKMQ():
         return B_m
 
 #%%
-    def Cb(self):
+    def Hb(self):
         '''
         Returns the stress-strain matrix for plate bending.
         '''
@@ -352,27 +353,27 @@ class DKMQ():
         E = self.E
         h = self.t
 
-        Cb = E*h**3/(12*(1 - nu**2))*np.array([[1,  nu,      0    ],
-                                            [nu, 1,       0    ],
-                                            [0,  0,  (1 - nu)/2]])
+        Hb = E*h**3/(12*(1 - nu**2))*np.array([[1,  nu,      0    ],
+                                               [nu, 1,       0    ],
+                                               [0,  0,  (1 - nu)/2]])
         
-        return Cb
+        return Hb
 
 #%%
-    def Cs(self):
+    def Hs(self):
         '''
         Returns the stress-strain matrix for shear.
         '''
-        # Reference 1, Equations (5.97), page 422
+        # Reference 2, Equations (5.97), page 422
         k = 5/6
         E = self.E
         h = self.t
         nu = self.nu
 
-        Cs = E*h*k/(2*(1 + nu))*np.array([[1, 0],
-                                       [0, 1]])
+        Hs = E*h*k/(2*(1 + nu))*np.array([[1, 0],
+                                          [0, 1]])
 
-        return Cs
+        return Hs
 
 #%%
     def Cm(self):
@@ -406,50 +407,42 @@ class DKMQ():
         Returns the local stiffness matrix for bending stresses
         '''
 
-        Cb = self.Cb()
-        Cs = self.Cs()
+        Hb = self.Hb()
+        Hs = self.Hs()
 
         # Define the gauss point for numerical integration
         gp = 1/3**0.5
 
-        # Get the determinant of the Jacobian matrix for each gauss pointing 
-        # Doing this now will save us from doing it twice below
-        J1 = det(self.J(gp, gp))
-        J2 = det(self.J(-gp, gp))
-        J3 = det(self.J(-gp, -gp))
-        J4 = det(self.J(gp, -gp))
+        # Get the determinant of the Jacobian matrix for each gauss pointing. Doing this now will save us from doing it twice below.
+        J1 = det(self.J(-gp, -gp))
+        J2 = det(self.J(gp, -gp))
+        J3 = det(self.J(gp, gp))
+        J4 = det(self.J(-gp, gp))
 
         # Get the bending B matrices for each gauss point
-        B1 = self.B_kappa(gp, gp)
-        B2 = self.B_kappa(-gp, gp)
-        B3 = self.B_kappa(-gp, -gp)
-        B4 = self.B_kappa(gp, -gp)
+        B1 = self.B_b(-gp, -gp)
+        B2 = self.B_b(gp, -gp)
+        B3 = self.B_b(gp, gp)
+        B4 = self.B_b(-gp, gp)
 
         # Create the stiffness matrix with bending stiffness terms
-        # See Reference 1, Equation 5.94
-        k = (np.matmul(B1.T, np.matmul(Cb, B1))*J1 +
-             np.matmul(B2.T, np.matmul(Cb, B2))*J2 +
-             np.matmul(B3.T, np.matmul(Cb, B3))*J3 +
-             np.matmul(B4.T, np.matmul(Cb, B4))*J4)
+        # See 2, Equation 5.94
+        k = (np.matmul(B1.T, np.matmul(Hb, B1))*J1 +
+             np.matmul(B2.T, np.matmul(Hb, B2))*J2 +
+             np.matmul(B3.T, np.matmul(Hb, B3))*J3 +
+             np.matmul(B4.T, np.matmul(Hb, B4))*J4)
 
-        # Get the MITC4 shear B matrices for each gauss point
-        B1 = self.B_gamma_MITC4(gp, gp)
-        B2 = self.B_gamma_MITC4(-gp, gp)
-        B3 = self.B_gamma_MITC4(-gp, -gp)
-        B4 = self.B_gamma_MITC4(gp, -gp)
-        
-        # Alternatively the shear B matrix below could be used. However, this matrix is prone to
-        # shear locking and will overestimate the stiffness.
-        # B1 = self.B_gamma(gp, gp)
-        # B2 = self.B_gamma(-gp, gp)
-        # B3 = self.B_gamma(-gp, -gp)
-        # B4 = self.B_gamma(gp, -gp)
+        # Get the shear [B_s] matrices for each gauss point
+        B1 = self.B_s(-gp, -gp)
+        B2 = self.B_s(gp, -gp)
+        B3 = self.B_s(gp, gp)
+        B4 = self.B_s(-gp, gp)
 
         # Add shear stiffness terms to the stiffness matrix
-        k += (np.matmul(B1.T, np.matmul(Cs, B1))*J1 +
-              np.matmul(B2.T, np.matmul(Cs, B2))*J2 +
-              np.matmul(B3.T, np.matmul(Cs, B3))*J3 +
-              np.matmul(B4.T, np.matmul(Cs, B4))*J4)
+        k += (np.matmul(B1.T, np.matmul(Hs, B1))*J1 +
+              np.matmul(B2.T, np.matmul(Hs, B2))*J2 +
+              np.matmul(B3.T, np.matmul(Hs, B3))*J3 +
+              np.matmul(B4.T, np.matmul(Hs, B4))*J4)
         
         # Following Bathe's recommendation for the drilling degree of freedom
         # from Example 4.19 in "Finite Element Procedures, 2nd Ed.", calculate
@@ -462,7 +455,7 @@ class DKMQ():
         # combined bending plus membrane stiffness matrix. Some of those terms
         # relate to translational stiffness. It seems more rational to only
         # look at the terms relating to rotational stiffness. That will be
-        # PyNite's approach.
+        # Pynite's approach.
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
                    )/1000
@@ -532,7 +525,7 @@ class DKMQ():
         B3 = self.B_m(-gp, -gp)
         B4 = self.B_m(gp, -gp)
 
-        # See reference 1 at the bottom of page 353, and reference 2 page 466
+        # See reference 2 at the bottom of page 353, and reference 2 page 466
         k = t*(np.matmul(B1.T, np.matmul(Cm, B1))*det(self.J(gp, gp)) +
                np.matmul(B2.T, np.matmul(Cm, B2))*det(self.J(-gp, gp)) +
                np.matmul(B3.T, np.matmul(Cm, B3))*det(self.J(-gp, -gp)) +
@@ -602,7 +595,7 @@ class DKMQ():
             The name of the load combination to get the consistent load vector for.
         '''
         
-        Hw = lambda r, s : 1/4*np.array([[(1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0, (1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0]])
+        Hw = lambda r, s : 1/4*np.array([[(1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0, (1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0]])
 
         # Initialize the fixed end reaction vector
         fer = np.zeros((12,1))
@@ -629,9 +622,9 @@ class DKMQ():
                     p -= factor*pressure[0]
         
         fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
-             + Hw(-gp, gp).T*p*det(self.J(-gp, gp))
+             + Hw(gp, -gp).T*p*det(self.J(gp, -gp))
              + Hw(gp, gp).T*p*det(self.J(gp, gp))
-             + Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
+             + Hw(-gp, gp).T*p*det(self.J(-gp, gp)))
 
         # Initialize the expanded vector to all zeros
         fer_exp = np.zeros((24, 1))
@@ -698,33 +691,33 @@ class DKMQ():
         D = np.zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        D[0, 0] = self.m_node.DX[combo_name]
-        D[1, 0] = self.m_node.DY[combo_name]
-        D[2, 0] = self.m_node.DZ[combo_name]
-        D[3, 0] = self.m_node.RX[combo_name]
-        D[4, 0] = self.m_node.RY[combo_name]
-        D[5, 0] = self.m_node.RZ[combo_name]
+        D[0, 0] = self.i_node.DX[combo_name]
+        D[1, 0] = self.i_node.DY[combo_name]
+        D[2, 0] = self.i_node.DZ[combo_name]
+        D[3, 0] = self.i_node.RX[combo_name]
+        D[4, 0] = self.i_node.RY[combo_name]
+        D[5, 0] = self.i_node.RZ[combo_name]
 
-        D[6, 0] = self.n_node.DX[combo_name]
-        D[7, 0] = self.n_node.DY[combo_name]
-        D[8, 0] = self.n_node.DZ[combo_name]
-        D[9, 0] = self.n_node.RX[combo_name]
-        D[10, 0] = self.n_node.RY[combo_name]
-        D[11, 0] = self.n_node.RZ[combo_name]
+        D[6, 0] = self.j_node.DX[combo_name]
+        D[7, 0] = self.j_node.DY[combo_name]
+        D[8, 0] = self.j_node.DZ[combo_name]
+        D[9, 0] = self.j_node.RX[combo_name]
+        D[10, 0] = self.j_node.RY[combo_name]
+        D[11, 0] = self.j_node.RZ[combo_name]
 
-        D[12, 0] = self.i_node.DX[combo_name]
-        D[13, 0] = self.i_node.DY[combo_name]
-        D[14, 0] = self.i_node.DZ[combo_name]
-        D[15, 0] = self.i_node.RX[combo_name]
-        D[16, 0] = self.i_node.RY[combo_name]
-        D[17, 0] = self.i_node.RZ[combo_name]
+        D[12, 0] = self.m_node.DX[combo_name]
+        D[13, 0] = self.m_node.DY[combo_name]
+        D[14, 0] = self.m_node.DZ[combo_name]
+        D[15, 0] = self.m_node.RX[combo_name]
+        D[16, 0] = self.m_node.RY[combo_name]
+        D[17, 0] = self.m_node.RZ[combo_name]
 
-        D[18, 0] = self.j_node.DX[combo_name]
-        D[19, 0] = self.j_node.DY[combo_name]
-        D[20, 0] = self.j_node.DZ[combo_name]
-        D[21, 0] = self.j_node.RX[combo_name]
-        D[22, 0] = self.j_node.RY[combo_name]
-        D[23, 0] = self.j_node.RZ[combo_name]
+        D[18, 0] = self.n_node.DX[combo_name]
+        D[19, 0] = self.n_node.DY[combo_name]
+        D[20, 0] = self.n_node.DZ[combo_name]
+        D[21, 0] = self.n_node.RX[combo_name]
+        D[22, 0] = self.n_node.RY[combo_name]
+        D[23, 0] = self.n_node.RZ[combo_name]
         
         # Return the global displacement vector
         return D
@@ -781,10 +774,10 @@ class DKMQ():
         
         # The local y-axis will be in the plane of the plate. Find a vector in
         # the plate's local xy plane.
-        xn = self.n_node.X
-        yn = self.n_node.Y
-        zn = self.n_node.Z
-        xy = [xn - xi, yn - yi, zn - zi]
+        xm = self.m_node.X
+        ym = self.m_node.Y
+        zm = self.m_node.Z
+        xy = [xm - xi, ym - yi, zm - zi]
 
         # Find a vector perpendicular to the plate surface to get the
         # orientation of the local z-axis.
@@ -806,8 +799,8 @@ class DKMQ():
 
         # Create the direction cosines matrix.
         dirCos = np.array([x,
-                        y,
-                        z])
+                           y,
+                           z])
         
         # Build the transformation matrix.
         T = np.zeros((24, 24))
@@ -824,19 +817,19 @@ class DKMQ():
         return T
 
 #%%
-    def shear(self, r=0, s=0, local=True, combo_name='Combo 1'):
+    def shear(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         '''
         Returns the interal shears at any point in the quad element.
 
         Internal shears are reported as a 2D array [[Qx], [Qy]] at the
-        specified location in the (r, s) natural coordinate system.
+        specified location in the (xi, eta) natural coordinate system.
 
         Parameters
         ----------
-        r : number
-            The r-coordinate. Default is 0.
-        s : number
-            The s-coordinate. Default is 0.
+        xi : number
+            The xi-coordinate. Default is 0.
+        eta : number
+            The eta-coordinate. Default is 0.
         
         Returns
         -------
@@ -851,20 +844,20 @@ class DKMQ():
         gp = 1/3**0.5
 
         # Define extrapolated r and s points
-        r_ex = r/gp
-        s_ex = s/gp
+        xi_ex = xi/gp
+        eta_ex = eta/gp
 
         # Define the interpolation functions
-        H = 1/4*np.array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
+        H = 1/4*np.array([(1 - xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 + eta_ex), (1 - xi_ex)*(1 + eta_ex)])
 
         # Get the stress-strain matrix
-        Cs = self.Cs()
+        Hs = self.Hs()
 
         # Calculate the internal shears [Qx, Qy] at each gauss point
-        q1 = np.matmul(Cs, np.matmul(self.B_gamma_MITC4(gp, gp), d))
-        q2 = np.matmul(Cs, np.matmul(self.B_gamma_MITC4(-gp, gp), d))
-        q3 = np.matmul(Cs, np.matmul(self.B_gamma_MITC4(-gp, -gp), d))
-        q4 = np.matmul(Cs, np.matmul(self.B_gamma_MITC4(gp, -gp), d))
+        q1 = np.matmul(Hs, np.matmul(self.B_s(-gp, -gp), d))
+        q2 = np.matmul(Hs, np.matmul(self.B_s(gp, -gp), d))
+        q3 = np.matmul(Hs, np.matmul(self.B_s(gp, gp), d))
+        q4 = np.matmul(Hs, np.matmul(self.B_s(-gp, gp), d))
 
         # Extrapolate to get the value at the requested location
         Qx = H[0]*q1[0] + H[1]*q2[0] + H[2]*q3[0] + H[3]*q4[0]
@@ -885,19 +878,19 @@ class DKMQ():
                                                   [0]]))
 
 #%%   
-    def moment(self, r=0, s=0, local=True, combo_name='Combo 1'):
+    def moment(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         '''
         Returns the interal moments at any point in the quad element.
 
         Internal moments are reported as a 2D array [[Mx], [My], [Mxy]] at the
-        specified location in the (r, s) natural coordinate system.
+        specified location in the (xi, eta) natural coordinate system.
 
         Parameters
         ----------
-        r : number
-            The r-coordinate. Default is 0.
-        s : number
-            The s-coordinate. Default is 0.
+        xi : number
+            The xi-coordinate. Default is 0.
+        eta : number
+            The eta-coordinate. Default is 0.
         
         Returns
         -------
@@ -912,20 +905,20 @@ class DKMQ():
         gp = 1/3**0.5
 
         # # Define extrapolated r and s points
-        r_ex = r/gp
-        s_ex = s/gp
+        xi_ex = xi/gp
+        eta_ex = eta/gp
 
         # Define the interpolation functions
-        H = 1/4*np.array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
+        H = 1/4*np.array([(1 - xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 + eta_ex), (1 - xi_ex)*(1 + eta_ex)])
 
         # Get the stress-strain matrix
-        Cb = self.Cb()
+        Hb = self.Hb()
 
         # Calculate the internal moments [Mx, My, Mxy] at each gauss point
-        m1 = np.matmul(Cb, np.matmul(self.B_kappa(gp, gp), d))
-        m2 = np.matmul(Cb, np.matmul(self.B_kappa(-gp, gp), d))
-        m3 = np.matmul(Cb, np.matmul(self.B_kappa(-gp, -gp), d))
-        m4 = np.matmul(Cb, np.matmul(self.B_kappa(gp, -gp), d))
+        m1 = np.matmul(Hb, np.matmul(self.B_kappa(-gp, -gp), d))
+        m2 = np.matmul(Hb, np.matmul(self.B_kappa(gp, -gp), d))
+        m3 = np.matmul(Hb, np.matmul(self.B_kappa(gp, gp), d))
+        m4 = np.matmul(Hb, np.matmul(self.B_kappa(-gp, gp), d))
 
         # Extrapolate to get the value at the requested location
         Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
@@ -949,7 +942,7 @@ class DKMQ():
                                                   [0]]))
 
 #%%
-    def membrane(self, r=0, s=0, local=True, combo_name='Combo 1'):
+    def membrane(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
@@ -959,20 +952,20 @@ class DKMQ():
         gp = 1/3**0.5
 
         # Define extrapolated r and s points
-        r_ex = r/gp
-        s_ex = s/gp
+        xi_ex = xi/gp
+        eta_ex = eta/gp
 
         # Define the interpolation functions
-        H = 1/4*np.array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
+        H = 1/4*np.array([(1 - xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 + eta_ex), (1 - xi_ex)*(1 + eta_ex)])
 
         # Get the stress-strain matrix
         Cm = self.Cm()
         
         # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
-        s1 = np.matmul(Cm, np.matmul(self.B_m(gp, gp), d))
-        s2 = np.matmul(Cm, np.matmul(self.B_m(-gp, gp), d))
-        s3 = np.matmul(Cm, np.matmul(self.B_m(-gp, -gp), d))
-        s4 = np.matmul(Cm, np.matmul(self.B_m(gp, -gp), d))
+        s1 = np.matmul(Cm, np.matmul(self.B_m(-gp, -gp), d))
+        s2 = np.matmul(Cm, np.matmul(self.B_m(gp, -gp), d))
+        s3 = np.matmul(Cm, np.matmul(self.B_m(gp, gp), d))
+        s4 = np.matmul(Cm, np.matmul(self.B_m(-gp, gp), d))
 
         # Extrapolate to get the value at the requested location
         Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]
