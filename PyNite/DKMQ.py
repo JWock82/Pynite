@@ -298,9 +298,14 @@ class DKMQ():
         P8x = j11*P8_xi + j12*P8_eta
         P8y = j21*P8_xi + j22*P8_eta
 
-        return np.array([[0, N1x,  0,  0, N2x,  0,  0, N3x,  0,  0, N4x,  0 ],
-                         [0,  0,  N1y, 0,  0,  N2y, 0,  0,  N3y, 0,  0,  N4y],
-                         [0, N1y, N1x, 0, N2y, N2x, 0, N3y, N3x, 0, N4y, N4x]])
+        C5, S5 = self.dir_cos(5)
+        C6, S6 = self.dir_cos(6)
+        C7, S7 = self.dir_cos(7)
+        C8, S8 = self.dir_cos(8)
+
+        return np.array([[    P5x*C5,          P6x*C6,          P7x*C7,          P8x*C8     ],
+                         [    P5y*S5,          P6y*S6,          P7y*S7,          P8y*S8,    ],
+                         [P5y*C5 + P5x*S5, P6y*C6 + P6x*S6, P7y*C7 + P7x*S7, P8y*C8 + P8x*S8]])
     
     def B_b(self, xi, eta):
         """
