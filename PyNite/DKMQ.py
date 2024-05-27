@@ -171,8 +171,8 @@ class DKMQ():
         x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
 
         # Return the Jacobian matrix
-        return 1/4*np.array([[x1*(eta - 1) - 1.0*x2*(eta - 1) + x3*(eta + 1) - 1.0*x4*(eta + 1), y1*(eta - 1) - 1.0*y2*(eta - 1) + y3*(eta + 1) - 1.0*y4*(eta + 1)],
-                             [x1*(xi - 1)  - 1.0*x2*(xi + 1)  + x3*(xi + 1)  - 1.0*x4*(xi - 1),  y1*(xi - 1)  - 1.0*y2*(xi + 1)  + y3*(xi + 1)  - 1.0*y4*(xi - 1)]])
+        return 1/4*np.array([[x1*(eta - 1) - x2*(eta - 1) + x3*(eta + 1) - x4*(eta + 1), y1*(eta - 1) - y2*(eta - 1) + y3*(eta + 1) - y4*(eta + 1)],
+                             [x1*(xi - 1)  - x2*(xi + 1)  + x3*(xi + 1)  - x4*(xi - 1),  y1*(xi - 1)  - y2*(xi + 1)  + y3*(xi + 1)  - y4*(xi - 1)]])
 
     def N_gamma(self, xi, eta):
 
@@ -245,7 +245,7 @@ class DKMQ():
         j21 = J_inv[1, 0]
         j22 = J_inv[1, 1]
 
-        # Derivatives of the interpolation functions
+        # Derivatives of the bilinear interpolation functions
         N1_xi = 0.25*eta - 0.25
         N2_xi = 0.25 - 0.25*eta
         N3_xi = 0.25*eta + 0.25
@@ -279,24 +279,24 @@ class DKMQ():
         j21 = J_inv[1, 0]
         j22 = J_inv[1, 1]
 
-        # Derivatives of the interpolation functions
-        N1_xi = 0.25*eta - 0.25
-        N2_xi = 0.25 - 0.25*eta
-        N3_xi = 0.25*eta + 0.25
-        N4_xi = - 0.25*eta - 0.25
-        N1_eta = 0.25*xi - 0.25
-        N2_eta = - 0.25*xi - 0.25
-        N3_eta = 0.25*xi + 0.25
-        N4_eta = 0.25 - 0.25*xi
+        # Derivatives of the quadratic interpolation functions
+        P5_xi = xi*(eta - 1)
+        P6_xi = -0.5*(eta - 1)*(eta + 1)
+        P7_xi = -xi*(eta + 1)
+        P8_xi = 0.5*(eta - 1)*(eta + 1)
+        P5_eta = 0.5*(xi - 1)*(xi + 1)
+        P6_eta = -eta*(xi + 1)
+        P7_eta = -0.5*(xi - 1)*(xi + 1)
+        P8_eta = eta*(xi - 1)
 
-        N1x = j11*N1_xi + j12*N1_eta
-        N1y = j21*N1_xi + j22*N1_eta
-        N2x = j11*N2_xi + j12*N2_eta
-        N2y = j21*N2_xi + j22*N2_eta
-        N3x = j11*N3_xi + j12*N3_eta
-        N3y = j21*N3_xi + j22*N3_eta
-        N4x = j11*N4_xi + j12*N4_eta
-        N4y = j21*N4_xi + j22*N4_eta
+        P5x = j11*P5_xi + j12*P5_eta
+        P5y = j21*P5_xi + j22*P5_eta
+        P6x = j11*P6_xi + j12*P6_eta
+        P6y = j21*P6_xi + j22*P6_eta
+        P7x = j11*P7_xi + j12*P7_eta
+        P7y = j21*P7_xi + j22*P7_eta
+        P8x = j11*P8_xi + j12*P8_eta
+        P8y = j21*P8_xi + j22*P8_eta
 
         return np.array([[0, N1x,  0,  0, N2x,  0,  0, N3x,  0,  0, N4x,  0 ],
                          [0,  0,  N1y, 0,  0,  N2y, 0,  0,  N3y, 0,  0,  N4y],
