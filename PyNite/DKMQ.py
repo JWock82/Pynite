@@ -1,9 +1,8 @@
 # References used to derive this element:
 # 1. "A Comparative Formulation of DKMQ, DSQ and MITC4 Quadrilateral Plate Elements with New Numerical Results Based on s-norm Tests", Irwan Katili, 
-# 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
-# 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
-# 3. "Finite Element Analysis Fundamentals", Richard H. Gallagher
-# 4. A comparative formulation of DKMQ, DSQ, and MITC4 quadrilateral plate elements with new numerical results based on s-norm tests
+# 2. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
+# 3. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
+# 4. "Finite Element Analysis Fundamentals", Richard H. Gallagher
 
 import numpy as np
 from numpy import add
