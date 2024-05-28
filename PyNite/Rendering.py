@@ -1175,6 +1175,12 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
         # Erase any previous contours
         for node in model.Nodes.values():
             node.contour = []
+        
+        # Check for global stresses:
+        if stress_type in ['MX', 'MY', 'MZ', 'QX', 'QY', 'QZ', 'SX', 'SY']:
+            local = False
+        else:
+            local = True
     
         # Step through each element in the model
         for element in list(model.Quads.values()) + list(model.Plates.values()):
@@ -1198,46 +1204,46 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
                 element.j_node.contour.append(j)
                 element.m_node.contour.append(m)
                 element.n_node.contour.append(n)
-            elif stress_type == 'Mx':
-                element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[0])
-                element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[0])
-                element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[0])
-                element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[0])
-            elif stress_type == 'My':
-                element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[1])
-                element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[1])
-                element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[1])
-                element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[1])
-            elif stress_type == 'Mxy':
-                element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[2])
-                element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[2])
-                element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[2])
-                element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[2])
-            elif stress_type == 'Qx':
-                element.i_node.contour.append(element.shear(r_left, s_bot, combo_name)[0])
-                element.j_node.contour.append(element.shear(r_right, s_bot, combo_name)[0])
-                element.m_node.contour.append(element.shear(r_right, s_top, combo_name)[0])
-                element.n_node.contour.append(element.shear(r_left, s_top, combo_name)[0])
-            elif stress_type == 'Qy':
-                element.i_node.contour.append(element.shear(r_left, s_bot, combo_name)[1])
-                element.j_node.contour.append(element.shear(r_right, s_bot, combo_name)[1])
-                element.m_node.contour.append(element.shear(r_right, s_top, combo_name)[1])
-                element.n_node.contour.append(element.shear(r_left, s_top, combo_name)[1])
-            elif stress_type == 'Sx':
-                element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[0])
-                element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[0])
-                element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[0])
-                element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[0])
-            elif stress_type == 'Sy':
-                element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[1])
-                element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[1])
-                element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[1])
-                element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[1])
-            elif stress_type == 'Txy':
-                element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[2])
-                element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[2])
-                element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[2])
-                element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[2])                 
+            elif stress_type.upper() == 'MX':
+                element.i_node.contour.append(element.moment(r_left, s_bot, local, combo_name)[0])
+                element.j_node.contour.append(element.moment(r_right, s_bot, local, combo_name)[0])
+                element.m_node.contour.append(element.moment(r_right, s_top, local, combo_name)[0])
+                element.n_node.contour.append(element.moment(r_left, s_top, local, combo_name)[0])
+            elif stress_type.upper() == 'MY':
+                element.i_node.contour.append(element.moment(r_left, s_bot, local, combo_name)[1])
+                element.j_node.contour.append(element.moment(r_right, s_bot, local, combo_name)[1])
+                element.m_node.contour.append(element.moment(r_right, s_top, local, combo_name)[1])
+                element.n_node.contour.append(element.moment(r_left, s_top, local, combo_name)[1])
+            elif stress_type.upper() == 'MXY':
+                element.i_node.contour.append(element.moment(r_left, s_bot, local, combo_name)[2])
+                element.j_node.contour.append(element.moment(r_right, s_bot, local, combo_name)[2])
+                element.m_node.contour.append(element.moment(r_right, s_top, local, combo_name)[2])
+                element.n_node.contour.append(element.moment(r_left, s_top, local, combo_name)[2])
+            elif stress_type.upper() == 'QX':
+                element.i_node.contour.append(element.shear(r_left, s_bot, local, combo_name)[0])
+                element.j_node.contour.append(element.shear(r_right, s_bot, local, combo_name)[0])
+                element.m_node.contour.append(element.shear(r_right, s_top, local, combo_name)[0])
+                element.n_node.contour.append(element.shear(r_left, s_top, local, combo_name)[0])
+            elif stress_type.upper() == 'QY':
+                element.i_node.contour.append(element.shear(r_left, s_bot, local, combo_name)[1])
+                element.j_node.contour.append(element.shear(r_right, s_bot, local, combo_name)[1])
+                element.m_node.contour.append(element.shear(r_right, s_top, local, combo_name)[1])
+                element.n_node.contour.append(element.shear(r_left, s_top, local, combo_name)[1])
+            elif stress_type.upper() == 'SX':
+                element.i_node.contour.append(element.membrane(r_left, s_bot, local, combo_name)[0])
+                element.j_node.contour.append(element.membrane(r_right, s_bot, local, combo_name)[0])
+                element.m_node.contour.append(element.membrane(r_right, s_top, local, combo_name)[0])
+                element.n_node.contour.append(element.membrane(r_left, s_top, local, combo_name)[0])
+            elif stress_type.upper() == 'SY':
+                element.i_node.contour.append(element.membrane(r_left, s_bot, local, combo_name)[1])
+                element.j_node.contour.append(element.membrane(r_right, s_bot, local, combo_name)[1])
+                element.m_node.contour.append(element.membrane(r_right, s_top, local, combo_name)[1])
+                element.n_node.contour.append(element.membrane(r_left, s_top, local, combo_name)[1])
+            elif stress_type.upper() == 'TXY':
+                element.i_node.contour.append(element.membrane(r_left, s_bot, local, combo_name)[2])
+                element.j_node.contour.append(element.membrane(r_right, s_bot, local, combo_name)[2])
+                element.m_node.contour.append(element.membrane(r_right, s_top, local, combo_name)[2])
+                element.n_node.contour.append(element.membrane(r_left, s_top, local, combo_name)[2])                 
       
         # Average the values at each node to obtain a smoothed contour
         for node in model.Nodes.values():
