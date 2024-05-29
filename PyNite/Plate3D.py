@@ -23,7 +23,6 @@ class Plate3D():
     approximation. Orthotropic behavior is limited to acting along the plate's local axes.
     """
 
-#%%
     def __init__(self, name, i_node, j_node, m_node, n_node, t, material_name, model, kx_mod=1.0,
                  ky_mod=1.0):
 
@@ -52,7 +51,6 @@ class Plate3D():
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
 
-#%%
     def _local_coords(self):
         '''
         Calculates or recalculates and stores the local (x, y) coordinates for each node of the
@@ -323,7 +321,6 @@ class Plate3D():
         # Return the [B] matrix for shear
         return inv(self.J(xi, eta)) @ self.N_gamma(xi, eta) @ self.A_gamma() @ self.A_phi_Delta() @ self.A_u()
 
-#%%
     def B_m(self, r, s):
 
         # Differentiate the interpolation functions
@@ -341,7 +338,6 @@ class Plate3D():
 
         return B_m
 
-#%%
     def Hb(self):
         '''
         Returns the stress-strain matrix for plate bending.
@@ -358,7 +354,6 @@ class Plate3D():
         
         return Hb
 
-#%%
     def Hs(self):
         '''
         Returns the stress-strain matrix for shear.
@@ -374,7 +369,6 @@ class Plate3D():
 
         return Hs
 
-#%%
     def Cm(self):
         """
         Returns the stress-strain matrix for an isotropic or orthotropic plane stress element
@@ -400,7 +394,6 @@ class Plate3D():
         
         return Cm
 
-#%%
     def k_b(self):
         '''
         Returns the local stiffness matrix for bending stresses
@@ -503,7 +496,6 @@ class Plate3D():
 
         return k_exp
 
-#%%
     def k_m(self):
         '''
         Returns the local stiffness matrix for membrane (in-plane) stresses.
@@ -562,7 +554,6 @@ class Plate3D():
         
         return k_exp
 
-#%%
     def k(self):
         '''
         Returns the quad element's local stiffness matrix.
@@ -573,8 +564,7 @@ class Plate3D():
 
         # Sum the bending and membrane stiffness matrices
         return np.add(self.k_b(), self.k_m())
-
-#%%   
+   
     def f(self, combo_name='Combo 1'):
         """
         Returns the quad element's local end force vector
@@ -583,7 +573,6 @@ class Plate3D():
         # Calculate and return the plate's local end force vector
         return np.add(np.matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
-#%%
     def fer(self, combo_name='Combo 1'):
         '''
         Returns the quadrilateral's local fixed end reaction vector.
@@ -650,7 +639,6 @@ class Plate3D():
 
         return fer_exp
 
-#%%
     def d(self, combo_name='Combo 1'):
        """
        Returns the quad element's local displacement vector
@@ -659,7 +647,6 @@ class Plate3D():
        # Calculate and return the local displacement vector
        return np.matmul(self.T(), self.D(combo_name))
 
-#%%
     def F(self, combo_name='Combo 1'):
         """
         Returns the quad element's global force vector
@@ -673,7 +660,6 @@ class Plate3D():
         # Calculate and return the global force vector
         return np.matmul(inv(self.T()), self.f(combo_name))
 
-#%%
     def D(self, combo_name='Combo 1'):
         '''
         Returns the quad element's global displacement vector for the given
@@ -721,7 +707,6 @@ class Plate3D():
         # Return the global displacement vector
         return D
 
-#%%
     def K(self):
         '''
         Returns the quad element's global stiffness matrix
@@ -732,8 +717,7 @@ class Plate3D():
 
         # Calculate and return the stiffness matrix in global coordinates
         return np.matmul(np.matmul(inv(T), self.k()), T)
-
-#%% 
+ 
     # Global fixed end reaction vector
     def FER(self, combo_name='Combo 1'):
         '''
@@ -748,8 +732,7 @@ class Plate3D():
         
         # Calculate and return the fixed end reaction vector
         return np.matmul(inv(self.T()), self.fer(combo_name))
-
-#%%  
+  
     def T(self):
         '''
         Returns the coordinate transformation matrix for the quad element.
@@ -815,7 +798,6 @@ class Plate3D():
         # Return the transformation matrix.
         return T
 
-#%%
     def shear(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         """
         Returns the interal shears at any point in the quad element.
@@ -875,8 +857,7 @@ class Plate3D():
             return np.matmul(dir_cos.T, np.array([Qx,
                                                   Qy,
                                                   [0]]))
-
-#%%   
+   
     def moment(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         """
         Returns the interal moments at any point in the quad element.
@@ -940,7 +921,6 @@ class Plate3D():
                                                   My,
                                                   [0]]))
 
-#%%
     def membrane(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         
         # Get the plate's local displacement vector

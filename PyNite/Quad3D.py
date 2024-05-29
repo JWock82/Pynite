@@ -588,33 +588,33 @@ class Quad3D():
         D = zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        D[0, 0] = self.m_node.DX[combo_name]
-        D[1, 0] = self.m_node.DY[combo_name]
-        D[2, 0] = self.m_node.DZ[combo_name]
-        D[3, 0] = self.m_node.RX[combo_name]
-        D[4, 0] = self.m_node.RY[combo_name]
-        D[5, 0] = self.m_node.RZ[combo_name]
+        D[0, 0] = self.i_node.DX[combo_name]
+        D[1, 0] = self.i_node.DY[combo_name]
+        D[2, 0] = self.i_node.DZ[combo_name]
+        D[3, 0] = self.i_node.RX[combo_name]
+        D[4, 0] = self.i_node.RY[combo_name]
+        D[5, 0] = self.i_node.RZ[combo_name]
 
-        D[6, 0] = self.n_node.DX[combo_name]
-        D[7, 0] = self.n_node.DY[combo_name]
-        D[8, 0] = self.n_node.DZ[combo_name]
-        D[9, 0] = self.n_node.RX[combo_name]
-        D[10, 0] = self.n_node.RY[combo_name]
-        D[11, 0] = self.n_node.RZ[combo_name]
+        D[6, 0] = self.j_node.DX[combo_name]
+        D[7, 0] = self.j_node.DY[combo_name]
+        D[8, 0] = self.j_node.DZ[combo_name]
+        D[9, 0] = self.j_node.RX[combo_name]
+        D[10, 0] = self.j_node.RY[combo_name]
+        D[11, 0] = self.j_node.RZ[combo_name]
 
-        D[12, 0] = self.i_node.DX[combo_name]
-        D[13, 0] = self.i_node.DY[combo_name]
-        D[14, 0] = self.i_node.DZ[combo_name]
-        D[15, 0] = self.i_node.RX[combo_name]
-        D[16, 0] = self.i_node.RY[combo_name]
-        D[17, 0] = self.i_node.RZ[combo_name]
+        D[12, 0] = self.m_node.DX[combo_name]
+        D[13, 0] = self.m_node.DY[combo_name]
+        D[14, 0] = self.m_node.DZ[combo_name]
+        D[15, 0] = self.m_node.RX[combo_name]
+        D[16, 0] = self.m_node.RY[combo_name]
+        D[17, 0] = self.m_node.RZ[combo_name]
 
-        D[18, 0] = self.j_node.DX[combo_name]
-        D[19, 0] = self.j_node.DY[combo_name]
-        D[20, 0] = self.j_node.DZ[combo_name]
-        D[21, 0] = self.j_node.RX[combo_name]
-        D[22, 0] = self.j_node.RY[combo_name]
-        D[23, 0] = self.j_node.RZ[combo_name]
+        D[18, 0] = self.n_node.DX[combo_name]
+        D[19, 0] = self.n_node.DY[combo_name]
+        D[20, 0] = self.n_node.DZ[combo_name]
+        D[21, 0] = self.n_node.RX[combo_name]
+        D[22, 0] = self.n_node.RY[combo_name]
+        D[23, 0] = self.n_node.RZ[combo_name]
         
         # Return the global displacement vector
         return D
@@ -714,7 +714,7 @@ class Quad3D():
         return T
 
 #%%
-    def shear(self, r=0, s=0, combo_name='Combo 1'):
+    def shear(self, r=0, s=0, local=True, combo_name='Combo 1'):
         '''
         Returns the interal shears at any point in the quad element.
 
@@ -764,7 +764,7 @@ class Quad3D():
                       Qy])
 
 #%%   
-    def moment(self, r=0, s=0, combo_name='Combo 1'):
+    def moment(self, r=0, s=0, local=True, combo_name='Combo 1'):
         '''
         Returns the interal moments at any point in the quad element.
 
@@ -816,7 +816,7 @@ class Quad3D():
                       Mxy])
 
 #%%
-    def membrane(self, r=0, s=0, combo_name='Combo 1'):
+    def membrane(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
@@ -826,20 +826,20 @@ class Quad3D():
         gp = 1/3**0.5
 
         # Define extrapolated r and s points
-        r_ex = r/gp
-        s_ex = s/gp
+        xi_ex = xi/gp
+        eta_ex = eta/gp
 
         # Define the interpolation functions
-        H = 1/4*array([(1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex), (1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex)])
+        H = 1/4*array([(1 - xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 + eta_ex), (1 - xi_ex)*(1 + eta_ex)])
 
         # Get the stress-strain matrix
         Cm = self.Cm()
         
         # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
-        s1 = matmul(Cm, matmul(self.B_m(gp, gp), d))
-        s2 = matmul(Cm, matmul(self.B_m(-gp, gp), d))
-        s3 = matmul(Cm, matmul(self.B_m(-gp, -gp), d))
-        s4 = matmul(Cm, matmul(self.B_m(gp, -gp), d))
+        s1 = matmul(Cm, matmul(self.B_m(-gp, -gp), d))
+        s2 = matmul(Cm, matmul(self.B_m(gp, -gp), d))
+        s3 = matmul(Cm, matmul(self.B_m(gp, gp), d))
+        s4 = matmul(Cm, matmul(self.B_m(-gp, gp), d))
 
         # Extrapolate to get the value at the requested location
         Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]
