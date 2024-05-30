@@ -1,34 +1,43 @@
-# References used to derive this element:
-# 1. "A Comparative Formulation of DKMQ, DSQ and MITC4 Quadrilateral Plate Elements with New Numerical Results Based on s-norm Tests", Irwan Katili, 
-# 2. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
-# 3. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
-# 4. "Finite Element Analysis Fundamentals", Richard H. Gallagher
+from numpy import zeros, array, matmul, cross, add
+from numpy.linalg import inv, norm, det
 
-import numpy as np
-from numpy import add
-from numpy.linalg import inv, det, norm
-from math import sin, cos
-
+#%%
 class Plate3D():
-    """
-    An isoparametric general quadrilateral element, formulated by superimposing an isoparametric
-    DKMQ bending element with an isoparametric plane stress element. Drilling stability is
-    provided by adding a weak rotational spring stiffness at each node. Isotropic behavior is the
-    default, but orthotropic in-plane behavior can be modeled by specifying stiffness modification
-    factors for the element's local x and y axes.
-
-    This element performs well for thick and thin plates, and for skewed plates. Element center
-    stresses and corner FORCES converge rapidly; however, corner STRESSES are more representative
-    of center stresses. Minor errors are introduced into the solution due to the drilling
-    approximation. Orthotropic behavior is limited to acting along the plate's local axes.
-    """
 
     def __init__(self, name, i_node, j_node, m_node, n_node, t, material_name, model, kx_mod=1.0,
                  ky_mod=1.0):
+        """
+        A rectangular plate element
+
+        Parameters
+        ----------
+        name : string
+            A unique plate name
+        i_node : Node3D
+            The plate's i-node
+        j_node : Node3D
+            The plate's j-node
+        m_node : Node3D
+            The plate's m-node
+        n_node : Node3D
+            The plate's n-node
+        t : number
+            Plate thickness
+        material_name : string
+            The name of the plate material
+        kx_mod : number
+            Modification factor for stiffness in the plate's local x-direction. Default value is
+            1.0, which indicates no stiffness modification (100% stiffness).
+        ky_mod : number
+            Modification factor for stiffness in the plate's local y-direction. Default value is
+            1.0, which indicates no stiffness modification (100% stiffness).
+        model : FEModel3D
+            The model the plate is a part of
+        """
 
         self.name = name
         self.ID = None
-        self.type = 'Quad'
+        self.type = 'Rect'
 
         self.i_node = i_node
         self.j_node = j_node
@@ -36,12 +45,13 @@ class Plate3D():
         self.n_node = n_node
 
         self.t = t
+        
         self.kx_mod = kx_mod
         self.ky_mod = ky_mod
 
         self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
-    
-        # Quads need a link to the model they belong to
+
+        # Plates need a link to the model they belong to
         self.model = model
 
         # Get material properties for the plate from the model
@@ -50,330 +60,24 @@ class Plate3D():
             self.nu = self.model.Materials[material_name].nu
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
-
-    def _local_coords(self):
-        '''
-        Calculates or recalculates and stores the local (x, y) coordinates for each node of the
-        quadrilateral.
-        '''
-
-        # Get the global coordinates for each node
-        X1, Y1, Z1 = self.i_node.X, self.i_node.Y, self.i_node.Z
-        X2, Y2, Z2 = self.j_node.X, self.j_node.Y, self.j_node.Z
-        X3, Y3, Z3 = self.m_node.X, self.m_node.Y, self.m_node.Z
-        X4, Y4, Z4 = self.n_node.X, self.n_node.Y, self.n_node.Z
-
-        # Node 1 will be used as the origin of the plate's local (x, y) coordinate system. Find the
-        # vector from the origin to each node.
-        vector_12 = np.array([X2 - X1, Y2 - Y1, Z2 - Z1]).T
-        vector_13 = np.array([X3 - X1, Y3 - Y1, Z3 - Z1]).T
-        vector_14 = np.array([X4 - X1, Y4 - Y1, Z4 - Z1]).T
-
-        # Define the plate's local x, y, and z axes
-        x_axis = vector_12
-        z_axis = np.cross(x_axis, vector_13)
-        y_axis = np.cross(z_axis, x_axis)
-
-        # Convert the x and y axes into unit vectors
-        x_axis = x_axis/norm(x_axis)
-        y_axis = y_axis/norm(y_axis)
-
-        # Calculate the local (x, y) coordinates for each node
-        self.x1 = 0
-        self.x2 = np.dot(vector_12, x_axis)
-        self.x3 = np.dot(vector_13, x_axis)
-        self.x4 = np.dot(vector_14, x_axis)
-        self.y1 = 0
-        self.y2 = np.dot(vector_12, y_axis)
-        self.y3 = np.dot(vector_13, y_axis)
-        self.y4 = np.dot(vector_14, y_axis)
-
-    def L_k(self, k):
-        
-        # Figures 3 and 5
-        if k == 5:
-            return ((self.j_node.X - self.i_node.X)**2 + (self.j_node.Y - self.i_node.Y)**2)**0.5
-        elif k == 6:
-            return ((self.m_node.X - self.j_node.X)**2 + (self.m_node.Y - self.j_node.Y)**2)**0.5
-        elif k == 7:
-            return ((self.n_node.X - self.m_node.X)**2 + (self.n_node.Y - self.m_node.Y)**2)**0.5
-        elif k == 8:
-            return ((self.i_node.X - self.n_node.X)**2 + (self.i_node.Y - self.n_node.Y)**2)**0.5
-        else:
-            raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
     
-    def dir_cos(self, k):
-
-        L_k = self.L_k(k)
-
-        # Figures 3 and 5
-        if k == 5:
-            C = (self.j_node.X - self.i_node.X)/L_k
-            S = (self.j_node.Y - self.i_node.Y)/L_k
-        elif k == 6:
-            C = (self.m_node.X - self.j_node.X)/L_k
-            S = (self.m_node.Y - self.j_node.Y)/L_k
-        elif k == 7:
-            C = (self.n_node.X - self.m_node.X)/L_k
-            S = (self.n_node.Y - self.m_node.Y)/L_k
-        elif k == 8:
-            C = (self.i_node.X - self.n_node.X)/L_k
-            S = (self.i_node.Y - self.n_node.Y)/L_k
-        else:
-            raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
-
-        return C, S
-
-    def phi_k(self, k):
-
-        kappa = 5/6
-
-        # Equation 74
-        return 2/(kappa*(1-self.nu))*(self.t/self.L_k(k))**2
-
-    def N_i(self, i, xi, eta):
+    def width(self):
         """
-        Returns the interpolation function for any given coordinate in the natural coordinate system
+        Returns the width of the plate along its local x-axis
         """
+        return self.i_node.distance(self.j_node)
 
-        if i == 1:
-            return 1/4*(1-eta)*(1-xi)
-        elif i == 2:
-            return 1/4*(1+eta)*(1-xi)
-        elif i == 3:
-            return 1/4*(1+eta)*(1+xi)
-        elif i == 4:
-            return 1/4*(1-eta)*(1+xi)
-        else:
-            raise Exception('Unable to calculate interpolation function. Invalid value specifed for i.')
+    def height(self):
+        """
+        Returns the height of the plate along its local y-axis
+        """
+        return self.i_node.distance(self.n_node)
     
-    def P_k(self, k, xi, eta):
-
-        if k == 5:
-            return 1/2*(1-eta**2)*(1-xi)
-        elif k == 6:
-            return 1/2*(1+eta)*(1-xi**2)
-        elif k == 7:
-            return 1/2*(1-eta**2)*(1+xi)
-        elif k == 8:
-            return 1/2*(1-eta)*(1-xi**2)
-        else:
-            raise Exception('Unable to calculate shape function. Invalid value specified for k.')
-
-    def J(self, xi, eta):
+    def Dm(self):
         """
-        Returns the Jacobian matrix for the element
-        """
-        
-        # Get the local coordinates for the element
-        x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
-
-        # Return the Jacobian matrix
-        return 1/4*np.array([[x1*(eta - 1) - x2*(eta - 1) + x3*(eta + 1) - x4*(eta + 1), y1*(eta - 1) - y2*(eta - 1) + y3*(eta + 1) - y4*(eta + 1)],
-                             [x1*(xi - 1)  - x2*(xi + 1)  + x3*(xi + 1)  - x4*(xi - 1),  y1*(xi - 1)  - y2*(xi + 1)  + y3*(xi + 1)  - y4*(xi - 1)]])
-
-    def N_gamma(self, xi, eta):
-
-        # Equation 44
-        return np.array([[1/2*(1-eta),      0,     1/2*(1+eta),      0],
-                         [     0,      1/2*(1+xi),      0,      1/2*(1-xi)]])
-
-    def A_gamma(self):
-
-        L5 = self.L_k(5)
-        L6 = self.L_k(6)
-        L7 = self.L_k(7)
-        L8 = self.L_k(8)
-
-        # Equation 46
-        return np.array([[L5/2,   0,     0,     0],
-                         [  0,  L6/2,    0,     0],
-                         [  0,    0,  -L7/2,    0],
-                         [  0,    0,     0,  -L8/2]])
-
-    def A_u(self):
-
-        L5 = self.L_k(5)
-        L6 = self.L_k(6)
-        L7 = self.L_k(7)
-        L8 = self.L_k(8)
-
-        C5, S5 = self.dir_cos(5)
-        C6, S6 = self.dir_cos(6)
-        C7, S7 = self.dir_cos(7)
-        C8, S8 = self.dir_cos(8)
-
-        return np.array([[-2/L5, C5, S5,  2/L5, C5, S5,   0,    0,  0,   0,    0,  0],
-                         [  0,    0,  0, -2/L6, C6, S6, 2/L6,  C6, S6,   0,    0,  0],
-                         [  0,    0,  0,   0,    0,  0, -2/L7, C7, S7,  2/L7, C7, S7],
-                         [ 2/L8, C8, S8,   0,    0,  0,   0,    0,  0, -2/L8, C8, S8]])
-
-    def A_Delta_inv_DKMQ(self):
-
-        phi5 = self.phi_k(5)
-        phi6 = self.phi_k(6)
-        phi7 = self.phi_k(7)
-        phi8 = self.phi_k(8)
-
-        return -3/2 * np.array([[1/(1+phi5),     0,          0,          0     ],
-                                [   0,       1/(1+phi6),     0,          0     ],
-                                [   0,           0,      1/(1+phi7),     0     ],
-                                [   0,           0,          0,      1/(1+phi8)]])
-
-    def A_phi_Delta(self):
-
-        phi5 = self.phi_k(5)
-        phi6 = self.phi_k(6)
-        phi7 = self.phi_k(7)
-        phi8 = self.phi_k(8)
-
-        return np.array([[phi5/(1+phi5),       0,             0,             0      ],
-                         [      0,       phi6/(1+phi6),       0,             0      ],
-                         [      0,             0,       phi7/(1+phi7),       0      ],
-                         [      0,             0,             0,       phi8/(1+phi8)]])
-    
-    def B_b_beta(self, xi, eta):
-
-        # Get the inverse of the Jacobian matrix
-        J_inv = inv(self.J(xi, eta))
-
-        # Get the individual terms for the Jacobian inverse
-        j11 = J_inv[0, 0]
-        j12 = J_inv[0, 1]
-        j21 = J_inv[1, 0]
-        j22 = J_inv[1, 1]
-
-        # Derivatives of the bilinear interpolation functions
-        N1_xi = 0.25*eta - 0.25
-        N2_xi = 0.25 - 0.25*eta
-        N3_xi = 0.25*eta + 0.25
-        N4_xi = - 0.25*eta - 0.25
-        N1_eta = 0.25*xi - 0.25
-        N2_eta = - 0.25*xi - 0.25
-        N3_eta = 0.25*xi + 0.25
-        N4_eta = 0.25 - 0.25*xi
-
-        N1x = j11*N1_xi + j12*N1_eta
-        N1y = j21*N1_xi + j22*N1_eta
-        N2x = j11*N2_xi + j12*N2_eta
-        N2y = j21*N2_xi + j22*N2_eta
-        N3x = j11*N3_xi + j12*N3_eta
-        N3y = j21*N3_xi + j22*N3_eta
-        N4x = j11*N4_xi + j12*N4_eta
-        N4y = j21*N4_xi + j22*N4_eta
-
-        return np.array([[0, N1x,  0,  0, N2x,  0,  0, N3x,  0,  0, N4x,  0 ],
-                         [0,  0,  N1y, 0,  0,  N2y, 0,  0,  N3y, 0,  0,  N4y],
-                         [0, N1y, N1x, 0, N2y, N2x, 0, N3y, N3x, 0, N4y, N4x]])
-    
-    def B_b_Delta_beta(self, xi, eta):
-
-        # Get the inverse of the Jacobian matrix
-        J_inv = inv(self.J(xi, eta))
-
-        # Get the individual terms for the Jacobian inverse
-        j11 = J_inv[0, 0]
-        j12 = J_inv[0, 1]
-        j21 = J_inv[1, 0]
-        j22 = J_inv[1, 1]
-
-        # Derivatives of the quadratic interpolation functions
-        P5_xi = xi*(eta - 1)
-        P6_xi = -0.5*(eta - 1)*(eta + 1)
-        P7_xi = -xi*(eta + 1)
-        P8_xi = 0.5*(eta - 1)*(eta + 1)
-        P5_eta = 0.5*(xi - 1)*(xi + 1)
-        P6_eta = -eta*(xi + 1)
-        P7_eta = -0.5*(xi - 1)*(xi + 1)
-        P8_eta = eta*(xi - 1)
-
-        P5x = j11*P5_xi + j12*P5_eta
-        P5y = j21*P5_xi + j22*P5_eta
-        P6x = j11*P6_xi + j12*P6_eta
-        P6y = j21*P6_xi + j22*P6_eta
-        P7x = j11*P7_xi + j12*P7_eta
-        P7y = j21*P7_xi + j22*P7_eta
-        P8x = j11*P8_xi + j12*P8_eta
-        P8y = j21*P8_xi + j22*P8_eta
-
-        C5, S5 = self.dir_cos(5)
-        C6, S6 = self.dir_cos(6)
-        C7, S7 = self.dir_cos(7)
-        C8, S8 = self.dir_cos(8)
-
-        return np.array([[    P5x*C5,          P6x*C6,          P7x*C7,          P8x*C8     ],
-                         [    P5y*S5,          P6y*S6,          P7y*S7,          P8y*S8,    ],
-                         [P5y*C5 + P5x*S5, P6y*C6 + P6x*S6, P7y*C7 + P7x*S7, P8y*C8 + P8x*S8]])
-    
-    def B_b(self, xi, eta):
-        """
-        Returns the [B_b] matrix for bending
+        Returns the plane stress constitutive matrix for orthotropic materials [Dm]
         """
 
-        # Return the [B] matrix for bending
-        return add(self.B_b_beta(xi, eta), self.B_b_Delta_beta(xi, eta) @ self.A_Delta_inv_DKMQ() @ self.A_u())
-
-    def B_s(self, xi, eta):
-        """
-        Returns the [B_s] matrix for shear
-        """
-        
-        # Return the [B] matrix for shear
-        return inv(self.J(xi, eta)) @ self.N_gamma(xi, eta) @ self.A_gamma() @ self.A_phi_Delta() @ self.A_u()
-
-    def B_m(self, r, s):
-
-        # Differentiate the interpolation functions
-        # Row 1 = interpolation functions differentiated with respect to x
-        # Row 2 = interpolation functions differentiated with respect to y
-        # Note that the inverse of the Jacobian converts from derivatives with
-        # respect to r and s to derivatives with respect to x and y
-        dH = np.matmul(inv(self.J(r, s)), 1/4*np.array([[s + 1, -s - 1, s - 1, -s + 1],                 
-                                                  [r + 1, -r + 1, r - 1, -r - 1]]))
-
-        # Reference 2, Example 5.5 (page 353)
-        B_m = np.array([[dH[0, 0],    0,     dH[0, 1],    0,     dH[0, 2],    0,     dH[0, 3],    0    ],
-                     [   0,     dH[1, 0],    0,     dH[1, 1],    0,     dH[1, 2],    0,     dH[1, 3]],
-                     [dH[1, 0], dH[0, 0], dH[1, 1], dH[0, 1], dH[1, 2], dH[0, 2], dH[1, 3], dH[0, 3]]])
-
-        return B_m
-
-    def Hb(self):
-        '''
-        Returns the stress-strain matrix for plate bending.
-        '''
-
-        # Referemce 1, Table 4.3, page 194
-        nu = self.nu
-        E = self.E
-        h = self.t
-
-        Hb = E*h**3/(12*(1 - nu**2))*np.array([[1,  nu,      0    ],
-                                               [nu, 1,       0    ],
-                                               [0,  0,  (1 - nu)/2]])
-        
-        return Hb
-
-    def Hs(self):
-        '''
-        Returns the stress-strain matrix for shear.
-        '''
-        # Reference 2, Equations (5.97), page 422
-        k = 5/6
-        E = self.E
-        h = self.t
-        nu = self.nu
-
-        Hs = E*h*k/(2*(1 + nu))*np.array([[1, 0],
-                                          [0, 1]])
-
-        return Hs
-
-    def Cm(self):
-        """
-        Returns the stress-strain matrix for an isotropic or orthotropic plane stress element
-        """
-        
         # Apply the stiffness modification factors for each direction to obtain orthotropic
         # behavior. Stiffness modification factors of 1.0 in each direction (the default) will
         # model isotropic behavior. Orthotropic behavior is limited to the element's local
@@ -387,75 +91,174 @@ class Plate3D():
         # Logan, Appendix C.3, page 750
         G = self.E/(2*(1 + self.nu))
 
-        # Gallagher, Equation 9.3, page 251
-        Cm = 1/(1 - nu_xy*nu_yx)*np.array([[   Ex,    nu_yx*Ex,           0         ],
-                                        [nu_xy*Ey,    Ey,              0         ],
-                                        [    0,        0,     (1 - nu_xy*nu_yx)*G]])
+        # Calculate the constitutive matrix [Dm]
+        Dm = 1/(1 - nu_xy*nu_yx)*array([[   Ex,    nu_yx*Ex,            0             ],
+                                        [nu_xy*Ey,    Ey,               0             ],
+                                        [   0,        0,     (1 - nu_xy*nu_yx)*G]])
+
+        # Return the constitutive matrix [Dm]
+        return Dm
+
+    def Db(self):
+        """
+        Returns the bending constitutive matrix for orthotropic materials [Db]
+        """
+
+        # Get the plate thickness and other material parameters
+        t = self.t
+        nu_xy = self.nu
+        nu_yx = self.nu
+        Ex = self.E*self.kx_mod
+        Ey = self.E*self.ky_mod
+        G = self.E/(2*(1 + self.nu))
+
+        # Calculate the constitutive matrix [Db]
+        Db = t**3/(12*(1 - nu_xy*nu_yx))*array([[   Ex,    nu_yx*Ex, 0],
+                                                [nu_xy*Ey,    Ey,    0],
+                                                [   0,        0,     G]])
+
+        # Return the constitutive matrix [Db]
+        return Db
+
+    def J(self, r, s):
+        '''
+        Returns the Jacobian matrix for the element
+        '''
         
-        return Cm
+        # Get the local coordinates for the element's nodes
+        x1, y1, x2, y2, x3, y3, x4, y4 = 0, 0, self.width(), 0, self.width(), self.height(), 0, self.height()
 
-    def k_b(self):
+        # Return the Jacobian matrix
+        return 1/4*array([[x1*(s - 1) - x2*(s - 1) + x3*(s + 1) - x4*(s + 1), y1*(s - 1) - y2*(s - 1) + y3*(s + 1) - y4*(s + 1)],
+                          [x1*(r - 1) - x2*(r + 1) + x3*(r + 1) - x4*(r - 1), y1*(r - 1) - y2*(r + 1) + y3*(r + 1) - y4*(r - 1)]])
+    
+    def B_m(self, r, s):
+
+        # Differentiate the interpolation functions
+        # Row 1 = interpolation functions differentiated with respect to x
+        # Row 2 = interpolation functions differentiated with respect to y
+        # Note that the inverse of the Jacobian converts from derivatives with
+        # respect to r and s to derivatives with respect to x and y
+        dH = matmul(inv(self.J(r, s)), 1/4*array([[s - 1, -s + 1, s + 1, -s - 1],                 
+                                                  [r - 1, -r - 1, r + 1, -r + 1]]))
+
+        # Reference 1, Example 5.5 (page 353)
+        B_m = array([[dH[0, 0],    0,     dH[0, 1],    0,     dH[0, 2],    0,     dH[0, 3],    0    ],
+                     [   0,     dH[1, 0],    0,     dH[1, 1],    0,     dH[1, 2],    0,     dH[1, 3]],
+                     [dH[1, 0], dH[0, 0], dH[1, 1], dH[0, 1], dH[1, 2], dH[0, 2], dH[1, 3], dH[0, 3]]])
+        
+        return B_m
+    
+    def k(self):
+        """
+        returns the plate's local stiffness matrix
+        """
+        return add(self.k_b(), self.k_m())
+    
+    def k_m(self):
         '''
-        Returns the local stiffness matrix for bending stresses
+        Returns the local stiffness matrix for membrane (in-plane) stresses.
+
+        Plane stress is assumed
         '''
 
-        Hb = self.Hb()
-        Hs = self.Hs()
+        t = self.t
+        Dm = self.Dm()
 
         # Define the gauss point for numerical integration
         gp = 1/3**0.5
 
-        # Get the determinant of the Jacobian matrix for each gauss pointing. Doing this now will save us from doing it twice below.
-        J1 = det(self.J(-gp, -gp))
-        J2 = det(self.J(gp, -gp))
-        J3 = det(self.J(gp, gp))
-        J4 = det(self.J(-gp, gp))
+        # Get the membrane B matrices for each gauss point
+        # Doing this now will save us from doing it twice below
+        B1 = self.B_m(-gp, -gp)
+        B2 = self.B_m(gp, -gp)
+        B3 = self.B_m(gp, gp)
+        B4 = self.B_m(-gp, gp)
 
-        # Get the bending B matrices for each gauss point
-        B1 = self.B_b(-gp, -gp)
-        B2 = self.B_b(gp, -gp)
-        B3 = self.B_b(gp, gp)
-        B4 = self.B_b(-gp, gp)
-
-        # Create the stiffness matrix with bending stiffness terms
-        # See 2, Equation 5.94
-        k = (np.matmul(B1.T, np.matmul(Hb, B1))*J1 +
-             np.matmul(B2.T, np.matmul(Hb, B2))*J2 +
-             np.matmul(B3.T, np.matmul(Hb, B3))*J3 +
-             np.matmul(B4.T, np.matmul(Hb, B4))*J4)
-
-        # Get the shear [B_s] matrices for each gauss point
-        B1 = self.B_s(-gp, -gp)
-        B2 = self.B_s(gp, -gp)
-        B3 = self.B_s(gp, gp)
-        B4 = self.B_s(-gp, gp)
-
-        # Add shear stiffness terms to the stiffness matrix
-        k += (np.matmul(B1.T, np.matmul(Hs, B1))*J1 +
-              np.matmul(B2.T, np.matmul(Hs, B2))*J2 +
-              np.matmul(B3.T, np.matmul(Hs, B3))*J3 +
-              np.matmul(B4.T, np.matmul(Hs, B4))*J4)
+        # See reference 1 at the bottom of page 353, and reference 2 page 466
+        k = t*(matmul(B1.T, matmul(Dm, B1))*det(self.J(-gp, -gp)) +
+               matmul(B2.T, matmul(Dm, B2))*det(self.J(gp, -gp)) +
+               matmul(B3.T, matmul(Dm, B3))*det(self.J(gp, gp)) +
+               matmul(B4.T, matmul(Dm, B4))*det(self.J(-gp, gp)))
         
-        # Following Bathe's recommendation for the drilling degree of freedom
-        # from Example 4.19 in "Finite Element Procedures, 2nd Ed.", calculate
-        # the drilling stiffness as 1/1000 of the smallest diagonal term in
-        # the element's stiffness matrix. This is not theoretically correct,
-        # but it allows the model to solve without singularities, and should
-        # have a minimal effect on the final solution. Bathe recommends 1/1000
-        # as a value that is weak enough but not so small that it affect the
-        # results. Bathe recommends looking at all the diagonals in the
-        # combined bending plus membrane stiffness matrix. Some of those terms
-        # relate to translational stiffness. It seems more rational to only
-        # look at the terms relating to rotational stiffness. That will be
-        # Pynite's approach.
+        k_exp = zeros((24, 24))
+
+        # Step through each term in the unexpanded stiffness matrix
+        # i = Unexpanded matrix row
+        for i in range(8):
+
+            # j = Unexpanded matrix column
+            for j in range(8):
+                
+                # Find the corresponding term in the expanded stiffness
+                # matrix
+
+                # m = Expanded matrix row
+                if i in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    m = i*3
+                if i in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    m = i*3 - 2
+
+                # n = Expanded matrix column
+                if j in [0, 2, 4, 6]:  # indices associated with displacement in x
+                    n = j*3
+                if j in [1, 3, 5, 7]:  # indices associated with displacement in y
+                    n = j*3 - 2
+                
+                # Ensure the indices are integers rather than floats
+                m, n = round(m), round(n)
+
+                # Add the term from the unexpanded matrix into the expanded matrix
+                k_exp[m, n] = k[i, j]
+        
+        return k_exp
+    
+    def k_b(self):
+        """
+        Returns the local stiffness matrix for bending
+        """
+
+        b = self.width()/2
+        c = self.height()/2
+
+        Ex = self.E
+        Ey = self.E
+        nu_xy = self.nu
+        nu_yx = self.nu
+        G = self.E/(2*(1 + self.nu))
+        t = self.t
+
+        # Stiffness matrix for plate bending. This matrix was derived using a jupyter notebook. The
+        # notebook can be found in the `Derivations`` folder of this project.
+        k = t**3/12*array([[(-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2 + Ey*nu_xy*b**2/2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), (-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2/2 - Ey*nu_xy*b**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(-Ey*nu_xy*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), Ey*nu_xy/(nu_xy*nu_yx - 1), (Ey*nu_xy*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0],
+                           [(Ex*nu_yx*b**2/2 + Ex*c**2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*nu_xy*nu_yx*b**2 - 2*G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), (-5*Ex*c**2 + G*nu_xy*nu_yx*b**2 - G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), 0, 2*(-5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2/2 + Ex*c**2/2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))],
+                           [(5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ex*c**2 + G*nu_xy*nu_yx*b**2 - G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2 - Ey*nu_xy*b**2/2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2/2 + Ey*nu_xy*b**2/2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(Ey*nu_xy*c**2/2 - Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-Ey*nu_xy*c**2/2 - Ey*b**2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), -Ey*nu_xy/(nu_xy*nu_yx - 1), (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0],
+                           [(5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(5*b**2*c*(nu_xy*nu_yx - 1)), 0, 2*(-5*Ex*c**2 - G*nu_xy*nu_yx*b**2 + G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2/2 - Ex*c**2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), -Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*nu_xy*nu_yx*b**2 - 2*G*b**2)/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*nu_yx*b**2/2 - Ex*c**2/2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))],
+                           [(-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (-5*Ex*c**2 - 25*Ey*nu_xy*b**2 + 2*b**2*(15*Ey*nu_xy - G*nu_xy*nu_yx + G))/(10*b**2*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2 - Ey*nu_xy*b**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-Ex*c**2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*nu_xy*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), Ey*nu_xy/(nu_xy*nu_yx - 1), (-Ey*nu_xy*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0],
+                           [(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*nu_yx*b**2/2 - Ex*c**2/2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2/2 - Ex*c**2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*c**2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))],
+                           [(5*Ex*nu_yx*b**2*c**2 - 10*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 + 20*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), (5*Ex*c**2 + 25*Ey*nu_xy*b**2 - 2*b**2*(15*Ey*nu_xy - G*nu_xy*nu_yx + G))/(10*b**2*c*(nu_xy*nu_yx - 1)), (-5*Ex*nu_yx*b**2*c**2 + 10*Ex*c**4 - 5*Ey*nu_xy*b**2*c**2 + 10*Ey*b**4 + 28*G*nu_xy*nu_yx*b**2*c**2 - 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (5*Ex*nu_yx*b**2*c**2 + 20*Ex*c**4 + 5*Ey*nu_xy*b**2*c**2 - 10*Ey*b**4 - 28*G*nu_xy*nu_yx*b**2*c**2 + 28*G*b**2*c**2)/(20*b**3*c**3*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), (-Ex*nu_yx*b**2*c**2/4 - Ex*c**4 - Ey*nu_xy*b**2*c**2/4 - Ey*b**4 + 7*G*nu_xy*nu_yx*b**2*c**2/5 - 7*G*b**2*c**2/5)/(b**3*c**3*(nu_xy*nu_yx - 1)), (Ex*nu_yx*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (Ex*c**2 + Ey*nu_xy*b**2/2 - G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1))],
+                           [(-5*Ey*b**2 + G*nu_xy*nu_yx*c**2 - G*c**2)/(5*b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - G*nu_xy*nu_yx*c**2 + G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-Ey*b**2/2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), (-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (-Ey*nu_xy*c**2/2 + Ey*b**2/2 + G*nu_xy*nu_yx*c**2/5 - G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 2*(-5*Ey*b**2 - 4*G*nu_xy*nu_yx*c**2 + 4*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), 0, (Ey*nu_xy*c**2/2 + Ey*b**2 - G*nu_xy*nu_yx*c**2/5 + G*c**2/5)/(b*c**2*(nu_xy*nu_yx - 1)), 4*(-5*Ey*b**2 + 2*G*nu_xy*nu_yx*c**2 - 2*G*c**2)/(15*b*c*(nu_xy*nu_yx - 1)), -Ey*nu_xy/(nu_xy*nu_yx - 1)],
+                           [(-Ex*nu_yx*b**2/2 + Ex*c**2/2 + G*nu_xy*nu_yx*b**2/5 - G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 8*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), -(Ex*c**2/2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, (-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (-Ex*c**2 + G*b**2*(nu_xy*nu_yx - 1)/5)/(b**2*c*(nu_xy*nu_yx - 1)), 0, -(10*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1)), (Ex*nu_yx*b**2/2 + Ex*c**2 - G*nu_xy*nu_yx*b**2/5 + G*b**2/5)/(b**2*c*(nu_xy*nu_yx - 1)), -Ex*nu_yx/(nu_xy*nu_yx - 1), 4*(-5*Ex*c**2 + 2*G*b**2*(nu_xy*nu_yx - 1))/(15*b*c*(nu_xy*nu_yx - 1))]])
+        
+        # Calculate the stiffness of a weak spring for the drilling degree of freedom (rotation
+        # about local z). We'll set the weak spring to be 1000 times weaker than any of the other
+        # rotational stiffnesses in the matrix.
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
                    )/1000
-        
+
+        # The matrix currently only holds terms related to bending action. We need to expand it to
+        # with placeholders for all the degrees of freedom so it can be directly added to the
+        # membrane stiffness matrix later on.
+
         # Initialize the expanded stiffness matrix to all zeros
-        k_exp = np.zeros((24, 24))
+        k_exp = zeros((24, 24))
 
         # Step through each term in the unexpanded stiffness matrix
+
         # i = Unexpanded matrix row
         for i in range(12):
 
@@ -487,117 +290,44 @@ class Plate3D():
                 # Add the term from the unexpanded matrix into the expanded
                 # matrix
                 k_exp[m, n] = k[i, j]
-
+        
         # Add the drilling degree of freedom's weak spring
         k_exp[5, 5] = k_rz
         k_exp[11, 11] = k_rz
         k_exp[17, 17] = k_rz
         k_exp[23, 23] = k_rz
-
+        
+        # Return the local stiffness matrix
         return k_exp
 
-    def k_m(self):
-        '''
-        Returns the local stiffness matrix for membrane (in-plane) stresses.
-
-        Plane stress is assumed
-        '''
-
-        t = self.t
-        Cm = self.Cm()
-
-        # Define the gauss point for numerical integration
-        gp = 1/3**0.5
-
-        # Get the membrane B matrices for each gauss point
-        # Doing this now will save us from doing it twice below
-        B1 = self.B_m(gp, gp)
-        B2 = self.B_m(-gp, gp)
-        B3 = self.B_m(-gp, -gp)
-        B4 = self.B_m(gp, -gp)
-
-        # See reference 2 at the bottom of page 353, and reference 2 page 466
-        k = t*(np.matmul(B1.T, np.matmul(Cm, B1))*det(self.J(gp, gp)) +
-               np.matmul(B2.T, np.matmul(Cm, B2))*det(self.J(-gp, gp)) +
-               np.matmul(B3.T, np.matmul(Cm, B3))*det(self.J(-gp, -gp)) +
-               np.matmul(B4.T, np.matmul(Cm, B4))*det(self.J(gp, -gp)))
-        
-        k_exp = np.zeros((24, 24))
-
-        # Step through each term in the unexpanded stiffness matrix
-        # i = Unexpanded matrix row
-        for i in range(8):
-
-            # j = Unexpanded matrix column
-            for j in range(8):
-                
-                # Find the corresponding term in the expanded stiffness
-                # matrix
-
-                # m = Expanded matrix row
-                if i in [0, 2, 4, 6]:  # indices associated with displacement in x
-                    m = i*3
-                if i in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    m = i*3 - 2
-
-                # n = Expanded matrix column
-                if j in [0, 2, 4, 6]:  # indices associated with displacement in x
-                    n = j*3
-                if j in [1, 3, 5, 7]:  # indices associated with displacement in y
-                    n = j*3 - 2
-                
-                # Ensure the indices are integers rather than floats
-                m, n = round(m), round(n)
-
-                # Add the term from the unexpanded matrix into the expanded matrix
-                k_exp[m, n] = k[i, j]
-        
-        return k_exp
-
-    def k(self):
-        '''
-        Returns the quad element's local stiffness matrix.
-        '''
-
-        # Recalculate the local coordinate system
-        self._local_coords()
-
-        # Sum the bending and membrane stiffness matrices
-        return np.add(self.k_b(), self.k_m())
-   
     def f(self, combo_name='Combo 1'):
         """
-        Returns the quad element's local end force vector
+        Returns the plate's local end force vector
         """
         
         # Calculate and return the plate's local end force vector
-        return np.add(np.matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
+        return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
     def fer(self, combo_name='Combo 1'):
-        '''
-        Returns the quadrilateral's local fixed end reaction vector.
+        """
+        Returns the rectangle's local fixed end reaction vector.
 
         Parameters
         ----------
         combo_name : string
-            The name of the load combination to get the consistent load vector for.
-        '''
+            The name of the load combination to get the load vector for.
+        """
         
-        Hw = lambda r, s : 1/4*np.array([[(1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0, (1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0]])
-
         # Initialize the fixed end reaction vector
-        fer = np.zeros((12,1))
+        fer = zeros((12, 1))
 
         # Get the requested load combination
         combo = self.model.LoadCombos[combo_name]
 
-        # Define the gauss point used for numerical integration
-        gp = 1/3**0.5
-
         # Initialize the element's surface pressure to zero
         p = 0
-
-        # Loop through each load case and factor in the load combination
+        
+        # Loop through each load case and factor in the load combination 
         for case, factor in combo.factors.items():
 
             # Sum the pressures
@@ -606,16 +336,26 @@ class Plate3D():
                 # Check if the current pressure corresponds to the current load case
                 if pressure[1] == case:
 
-                    # Sum the pressures
-                    p -= factor*pressure[0]
+                    # Sum the pressures multiplied by their load factors
+                    p += factor*pressure[0]
         
-        fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
-             + Hw(gp, -gp).T*p*det(self.J(gp, -gp))
-             + Hw(gp, gp).T*p*det(self.J(gp, gp))
-             + Hw(-gp, gp).T*p*det(self.J(-gp, gp)))
+        b = self.width()/2
+        c = self.height()/2
+        
+        fer = -4*p*c*b*array([[1/4], [c/12], [-b/12], [1/4], [c/12], [b/12], [1/4], [-c/12], [b/12], [1/4], [-c/12], [-b/12]])
+
+        # At this point `fer` only contains terms for the degrees of freedom
+        # associated with membrane action. Expand `fer` to include zero terms for
+        # the degrees of freedom related to bending action. This will allow
+        # the bending and membrane vectors to be summed directly
+        # later on. `numpy` has an `insert` function that can be used to
+        # insert rows and columns of zeros one at a time, but it is very slow
+        # as it makes a temporary copy of the vector term by term each time
+        # it's called. The algorithm used here accomplishes the same thing
+        # much faster. Terms are copied only once.
 
         # Initialize the expanded vector to all zeros
-        fer_exp = np.zeros((24, 1))
+        fer_exp = zeros((24, 1))
 
         # Step through each term in the unexpanded vector
         # i = Unexpanded vector row
@@ -638,89 +378,124 @@ class Plate3D():
             fer_exp[m, 0] = fer[i, 0]
 
         return fer_exp
-
+        
     def d(self, combo_name='Combo 1'):
        """
-       Returns the quad element's local displacement vector
+       Returns the plate's local displacement vector
        """
 
        # Calculate and return the local displacement vector
-       return np.matmul(self.T(), self.D(combo_name))
+       return matmul(self.T(), self.D(combo_name))
 
     def F(self, combo_name='Combo 1'):
         """
-        Returns the quad element's global force vector
-
-        Parameters
-        ----------
-        combo_name : string
-            The load combination to get results for.
+        Returns the plate's global nodal force vector
         """
-        
+
         # Calculate and return the global force vector
-        return np.matmul(inv(self.T()), self.f(combo_name))
+        return matmul(inv(self.T()), self.f(combo_name))
 
     def D(self, combo_name='Combo 1'):
-        '''
-        Returns the quad element's global displacement vector for the given
-        load combination.
-
-        Parameters
-        ----------
-        combo_name : string
-            The name of the load combination to get the displacement vector
-            for (not the load combination itself).
-        '''
+        """
+        Returns the plate's global displacement vector for the given load combination.
+        """
         
         # Initialize the displacement vector
-        D = np.zeros((24, 1))
+        D = zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        D[0, 0] = self.i_node.DX[combo_name]
-        D[1, 0] = self.i_node.DY[combo_name]
-        D[2, 0] = self.i_node.DZ[combo_name]
-        D[3, 0] = self.i_node.RX[combo_name]
-        D[4, 0] = self.i_node.RY[combo_name]
-        D[5, 0] = self.i_node.RZ[combo_name]
+        D.itemset((0, 0), self.i_node.DX[combo_name])
+        D.itemset((1, 0), self.i_node.DY[combo_name])
+        D.itemset((2, 0), self.i_node.DZ[combo_name])
+        D.itemset((3, 0), self.i_node.RX[combo_name])
+        D.itemset((4, 0), self.i_node.RY[combo_name])
+        D.itemset((5, 0), self.i_node.RZ[combo_name])
 
-        D[6, 0] = self.j_node.DX[combo_name]
-        D[7, 0] = self.j_node.DY[combo_name]
-        D[8, 0] = self.j_node.DZ[combo_name]
-        D[9, 0] = self.j_node.RX[combo_name]
-        D[10, 0] = self.j_node.RY[combo_name]
-        D[11, 0] = self.j_node.RZ[combo_name]
+        D.itemset((6, 0), self.j_node.DX[combo_name])
+        D.itemset((7, 0), self.j_node.DY[combo_name])
+        D.itemset((8, 0), self.j_node.DZ[combo_name])
+        D.itemset((9, 0), self.j_node.RX[combo_name])
+        D.itemset((10, 0), self.j_node.RY[combo_name])
+        D.itemset((11, 0), self.j_node.RZ[combo_name])
 
-        D[12, 0] = self.m_node.DX[combo_name]
-        D[13, 0] = self.m_node.DY[combo_name]
-        D[14, 0] = self.m_node.DZ[combo_name]
-        D[15, 0] = self.m_node.RX[combo_name]
-        D[16, 0] = self.m_node.RY[combo_name]
-        D[17, 0] = self.m_node.RZ[combo_name]
+        D.itemset((12, 0), self.m_node.DX[combo_name])
+        D.itemset((13, 0), self.m_node.DY[combo_name])
+        D.itemset((14, 0), self.m_node.DZ[combo_name])
+        D.itemset((15, 0), self.m_node.RX[combo_name])
+        D.itemset((16, 0), self.m_node.RY[combo_name])
+        D.itemset((17, 0), self.m_node.RZ[combo_name])
 
-        D[18, 0] = self.n_node.DX[combo_name]
-        D[19, 0] = self.n_node.DY[combo_name]
-        D[20, 0] = self.n_node.DZ[combo_name]
-        D[21, 0] = self.n_node.RX[combo_name]
-        D[22, 0] = self.n_node.RY[combo_name]
-        D[23, 0] = self.n_node.RZ[combo_name]
+        D.itemset((18, 0), self.n_node.DX[combo_name])
+        D.itemset((19, 0), self.n_node.DY[combo_name])
+        D.itemset((20, 0), self.n_node.DZ[combo_name])
+        D.itemset((21, 0), self.n_node.RX[combo_name])
+        D.itemset((22, 0), self.n_node.RY[combo_name])
+        D.itemset((23, 0), self.n_node.RZ[combo_name])
         
         # Return the global displacement vector
         return D
+ 
+    def T(self):
+        """
+        Returns the plate's transformation matrix
+        """
+
+        # Calculate the direction cosines for the local x-axis
+        # The local x-axis will run from the i-node to the j-node
+        xi = self.i_node.X
+        xj = self.j_node.X
+        yi = self.i_node.Y
+        yj = self.j_node.Y
+        zi = self.i_node.Z
+        zj = self.j_node.Z
+        x = [(xj - xi), (yj - yi), (zj - zi)]
+        x = x/norm(x)
+        
+        # The local y-axis will be in the plane of the plate
+        # Find a vector in the plate's local xy plane
+        xn = self.n_node.X
+        yn = self.n_node.Y
+        zn = self.n_node.Z
+        xy = [xn - xi, yn - yi, zn - zi]
+
+        # Find a vector perpendicular to the plate surface to get the orientation of the local z-axis
+        z = cross(x, xy)
+        
+        # Divide the vector by its magnitude to produce a unit z-vector of direction cosines
+        z = z/norm(z)
+
+        # Calculate the local y-axis as a vector perpendicular to the local z and x-axes
+        y = cross(z, x)
+        
+        # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+        y = y/norm(y)
+
+        # Create the direction cosines matrix
+        dirCos = array([x, y, z])
+        
+        # Build the transformation matrix
+        transMatrix = zeros((24, 24))
+        transMatrix[0:3, 0:3] = dirCos
+        transMatrix[3:6, 3:6] = dirCos
+        transMatrix[6:9, 6:9] = dirCos
+        transMatrix[9:12, 9:12] = dirCos
+        transMatrix[12:15, 12:15] = dirCos
+        transMatrix[15:18, 15:18] = dirCos
+        transMatrix[18:21, 18:21] = dirCos
+        transMatrix[21:24, 21:24] = dirCos
+        
+        return transMatrix
 
     def K(self):
-        '''
-        Returns the quad element's global stiffness matrix
-        '''
-
-        # Get the transformation matrix
-        T = self.T()
+        """
+        Returns the plate's global stiffness matrix
+        """
 
         # Calculate and return the stiffness matrix in global coordinates
-        return np.matmul(np.matmul(inv(T), self.k()), T)
- 
-    # Global fixed end reaction vector
+        return matmul(matmul(inv(self.T()), self.k()), self.T())
+
     def FER(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the global fixed end reaction vector.
 
         Parameters
@@ -728,201 +503,149 @@ class Plate3D():
         combo_name : string
             The name of the load combination to calculate the fixed end
             reaction vector for (not the load combination itself).
-        '''
+        """
         
         # Calculate and return the fixed end reaction vector
-        return np.matmul(inv(self.T()), self.fer(combo_name))
-  
-    def T(self):
-        '''
-        Returns the coordinate transformation matrix for the quad element.
-        '''
+        return matmul(inv(self.T()), self.fer(combo_name))
 
-        xi = self.i_node.X
-        xj = self.j_node.X
-        yi = self.i_node.Y
-        yj = self.j_node.Y
-        zi = self.i_node.Z
-        zj = self.j_node.Z
-
-        # Calculate the direction cosines for the local x-axis.The local x-axis will run from
-        # the i-node to the j-node
-        x = [xj - xi, yj - yi, zj - zi]
-
-        # Divide the vector by its magnitude to produce a unit x-vector of
-        # direction cosines
-        mag = (x[0]**2 + x[1]**2 + x[2]**2)**0.5
-        x = [x[0]/mag, x[1]/mag, x[2]/mag]
-        
-        # The local y-axis will be in the plane of the plate. Find a vector in
-        # the plate's local xy plane.
-        xm = self.m_node.X
-        ym = self.m_node.Y
-        zm = self.m_node.Z
-        xy = [xm - xi, ym - yi, zm - zi]
-
-        # Find a vector perpendicular to the plate surface to get the
-        # orientation of the local z-axis.
-        z = np.cross(x, xy)
-        
-        # Divide the z-vector by its magnitude to produce a unit z-vector of
-        # direction cosines.
-        mag = (z[0]**2 + z[1]**2 + z[2]**2)**0.5
-        z = [z[0]/mag, z[1]/mag, z[2]/mag]
-
-        # Calculate the local y-axis as a vector perpendicular to the local z
-        # and x-axes.
-        y = np.cross(z, x)
-        
-        # Divide the y-vector by its magnitude to produce a unit vector of
-        # direction cosines.
-        mag = (y[0]**2 + y[1]**2 + y[2]**2)**0.5
-        y = [y[0]/mag, y[1]/mag, y[2]/mag]
-
-        # Create the direction cosines matrix.
-        dirCos = np.array([x,
-                           y,
-                           z])
-        
-        # Build the transformation matrix.
-        T = np.zeros((24, 24))
-        T[0:3, 0:3] = dirCos
-        T[3:6, 3:6] = dirCos
-        T[6:9, 6:9] = dirCos
-        T[9:12, 9:12] = dirCos
-        T[12:15, 12:15] = dirCos
-        T[15:18, 15:18] = dirCos
-        T[18:21, 18:21] = dirCos
-        T[21:24, 21:24] = dirCos
-        
-        # Return the transformation matrix.
-        return T
-
-    def shear(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
+    def _C(self):
         """
-        Returns the interal shears at any point in the quad element.
+        Returns the plate's displacement coefficient matrix [C]
+        """
 
-        Internal shears are reported as a 2D array [[Qx], [Qy]] at the
-        specified location in the (xi, eta) natural coordinate system.
+        # Find the local x and y coordinates at each node
+        xi = 0
+        yi = 0
+        xj = self.width()
+        yj = 0
+        xm = xj
+        ym = self.height()
+        xn = 0
+        yn = ym
+
+        # Calculate the [C] coefficient matrix
+        C = array([[1, xi, yi, xi**2, xi*yi, yi**2, xi**3, xi**2*yi, xi*yi**2, yi**3, xi**3*yi, xi*yi**3],
+                    [0, 0, 1, 0, xi, 2*yi, 0, xi**2, 2*xi*yi, 3*yi**2, xi**3, 3*xi*yi**2],
+                    [0, -1, 0, -2*xi, -yi, 0, -3*xi**2, -2*xi*yi, -yi**2, 0, -3*xi**2*yi, -yi**3],
+                    
+                    [1, xj, yj, xj**2, xj*yj, yj**2, xj**3, xj**2*yj, xj*yj**2, yj**3, xj**3*yj, xj*yj**3],
+                    [0, 0, 1, 0, xj, 2*yj, 0, xj**2, 2*xj*yj, 3*yj**2, xj**3, 3*xj*yj**2],
+                    [0, -1, 0, -2*xj, -yj, 0, -3*xj**2, -2*xj*yj, -yj**2, 0, -3*xj**2*yj, -yj**3],
+
+                    [1, xm, ym, xm**2, xm*ym, ym**2, xm**3, xm**2*ym, xm*ym**2, ym**3, xm**3*ym, xm*ym**3],
+                    [0, 0, 1, 0, xm, 2*ym, 0, xm**2, 2*xm*ym, 3*ym**2, xm**3, 3*xm*ym**2],
+                    [0, -1, 0, -2*xm, -ym, 0, -3*xm**2, -2*xm*ym, -ym**2, 0, -3*xm**2*ym, -ym**3],
+
+                    [1, xn, yn, xn**2, xn*yn, yn**2, xn**3, xn**2*yn, xn*yn**2, yn**3, xn**3*yn, xn*yn**3],
+                    [0, 0, 1, 0, xn, 2*yn, 0, xn**2, 2*xn*yn, 3*yn**2, xn**3, 3*xn*yn**2],
+                    [0, -1, 0, -2*xn, -yn, 0, -3*xn**2, -2*xn*yn, -yn**2, 0, -3*xn**2*yn, -yn**3]])
+        
+        # Return the coefficient matrix
+        return C
+
+    def _Q(self, x, y):
+        """
+        Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y)
+        in the plate's local system.
+        """
+
+        # Calculate the [Q] coefficient matrix
+        Q =  array([[0, 0, 0, -2, 0, 0, -6*x, -2*y, 0, 0, -6*x*y, 0],
+                    [0, 0, 0, 0, 0, -2, 0, 0, -2*x, -6*y, 0, -6*x*y],
+                    [0, 0, 0, 0, -2, 0, 0, -4*x, -4*y, 0, -6*x**2, -6*y**2]])
+ 
+        # Return the [Q] coefficient matrix
+        return Q
+
+    def _a(self, combo_name='Combo 1'):
+        """
+        Returns the vector of plate bending constants for the displacement function.
 
         Parameters
         ----------
-        xi : number
-            The xi-coordinate. Default is 0.
-        eta : number
-            The eta-coordinate. Default is 0.
-        
-        Returns
-        -------
-        Internal shear force per unit length of the quad element: [[Qx], [Qy]]
+        combo_name : string
+            The name of the load combination to get the vector for
         """
 
         # Get the plate's local displacement vector
         # Slice out terms not related to plate bending
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
-        # Define the gauss point used for numerical integration
-        gp = 1/3**0.5
+        # Return the plate bending constants
+        return inv(self._C()) @ d
 
-        # Define extrapolated r and s points
-        xi_ex = xi/gp
-        eta_ex = eta/gp
-
-        # Define the interpolation functions
-        H = 1/4*np.array([(1 - xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 + eta_ex), (1 - xi_ex)*(1 + eta_ex)])
-
-        # Get the stress-strain matrix
-        Hs = self.Hs()
-
-        # Calculate the internal shears [Qx, Qy] at each gauss point
-        q1 = np.matmul(Hs, np.matmul(self.B_s(-gp, -gp), d))
-        q2 = np.matmul(Hs, np.matmul(self.B_s(gp, -gp), d))
-        q3 = np.matmul(Hs, np.matmul(self.B_s(gp, gp), d))
-        q4 = np.matmul(Hs, np.matmul(self.B_s(-gp, gp), d))
-
-        # Extrapolate to get the value at the requested location
-        Qx = H[0]*q1[0] + H[1]*q2[0] + H[2]*q3[0] + H[3]*q4[0]
-        Qy = H[0]*q1[1] + H[1]*q2[1] + H[2]*q3[1] + H[3]*q4[1]
-
-        if local:
-            
-            return np.array([Qx,
-                             Qy])
-        
-        else:
-            
-            # Get the direction cosines for the plate's local coordinate system
-            dir_cos = self.T()[:3, :3]
-
-            return np.matmul(dir_cos.T, np.array([Qx,
-                                                  Qy,
-                                                  [0]]))
-   
-    def moment(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
+    def moment(self, x, y, local=True, combo_name='Combo 1'):
         """
-        Returns the interal moments at any point in the quad element.
-
-        Internal moments are reported as a 2D array [[Mx], [My], [Mxy]] at the
-        specified location in the (xi, eta) natural coordinate system.
+        Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
+        coordinate system
 
         Parameters
         ----------
-        xi : number
-            The xi-coordinate. Default is 0.
-        eta : number
-            The eta-coordinate. Default is 0.
+        x : number
+            The x-coordinate in the plate's local coordinate system.
+        y : number
+            The y-coordinate in the plate's local coordinate system.
+        combo_name : string
+            The name of the load combination to evaluate. The default is 'Combo 1'.
+
+        """
         
-        Returns
-        -------
-        Internal moment per unit length of the quad element: [[Mx], [My], [Mxy]]
+        # Calculate and return internal moments
+        # A negative sign will be applied to change the sign convention to match that of
+        # PyNite's quadrilateral elements.
+        return -self.Db() @ self._Q(x, y) @ self._a(combo_name)
+ 
+    def shear(self, x, y, local=True, combo_name='Combo 1'):
+        """
+        Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
+        coordinate system
+
+        Parameters
+        ----------
+        x : number
+            The x-coordinate in the plate's local coordinate system.
+        y : number
+            The y-coordinate in the plate's local coordinate system.
+        combo_name : string
+            The name of the load combination to evaluate. The default is 'Combo 1'.
+
         """
 
-        # Get the plate's local displacement vector
-        # Slice out terms not related to plate bending
-        d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
+        # Store matrices into local variables for quicker access
+        Db = self.Db()
+        a = self._a(combo_name)
 
-        # Define the gauss point used for numerical integration
-        gp = 1/3**0.5
+        # Calculate the derivatives of the plate moments needed to compute shears
+        dMx_dx = (Db @ array([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
+                             [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]]) @ a)[0]
 
-        # # Define extrapolated r and s points
-        xi_ex = xi/gp
-        eta_ex = eta/gp
-
-        # Define the interpolation functions
-        H = 1/4*np.array([(1 - xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 + eta_ex), (1 - xi_ex)*(1 + eta_ex)])
-
-        # Get the stress-strain matrix
-        Hb = self.Hb()
-
-        # Calculate the internal moments [Mx, My, Mxy] at each gauss point
-        m1 = np.matmul(Hb, np.matmul(self.B_kappa(-gp, -gp), d))
-        m2 = np.matmul(Hb, np.matmul(self.B_kappa(gp, -gp), d))
-        m3 = np.matmul(Hb, np.matmul(self.B_kappa(gp, gp), d))
-        m4 = np.matmul(Hb, np.matmul(self.B_kappa(-gp, gp), d))
-
-        # Extrapolate to get the value at the requested location
-        Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
-        My = H[0]*m1[1] + H[1]*m2[1] + H[2]*m3[1] + H[3]*m4[1]
-        Mxy = H[0]*m1[2] + H[1]*m2[2] + H[2]*m3[2] + H[3]*m4[2]
+        dMxy_dy = (Db @ array([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+                              [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
+                              [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]]) @ a)[2]
         
-        if local:
+        dMy_dy = (Db @ array([[0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*x, 0],
+                             [0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -6*x],
+                             [0, 0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*y]]) @ a)[1]
 
-            return np.array([Mx,
-                             My,
-                             Mxy])
+        dMxy_dx = (Db @ array([[0, 0, 0, 0, 0, 0, -6, 0, 0, 0, -6*y, 0],
+                              [0, 0, 0, 0, 0, 0, 0, 0, -2, 0, 0, -6*y],
+                              [0, 0, 0, 0, 0, 0, 0, -4, 0, 0, -12*x, 0]]) @ a)[2]
         
-        else:
-            
-            # Get the direction cosines for the plate's local coordinate system
-            dir_cos = self.T()[:3, :3]
+        # Calculate internal shears
+        Qx = (dMx_dx + dMxy_dy)[0]
+        Qy = (dMy_dy + dMxy_dx)[0]
 
-            # Convert the plate flexural stresses to global coordinates
-            return np.matmul(dir_cos.T, np.array([Mx,
-                                                  My,
-                                                  [0]]))
+        # Return internal shears
+        return array([[Qx], 
+                       [Qy]])
 
-    def membrane(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
+    def membrane(self, x, y, local=True, combo_name='Combo 1'):
         
+        # Convert the (x, y) coordinates to (r, x) coordinates
+        r = -1 + 2*x/self.width()
+        s = -1 + 2*y/self.height()
+
         # Get the plate's local displacement vector
         # Slice out terms not related to membrane forces
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
@@ -931,39 +654,26 @@ class Plate3D():
         gp = 1/3**0.5
 
         # Define extrapolated r and s points
-        xi_ex = xi/gp
-        eta_ex = eta/gp
+        r_ex = r/gp
+        s_ex = s/gp
 
         # Define the interpolation functions
-        H = 1/4*np.array([(1 - xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 - eta_ex), (1 + xi_ex)*(1 + eta_ex), (1 - xi_ex)*(1 + eta_ex)])
+        H = 1/4*array([(1 - r_ex)*(1 - s_ex), (1 + r_ex)*(1 - s_ex), (1 + r_ex)*(1 + s_ex), (1 - r_ex)*(1 + s_ex)])
 
         # Get the stress-strain matrix
-        Cm = self.Cm()
+        Dm = self.Dm()
         
         # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
-        s1 = np.matmul(Cm, np.matmul(self.B_m(-gp, -gp), d))
-        s2 = np.matmul(Cm, np.matmul(self.B_m(gp, -gp), d))
-        s3 = np.matmul(Cm, np.matmul(self.B_m(gp, gp), d))
-        s4 = np.matmul(Cm, np.matmul(self.B_m(-gp, gp), d))
+        s1 = matmul(Dm, matmul(self.B_m(-gp, -gp), d))
+        s2 = matmul(Dm, matmul(self.B_m(gp, -gp), d))
+        s3 = matmul(Dm, matmul(self.B_m(gp, gp), d))
+        s4 = matmul(Dm, matmul(self.B_m(-gp, gp), d))
 
         # Extrapolate to get the value at the requested location
         Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]
         Sy = H[0]*s1[1] + H[1]*s2[1] + H[2]*s3[1] + H[3]*s4[1]
         Txy = H[0]*s1[2] + H[1]*s2[2] + H[2]*s3[2] + H[3]*s4[2]
 
-        if local:
-
-            return np.array([Sx,
-                             Sy,
-                             Txy])
-        
-        else:
-
-            # Get the direction cosines for the plate's local coordinate system
-            dir_cos = self.T()[:3, :3]
-
-            # Convert the plate membrane stresses to global coordinates
-            return np.matmul(dir_cos.T, np.array([Sx,
-                                                  Sy,
-                                                  [0]]))
-
+        return array([Sx,
+                      Sy,
+                      Txy])
