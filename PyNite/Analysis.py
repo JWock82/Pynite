@@ -636,8 +636,12 @@ def _calc_reactions(model, log=False, combo_tags=None):
 
     Parameters
     ----------
+    model : FEModel3D
+        The finite element model to calculate reactions for.
     log : bool, optional
         Prints updates to the console if set to True. Default is False.
+    combo_tags : string, optional
+        A list of tags that will be used to identify which load combinations need their reactions calculated. If set to `None` then all load combinations will have their reactions calculated. Default is `None`.
     """
 
     # Print a status update to the console
