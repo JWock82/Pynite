@@ -638,7 +638,7 @@ class Plate3D():
 
         # Return internal shears
         return array([[Qx], 
-                       [Qy]])
+                      [Qy]])
 
     def membrane(self, x, y, local=True, combo_name='Combo 1'):
         

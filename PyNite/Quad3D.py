@@ -321,20 +321,20 @@ class Quad3D():
         # Return the [B] matrix for shear
         return inv(self.J(xi, eta)) @ self.N_gamma(xi, eta) @ self.A_gamma() @ self.A_phi_Delta() @ self.A_u()
 
-    def B_m(self, r, s):
+    def B_m(self, xi, eta):
 
         # Differentiate the interpolation functions
         # Row 1 = interpolation functions differentiated with respect to x
         # Row 2 = interpolation functions differentiated with respect to y
         # Note that the inverse of the Jacobian converts from derivatives with
         # respect to r and s to derivatives with respect to x and y
-        dH = np.matmul(inv(self.J(r, s)), 1/4*np.array([[s + 1, -s - 1, s - 1, -s + 1],                 
-                                                  [r + 1, -r + 1, r - 1, -r - 1]]))
+        dH = np.matmul(inv(self.J(xi, eta)), 1/4*np.array([[eta - 1, -eta + 1, eta + 1, -eta - 1],                 
+                                                        [xi - 1,  -xi - 1,  xi + 1,  -xi + 1 ]]))
 
         # Reference 2, Example 5.5 (page 353)
         B_m = np.array([[dH[0, 0],    0,     dH[0, 1],    0,     dH[0, 2],    0,     dH[0, 3],    0    ],
-                     [   0,     dH[1, 0],    0,     dH[1, 1],    0,     dH[1, 2],    0,     dH[1, 3]],
-                     [dH[1, 0], dH[0, 0], dH[1, 1], dH[0, 1], dH[1, 2], dH[0, 2], dH[1, 3], dH[0, 3]]])
+                        [   0,     dH[1, 0],    0,     dH[1, 1],    0,     dH[1, 2],    0,     dH[1, 3]],
+                        [dH[1, 0], dH[0, 0], dH[1, 1], dH[0, 1], dH[1, 2], dH[0, 2], dH[1, 3], dH[0, 3]]])
 
         return B_m
 
@@ -817,8 +817,7 @@ class Quad3D():
         Internal shear force per unit length of the quad element: [[Qx], [Qy]]
         """
 
-        # Get the plate's local displacement vector
-        # Slice out terms not related to plate bending
+        # Get the plate's local displacement vector. Slice out terms not related to plate bending.
         d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
 
         # Define the gauss point used for numerical integration
@@ -923,8 +922,7 @@ class Quad3D():
 
     def membrane(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         
-        # Get the plate's local displacement vector
-        # Slice out terms not related to membrane forces
+        # Get the plate's local displacement vector. Slice out terms not related to membrane stresses.
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
 
         # Define the gauss point used for numerical integration
