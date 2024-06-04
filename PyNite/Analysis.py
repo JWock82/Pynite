@@ -787,7 +787,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                 # Sum the quad forces at the node
                 for quad in model.Quads.values():
 
-                    if quad.m_node == node:
+                    if quad.i_node == node:
 
                         # Get the quad's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -800,7 +800,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         if node.support_RY: node.RxnMY[combo.name] += quad_F[4, 0]
                         if node.support_RZ: node.RxnMZ[combo.name] += quad_F[5, 0]
 
-                    elif quad.n_node == node:
+                    elif quad.j_node == node:
 
                         # Get the quad's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -813,7 +813,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         if node.support_RY: node.RxnMY[combo.name] += quad_F[10, 0]
                         if node.support_RZ: node.RxnMZ[combo.name] += quad_F[11, 0]
 
-                    elif quad.i_node == node:
+                    elif quad.m_node == node:
 
                         # Get the quad's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -826,7 +826,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         if node.support_RY: node.RxnMY[combo.name] += quad_F[16, 0]
                         if node.support_RZ: node.RxnMZ[combo.name] += quad_F[17, 0]
 
-                    elif quad.j_node == node:
+                    elif quad.n_node == node:
 
                         # Get the quad's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
