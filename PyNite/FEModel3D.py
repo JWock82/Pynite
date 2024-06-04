@@ -1838,16 +1838,16 @@ class FEModel3D():
                 # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
                 if a < 6:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.m_node.ID*6 + a
+                    m = quad.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.n_node.ID*6 + (a - 6)
+                    m = quad.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.i_node.ID*6 + (a - 12)
+                    m = quad.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.j_node.ID*6 + (a - 18)
+                    m = quad.n_node.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER[m, 0] += quad_FER[a, 0]
