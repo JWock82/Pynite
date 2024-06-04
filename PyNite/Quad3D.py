@@ -894,10 +894,10 @@ class Quad3D():
         Hb = self.Hb()
 
         # Calculate the internal moments [Mx, My, Mxy] at each gauss point
-        m1 = np.matmul(Hb, np.matmul(self.B_kappa(-gp, -gp), d))
-        m2 = np.matmul(Hb, np.matmul(self.B_kappa(gp, -gp), d))
-        m3 = np.matmul(Hb, np.matmul(self.B_kappa(gp, gp), d))
-        m4 = np.matmul(Hb, np.matmul(self.B_kappa(-gp, gp), d))
+        m1 = np.matmul(Hb, np.matmul(self.B_b(-gp, -gp), d))
+        m2 = np.matmul(Hb, np.matmul(self.B_b(gp, -gp), d))
+        m3 = np.matmul(Hb, np.matmul(self.B_b(gp, gp), d))
+        m4 = np.matmul(Hb, np.matmul(self.B_b(-gp, gp), d))
 
         # Extrapolate to get the value at the requested location
         Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
