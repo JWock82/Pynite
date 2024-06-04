@@ -32,7 +32,7 @@ t = 8           # Masonry thickness (in)
 # The effects of cracked masonry can be modeled by adjusting the `ky_mod` factor. For this example
 # uncracked masonry will be used to match the textbook problem.
 model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Masonry', kx_mod=1, ky_mod=1,
-                         origin=[0, 0, 0], plane='XY', element_type='Rect')
+                         origin=[0, 0, 0], plane='XY', element_type='Quad')
 
 # Add a 4' wide x 12' tall door opening to the mesh
 model.Meshes['MSH1'].add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
