@@ -511,16 +511,16 @@ class Quad3D():
 
         # Get the membrane B matrices for each gauss point
         # Doing this now will save us from doing it twice below
-        B1 = self.B_m(gp, gp)
-        B2 = self.B_m(-gp, gp)
-        B3 = self.B_m(-gp, -gp)
-        B4 = self.B_m(gp, -gp)
+        B1 = self.B_m(-gp, -gp)
+        B2 = self.B_m(gp, -gp)
+        B3 = self.B_m(gp, gp)
+        B4 = self.B_m(-gp, gp)
 
         # See reference 2 at the bottom of page 353, and reference 2 page 466
-        k = t*(np.matmul(B1.T, np.matmul(Cm, B1))*det(self.J(gp, gp)) +
-               np.matmul(B2.T, np.matmul(Cm, B2))*det(self.J(-gp, gp)) +
-               np.matmul(B3.T, np.matmul(Cm, B3))*det(self.J(-gp, -gp)) +
-               np.matmul(B4.T, np.matmul(Cm, B4))*det(self.J(gp, -gp)))
+        k = t*(np.matmul(B1.T, np.matmul(Cm, B1))*det(self.J(-gp, -gp)) +
+               np.matmul(B2.T, np.matmul(Cm, B2))*det(self.J(gp, -gp)) +
+               np.matmul(B3.T, np.matmul(Cm, B3))*det(self.J(gp, gp)) +
+               np.matmul(B4.T, np.matmul(Cm, B4))*det(self.J(-gp, gp)))
         
         k_exp = np.zeros((24, 24))
 
