@@ -137,26 +137,26 @@ class Quad3D():
         """
 
         if i == 1:
-            return 1/4*(1-eta)*(1-xi)
+            return 1/4*(1 - xi)*(1 - eta)
         elif i == 2:
-            return 1/4*(1+eta)*(1-xi)
+            return 1/4*(1 + xi)*(1 - eta)
         elif i == 3:
-            return 1/4*(1+eta)*(1+xi)
+            return 1/4*(1 + xi)*(1 + eta)
         elif i == 4:
-            return 1/4*(1-eta)*(1+xi)
+            return 1/4*(1 - xi)*(1 + eta)
         else:
             raise Exception('Unable to calculate interpolation function. Invalid value specifed for i.')
     
     def P_k(self, k, xi, eta):
 
         if k == 5:
-            return 1/2*(1-eta**2)*(1-xi)
+            return 1/2*(1 - xi**2)*(1 - eta)
         elif k == 6:
-            return 1/2*(1+eta)*(1-xi**2)
+            return 1/2*(1 + xi)*(1 - eta**2)
         elif k == 7:
-            return 1/2*(1-eta**2)*(1+xi)
+            return 1/2*(1 - xi**2)*(1 + eta)
         elif k == 8:
-            return 1/2*(1-eta)*(1-xi**2)
+            return 1/2*(1 - xi)*(1 - eta**2)
         else:
             raise Exception('Unable to calculate shape function. Invalid value specified for k.')
 
@@ -175,8 +175,8 @@ class Quad3D():
     def N_gamma(self, xi, eta):
 
         # Equation 44
-        return np.array([[1/2*(1-eta),      0,     1/2*(1+eta),      0],
-                         [     0,      1/2*(1+xi),      0,      1/2*(1-xi)]])
+        return np.array([[1/2*(1 - eta),       0,      1/2*(1 + eta),       0     ],
+                         [     0,        1/2*(1 + xi),       0,       1/2*(1 - xi)]])
 
     def A_gamma(self):
 
@@ -186,9 +186,9 @@ class Quad3D():
         L8 = self.L_k(8)
 
         # Equation 46
-        return np.array([[L5/2,   0,     0,     0],
-                         [  0,  L6/2,    0,     0],
-                         [  0,    0,  -L7/2,    0],
+        return np.array([[L5/2,   0,     0,     0 ],
+                         [  0,  L6/2,    0,     0 ],
+                         [  0,    0,  -L7/2,    0 ],
                          [  0,    0,     0,  -L8/2]])
 
     def A_u(self):
@@ -244,14 +244,14 @@ class Quad3D():
         j22 = J_inv[1, 1]
 
         # Derivatives of the bilinear interpolation functions
-        N1_xi = 0.25*eta - 0.25
-        N2_xi = 0.25 - 0.25*eta
-        N3_xi = 0.25*eta + 0.25
-        N4_xi = - 0.25*eta - 0.25
-        N1_eta = 0.25*xi - 0.25
-        N2_eta = - 0.25*xi - 0.25
-        N3_eta = 0.25*xi + 0.25
-        N4_eta = 0.25 - 0.25*xi
+        N1_xi = 0.25*(eta - 1)
+        N2_xi = -0.25*(eta - 1)
+        N3_xi = 0.25*(eta + 1)
+        N4_xi = -0.25*(eta + 1)
+        N1_eta = 0.25*(xi - 1)
+        N2_eta = -0.25*(xi + 1)
+        N3_eta = 0.25*(xi + 1)
+        N4_eta = -0.25*(xi - 1)
 
         N1x = j11*N1_xi + j12*N1_eta
         N1y = j21*N1_xi + j22*N1_eta
@@ -389,8 +389,8 @@ class Quad3D():
 
         # Gallagher, Equation 9.3, page 251
         Cm = 1/(1 - nu_xy*nu_yx)*np.array([[   Ex,    nu_yx*Ex,           0         ],
-                                        [nu_xy*Ey,    Ey,              0         ],
-                                        [    0,        0,     (1 - nu_xy*nu_yx)*G]])
+                                           [nu_xy*Ey,    Ey,              0         ],
+                                           [    0,        0,     (1 - nu_xy*nu_yx)*G]])
         
         return Cm
 
@@ -883,7 +883,7 @@ class Quad3D():
         # Define the gauss point used for numerical integration
         gp = 1/3**0.5
 
-        # # Define extrapolated r and s points
+        # # Define extrapolated `xi` and `eta` points
         xi_ex = xi/gp
         eta_ex = eta/gp
 
