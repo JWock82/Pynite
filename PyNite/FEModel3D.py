@@ -1481,32 +1481,32 @@ class FEModel3D():
                 # Determine which node the index 'a' is related to
                 if a < 6:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.m_node.ID*6 + a
+                    m = quad.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.n_node.ID*6 + (a - 6)
+                    m = quad.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.i_node.ID*6 + (a - 12)
+                    m = quad.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.j_node.ID*6 + (a - 18)
+                    m = quad.n_node.ID*6 + (a - 18)
 
                 for b in range(24):
 
                     # Determine which node the index 'b' is related to
                     if b < 6:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.m_node.ID*6 + b
+                        n = quad.i_node.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.n_node.ID*6 + (b - 6)
+                        n = quad.j_node.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.i_node.ID*6 + (b - 12)
+                        n = quad.m_node.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.j_node.ID*6 + (b - 18)
+                        n = quad.n_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     if sparse == True:
