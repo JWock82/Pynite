@@ -54,7 +54,7 @@ model.analyze(check_statics=True)
 # +-----------------------+
 
 # Set up a renderer for the wall. The quad mesh will be set to show 'Mx' results.
-from PyNite.Visualization import Renderer
+from PyNite.Rendering import Renderer
 renderer = Renderer(model)
 renderer.annotation_size = mesh_size/6
 renderer.deformed_shape = False
