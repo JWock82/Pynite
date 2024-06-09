@@ -193,20 +193,23 @@ class Quad3D():
 
     def A_u(self):
 
+        # Calculate the length of each side of the quad
         L5 = self.L_k(5)
         L6 = self.L_k(6)
         L7 = self.L_k(7)
         L8 = self.L_k(8)
 
+        # Get the direction cosines for each side of the quad
         C5, S5 = self.dir_cos(5)
         C6, S6 = self.dir_cos(6)
         C7, S7 = self.dir_cos(7)
         C8, S8 = self.dir_cos(8)
 
-        return np.array([[-2/L5, C5, S5,  2/L5, C5, S5,   0,    0,  0,   0,    0,  0],
-                         [  0,    0,  0, -2/L6, C6, S6, 2/L6,  C6, S6,   0,    0,  0],
-                         [  0,    0,  0,   0,    0,  0, -2/L7, C7, S7,  2/L7, C7, S7],
-                         [ 2/L8, C8, S8,   0,    0,  0,   0,    0,  0, -2/L8, C8, S8]])
+        # Return the [A_u] matrix
+        return 1/2*np.array([[-2/L5, C5, S5,  2/L5, C5, S5,   0,    0,  0,   0,    0,  0],
+                             [  0,    0,  0, -2/L6, C6, S6, 2/L6,  C6, S6,   0,    0,  0],
+                             [  0,    0,  0,   0,    0,  0, -2/L7, C7, S7,  2/L7, C7, S7],
+                             [ 2/L8, C8, S8,   0,    0,  0,   0,    0,  0, -2/L8, C8, S8]])
 
     def A_Delta_inv_DKMQ(self):
 
@@ -327,9 +330,9 @@ class Quad3D():
         # Row 1 = interpolation functions differentiated with respect to x
         # Row 2 = interpolation functions differentiated with respect to y
         # Note that the inverse of the Jacobian converts from derivatives with
-        # respect to r and s to derivatives with respect to x and y
+        # respect to xi and eta to derivatives with respect to x and y
         dH = np.matmul(inv(self.J(xi, eta)), 1/4*np.array([[eta - 1, -eta + 1, eta + 1, -eta - 1],                 
-                                                        [xi - 1,  -xi - 1,  xi + 1,  -xi + 1 ]]))
+                                                           [xi - 1,  -xi - 1,  xi + 1,  -xi + 1 ]]))
 
         # Reference 2, Example 5.5 (page 353)
         B_m = np.array([[dH[0, 0],    0,     dH[0, 1],    0,     dH[0, 2],    0,     dH[0, 3],    0    ],
@@ -411,7 +414,7 @@ class Quad3D():
         J3 = det(self.J(gp, gp))
         J4 = det(self.J(-gp, gp))
 
-        # Get the bending B matrices for each gauss point
+        # Get the bending [B_b] matrices for each gauss point
         B1 = self.B_b(-gp, -gp)
         B2 = self.B_b(gp, -gp)
         B3 = self.B_b(gp, gp)
@@ -571,7 +574,7 @@ class Quad3D():
         """
         
         # Calculate and return the plate's local end force vector
-        return np.add(np.matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
+        return np.add(self.k() @ self.d(combo_name), self.fer(combo_name))
 
     def fer(self, combo_name='Combo 1'):
         '''
@@ -583,7 +586,7 @@ class Quad3D():
             The name of the load combination to get the consistent load vector for.
         '''
         
-        Hw = lambda r, s : 1/4*np.array([[(1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0, (1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0]])
+        Hw = lambda xi, eta : 1/4*np.array([[(1 - xi)*(1 - eta), 0, 0, (1 + xi)*(1 - eta), 0, 0, (1 + xi)*(1 + eta), 0, 0, (1 - xi)*(1 + eta), 0, 0]])
 
         # Initialize the fixed end reaction vector
         fer = np.zeros((12,1))
@@ -645,7 +648,7 @@ class Quad3D():
        """
 
        # Calculate and return the local displacement vector
-       return np.matmul(self.T(), self.D(combo_name))
+       return self.T() @ self.D(combo_name)
 
     def F(self, combo_name='Combo 1'):
         """
