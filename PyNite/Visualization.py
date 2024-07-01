@@ -2,7 +2,7 @@
 from json import load
 import warnings
 
-from IPython.display import Image
+#from IPython.display import Image
 from numpy import array, empty, append, cross
 from numpy.linalg import norm
 import vtk
@@ -1617,10 +1617,10 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
     
     # Step through each node
     for node in model.Nodes.values():
-    
+        
         # Step through and display each nodal load
         for load in node.NodeLoads:
-          
+            
             # Determine if this load is part of the requested LoadCombo or case
             if load[2] in load_factors:
               
@@ -1648,7 +1648,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
-    
+                
     # Step through each member
     for member in model.Members.values():
     

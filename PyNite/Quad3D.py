@@ -676,7 +676,8 @@ class Quad3D():
         '''
         Returns the coordinate transformation matrix for the quad element.
         '''
-
+        if not hasattr(self, '_local_x_vector'): self._local_coords()
+        
         # Create the direction cosines matrix.
         dirCos = array([self._local_x_vector,
                         self._local_y_vector,
