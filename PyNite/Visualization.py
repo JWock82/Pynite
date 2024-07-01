@@ -2,7 +2,7 @@
 from json import load
 import warnings
 
-#from IPython.display import Image
+from IPython.display import Image
 from numpy import array, empty, append, cross
 from numpy.linalg import norm
 import vtk
