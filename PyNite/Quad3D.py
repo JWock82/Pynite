@@ -409,7 +409,7 @@ class Quad3D():
         # Define the gauss point for numerical integration
         gp = 1/3**0.5
 
-        # Get the determinant of the Jacobian matrix for each gauss pointing. Doing this now will save us from doing it twice below.
+        # Get the determinant of the Jacobian matrix for each gauss point. Doing this now will save us from doing it twice below.
         J1 = det(self.J(-gp, -gp))
         J2 = det(self.J(gp, -gp))
         J3 = det(self.J(gp, gp))
