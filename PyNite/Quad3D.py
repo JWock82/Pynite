@@ -15,7 +15,8 @@ class Quad3D():
     DKMQ bending element with an isoparametric plane stress element. Drilling stability is
     provided by adding a weak rotational spring stiffness at each node. Isotropic behavior is the
     default, but orthotropic in-plane behavior can be modeled by specifying stiffness modification
-    factors for the element's local x and y axes.
+    factors for the element's local x and y axes. Orthotropic behavior is only available for
+    rectangular plates.
 
     This element performs well for thick and thin plates, and for skewed plates. Element center
     stresses and corner FORCES converge rapidly; however, corner STRESSES are more representative
@@ -133,7 +134,7 @@ class Quad3D():
 
     def N_i(self, i, xi, eta):
         """
-        Returns the interpolation function for any given coordinate in the natural coordinate system
+        Returns the interpolation function for any given coordinate in the natural (xi, eta) coordinate system
         """
 
         if i == 1:
@@ -218,10 +219,10 @@ class Quad3D():
         phi7 = self.phi_k(7)
         phi8 = self.phi_k(8)
 
-        return -3/2 * np.array([[1/(1+phi5),     0,          0,          0     ],
-                                [   0,       1/(1+phi6),     0,          0     ],
-                                [   0,           0,      1/(1+phi7),     0     ],
-                                [   0,           0,          0,      1/(1+phi8)]])
+        return -3/2*np.array([[1/(1+phi5),     0,          0,          0     ],
+                              [   0,       1/(1+phi6),     0,          0     ],
+                              [   0,           0,      1/(1+phi7),     0     ],
+                              [   0,           0,          0,      1/(1+phi8)]])
 
     def A_phi_Delta(self):
 
@@ -719,7 +720,7 @@ class Quad3D():
         T = self.T()
 
         # Calculate and return the stiffness matrix in global coordinates
-        return np.matmul(np.matmul(inv(T), self.k()), T)
+        return inv(T) @ self.k() @ T
  
     # Global fixed end reaction vector
     def FER(self, combo_name='Combo 1'):
@@ -737,9 +738,9 @@ class Quad3D():
         return np.matmul(inv(self.T()), self.fer(combo_name))
   
     def T(self):
-        '''
+        """
         Returns the coordinate transformation matrix for the quad element.
-        '''
+        """
 
         xi = self.i_node.X
         xj = self.j_node.X
@@ -783,20 +784,20 @@ class Quad3D():
         y = [y[0]/mag, y[1]/mag, y[2]/mag]
 
         # Create the direction cosines matrix.
-        dirCos = np.array([x,
+        dir_cos = np.array([x,
                            y,
                            z])
         
         # Build the transformation matrix.
         T = np.zeros((24, 24))
-        T[0:3, 0:3] = dirCos
-        T[3:6, 3:6] = dirCos
-        T[6:9, 6:9] = dirCos
-        T[9:12, 9:12] = dirCos
-        T[12:15, 12:15] = dirCos
-        T[15:18, 15:18] = dirCos
-        T[18:21, 18:21] = dirCos
-        T[21:24, 21:24] = dirCos
+        T[0:3, 0:3] = dir_cos
+        T[3:6, 3:6] = dir_cos
+        T[6:9, 6:9] = dir_cos
+        T[9:12, 9:12] = dir_cos
+        T[12:15, 12:15] = dir_cos
+        T[15:18, 15:18] = dir_cos
+        T[18:21, 18:21] = dir_cos
+        T[21:24, 21:24] = dir_cos
         
         # Return the transformation matrix.
         return T

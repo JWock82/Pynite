@@ -240,14 +240,19 @@ class Mesh():
             combinations will be evaluated.
         """
 
-        if direction == 'Mx':
+        if direction in ['MX', 'MY', 'MZ']:
+            local = False
+        else:
+            local = True
+
+        if direction.upper() == 'MX':
             i = 0
-        elif direction == 'My':
+        elif direction.upper() == 'MY':
             i = 1
-        elif direction == 'Mxy':
+        elif direction == 'Mxy' or direction == 'MZ':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', or \'Mxy\'')
+            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', \'Mxy\', \'MX\', \'MY\', or \'MZ\'')
 
         # Initialize the maximum value to None
         M_max = None
@@ -263,7 +268,7 @@ class Mesh():
                 xm, ym = element.width(), element.height()
                 xn, yn, = 0, element.height()
             elif element.type == 'Quad':
-                # Use the quad's natural (r, s) coordinate system
+                # Use the quad's natural (xi, eta) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
@@ -277,11 +282,11 @@ class Mesh():
                     
                     # Find the maximum moment in the element, checking each corner and the center
                     # of the element
-                    M_element = max([element.moment(xi, yi, load_combo.name)[i, 0],
-                                     element.moment(xj, yj, load_combo.name)[i, 0],
-                                     element.moment(xm, ym, load_combo.name)[i, 0],
-                                     element.moment(xn, yn, load_combo.name)[i, 0],
-                                     element.moment((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    M_element = max([element.moment(xi, yi, local, load_combo.name)[i, 0],
+                                     element.moment(xj, yj, local, load_combo.name)[i, 0],
+                                     element.moment(xm, ym, local, load_combo.name)[i, 0],
+                                     element.moment(xn, yn, local, load_combo.name)[i, 0],
+                                     element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum moment calculated is the largest encountered so far
                     if M_max == None or M_max < M_element:
@@ -307,15 +312,20 @@ class Mesh():
             The name of the load combination to get the minimum moment for. If omitted, all load
             combinations will be evaluated.
         """
+        
+        if direction in ['MX', 'MY', 'MZ']:
+            local = False
+        else:
+            local = True
 
-        if direction == 'Mx':
+        if direction.upper() == 'MX':
             i = 0
-        elif direction == 'My':
+        elif direction.upper() == 'MY':
             i = 1
-        elif direction == 'Mxy':
+        elif direction == 'Mxy' or direction == 'MZ':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', or \'Mxy\'')
+            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', \'Mxy\', \'MX\', \'MY\', or \'MZ\'')
 
         # Initialize the minimum value to None
         M_min = None
@@ -345,11 +355,11 @@ class Mesh():
                     
                     # Find the minimum moment in the element, checking each corner and the center
                     # of the element
-                    M_element = min([element.moment(xi, yi, load_combo.name)[i, 0],
-                                     element.moment(xj, yj, load_combo.name)[i, 0],
-                                     element.moment(xm, ym, load_combo.name)[i, 0],
-                                     element.moment(xn, yn, load_combo.name)[i, 0],
-                                     element.moment((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    M_element = min([element.moment(xi, yi, local, load_combo.name)[i, 0],
+                                     element.moment(xj, yj, local, load_combo.name)[i, 0],
+                                     element.moment(xm, ym, local, load_combo.name)[i, 0],
+                                     element.moment(xn, yn, local, load_combo.name)[i, 0],
+                                     element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum moment calculated is the smallest encountered so far
                     if M_min == None or M_min > M_element:
