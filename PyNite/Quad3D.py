@@ -93,13 +93,13 @@ class Quad3D():
         
         # Figures 3 and 5
         if k == 5:
-            return ((self.j_node.X - self.i_node.X)**2 + (self.j_node.Y - self.i_node.Y)**2)**0.5
+            return ((self.x2 - self.x1)**2 + (self.y2 - self.y1)**2)**0.5
         elif k == 6:
-            return ((self.m_node.X - self.j_node.X)**2 + (self.m_node.Y - self.j_node.Y)**2)**0.5
+            return ((self.x3 - self.x2)**2 + (self.y3 - self.y2)**2)**0.5
         elif k == 7:
-            return ((self.n_node.X - self.m_node.X)**2 + (self.n_node.Y - self.m_node.Y)**2)**0.5
+            return ((self.x4 - self.x3)**2 + (self.y4 - self.y3)**2)**0.5
         elif k == 8:
-            return ((self.i_node.X - self.n_node.X)**2 + (self.i_node.Y - self.n_node.Y)**2)**0.5
+            return ((self.x1 - self.x4)**2 + (self.y1 - self.y4)**2)**0.5
         else:
             raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
     
@@ -109,17 +109,17 @@ class Quad3D():
 
         # Figures 3 and 5
         if k == 5:
-            C = (self.j_node.X - self.i_node.X)/L_k
-            S = (self.j_node.Y - self.i_node.Y)/L_k
+            C = (self.x2 - self.x1)/L_k
+            S = (self.y2 - self.y1)/L_k
         elif k == 6:
-            C = (self.m_node.X - self.j_node.X)/L_k
-            S = (self.m_node.Y - self.j_node.Y)/L_k
+            C = (self.x3 - self.x2)/L_k
+            S = (self.y3 - self.y2)/L_k
         elif k == 7:
-            C = (self.n_node.X - self.m_node.X)/L_k
-            S = (self.n_node.Y - self.m_node.Y)/L_k
+            C = (self.x4 - self.x3)/L_k
+            S = (self.y4 - self.y3)/L_k
         elif k == 8:
-            C = (self.i_node.X - self.n_node.X)/L_k
-            S = (self.i_node.Y - self.n_node.Y)/L_k
+            C = (self.x1 - self.x4)/L_k
+            S = (self.y1 - self.y4)/L_k
         else:
             raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
 
@@ -785,8 +785,8 @@ class Quad3D():
 
         # Create the direction cosines matrix.
         dir_cos = np.array([x,
-                           y,
-                           z])
+                            y,
+                            z])
         
         # Build the transformation matrix.
         T = np.zeros((24, 24))
