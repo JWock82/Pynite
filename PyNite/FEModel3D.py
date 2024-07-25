@@ -1919,7 +1919,7 @@ class FEModel3D():
         # Return the global displacement vector
         return self._D[combo_name]
 
-    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None):
+    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags:list=None,load_combos:list=None):
         """Performs first-order static analysis. Iterations are performed if tension-only members or compression-only members are present.
 
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -1952,7 +1952,7 @@ class FEModel3D():
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
         # Identify which load combinations have the tags the user has given
-        combo_list = Analysis._identify_combos(self, combo_tags)
+        combo_list = Analysis._identify_combos(self, combo_tags,load_combos)
 
         # Step through each load combination
         for combo in combo_list:
@@ -2036,7 +2036,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'Linear TC'
 
-    def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True, combo_tags=None):
+    def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True, combo_tags:list=None,load_combos:list=None):
         """Performs first-order static analysis. This analysis procedure is much faster since it only assembles the global stiffness matrix once, rather than once for each load combination. It is not appropriate when non-linear behavior such as tension/compression only analysis or P-Delta analysis are required.
 
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -2074,7 +2074,7 @@ class FEModel3D():
             K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
         # Identify which load combinations have the tags the user has given
-        combo_list = Analysis._identify_combos(self, combo_tags)
+        combo_list = Analysis._identify_combos(self, combo_tags,load_combos)
 
         # Step through each load combination
         for combo in combo_list:
@@ -2128,7 +2128,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'Linear'
 
-    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, sparse=True, combo_tags=None):
+    def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, sparse=True, combo_tags:list=None,load_combos:list=None):
         """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
         :param log: Prints updates to the console if set to True. Default is False.
@@ -2159,7 +2159,7 @@ class FEModel3D():
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
         # Identify which load combinations have the tags the user has given
-        combo_list = Analysis._identify_combos(self, combo_tags)
+        combo_list = Analysis._identify_combos(self, combo_tags,load_combos)
 
         # Step through each load combination
         for combo in combo_list:
@@ -2184,7 +2184,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
     
-    def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
+    def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags:list=None,load_combos:list=None):
 
         if log:
             print('+---------------------+')
@@ -2215,7 +2215,7 @@ class FEModel3D():
 
         # Identify which load combinations have the tags the user has given
         # TODO: Remove the pushover combo istelf from `combo_list`
-        combo_list = Analysis._identify_combos(self, combo_tags)
+        combo_list = Analysis._identify_combos(self, combo_tags,load_combos)
         combo_list = [combo for combo in combo_list if combo.name != push_combo]
 
         # Step through each load combination

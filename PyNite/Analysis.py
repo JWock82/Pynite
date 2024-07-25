@@ -43,7 +43,7 @@ def _prepare_model(model):
     # Assign an internal ID to all nodes and elements in the model. This number is different from the name used by the user to identify nodes and elements.
     _renumber(model)
 
-def _identify_combos(model, combo_tags=None):
+def _identify_combos(model, combo_tags:list=None,load_combos:list=None):
     """Returns a list of load combinations that are to be run based on tags given by the user.
 
     :param model: The model being analyzed.
@@ -66,6 +66,10 @@ def _identify_combos(model, combo_tags=None):
             # Check if this load combination is tagged with any of the tags we're looking for
             if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags):
                 # Add the load combination to the list of load combinations to be evaluated
+                combo_list.append(combo)
+            
+            elif combo.name in load_combos:
+                # Add the load combination by its name to the list of load combinations to be evaluated
                 combo_list.append(combo)
     
     # Return the list of load combinations to be evaluated
@@ -611,7 +615,7 @@ def _check_TC_convergence(model, combo_name='Combo 1', log=True):
     # Return whether the TC analysis has converged
     return convergence
 
-def _calc_reactions(model, log=False, combo_tags=None):
+def _calc_reactions(model, log=False, combo_tags:list=None,load_combos:list=None):
     """
     Calculates reactions internally once the model is solved.
 
@@ -625,7 +629,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
     if log: print('- Calculating reactions')
 
     # Identify which load combinations to evaluate
-    combo_list = _identify_combos(model, combo_tags)
+    combo_list = _identify_combos(model, combo_tags,load_combos)
 
     # Calculate the reactions node by node
     for node in model.Nodes.values():
