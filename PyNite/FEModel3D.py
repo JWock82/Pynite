@@ -5,6 +5,7 @@ from math import isclose
 
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d
 from numpy.linalg import solve
+from scipy.spatial import KDTree
 
 from PyNite.Node3D import Node3D
 from PyNite.Material import Material
@@ -723,6 +724,25 @@ class FEModel3D():
         
         #Return the mesh's name
         return name
+
+    def determine_proximal_nodes(self, tolerance=0.001):
+        """A method using a KD-Tree to efficiently determine nodes which are within a certain distance of each other"""
+
+        #TODO: add nodes that are not in the FEA structure
+        #TODO: add nodes that are in another structure + origin offset (for merging frames)
+        nodes = list(self.Nodes.keys())
+        data = list([(v.X,v.Y,v.Z) for v in self.Nodes.values()])
+
+        #make the tree
+        tree = KDTree(data)
+        #find pairs within distance (exact)
+        indexes = tree.query_pairs(r=tolerance)
+        out = []
+        #get the mode names
+        for i, j in indexes:
+            out.append((nodes[i], nodes[j]))
+        return out
+
 
     def merge_duplicate_nodes(self, tolerance=0.001):
         """Removes duplicate nodes from the model and returns a list of the removed node names.
