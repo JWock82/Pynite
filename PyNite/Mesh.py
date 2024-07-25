@@ -780,7 +780,7 @@ class AnnulusMesh(Mesh):
         self.num_quads_inner = None
         self.num_quads_outer = None
         
-        # self.generate()
+        self.generate()
     
     def generate(self):
         
