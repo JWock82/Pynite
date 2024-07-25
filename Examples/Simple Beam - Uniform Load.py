@@ -37,13 +37,13 @@ simple_beam.add_member_dist_load('M1', 'Fy', -200/1000/12, -200/1000/12, 0, 168)
 simple_beam.analyze()
 
 # Print the shear, moment, and deflection diagrams
-simple_beam.Members['M1'].plot_shear('Fy')
-simple_beam.Members['M1'].plot_moment('Mz')
-simple_beam.Members['M1'].plot_deflection('dy')
+simple_beam.members['M1'].plot_shear('Fy')
+simple_beam.members['M1'].plot_moment('Mz')
+simple_beam.members['M1'].plot_deflection('dy')
 
 # Print reactions at each end of the beam
-print('Left Support Reaction:', simple_beam.Nodes['N1'].RxnFY, 'kip')
-print('Right Support Reacton:', simple_beam.Nodes['N2'].RxnFY, 'kip')
+print('Left Support Reaction:', simple_beam.nodes['N1'].RxnFY, 'kip')
+print('Right Support Reacton:', simple_beam.nodes['N2'].RxnFY, 'kip')
 
 # Render the deformed shape of the beam magnified 100 times, with a text height of 5 inches
 from PyNite.Rendering import Renderer

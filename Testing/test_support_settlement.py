@@ -83,7 +83,7 @@ class Test_Support_Settlement(unittest.TestCase):
             with self.subTest(node=name):
 
                 # Get the reaction at the node
-                PyNite_rxn = beam.Nodes[name].RxnFY['Combo 1']
+                PyNite_rxn = beam.nodes[name].RxnFY['Combo 1']
 
                 # There are some known rounding errors in the "textbook values" listed above. These
                 # rounding errors cause up to a 7.6% difference from the theoretical solution.

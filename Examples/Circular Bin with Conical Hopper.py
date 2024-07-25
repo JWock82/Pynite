@@ -29,15 +29,15 @@ model.add_frustrum_mesh('MSH1', mesh_size, r_shell, r_hopper, h_hopper, t, 'Stee
 
 # Generate the mesh. The mesh would automatically be generated during analysis, but we want to
 # manipulate it now so we'll generate it in advance.
-model.Meshes['MSH1'].generate()
+model.meshes['MSH1'].generate()
 
 # Determine how many elements make up the circumference at the top of the hopper. This will
 # determine the number of elements making up the circumference of the cylindrical shell.
-n_hopper = model.Meshes['MSH1'].num_quads_outer
+n_hopper = model.meshes['MSH1'].num_quads_outer
 
 # Find an unused node and element name to start the cylinder off with
-first_node = 'N' + str(len(model.Nodes.values()) + 1)
-first_element = 'Q' + str(len(model.Quads.values()) + 1)
+first_node = 'N' + str(len(model.nodes.values()) + 1)
+first_element = 'Q' + str(len(model.quads.values()) + 1)
 
 # Add the cylindrical shell mesh
 model.add_cylinder_mesh('MSH2', mesh_size, r_shell, h_shell, t, 'Steel', kx_mod, ky_mod, center,
@@ -51,12 +51,12 @@ model.merge_duplicate_nodes()
 # cProfile.run('model.merge_duplicate_nodes()', sort='cumtime')  
 
 # Add hydrostatic pressure to each element in the model
-for element in model.Quads.values():
+for element in model.quads.values():
     Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
     model.add_quad_surface_pressure(element.name, 62.4*(h_shell - Yavg), case='Hydrostatic')
 
 # Add supports at the springline
-for node in model.Nodes.values():
+for node in model.nodes.values():
     if round(node.Y, 10) == 0:
         model.def_support(node.name, True, True, True, False, False, False)
 

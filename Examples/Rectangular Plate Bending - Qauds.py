@@ -30,15 +30,15 @@ model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Concrete', 1, 1, 
 # PyNite automatically generates each mesh when it analyzes. Sometimes it's convenient to generate
 # the nodes and elements in the mesh in advance so that we can manipulate the mesh prior to
 # analysis.
-model.Meshes['MSH1'].generate()
+model.meshes['MSH1'].generate()
 
 # Step through each quadrilateral in the model
-for element in model.Quads.values():
+for element in model.quads.values():
     # Add loads to the element
     model.add_quad_surface_pressure(element.name, load, case='W')
 
 # Add fully fixed supports on all side of the wall
-for node in model.Nodes.values():
+for node in model.nodes.values():
     if (round(node.Y, 10) == 0 or round(node.Y, 10) == height or round(node.X, 10) == 0 or
         round(node.X, 10) == width):
         model.def_support(node.name, True, True, True, True, True, True)
@@ -97,7 +97,7 @@ print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 # the maximum moment.
 
 # Get the force vector for quad 101 for load combination '1.0W'
-f_vector = model.Quads['Q101'].f('1.0W')
+f_vector = model.quads['Q101'].f('1.0W')
 
 # Although the MITC4 element nodes are defined by the user in the order [i, j, m, n], internally
 # PyNite formulates the plate in the order [m, n, i, j] to be consistent with the literature used
@@ -115,7 +115,7 @@ f_vector = model.Quads['Q101'].f('1.0W')
 Mx = f_vector[16, 0]
 
 # We can find the max My moment similarly from quad 6
-f_vector_11 = model.Quads['Q6'].f('1.0W')
+f_vector_11 = model.quads['Q6'].f('1.0W')
 My = f_vector_11[15, 0]
 
 # Now we'll convert these values to a force per unit length. The height and width of the plate is

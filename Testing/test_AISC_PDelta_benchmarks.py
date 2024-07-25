@@ -78,10 +78,10 @@ class Test_AISC_Benchmark(unittest.TestCase):
         # renderer.render_model()
 
         # The moment at the base of the column
-        calculated_moment = cantilever.Nodes['N1'].RxnMZ['Combo 1']
+        calculated_moment = cantilever.nodes['N1'].RxnMZ['Combo 1']
 
         # the deflection at the top of the column
-        calculated_displacement = cantilever.Nodes['N6'].DX['Combo 1']*12
+        calculated_displacement = cantilever.nodes['N6'].DX['Combo 1']*12
 
         # Calculate the AISC benchmark problem solution:
         alpha = (P*L**2/(E*I))**0.5
@@ -145,9 +145,9 @@ class Test_AISC_Benchmark(unittest.TestCase):
 
         Mmid_calculated = []
         dmid_calculated = []
-        for combo in column.LoadCombos.values():
-            Mmid_calculated.append(-column.Members['M1'].moment('Mz', 14, combo.name)*12)
-            dmid_calculated.append(-column.Members['M1'].deflection('dy', 14, combo.name)*12)
+        for combo in column.load_combos.values():
+            Mmid_calculated.append(-column.members['M1'].moment('Mz', 14, combo.name)*12)
+            dmid_calculated.append(-column.members['M1'].deflection('dy', 14, combo.name)*12)
 
         # Expected results per AISC
         Mmid_expected = [235, 269, 313, 375]
@@ -210,9 +210,9 @@ class Test_AISC_Benchmark(unittest.TestCase):
 
         Mbase_calculated = []
         dtip_calculated = []
-        for combo in column.LoadCombos.values():
-            Mbase_calculated.append(-column.Members['M1'].moment('Mz', 0, combo.name)*12)
-            dtip_calculated.append(-column.Members['M1'].deflection('dy', 28, combo.name)*12)
+        for combo in column.load_combos.values():
+            Mbase_calculated.append(-column.members['M1'].moment('Mz', 0, combo.name)*12)
+            dtip_calculated.append(-column.members['M1'].deflection('dy', 28, combo.name)*12)
 
         # Expected results per AISC
         Mbase_expected = [-336, -469, -598, -848]

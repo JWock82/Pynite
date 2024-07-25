@@ -37,10 +37,10 @@ model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Concrete', kx_mod
 
 # Generate the mesh prior to analysis. This step is optional, but it allows you to work with it to
 # it before analyzing.
-model.Meshes['MSH1'].generate()
+model.meshes['MSH1'].generate()
 
 # Step through each quadrilateral and rectangular plate in the model
-for element in list(model.Quads.values()) + list(model.Plates.values()):
+for element in list(model.quads.values()) + list(model.plates.values()):
 
     # Calculate the average elevation of the element based on the positions of its nodes
     Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
@@ -49,13 +49,13 @@ for element in list(model.Quads.values()) + list(model.Plates.values()):
     if Yavg < HL:
 
         # Add hydrostatic loads to the element
-        if model.Meshes['MSH1'].element_type == 'Rect':
+        if model.meshes['MSH1'].element_type == 'Rect':
             model.add_plate_surface_pressure(element.name, 62.4*(HL - Yavg), case='F')
         else:
             model.add_quad_surface_pressure(element.name, 62.4*(HL - Yavg), case='F')
 
 # Add fully fixed supports at left, right, and bottom of the wall
-for node in model.Nodes.values():
+for node in model.nodes.values():
     if round(node.Y, 10) == 0 or round(node.X, 10) == 0 or round(node.X, 10) == width:
         model.def_support(node.name, True, True, True, True, True, True)
 
@@ -80,5 +80,5 @@ renderer.scalar_bar_text_size = 12
 renderer.render_model()
 
 # Print the maximum and minumum displacements
-print('Max displacement: ', max([node.DZ['1.4F'] for node in model.Nodes.values()]))
-print('Min displacement: ', min([node.DZ['1.4F'] for node in model.Nodes.values()]))
+print('Max displacement: ', max([node.DZ['1.4F'] for node in model.nodes.values()]))
+print('Min displacement: ', min([node.DZ['1.4F'] for node in model.nodes.values()]))

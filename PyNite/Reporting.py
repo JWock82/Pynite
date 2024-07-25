@@ -53,10 +53,10 @@ def create_report(model, output_filepath=path/'./Pynite Report.pdf', **kwargs):
     if 'plate_center_membrane' not in kwargs: kwargs['plate_center_membrane'] = True
 
     # Pass the dictionaries to the report template
-    kwargs['nodes'] = model.Nodes.values()
-    kwargs['members'] = model.Members.values()
-    kwargs['plates'] = model.Plates.values()
-    kwargs['quads'] = model.Quads.values()
+    kwargs['nodes'] = model.nodes.values()
+    kwargs['members'] = model.members.values()
+    kwargs['plates'] = model.plates.values()
+    kwargs['quads'] = model.quads.values()
 
     # Create the report HTML using jinja2
     HTML = template.render(**kwargs)
