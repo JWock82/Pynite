@@ -97,8 +97,7 @@ class FEModel3D():
     def add_node(self, name, X, Y, Z):
         """Adds a new node to the model.
 
-        :param name: A unique user-defined name for the node. If set to None or "" a name will be
-                     automatically assigned.
+        :param name: A unique user-defined name for the node. If set to None or "" a name will be automatically assigned.
         :type name: str
         :param X: The node's global X-coordinate.
         :type X: number

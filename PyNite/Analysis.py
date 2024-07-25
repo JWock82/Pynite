@@ -44,18 +44,20 @@ def _prepare_model(model):
     _renumber(model)
 
 def _identify_combos(model, combo_tags:list=None,load_combos:list=None):
-    """Returns a list of load combinations that are to be run based on tags given by the user.
+    """Returns a list of load combinations that are to be run based on tags or names given by the user. If neither combo tags or names is given all load combinations will be returned.
 
     :param model: The model being analyzed.
     :type model: FEModel3D
-    :param combo_tags: A list of tags used for the load combinations to be evaluated. Defaults to `None` in which case all load combinations will be added to the list of load combinations to be run.
+    :param combo_tags: A list of tags used for the load combinations to be evaluated. Defaults to `None` in which case all load combinations will be added to the list of load combinations to be run, unless `load_combos` is not `None`.
     :type combo_tags: list, optional
+    :param load_combos: A list of load combination names to be evaluated. Defaults to `None` in which case all load combinations will be added to the list of load combinations to be run, unless `combo_tags` is not `None`.
+    :type load_combos: list, optional
     :return: A list containing the load combinations to be analyzed.
     :rtype: list
     """
     
     # Identify which load combinations to evaluate
-    if combo_tags is None:
+    if combo_tags is None and load_combos is None:
         # Evaluate all load combinations if not tags have been provided
         combo_list = model.LoadCombos.values()
     else:
@@ -63,17 +65,18 @@ def _identify_combos(model, combo_tags:list=None,load_combos:list=None):
         combo_list = []
         # Step through each load combination in the model
         for combo in model.LoadCombos.values():
-            # Check if this load combination is tagged with any of the tags we're looking for
+            # Check if this load combination is tagged with any of the tags we're looking for or if it is named in the list of load combinations to be evaluated
             if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags):
                 # Add the load combination to the list of load combinations to be evaluated
                 combo_list.append(combo)
             
-            elif combo.name in load_combos:
+            elif load_combos is not None and combo.name in load_combos:
                 # Add the load combination by its name to the list of load combinations to be evaluated
                 combo_list.append(combo)
     
     # Return the list of load combinations to be evaluated
     return combo_list
+
 
 def _check_stability(model, K):
     """
