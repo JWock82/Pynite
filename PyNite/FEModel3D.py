@@ -788,7 +788,7 @@ class FEModel3D():
             if node_lookup[node_1_name] is None:
                 continue
 
-            # There is no need to check `node_1` against itself
+            #Check combinations. There is no need to check `node_1` against itself
             for node_2_name in node_names[i + 1:]:
 
                 # Skip iteration if node_2 has already been removed
@@ -796,12 +796,14 @@ class FEModel3D():
                     continue
 
                 # Calculate the distance between nodes
-                if self.Nodes[node_1_name].distance(self.Nodes[node_2_name]) > tolerance:
+                n2 = self.Nodes[node_2_name]
+                n1 = self.Nodes[node_1_name]
+                if n1.distance(n2) > tolerance:
                     continue
 
                 # Replace references to `node_2` in each element with references to `node_1`
                 for element, node_type in node_lookup[node_2_name]:
-                    setattr(element, node_type, self.Nodes[node_1_name])
+                    setattr(element, node_type, n1)
 
                 # Flag `node_2` as no longer used
                 node_lookup[node_2_name] = None
@@ -809,15 +811,15 @@ class FEModel3D():
                 # Merge any boundary conditions
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:
-                    if getattr(self.Nodes[node_2_name], dof) == True:
-                        setattr(self.Nodes[node_1_name], dof, True)
+                    if getattr(n2, dof) == True:
+                        setattr(n1, dof, True)
                 
                 # Merge any spring supports
                 spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
                 for dof in spring_cond:
-                    value = getattr(self.Nodes[node_2_name], dof)
+                    value = getattr(n2, dof)
                     if value != [None, None, None]:
-                        setattr(self.Nodes[node_1_name], dof, value)
+                        setattr(n1, dof, value)
                 
                 # Fix the mesh labels
                 for mesh in self.Meshes.values():
@@ -826,17 +828,22 @@ class FEModel3D():
                     if node_2_name in mesh.nodes.keys():
 
                         # Attach the correct node to the mesh
-                        mesh.nodes[node_2_name] = self.Nodes[node_1_name]
+                        mesh.nodes[node_2_name] = n1
 
                         # Fix the dictionary key
+                        print(f'{mesh} rmv {node_2_name} -> {node_1_name}')
                         mesh.nodes[node_1_name] = mesh.nodes.pop(node_2_name)
 
                     # Fix the elements in the mesh
                     for element in mesh.elements.values():
-                        if node_2_name == element.i_node.name: element.i_node = self.Nodes[node_1_name]
-                        if node_2_name == element.j_node.name: element.j_node = self.Nodes[node_1_name]
-                        if node_2_name == element.m_node.name: element.m_node = self.Nodes[node_1_name]
-                        if node_2_name == element.n_node.name: element.n_node = self.Nodes[node_1_name]
+                        if node_2_name == element.i_node.name: 
+                            element.i_node = n1
+                        if node_2_name == element.j_node.name: 
+                            element.j_node = n1
+                        if node_2_name == element.m_node.name: 
+                            element.m_node = n1
+                        if node_2_name == element.n_node.name: 
+                            element.n_node = n1
                     
                 # Add the node to the `remove` list
                 remove_list.append(node_2_name)
