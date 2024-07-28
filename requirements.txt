@@ -1,6 +1,3 @@
-IPython
-matplotlib
+# Minimum requirements
 numpy
 prettytable
-scipy
-vtk

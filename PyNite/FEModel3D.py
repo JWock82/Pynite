@@ -3,8 +3,10 @@ from os import rename
 import warnings
 from math import isclose
 
-from numpy import array, zeros, matmul, divide, subtract, atleast_2d
+
 from PyNite.Solvers import solve
+from numpy import array, zeros, matmul, divide, subtract, atleast_2d, all
+
 from PyNite.Node3D import Node3D
 from PyNite.Material import Material
 from PyNite.Section import Section
@@ -278,7 +280,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name, i_node, j_node, material, Iy=None, Iz=None, J=None, A=None, aux_node=None, tension_only=False, comp_only=False, section_name=None):
+    def add_member(self, name, i_node, j_node, material_name, Iy=None, Iz=None, J=None, A=None, aux_node=None, tension_only=False, comp_only=False, section_name=None):
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -287,7 +289,7 @@ class FEModel3D():
         :type i_node: str
         :param j_node: The name of the j-node (end node).
         :type j_node: str
-        :param material: The name of the material of the member.
+        :param material_name: The name of the material of the member.
         :type material: str
         :param Iy: The moment of inertia of the member about its local y-axis.
         :type Iy: number
@@ -323,9 +325,9 @@ class FEModel3D():
                 
         # Create a new member
         if aux_node == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section_name=section_name)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material_name, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section_name=section_name)
+            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material_name, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         
         # Add the new member to the list
         self.Members[name] = new_member
@@ -336,7 +338,7 @@ class FEModel3D():
         # Return the member name
         return name
 
-    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1.0, ky_mod=1.0):
+    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material_name, kx_mod=1.0, ky_mod=1.0):
         """Adds a new rectangular plate to the model. The plate formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on a 12-term
         polynomial formulation. This element must be rectangular, and must not be used where a
@@ -356,8 +358,8 @@ class FEModel3D():
         :type n_node: str
         :param t: The thickness of the element.
         :type t: number
-        :param material: The name of the material for the element.
-        :type material: str
+        :param material_name: The name of the material for the element.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
                        x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -382,7 +384,7 @@ class FEModel3D():
         
         # Create a new plate
         new_plate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
-                           self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
+                           self.Nodes[n_node], t, material_name, self, kx_mod, ky_mod)
         
         # Add the new plate to the list
         self.Plates[name] = new_plate
@@ -393,7 +395,7 @@ class FEModel3D():
         # Return the plate name
         return name
 
-    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material, kx_mod=1.0, ky_mod=1.0):
+    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material_name, kx_mod=1.0, ky_mod=1.0):
         """Adds a new quadrilateral to the model. The quad formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on an MITC4
         formulation. This element handles distortion relatively well, and is appropriate for thick
@@ -415,8 +417,8 @@ class FEModel3D():
         :type n_node: str
         :param t: The thickness of the element.
         :type t: number
-        :param material: The name of the material for the element.
-        :type material: str
+        :param material_name: The name of the material for the element.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
             x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
@@ -441,7 +443,7 @@ class FEModel3D():
         
         # Create a new member
         new_quad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
-                         self.Nodes[n_node], t, material, self, kx_mod, ky_mod)
+                         self.Nodes[n_node], t, material_name, self, kx_mod, ky_mod)
         
         # Add the new member to the list
         self.Quads[name] = new_quad
@@ -452,7 +454,7 @@ class FEModel3D():
         #Return the quad name
         return name
 
-    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
+    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material_name, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
@@ -465,8 +467,8 @@ class FEModel3D():
         :type height: number
         :param thickness: The thickness of each element in the mesh.
         :type thickness: number
-        :param material: The name of the material for elements in the mesh.
-        :type material: str
+        :param material_name: The name of the material for elements in the mesh.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local x-direction. Defaults to 1.0 (no modification).
         :type kx_mod: float, optional
         :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local y-direction. Defaults to 1.0 (no modification).
@@ -507,7 +509,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create the mesh
-        new_mesh = RectangleMesh(mesh_size, width, height, thickness, material, self, kx_mod,
+        new_mesh = RectangleMesh(mesh_size, width, height, thickness, material_name, self, kx_mod,
                                  ky_mod, origin, plane, x_control, y_control, start_node,
                                  start_element, element_type=element_type)
 
@@ -520,7 +522,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
     
-    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material, kx_mod=1.0, 
+    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material_name, kx_mod=1.0, 
             ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
         """Adds a mesh of quadrilaterals forming an annulus (a donut).
 
@@ -534,8 +536,8 @@ class FEModel3D():
         :type inner_radius: float
         :param thickness: Element thickness.
         :type thickness: float
-        :param material: The name of the element material.
-        :type material: str
+        :param material_name: The name of the element material.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for radial stiffness in the element's local
                        x-direction. Default is 1.0 (no modification).
         :type kx_mod: float, optional
@@ -572,7 +574,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
-        new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material, self,
+        new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material_name, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element)
 
         # Add the new mesh to the `Meshes` dictionary
@@ -584,7 +586,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
 
-    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,material, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
+    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,material_name, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
         """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
 
         :param name: A unique name for the mesh.
@@ -599,8 +601,8 @@ class FEModel3D():
         :type height: number
         :param thickness: The thickness of the elements.
         :type thickness: number
-        :param material: The name of the element material.
-        :type material: str
+        :param material_name: The name of the element material.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for radial stiffness in each element's local x-direction, defaults to 1 (no modification).
         :type kx_mod: number, optional
         :param ky_mod: Stiffness modification factor for meridional stiffness in each element's local y-direction, defaults to 1 (no modification).
@@ -634,7 +636,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
-        new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material,
+        new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material_name,
                                 self, kx_mod, ky_mod, origin, axis, start_node, start_element)
 
         # Add the new mesh to the `Meshes` dictionary
@@ -646,7 +648,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
     
-    def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material, kx_mod=1,
+    def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material_name, kx_mod=1,
                           ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None, start_node=None,
                           start_element=None, element_type='Quad'):
         """Adds a mesh of elements forming a cylinder.
@@ -661,8 +663,8 @@ class FEModel3D():
         :type height: float
         :param thickness: Element thickness.
         :type thickness: float
-        :param material: The name of the element material.
-        :type material: str
+        :param material_name: The name of the element material.
+        :type material_name: str
         :param kx_mod: Stiffness modification factor for hoop stiffness in each element's local
                        x-direction. Defaults to 1.0 (no modification).
         :type kx_mod: int, optional
@@ -710,7 +712,7 @@ class FEModel3D():
             start_element = self.unique_name(self.Quads, 'Q')
         
         # Create a new mesh
-        new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material, self,
+        new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material_name, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element,
                                num_elements, element_type)
 
@@ -981,9 +983,9 @@ class FEModel3D():
         :raises ValueError: _description_
         """
             
-        # Validate the value of Direction
+        # Validate the value of direction
         if direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
-            raise ValueError(f"Direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {direction} was given.")
+            raise ValueError(f"direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {direction} was given.")
         # Get the node
         node = self.Nodes[node_name]
 
@@ -1003,11 +1005,11 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def def_releases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
+    def def_releases(self, member_name, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
         """Defines member end realeses for a member. All member end releases will default to unreleased unless specified otherwise.
 
-        :param Member: The name of the member to have its releases modified.
-        :type Member: str
+        :param member_name: The name of the member to have its releases modified.
+        :type member_name: str
         :param Dxi: Indicates whether the member is released axially at its start. Defaults to False.
         :type Dxi: bool, optional
         :param Dyi: Indicates whether the member is released for shear in the local y-axis at its start. Defaults to False.
@@ -1035,7 +1037,7 @@ class FEModel3D():
         """
         
         # Apply the end releases to the member
-        self.Members[Member].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
+        self.Members[member_name].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
 
         # Flag the model as unsolved
         self.solution = None
@@ -1060,14 +1062,14 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = None
 
-    def add_node_load(self, Node, Direction, P, case='Case 1'):
+    def add_node_load(self, node_name, direction, P, case='Case 1'):
         """Adds a nodal load to the model.
 
-        :param Node: The name of the node where the load is being applied.
-        :type Node: str
-        :param Direction: The global direction the load is being applied in. Forces are `'FX'`,
+        :param node_name: The name of the node where the load is being applied.
+        :type node_name: str
+        :param direction: The global direction the load is being applied in. Forces are `'FX'`,
                           `'FY'`, and `'FZ'`. Moments are `'MX'`, `'MY'`, and `'MZ'`.
-        :type Direction: str
+        :type direction: str
         :param P: The numeric value (magnitude) of the load.
         :type P: float
         :param case: The name of the load case the load belongs to. Defaults to 'Case 1'.
@@ -1075,26 +1077,26 @@ class FEModel3D():
         :raises ValueError: Occurs when an invalid load direction was specified.
         """
         
-        # Validate the value of Direction
-        if Direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
-            raise ValueError(f"Direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {Direction} was given.")
+        # Validate the value of direction
+        if direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
+            raise ValueError(f"direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {direction} was given.")
         # Add the node load to the model
-        self.Nodes[Node].NodeLoads.append((Direction, P, case))
+        self.Nodes[node_name].NodeLoads.append((direction, P, case))
 
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_pt_load(self, Member, Direction, P, x, case='Case 1'):
+    def add_member_pt_load(self, member_name, direction, P, x, case='Case 1'):
         """Adds a member point load to the model.
 
-        :param Member: The name of the member the load is being applied to.
-        :type Member: str
-        :param Direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
+        :param member_name: The name of the member the load is being applied to.
+        :type member_name: str
+        :param direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
                           `'Fy'`, `'Fz'`, `'Mx'`, `'My'`, `'Mz'`, `'FX'`, `'FY'`, `'FZ'`, `'MX'`, `'MY'`, or `'MZ'`.
                           Note that lower-case notation indicates use of the beam's local
                           coordinate system, while upper-case indicates use of the model's globl
                           coordinate system.
-        :type Direction: str
+        :type direction: str
         :param P: The numeric value (magnitude) of the load.
         :type P: float
         :param x: The load's location along the member's local x-axis.
@@ -1104,27 +1106,27 @@ class FEModel3D():
         :raises ValueError: Occurs when an invalid load direction has been specified.
         """            
 
-        # Validate the value of Direction
-        if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', 'MZ'):
-            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {Direction} was given.")
+        # Validate the value of direction
+        if direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', 'MZ'):
+            raise ValueError(f"direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {direction} was given.")
         
         # Add the point load to the member
-        self.Members[Member].PtLoads.append((Direction, P, x, case))
+        self.Members[member_name].PtLoads.append((direction, P, x, case))
         
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_dist_load(self, Member, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
+    def add_member_dist_load(self, member_name, direction, w1, w2, x1=None, x2=None, case='Case 1'):
         """Adds a member distributed load to the model.
 
-        :param Member: The name of the member the load is being appied to.
-        :type Member: str
-        :param Direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
+        :param member_name: The name of the member the load is being appied to.
+        :type member_name: str
+        :param direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
                           `'Fy'`, `'Fz'`, `'FX'`, `'FY'`, or `'FZ'`.
                           Note that lower-case notation indicates use of the beam's local
                           coordinate system, while upper-case indicates use of the model's globl
                           coordinate system.
-        :type Direction: str
+        :type direction: str
         :param w1: The starting value (magnitude) of the load.
         :type w1: float
         :param w2: The ending value (magnitude) of the load.
@@ -1140,9 +1142,9 @@ class FEModel3D():
         :raises ValueError: Occurs when an invalid load direction has been specified.
         """
        
-        # Validate the value of Direction
-        if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'):
-            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', or 'FZ'. {Direction} was given.")
+        # Validate the value of direction
+        if direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'):
+            raise ValueError(f"direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', or 'FZ'. {direction} was given.")
         # Determine if a starting and ending points for the load have been specified.
         # If not, use the member start and end as defaults
         if x1 == None:
@@ -1151,15 +1153,37 @@ class FEModel3D():
             start = x1
         
         if x2 == None:
-            end = self.Members[Member].L()
+            end = self.Members[member_name].L()
         else:
             end = x2
 
         # Add the distributed load to the member
-        self.Members[Member].DistLoads.append((Direction, w1, w2, start, end, case))
+        self.Members[member_name].DistLoads.append((direction, w1, w2, start, end, case))
         
         # Flag the model as unsolved
         self.solution = None
+
+    def add_member_self_weight(self, global_direction, factor, case='Case 1'):
+        """Adds self weight to all members in the model. Note that this only works for members. Plate and Quad elements will be ignored by this command.
+
+        :param global_direction: The global direction to apply the member load in: 'FX', 'FY', or 'FZ'.
+        :type global_direction: string
+        :param factor: A factor to apply to the member self-weight. Can be used to account for items like connections, or to switch the direction of the self-weight load.
+        :type factor: float
+        :param case: The load case to apply the self-weight to. Defaults to 'Case 1'
+        :type case: str, optional
+        """
+
+        # Step through each member in the model
+        for member in self.Members.values():
+
+            # Calculate the self weight of the member
+            self_weight = factor*self.Materials[member.material_name].rho*member.A
+
+            # Add the self-weight load to the member
+            self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case)
+        
+        # No need to flag the model as unsolved. That has already been taken care of by our call to `add_member_dist_load`
 
     def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
         """Adds a surface pressure to the rectangular plate element.
@@ -1458,32 +1482,32 @@ class FEModel3D():
                 # Determine which node the index 'a' is related to
                 if a < 6:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.m_node.ID*6 + a
+                    m = quad.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.n_node.ID*6 + (a - 6)
+                    m = quad.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.i_node.ID*6 + (a - 12)
+                    m = quad.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.j_node.ID*6 + (a - 18)
+                    m = quad.n_node.ID*6 + (a - 18)
 
                 for b in range(24):
 
                     # Determine which node the index 'b' is related to
                     if b < 6:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.m_node.ID*6 + b
+                        n = quad.i_node.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.n_node.ID*6 + (b - 6)
+                        n = quad.j_node.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.i_node.ID*6 + (b - 12)
+                        n = quad.m_node.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.j_node.ID*6 + (b - 18)
+                        n = quad.n_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     if sparse == True:
@@ -1815,16 +1839,16 @@ class FEModel3D():
                 # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
                 if a < 6:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.m_node.ID*6 + a
+                    m = quad.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.n_node.ID*6 + (a - 6)
+                    m = quad.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.i_node.ID*6 + (a - 12)
+                    m = quad.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.j_node.ID*6 + (a - 18)
+                    m = quad.n_node.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER[m, 0] += quad_FER[a, 0]
@@ -2237,9 +2261,23 @@ class FEModel3D():
                 # Inform the user which pushover load step we're on
                 if log:
                     print('- Beginning pushover load step #' + str(step_num))
+                
+                # Reset all member plastic load reversal flags to be `False`
+                for member in self.Members.values():
+                    member.pl_reverse = False
 
-                # Run the next pushover load step
-                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
+                # Run/rerun this load step until no new unloaded member flags exist
+                run_step = True
+                while run_step == True:
+
+                    # Assume this iteration will converge
+                    run_step = False
+
+                    # Store the model's current displacements in case we need to revert
+                    D_temp = self._D
+
+                    # Run or rerun the next pushover load step
+                    d_Delta = Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
 
                 # Update nonlinear material member end forces for each member
                 for member in self.Members.values():

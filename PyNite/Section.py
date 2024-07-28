@@ -3,7 +3,7 @@ import numpy as np
 
 class Section():
 
-    def __init__(self, model, name, A, Iy, Iz, J, material):
+    def __init__(self, model, name, A, Iy, Iz, J, material_name):
         
         self.model = model
         self.name = name
@@ -11,8 +11,8 @@ class Section():
         self.Iy = Iy
         self.Iz = Iz
         self.J = J
-        self.material = material
-        self.fy = model.Materials[material].fy
+        self.material_name = material_name
+        self.fy = model.Materials[material_name].fy
     
     def Phi(self):
         pass
@@ -39,10 +39,10 @@ class Section():
 
 class SteelSection(Section):
 
-    def __init__(self, model, name, A, Iy, Iz, J, Zy, Zz, material):
+    def __init__(self, model, name, A, Iy, Iz, J, Zy, Zz, material_name):
 
         # Basic section properties
-        super().__init__(model, name, A, Iy, Iz, J, material)
+        super().__init__(model, name, A, Iy, Iz, J, material_name)
 
         # Additional section properties for steel
         self.ry = (Iy/A)**0.5

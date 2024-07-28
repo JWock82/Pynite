@@ -32,7 +32,7 @@ t = 8           # Masonry thickness (in)
 # The effects of cracked masonry can be modeled by adjusting the `ky_mod` factor. For this example
 # uncracked masonry will be used to match the textbook problem.
 model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Masonry', kx_mod=1, ky_mod=1,
-                         origin=[0, 0, 0], plane='XY', element_type='Rect')
+                         origin=[0, 0, 0], plane='XY', element_type='Quad')
 
 # Add a 4' wide x 12' tall door opening to the mesh
 model.Meshes['MSH1'].add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
@@ -85,7 +85,7 @@ model.analyze(log=True, check_statics=True)
 # window = render_model(model, annotation_size=1, render_loads=True, deformed_shape=True,
 #                       deformed_scale=200, color_map='Txy', scalar_bar=False,
 #                       combo_name='Seismic', labels=False, screenshot='console')
-from PyNite.Visualization import Renderer
+from PyNite.Rendering import Renderer
 renderer = Renderer(model)
 renderer.combo_name = 'Seismic'
 renderer.color_map = 'Txy'
@@ -93,8 +93,7 @@ renderer.annotation_size = 1
 renderer.deformed_shape = True
 renderer.deformed_scale = 200
 renderer.scalar_bar = True
-# renderer.render_model()
-renderer.screenshot()
+renderer.render_model()
 
 # Print the maximum displacement
 d_max = max([node.DX['Seismic'] for node in model.Nodes.values()])

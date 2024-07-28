@@ -8,9 +8,7 @@ from numpy.linalg import norm
 import vtk
 
 class Renderer():
-    """
-    This class is not in use yet. Future visualization code will use this
-    class to allow for more efficient building and rebuilding of visual models.
+    """Used to render finite element models.
     """
 
     scalar = None
@@ -73,6 +71,11 @@ class Renderer():
         self.render_loads = render_loads
     
     def set_color_map(self, color_map=None):
+        """Sets the color map for plate contours.
+
+        :param color_map: The color map to use: Valid options are 'Qx', Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy' 'Txy'. Qx and Qy are out-of-plane shear forces. Mx, My, and Mxy are local out-of-plane bending moments. 'Sx' and 'Sy' are membrane forces, and 'Txy' is an in-plane shear force. Defaults to None.
+        :type color_map: str, optional
+        """
         self.color_map = color_map
     
     def set_combo_name(self, combo_name='Combo 1'):

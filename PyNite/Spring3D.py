@@ -19,11 +19,11 @@ class Spring3D():
         '''
         Initializes a new spring.
         '''
-        self.name = name    # A unique name for the spring given by the user
-        self.ID = None      # Unique index number for the spring assigned by the program
+        self.name = name      # A unique name for the spring given by the user
+        self.ID = None        # Unique index number for the spring assigned by the program
         self.i_node = i_node  # The spring's i-node
         self.j_node = j_node  # The spring's j-node
-        self.ks = ks        # The spring constant (force/displacement)
+        self.ks = ks          # The spring constant (force/displacement)
         self.LoadCombos = LoadCombos # The dictionary of load combinations in the model this spring belongs to
         self.tension_only = tension_only # Indicates whether the spring is tension-only
         self.comp_only = comp_only # Indicates whether the spring is compression-only

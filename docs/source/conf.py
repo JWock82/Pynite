@@ -10,7 +10,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('../../PyNite'))
+# sys.path.insert(0, os.path.abspath('../../PyNite'))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../../PyNite'))
 project = 'Pynite'
 copyright = '2023, D. Craig Brinck, SE'
 author = 'D. Craig Brinck, SE'
-release = '0.0.81'
+release = '0.0.94'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -29,7 +29,7 @@ extensions = ['sphinx.ext.autodoc']
 autoclass_content = 'class'
 
 # autodoc settings
-autodoc_mock_imports = ['numpy']  # Mock the numpy import
+autodoc_mock_imports = ['numpy', 'IPython', 'vtk', 'pdfkit']  # Mock import dependencies
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -37,9 +37,10 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
+html_theme = 'bizstyle'
 html_theme_options = {
-    "sidebarwidth": "230px",
+    "sidebarwidth": "300px",
     "navigation_depth": 1
 }
 html_static_path = ['_static']

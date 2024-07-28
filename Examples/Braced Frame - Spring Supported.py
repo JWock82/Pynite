@@ -15,9 +15,9 @@ braced_frame.add_node('N4', 15*12, 0*12, 0)
 
 # Define column properties (use W10x33 from the AISC Manual):
 Iy = 36.6 # in^4
-Iz = 171 # in^4
-J = 0.58 # in^4
-A = 9.71 # in^2
+Iz = 171  # in^4
+J = 0.58  # in^4
+A = 9.71  # in^2
 
 # Define a material
 E = 29000 # Young's modulus (ksi)
@@ -130,7 +130,7 @@ braced_frame.analyze()
 
 # Display the deformed shape of the structure magnified 50 times with the text
 # height 5 model units (inches) high.
-from PyNite.Visualization import Renderer
+from PyNite.Rendering import Renderer
 rndr = Renderer(braced_frame)
 rndr.annotation_size = 5
 rndr.deformed_shape = True
@@ -138,6 +138,7 @@ rndr.deformed_scale = 50
 rndr.combo_name = '1.2D+1.0W'
 rndr.window_width = 750
 rndr.window_height = 750
+rndr.render_loads = True
 rndr.render_model()
 
 # We should see upward displacement at N1 and downward displacement at N4 if

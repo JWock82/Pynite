@@ -1,6 +1,6 @@
 # %%
 from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose
-from numpy.linalg import inv
+from numpy.linalg import inv, pinv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
 from PyNite.BeamSegY import BeamSegY
@@ -22,7 +22,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, name, i_node, j_node, material, model, Iy, Iz, J, A, auxNode=None,
+    def __init__(self, name, i_node, j_node, material_name, model, Iy, Iz, J, A, auxNode=None,
                  tension_only=False, comp_only=False, section_name=None):
         """
         Initializes a new member.
@@ -31,9 +31,9 @@ class Member3D():
         self.ID = None        # Unique index number for the member assigned by the program
         self.i_node = i_node  # The element's i-node
         self.j_node = j_node  # The element's j-node
-        self.material = material  # The element's material
-        self.E = model.Materials[material].E   # The modulus of elasticity of the element
-        self.G = model.Materials[material].G   # The shear modulus of the element
+        self.material_name = material_name  # The element's material
+        self.E = model.Materials[material_name].E   # The modulus of elasticity of the element
+        self.G = model.Materials[material_name].G   # The shear modulus of the element
 
         # Section properties
         if section_name is None:
@@ -56,6 +56,10 @@ class Member3D():
         self._fxj = 0
         self._myj = 0
         self._mzj = 0
+
+        # Variable used to track plastic load reveral
+        self.i_reversal = False
+        self.j_reversal = False
 
         self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
         self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
@@ -266,31 +270,54 @@ class Member3D():
         if allclose(G, 0, atol=1e-14):
             return zeros((12, 12))
         else:
-            return -ke @ G @ inv(G.T @ ke @ G) @ G.T @ ke
+            return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
     
-    def lamb(self, combo_name='Combo 1'):
+    def lamb(self, model_Delta_D, combo_name='Combo 1', push_combo='Push', step_num=1):
+
+        # Obtain the change in the member's end displacements from the calculated displacement change vector
+        Delta_D = array([model_Delta_D[self.i_node.ID*6 + 0],
+                        model_Delta_D[self.i_node.ID*6 + 1],
+                        model_Delta_D[self.i_node.ID*6 + 2],
+                        model_Delta_D[self.i_node.ID*6 + 3],
+                        model_Delta_D[self.i_node.ID*6 + 4],
+                        model_Delta_D[self.i_node.ID*6 + 5],
+                        model_Delta_D[self.j_node.ID*6 + 0],
+                        model_Delta_D[self.j_node.ID*6 + 1],
+                        model_Delta_D[self.j_node.ID*6 + 2],
+                        model_Delta_D[self.j_node.ID*6 + 3],
+                        model_Delta_D[self.j_node.ID*6 + 4],
+                        model_Delta_D[self.j_node.ID*6 + 5]]).reshape(12, 1)
+        
+        # Convert the gloabl changes in displacement to local coordinates
+        Delta_d = self.T() @ Delta_D
 
         # Get the elastic local stiffness matrix
         ke = self.k()
 
         # Get the total end forces applied to the element
-        f = self.f() - self.fer(combo_name)
-        d = self.d(combo_name)
+        f = self.f(combo_name, push_combo) - self.fer(combo_name) - self.fer(push_combo)*step_num
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
             raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
         else:
-            Gi = self.section.G(f[0], f[4], f[5])
-            Gj = self.section.G(f[6], f[10], f[11])
+            if self.i_reversal == False:
+                Gi = self.section.G(f[0], f[4], f[5])
+            else:
+                Gi = [[0], [0], [0]]
+            
+            if self.j_reversal == False:
+                Gj = self.section.G(f[6], f[10], f[11])
+            else:
+                Gj = [[0], [0], [0]]
         
         # Expand the gradients for a 12 degree of freedom element
         zeros_array = zeros((6, 1))
-        Gi = vstack(Gi, zeros_array)
-        Gj = vstack(zeros_array, Gj)
-        G = hstack(Gi, Gj)
+        Gi = vstack((Gi, zeros_array))
+        Gj = vstack((zeros_array, Gj))
+        G = hstack((Gi, Gj))
 
-        return inv(G.T() @ ke @ G) @ G.T() @ ke @ d
+        return inv(G.T @ ke @ G) @ G.T @ ke @ Delta_d
 
 #%%
     def fer(self, combo_name='Combo 1'):
@@ -441,7 +468,7 @@ class Member3D():
             P = (self.d(combo_name)[6, 0] - self.d(combo_name)[0, 0])*self.A*self.E/self.L()
             return add(matmul(add(self.k(), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
         elif self.model.solution == 'Pushover':
-            P = self._fxj  -self._fxi
+            P = self._fxj - self._fxi
             return add(matmul(add(self.k(), self.kg(P), self.km(combo_name, push_combo, step_num)), self.d(combo_name)), self.fer(combo_name))
         else:
             return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
@@ -458,7 +485,7 @@ class Member3D():
         """
         
         # Calculate and return the local displacement vector
-        return matmul(self.T(), self.D(combo_name))
+        return self.T() @ self.D(combo_name)
         
 #%%  
     # Transformation matrix
@@ -638,6 +665,7 @@ class Member3D():
         # Initialize the displacement vector
         D = zeros((12, 1))
         
+        # TODO: I'm not sure this next block is the best way to handle inactive members - need to review
         # Read in the global displacements from the nodes
         # Apply axial displacements only if the member is active
         if self.active[combo_name] == True:

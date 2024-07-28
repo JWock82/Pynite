@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="PyNiteFEA",
-    version="0.0.87",
+    version="0.0.95",
     author="D. Craig Brinck, PE, SE",
     author_email="Building.Code@outlook.com",
     description="A simple elastic 3D structural finite element library for Python.",
@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/JWock82/PyNite.git",
     packages=setuptools.find_packages(include=['PyNite', 'Pynite.*']),
-    package_data = {'PyNite': ['*html', '*.css']},
+    package_data = {'PyNite': ['*html', '*.css', '*Full Logo No Buffer - Transparent.png']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -24,13 +24,13 @@ setuptools.setup(
         'PrettyTable'
     ],
     extras_require = {
-        'Sparse Solver': ['scipy'],
-        'Plotting': ['matplotlib'],
-        'Visualization':  ['vtk'],
-        'Visualization Screenshots': ['IPython'],
-        'Reporting': ['pdfkit', 'Jinja2'],
-        'Reviewing Derivations': ['jupyterlab', 'sympy']
+        'sparse': ['scipy'],
+        'plotting': ['matplotlib'],
+        'vtk':  ['vtk', 'IPython'],
+        'pyvista': ['vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets'],
+        'reporting': ['pdfkit', 'Jinja2'],
+        'derivations': ['jupyterlab', 'sympy']
     },
     include_package_data = True,
-    python_requires = '>=3.6',
+    python_requires = '>=3.7',
 )

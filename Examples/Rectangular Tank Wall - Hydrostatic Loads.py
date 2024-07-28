@@ -3,7 +3,6 @@
 # Import a few libraries from PyNite that we'll need
 from PyNite.FEModel3D import FEModel3D
 from PyNite.Mesh import RectangleMesh
-from PyNite.Visualization import render_model
 
 # Create a finite element model
 model = FEModel3D()
@@ -60,15 +59,14 @@ for node in model.Nodes.values():
     if round(node.Y, 10) == 0 or round(node.X, 10) == 0 or round(node.X, 10) == width:
         model.def_support(node.name, True, True, True, True, True, True)
 
-# Add a load combination named '1.4F' with a factor of 1.4 applied to any loads designated as
-# 'Hydrostatic'.
+# Add a load combination named '1.4F' with a factor of 1.4 applied to any loads designated as 'Hydrostatic'.
 model.add_load_combo('1.4F', {'F': 1.4})
 
 # Analyze the model
 model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Mx` moments.
-from PyNite.Visualization import Renderer
+from PyNite.Rendering import Renderer
 renderer = Renderer(model)
 renderer.annotation_size = 0.2
 renderer.render_loads = True
