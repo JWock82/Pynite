@@ -411,34 +411,34 @@ class Quad3D():
 
         # Get the determinant of the Jacobian matrix for each gauss point. Doing this now will save us from doing it twice below.
         J1 = det(self.J(-gp, -gp))
-        J2 = det(self.J(gp, -gp))
-        J3 = det(self.J(gp, gp))
-        J4 = det(self.J(-gp, gp))
+        J2 = det(self.J( gp, -gp))
+        J3 = det(self.J( gp,  gp))
+        J4 = det(self.J(-gp,  gp))
 
         # Get the bending [B_b] matrices for each gauss point
         B1 = self.B_b(-gp, -gp)
-        B2 = self.B_b(gp, -gp)
-        B3 = self.B_b(gp, gp)
-        B4 = self.B_b(-gp, gp)
+        B2 = self.B_b( gp, -gp)
+        B3 = self.B_b( gp,  gp)
+        B4 = self.B_b(-gp,  gp)
 
         # Create the stiffness matrix with bending stiffness terms
         # See 2, Equation 5.94
-        k = (np.matmul(B1.T, np.matmul(Hb, B1))*J1 +
-             np.matmul(B2.T, np.matmul(Hb, B2))*J2 +
-             np.matmul(B3.T, np.matmul(Hb, B3))*J3 +
-             np.matmul(B4.T, np.matmul(Hb, B4))*J4)
+        k = ((B1.T @ Hb @ B1)*J1 +
+             (B2.T @ Hb @ B2)*J2 +
+             (B3.T @ Hb @ B3)*J3 +
+             (B4.T @ Hb @ B4)*J4)
 
         # Get the shear [B_s] matrices for each gauss point
         B1 = self.B_s(-gp, -gp)
-        B2 = self.B_s(gp, -gp)
-        B3 = self.B_s(gp, gp)
-        B4 = self.B_s(-gp, gp)
+        B2 = self.B_s( gp, -gp)
+        B3 = self.B_s( gp,  gp)
+        B4 = self.B_s(-gp,  gp)
 
         # Add shear stiffness terms to the stiffness matrix
-        k += (np.matmul(B1.T, np.matmul(Hs, B1))*J1 +
-              np.matmul(B2.T, np.matmul(Hs, B2))*J2 +
-              np.matmul(B3.T, np.matmul(Hs, B3))*J3 +
-              np.matmul(B4.T, np.matmul(Hs, B4))*J4)
+        k += ((B1.T @ Hs @ B1)*J1 +
+              (B2.T @ Hs @ B2)*J2 +
+              (B3.T @ Hs @ B3)*J3 +
+              (B4.T @ Hs @ B4)*J4)
         
         # Following Bathe's recommendation for the drilling degree of freedom
         # from Example 4.19 in "Finite Element Procedures, 2nd Ed.", calculate
@@ -516,15 +516,15 @@ class Quad3D():
         # Get the membrane B matrices for each gauss point
         # Doing this now will save us from doing it twice below
         B1 = self.B_m(-gp, -gp)
-        B2 = self.B_m(gp, -gp)
-        B3 = self.B_m(gp, gp)
-        B4 = self.B_m(-gp, gp)
+        B2 = self.B_m( gp, -gp)
+        B3 = self.B_m( gp,  gp)
+        B4 = self.B_m(-gp,  gp)
 
         # See reference 2 at the bottom of page 353, and reference 2 page 466
-        k = t*(np.matmul(B1.T, np.matmul(Cm, B1))*det(self.J(-gp, -gp)) +
-               np.matmul(B2.T, np.matmul(Cm, B2))*det(self.J(gp, -gp)) +
-               np.matmul(B3.T, np.matmul(Cm, B3))*det(self.J(gp, gp)) +
-               np.matmul(B4.T, np.matmul(Cm, B4))*det(self.J(-gp, gp)))
+        k = t*((B1.T @ Cm @ B1)*det(self.J(-gp, -gp)) +
+               (B2.T @ Cm @ B2)*det(self.J( gp, -gp)) +
+               (B3.T @ Cm @ B3)*det(self.J( gp,  gp)) +
+               (B4.T @ Cm @ B4)*det(self.J(-gp,  gp)))
         
         k_exp = np.zeros((24, 24))
 
@@ -578,19 +578,19 @@ class Quad3D():
         return np.add(self.k() @ self.d(combo_name), self.fer(combo_name))
 
     def fer(self, combo_name='Combo 1'):
-        '''
+        """
         Returns the quadrilateral's local fixed end reaction vector.
 
         Parameters
         ----------
         combo_name : string
             The name of the load combination to get the consistent load vector for.
-        '''
+        """
         
         Hw = lambda xi, eta : 1/4*np.array([[(1 - xi)*(1 - eta), 0, 0, (1 + xi)*(1 - eta), 0, 0, (1 + xi)*(1 + eta), 0, 0, (1 - xi)*(1 + eta), 0, 0]])
 
         # Initialize the fixed end reaction vector
-        fer = np.zeros((12,1))
+        fer = np.zeros((12, 1))
 
         # Get the requested load combination
         combo = self.model.LoadCombos[combo_name]
@@ -614,9 +614,9 @@ class Quad3D():
                     p -= factor*pressure[0]
         
         fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
-             + Hw(gp, -gp).T*p*det(self.J(gp, -gp))
-             + Hw(gp, gp).T*p*det(self.J(gp, gp))
-             + Hw(-gp, gp).T*p*det(self.J(-gp, gp)))
+             + Hw( gp, -gp).T*p*det(self.J( gp, -gp))
+             + Hw( gp,  gp).T*p*det(self.J( gp,  gp))
+             + Hw(-gp,  gp).T*p*det(self.J(-gp,  gp)))
 
         # Initialize the expanded vector to all zeros
         fer_exp = np.zeros((24, 1))
@@ -760,10 +760,10 @@ class Quad3D():
         
         # The local y-axis will be in the plane of the plate. Find a vector in
         # the plate's local xy plane.
-        xm = self.m_node.X
-        ym = self.m_node.Y
-        zm = self.m_node.Z
-        xy = [xm - xi, ym - yi, zm - zi]
+        xn = self.n_node.X
+        yn = self.n_node.Y
+        zn = self.n_node.Z
+        xy = [xn - xi, yn - yi, zn - zi]
 
         # Find a vector perpendicular to the plate surface to get the
         # orientation of the local z-axis.
@@ -899,9 +899,9 @@ class Quad3D():
 
         # Calculate the internal moments [Mx, My, Mxy] at each gauss point
         m1 = np.matmul(Hb, np.matmul(self.B_b(-gp, -gp), d))
-        m2 = np.matmul(Hb, np.matmul(self.B_b(gp, -gp), d))
-        m3 = np.matmul(Hb, np.matmul(self.B_b(gp, gp), d))
-        m4 = np.matmul(Hb, np.matmul(self.B_b(-gp, gp), d))
+        m2 = np.matmul(Hb, np.matmul(self.B_b( gp, -gp), d))
+        m3 = np.matmul(Hb, np.matmul(self.B_b( gp,  gp), d))
+        m4 = np.matmul(Hb, np.matmul(self.B_b(-gp,  gp), d))
 
         # Extrapolate to get the value at the requested location
         Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
