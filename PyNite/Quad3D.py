@@ -498,6 +498,14 @@ class Quad3D():
         k_exp[17, 17] = k_rz
         k_exp[23, 23] = k_rz
 
+        # Invert the local +y bending sign convention to match Pynite's
+        k_exp[[4, 10, 16, 22], :] *= -1
+        k_exp[:, [4, 10, 16, 22]] *= -1
+        
+        # The way the DKMQ element was derived, the local x and y axes of the element are swapped from Pynite's definitions of x and y. Swap them to match Pynite.
+        k_exp[[3, 4, 9, 10, 15, 16, 21, 22], :] = k_exp[[4, 3, 10, 9, 16, 15, 22, 21], :]
+        k_exp[:, [3, 4, 9, 10, 15, 16, 21, 22]] = k_exp[:, [4, 3, 10, 9, 16, 15, 22, 21]]
+
         return k_exp
 
     def k_m(self):
@@ -611,7 +619,7 @@ class Quad3D():
                 if pressure[1] == case:
 
                     # Sum the pressures
-                    p -= factor*pressure[0]
+                    p += factor*pressure[0]
         
         fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
              + Hw( gp, -gp).T*p*det(self.J( gp, -gp))
@@ -662,7 +670,7 @@ class Quad3D():
         """
         
         # Calculate and return the global force vector
-        return np.matmul(inv(self.T()), self.f(combo_name))
+        return inv(self.T()) @ self.f(combo_name)
 
     def D(self, combo_name='Combo 1'):
         '''
@@ -735,7 +743,7 @@ class Quad3D():
         '''
         
         # Calculate and return the fixed end reaction vector
-        return np.matmul(inv(self.T()), self.fer(combo_name))
+        return inv(self.T()) @ self.fer(combo_name)
   
     def T(self):
         """
