@@ -619,7 +619,7 @@ class Quad3D():
                 if pressure[1] == case:
 
                     # Sum the pressures
-                    p += factor*pressure[0]
+                    p -= factor*pressure[0]
         
         fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
              + Hw( gp, -gp).T*p*det(self.J( gp, -gp))
