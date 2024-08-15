@@ -99,24 +99,22 @@ print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 # Get the force vector for quad 101 for load combination '1.0W'
 f_vector = model.Quads['Q101'].f('1.0W')
 
-# Although the MITC4 element nodes are defined by the user in the order [i, j, m, n], internally
-# PyNite formulates the plate in the order [m, n, i, j] to be consistent with the literature used
-# to derive this element. Therefore the MITC4 element's force vector is arranged as follows:
+# The DKMQ element's force vector is arranged as follows:
 # ************************************************************************************************************************************************************
-# f vector: [[fx_m, fy_m, fz_m, mx_m, my_m, mz_m, fx_n, fy_n, fz_n, mx_n, my_n, mz_n, fx_i, fy_i, fz_i, mx_i, my_i, mz_i, fx_j, fy_j, fz_j, mx_j, my_j, mz_j]]
+# f vector: [[fx_i, fy_i, fz_i, mx_i, my_i, mz_i, fx_j, fy_j, fz_j, mx_j, my_j, mz_j, fx_m, fy_m, fz_m, mx_m, my_m, mz_m, fx_n, fy_n, fz_n, mx_n, my_n, mz_n]]
 # index:    [[  0 ,   1 ,   2 ,   3 ,   4 ,   5 ,   6 ,   7 ,   8 ,   9 ,  10 ,  11 ,  12 ,  13 ,  14 ,  15 ,  16 ,  17 ,  18 ,  19 ,  20 ,  21 ,  22 ,  23 ]]
 # ************************************************************************************************************************************************************
 # nomenclature: fx_n = force in the local x-direction at the n-node
 #               my_j = moment about the local y-axis at the j-node
 
 # We are interested in the moment applied to the i-node about the quad's local y-axis (my_i). This
-# is at index 16 in the f vector. Note that here Mx is the moment about the local y-axis, rather
+# is at index 4 in the f vector. Note that here Mx is the moment about the local y-axis, rather
 # than about it's local x-axis. This can be confusing, but is a commonly used plate nomenclature.
-Mx = f_vector[16, 0]
+Mx = f_vector[4, 0]
 
 # We can find the max My moment similarly from quad 6
 f_vector_11 = model.Quads['Q6'].f('1.0W')
-My = f_vector_11[15, 0]
+My= f_vector_11[3, 0]
 
 # Now we'll convert these values to a force per unit length. The height and width of the plate is
 # `meshsize`.

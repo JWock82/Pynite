@@ -905,7 +905,7 @@ class Quad3D():
         # Get the stress-strain matrix
         Hb = self.Hb()
 
-        # Calculate the internal moments [Mx, My, Mxy] at each gauss point
+        # Calculate the internal moments [-My, Mx, Mxy] at each gauss point
         m1 = np.matmul(Hb, np.matmul(self.B_b(-gp, -gp), d))
         m2 = np.matmul(Hb, np.matmul(self.B_b( gp, -gp), d))
         m3 = np.matmul(Hb, np.matmul(self.B_b( gp,  gp), d))
