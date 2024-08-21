@@ -82,16 +82,21 @@ renderer.render_model()
 # Timoshenko solution
 b = HL
 a = width
-D = E*t**3/(12*(1-nu**2))
-qo = 1/2*(HL*62.4)*HL
+qo = HL*62.4*1.4
 Mx = -0.0131*qo*a**2
 My = -0.0242*qo*a**2
-d = 0.00069*qo*a**4/D
-print('Max Moment at Side of Wall, Mx:', model.Meshes['MSH1'].max_moment('Mx', '1.4F'))
-print('Timoshenko Solution for Mx at Side of Wall, Mx:', Mx)
-print('Max Moment at Base of Wall, My: ', model.Meshes['MSH1'].max_moment('My', '1.4F'))
+
+# Pynite solution
+Mx_pn = model.Quads['Q176'].moment(-1, 0, True, '1.4F')[0, 0]
+
+# Comparison of solutions
+print('Max Moment at Side Mid-Height of Wall, Mx:', Mx_pn)
+print('Timoshenko Solution for Mx at Side Mid-Height of Wall, Mx:', Mx)
+print('Max Moment at Base of Wall, My: ', model.Meshes['MSH1'].min_moment('My', '1.4F'))
 print('Timoshenko Solution for My at Base of Wall, My: ', My)
 
 # Print the maximum and minumum displacements
+D = E*t**3/(12*(1-nu**2))
+d = 0.00069*qo*a**4/D
 print('Max displacement: ', max([node.DZ['1.4F'] for node in model.Nodes.values()]))
 print('Timoshenko Solution for displacement, d: ', d)
