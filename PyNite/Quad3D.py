@@ -829,8 +829,14 @@ class Quad3D():
         Internal shear force per unit length of the quad element: [[Qx], [Qy]]
         """
 
-        # Get the plate's local displacement vector. Slice out terms not related to plate bending.
-        d = self.d(combo_name)[[2, 3, 4, 8, 9, 10, 14, 15, 16, 20, 21, 22], :]
+        # Get the plate's local displacement vector
+        d = self.d(combo_name)
+                
+        # Correct the sign convention for x-axis rotation - note that +x bending and +x rotation are opposite in the DKMQ derivation. Hence when correcting d we correct the x terms, but when correcting k we correct the y terms
+        d[[3, 9, 15, 21], :] *= -1
+
+        # Slice out terms not related to plate bending, and swap the local x and y to match the DKMQ derivation
+        d = d[[2, 4, 3, 8, 10, 9, 14, 16, 15, 20, 22, 21], :]
 
         # Define the gauss point used for numerical integration
         gp = 1/3**0.5
