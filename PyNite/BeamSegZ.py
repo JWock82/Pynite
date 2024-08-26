@@ -4,6 +4,8 @@ Created on Mon Nov  6 20:52:31 2017
 
 @author: D. Craig Brinck, SE
 """
+from numpy import full
+
 # %%
 # A mathematically continuous beam segment
 class BeamSegZ():
@@ -128,14 +130,18 @@ class BeamSegZ():
         
         return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
 
-    def Torsion(self):
+    def Torsion(self, x = 0):
         """
         Returns the torsional moment in the segment.
         """
         
         # The torsional moment is constant across the segment
         # This can be updated in the future for distributed torsional forces
-        return self.T1
+
+        if isinstance(x, (int, float)):
+            return self.T1
+        else:
+            return full(len(x), self.T1)
     
     def slope(self, x, P_delta=False):
         """Returns the slope of the elastic curve at any point `x` along the segment.
