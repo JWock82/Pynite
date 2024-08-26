@@ -873,7 +873,8 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         x_array : array = None
-            A custom array of x values that may be provided by the user, otherwise an array is generated
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order
         """
         
         # Segment the member if necessary
@@ -1107,7 +1108,8 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         x_array : array = None
-            A custom array of x values that may be provided by the user, otherwise an array is generated
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1271,7 +1273,8 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         x_array : array = None
-            A custom array of x values that may be provided by the user, otherwise an array is generated
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1410,7 +1413,8 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         x_array : array = None
-            A custom array of x values that may be provided by the user, otherwise an array is generated
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1604,7 +1608,8 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         x_array : array = None
-            A custom array of x values that may be provided by the user, otherwise an array is generated
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -1750,7 +1755,8 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         x_array : array = None
-            A custom array of x values that may be provided by the user, otherwise an array is generated
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
@@ -2067,7 +2073,12 @@ class Member3D():
             if i == len(segments)-1:
                 index2 = len(x_array)
             else:
-                index2 = where(x_array > segment.x2)[0][0]
+                try:
+                    index2 = where(x_array > segment.x2)[0][0]
+                except IndexError:
+                    index2 = len(x_array)
+            
+            if last_index == index2: continue
 
             thisseg_x_array = x_array[last_index:index2]
 
