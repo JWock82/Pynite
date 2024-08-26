@@ -1,5 +1,5 @@
 # %%
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose, where
 from numpy.linalg import inv, pinv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
@@ -858,7 +858,7 @@ class Member3D():
         Member3D.__plt.show()    
         
 
-    def shear_array(self, Direction, n_points: int, combo_name='Combo 1'):
+    def shear_array(self, Direction, n_points: int, combo_name='Combo 1', x_array=None):
         """
         Returns the array of the shear in the member for the given direction
         
@@ -872,19 +872,59 @@ class Member3D():
             The number of points in the array to generate over the full length of the member.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated
         """
         
-        # Segment the member into segments with mathematically continuous loads if not already done
+        # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
         L = self.L()
-        x_arr = linspace(0, L, n_points)
-        y_arr = array(
-            [self.shear(Direction, x, combo_name) for x in x_arr]
-        )
-        return array([x_arr, y_arr])
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array<0) or any(x_array>L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+
+        # Check which axis is of interest
+        if Direction == 'Fz':
+            segment_moms = []
+            last_index = 0
+            for i, segment in enumerate(self.SegmentsY):
+                if i == len(self.SegmentsY)-1:
+                    index2 = len(x_array)
+                else:
+                    index2 = where(x_array > segment.x2)[0][0]
+
+                thisseg_x_array = x_array[last_index:index2]
+                thisseg_y_array = segment.Shear(thisseg_x_array - segment.x1)
+                segment_moms.append(thisseg_y_array)
+
+                last_index = index2
+
+            return hstack(segment_moms)
+                
+        elif Direction == 'Fy':
+            segment_moms = []
+            last_index = 0
+            for i, segment in enumerate(self.SegmentsZ):
+                if i == len(self.SegmentsY)-1:
+                    index2 = len(x_array)
+                else:
+                    index2 = where(x_array > segment.x2)[0][0]
+
+                thisseg_x_array = x_array[last_index:index2]
+                thisseg_y_array = segment.Shear(thisseg_x_array - segment.x1)
+                segment_moms.append(thisseg_y_array)
+
+                last_index = index2
+
+            return hstack(segment_moms)
+        
+        else:
+            raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
 
 #%%
     def moment(self, Direction, x, combo_name='Combo 1'):
@@ -1079,9 +1119,8 @@ class Member3D():
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
-
-
-    def moment_array(self, Direction, n_points, combo_name='Combo 1'):
+    
+    def moment_array(self, Direction, n_points, combo_name='Combo 1', x_array = None):
         """
         Returns the array of the moment in the member for the given direction
         
@@ -1095,18 +1134,73 @@ class Member3D():
             The number of points in the array to generate over the full length of the member.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated
         """
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
+        # Determine if a P-Delta analysis has been run
+        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            # Include P-little-delta effects in the moment results
+            P_delta = True
+        else:
+            # Do not include P-little delta effects in the moment results
+            P_delta = False
+
         L = self.L()
-        x_arr = linspace(0, L, n_points)
-        y_arr = array(
-            [self.moment(Direction, x, combo_name) for x in x_arr]
-        )
-        return array([x_arr, y_arr])
+
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array<0) or any(x_array>L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+                
+        if P_delta:
+            #P-delta analysis is not vectorised yet, do it element-wise
+            y_arr = array([self.moment(Direction, x, combo_name) for x in x_array])
+            return array([x_array, y_arr])
+
+        else:
+            # Check which axis is of interest
+            if Direction == 'My':
+                segment_moms = []
+                last_index = 0
+                for i, segment in enumerate(self.SegmentsY):
+                    if i == len(self.SegmentsY)-1:
+                        index2 = len(x_array)
+                    else:
+                        index2 = where(x_array > segment.x2)[0][0]
+
+                    thisseg_x_array = x_array[last_index:index2]
+                    thisseg_y_array = segment.moment(thisseg_x_array - segment.x1, P_delta)
+                    segment_moms.append(thisseg_y_array)
+
+                    last_index = index2
+
+                return hstack(segment_moms)
+                    
+            elif Direction == 'Mz':
+                segment_moms = []
+                last_index = 0
+                for i, segment in enumerate(self.SegmentsZ):
+                    if i == len(self.SegmentsY)-1:
+                        index2 = len(x_array)
+                    else:
+                        index2 = where(x_array > segment.x2)[0][0]
+
+                    thisseg_x_array = x_array[last_index:index2]
+                    thisseg_y_array = segment.moment(thisseg_x_array - segment.x1, P_delta)
+                    segment_moms.append(thisseg_y_array)
+
+                    last_index = index2
+
+                return hstack(segment_moms)
+            
+            else:
+                raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
        
 #%%
     def torque(self, x, combo_name='Combo 1'):
@@ -1542,7 +1636,7 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
 
-    def deflection_array(self, Direction, n_points, combo_name='Combo 1'):
+    def deflection_array(self, Direction, n_points, combo_name='Combo 1', x_array=None):
         """
         Returns the array of the deflection in the member for the given direction
         
@@ -1557,18 +1651,90 @@ class Member3D():
             The number of points in the array to generate over the full length of the member.
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated
         """
         # Segment the member if necessary
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
             self.__solved_combo = self.model.LoadCombos[combo_name]
 
+        # Determine if a P-Delta analysis has been run
+        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            # Include P-little-delta effects in the moment results
+            P_delta = True
+        else:
+            # Do not include P-little delta effects in the moment results
+            P_delta = False
+
         L = self.L()
-        x_arr = linspace(0, L, n_points)
-        y_arr = array(
-            [self.deflection(Direction, x, combo_name) for x in x_arr]
-        )
-        return array([x_arr, y_arr])
+
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array<0) or any(x_array>L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+                
+        if P_delta:
+            #P-delta analysis is not vectorised yet, do it element-wise
+            y_arr = array([self.deflection(Direction, x, combo_name) for x in x_array])
+            return array([x_array, y_arr])
+
+        else:
+            # Check which axis is of interest
+            if Direction == 'dz':
+                segment_moms = []
+                last_index = 0
+                for i, segment in enumerate(self.SegmentsY):
+                    if i == len(self.SegmentsY)-1:
+                        index2 = len(x_array)
+                    else:
+                        index2 = where(x_array > segment.x2)[0][0]
+
+                    thisseg_x_array = x_array[last_index:index2]
+                    thisseg_y_array = segment.deflection(thisseg_x_array - segment.x1, P_delta)
+                    segment_moms.append(thisseg_y_array)
+
+                    last_index = index2
+
+                return hstack(segment_moms)
+
+            elif Direction == 'dy':
+                segment_moms = []
+                last_index = 0
+                for i, segment in enumerate(self.SegmentsZ):
+                    if i == len(self.SegmentsY)-1:
+                        index2 = len(x_array)
+                    else:
+                        index2 = where(x_array > segment.x2)[0][0]
+
+                    thisseg_x_array = x_array[last_index:index2]
+                    thisseg_y_array = segment.deflection(thisseg_x_array - segment.x1, P_delta)
+                    segment_moms.append(thisseg_y_array)
+
+                    last_index = index2
+
+                return hstack(segment_moms)
+                                
+            elif Direction == 'dx':
+                segment_moms = []
+                last_index = 0
+                for i, segment in enumerate(self.SegmentsZ):
+                    if i == len(self.SegmentsY)-1:
+                        index2 = len(x_array)
+                    else:
+                        index2 = where(x_array > segment.x2)[0][0]
+
+                    thisseg_x_array = x_array[last_index:index2]
+                    thisseg_y_array = segment.AxialDeflection(thisseg_x_array - segment.x1)
+                    segment_moms.append(thisseg_y_array)
+
+                    last_index = index2
+
+                return hstack(segment_moms)
+            
+            else:
+                raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
 
     def rel_deflection(self, Direction, x, combo_name='Combo 1'):
         """
