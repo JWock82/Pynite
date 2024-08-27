@@ -1778,12 +1778,12 @@ class Member3D():
 
         # Check which axis is of interest
         if Direction == 'dy':
-            deflections = self._extract_vector_results(self.SegmentsZ, x_array, 'deflection')
-            return deflections - (dyi + (dyj-dyi)/L*x_array) 
+            deflections = self._extract_vector_results(self.SegmentsZ, x_array, 'deflection')[1]
+            return vstack((x_array, deflections - (dyi + (dyj-dyi)/L*x_array)))
         
         elif Direction == 'dz':
-            deflections = self._extract_vector_results(self.SegmentsY, x_array, 'deflection')
-            return deflections - (dzi + (dzj-dzi)/L*x_array)            
+            deflections = self._extract_vector_results(self.SegmentsY, x_array, 'deflection')[1]
+            return vstack((x_array, deflections - (dzi + (dzj-dzi)/L*x_array)))        
         
     def _segment_member(self, combo_name='Combo 1'):
         """
@@ -2099,4 +2099,4 @@ class Member3D():
 
             last_index = index2
 
-        return hstack(segment_results)
+        return vstack((x_array, hstack(segment_results)))
