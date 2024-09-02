@@ -33,15 +33,15 @@ def FER_PtLoad(P, x, L, Direction):
     
     # Populate the fixed end reaction vector
     if Direction == "Fy":
-        FER.itemset((1, 0), -P*b**2*(L+2*x)/L**3)
-        FER.itemset((5, 0), -P*x*b**2/L**2)
-        FER.itemset((7, 0), -P*x**2*(L+2*b)/L**3)
-        FER.itemset((11, 0), P*x**2*b/L**2)
+        FER[1, 0] = -P*b**2*(L+2*x)/L**3
+        FER[5, 0] = -P*x*b**2/L**2
+        FER[7, 0] = -P*x**2*(L+2*b)/L**3
+        FER[11, 0] = P*x**2*b/L**2
     elif Direction == "Fz":
-        FER.itemset((2, 0), -P*b**2*(L+2*x)/L**3)
-        FER.itemset((4, 0), P*x*b**2/L**2)
-        FER.itemset((8, 0), -P*x**2*(L+2*b)/L**3)
-        FER.itemset((10, 0), -P*x**2*b/L**2)
+        FER[2, 0] = -P*b**2*(L+2*x)/L**3
+        FER[4, 0] = P*x*b**2/L**2
+        FER[8, 0] = -P*x**2*(L+2*b)/L**3
+        FER[10, 0] = -P*x**2*b/L**2
         
     return FER
     
@@ -70,15 +70,15 @@ def FER_Moment(M, x, L, Direction):
     
     # Populate the fixed end reaction vector
     if Direction == "Mz":
-        FER.itemset((1, 0), 6*M*x*b/L**3)
-        FER.itemset((5, 0), M*b*(2*x-b)/L**2)
-        FER.itemset((7, 0), -6*M*x*b/L**3)
-        FER.itemset((11, 0), M*x*(2*b-x)/L**2)
+        FER[1, 0] = 6*M*x*b/L**3
+        FER[5, 0] = M*b*(2*x-b)/L**2
+        FER[7, 0] = -6*M*x*b/L**3
+        FER[11, 0] = M*x*(2*b-x)/L**2
     elif Direction == "My":
-        FER.itemset((2, 0), -6*M*x*b/L**3)
-        FER.itemset((4, 0), M*b*(2*x-b)/L**2)
-        FER.itemset((8, 0), 6*M*x*b/L**3)
-        FER.itemset((10, 0), M*x*(2*b-x)/L**2)
+        FER[2, 0] = -6*M*x*b/L**3
+        FER[4, 0] = M*b*(2*x-b)/L**2
+        FER[8, 0] = 6*M*x*b/L**3
+        FER[10, 0] = M*x*(2*b-x)/L**2
     return FER
     
 # %%
@@ -90,15 +90,15 @@ def FER_LinLoad(w1, w2, x1, x2, L, Direction):
     
     # Populate the fixed end reaction vector
     if Direction == 'Fy':
-        FER.itemset((1, 0), (x1 - x2)*(10*L**3*w1 + 10*L**3*w2 - 15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3))
-        FER.itemset((5, 0), (x1 - x2)*(20*L**2*w1*x1 + 10*L**2*w1*x2 + 10*L**2*w2*x1 + 20*L**2*w2*x2 - 30*L*w1*x1**2 - 20*L*w1*x1*x2 - 10*L*w1*x2**2 - 10*L*w2*x1**2 - 20*L*w2*x1*x2 - 30*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2))
-        FER.itemset((7, 0), -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3))
-        FER.itemset((11, 0), (x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2))
+        FER[1, 0] = (x1 - x2)*(10*L**3*w1 + 10*L**3*w2 - 15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
+        FER[5, 0] = (x1 - x2)*(20*L**2*w1*x1 + 10*L**2*w1*x2 + 10*L**2*w2*x1 + 20*L**2*w2*x2 - 30*L*w1*x1**2 - 20*L*w1*x1*x2 - 10*L*w1*x2**2 - 10*L*w2*x1**2 - 20*L*w2*x1*x2 - 30*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
+        FER[7, 0] = -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
+        FER[11, 0] = (x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
     elif Direction == 'Fz':
-        FER.itemset((2, 0), (x1 - x2)*(10*L**3*w1 + 10*L**3*w2 - 15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3))
-        FER.itemset((4, 0), -(x1 - x2)*(20*L**2*w1*x1 + 10*L**2*w1*x2 + 10*L**2*w2*x1 + 20*L**2*w2*x2 - 30*L*w1*x1**2 - 20*L*w1*x1*x2 - 10*L*w1*x2**2 - 10*L*w2*x1**2 - 20*L*w2*x1*x2 - 30*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2))
-        FER.itemset((8, 0), -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3))
-        FER.itemset((10, 0), -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2))
+        FER[2, 0] = (x1 - x2)*(10*L**3*w1 + 10*L**3*w2 - 15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
+        FER[4, 0] = -(x1 - x2)*(20*L**2*w1*x1 + 10*L**2*w1*x2 + 10*L**2*w2*x1 + 20*L**2*w2*x2 - 30*L*w1*x1**2 - 20*L*w1*x1*x2 - 10*L*w1*x2**2 - 10*L*w2*x1**2 - 20*L*w2*x1*x2 - 30*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
+        FER[8, 0] = -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
+        FER[10, 0] = -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
 
     return FER
 
@@ -110,8 +110,8 @@ def FER_AxialPtLoad(P, x, L):
     FER = zeros((12, 1))
     
     # Populate the fixed end reaction vector
-    FER.itemset((0, 0), -P*(L-x)/L)
-    FER.itemset((6, 0), -P*x/L)
+    FER[0, 0] = -P*(L-x)/L
+    FER[6, 0] = -P*x/L
     
     return FER
 
@@ -123,8 +123,8 @@ def FER_AxialLinLoad(p1, p2, x1, x2, L):
     FER = zeros((12, 1))
     
     # Populate the fixed end reaction vector
-    FER.itemset((0, 0), 1/(6*L)*(x1-x2)*(3*L*p1+3*L*p2-2*p1*x1-p1*x2-p2*x1-2*p2*x2))
-    FER.itemset((6, 0), 1/(6*L)*(x1-x2)*(2*p1*x1+p1*x2+p2*x1+2*p2*x2))
+    FER[0, 0] = 1/(6*L)*(x1-x2)*(3*L*p1+3*L*p2-2*p1*x1-p1*x2-p2*x1-2*p2*x2)
+    FER[6, 0] = 1/(6*L)*(x1-x2)*(2*p1*x1+p1*x2+p2*x1+2*p2*x2)
     
     return FER
  
@@ -144,7 +144,7 @@ def FER_Torque(T, x, L):
     FER = zeros((12, 1))
     
     # Populate the fixed end reaction vector
-    FER.itemset((3, 0), -T*(L - x)/L)
-    FER.itemset((9, 0), -T*x/L)
+    FER[3, 0] = -T*(L - x)/L
+    FER[9, 0] = -T*x/L
 
     return FER
