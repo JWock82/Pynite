@@ -52,6 +52,51 @@ class Quad3D():
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
 
+    # def _local_coords(self):
+    #     '''
+    #     Calculates or recalculates and stores the local (x, y) coordinates for each node of the
+    #     quadrilateral.
+    #     '''
+
+    #     # Get the global coordinates for each node
+    #     X1, Y1, Z1 = self.i_node.X, self.i_node.Y, self.i_node.Z
+    #     X2, Y2, Z2 = self.j_node.X, self.j_node.Y, self.j_node.Z
+    #     X3, Y3, Z3 = self.m_node.X, self.m_node.Y, self.m_node.Z
+    #     X4, Y4, Z4 = self.n_node.X, self.n_node.Y, self.n_node.Z
+
+    #     # Node 1 will be used as the origin of the plate's local (x, y) coordinate system. Find the
+    #     # vector from the origin to each node.
+    #     Xi1, Yi1, Zi1 = (X1 + X4)/2, (Y1 + Y4)/2, (Z1 + Z4)/2
+    #     Xi2, Yi2, Zi2 = (X2 + X3)/2, (Y2 + Y3)/2, (Z2 + Z3)/2
+    #     Xo, Yo, Zo = (Xi1 + Xi2)/2, (Yi1 + Yi2)/2, (Zi1 + Zi2)/2
+
+    #     x_axis = np.array([Xi2 - Xi1, Yi2 - Yi1, Zi2 - Zi1]).T
+
+    #     vector_01 = np.array([X1 - Xo, Y1 - Yo, Z1 - Zo]).T
+    #     vector_02 = np.array([X2 - Xo, Y2 - Yo, Z2 - Zo]).T
+    #     vector_03 = np.array([X3 - Xo, Y3 - Yo, Z3 - Zo]).T
+    #     vector_04 = np.array([X4 - Xo, Y4 - Yo, Z4 - Zo]).T
+
+    #     # Define the plate's local y, and z axes
+    #     vector_x3 = np.array([X3 - Xi1, Y3 - Yi1, Z3 - Zi1]).T
+    #     z_axis = np.cross(x_axis, vector_x3)
+    #     y_axis = np.cross(z_axis, x_axis)
+
+    #     # Convert the x, y and z axes into unit vectors
+    #     x_axis = x_axis/norm(x_axis)
+    #     y_axis = y_axis/norm(y_axis)
+    #     z_axis = z_axis/norm(z_axis)
+
+    #     # Calculate the local (x, y) coordinates for each node
+    #     self.x1 = np.dot(vector_01, x_axis)
+    #     self.x2 = np.dot(vector_02, x_axis)
+    #     self.x3 = np.dot(vector_03, x_axis)
+    #     self.x4 = np.dot(vector_04, x_axis)
+    #     self.y1 = np.dot(vector_01, y_axis)
+    #     self.y2 = np.dot(vector_02, y_axis)
+    #     self.y3 = np.dot(vector_03, y_axis)
+    #     self.y4 = np.dot(vector_04, y_axis)
+    
     def _local_coords(self):
         '''
         Calculates or recalculates and stores the local (x, y) coordinates for each node of the
@@ -763,8 +808,9 @@ class Quad3D():
 
         # Divide the vector by its magnitude to produce a unit x-vector of
         # direction cosines
-        mag = (x[0]**2 + x[1]**2 + x[2]**2)**0.5
-        x = [x[0]/mag, x[1]/mag, x[2]/mag]
+        # mag = (x[0]**2 + x[1]**2 + x[2]**2)**0.5
+        # x = [x[0]/mag, x[1]/mag, x[2]/mag]
+        x = x/norm(x)
         
         # The local y-axis will be in the plane of the plate. Find a vector in
         # the plate's local xy plane.
@@ -779,8 +825,9 @@ class Quad3D():
         
         # Divide the z-vector by its magnitude to produce a unit z-vector of
         # direction cosines.
-        mag = (z[0]**2 + z[1]**2 + z[2]**2)**0.5
-        z = [z[0]/mag, z[1]/mag, z[2]/mag]
+        # mag = (z[0]**2 + z[1]**2 + z[2]**2)**0.5
+        # z = [z[0]/mag, z[1]/mag, z[2]/mag]
+        z = z/norm(z)
 
         # Calculate the local y-axis as a vector perpendicular to the local z
         # and x-axes.
@@ -788,8 +835,9 @@ class Quad3D():
         
         # Divide the y-vector by its magnitude to produce a unit vector of
         # direction cosines.
-        mag = (y[0]**2 + y[1]**2 + y[2]**2)**0.5
-        y = [y[0]/mag, y[1]/mag, y[2]/mag]
+        # mag = (y[0]**2 + y[1]**2 + y[2]**2)**0.5
+        # y = [y[0]/mag, y[1]/mag, y[2]/mag]
+        y = y/norm(y)
 
         # Create the direction cosines matrix.
         dir_cos = np.array([x,
@@ -809,7 +857,72 @@ class Quad3D():
         
         # Return the transformation matrix.
         return T
+    
+    # def T(self):
+    #     """
+    #     Returns the coordinate transformation matrix for the quad element.
+    #     """
 
+    #     xi = self.i_node.X
+    #     xj = self.j_node.X
+    #     yi = self.i_node.Y
+    #     yj = self.j_node.Y
+    #     zi = self.i_node.Z
+    #     zj = self.j_node.Z
+
+    #     # Calculate the direction cosines for the local x-axis.The local x-axis will run from
+    #     # the i-node to the j-node
+    #     x = [xj - xi, yj - yi, zj - zi]
+
+    #     # Divide the vector by its magnitude to produce a unit x-vector of
+    #     # direction cosines
+    #     mag = (x[0]**2 + x[1]**2 + x[2]**2)**0.5
+    #     x = [x[0]/mag, x[1]/mag, x[2]/mag]
+        
+    #     # The local y-axis will be in the plane of the plate. Find a vector in
+    #     # the plate's local xy plane.
+    #     xn = self.n_node.X
+    #     yn = self.n_node.Y
+    #     zn = self.n_node.Z
+    #     xy = [xn - xi, yn - yi, zn - zi]
+
+    #     # Find a vector perpendicular to the plate surface to get the
+    #     # orientation of the local z-axis.
+    #     z = np.cross(x, xy)
+        
+    #     # Divide the z-vector by its magnitude to produce a unit z-vector of
+    #     # direction cosines.
+    #     mag = (z[0]**2 + z[1]**2 + z[2]**2)**0.5
+    #     z = [z[0]/mag, z[1]/mag, z[2]/mag]
+
+    #     # Calculate the local y-axis as a vector perpendicular to the local z
+    #     # and x-axes.
+    #     y = np.cross(z, x)
+        
+    #     # Divide the y-vector by its magnitude to produce a unit vector of
+    #     # direction cosines.
+    #     mag = (y[0]**2 + y[1]**2 + y[2]**2)**0.5
+    #     y = [y[0]/mag, y[1]/mag, y[2]/mag]
+
+    #     # Create the direction cosines matrix.
+    #     dir_cos = np.array([x,
+    #                         y,
+    #                         z])
+        
+    #     # Build the transformation matrix.
+    #     T = np.zeros((24, 24))
+    #     T[0:3, 0:3] = dir_cos
+    #     T[3:6, 3:6] = dir_cos
+    #     T[6:9, 6:9] = dir_cos
+    #     T[9:12, 9:12] = dir_cos
+    #     T[12:15, 12:15] = dir_cos
+    #     T[15:18, 15:18] = dir_cos
+    #     T[18:21, 18:21] = dir_cos
+    #     T[21:24, 21:24] = dir_cos
+        
+    #     # Return the transformation matrix.
+    #     return T
+    
     def shear(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         """
         Returns the interal shears at any point in the quad element.
@@ -938,10 +1051,14 @@ class Quad3D():
             # Get the direction cosines for the plate's local coordinate system
             dir_cos = self.T()[:3, :3]
 
-            # Convert the plate flexural stresses to global coordinates
-            return np.matmul(dir_cos.T, np.array([Mx,
-                                                  My,
-                                                  [0]]))
+            # Convert the local results to global results
+            M_global = np.matmul(dir_cos, np.array([ -My,
+                                                      Mx,
+                                                      [0]]))
+            
+            M_global = M_global[[1, 0, 2], :]
+
+            return M_global
 
     def membrane(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
         

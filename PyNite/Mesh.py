@@ -108,13 +108,18 @@ class Mesh():
             combinations will be evaluated.
         """
 
-        if direction == 'Qx':
+        if direction in ['QX', 'QY']:
+            local = False
+        else:
+            local = True
+
+        if direction.upper() == 'QX':
             i = 0
-        elif direction == 'Qy':
+        elif direction.upper() == 'QY':
             i = 1
         else:
-            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', or \'Qy\'')
-
+            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', or \'QY\'')
+        
         # Initialize the maximum value to None
         Q_max = None
 
@@ -143,11 +148,11 @@ class Mesh():
                     
                     # Find the maximum shear in the element, checking each corner and the center
                     # of the element
-                    Q_element = max([element.shear(xi, yi, load_combo.name)[i, 0],
-                                     element.shear(xj, yj, load_combo.name)[i, 0],
-                                     element.shear(xm, ym, load_combo.name)[i, 0],
-                                     element.shear(xn, yn, load_combo.name)[i, 0],
-                                     element.shear((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    Q_element = max([element.shear(xi, yi, local, load_combo.name)[i, 0],
+                                     element.shear(xj, yj, local, load_combo.name)[i, 0],
+                                     element.shear(xm, ym, local, load_combo.name)[i, 0],
+                                     element.shear(xn, yn, local, load_combo.name)[i, 0],
+                                     element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum shear calculated is the largest encountered so far
                     if Q_max == None or Q_max < Q_element:
@@ -174,12 +179,17 @@ class Mesh():
             combinations will be evaluated.
         """
 
-        if direction == 'Qx':
+        if direction in ['QX', 'QY']:
+            local = False
+        else:
+            local = True
+
+        if direction.upper() == 'QX':
             i = 0
-        elif direction == 'Qy':
+        elif direction.upper() == 'QY':
             i = 1
         else:
-            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', or \'Qy\'')
+            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', or \'QY\'')
 
         # Initialize the minimum value to None
         Q_min = None
@@ -209,11 +219,11 @@ class Mesh():
                     
                     # Find the minimum shear in the element, checking each corner and the center
                     # of the element
-                    Q_element = min([element.shear(xi, yi, load_combo.name)[i, 0],
-                                     element.shear(xj, yj, load_combo.name)[i, 0],
-                                     element.shear(xm, ym, load_combo.name)[i, 0],
-                                     element.shear(xn, yn, load_combo.name)[i, 0],
-                                     element.shear((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    Q_element = min([element.shear(xi, yi, local, load_combo.name)[i, 0],
+                                     element.shear(xj, yj, local, load_combo.name)[i, 0],
+                                     element.shear(xm, ym, local, load_combo.name)[i, 0],
+                                     element.shear(xn, yn, local, load_combo.name)[i, 0],
+                                     element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum shear calculated is the smallest encountered so far
                     if Q_min == None or Q_min > Q_element:

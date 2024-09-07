@@ -72,7 +72,7 @@ renderer.annotation_size = 0.2
 renderer.render_loads = True
 renderer.deformed_shape = True
 renderer.deformed_scale = 1000
-renderer.color_map = 'Mx'
+renderer.color_map = 'Qy'
 renderer.combo_name = '1.4F'
 renderer.labels = True
 renderer.scalar_bar = True
@@ -83,17 +83,22 @@ renderer.render_model()
 b = HL
 a = width
 qo = HL*62.4*1.4
+Qx = 0.136*qo*a
+Qy = 0.248*qo*a
 Mx = -0.0131*qo*a**2
 My = -0.0242*qo*a**2
 
 # Pynite solution
+Qx_pn = model.Quads['Q176'].shear(-1, 0, True, '1.4F')[0, 0]
+Qy_pn = model.Meshes['MSH1'].max_shear('Qy', '1.4F')
 Mx_pn = model.Quads['Q176'].moment(-1, 0, True, '1.4F')[0, 0]
+My_pn = model.Meshes['MSH1'].min_moment('My', '1.4F')
 
 # Comparison of solutions
-print('Max Moment at Side Mid-Height of Wall, Mx:', Mx_pn)
-print('Timoshenko Solution for Mx at Side Mid-Height of Wall, Mx:', Mx)
-print('Max Moment at Base of Wall, My: ', model.Meshes['MSH1'].min_moment('My', '1.4F'))
-print('Timoshenko Solution for My at Base of Wall, My: ', My)
+print('Max Moment at Side Mid-Height of Wall, Mx | Pynite: ', Mx_pn, '| Timoshenko: ', Mx)
+print('Max Moment at Base of Wall, My | Pynite: ', My_pn, '| Timoshenko: ', My)
+print('Max Shear at Side Mid-Height of Wall, Qx | Pynite: ', Qx_pn, '| Timoshenko: ', Qx)
+print('Max Shear at Base of Wall, My | Pynite: ', Qy_pn, '| Timoshenko: ', Qy)
 
 # Print the maximum and minumum displacements
 D = E*t**3/(12*(1-nu**2))
