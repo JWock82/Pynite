@@ -1,3 +1,6 @@
+# The MITC4 element is no longer used by Pynite. It has been replaced with the DKMQ element instead. Still, it seems a waste to throw this legacy code out. There may be a use for an MITC4 element in the future - even if only for academic purposes. Many FEA programs allow the user to pick from multiple types of plate elements. Pynite may take that approach in the future.
+
+
 # References used to derive this element:
 # 1. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 2. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
@@ -7,7 +10,7 @@ from numpy import array, arccos, dot, cross, matmul, add, zeros
 from numpy.linalg import inv, det, norm
 from math import sin, cos
 
-class Quad3D():
+class MITC4():
     """
     An isoparametric general quadrilateral element, formulated by superimposing an isoparametric
     MITC4 bending element with an isoparametric plane stress element. Drilling stability is
@@ -27,7 +30,7 @@ class Quad3D():
 
         self.name = name
         self.ID = None
-        self.type = 'Quad'
+        self.type = 'MITC4'
 
         self.i_node = i_node
         self.j_node = j_node
@@ -518,9 +521,9 @@ class Quad3D():
                     # Sum the pressures
                     p -= factor*pressure[0]
         
-        fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
+        fer = (Hw( gp,  gp).T*p*det(self.J( gp,  gp))
              + Hw(-gp,  gp).T*p*det(self.J(-gp,  gp))
-             + Hw( gp,  gp).T*p*det(self.J( gp,  gp))
+             + Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
              + Hw( gp, -gp).T*p*det(self.J( gp, -gp)))
 
         # Initialize the expanded vector to all zeros
@@ -751,10 +754,10 @@ class Quad3D():
         Cs = self.Cs()
 
         # Calculate the internal shears [Qx, Qy] at each gauss point
-        q1 = matmul(Cs, matmul(self.B_gamma_MITC4(gp, gp), d))
-        q2 = matmul(Cs, matmul(self.B_gamma_MITC4(-gp, gp), d))
+        q1 = matmul(Cs, matmul(self.B_gamma_MITC4( gp,  gp), d))
+        q2 = matmul(Cs, matmul(self.B_gamma_MITC4(-gp,  gp), d))
         q3 = matmul(Cs, matmul(self.B_gamma_MITC4(-gp, -gp), d))
-        q4 = matmul(Cs, matmul(self.B_gamma_MITC4(gp, -gp), d))
+        q4 = matmul(Cs, matmul(self.B_gamma_MITC4( gp, -gp), d))
 
         # Extrapolate to get the value at the requested location
         Qx = H[0]*q1[0] + H[1]*q2[0] + H[2]*q3[0] + H[3]*q4[0]
@@ -801,10 +804,10 @@ class Quad3D():
         Cb = self.Cb()
 
         # Calculate the internal moments [Mx, My, Mxy] at each gauss point
-        m1 = matmul(Cb, matmul(self.B_kappa(gp, gp), d))
-        m2 = matmul(Cb, matmul(self.B_kappa(-gp, gp), d))
+        m1 = matmul(Cb, matmul(self.B_kappa( gp,  gp), d))
+        m2 = matmul(Cb, matmul(self.B_kappa(-gp,  gp), d))
         m3 = matmul(Cb, matmul(self.B_kappa(-gp, -gp), d))
-        m4 = matmul(Cb, matmul(self.B_kappa(gp, -gp), d))
+        m4 = matmul(Cb, matmul(self.B_kappa( gp, -gp), d))
 
         # Extrapolate to get the value at the requested location
         Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
@@ -836,10 +839,10 @@ class Quad3D():
         Cm = self.Cm()
         
         # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
-        s1 = matmul(Cm, matmul(self.B_m(gp, gp), d))
-        s2 = matmul(Cm, matmul(self.B_m(-gp, gp), d))
+        s1 = matmul(Cm, matmul(self.B_m( gp,  gp), d))
+        s2 = matmul(Cm, matmul(self.B_m(-gp,  gp), d))
         s3 = matmul(Cm, matmul(self.B_m(-gp, -gp), d))
-        s4 = matmul(Cm, matmul(self.B_m(gp, -gp), d))
+        s4 = matmul(Cm, matmul(self.B_m( gp, -gp), d))
 
         # Extrapolate to get the value at the requested location
         Sx = H[0]*s1[0] + H[1]*s2[0] + H[2]*s3[0] + H[3]*s4[0]
