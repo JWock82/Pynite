@@ -56,15 +56,15 @@ class Test_2D_Frame(unittest.TestCase):
         # Analyze the model
         beam.analyze()
 
-        d1 = beam.Members['M1'].min_deflection('dy')
+        d1 = beam.members['M1'].min_deflection('dy')
 
         # Change the moment of inertia to account for cracking
         Iz = 0.35*Iz
-        beam.Members['M1'].Iz = Iz
+        beam.members['M1'].Iz = Iz
 
         beam.analyze()
 
-        d2 = beam.Members['M1'].min_deflection('dy')
+        d2 = beam.members['M1'].min_deflection('dy')
 
         # print(d1, d2)
 

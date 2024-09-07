@@ -47,11 +47,11 @@ renderer.deformed_shape = True
 renderer.render_model()
 
 # The moment at the base of the column
-calculated_moment = cantilever.Nodes['N1'].RxnMZ['Combo 1']
-calculated_moment2 = cantilever.Members['M1'].plot_moment('Mz', 'Combo 1', 100)
+calculated_moment = cantilever.nodes['N1'].RxnMZ['Combo 1']
+calculated_moment2 = cantilever.members['M1'].plot_moment('Mz', 'Combo 1', 100)
 
 # the deflection at the top of the column
-calculated_displacement = cantilever.Nodes['N6'].DX['Combo 1']*12
+calculated_displacement = cantilever.nodes['N6'].DX['Combo 1']*12
 
 # Calculate the AISC benchmark problem solution:
 alpha = (P*L**2/(E*I))**0.5

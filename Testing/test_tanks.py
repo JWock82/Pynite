@@ -48,10 +48,10 @@ class Test_Tanks(unittest.TestCase):
         axis = 'Y'          # Axis of revolution
 
         tank_model.add_cylinder_mesh('MSH1', mesh_size, R, H, t, 'Concrete', 1, 1, center, axis, element_type='Quad')
-        tank_model.Meshes['MSH1'].generate()
+        tank_model.meshes['MSH1'].generate()
 
         # Add hydrostatic loads to the elements
-        for element in tank_model.Quads.values():
+        for element in tank_model.quads.values():
 
             avg_Y = (element.i_node.Y + element.j_node.Y
                    + element.m_node.Y + element.n_node.Y)/4
@@ -62,7 +62,7 @@ class Test_Tanks(unittest.TestCase):
         
 
         # Add fixed supports to the base
-        for node in tank_model.Nodes.values():
+        for node in tank_model.nodes.values():
             if node.Y == 0:
                 tank_model.def_support(node.name, True, True, True, True, True, True)
 
@@ -81,14 +81,14 @@ class Test_Tanks(unittest.TestCase):
         Qy_max_Tim = -(w*R*H*t)/(12*(1 - nu**2))**0.5*(2*beta - 1/H)
 
         # Find the max/min moments at the top of any element
-        My_min = -max([element.moment(0, 1)[1, 0] for element in tank_model.Quads.values()])
-        My_max = -min([element.moment(0, 1)[1, 0] for element in tank_model.Quads.values()])
+        My_min = -max([element.moment(0, 1)[1, 0] for element in tank_model.quads.values()])
+        My_max = -min([element.moment(0, 1)[1, 0] for element in tank_model.quads.values()])
 
         # Find the max hoop tension at the center of any element
-        Sx = max([element.membrane(0, 0)[0, 0] for element in tank_model.Quads.values()])*t
+        Sx = max([element.membrane(0, 0)[0, 0] for element in tank_model.quads.values()])*t
 
         # Find the maximum reaction at the base of the tank
-        RMy = max([node.RxnMX['Combo 1'] for node in tank_model.Nodes.values()])/mesh_size
+        RMy = max([node.RxnMX['Combo 1'] for node in tank_model.nodes.values()])/mesh_size
         
         # Check that the PyNite calculated values are within 3% of the calculated PCA values.
         self.assertLess(abs(1 - My_max/My_max_PCA), 0.03, 'Failed quad cylinder flexure test.')
@@ -133,10 +133,10 @@ class Test_Tanks(unittest.TestCase):
         tank_model.add_cylinder_mesh('MSH1', mesh_size, R, H, t, 'Concrete', 1, 1, center, axis, element_type='Rect')
         
         # Generate the mesh prior to running so we can work with it
-        tank_model.Meshes['MSH1'].generate()
+        tank_model.meshes['MSH1'].generate()
 
         # Add hydrostatic loads to the elements
-        for element in tank_model.Plates.values():
+        for element in tank_model.plates.values():
 
             avg_Y = (element.i_node.Y + element.j_node.Y
                    + element.m_node.Y + element.n_node.Y)/4
@@ -147,7 +147,7 @@ class Test_Tanks(unittest.TestCase):
         
 
         # Add fixed supports to the base
-        for node in tank_model.Nodes.values():
+        for node in tank_model.nodes.values():
             if node.Y == 0:
                 tank_model.def_support(node.name, True, True, True, True, True, True)
 
@@ -165,9 +165,9 @@ class Test_Tanks(unittest.TestCase):
         My_max_Tim = (1 - 1/(beta*H))*w*R*H*t/(12*(1 - nu**2))**0.5
         Qy_max_Tim = -(w*R*H*t)/(12*(1 - nu**2))**0.5*(2*beta - 1/H)
 
-        My_max = tank_model.Meshes['MSH1'].max_moment('My')
-        My_min = tank_model.Meshes['MSH1'].min_moment('My')
-        Sx = max([element.membrane(element.width()/2, element.height()/2)[0, 0] for element in tank_model.Plates.values()])*t
+        My_max = tank_model.meshes['MSH1'].max_moment('My')
+        My_min = tank_model.meshes['MSH1'].min_moment('My')
+        Sx = max([element.membrane(element.width()/2, element.height()/2)[0, 0] for element in tank_model.plates.values()])*t
 
         # Check that the PyNite calculated values are within 8% of expected values. With a finer mesh the results are known to converge even closer, but 8% allows the model to run faster.
         self.assertLess(abs(1 - My_max/My_max_PCA), 0.08, 'Failed plate cylinder flexure test.')

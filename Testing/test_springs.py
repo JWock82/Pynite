@@ -48,15 +48,15 @@ class Test_Spring_Elements(unittest.TestCase):
         #                   ('4', 1.3636363636363638),
         #                   ('1', -909.0909090909091),
         #                   ('2', -4090.9090909090914)]
-        n3_DX = system.Nodes['3'].DX['Combo 1']
+        n3_DX = system.nodes['3'].DX['Combo 1']
         self.assertAlmostEqual(n3_DX/ 0.9090909090909092, 1.0, 2)
 
-        n4_DX = system.Nodes['4'].DX['Combo 1']
+        n4_DX = system.nodes['4'].DX['Combo 1']
         self.assertAlmostEqual(n4_DX/1.3636363636363638, 1.0, 2)
         
-        n1_rxn = system.Nodes['1'].RxnFX['Combo 1']
+        n1_rxn = system.nodes['1'].RxnFX['Combo 1']
         self.assertAlmostEqual(n1_rxn/-909.0909090909091, 1.0, 2)
         
-        n2_rxn = system.Nodes['2'].RxnFX['Combo 1']
+        n2_rxn = system.nodes['2'].RxnFX['Combo 1']
         self.assertAlmostEqual(n2_rxn/-4090.9090909090914, 1.0, 2)
         
