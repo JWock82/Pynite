@@ -495,7 +495,7 @@ class Quad3D():
         Hw = lambda r, s : 1/4*array([[(1 + r)*(1 + s), 0, 0, (1 - r)*(1 + s), 0, 0, (1 - r)*(1 - s), 0, 0, (1 + r)*(1 - s), 0, 0]])
 
         # Initialize the fixed end reaction vector
-        fer = zeros((12,1))
+        fer = zeros((12, 1))
 
         # Get the requested load combination
         combo = self.model.load_combos[combo_name]
@@ -519,9 +519,9 @@ class Quad3D():
                     p -= factor*pressure[0]
         
         fer = (Hw(-gp, -gp).T*p*det(self.J(-gp, -gp))
-             + Hw(-gp, gp).T*p*det(self.J(-gp, gp))
-             + Hw(gp, gp).T*p*det(self.J(gp, gp))
-             + Hw(gp, -gp).T*p*det(self.J(gp, -gp)))
+             + Hw(-gp,  gp).T*p*det(self.J(-gp,  gp))
+             + Hw( gp,  gp).T*p*det(self.J( gp,  gp))
+             + Hw( gp, -gp).T*p*det(self.J( gp, -gp)))
 
         # Initialize the expanded vector to all zeros
         fer_exp = zeros((24, 1))

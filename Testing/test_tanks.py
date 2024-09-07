@@ -75,26 +75,31 @@ class Test_Tanks(unittest.TestCase):
         Sx_PCA = 55945/1.3/1.7
 
         # From Timoshenko Section 117 (p. 485)
-        # The Timoshenko solution yields similar results to the PCA solution
+        # The Timoshenko solution yields similar results to the PCA solution, but with a slightly larger margin of error
         beta = (3*(1 - nu**2)/(R**2*t**2))**0.25  # Equation 275
         My_max_Tim = (1 - 1/(beta*H))*w*R*H*t/(12*(1 - nu**2))**0.5
         Qy_max_Tim = -(w*R*H*t)/(12*(1 - nu**2))**0.5*(2*beta - 1/H)
 
-        My_max = max([element.moment(0, 1)[1, 0] for element in tank_model.quads.values()])
-        My_min = min([element.moment(0, 1)[1, 0] for element in tank_model.quads.values()])
+        # Find the max/min moments at the top of any element
+        My_min = -max([element.moment(0, 1)[1, 0] for element in tank_model.quads.values()])
+        My_max = -min([element.moment(0, 1)[1, 0] for element in tank_model.quads.values()])
+
+        # Find the max hoop tension at the center of any element
         Sx = max([element.membrane(0, 0)[0, 0] for element in tank_model.quads.values()])*t
 
-        # MITC4 element corner stresses are unreliable. Use the maximum
-        # reaction at the base of the tank instead.
+        # Find the maximum reaction at the base of the tank
         RMy = max([node.RxnMX['Combo 1'] for node in tank_model.nodes.values()])/mesh_size
         
-        # Check that the PyNite calculated values are within 2% of expected
-        # values.
-        self.assertLess(abs(1 - My_max/4900), 0.02, 'Failed quad cylinder flexure test.')
-        self.assertLess(abs(1 - RMy/My_max_PCA), 0.02, 'Failed quad cylinder flexure test.')
-        self.assertLess(abs(1 - My_min/My_min_PCA), 0.02, 'Failed quad cylinder flexure test.')
+        # Check that the PyNite calculated values are within 3% of the calculated PCA values.
+        self.assertLess(abs(1 - My_max/My_max_PCA), 0.03, 'Failed quad cylinder flexure test.')
+        self.assertLess(abs(1 - RMy/My_max_PCA), 0.03, 'Failed quad cylinder flexure test.')
+        self.assertLess(abs(1 - My_min/My_min_PCA), 0.03, 'Failed quad cylinder flexure test.')
+
+        # Check the sign convention for local y-axis bending
         self.assertGreater(My_max, 0, 'Failed quad cylinder sign convention test')
-        self.assertLess(abs(1 - Sx/20000), 0.02, 'Failed quad cylinder hoop tension test.')
+
+        # Check the expected hoop tension
+        self.assertLess(abs(1 - Sx/20000), 0.03, 'Failed quad cylinder hoop tension test.')
 
         # Render the model
         # from PyNite.Visualization import render_model

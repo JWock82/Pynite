@@ -404,33 +404,33 @@ class Plate3D():
         D = zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        D.itemset((0, 0), self.i_node.DX[combo_name])
-        D.itemset((1, 0), self.i_node.DY[combo_name])
-        D.itemset((2, 0), self.i_node.DZ[combo_name])
-        D.itemset((3, 0), self.i_node.RX[combo_name])
-        D.itemset((4, 0), self.i_node.RY[combo_name])
-        D.itemset((5, 0), self.i_node.RZ[combo_name])
+        D[0, 0] = self.i_node.DX[combo_name]
+        D[1, 0] = self.i_node.DY[combo_name]
+        D[2, 0] = self.i_node.DZ[combo_name]
+        D[3, 0] = self.i_node.RX[combo_name]
+        D[4, 0] = self.i_node.RY[combo_name]
+        D[5, 0] = self.i_node.RZ[combo_name]
 
-        D.itemset((6, 0), self.j_node.DX[combo_name])
-        D.itemset((7, 0), self.j_node.DY[combo_name])
-        D.itemset((8, 0), self.j_node.DZ[combo_name])
-        D.itemset((9, 0), self.j_node.RX[combo_name])
-        D.itemset((10, 0), self.j_node.RY[combo_name])
-        D.itemset((11, 0), self.j_node.RZ[combo_name])
+        D[6, 0] = self.j_node.DX[combo_name]
+        D[7, 0] = self.j_node.DY[combo_name]
+        D[8, 0] = self.j_node.DZ[combo_name]
+        D[9, 0] = self.j_node.RX[combo_name]
+        D[10, 0] = self.j_node.RY[combo_name]
+        D[11, 0] = self.j_node.RZ[combo_name]
 
-        D.itemset((12, 0), self.m_node.DX[combo_name])
-        D.itemset((13, 0), self.m_node.DY[combo_name])
-        D.itemset((14, 0), self.m_node.DZ[combo_name])
-        D.itemset((15, 0), self.m_node.RX[combo_name])
-        D.itemset((16, 0), self.m_node.RY[combo_name])
-        D.itemset((17, 0), self.m_node.RZ[combo_name])
+        D[12, 0] = self.m_node.DX[combo_name]
+        D[13, 0] = self.m_node.DY[combo_name]
+        D[14, 0] = self.m_node.DZ[combo_name]
+        D[15, 0] = self.m_node.RX[combo_name]
+        D[16, 0] = self.m_node.RY[combo_name]
+        D[17, 0] = self.m_node.RZ[combo_name]
 
-        D.itemset((18, 0), self.n_node.DX[combo_name])
-        D.itemset((19, 0), self.n_node.DY[combo_name])
-        D.itemset((20, 0), self.n_node.DZ[combo_name])
-        D.itemset((21, 0), self.n_node.RX[combo_name])
-        D.itemset((22, 0), self.n_node.RY[combo_name])
-        D.itemset((23, 0), self.n_node.RZ[combo_name])
+        D[18, 0] = self.n_node.DX[combo_name]
+        D[19, 0] = self.n_node.DY[combo_name]
+        D[20, 0] = self.n_node.DZ[combo_name]
+        D[21, 0] = self.n_node.RX[combo_name]
+        D[22, 0] = self.n_node.RY[combo_name]
+        D[23, 0] = self.n_node.RZ[combo_name]
         
         # Return the global displacement vector
         return D
