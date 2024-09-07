@@ -68,8 +68,8 @@ class Test_2D_Frame(unittest.TestCase):
         # renderer.annotation_size = 1
         # renderer.render_model()
 
-        RY1 = beam.Nodes['N1'].RxnFY['1.4D']
-        RY2 = beam.Nodes['N2'].RxnFY['1.4D']
+        RY1 = beam.nodes['N1'].RxnFY['1.4D']
+        RY2 = beam.nodes['N2'].RxnFY['1.4D']
 
         # Check the result
         self.assertAlmostEqual(RY1/(1.4*5), 1, 2)

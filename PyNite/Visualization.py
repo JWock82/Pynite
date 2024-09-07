@@ -212,7 +212,7 @@ class Renderer():
         if self.deformed_shape and self.case != None:
             raise Exception('Deformed shape is only available for load combinations,'
                             ' not load cases.')
-        if self.model.LoadCombos == {} and self.render_loads == True and self.case == None:
+        if self.model.load_combos == {} and self.render_loads == True and self.case == None:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
         
@@ -226,23 +226,23 @@ class Renderer():
 
             # Create a visual node for each node in the model
             vis_nodes = []
-            for node in self.model.Nodes.values():
+            for node in self.model.nodes.values():
                 vis_nodes.append(VisNode(node, self.annotation_size, color))
             
             # Create a visual auxiliary node for each auxiliary node in the model
             vis_aux_nodes = []
-            for aux_node in self.model.AuxNodes.values():
+            for aux_node in self.model.aux_nodes.values():
                 vis_aux_nodes.append(VisNode(aux_node, self.annotation_size, color))
         
         # Create a visual spring for each spring in the model
         vis_springs = []
-        for spring in self.model.Springs.values():
-            vis_springs.append(VisSpring(spring, self.model.Nodes, self.annotation_size))    
+        for spring in self.model.springs.values():
+            vis_springs.append(VisSpring(spring, self.model.nodes, self.annotation_size))    
     
         # Create a visual member for each member in the model
         vis_members = []
-        for member in self.model.Members.values():
-            vis_members.append(VisMember(member, self.model.Nodes, self.annotation_size, self.theme))
+        for member in self.model.members.values():
+            vis_members.append(VisMember(member, self.model.nodes, self.annotation_size, self.theme))
         
         # Get the renderer
         renderer = self.renderer
@@ -345,7 +345,7 @@ class Renderer():
             _RenderLoads(self.model, renderer, self.annotation_size, self.combo_name, self.case, self.theme)
         
         # Render the plates and quads, if present
-        if self.model.Quads or self.model.Plates:
+        if self.model.quads or self.model.plates:
             _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale,
                             self.color_map, self.scalar_bar, self.scalar_bar_text_size,
                             self.combo_name, self.theme)
@@ -425,30 +425,30 @@ def render_model(model, annotation_size=5, deformed_shape=False, deformed_scale=
     if deformed_shape and case != None:
         raise Exception('Deformed shape is only available for load combinations,'
                         ' not load cases.')
-    if model.LoadCombos == {} and render_loads == True and case == None:
+    if model.load_combos == {} and render_loads == True and case == None:
         raise Exception('Unable to render load combination. No load combinations defined.')
     
     # Create a visual node for each node in the model
     if theme == 'print': color = 'black'
     else: color = None
     vis_nodes = []
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
         vis_nodes.append(VisNode(node, annotation_size, color))
     
     # Create a visual auxiliary node for each auxiliary node in the model
     vis_aux_nodes = []
-    for aux_node in model.AuxNodes.values():
+    for aux_node in model.aux_nodes.values():
         vis_aux_nodes.append(VisNode(aux_node, annotation_size, color='red'))
     
     # Create a visual spring for each spring in the model
     vis_springs = []
-    for spring in model.Springs.values():
-        vis_springs.append(VisSpring(spring, model.Nodes, annotation_size))    
+    for spring in model.springs.values():
+        vis_springs.append(VisSpring(spring, model.nodes, annotation_size))    
   
     # Create a visual member for each member in the model
     vis_members = []
-    for member in model.Members.values():
-        vis_members.append(VisMember(member, model.Nodes, annotation_size, theme))
+    for member in model.members.values():
+        vis_members.append(VisMember(member, model.nodes, annotation_size, theme))
     
     # Create a window
     window = vtk.vtkRenderWindow()
@@ -551,7 +551,7 @@ def render_model(model, annotation_size=5, deformed_shape=False, deformed_scale=
         _RenderLoads(model, renderer, annotation_size, combo_name, case)
     
     # Render the plates and quads, if present
-    if model.Quads or model.Plates:
+    if model.quads or model.plates:
         _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar,
                         12, combo_name)
 
@@ -1430,11 +1430,11 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
     if stress_type != None:
     
         # Erase any previous contours
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
             node.contour = []
     
         # Step through each element in the model
-        for element in list(model.Quads.values()) + list(model.Plates.values()):
+        for element in list(model.quads.values()) + list(model.plates.values()):
             
             # Rectangular elements and quadrilateral elements have different local coordinate systems.
             # Rectangles are based on a traditional (x, y) system, while quadrilaterals are based on a
@@ -1505,7 +1505,7 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
                 element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[2])                 
       
         # Average the values at each node to obtain a smoothed contour
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
             # Prevent divide by zero errors for nodes with no contour values
             if node.contour != []:
                 node.contour = sum(node.contour)/len(node.contour)
@@ -1541,27 +1541,27 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
     if render_nodes == True:
         
         # Add the deformed nodes to the append filter
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
             
             vis_node = VisDeformedNode(node, scale_factor, annotation_size, combo_name)
             append_filter.AddInputData(vis_node.source.GetOutput())
         
     # Add the springs to the append filter
-    for spring in model.Springs.values():
+    for spring in model.springs.values():
         
         # Only add the spring if it is active for the given load combination
         if spring.active[combo_name] == True:
             
-            vis_spring = VisDeformedSpring(spring, model.Nodes, scale_factor, combo_name)
+            vis_spring = VisDeformedSpring(spring, model.nodes, scale_factor, combo_name)
             append_filter.AddInputData(vis_spring.source.GetOutput())
             
     # Add the members to the append filter
-    for member in model.Members.values():
+    for member in model.members.values():
         
         # Only add the member if it is active for the given load combination.
         if member.active[combo_name] == True:
             
-            vis_member = VisDeformedMember(member, model.Nodes, scale_factor, combo_name)
+            vis_member = VisDeformedMember(member, model.nodes, scale_factor, combo_name)
             append_filter.AddInputData(vis_member.source)
             
     # Create a mapper and actor for the append filter
@@ -1599,14 +1599,14 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
     # Display the requested load combination, or 'Combo 1' if no load combo or case has been
     # specified
     if case == None:
-        # Store model.LoadCombos[combo].factors under a simpler name for use below
-        load_factors = model.LoadCombos[combo_name].factors
+        # Store model.load_combos[combo].factors under a simpler name for use below
+        load_factors = model.load_combos[combo_name].factors
     else:
         # Set up a load combination dictionary that represents the load case
         load_factors = {case: 1}
     
     # Step through each node
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
     
         # Step through and display each nodal load
         for load in node.NodeLoads:
@@ -1640,7 +1640,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
     
     # Step through each member
-    for member in model.Members.values():
+    for member in model.members.values():
     
         # Get the direction cosines for the member's local axes
         dir_cos = member.T()[0:3, 0:3]
@@ -1730,7 +1730,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
     
     # Step through each plate
     i = 0
-    for plate in list(model.Plates.values()) + list(model.Quads.values()):
+    for plate in list(model.plates.values()) + list(model.quads.values()):
     
         # Get the direction cosines for the plate's local z-axis
         dir_cos = plate.T()[0:3, 0:3]
@@ -1848,7 +1848,7 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
     _PrepContour(model, color_map, combo_name)
     
     # Add each plate and quad in the model to the cell array we just created
-    for item in list(model.Plates.values()) + list(model.Quads.values()):
+    for item in list(model.plates.values()) + list(model.quads.values()):
         
         # Create a point for each corner (must be in counter clockwise order)
         if deformed_shape == True:
@@ -1989,74 +1989,74 @@ def _MaxLoads(model, combo_name=None, case=None):
     if case == None:
     
         # Step through each node
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
       
             # Step through each nodal load to find the largest one
             for load in node.NodeLoads:
               
                 # Find the largest loads in the load combination
-                if load[2] in model.LoadCombos[combo_name].factors:
+                if load[2] in model.load_combos[combo_name].factors:
                     if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_pt_load:
-                            max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
+                        if abs(load[1]*model.load_combos[combo_name].factors[load[2]]) > max_pt_load:
+                            max_pt_load = abs(load[1]*model.load_combos[combo_name].factors[load[2]])
                     else:
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[2]]) > max_moment:
-                            max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[2]])
+                        if abs(load[1]*model.load_combos[combo_name].factors[load[2]]) > max_moment:
+                            max_moment = abs(load[1]*model.load_combos[combo_name].factors[load[2]])
     
         # Step through each member
-        for member in model.Members.values():
+        for member in model.members.values():
       
             # Step through each member point load
             for load in member.PtLoads:
                 
                 # Find and store the largest point load and moment in the load combination
-                if load[3] in model.LoadCombos[combo_name].factors:
+                if load[3] in model.load_combos[combo_name].factors:
           
                     if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
                     or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_pt_load:
-                            max_pt_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
+                        if abs(load[1]*model.load_combos[combo_name].factors[load[3]]) > max_pt_load:
+                            max_pt_load = abs(load[1]*model.load_combos[combo_name].factors[load[3]])
                     else:
-                        if abs(load[1]*model.LoadCombos[combo_name].factors[load[3]]) > max_moment:
-                            max_moment = abs(load[1]*model.LoadCombos[combo_name].factors[load[3]])
+                        if abs(load[1]*model.load_combos[combo_name].factors[load[3]]) > max_moment:
+                            max_moment = abs(load[1]*model.load_combos[combo_name].factors[load[3]])
       
             # Step through each member distributed load
             for load in member.DistLoads:
         
                 #Find and store the largest distributed load in the load combination
-                if load[5] in model.LoadCombos[combo_name].factors:
+                if load[5] in model.load_combos[combo_name].factors:
           
-                    if abs(load[1]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
-                        max_dist_load = abs(load[1]*model.LoadCombos[combo_name].factors[load[5]])
-                    if abs(load[2]*model.LoadCombos[combo_name].factors[load[5]]) > max_dist_load:
-                        max_dist_load = abs(load[2]*model.LoadCombos[combo_name].factors[load[5]])
+                    if abs(load[1]*model.load_combos[combo_name].factors[load[5]]) > max_dist_load:
+                        max_dist_load = abs(load[1]*model.load_combos[combo_name].factors[load[5]])
+                    if abs(load[2]*model.load_combos[combo_name].factors[load[5]]) > max_dist_load:
+                        max_dist_load = abs(load[2]*model.load_combos[combo_name].factors[load[5]])
       
         # Step through each plate
-        for plate in model.Plates.values():
+        for plate in model.plates.values():
       
             # Step through each plate load
             for load in plate.pressures:
         
-                if load[1] in model.LoadCombos[combo_name].factors:
-                    if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-                        max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
+                if load[1] in model.load_combos[combo_name].factors:
+                    if abs(load[0]*model.load_combos[combo_name].factors[load[1]]) > max_area_load:
+                        max_area_load = abs(load[0]*model.load_combos[combo_name].factors[load[1]])
       
         # Step through each quad
-        for quad in model.Quads.values():
+        for quad in model.quads.values():
       
             # Step through each plate load
             for load in quad.pressures:
         
                 # Check to see if the load case is in the requested load combination
-                if load[1] in model.LoadCombos[combo_name].factors:
-                    if abs(load[0]*model.LoadCombos[combo_name].factors[load[1]]) > max_area_load:
-                        max_area_load = abs(load[0]*model.LoadCombos[combo_name].factors[load[1]])
+                if load[1] in model.load_combos[combo_name].factors:
+                    if abs(load[0]*model.load_combos[combo_name].factors[load[1]]) > max_area_load:
+                        max_area_load = abs(load[0]*model.load_combos[combo_name].factors[load[1]])
       
     # Behavior if case has been specified
     else:
         
         # Step through each node
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
       
             # Step through each nodal load to find the largest one
             for load in node.NodeLoads:
@@ -2071,7 +2071,7 @@ def _MaxLoads(model, combo_name=None, case=None):
                             max_moment = abs(load[1])
       
         # Step through each member
-        for member in model.Members.values():
+        for member in model.members.values():
       
             # Step through each member point load
             for load in member.PtLoads:
@@ -2099,7 +2099,7 @@ def _MaxLoads(model, combo_name=None, case=None):
                         max_dist_load = abs(load[2])
             
             # Step through each plate
-            for plate in model.Plates.values():
+            for plate in model.plates.values():
           
                 # Step through each plate load
                 for load in plate.pressures:
@@ -2110,7 +2110,7 @@ def _MaxLoads(model, combo_name=None, case=None):
                             max_area_load = abs(load[0])
           
         # Step through each quad
-        for quad in model.Quads.values():
+        for quad in model.quads.values():
       
             # Step through each plate load
             for load in quad.pressures:

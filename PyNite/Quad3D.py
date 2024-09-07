@@ -47,8 +47,8 @@ class Quad3D():
 
         # Get material properties for the plate from the model
         try:
-            self.E = self.model.Materials[material_name].E
-            self.nu = self.model.Materials[material_name].nu
+            self.E = self.model.materials[material_name].E
+            self.nu = self.model.materials[material_name].nu
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
 
@@ -601,7 +601,7 @@ class Quad3D():
         fer = np.zeros((12, 1))
 
         # Get the requested load combination
-        combo = self.model.LoadCombos[combo_name]
+        combo = self.model.load_combos[combo_name]
 
         # Define the gauss point used for numerical integration
         gp = 1/3**0.5

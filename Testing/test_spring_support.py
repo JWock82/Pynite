@@ -65,9 +65,9 @@ class Test_Spring_Supports(unittest.TestCase):
         # Analyze the model
         boef.analyze(sparse=False)
 
-        print(boef.Members['M8'].min_moment('Mz'))
-        print(boef.Members['M8'].max_moment('Mz'))
+        print(boef.members['M8'].min_moment('Mz'))
+        print(boef.members['M8'].max_moment('Mz'))
 
         # Check that results are within 5% of the expected answer
-        self.assertLess(boef.Nodes['N9'].DY['Combo 1']/(-0.238) - 1, 0.05, 'Failed beam on elastic foundation test.')
-        self.assertLess(-boef.Members['M8'].min_moment('Mz')/547 - 1, 0.05, 'Failed beam on elastic foundation test.')
+        self.assertLess(boef.nodes['N9'].DY['Combo 1']/(-0.238) - 1, 0.05, 'Failed beam on elastic foundation test.')
+        self.assertLess(-boef.members['M8'].min_moment('Mz')/547 - 1, 0.05, 'Failed beam on elastic foundation test.')

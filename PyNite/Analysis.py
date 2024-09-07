@@ -12,7 +12,7 @@ def _prepare_model(model):
     
     # Reset any nodal displacements
     model._D = {}
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
         node.DX = {}
         node.DY = {}
         node.DZ = {}
@@ -21,23 +21,23 @@ def _prepare_model(model):
         node.RZ = {}
 
     # Ensure there is at least 1 load combination to solve if the user didn't define any
-    if model.LoadCombos == {}:
+    if model.load_combos == {}:
         # Create and add a default load combination to the dictionary of load combinations
-        model.LoadCombos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
+        model.load_combos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
     
     # Generate all meshes
-    for mesh in model.Meshes.values():
+    for mesh in model.meshes.values():
         if mesh.is_generated == False:
             mesh.generate()
 
     # Activate all springs and members for all load combinations
-    for spring in model.Springs.values():
-        for combo_name in model.LoadCombos.keys():
+    for spring in model.springs.values():
+        for combo_name in model.load_combos.keys():
             spring.active[combo_name] = True
     
     # Activate all physical members for all load combinations
-    for phys_member in model.Members.values():
-        for combo_name in model.LoadCombos.keys():
+    for phys_member in model.members.values():
+        for combo_name in model.load_combos.keys():
             phys_member.active[combo_name] = True
     
     # Assign an internal ID to all nodes and elements in the model. This number is different from the name used by the user to identify nodes and elements.
@@ -57,12 +57,12 @@ def _identify_combos(model, combo_tags=None):
     # Identify which load combinations to evaluate
     if combo_tags is None:
         # Evaluate all load combinations if not tags have been provided
-        combo_list = model.LoadCombos.values()
+        combo_list = model.load_combos.values()
     else:
         # Initialize the list of load combinations to be evaluated
         combo_list = []
         # Step through each load combination in the model
-        for combo in model.LoadCombos.values():
+        for combo in model.load_combos.values():
             # Check if this load combination is tagged with any of the tags we're looking for
             if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags):
                 # Add the load combination to the list of load combinations to be evaluated
@@ -83,7 +83,7 @@ def _check_stability(model, K):
     for i in range(K.shape[0]):
         
         # Determine which node this term belongs to
-        node = [node for node in model.Nodes.values() if node.ID == int(i/6)][0]
+        node = [node for node in model.nodes.values() if node.ID == int(i/6)][0]
 
         # Determine which degree of freedom this term belongs to
         dof = i%6
@@ -227,9 +227,9 @@ def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=Tr
 
         # Sum the calculated displacements
         if first_step:
-            _store_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
+            _store_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
         else:
-            _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
+            _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
         
         # Check whether the tension/compression-only analysis has converged and deactivate any members that are showing forces they can't hold
         convergence_TC = _check_TC_convergence(model, combo_name, log)
@@ -246,7 +246,7 @@ def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=Tr
             iter_count_TC += 1
 
             # Undo the last iteration of the analysis since the T/C analysis didn't converge
-            _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
+            _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
             iter_count_PD = 0
 
         else:
@@ -340,7 +340,7 @@ def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices
         Delta_D = _unpartition_disp(model, Delta_D1, D2, D1_indices, D2_indices)
 
         # Step through each member in the model
-        for member in model.Members.values():
+        for member in model.members.values():
                         
             # Check for plastic load reversal at the i-node in this load step
             if member.i_reversal == False and member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 1] < 0:
@@ -362,10 +362,10 @@ def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices
 
         # Undo the last loadstep if plastic load reversal was discovered. We'll rerun it with the corresponding gradients set to zero vectors.
         if run_step == True:
-            _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
+            _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
     
     # Sum the calculated displacements
-    _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.LoadCombos[combo_name])
+    _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
 
     # Flag the model as solved
     model.solution = 'Pushover'
@@ -387,10 +387,10 @@ def _unpartition_disp(model, D1, D2, D1_indices, D2_indices):
     :rtype: array
     """
     
-    D = zeros((len(model.Nodes)*6, 1))
+    D = zeros((len(model.nodes)*6, 1))
 
     # Step through each node in the model
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
         
         if node.ID*6 + 0 in D2_indices:
             # Get the enforced displacement
@@ -461,7 +461,7 @@ def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
     model._D[combo.name] = D
 
     # Store the calculated global nodal displacements into each node object
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
 
         node.DX[combo.name] = D[node.ID*6 + 0, 0]
         node.DY[combo.name] = D[node.ID*6 + 1, 0]
@@ -494,7 +494,7 @@ def _sum_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
     model._D[combo.name] += Delta_D
 
     # Sum the load step's calculated global nodal displacements to each node object's global displacement
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
 
         node.DX[combo.name] += Delta_D[node.ID*6 + 0, 0]
         node.DY[combo.name] += Delta_D[node.ID*6 + 1, 0]
@@ -510,7 +510,7 @@ def _check_TC_convergence(model, combo_name='Combo 1', log=True):
     
     # Provide an update to the console if requested by the user
     if log: print('- Checking for tension/compression-only support spring convergence')
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
 
         # Check convergence of tension/compression-only spring supports and activate/deactivate them as necessary
         if node.spring_DX[1] is not None:
@@ -596,7 +596,7 @@ def _check_TC_convergence(model, combo_name='Combo 1', log=True):
 
     # Check tension/compression-only springs
     if log: print('- Checking for tension/compression-only spring convergence')
-    for spring in model.Springs.values():
+    for spring in model.springs.values():
 
         if spring.active[combo_name] == True:
 
@@ -612,7 +612,7 @@ def _check_TC_convergence(model, combo_name='Combo 1', log=True):
 
     # Check tension/compression only members
     if log: print('- Checking for tension/compression-only member convergence')
-    for phys_member in model.Members.values():
+    for phys_member in model.members.values():
 
         # Only run the tension/compression only check if the member is still active
         if phys_member.active[combo_name] == True:
@@ -651,7 +651,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
     combo_list = _identify_combos(model, combo_tags)
 
     # Calculate the reactions node by node
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
         
         # Step through each load combination
         for combo in combo_list:
@@ -669,7 +669,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
             or  node.support_RX or node.support_RY or node.support_RZ):
 
                 # Sum the spring end forces at the node
-                for spring in model.Springs.values():
+                for spring in model.springs.values():
 
                     if spring.i_node == node and spring.active[combo.name] == True:
                         
@@ -698,7 +698,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         if node.support_RZ: node.RxnMZ[combo.name] += spring_F[11, 0]
 
                 # Step through each physical member in the model
-                for phys_member in model.Members.values():
+                for phys_member in model.members.values():
 
                     # Sum the sub-member end forces at the node
                     for member in phys_member.sub_members.values():
@@ -730,7 +730,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                             if node.support_RZ: node.RxnMZ[combo.name] += member_F[11, 0]
 
                 # Sum the plate forces at the node
-                for plate in model.Plates.values():
+                for plate in model.plates.values():
 
                     if plate.i_node == node:
 
@@ -785,7 +785,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                         if node.support_RZ: node.RxnMZ[combo.name] += plate_F[23, 0]
 
                 # Sum the quad forces at the node
-                for quad in model.Quads.values():
+                for quad in model.quads.values():
 
                     if quad.i_node == node:
 
@@ -920,10 +920,10 @@ def _check_statics(model, combo_tags=None):
 
     # Identify which load combinations to evaluate
     if combo_tags is None:
-        combo_list = model.LoadCombos.values()
+        combo_list = model.load_combos.values()
     else:
         combo_list = []
-        for combo in model.LoadCombos.values():
+        for combo in model.load_combos.values():
             if any(tag in combo.combo_tags for tag in combo_tags):
                 combo_list.append(combo)
 
@@ -941,7 +941,7 @@ def _check_statics(model, combo_tags=None):
         FER = model.FER(combo.name)
 
         # Step through each node and sum its forces
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
 
             # Get the node's coordinates
             X = node.X
@@ -1004,7 +1004,7 @@ def _partition_D(model):
     D2 = []         # A list of the values of the known nodal displacements (D != None)
 
     # Create the auxiliary table
-    for node in model.Nodes.values():
+    for node in model.nodes.values():
         
         # Unknown displacement DX
         if node.support_DX==False and node.EnforcedDX == None:
@@ -1124,25 +1124,25 @@ def _renumber(model):
     """
     
     # Number each node in the model
-    for id, node in enumerate(model.Nodes.values()):
+    for id, node in enumerate(model.nodes.values()):
         node.ID = id
     
     # Number each spring in the model
-    for id, spring in enumerate(model.Springs.values()):
+    for id, spring in enumerate(model.springs.values()):
         spring.ID = id
 
     # Descritize all the physical members and number each member in the model
     id = 0
-    for phys_member in model.Members.values():
+    for phys_member in model.members.values():
         phys_member.descritize()
         for member in phys_member.sub_members.values():
             member.ID = id
             id += 1
     
     # Number each plate in the model
-    for id, plate in enumerate(model.Plates.values()):
+    for id, plate in enumerate(model.plates.values()):
         plate.ID = id
     
     # Number each quadrilateral in the model
-    for id, quad in enumerate(model.Quads.values()):
+    for id, quad in enumerate(model.quads.values()):
         quad.ID = id

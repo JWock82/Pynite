@@ -67,17 +67,17 @@ class Test_Plates(unittest.TestCase):
         plate_model.def_support('N5', True, True, False, False, False, True)
 
         # Check to see if the stiffness matrix for each plate is symmetric
-        # print(allclose(plate_model.Plates[0].K(), plate_model.Plates[0].K().T))
-        # print(allclose(plate_model.Plates[1].K(), plate_model.Plates[1].K().T))
-        # print(allclose(plate_model.Plates[2].K(), plate_model.Plates[2].K().T))
-        # print(allclose(plate_model.Plates[3].K(), plate_model.Plates[3].K().T))
+        # print(allclose(plate_model.plates[0].K(), plate_model.plates[0].K().T))
+        # print(allclose(plate_model.plates[1].K(), plate_model.plates[1].K().T))
+        # print(allclose(plate_model.plates[2].K(), plate_model.plates[2].K().T))
+        # print(allclose(plate_model.plates[3].K(), plate_model.plates[3].K().T))
 
         # Check to see if the global stiffness matrix is symmetric
         # print(allclose(plate_model.K(Renumber=True), plate_model.K(Renumber=False).T))
 
         plate_model.analyze(check_statics=True, sparse=False)
         # Test: displacement of N5 in Z direction
-        calculated_displacement = plate_model.Nodes['N5'].DZ['Combo 1']
+        calculated_displacement = plate_model.nodes['N5'].DZ['Combo 1']
         expected_displacement = -0.0861742424242424
         self.assertAlmostEqual(calculated_displacement/expected_displacement, 1.0, 2)
 
@@ -104,15 +104,15 @@ class Test_Plates(unittest.TestCase):
                                        element_type='Rect')
         
         # Generate the mesh
-        plate_model.Meshes['MSH1'].generate()
+        plate_model.meshes['MSH1'].generate()
 
         # Add supports to the sides and base of the wall
-        for node in plate_model.Nodes.values():
+        for node in plate_model.nodes.values():
             if node.X == 0 or node.X == a or node.Y == 0:
                 plate_model.def_support(node.name, True, True, True, True, True, True)
         
         # Add hydrostatic loads to the elements
-        for element in plate_model.Plates.values():
+        for element in plate_model.plates.values():
             Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
             plate_model.add_plate_surface_pressure(element.name, p, 'Hydrostatic')
@@ -124,7 +124,7 @@ class Test_Plates(unittest.TestCase):
         plate_model.analyze()
 
         # Get the maximum deflection in the model at the top of the wall
-        DZ_calcd = max([node.DZ['F'] for node in plate_model.Nodes.values() if node.Y == b])
+        DZ_calcd = max([node.DZ['F'] for node in plate_model.nodes.values() if node.Y == b])
         
         # Find the maximum deflection at the top of the wall from Timoshenko's Table 45
         q = 62.4*b
@@ -156,15 +156,15 @@ class Test_Plates(unittest.TestCase):
         # Generate the mesh of quads
         quad_model.add_rectangle_mesh('MSH1', mesh_size, a, b, t, 'Concrete', kx_mod=1, ky_mod=1,
                                       element_type='Quad')
-        quad_model.Meshes['MSH1'].generate()
+        quad_model.meshes['MSH1'].generate()
 
         # Add supports to the sides and base of the wall
-        for node in quad_model.Nodes.values():
+        for node in quad_model.nodes.values():
             if node.X == 0 or node.X == a or node.Y == 0:
                 quad_model.def_support(node.name, True, True, True, True, True, True)
         
         # Add hydrostatic loads to the elements
-        for element in quad_model.Quads.values():
+        for element in quad_model.quads.values():
             Yavg = (element.i_node.Y + element.j_node.Y + element.m_node.Y + element.n_node.Y)/4
             p = 62.4*(b - Yavg)
             quad_model.add_quad_surface_pressure(element.name, p, 'Hydrostatic')
@@ -176,7 +176,7 @@ class Test_Plates(unittest.TestCase):
         quad_model.analyze()
 
         # Get the maximum deflection in the model at the top of the wall
-        DZ_calcd = max([node.DZ['F'] for node in quad_model.Nodes.values() if node.Y == b])
+        DZ_calcd = max([node.DZ['F'] for node in quad_model.nodes.values() if node.Y == b])
         
         # Find the maximum deflection at the top of the wall from Timoshenko's Table 45
         q = 62.4*b

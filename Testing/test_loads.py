@@ -35,7 +35,7 @@ class TestLoads(unittest.TestCase):
         cont_beam.add_member_self_weight('FY', 1, 'D')
         cont_beam.add_load_combo('D', {'D':1.0})
         cont_beam.analyze()
-        for member in cont_beam.Members.values():
+        for member in cont_beam.members.values():
             self.assertAlmostEqual(member.DistLoads[0][1], 0.034, 4)
             self.assertAlmostEqual(member.DistLoads[0][2], 0.034, 4)
 
@@ -74,10 +74,10 @@ class TestLoads(unittest.TestCase):
         Beam.analyze()
         
         # Member fixed end reaction vector
-        # print('M1 Displacement Vector: ', Beam.Members['M1'].d())
-        # print('M1 Fixed End Reaction Vector: ', Beam.Members['M1'].fer())
+        # print('M1 Displacement Vector: ', Beam.members['M1'].d())
+        # print('M1 Fixed End Reaction Vector: ', Beam.members['M1'].fer())
         # Reactions
         for node_name in ('N1', 'N2'):
             with self.subTest(node=node_name):
-                rxn = Beam.Nodes[node_name].RxnFX['Combo 1']
+                rxn = Beam.nodes[node_name].RxnFX['Combo 1']
                 self.assertAlmostEqual(rxn/-25.0, 1.0, 2)

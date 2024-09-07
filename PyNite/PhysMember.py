@@ -39,7 +39,7 @@ class PhysMember(Member3D):
         int_nodes.append([self.j_node, norm(vector_ij)])
 
         # Step through each node in the model
-        for node in self.model.Nodes.values():
+        for node in self.model.nodes.values():
 
             # Check each node in the model (except the i and j-nodes)
             if node is not self.i_node and node is not self.j_node:
@@ -82,7 +82,7 @@ class PhysMember(Member3D):
             new_sub_member = Member3D(name, i_node, j_node, self.material_name, self.model, self.Iy, self.Iz, self.J, self.A, self.auxNode, self.tension_only, self.comp_only, section_name)
             
             # Flag the sub-member as active
-            for combo_name in self.model.LoadCombos.keys():
+            for combo_name in self.model.load_combos.keys():
                 new_sub_member.active[combo_name] = True
 
             # Apply end releases if applicable
