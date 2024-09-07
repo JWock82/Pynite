@@ -62,7 +62,8 @@ Here's a list of projects that use PyNite:
 
 # What's New?
 v0.0.96
-* Changed quad elements from MITC4 formulation to DKMQ formulation. This greatly improves plate results at corners.
+* Changed quad elements from MITC4 formulation to DKMQ formulation. This greatly improves plate results at corners and increases the speed with which the plate's stiffness matrix is assembled. MITC4 element code has been retained as legacy code, but is no longer used by the program.
+* Implemented snake-case for dictionary names (e.g. `FEModel3D.Nodes` is now `FEModel3D.nodes`). These changes were made to prepare `Pynite` for a v1.0 release that is consistent with the `PEP8` style guide for `python`.
 
 v0.0.95
 * Bug fix for rendering negative point loads via `Pyvista`. They were being rendered as positive loads. The analysis was not impacted by this bug.
