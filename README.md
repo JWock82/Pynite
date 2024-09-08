@@ -28,7 +28,7 @@ For a more detailed discussion on installation options and dependencies see http
 * Tension-only and compression-only elements.
 * Spring elements: two-way, tension-only, and compression-only.
 * Spring supports: two-way and one-way.
-* Quadrilateral plate elements (MITC4 formulation).
+* Quadrilateral plate elements (DKMQ formulation).
 * Rectangular plate elements (12-term polynomial formulation).
 * Basic meshing algorithms for some common shapes and for openings in rectangular walls.
 * Reports support reactions.
@@ -61,6 +61,10 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.96
+* Changed quad elements from MITC4 formulation to DKMQ formulation. This greatly improves plate results at corners and increases the speed with which the plate's stiffness matrix is assembled. MITC4 element code has been retained as legacy code, but is no longer used by the program.
+* Implemented snake-case for dictionary names (e.g. `FEModel3D.Nodes` is now `FEModel3D.nodes`). These changes were made to prepare `Pynite` for a v1.0 release that is consistent with the `PEP8` style guide for `python`.
+
 v0.0.95
 * Bug fix for rendering negative point loads via `Pyvista`. They were being rendered as positive loads. The analysis was not impacted by this bug.
 

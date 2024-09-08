@@ -36,4 +36,4 @@ class Test_2D_Frame(unittest.TestCase):
         model.def_support_spring('N1', 'DY', '5', '-')
         model.analyze()
 
-        self.assertEqual(model.Nodes['N1'].RxnFY['Combo 1'], 5)
+        self.assertEqual(model.nodes['N1'].RxnFY['Combo 1'], 5)

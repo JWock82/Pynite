@@ -103,13 +103,13 @@ Shear Results:
 .. code-block:: python
 
     # Get the maximum strong-axis shear from member 'M1' for load combination '1.4D'
-    my_model.Members['M1'].max_shear('Fy', '1.4D')
+    my_model.members['M1'].max_shear('Fy', '1.4D')
 
     # Get the minimum weak-axis shear from member 'M3' for load combination '1.2D+1.6L'
-    my_model.Members['M3'].min_shear('Fz', '1.2D+1.6L')
+    my_model.members['M3'].min_shear('Fz', '1.2D+1.6L')
 
     # Get the strong axis shear 5 units from the start of member 'M2' for load combination '1.2D+1.6S'
-    my_model.Members['M2'].shear('Fy', 5, '1.2D+1.6S')
+    my_model.members['M2'].shear('Fy', 5, '1.2D+1.6S')
 
     # Plot the strong axis shear diagram for member 'M1' for load combination '1.4D' using 100 points
     my_model.plot_shear('Fy', '1.4D', 100)
@@ -119,13 +119,13 @@ Moment Results:
 .. code-block:: python
 
     # Get the maximum strong-axis moment from member 'M1' for load combination '1.4D'
-    my_model.Members['M1'].max_moment('Mz', '1.4D')
+    my_model.members['M1'].max_moment('Mz', '1.4D')
 
     # Get the minimum weak-axis moment from member 'M3' for load combination '1.2D+1.6L'
-    my_model.Members['M3'].min_moment('My', '1.2D+1.6L')
+    my_model.members['M3'].min_moment('My', '1.2D+1.6L')
 
     # Get the strong axis moment 5 units from the start of member 'M2' for load combination '1.2D+1.6S'
-    my_model.Members['M2'].moment('Mz', 5, '1.2D+1.6S')
+    my_model.members['M2'].moment('Mz', 5, '1.2D+1.6S')
 
     # Plot the strong axis moment diagram for member 'M1' for load combination '1.4D' using 100 points
     my_model.plot_moment('Mz', '1.4D', 100)
@@ -135,13 +135,13 @@ Deflection Results:
 .. code-block:: python
 
     # Get the maximum strong-axis deflection from member 'M1' for load combination 'D'
-    my_model.Members['M1'].max_deflection('dy', 'D')
+    my_model.members['M1'].max_deflection('dy', 'D')
 
     # Get the minimum weak-axis deflection from member 'M3' for load combination 'D+L'
-    my_model.Members['M3'].min_deflection('dz', 'D+L')
+    my_model.members['M3'].min_deflection('dz', 'D+L')
 
     # Get the strong axis defletion 5 units from the start of member 'M2' for load combination 'D+S'
-    my_model.Members['M2'].deflection('dy', 5, 'D+S')
+    my_model.members['M2'].deflection('dy', 5, 'D+S')
 
     # Plot the strong axis deflection diagram for member 'M1' for load combination 'D' using 100 points
     my_model.plot_deflection('dy', 'D', 100)

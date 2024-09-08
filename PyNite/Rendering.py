@@ -221,7 +221,7 @@ class Renderer:
         if self.deformed_shape and self.case != None:
             raise Exception('Deformed shape is only available for load combinations,'
                             ' not load cases.')
-        if self.model.LoadCombos == {} and self.render_loads == True and self.case == None:
+        if self.model.load_combos == {} and self.render_loads == True and self.case == None:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
 
@@ -244,51 +244,51 @@ class Renderer:
                 color = 'grey'
 
             # Plot each node in the model
-            for node in self.model.Nodes.values():
+            for node in self.model.nodes.values():
                 self.plot_node(node, color)
             
             # Plot each auxiliary node in the model
-            for aux_node in self.model.AuxNodes.values():
+            for aux_node in self.model.aux_nodes.values():
                 self.plot_node(aux_node, color)
         
         # Render node labels
-        label_points = [[node.X, node.Y, node.Z] for node in self.model.Nodes.values()]
-        labels = [node.name for node in self.model.Nodes.values()]
+        label_points = [[node.X, node.Y, node.Z] for node in self.model.nodes.values()]
+        labels = [node.name for node in self.model.nodes.values()]
         
         self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=True, point_color='grey', point_size=5, shape=None, render_points_as_spheres=True)
 
         # Check if there are springs in the model
-        if self.model.Springs:
+        if self.model.springs:
 
             # Render the springs
-            for spring in self.model.Springs.values():
+            for spring in self.model.springs.values():
                 self.plot_spring(spring, self.annotation_size, 'grey')
             
             # Render the spring labels
             self.plotter.add_point_labels(self._spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None, render_points_as_spheres=False)
         
         # Render the members
-        for member in self.model.Members.values():
+        for member in self.model.members.values():
             self.plot_member(member)
 
         # Render the member labels
-        label_points = [[(member.i_node.X+member.j_node.X)/2, (member.i_node.Y+member.j_node.Y)/2, (member.i_node.Z+member.j_node.Z)/2] for member in self.model.Members.values()]
-        labels = [member.name for member in self.model.Members.values()]
+        label_points = [[(member.i_node.X+member.j_node.X)/2, (member.i_node.Y+member.j_node.Y)/2, (member.i_node.Z+member.j_node.Z)/2] for member in self.model.members.values()]
+        labels = [member.name for member in self.model.members.values()]
         self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
 
         # Render the deformed shape if requested
         if self.deformed_shape == True:
 
             # Render deformed nodes
-            # for node in self.model.Nodes.values():
+            # for node in self.model.nodes.values():
             #     self.plot_deformed_node(node, self.deformed_scale)
             
             # Render deformed members
-            for member in self.model.Members.values():
+            for member in self.model.members.values():
                 self.plot_deformed_member(member, self.deformed_scale)
             
             # Render deformed springs
-            for spring in self.model.Springs.values():
+            for spring in self.model.springs.values():
                 self.plot_deformed_spring(spring, self.deformed_scale, self.combo_name)
 
             # _DeformedShape(self.model, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
@@ -303,7 +303,7 @@ class Renderer:
             self.plotter.add_point_labels(self._load_label_points, self._load_labels, bold=False, text_color='green', show_points=False, shape=None, render_points_as_spheres=False)
         
         # Render the plates and quads, if present
-        if self.model.Quads or self.model.Plates:
+        if self.model.quads or self.model.plates:
             self.plot_plates(self.deformed_shape, self.deformed_scale, self.color_map, self.combo_name)
         
         # Determine whether to show or hide the scalar bar
@@ -541,7 +541,7 @@ class Renderer:
         _PrepContour(self.model, color_map, combo_name)
         
         # Add each plate and quad in the model to the PyVista dataset
-        for item in list(self.model.Plates.values()) + list(self.model.Quads.values()):
+        for item in list(self.model.plates.values()) + list(self.model.quads.values()):
             
             # Create a point for each corner (must be in counter clockwise order)
             if deformed_shape:
@@ -850,74 +850,74 @@ class Renderer:
         if self.case == None:
         
             # Step through each node
-            for node in self.model.Nodes.values():
+            for node in self.model.nodes.values():
         
                 # Step through each nodal load to find the largest one
                 for load in node.NodeLoads:
                 
                     # Find the largest loads in the load combination
-                    if load[2] in self.model.LoadCombos[self.combo_name].factors:
+                    if load[2] in self.model.load_combos[self.combo_name].factors:
                         if load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ':
-                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]]) > max_pt_load:
-                                max_pt_load = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]])
+                            if abs(load[1]*self.model.load_combos[self.combo_name].factors[load[2]]) > max_pt_load:
+                                max_pt_load = abs(load[1]*self.model.load_combos[self.combo_name].factors[load[2]])
                         else:
-                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]]) > max_moment:
-                                max_moment = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[2]])
+                            if abs(load[1]*self.model.load_combos[self.combo_name].factors[load[2]]) > max_moment:
+                                max_moment = abs(load[1]*self.model.load_combos[self.combo_name].factors[load[2]])
         
             # Step through each member
-            for member in self.model.Members.values():
+            for member in self.model.members.values():
         
                 # Step through each member point load
                 for load in member.PtLoads:
                     
                     # Find and store the largest point load and moment in the load combination
-                    if load[3] in self.model.LoadCombos[self.combo_name].factors:
+                    if load[3] in self.model.load_combos[self.combo_name].factors:
             
                         if (load[0] == 'Fx' or load[0] == 'Fy' or load[0] == 'Fz'
                         or  load[0] == 'FX' or load[0] == 'FY' or load[0] == 'FZ'):
-                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]]) > max_pt_load:
-                                max_pt_load = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]])
+                            if abs(load[1]*self.model.load_combos[self.combo_name].factors[load[3]]) > max_pt_load:
+                                max_pt_load = abs(load[1]*self.model.load_combos[self.combo_name].factors[load[3]])
                         else:
-                            if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]]) > max_moment:
-                                max_moment = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[3]])
+                            if abs(load[1]*self.model.load_combos[self.combo_name].factors[load[3]]) > max_moment:
+                                max_moment = abs(load[1]*self.model.load_combos[self.combo_name].factors[load[3]])
         
                 # Step through each member distributed load
                 for load in member.DistLoads:
             
                     #Find and store the largest distributed load in the load combination
-                    if load[5] in self.model.LoadCombos[self.combo_name].factors:
+                    if load[5] in self.model.load_combos[self.combo_name].factors:
             
-                        if abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[5]]) > max_dist_load:
-                            max_dist_load = abs(load[1]*self.model.LoadCombos[self.combo_name].factors[load[5]])
-                        if abs(load[2]*self.model.LoadCombos[self.combo_name].factors[load[5]]) > max_dist_load:
-                            max_dist_load = abs(load[2]*self.model.LoadCombos[self.combo_name].factors[load[5]])
+                        if abs(load[1]*self.model.load_combos[self.combo_name].factors[load[5]]) > max_dist_load:
+                            max_dist_load = abs(load[1]*self.model.load_combos[self.combo_name].factors[load[5]])
+                        if abs(load[2]*self.model.load_combos[self.combo_name].factors[load[5]]) > max_dist_load:
+                            max_dist_load = abs(load[2]*self.model.load_combos[self.combo_name].factors[load[5]])
         
             # Step through each plate
-            for plate in self.model.Plates.values():
+            for plate in self.model.plates.values():
         
                 # Step through each plate load
                 for load in plate.pressures:
             
-                    if load[1] in self.model.LoadCombos[self.combo_name].factors:
-                        if abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]]) > max_area_load:
-                            max_area_load = abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]])
+                    if load[1] in self.model.load_combos[self.combo_name].factors:
+                        if abs(load[0]*self.model.load_combos[self.combo_name].factors[load[1]]) > max_area_load:
+                            max_area_load = abs(load[0]*self.model.load_combos[self.combo_name].factors[load[1]])
         
             # Step through each quad
-            for quad in self.model.Quads.values():
+            for quad in self.model.quads.values():
         
                 # Step through each plate load
                 for load in quad.pressures:
             
                     # Check to see if the load case is in the requested load combination
-                    if load[1] in self.model.LoadCombos[self.combo_name].factors:
-                        if abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]]) > max_area_load:
-                            max_area_load = abs(load[0]*self.model.LoadCombos[self.combo_name].factors[load[1]])
+                    if load[1] in self.model.load_combos[self.combo_name].factors:
+                        if abs(load[0]*self.model.load_combos[self.combo_name].factors[load[1]]) > max_area_load:
+                            max_area_load = abs(load[0]*self.model.load_combos[self.combo_name].factors[load[1]])
         
         # Behavior if case has been specified
         else:
             
             # Step through each node
-            for node in self.model.Nodes.values():
+            for node in self.model.nodes.values():
         
                 # Step through each nodal load to find the largest one
                 for load in node.NodeLoads:
@@ -932,7 +932,7 @@ class Renderer:
                                 max_moment = abs(load[1])
         
             # Step through each member
-            for member in self.model.Members.values():
+            for member in self.model.members.values():
         
                 # Step through each member point load
                 for load in member.PtLoads:
@@ -960,7 +960,7 @@ class Renderer:
                             max_dist_load = abs(load[2])
                 
                 # Step through each plate
-                for plate in self.model.Plates.values():
+                for plate in self.model.plates.values():
             
                     # Step through each plate load
                     for load in plate.pressures:
@@ -971,7 +971,7 @@ class Renderer:
                                 max_area_load = abs(load[0])
             
             # Step through each quad
-            for quad in self.model.Quads.values():
+            for quad in self.model.quads.values():
         
                 # Step through each plate load
                 for load in quad.pressures:
@@ -992,14 +992,14 @@ class Renderer:
         # Display the requested load combination, or 'Combo 1' if no load combo or case has been
         # specified
         if self.case is None:
-            # Store model.LoadCombos[combo].factors under a simpler name for use below
-            load_factors = self.model.LoadCombos[self.combo_name].factors
+            # Store model.load_combos[combo].factors under a simpler name for use below
+            load_factors = self.model.load_combos[self.combo_name].factors
         else:
             # Set up a load combination dictionary that represents the load case
             load_factors = {self.case: 1}
         
         # Step through each node
-        for node in self.model.Nodes.values():
+        for node in self.model.nodes.values():
         
             # Step through and display each nodal load
             for load in node.NodeLoads:
@@ -1029,7 +1029,7 @@ class Renderer:
                         self.plot_moment((node.X, node.Y, node.Z), direction, abs(load_value/max_moment)*2.5*self.annotation_size, str(load_value), 'green')
         
         # Step through each member
-        for member in self.model.Members.values():
+        for member in self.model.members.values():
         
             # Get the direction cosines for the member's local axes
             dir_cos = member.T()[0:3, 0:3]
@@ -1108,7 +1108,7 @@ class Renderer:
                         self.plot_dist_load(position1, position2, direction, w1/max_dist_load*5*self.annotation_size, w2/max_dist_load*5*self.annotation_size, str(sig_fig_round(w1, 3)), str(sig_fig_round(w2, 3)), 'green')
         
         # Step through each plate
-        for plate in list(self.model.Plates.values()) + list(self.model.Quads.values()):
+        for plate in list(self.model.plates.values()) + list(self.model.quads.values()):
         
             # Get the direction cosines for the plate's local z-axis
             dir_cos = plate.T()[0:3, 0:3]
@@ -1173,11 +1173,17 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
     if stress_type != None:
     
         # Erase any previous contours
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
             node.contour = []
+        
+        # Check for global stresses:
+        if stress_type in ['MX', 'MY', 'MZ', 'QX', 'QY', 'QZ', 'SX', 'SY']:
+            local = False
+        else:
+            local = True
     
         # Step through each element in the model
-        for element in list(model.Quads.values()) + list(model.Plates.values()):
+        for element in list(model.quads.values()) + list(model.plates.values()):
             
             # Rectangular elements and quadrilateral elements have different local coordinate systems. Rectangles are based on a traditional (x, y) system, while quadrilaterals are based on a 'natural' (r, s) coordinate system. To reduce duplication of code for both these elements we'll define the edges of the plate here for either element using the (r, s) terminology.
             if element.type == 'Rect':
@@ -1193,58 +1199,54 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
       
             # Determine which stress result has been requested by the user
             if stress_type == 'dz':
-                # Internally PyNite defines the nodes for a rectangular element in the order (i, j,m, n), while VTK defines the nodes for a quadrilateral element in the order (m, n, i, j)
-                if element.type == 'Rect':
-                    i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
-                else:
-                    i, j, m, n = element.d(combo_name)[[14, 20, 2, 8], :]
+                i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
                 element.i_node.contour.append(i)
                 element.j_node.contour.append(j)
                 element.m_node.contour.append(m)
                 element.n_node.contour.append(n)
-            elif stress_type == 'Mx':
-                element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[0])
-                element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[0])
-                element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[0])
-                element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[0])
-            elif stress_type == 'My':
-                element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[1])
-                element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[1])
-                element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[1])
-                element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[1])
-            elif stress_type == 'Mxy':
-                element.i_node.contour.append(element.moment(r_left, s_bot, combo_name)[2])
-                element.j_node.contour.append(element.moment(r_right, s_bot, combo_name)[2])
-                element.m_node.contour.append(element.moment(r_right, s_top, combo_name)[2])
-                element.n_node.contour.append(element.moment(r_left, s_top, combo_name)[2])
-            elif stress_type == 'Qx':
-                element.i_node.contour.append(element.shear(r_left, s_bot, combo_name)[0])
-                element.j_node.contour.append(element.shear(r_right, s_bot, combo_name)[0])
-                element.m_node.contour.append(element.shear(r_right, s_top, combo_name)[0])
-                element.n_node.contour.append(element.shear(r_left, s_top, combo_name)[0])
-            elif stress_type == 'Qy':
-                element.i_node.contour.append(element.shear(r_left, s_bot, combo_name)[1])
-                element.j_node.contour.append(element.shear(r_right, s_bot, combo_name)[1])
-                element.m_node.contour.append(element.shear(r_right, s_top, combo_name)[1])
-                element.n_node.contour.append(element.shear(r_left, s_top, combo_name)[1])
-            elif stress_type == 'Sx':
-                element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[0])
-                element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[0])
-                element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[0])
-                element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[0])
-            elif stress_type == 'Sy':
-                element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[1])
-                element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[1])
-                element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[1])
-                element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[1])
-            elif stress_type == 'Txy':
-                element.i_node.contour.append(element.membrane(r_left, s_bot, combo_name)[2])
-                element.j_node.contour.append(element.membrane(r_right, s_bot, combo_name)[2])
-                element.m_node.contour.append(element.membrane(r_right, s_top, combo_name)[2])
-                element.n_node.contour.append(element.membrane(r_left, s_top, combo_name)[2])                 
+            elif stress_type.upper() == 'MX':
+                element.i_node.contour.append(element.moment(r_left, s_bot, local, combo_name)[0])
+                element.j_node.contour.append(element.moment(r_right, s_bot, local, combo_name)[0])
+                element.m_node.contour.append(element.moment(r_right, s_top, local, combo_name)[0])
+                element.n_node.contour.append(element.moment(r_left, s_top, local, combo_name)[0])
+            elif stress_type.upper() == 'MY':
+                element.i_node.contour.append(element.moment(r_left, s_bot, local, combo_name)[1])
+                element.j_node.contour.append(element.moment(r_right, s_bot, local, combo_name)[1])
+                element.m_node.contour.append(element.moment(r_right, s_top, local, combo_name)[1])
+                element.n_node.contour.append(element.moment(r_left, s_top, local, combo_name)[1])
+            elif stress_type.upper() == 'MXY':
+                element.i_node.contour.append(element.moment(r_left, s_bot, local, combo_name)[2])
+                element.j_node.contour.append(element.moment(r_right, s_bot, local, combo_name)[2])
+                element.m_node.contour.append(element.moment(r_right, s_top, local, combo_name)[2])
+                element.n_node.contour.append(element.moment(r_left, s_top, local, combo_name)[2])
+            elif stress_type.upper() == 'QX':
+                element.i_node.contour.append(element.shear(r_left, s_bot, local, combo_name)[0])
+                element.j_node.contour.append(element.shear(r_right, s_bot, local, combo_name)[0])
+                element.m_node.contour.append(element.shear(r_right, s_top, local, combo_name)[0])
+                element.n_node.contour.append(element.shear(r_left, s_top, local, combo_name)[0])
+            elif stress_type.upper() == 'QY':
+                element.i_node.contour.append(element.shear(r_left, s_bot, local, combo_name)[1])
+                element.j_node.contour.append(element.shear(r_right, s_bot, local, combo_name)[1])
+                element.m_node.contour.append(element.shear(r_right, s_top, local, combo_name)[1])
+                element.n_node.contour.append(element.shear(r_left, s_top, local, combo_name)[1])
+            elif stress_type.upper() == 'SX':
+                element.i_node.contour.append(element.membrane(r_left, s_bot, local, combo_name)[0])
+                element.j_node.contour.append(element.membrane(r_right, s_bot, local, combo_name)[0])
+                element.m_node.contour.append(element.membrane(r_right, s_top, local, combo_name)[0])
+                element.n_node.contour.append(element.membrane(r_left, s_top, local, combo_name)[0])
+            elif stress_type.upper() == 'SY':
+                element.i_node.contour.append(element.membrane(r_left, s_bot, local, combo_name)[1])
+                element.j_node.contour.append(element.membrane(r_right, s_bot, local, combo_name)[1])
+                element.m_node.contour.append(element.membrane(r_right, s_top, local, combo_name)[1])
+                element.n_node.contour.append(element.membrane(r_left, s_top, local, combo_name)[1])
+            elif stress_type.upper() == 'TXY':
+                element.i_node.contour.append(element.membrane(r_left, s_bot, local, combo_name)[2])
+                element.j_node.contour.append(element.membrane(r_right, s_bot, local, combo_name)[2])
+                element.m_node.contour.append(element.membrane(r_right, s_top, local, combo_name)[2])
+                element.n_node.contour.append(element.membrane(r_left, s_top, local, combo_name)[2])                 
       
         # Average the values at each node to obtain a smoothed contour
-        for node in model.Nodes.values():
+        for node in model.nodes.values():
             # Prevent divide by zero errors for nodes with no contour values
             if node.contour != []:
                 node.contour = sum(node.contour)/len(node.contour)

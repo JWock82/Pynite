@@ -33,7 +33,7 @@ example, to retrieve the X-coordinate for the node we just created we could acce
 
 .. code-block:: python
 
-    my_model.Nodes['N1'].X
+    my_model.nodes['N1'].X
 
 This returns the X coordinate for the node. Notice the "dot" operator above. As you use the
 dictionaries a good code environment can prompt you to see what information is available when you
@@ -41,15 +41,15 @@ use the "dot" operator.
 
 Avaliable dictionaries are:
 
-* ``my_model.Nodes``       A dictionary containing all the nodes in the model
-* ``my_model.AuxNodes``    A dictionary containing all the auxiliary nodes in the model
-* ``my_model.Members``     A dictionary containing all the members in the model
-* ``my_model.Springs``     A dictionary containing all the springs in the model
-* ``my_model.Plates``      A dictionary containing all the rectangular plates in the model
-* ``my_model.Quads``       A dictionary containing all the quadrilaterals in the model
-* ``my_model.Materials``   A dictionary containing all the materials in the model
-* ``my_model.LoadCombos``  A dictionary containing all the load combinations in the model
-* ``my_model.Meshes``      A dictionary containing all the meshes in the model
+* ``my_model.nodes``       A dictionary containing all the nodes in the model
+* ``my_model.aux_nodes``    A dictionary containing all the auxiliary nodes in the model
+* ``my_model.members``     A dictionary containing all the members in the model
+* ``my_model.springs``     A dictionary containing all the springs in the model
+* ``my_model.plates``      A dictionary containing all the rectangular plates in the model
+* ``my_model.quads``       A dictionary containing all the quadrilaterals in the model
+* ``my_model.materials``   A dictionary containing all the materials in the model
+* ``my_model.load_combos``  A dictionary containing all the load combinations in the model
+* ``my_model.meshes``      A dictionary containing all the meshes in the model
 
 FEModel3D Class Reference
 =========================

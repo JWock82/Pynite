@@ -48,13 +48,13 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
     beam.analyze()
 
     # Print the shear, moment, and deflection diagrams
-    beam.Members['M1'].plot_shear('Fy')
-    beam.Members['M1'].plot_moment('Mz')
-    beam.Members['M1'].plot_deflection('dy')
+    beam.members['M1'].plot_shear('Fy')
+    beam.members['M1'].plot_moment('Mz')
+    beam.members['M1'].plot_deflection('dy')
 
     # Print reactions at each end of the beam
-    print('Left Support Reaction:', beam.Nodes['N1'].RxnFY, 'kip')
-    print('Right Support Reacton:', beam.Nodes['N2'].RxnFY, 'kip')
+    print('Left Support Reaction:', beam.nodes['N1'].RxnFY, 'kip')
+    print('Right Support Reacton:', beam.nodes['N2'].RxnFY, 'kip')
 
     # Render the deformed shape of the beam magnified 100 times, with a text
     # height of 5 inches

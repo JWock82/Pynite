@@ -12,7 +12,7 @@ class Section():
         self.Iz = Iz
         self.J = J
         self.material_name = material_name
-        self.fy = model.Materials[material_name].fy
+        self.fy = model.materials[material_name].fy
     
     def Phi(self):
         pass
