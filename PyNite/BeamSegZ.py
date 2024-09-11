@@ -140,10 +140,10 @@ class BeamSegZ():
 
         #As the return value is not calculated as a function of x (for now), we need to check
         #whether x is an array, and if so, return a results array of the same length
-        if isinstance(x, array):
-            return full(len(x), self.T1)
-        else:
+        if isinstance(x, (int, float)):
             return self.T1
+        else:
+            return full(len(x), self.T1)
     
     def slope(self, x, P_delta=False):
         """Returns the slope of the elastic curve at any point `x` along the segment.
