@@ -122,17 +122,17 @@ rndr.render_model()
 # Plot the axial load diagrams for the braces. We should see no compression on
 # 'Brace2' and 64 kips on 'Brace1' if the tension-only analysis worked
 # correctly.
-braced_frame.Members['Brace1'].plot_axial(combo_name='1.2D+1.0W')
-braced_frame.Members['Brace2'].plot_axial(combo_name='1.2D+1.0W')
+braced_frame.members['Brace1'].plot_axial(combo_name='1.2D+1.0W')
+braced_frame.members['Brace2'].plot_axial(combo_name='1.2D+1.0W')
 
 # Report the frame reactions for the load combination '1.2D+1.0W'. We should
 # see a -50 kip horizontal reaction at node 'N1', and a zero kip reaction at
 # node 'N4' if the tension-only analysis worked correctly. Similarly, we
 print('1.2D+1.0W: N1 reaction FY =',
-      '{:.3f}'.format(braced_frame.Nodes['N1'].RxnFY['1.2D+1.0W']), 'kip')
+      '{:.3f}'.format(braced_frame.nodes['N1'].RxnFY['1.2D+1.0W']), 'kip')
 print('1.2D+1.0W: N1 reaction FX =',
-      '{:.3f}'.format(braced_frame.Nodes['N1'].RxnFX['1.2D+1.0W']), 'kip')
+      '{:.3f}'.format(braced_frame.nodes['N1'].RxnFX['1.2D+1.0W']), 'kip')
 print('1.2D+1.0W: N4 reaction FY =',
-      '{:.3f}'.format(braced_frame.Nodes['N4'].RxnFY['1.2D+1.0W']), 'kip')
+      '{:.3f}'.format(braced_frame.nodes['N4'].RxnFY['1.2D+1.0W']), 'kip')
 print('1.2D+1.0W: N4 reaction FX =',
-      '{:.3f}'.format(braced_frame.Nodes['N4'].RxnFX['1.2D+1.0W']), 'kip')
+      '{:.3f}'.format(braced_frame.nodes['N4'].RxnFX['1.2D+1.0W']), 'kip')

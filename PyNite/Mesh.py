@@ -41,13 +41,13 @@ class Mesh():
         for node in self.nodes.values():
 
             # Check if this node name is already being used in the model's `Nodes` dictionary
-            if node.name in self.model.Nodes.keys():
+            if node.name in self.model.nodes.keys():
 
                 # Come up with a new node name
-                node.name = self.model.unique_name(self.model.Nodes, 'N')
+                node.name = self.model.unique_name(self.model.nodes, 'N')
             
             # Save the node to the model
-            self.model.Nodes[node.name] = node
+            self.model.nodes[node.name] = node
 
             # Add this node to the mesh's new/replacement `nodes` dictionary
             revised_nodes[node.name] = node
@@ -59,24 +59,24 @@ class Mesh():
             if element.type == 'Rect':
 
                 # Check if this element name is already being used in the model's `Plates` dictionary
-                if element.name in self.model.Plates.keys():
+                if element.name in self.model.plates.keys():
 
                     # Come up with a new element name
-                    element.name = self.model.unique_name(self.model.Plates, 'R')
+                    element.name = self.model.unique_name(self.model.plates, 'R')
 
                 # Save the element to the model
-                self.model.Plates[element.name] = element
+                self.model.plates[element.name] = element
 
             elif element.type == 'Quad':
 
                 # Check if this element name is already being used in the model's `Quads` dictionary
-                if element.name in self.model.Quads.keys():
+                if element.name in self.model.quads.keys():
 
                     # Come up with a new element name
-                    element.name = self.model.unique_name(self.model.Quads, prefix='Q')
+                    element.name = self.model.unique_name(self.model.quads, prefix='Q')
 
                 # Save the element to the model
-                self.model.Quads[element.name] = element
+                self.model.quads[element.name] = element
             
             # Add this element to the mesh's new/replacement `elements` dictionary
             revised_elements[element.name] = element
@@ -108,13 +108,18 @@ class Mesh():
             combinations will be evaluated.
         """
 
-        if direction == 'Qx':
+        if direction in ['QX', 'QY']:
+            local = False
+        else:
+            local = True
+
+        if direction.upper() == 'QX':
             i = 0
-        elif direction == 'Qy':
+        elif direction.upper() == 'QY':
             i = 1
         else:
-            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', or \'Qy\'')
-
+            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', or \'QY\'')
+        
         # Initialize the maximum value to None
         Q_max = None
 
@@ -136,18 +141,18 @@ class Mesh():
                 xn, yn = -1, 1
 
             # Step through each load combination in the model
-            for load_combo in self.model.LoadCombos.values():
+            for load_combo in self.model.load_combos.values():
 
                 # Determine if this load combination should be evaluated
                 if combo is None or load_combo.name == combo:
                     
                     # Find the maximum shear in the element, checking each corner and the center
                     # of the element
-                    Q_element = max([element.shear(xi, yi, load_combo.name)[i, 0],
-                                     element.shear(xj, yj, load_combo.name)[i, 0],
-                                     element.shear(xm, ym, load_combo.name)[i, 0],
-                                     element.shear(xn, yn, load_combo.name)[i, 0],
-                                     element.shear((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    Q_element = max([element.shear(xi, yi, local, load_combo.name)[i, 0],
+                                     element.shear(xj, yj, local, load_combo.name)[i, 0],
+                                     element.shear(xm, ym, local, load_combo.name)[i, 0],
+                                     element.shear(xn, yn, local, load_combo.name)[i, 0],
+                                     element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum shear calculated is the largest encountered so far
                     if Q_max == None or Q_max < Q_element:
@@ -174,12 +179,17 @@ class Mesh():
             combinations will be evaluated.
         """
 
-        if direction == 'Qx':
+        if direction in ['QX', 'QY']:
+            local = False
+        else:
+            local = True
+
+        if direction.upper() == 'QX':
             i = 0
-        elif direction == 'Qy':
+        elif direction.upper() == 'QY':
             i = 1
         else:
-            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', or \'Qy\'')
+            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', or \'QY\'')
 
         # Initialize the minimum value to None
         Q_min = None
@@ -202,18 +212,18 @@ class Mesh():
                 xn, yn = -1, 1
 
             # Step through each load combination the element utilizes
-            for load_combo in self.model.LoadCombos.values():
+            for load_combo in self.model.load_combos.values():
 
                 # Determine if this load combination should be evaluated
                 if combo is None or load_combo.name == combo:
                     
                     # Find the minimum shear in the element, checking each corner and the center
                     # of the element
-                    Q_element = min([element.shear(xi, yi, load_combo.name)[i, 0],
-                                     element.shear(xj, yj, load_combo.name)[i, 0],
-                                     element.shear(xm, ym, load_combo.name)[i, 0],
-                                     element.shear(xn, yn, load_combo.name)[i, 0],
-                                     element.shear((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    Q_element = min([element.shear(xi, yi, local, load_combo.name)[i, 0],
+                                     element.shear(xj, yj, local, load_combo.name)[i, 0],
+                                     element.shear(xm, ym, local, load_combo.name)[i, 0],
+                                     element.shear(xn, yn, local, load_combo.name)[i, 0],
+                                     element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum shear calculated is the smallest encountered so far
                     if Q_min == None or Q_min > Q_element:
@@ -240,14 +250,19 @@ class Mesh():
             combinations will be evaluated.
         """
 
-        if direction == 'Mx':
+        if direction in ['MX', 'MY', 'MZ']:
+            local = False
+        else:
+            local = True
+
+        if direction.upper() == 'MX':
             i = 0
-        elif direction == 'My':
+        elif direction.upper() == 'MY':
             i = 1
-        elif direction == 'Mxy':
+        elif direction == 'Mxy' or direction == 'MZ':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', or \'Mxy\'')
+            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', \'Mxy\', \'MX\', \'MY\', or \'MZ\'')
 
         # Initialize the maximum value to None
         M_max = None
@@ -263,25 +278,25 @@ class Mesh():
                 xm, ym = element.width(), element.height()
                 xn, yn, = 0, element.height()
             elif element.type == 'Quad':
-                # Use the quad's natural (r, s) coordinate system
+                # Use the quad's natural (xi, eta) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
                 xn, yn = -1, 1
 
             # Step through each load combination the element utilizes
-            for load_combo in self.model.LoadCombos.values():
+            for load_combo in self.model.load_combos.values():
 
                 # Determine if this load combination should be evaluated
                 if combo is None or load_combo.name == combo:
                     
                     # Find the maximum moment in the element, checking each corner and the center
                     # of the element
-                    M_element = max([element.moment(xi, yi, load_combo.name)[i, 0],
-                                     element.moment(xj, yj, load_combo.name)[i, 0],
-                                     element.moment(xm, ym, load_combo.name)[i, 0],
-                                     element.moment(xn, yn, load_combo.name)[i, 0],
-                                     element.moment((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    M_element = max([element.moment(xi, yi, local, load_combo.name)[i, 0],
+                                     element.moment(xj, yj, local, load_combo.name)[i, 0],
+                                     element.moment(xm, ym, local, load_combo.name)[i, 0],
+                                     element.moment(xn, yn, local, load_combo.name)[i, 0],
+                                     element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum moment calculated is the largest encountered so far
                     if M_max == None or M_max < M_element:
@@ -307,15 +322,20 @@ class Mesh():
             The name of the load combination to get the minimum moment for. If omitted, all load
             combinations will be evaluated.
         """
+        
+        if direction in ['MX', 'MY', 'MZ']:
+            local = False
+        else:
+            local = True
 
-        if direction == 'Mx':
+        if direction.upper() == 'MX':
             i = 0
-        elif direction == 'My':
+        elif direction.upper() == 'MY':
             i = 1
-        elif direction == 'Mxy':
+        elif direction == 'Mxy' or direction == 'MZ':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', or \'Mxy\'')
+            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', \'Mxy\', \'MX\', \'MY\', or \'MZ\'')
 
         # Initialize the minimum value to None
         M_min = None
@@ -338,18 +358,18 @@ class Mesh():
                 xn, yn = -1, 1
 
             # Step through each load combination the element utilizes
-            for load_combo in self.model.LoadCombos.values():
+            for load_combo in self.model.load_combos.values():
 
                 # Determine if this load combination should be evaluated
                 if combo is None or load_combo.name == combo:
                     
                     # Find the minimum moment in the element, checking each corner and the center
                     # of the element
-                    M_element = min([element.moment(xi, yi, load_combo.name)[i, 0],
-                                     element.moment(xj, yj, load_combo.name)[i, 0],
-                                     element.moment(xm, ym, load_combo.name)[i, 0],
-                                     element.moment(xn, yn, load_combo.name)[i, 0],
-                                     element.moment((xi + xj)/2, (yi + yn)/2, load_combo.name)[i, 0]])
+                    M_element = min([element.moment(xi, yi, local, load_combo.name)[i, 0],
+                                     element.moment(xj, yj, local, load_combo.name)[i, 0],
+                                     element.moment(xm, ym, local, load_combo.name)[i, 0],
+                                     element.moment(xn, yn, local, load_combo.name)[i, 0],
+                                     element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum moment calculated is the smallest encountered so far
                     if M_min == None or M_min > M_element:
@@ -674,14 +694,14 @@ class RectangleMesh(Mesh):
 
         # Add the nodes to the model
         for key, node in self.nodes.items():
-            self.model.Nodes[key] = node
+            self.model.nodes[key] = node
         
         # Add the elements to the model
         for key, element in self.elements.items():
             if element.type == 'Quad':
-                self.model.Quads[key] = element
+                self.model.quads[key] = element
             elif element.type == 'Rect':
-                self.model.Plates[key] = element
+                self.model.plates[key] = element
 
         # Flag the mesh as generated
         self._is_generated = True
@@ -845,14 +865,14 @@ class AnnulusMesh(Mesh):
 
         # Add the nodes to the model
         for node in self.nodes.values():
-            self.model.Nodes[node.name] = node
+            self.model.nodes[node.name] = node
         
         # Add the elements to the model
         for element in self.elements.values():
             if element.type.upper() == 'QUAD':
-                self.model.Quads[element.name] = element
+                self.model.quads[element.name] = element
             elif element.type.upper() == 'RECT':
-                self.model.Plates[element.name] = element
+                self.model.plates[element.name] = element
         
         # Flag the mesh as generated
         self._is_generated = True
@@ -970,14 +990,14 @@ class AnnulusRingMesh(Mesh):
 
         # Add the nodes and elements to the model
         for node in self.nodes.values():
-            self.model.Nodes[node.name] = node
+            self.model.nodes[node.name] = node
         
         # Add the elements to the model
         for element in self.elements.values():
             if element.type.upper() == 'QUAD':
-                self.model.Quads[element.name] = element
+                self.model.quads[element.name] = element
             if element.type.upper() == 'RECT':
-                self.model.Plates[element.name] = element
+                self.model.plates[element.name] = element
         
         # Flag the mesh as generated
         self._is_generated = True
@@ -1148,13 +1168,13 @@ class AnnulusTransRingMesh(Mesh):
 
         # Add the nodes and elements to the model
         for node in self.nodes.values():
-            self.model.Nodes[node.name] = node
+            self.model.nodes[node.name] = node
         
         for element in self.elements.values():
             if element.type == 'Quad':
-                self.model.Quads[element.name] = element
+                self.model.quads[element.name] = element
             else:
-                self.model.Plates[element.name] = element
+                self.model.plates[element.name] = element
         
         # Flag the mesh as generated
         self._is_generated = True
@@ -1330,13 +1350,13 @@ class CylinderMesh(Mesh):
 
         # Add the nodes and elements to the model
         for node in self.nodes.values():
-            self.model.Nodes[node.name] = node
+            self.model.nodes[node.name] = node
         
         for element in self.elements.values():
             if element.type == 'Quad':
-                self.model.Quads[element.name] = element
+                self.model.quads[element.name] = element
             else:
-                self.model.Plates[element.name] = element
+                self.model.plates[element.name] = element
         
         # Flag the mesh as generated
         self._is_generated = True
@@ -1513,13 +1533,13 @@ class CylinderRingMesh(Mesh):
         
         # Add the nodes and elements to the model
         for node in self.nodes.values():
-            self.model.Nodes[node.name] = node
+            self.model.nodes[node.name] = node
         
         for element in self.elements.values():
             if element.type == 'Quad':
-                self.model.Quads[element.name] = element
+                self.model.quads[element.name] = element
             else:
-                self.model.Plates[element.name] = element
+                self.model.plates[element.name] = element
             
         # Flag the mesh as generated
         self._is_generated = True
@@ -1560,10 +1580,10 @@ def check_mesh_integrity(mesh, console_log=True):
     count = 0
     for element in mesh.elements.values():
 
-        if (element.i_node not in mesh.model.Nodes.values() or
-            element.j_node not in mesh.model.Nodes.values() or
-            element.m_node not in mesh.model.Nodes.values() or
-            element.n_node not in mesh.model.Nodes.values()):
+        if (element.i_node not in mesh.model.nodes.values() or
+            element.j_node not in mesh.model.nodes.values() or
+            element.m_node not in mesh.model.nodes.values() or
+            element.n_node not in mesh.model.nodes.values()):
 
             count += 1
     
@@ -1591,7 +1611,7 @@ def check_mesh_integrity(mesh, console_log=True):
     # Check that each element's name in the mesh is in the model
     count = 0
     for element in mesh.elements.values():
-        if element.name not in mesh.model.Plates.keys() and element.name not in mesh.model.Quads.keys():
+        if element.name not in mesh.model.plates.keys() and element.name not in mesh.model.quads.keys():
             count += 1
     
     if count != 0:
@@ -1600,7 +1620,7 @@ def check_mesh_integrity(mesh, console_log=True):
     # Check that each element in the mesh is in the model
     count = 0
     for element in mesh.elements.values():
-        if element not in mesh.model.Plates.values() and element.name not in mesh.model.Quads.values():
+        if element not in mesh.model.plates.values() and element.name not in mesh.model.quads.values():
             count += 1
     
     if count != 0:
@@ -1611,10 +1631,10 @@ def check_mesh_integrity(mesh, console_log=True):
     for element in mesh.elements.values():
         
         if mesh.element_type == 'Rect':
-            if element.name not in mesh.model.Plates.keys() or mesh.elements[element.name] is not mesh.model.Plates[element.name]:
+            if element.name not in mesh.model.plates.keys() or mesh.elements[element.name] is not mesh.model.plates[element.name]:
                 count +=1
         elif mesh.element_type == 'Quad':
-            if element.name not in mesh.model.Quads.keys() or mesh.elements[element.name] is not mesh.model.Quads[element.name]:
+            if element.name not in mesh.model.quads.keys() or mesh.elements[element.name] is not mesh.model.quads[element.name]:
                 count += 1
     
     # Prepare the error message
@@ -1634,7 +1654,7 @@ def check_mesh_integrity(mesh, console_log=True):
     # count = 0
     # for node in mesh.nodes.values():
 
-    #     if node.name not in mesh.model.Nodes.keys() or mesh.nodes[node.name] is not mesh.model.Nodes[node.name]:
+    #     if node.name not in mesh.model.nodes.keys() or mesh.nodes[node.name] is not mesh.model.nodes[node.name]:
     #         count += 1
     
     # # Prepare the error message

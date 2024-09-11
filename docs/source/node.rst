@@ -19,7 +19,7 @@ Once added to the model, the node will be stored in the ``Nodes`` dictionary of 
 .. code-block:: python
 
     # Get the node we just created from the model
-    node_1 = my_model.Nodes['N1']
+    node_1 = my_model.nodes['N1']
 
 Adding Supports to a Node
 =========================
@@ -99,12 +99,12 @@ Example:
     myModel.AddNodeDisplacement('N4', 'DY', -1.5)
 
 ## Getting Node Results
-The `FEModel3D` class stores nodes in a Python dictionary. Nodes can be accessed using the sytax `FEModel3D.Nodes['node_name']`.
+The `FEModel3D` class stores nodes in a Python dictionary. Nodes can be accessed using the sytax `FEModel3D.nodes['node_name']`.
 
 Once you've retrieved a node you can access its reactions and displacements as node class attributes. Reactions and displacements are also stored in dictionary format, with the keys being the load combination names.
 
 Examples:
 
     # Printing the Y-reaction and the reaction moment about the Z-axis at nodes "N2" and "N3" respectively
-    print(myModel.Nodes['N2'].RxnFY['1.2D+1.0W'])
-    print(myModel.Nodes['N3'].RxnMZ['1.2D+1.0W'])
+    print(myModel.nodes['N2'].RxnFY['1.2D+1.0W'])
+    print(myModel.nodes['N3'].RxnMZ['1.2D+1.0W'])

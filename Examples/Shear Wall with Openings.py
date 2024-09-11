@@ -32,24 +32,24 @@ t = 8           # Masonry thickness (in)
 # The effects of cracked masonry can be modeled by adjusting the `ky_mod` factor. For this example
 # uncracked masonry will be used to match the textbook problem.
 model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Masonry', kx_mod=1, ky_mod=1,
-                         origin=[0, 0, 0], plane='XY', element_type='Rect')
+                         origin=[0, 0, 0], plane='XY', element_type='Quad')
 
 # Add a 4' wide x 12' tall door opening to the mesh
-model.Meshes['MSH1'].add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
+model.meshes['MSH1'].add_rect_opening(name='Door 1', x_left=2*12, y_bott=0*12, width=4*12, height=12*12)
 
 # Add a 4' wide x 4' tall window opening to the mesh
-model.Meshes['MSH1'].add_rect_opening(name='Window 1', x_left=8*12, y_bott=8*12, width=4*12, height=4*12)
+model.meshes['MSH1'].add_rect_opening(name='Window 1', x_left=8*12, y_bott=8*12, width=4*12, height=4*12)
 
 # Add another 4' wide x 4' tall window opening to the mesh
-model.Meshes['MSH1'].add_rect_opening(name='Window 2', x_left=14*12, y_bott=8*12, width=4*12, height=4*12)
+model.meshes['MSH1'].add_rect_opening(name='Window 2', x_left=14*12, y_bott=8*12, width=4*12, height=4*12)
 
 # Add another 4' wide x 12' tall door opening to the mesh
-model.Meshes['MSH1'].add_rect_opening(name='Door 2', x_left=20*12, y_bott=0*12, width=4*12, height=12*12)
+model.meshes['MSH1'].add_rect_opening(name='Door 2', x_left=20*12, y_bott=0*12, width=4*12, height=12*12)
 
 # Generate the mesh now that we've defined all the openings. Pynite automatically generates all
 # meshes when analyzing, but generating it early with give us the chance to work with it prior to
 # analysis.
-model.Meshes['MSH1'].generate()
+model.meshes['MSH1'].generate()
 
 # Shear at the top of the wall
 V = 100  # kip
@@ -57,11 +57,11 @@ V = 100  # kip
 # The shear at the top of the wall will be distributed evently to all the
 # nodes at the top of the wall. Determine how many nodes are at the top of the
 # wall.
-n = len([node for node in model.Nodes.values() if isclose(node.Y, height)])
+n = len([node for node in model.nodes.values() if isclose(node.Y, height)])
 v = V/n
 
 # Add supports and loads to the nodes
-for node in model.Nodes.values():
+for node in model.nodes.values():
 
     # Determine if the node is at the base of the wall
     if isclose(node.Y, 0):
@@ -96,7 +96,7 @@ renderer.scalar_bar = True
 renderer.render_model()
 
 # Print the maximum displacement
-d_max = max([node.DX['Seismic'] for node in model.Nodes.values()])
+d_max = max([node.DX['Seismic'] for node in model.nodes.values()])
 print('Max displacement: ', d_max, 'in')
 print('Expected displacement from reference text: ', 7.623/E*t, 'in')
 print('Wall rigidity: ', V/d_max, 'kips/in')

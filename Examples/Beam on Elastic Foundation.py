@@ -74,15 +74,15 @@ renderer.window_height = 250
 renderer.render_model()
 
 # Find and print the largest displacement
-d_min = boef.Members['M1'].min_deflection('dy')
+d_min = boef.members['M1'].min_deflection('dy')
 print('Minimum deflection: ', round(d_min, 4), 'in')
 
 # Alternatively the line below could be used to get the largest nodal displacement in the model
 # It will be slightly less since there is no node at the midpoint of the member.
-# d_min = min([node.DY['Combo 1'] for node in boef.Nodes.values()])
+# d_min = min([node.DY['Combo 1'] for node in boef.nodes.values()])
 
 # Find and print the minimum moment
-M_min = boef.Members['M1'].min_moment('Mz')
-M_max = boef.Members['M1'].max_moment('Mz')
+M_min = boef.members['M1'].min_moment('Mz')
+M_max = boef.members['M1'].max_moment('Mz')
 print('Minimum moment: ', round(M_min), 'k-in')
 print('Maximum moment: ', round(M_max), 'k-in')

@@ -143,5 +143,5 @@ rndr.render_model()
 
 # We should see upward displacement at N1 and downward displacement at N4 if
 # our springs worked correctly
-print('N1 displacement in Y =', braced_frame.Nodes['N1'].DY['1.2D+1.0W'])
-print('N4 displacement in Y =', braced_frame.Nodes['N4'].DY['1.2D+1.0W'])
+print('N1 displacement in Y =', braced_frame.nodes['N1'].DY['1.2D+1.0W'])
+print('N4 displacement in Y =', braced_frame.nodes['N4'].DY['1.2D+1.0W'])

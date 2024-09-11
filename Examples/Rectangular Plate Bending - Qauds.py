@@ -30,15 +30,15 @@ model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Concrete', 1, 1, 
 # PyNite automatically generates each mesh when it analyzes. Sometimes it's convenient to generate
 # the nodes and elements in the mesh in advance so that we can manipulate the mesh prior to
 # analysis.
-model.Meshes['MSH1'].generate()
+model.meshes['MSH1'].generate()
 
 # Step through each quadrilateral in the model
-for element in model.Quads.values():
+for element in model.quads.values():
     # Add loads to the element
     model.add_quad_surface_pressure(element.name, load, case='W')
 
 # Add fully fixed supports on all side of the wall
-for node in model.Nodes.values():
+for node in model.nodes.values():
     if (round(node.Y, 10) == 0 or round(node.Y, 10) == height or round(node.X, 10) == 0 or
         round(node.X, 10) == width):
         model.def_support(node.name, True, True, True, True, True, True)
@@ -54,7 +54,7 @@ model.analyze(check_statics=True)
 # +-----------------------+
 
 # Set up a renderer for the wall. The quad mesh will be set to show 'Mx' results.
-from PyNite.Visualization import Renderer
+from PyNite.Rendering import Renderer
 renderer = Renderer(model)
 renderer.annotation_size = mesh_size/6
 renderer.deformed_shape = False
@@ -97,26 +97,24 @@ print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 # the maximum moment.
 
 # Get the force vector for quad 101 for load combination '1.0W'
-f_vector = model.Quads['Q101'].f('1.0W')
+f_vector = model.quads['Q101'].f('1.0W')
 
-# Although the MITC4 element nodes are defined by the user in the order [i, j, m, n], internally
-# PyNite formulates the plate in the order [m, n, i, j] to be consistent with the literature used
-# to derive this element. Therefore the MITC4 element's force vector is arranged as follows:
+# The DKMQ element's force vector is arranged as follows:
 # ************************************************************************************************************************************************************
-# f vector: [[fx_m, fy_m, fz_m, mx_m, my_m, mz_m, fx_n, fy_n, fz_n, mx_n, my_n, mz_n, fx_i, fy_i, fz_i, mx_i, my_i, mz_i, fx_j, fy_j, fz_j, mx_j, my_j, mz_j]]
+# f vector: [[fx_i, fy_i, fz_i, mx_i, my_i, mz_i, fx_j, fy_j, fz_j, mx_j, my_j, mz_j, fx_m, fy_m, fz_m, mx_m, my_m, mz_m, fx_n, fy_n, fz_n, mx_n, my_n, mz_n]]
 # index:    [[  0 ,   1 ,   2 ,   3 ,   4 ,   5 ,   6 ,   7 ,   8 ,   9 ,  10 ,  11 ,  12 ,  13 ,  14 ,  15 ,  16 ,  17 ,  18 ,  19 ,  20 ,  21 ,  22 ,  23 ]]
 # ************************************************************************************************************************************************************
 # nomenclature: fx_n = force in the local x-direction at the n-node
 #               my_j = moment about the local y-axis at the j-node
 
 # We are interested in the moment applied to the i-node about the quad's local y-axis (my_i). This
-# is at index 16 in the f vector. Note that here Mx is the moment about the local y-axis, rather
+# is at index 4 in the f vector. Note that here Mx is the moment about the local y-axis, rather
 # than about it's local x-axis. This can be confusing, but is a commonly used plate nomenclature.
-Mx = f_vector[16, 0]
+Mx = f_vector[4, 0]
 
 # We can find the max My moment similarly from quad 6
-f_vector_11 = model.Quads['Q6'].f('1.0W')
-My = f_vector_11[15, 0]
+f_vector_11 = model.quads['Q6'].f('1.0W')
+My= f_vector_11[3, 0]
 
 # Now we'll convert these values to a force per unit length. The height and width of the plate is
 # `meshsize`.

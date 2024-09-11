@@ -20,14 +20,14 @@ class BeamSegY(BeamSegZ):
         P1 = self.P1
         w1 = self.w1
         w2 = self.w2
-        delta1 = self.delta1
-        delta = self.deflection(x)
         L = self.Length()
         
         # M = M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L)
         M = -M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
         
         if P_delta == True:
+            delta1 = self.delta1
+            delta = self.deflection(x)
             M += P1*(delta - delta1)
         
         return M
@@ -49,12 +49,13 @@ class BeamSegY(BeamSegZ):
         w1 = self.w1
         w2 = self.w2
         theta_1 = self.theta1
-        delta_x = self.deflection(x, P_delta)
-        delta_1 = self.delta1
+
         L = self.Length()
         EI = self.EI
         
         if P_delta == True:
+            delta_x = self.deflection(x, P_delta)
+            delta_1 = self.delta1
             return theta_1 + (-V1*x**2/2 - w1*x**3/6 + x*(-M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
         else:
             return theta_1 + (-V1*x**2/2 - w1*x**3/6 + x*(-M1) + x**4*(w1 - w2)/(24*L))/EI

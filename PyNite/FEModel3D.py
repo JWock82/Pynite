@@ -32,33 +32,33 @@ class FEModel3D():
         # the data types they store, and then those types will be removed. This will give us the
         # ability to get type-based hints when using the dictionaries.
 
-        self.Nodes = {str:Node3D}          # A dictionary of the model's nodes
-        self.Nodes.pop(str)
-        self.AuxNodes = {str:Node3D}       # A dictionary of the model's auxiliary nodes
-        self.AuxNodes.pop(str)
-        self.Materials = {str:Material}    # A dictionary of the model's materials
-        self.Materials.pop(str)
-        self.Sections = {str:Section}      # A dictonary of the model's cross-sections
-        self.Sections.pop(str)
-        self.Springs = {str:Spring3D}      # A dictionary of the model's springs
-        self.Springs.pop(str)
-        self.Members = {str:PhysMember}    # A dictionary of the model's physical members
-        self.Members.pop(str)
-        self.Quads = {str:Quad3D}          # A dictionary of the model's quadiralterals
-        self.Quads.pop(str)
-        self.Plates = {str:Plate3D}        # A dictionary of the model's rectangular plates
-        self.Plates.pop(str)
-        self.Meshes = {str:Mesh}           # A dictionary of the model's meshes
-        self.Meshes.pop(str)         
-        self.LoadCombos = {str:LoadCombo}  # A dictionary of the model's load combinations
-        self.LoadCombos.pop(str)
+        self.nodes = {str:Node3D}          # A dictionary of the model's nodes
+        self.nodes.pop(str)
+        self.aux_nodes = {str:Node3D}       # A dictionary of the model's auxiliary nodes
+        self.aux_nodes.pop(str)
+        self.materials = {str:Material}    # A dictionary of the model's materials
+        self.materials.pop(str)
+        self.sections = {str:Section}      # A dictonary of the model's cross-sections
+        self.sections.pop(str)
+        self.springs = {str:Spring3D}      # A dictionary of the model's springs
+        self.springs.pop(str)
+        self.members = {str:PhysMember}    # A dictionary of the model's physical members
+        self.members.pop(str)
+        self.quads = {str:Quad3D}          # A dictionary of the model's quadiralterals
+        self.quads.pop(str)
+        self.plates = {str:Plate3D}        # A dictionary of the model's rectangular plates
+        self.plates.pop(str)
+        self.meshes = {str:Mesh}           # A dictionary of the model's meshes
+        self.meshes.pop(str)         
+        self.load_combos = {str:LoadCombo}  # A dictionary of the model's load combinations
+        self.load_combos.pop(str)
         self._D = {str:[]}                 # A dictionary of the model's nodal displacements by load combination
         self._D.pop(str)
         
         self.solution = None  # Indicates the solution type for the latest run of the model
 
     @property
-    def LoadCases(self):
+    def load_cases(self):
         """Returns a list of all the load cases in the model (in alphabetical order).
         """
         
@@ -66,14 +66,14 @@ class FEModel3D():
         cases = []
 
         # Step through each node
-        for node in self.Nodes.values():
+        for node in self.nodes.values():
             # Step through each nodal load
             for load in node.NodeLoads:
                 # Get the load case for each nodal laod
                 cases.append(load[2])
         
         # Step through each member
-        for member in self.Members.values():
+        for member in self.members.values():
             # Step through each member point load
             for load in member.PtLoads:
                 # Get the load case for each member point load
@@ -84,7 +84,7 @@ class FEModel3D():
                 cases.append(load[5])
         
         # Step through each plate/quad
-        for plate in list(self.Plates.values()) + list(self.Quads.values()):
+        for plate in list(self.plates.values()) + list(self.quads.values()):
             # Step through each surface load
             for load in plate.pressures:
                 # Get the load case for each plate/quad pressure
@@ -112,21 +112,21 @@ class FEModel3D():
         
         # Name the node or check it doesn't already exist
         if name:
-            if name in self.Nodes:
+            if name in self.nodes:
                 raise NameError(f"Node name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "N" + str(len(self.Nodes))
+            name = "N" + str(len(self.nodes))
             count = 1
-            while name in self.Nodes: 
-                name = "N" + str(len(self.Nodes) + count)
+            while name in self.nodes: 
+                name = "N" + str(len(self.nodes) + count)
                 count += 1
         
         # Create a new node
         new_node = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
-        self.Nodes[name] = new_node
+        self.nodes[name] = new_node
         
         # Flag the model as unsolved
         self.solution = None
@@ -156,21 +156,21 @@ class FEModel3D():
         
         # Name the node or check it doesn't already exist
         if name:
-            if name in self.AuxNodes:
+            if name in self.aux_nodes:
                 raise NameError(f"Auxnode name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "AN" + str(len(self.AuxNodes))
+            name = "AN" + str(len(self.aux_nodes))
             count = 1
-            while name in self.AuxNodes: 
-                name = "AN" + str(len(self.AuxNodes)+count)
+            while name in self.aux_nodes: 
+                name = "AN" + str(len(self.aux_nodes)+count)
                 count += 1
                 
         # Create a new node
         new_node = Node3D(name, X, Y, Z)
         
         # Add the new node to the list
-        self.AuxNodes[name] = new_node
+        self.aux_nodes[name] = new_node
 
         # Flag the model as unsolved
         self.solution = None
@@ -196,21 +196,21 @@ class FEModel3D():
 
         # Name the material or check it doesn't already exist
         if name:
-            if name in self.Materials:
+            if name in self.materials:
                 raise NameError(f"Material name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "M" + str(len(self.Materials))
+            name = "M" + str(len(self.materials))
             count = 1
-            while name in self.Materials: 
-                name = "M" + str(len(self.Materials) + count)
+            while name in self.materials: 
+                name = "M" + str(len(self.materials) + count)
                 count += 1
                 
         # Create a new material
         new_material = Material(name, E, G, nu, rho, fy)
         
         # Add the new material to the list
-        self.Materials[name] = new_material
+        self.materials[name] = new_material
         
         # Flag the model as unsolved
         self.solution = None
@@ -225,9 +225,9 @@ class FEModel3D():
         """
 
         # Check if the section name has already been used
-        if name not in self.Sections.keys():
+        if name not in self.sections.keys():
             # Store the section in the `Sections` dictionary
-            self.Sections[name] = section
+            self.sections[name] = section
         else:
             # Stop execution and notify the user that the section name is already being used
             raise Exception('Cross-section name ' + name + ' already exists in the model.')
@@ -255,23 +255,23 @@ class FEModel3D():
         
         # Name the spring or check it doesn't already exist
         if name:
-            if name in self.Springs:
+            if name in self.springs:
                 raise NameError(f"Spring name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "S" + str(len(self.Springs))
+            name = "S" + str(len(self.springs))
             count = 1
-            while name in self.Springs: 
-                name = "S" + str(len(self.Springs) + count)
+            while name in self.springs: 
+                name = "S" + str(len(self.springs) + count)
                 count += 1
                 
         # Create a new spring
-        new_spring = Spring3D(name, self.Nodes[i_node], self.Nodes[j_node],
-                              ks, self.LoadCombos, tension_only=tension_only,
+        new_spring = Spring3D(name, self.nodes[i_node], self.nodes[j_node],
+                              ks, self.load_combos, tension_only=tension_only,
                               comp_only=comp_only)
         
         # Add the new spring to the list
-        self.Springs[name] = new_spring
+        self.springs[name] = new_spring
         
         # Flag the model as unsolved
         self.solution = None
@@ -313,23 +313,23 @@ class FEModel3D():
 
         # Name the member or check it doesn't already exist
         if name:
-            if name in self.Members: raise NameError(f"Member name '{name}' already exists")
+            if name in self.members: raise NameError(f"Member name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "M" + str(len(self.Members))
+            name = "M" + str(len(self.members))
             count = 1
-            while name in self.Members: 
-                name = "M" + str(len(self.Members)+count)
+            while name in self.members: 
+                name = "M" + str(len(self.members)+count)
                 count += 1
                 
         # Create a new member
         if aux_node == None:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material_name, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section_name=section_name)
+            new_member = PhysMember(name, self.nodes[i_node], self.nodes[j_node], material_name, self, Iy, Iz, J, A, tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         else:
-            new_member = PhysMember(name, self.Nodes[i_node], self.Nodes[j_node], material_name, self, Iy, Iz, J, A, aux_node=self.AuxNodes[aux_node], tension_only=tension_only, comp_only=comp_only, section_name=section_name)
+            new_member = PhysMember(name, self.nodes[i_node], self.nodes[j_node], material_name, self, Iy, Iz, J, A, aux_node=self.aux_nodes[aux_node], tension_only=tension_only, comp_only=comp_only, section_name=section_name)
         
         # Add the new member to the list
-        self.Members[name] = new_member
+        self.members[name] = new_member
         
         # Flag the model as unsolved
         self.solution = None
@@ -372,21 +372,21 @@ class FEModel3D():
         
         # Name the plate or check it doesn't already exist
         if name:
-            if name in self.Plates: raise NameError(f"Plate name '{name}' already exists")
+            if name in self.plates: raise NameError(f"Plate name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "P" + str(len(self.Plates))
+            name = "P" + str(len(self.plates))
             count = 1
-            while name in self.Plates: 
-                name = "P" + str(len(self.Plates)+count)
+            while name in self.plates: 
+                name = "P" + str(len(self.plates)+count)
                 count += 1
         
         # Create a new plate
-        new_plate = Plate3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
-                           self.Nodes[n_node], t, material_name, self, kx_mod, ky_mod)
+        new_plate = Plate3D(name, self.nodes[i_node], self.nodes[j_node], self.nodes[m_node],
+                           self.nodes[n_node], t, material_name, self, kx_mod, ky_mod)
         
         # Add the new plate to the list
-        self.Plates[name] = new_plate
+        self.plates[name] = new_plate
 
         # Flag the model as unsolved
         self.solution = None
@@ -431,21 +431,21 @@ class FEModel3D():
         
         # Name the quad or check it doesn't already exist
         if name:
-            if name in self.Quads: raise NameError(f"Quad name '{name}' already exists")
+            if name in self.quads: raise NameError(f"Quad name '{name}' already exists")
         else:
             # As a guess, start with the length of the dictionary
-            name = "Q" + str(len(self.Quads))
+            name = "Q" + str(len(self.quads))
             count = 1
-            while name in self.Quads: 
-                name = "Q" + str(len(self.Quads) + count)
+            while name in self.quads: 
+                name = "Q" + str(len(self.quads) + count)
                 count += 1
         
         # Create a new member
-        new_quad = Quad3D(name, self.Nodes[i_node], self.Nodes[j_node], self.Nodes[m_node],
-                         self.Nodes[n_node], t, material_name, self, kx_mod, ky_mod)
+        new_quad = Quad3D(name, self.nodes[i_node], self.nodes[j_node], self.nodes[m_node],
+                         self.nodes[n_node], t, material_name, self, kx_mod, ky_mod)
         
         # Add the new member to the list
-        self.Quads[name] = new_quad
+        self.quads[name] = new_quad
 
         # Flag the model as unsolved
         self.solution = None
@@ -494,18 +494,18 @@ class FEModel3D():
         # Check if a mesh name has been provided
         if name:
             # Check that the mesh name isn't already being used
-            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+            if name in self.meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Rename the mesh if necessary
         else:
-            name = self.unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.meshes, 'MSH')
         
         # Identify the starting node and element
         if start_node is None:
-            start_node = self.unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.nodes, 'N')
         if element_type == 'Rect' and start_element is None:
-            start_element = self.unique_name(self.Plates, 'R')
+            start_element = self.unique_name(self.plates, 'R')
         elif element_type == 'Quad' and start_element is None:
-            start_element = self.unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.quads, 'Q')
         
         # Create the mesh
         new_mesh = RectangleMesh(mesh_size, width, height, thickness, material_name, self, kx_mod,
@@ -513,7 +513,7 @@ class FEModel3D():
                                  start_element, element_type=element_type)
 
         # Add the new mesh to the `Meshes` dictionary
-        self.Meshes[name] = new_mesh
+        self.meshes[name] = new_mesh
 
         # Flag the model as unsolved
         self.solution = None
@@ -561,23 +561,23 @@ class FEModel3D():
         # Check if a mesh name has been provided
         if name:
             # Check that the mesh name doesn't already exist
-            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+            if name in self.meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Give the mesh a new name if necessary
         else:
-            name = self.unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.meshes, 'MSH')
 
         # Identify the starting node and element
         if start_node is None:
-            start_node = self.unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.nodes, 'N')
         if start_element is None:
-            start_element = self.unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.quads, 'Q')
         
         # Create a new mesh
         new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material_name, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element)
 
         # Add the new mesh to the `Meshes` dictionary
-        self.Meshes[name] = new_mesh
+        self.meshes[name] = new_mesh
 
         # Flag the model as unsolved
         self.solution = None
@@ -623,23 +623,23 @@ class FEModel3D():
         # Check if a name has been provided
         if name:
             # Check that the mesh name doesn't already exist
-            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+            if name in self.meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Give the mesh a new name if necessary
         else:
-            name = self.unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.meshes, 'MSH')
 
         # Identify the starting node and element
         if start_node is None:
-            start_node = self.unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.nodes, 'N')
         if start_element is None:
-            start_element = self.unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.quads, 'Q')
         
         # Create a new mesh
         new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material_name,
                                 self, kx_mod, ky_mod, origin, axis, start_node, start_element)
 
         # Add the new mesh to the `Meshes` dictionary
-        self.Meshes[name] = new_mesh
+        self.meshes[name] = new_mesh
 
         # Flag the model as unsolved
         self.solution = None
@@ -697,18 +697,18 @@ class FEModel3D():
         # Check if a name has been provided
         if name:
             # Check that the mesh name doesn't already exist
-            if name in self.Meshes: raise NameError(f"Mesh name '{name}' already exists")
+            if name in self.meshes: raise NameError(f"Mesh name '{name}' already exists")
         # Give the mesh a new name if necessary
         else:
-            name = self.unique_name(self.Meshes, 'MSH')
+            name = self.unique_name(self.meshes, 'MSH')
 
         # Identify the starting node and element
         if start_node is None:
-            start_node = self.unique_name(self.Nodes, 'N')
+            start_node = self.unique_name(self.nodes, 'N')
         if element_type == 'Rect' and start_element is None:
-            start_element = self.unique_name(self.Plates, 'R')
+            start_element = self.unique_name(self.plates, 'R')
         elif element_type == 'Quad' and start_element is None:
-            start_element = self.unique_name(self.Quads, 'Q')
+            start_element = self.unique_name(self.quads, 'Q')
         
         # Create a new mesh
         new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material_name, self,
@@ -716,7 +716,7 @@ class FEModel3D():
                                num_elements, element_type)
 
         # Add the new mesh to the `Meshes` dictionary
-        self.Meshes[name] = new_mesh
+        self.meshes[name] = new_mesh
 
         # Flag the model as unsolved
         self.solution = None
@@ -733,8 +733,8 @@ class FEModel3D():
         """
 
         # Initialize a dictionary marking where each node is used
-        node_lookup = {node_name: [] for node_name in self.Nodes.keys()}
-        element_dicts = ('Springs', 'Members', 'Plates', 'Quads')
+        node_lookup = {node_name: [] for node_name in self.nodes.keys()}
+        element_dicts = ('springs', 'members', 'plates', 'quads')
         node_types = ('i_node', 'j_node', 'm_node', 'n_node')
 
         # Step through each dictionary of elements in the model (springs, members, plates, quads)
@@ -756,7 +756,7 @@ class FEModel3D():
                         node_lookup[node.name].append((element, node_type))
 
         # Make a list of the names of each node in the model
-        node_names = list(self.Nodes.keys())
+        node_names = list(self.nodes.keys())
 
         # Make a list of nodes to be removed from the model
         remove_list = []
@@ -776,12 +776,12 @@ class FEModel3D():
                     continue
 
                 # Calculate the distance between nodes
-                if self.Nodes[node_1_name].distance(self.Nodes[node_2_name]) > tolerance:
+                if self.nodes[node_1_name].distance(self.nodes[node_2_name]) > tolerance:
                     continue
 
                 # Replace references to `node_2` in each element with references to `node_1`
                 for element, node_type in node_lookup[node_2_name]:
-                    setattr(element, node_type, self.Nodes[node_1_name])
+                    setattr(element, node_type, self.nodes[node_1_name])
 
                 # Flag `node_2` as no longer used
                 node_lookup[node_2_name] = None
@@ -789,41 +789,41 @@ class FEModel3D():
                 # Merge any boundary conditions
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:
-                    if getattr(self.Nodes[node_2_name], dof) == True:
-                        setattr(self.Nodes[node_1_name], dof, True)
+                    if getattr(self.nodes[node_2_name], dof) == True:
+                        setattr(self.nodes[node_1_name], dof, True)
                 
                 # Merge any spring supports
                 spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
                 for dof in spring_cond:
-                    value = getattr(self.Nodes[node_2_name], dof)
+                    value = getattr(self.nodes[node_2_name], dof)
                     if value != [None, None, None]:
-                        setattr(self.Nodes[node_1_name], dof, value)
+                        setattr(self.nodes[node_1_name], dof, value)
                 
                 # Fix the mesh labels
-                for mesh in self.Meshes.values():
+                for mesh in self.meshes.values():
 
                     # Fix the nodes in the mesh
                     if node_2_name in mesh.nodes.keys():
 
                         # Attach the correct node to the mesh
-                        mesh.nodes[node_2_name] = self.Nodes[node_1_name]
+                        mesh.nodes[node_2_name] = self.nodes[node_1_name]
 
                         # Fix the dictionary key
                         mesh.nodes[node_1_name] = mesh.nodes.pop(node_2_name)
 
                     # Fix the elements in the mesh
                     for element in mesh.elements.values():
-                        if node_2_name == element.i_node.name: element.i_node = self.Nodes[node_1_name]
-                        if node_2_name == element.j_node.name: element.j_node = self.Nodes[node_1_name]
-                        if node_2_name == element.m_node.name: element.m_node = self.Nodes[node_1_name]
-                        if node_2_name == element.n_node.name: element.n_node = self.Nodes[node_1_name]
+                        if node_2_name == element.i_node.name: element.i_node = self.nodes[node_1_name]
+                        if node_2_name == element.j_node.name: element.j_node = self.nodes[node_1_name]
+                        if node_2_name == element.m_node.name: element.m_node = self.nodes[node_1_name]
+                        if node_2_name == element.n_node.name: element.n_node = self.nodes[node_1_name]
                     
                 # Add the node to the `remove` list
                 remove_list.append(node_2_name)
 
         # Remove `node_2` from the model's `Nodes` dictionary
         for node_name in remove_list:
-            self.Nodes.pop(node_name)
+            self.nodes.pop(node_name)
         
         # Flag the model as unsolved
         self.solution = None
@@ -837,12 +837,12 @@ class FEModel3D():
             
         # Remove the node. Nodal loads are stored within the node, so they
         # will be deleted automatically when the node is deleted.
-        self.Nodes.pop(node_name)
+        self.nodes.pop(node_name)
         
         # Find any elements attached to the node and remove them
-        self.Members = {name: member for name, member in self.Members.items() if member.i_node.name != node_name and member.j_node.name != node_name}
-        self.Plates = {name: plate for name, plate in self.Plates.items() if plate.i_node.name != node_name and plate.j_node.name != node_name and plate.m_node.name != node_name and plate.n_node.name != node_name}
-        self.Quads = {name: quad for name, quad in self.Quads.items() if quad.i_node.name != node_name and quad.j_node.name != node_name and quad.m_node.name != node_name and quad.n_node.name != node_name}
+        self.members = {name: member for name, member in self.members.items() if member.i_node.name != node_name and member.j_node.name != node_name}
+        self.plates = {name: plate for name, plate in self.plates.items() if plate.i_node.name != node_name and plate.j_node.name != node_name and plate.m_node.name != node_name and plate.n_node.name != node_name}
+        self.quads = {name: quad for name, quad in self.quads.items() if quad.i_node.name != node_name and quad.j_node.name != node_name and quad.m_node.name != node_name and quad.n_node.name != node_name}
 
         # Flag the model as unsolved
         self.solution = None
@@ -855,10 +855,10 @@ class FEModel3D():
         """
 
         # Remove the auxiliary node
-        self.AuxNodes.pop(auxnode_name)
+        self.aux_nodes.pop(auxnode_name)
 
         # Remove the auxiliary node from any members that were using it
-        for member in self.Members.values():
+        for member in self.members.values():
             if member.auxNode == auxnode_name:
                 member.auxNode = None
         
@@ -873,7 +873,7 @@ class FEModel3D():
         """
         
         # Remove the spring
-        self.Springs.pop(spring_name)
+        self.springs.pop(spring_name)
 
         # Flag the model as unsolved
         self.solution = None
@@ -888,7 +888,7 @@ class FEModel3D():
         
         # Remove the member. Member loads are stored within the member, so they
         # will be deleted automatically when the member is deleted.
-        self.Members.pop(member_name)
+        self.members.pop(member_name)
 
         # Flag the model as unsolved
         self.solution = None
@@ -920,7 +920,7 @@ class FEModel3D():
         """            
         
         # Get the node to be supported
-        node = self.Nodes[node_name]
+        node = self.nodes[node_name]
                 
         # Set the node's support conditions
         node.support_DX = support_DX
@@ -951,17 +951,17 @@ class FEModel3D():
         if dof in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             if direction in ('+', '-', None):
                 if dof == 'DX':
-                    self.Nodes[node_name].spring_DX = [stiffness, direction, True]
+                    self.nodes[node_name].spring_DX = [stiffness, direction, True]
                 elif dof == 'DY':
-                    self.Nodes[node_name].spring_DY = [stiffness, direction, True]
+                    self.nodes[node_name].spring_DY = [stiffness, direction, True]
                 elif dof == 'DZ':
-                    self.Nodes[node_name].spring_DZ = [stiffness, direction, True]
+                    self.nodes[node_name].spring_DZ = [stiffness, direction, True]
                 elif dof == 'RX':
-                    self.Nodes[node_name].spring_RX = [stiffness, direction, True]
+                    self.nodes[node_name].spring_RX = [stiffness, direction, True]
                 elif dof == 'RY':
-                    self.Nodes[node_name].spring_RY = [stiffness, direction, True]
+                    self.nodes[node_name].spring_RY = [stiffness, direction, True]
                 elif dof == 'RZ':
-                    self.Nodes[node_name].spring_RZ = [stiffness, direction, True]
+                    self.nodes[node_name].spring_RZ = [stiffness, direction, True]
             else:
                 raise ValueError('Invalid support spring direction. Specify \'+\', \'-\', or None.')
         else:
@@ -982,11 +982,11 @@ class FEModel3D():
         :raises ValueError: _description_
         """
             
-        # Validate the value of Direction
+        # Validate the value of direction
         if direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
-            raise ValueError(f"Direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {direction} was given.")
+            raise ValueError(f"direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {direction} was given.")
         # Get the node
-        node = self.Nodes[node_name]
+        node = self.nodes[node_name]
 
         if direction == 'DX':
             node.EnforcedDX = magnitude
@@ -1004,11 +1004,11 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def def_releases(self, Member, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
+    def def_releases(self, member_name, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
         """Defines member end realeses for a member. All member end releases will default to unreleased unless specified otherwise.
 
-        :param Member: The name of the member to have its releases modified.
-        :type Member: str
+        :param member_name: The name of the member to have its releases modified.
+        :type member_name: str
         :param Dxi: Indicates whether the member is released axially at its start. Defaults to False.
         :type Dxi: bool, optional
         :param Dyi: Indicates whether the member is released for shear in the local y-axis at its start. Defaults to False.
@@ -1036,7 +1036,7 @@ class FEModel3D():
         """
         
         # Apply the end releases to the member
-        self.Members[Member].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
+        self.members[member_name].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
 
         # Flag the model as unsolved
         self.solution = None
@@ -1056,19 +1056,19 @@ class FEModel3D():
         new_combo = LoadCombo(name, combo_tags, factors)
 
         # Add the load combination to the dictionary of load combinations
-        self.LoadCombos[name] = new_combo
+        self.load_combos[name] = new_combo
 
         # Flag the model as solved
         self.solution = None
 
-    def add_node_load(self, Node, Direction, P, case='Case 1'):
+    def add_node_load(self, node_name, direction, P, case='Case 1'):
         """Adds a nodal load to the model.
 
-        :param Node: The name of the node where the load is being applied.
-        :type Node: str
-        :param Direction: The global direction the load is being applied in. Forces are `'FX'`,
+        :param node_name: The name of the node where the load is being applied.
+        :type node_name: str
+        :param direction: The global direction the load is being applied in. Forces are `'FX'`,
                           `'FY'`, and `'FZ'`. Moments are `'MX'`, `'MY'`, and `'MZ'`.
-        :type Direction: str
+        :type direction: str
         :param P: The numeric value (magnitude) of the load.
         :type P: float
         :param case: The name of the load case the load belongs to. Defaults to 'Case 1'.
@@ -1076,26 +1076,26 @@ class FEModel3D():
         :raises ValueError: Occurs when an invalid load direction was specified.
         """
         
-        # Validate the value of Direction
-        if Direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
-            raise ValueError(f"Direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {Direction} was given.")
+        # Validate the value of direction
+        if direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
+            raise ValueError(f"direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {direction} was given.")
         # Add the node load to the model
-        self.Nodes[Node].NodeLoads.append((Direction, P, case))
+        self.nodes[node_name].NodeLoads.append((direction, P, case))
 
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_pt_load(self, Member, Direction, P, x, case='Case 1'):
+    def add_member_pt_load(self, member_name, direction, P, x, case='Case 1'):
         """Adds a member point load to the model.
 
-        :param Member: The name of the member the load is being applied to.
-        :type Member: str
-        :param Direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
+        :param member_name: The name of the member the load is being applied to.
+        :type member_name: str
+        :param direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
                           `'Fy'`, `'Fz'`, `'Mx'`, `'My'`, `'Mz'`, `'FX'`, `'FY'`, `'FZ'`, `'MX'`, `'MY'`, or `'MZ'`.
                           Note that lower-case notation indicates use of the beam's local
                           coordinate system, while upper-case indicates use of the model's globl
                           coordinate system.
-        :type Direction: str
+        :type direction: str
         :param P: The numeric value (magnitude) of the load.
         :type P: float
         :param x: The load's location along the member's local x-axis.
@@ -1105,27 +1105,27 @@ class FEModel3D():
         :raises ValueError: Occurs when an invalid load direction has been specified.
         """            
 
-        # Validate the value of Direction
-        if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', 'MZ'):
-            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {Direction} was given.")
+        # Validate the value of direction
+        if direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', 'MZ'):
+            raise ValueError(f"direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {direction} was given.")
         
         # Add the point load to the member
-        self.Members[Member].PtLoads.append((Direction, P, x, case))
+        self.members[member_name].PtLoads.append((direction, P, x, case))
         
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_dist_load(self, member_name, Direction, w1, w2, x1=None, x2=None, case='Case 1'):
+    def add_member_dist_load(self, member_name, direction, w1, w2, x1=None, x2=None, case='Case 1'):
         """Adds a member distributed load to the model.
 
         :param member_name: The name of the member the load is being appied to.
         :type member_name: str
-        :param Direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
+        :param direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
                           `'Fy'`, `'Fz'`, `'FX'`, `'FY'`, or `'FZ'`.
                           Note that lower-case notation indicates use of the beam's local
                           coordinate system, while upper-case indicates use of the model's globl
                           coordinate system.
-        :type Direction: str
+        :type direction: str
         :param w1: The starting value (magnitude) of the load.
         :type w1: float
         :param w2: The ending value (magnitude) of the load.
@@ -1141,9 +1141,9 @@ class FEModel3D():
         :raises ValueError: Occurs when an invalid load direction has been specified.
         """
        
-        # Validate the value of Direction
-        if Direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'):
-            raise ValueError(f"Direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', or 'FZ'. {Direction} was given.")
+        # Validate the value of direction
+        if direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'):
+            raise ValueError(f"direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', or 'FZ'. {direction} was given.")
         # Determine if a starting and ending points for the load have been specified.
         # If not, use the member start and end as defaults
         if x1 == None:
@@ -1152,12 +1152,12 @@ class FEModel3D():
             start = x1
         
         if x2 == None:
-            end = self.Members[member_name].L()
+            end = self.members[member_name].L()
         else:
             end = x2
 
         # Add the distributed load to the member
-        self.Members[member_name].DistLoads.append((Direction, w1, w2, start, end, case))
+        self.members[member_name].DistLoads.append((direction, w1, w2, start, end, case))
         
         # Flag the model as unsolved
         self.solution = None
@@ -1174,10 +1174,10 @@ class FEModel3D():
         """
 
         # Step through each member in the model
-        for member in self.Members.values():
+        for member in self.members.values():
 
             # Calculate the self weight of the member
-            self_weight = factor*self.Materials[member.material_name].rho*member.A
+            self_weight = factor*self.materials[member.material_name].rho*member.A
 
             # Add the self-weight load to the member
             self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case)
@@ -1198,8 +1198,8 @@ class FEModel3D():
         """   
 
         # Add the surface pressure to the rectangle
-        if plate_name in self.Plates.keys():
-            self.Plates[plate_name].pressures.append([pressure, case])
+        if plate_name in self.plates.keys():
+            self.plates[plate_name].pressures.append([pressure, case])
         else:
             raise Exception('Invalid plate name specified for plate surface pressure.')
         
@@ -1219,8 +1219,8 @@ class FEModel3D():
         """
 
         # Add the surface pressure to the quadrilateral
-        if quad_name in self.Quads.keys():
-            self.Quads[quad_name].pressures.append([pressure, case])
+        if quad_name in self.quads.keys():
+            self.quads[quad_name].pressures.append([pressure, case])
         else:
             raise Exception('Invalid quad name specified for quad surface pressure.')
         
@@ -1232,7 +1232,7 @@ class FEModel3D():
         """
 
         # Delete the member loads and the calculated internal forces
-        for member in self.Members.values():
+        for member in self.members.values():
             member.DistLoads = []
             member.PtLoads = []
             member.SegmentsZ = []
@@ -1240,15 +1240,15 @@ class FEModel3D():
             member.SegmentsX = []
         
         # Delete the plate loads
-        for plate in self.Plates.values():
+        for plate in self.plates.values():
             plate.pressures = []
         
         # Delete the quadrilateral loads
-        for quad in self.Quads.values():
+        for quad in self.quads.values():
             quad.pressures = []
         
         # Delete the nodal loads, calculated displacements, and calculated reactions
-        for node in self.Nodes.values():
+        for node in self.nodes.values():
 
             node.NodeLoads = []
 
@@ -1300,11 +1300,11 @@ class FEModel3D():
             data = []
         else:
             # Initialize a dense matrix of zeros
-            K = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
+            K = zeros((len(self.nodes)*6, len(self.nodes)*6))
         
         # Add stiffness terms for each nodal spring in the model
         if log: print('- Adding nodal spring support stiffness terms to global stiffness matrix')
-        for node in self.Nodes.values():
+        for node in self.nodes.values():
             
             # Determine if the node has any spring supports
             if node.spring_DX[0] != None:
@@ -1381,7 +1381,7 @@ class FEModel3D():
 
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
-        for spring in self.Springs.values():
+        for spring in self.springs.values():
             
             if spring.active[combo_name] == True:
 
@@ -1422,7 +1422,7 @@ class FEModel3D():
 
         # Add stiffness terms for each physical member in the model
         if log: print('- Adding member stiffness terms to global stiffness matrix')
-        for phys_member in self.Members.values():
+        for phys_member in self.members.values():
             
             # Check to see if the physical member is active for the given load combination
             if phys_member.active[combo_name] == True:
@@ -1467,7 +1467,7 @@ class FEModel3D():
                 
         # Add stiffness terms for each quadrilateral in the model
         if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
-        for quad in self.Quads.values():
+        for quad in self.quads.values():
             
             # Get the quadrilateral's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1481,32 +1481,32 @@ class FEModel3D():
                 # Determine which node the index 'a' is related to
                 if a < 6:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.m_node.ID*6 + a
+                    m = quad.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.n_node.ID*6 + (a - 6)
+                    m = quad.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.i_node.ID*6 + (a - 12)
+                    m = quad.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.j_node.ID*6 + (a - 18)
+                    m = quad.n_node.ID*6 + (a - 18)
 
                 for b in range(24):
 
                     # Determine which node the index 'b' is related to
                     if b < 6:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.m_node.ID*6 + b
+                        n = quad.i_node.ID*6 + b
                     elif b < 12:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.n_node.ID*6 + (b - 6)
+                        n = quad.j_node.ID*6 + (b - 6)
                     elif b < 18:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.i_node.ID*6 + (b - 12)
+                        n = quad.m_node.ID*6 + (b - 12)
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.j_node.ID*6 + (b - 18)
+                        n = quad.n_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     if sparse == True:
@@ -1518,7 +1518,7 @@ class FEModel3D():
         
         # Add stiffness terms for each plate in the model
         if log: print('- Adding plate stiffness terms to global stiffness matrix')
-        for plate in self.Plates.values():
+        for plate in self.plates.values():
             
             # Get the plate's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1576,7 +1576,7 @@ class FEModel3D():
             row = array(row)
             col = array(col)
             data = array(data)
-            K = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
+            K = coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         # Check that there are no nodal instabilities
         if check_stability:
@@ -1605,13 +1605,13 @@ class FEModel3D():
         if sparse == True:
             # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a scipy sparse `lil_matrix`. This matrix format has several advantages. It uses less memory if the matrix is sparse, supports slicing, and can be converted to other formats (sparse or dense) later on for mathematical operations.
             from scipy.sparse import lil_matrix
-            Kg = lil_matrix((len(self.Nodes)*6, len(self.Nodes)*6))
+            Kg = lil_matrix((len(self.nodes)*6, len(self.nodes)*6))
         else:
-            Kg = zeros(len(self.Nodes)*6, len(self.Nodes)*6)
+            Kg = zeros(len(self.nodes)*6, len(self.nodes)*6)
         
         # Add stiffness terms for each physical member in the model
         if log: print('- Adding member geometric stiffness terms to global geometric stiffness matrix')
-        for phys_member in self.Members.values():
+        for phys_member in self.members.values():
             
             # Check to see if the physical member is active for the given load combination
             if phys_member.active[combo_name] == True:
@@ -1691,11 +1691,11 @@ class FEModel3D():
             data = []
         else:
             # Initialize a dense matrix of zeros
-            Km = zeros((len(self.Nodes)*6, len(self.Nodes)*6))
+            Km = zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         # Add stiffness terms for each physical member in the model
         if log: print('- Calculating the plastic reduction matrix')
-        for phys_member in self.Members.values():
+        for phys_member in self.members.values():
             
             # Check to see if the physical member is active for the given load combination
             if phys_member.active[combo_name] == True:
@@ -1744,7 +1744,7 @@ class FEModel3D():
             row = array(row)
             col = array(col)
             data = array(data)
-            Km = coo_matrix((data, (row, col)), shape=(len(self.Nodes)*6, len(self.Nodes)*6))
+            Km = coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         # Check that there are no nodal instabilities
         # if check_stability:
@@ -1766,10 +1766,10 @@ class FEModel3D():
         """        
         
         # Initialize a zero vector to hold all the terms
-        FER = zeros((len(self.Nodes) * 6, 1))
+        FER = zeros((len(self.nodes) * 6, 1))
         
         # Step through each physical member in the model
-        for phys_member in self.Members.values():
+        for phys_member in self.members.values():
             
             # Step through each sub-member and add terms
             for member in phys_member.sub_members.values():
@@ -1795,7 +1795,7 @@ class FEModel3D():
                     FER[m, 0] += member_FER[a, 0]
         
         # Add terms for each rectangle in the model
-        for plate in self.Plates.values():
+        for plate in self.plates.values():
             
             # Get the quadrilateral's global fixed end reaction vector
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1824,7 +1824,7 @@ class FEModel3D():
                 FER[m, 0] += plate_FER[a, 0]
 
         # Add terms for each quadrilateral in the model
-        for quad in self.Quads.values():
+        for quad in self.quads.values():
             
             # Get the quadrilateral's global fixed end reaction vector
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1838,16 +1838,16 @@ class FEModel3D():
                 # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
                 if a < 6:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.m_node.ID*6 + a
+                    m = quad.i_node.ID*6 + a
                 elif a < 12:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.n_node.ID*6 + (a - 6)
+                    m = quad.j_node.ID*6 + (a - 6)
                 elif a < 18:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.i_node.ID*6 + (a - 12)
+                    m = quad.m_node.ID*6 + (a - 12)
                 else:
                     # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.j_node.ID*6 + (a - 18)
+                    m = quad.n_node.ID*6 + (a - 18)
                 
                 # Now that 'm' is known, place the term in the global fixed end reaction vector
                 FER[m, 0] += quad_FER[a, 0]
@@ -1866,13 +1866,13 @@ class FEModel3D():
         """
             
         # Initialize a zero vector to hold all the terms
-        P = zeros((len(self.Nodes)*6, 1))
+        P = zeros((len(self.nodes)*6, 1))
         
         # Get the load combination for the given 'combo_name'
-        combo = self.LoadCombos[combo_name]
+        combo = self.load_combos[combo_name]
 
         # Add terms for each node in the model
-        for node in self.Nodes.values():
+        for node in self.nodes.values():
             
             # Get the node's ID
             ID = node.ID
@@ -2062,7 +2062,7 @@ class FEModel3D():
 
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
         # Note that for linear analysis the stiffness matrix can be obtained for any load combination, as it's the same for all of them
-        combo_name = list(self.LoadCombos.keys())[0]
+        combo_name = list(self.load_combos.keys())[0]
         if sparse == True:
             K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
         else:
@@ -2197,7 +2197,7 @@ class FEModel3D():
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
         # Identify and tag the primary load combinations the pushover load will be added to
-        for combo in self.LoadCombos.values():
+        for combo in self.load_combos.values():
 
             # No need to tag the pushover combo
             if combo.name != push_combo:
@@ -2225,12 +2225,12 @@ class FEModel3D():
                 print('- Analyzing load combination ' + combo.name)
             
             # Reset nonlinear material member end forces to zero
-            for member in self.Members.values():
+            for member in self.members.values():
                 member._fxi, member._myi, member._mzi = 0, 0, 0
                 member._fxj, member._myj, member._mzj = 0, 0, 0
 
             # Get the pushover load step and initialize the load factor
-            load_step = list(self.LoadCombos[push_combo].factors.values())[0]
+            load_step = list(self.load_combos[push_combo].factors.values())[0]
             load_factor = load_step
             step_num = 1
             
@@ -2262,7 +2262,7 @@ class FEModel3D():
                     print('- Beginning pushover load step #' + str(step_num))
                 
                 # Reset all member plastic load reversal flags to be `False`
-                for member in self.Members.values():
+                for member in self.members.values():
                     member.pl_reverse = False
 
                 # Run/rerun this load step until no new unloaded member flags exist
@@ -2279,7 +2279,7 @@ class FEModel3D():
                     d_Delta = Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
 
                 # Update nonlinear material member end forces for each member
-                for member in self.Members.values():
+                for member in self.members.values():
                     member._fxi = member.f(combo.name, push_combo, step_num)[0, 0]
                     member._myi = member.f(combo.name, push_combo, step_num)[4, 0]
                     member._mzi = member.f(combo.name, push_combo, step_num)[5, 0]
@@ -2329,48 +2329,48 @@ class FEModel3D():
         """
 
         # Rename each node in the model
-        temp = self.Nodes.copy()
+        temp = self.nodes.copy()
         id = 1
         for old_key in temp.keys():
             new_key = 'N' + str(id)
-            self.Nodes[new_key] = self.Nodes.pop(old_key)
-            self.Nodes[new_key].name = new_key
+            self.nodes[new_key] = self.nodes.pop(old_key)
+            self.nodes[new_key].name = new_key
             id += 1
         
         # Rename each spring in the model
-        temp = self.Springs.copy()
+        temp = self.springs.copy()
         id = 1
         for old_key in temp.keys():
             new_key = 'S' + str(id)
-            self.Springs[new_key] = self.Springs.pop(old_key)
-            self.Springs[new_key].name = new_key
+            self.springs[new_key] = self.springs.pop(old_key)
+            self.springs[new_key].name = new_key
             id += 1
 
         # Rename each member in the model
-        temp = self.Members.copy()
+        temp = self.members.copy()
         id = 1
         for old_key in temp.keys():
             new_key = 'M' + str(id)
-            self.Members[new_key] = self.Members.pop(old_key)
-            self.Members[new_key].name = new_key
+            self.members[new_key] = self.members.pop(old_key)
+            self.members[new_key].name = new_key
             id += 1
         
         # Rename each plate in the model
-        temp = self.Plates.copy()
+        temp = self.plates.copy()
         id = 1
         for old_key in temp.keys():
             new_key = 'P' + str(id)
-            self.Plates[new_key] = self.Plates.pop(old_key)
-            self.Plates[new_key].name = new_key
+            self.plates[new_key] = self.plates.pop(old_key)
+            self.plates[new_key].name = new_key
             id += 1
         
         # Rename each quad in the model
-        temp = self.Quads.copy()
+        temp = self.quads.copy()
         id = 1
         for old_key in temp.keys():
             new_key = 'Q' + str(id)
-            self.Quads[new_key] = self.Quads.pop(old_key)
-            self.Quads[new_key].name = new_key
+            self.quads[new_key] = self.quads.pop(old_key)
+            self.quads[new_key].name = new_key
             id += 1
 
     def orphaned_nodes(self):
@@ -2382,15 +2382,15 @@ class FEModel3D():
         orphans = []
 
         # Step through each node in the model
-        for node in self.Nodes.values():
+        for node in self.nodes.values():
 
             orphaned = False
 
             # Check to see if the node is attached to any elements
-            quads = [quad.name for quad in self.Quads.values() if quad.i_node == node or quad.j_node == node or quad.m_node == node or quad.n_node == node]
-            plates = [plate.name for plate in self.Plates.values() if plate.i_node == node or plate.j_node == node or plate.m_node == node or plate.n_node == node]
-            members = [member.name for member in self.Members.values() if member.i_node == node or member.j_node == node]
-            springs = [spring.name for spring in self.Springs.values() if spring.i_node == node or spring.j_node == node]
+            quads = [quad.name for quad in self.quads.values() if quad.i_node == node or quad.j_node == node or quad.m_node == node or quad.n_node == node]
+            plates = [plate.name for plate in self.plates.values() if plate.i_node == node or plate.j_node == node or plate.m_node == node or plate.n_node == node]
+            members = [member.name for member in self.members.values() if member.i_node == node or member.j_node == node]
+            springs = [spring.name for spring in self.springs.values() if spring.i_node == node or spring.j_node == node]
 
             # Determine if the node is orphaned
             if quads == [] and plates == [] and members == [] and springs == []:

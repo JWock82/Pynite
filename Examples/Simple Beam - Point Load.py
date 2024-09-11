@@ -51,23 +51,23 @@ renderer.combo_name = '1.2D+1.6L'
 renderer.render_model()
 
 # Print the shear, moment, and deflection diagrams
-simple_beam.Members['M1'].plot_shear('Fy', '1.2D+1.6L')
-simple_beam.Members['M1'].plot_moment('Mz', '1.2D+1.6L')
-simple_beam.Members['M1'].plot_deflection('dy', '1.2D+1.6L')
+simple_beam.members['M1'].plot_shear('Fy', '1.2D+1.6L')
+simple_beam.members['M1'].plot_moment('Mz', '1.2D+1.6L')
+simple_beam.members['M1'].plot_deflection('dy', '1.2D+1.6L')
 
 # Print reactions at each end of the beam
-print('Left Support Reaction:', simple_beam.Nodes['N1'].RxnFY['1.2D+1.6L'], 'kip')
-print('Right Support Reacton:', simple_beam.Nodes['N2'].RxnFY['1.2D+1.6L'], 'kip')
+print('Left Support Reaction:', simple_beam.nodes['N1'].RxnFY['1.2D+1.6L'], 'kip')
+print('Right Support Reacton:', simple_beam.nodes['N2'].RxnFY['1.2D+1.6L'], 'kip')
 
 # Print the max/min shears and moments in the beam
-print('Maximum Shear:', simple_beam.Members['M1'].max_shear('Fy', '1.2D+1.6L'), 'kip')
-print('Minimum Shear:', simple_beam.Members['M1'].min_shear('Fy', '1.2D+1.6L'), 'kip')
-print('Maximum Moment:', simple_beam.Members['M1'].max_moment('Mz', '1.2D+1.6L')/12, 'kip-ft')
-print('Minimum Moment:', simple_beam.Members['M1'].min_moment('Mz', '1.2D+1.6L')/12, 'kip-ft')
+print('Maximum Shear:', simple_beam.members['M1'].max_shear('Fy', '1.2D+1.6L'), 'kip')
+print('Minimum Shear:', simple_beam.members['M1'].min_shear('Fy', '1.2D+1.6L'), 'kip')
+print('Maximum Moment:', simple_beam.members['M1'].max_moment('Mz', '1.2D+1.6L')/12, 'kip-ft')
+print('Minimum Moment:', simple_beam.members['M1'].min_moment('Mz', '1.2D+1.6L')/12, 'kip-ft')
 
 # Print the max/min deflections in the beam
-print('Maximum Deflection:', simple_beam.Members['M1'].max_deflection('dy', '1.2D+1.6L'), 'in')
-print('Minimum Deflection:', simple_beam.Members['M1'].min_deflection('dy', '1.2D+1.6L'), 'in')
+print('Maximum Deflection:', simple_beam.members['M1'].max_deflection('dy', '1.2D+1.6L'), 'in')
+print('Minimum Deflection:', simple_beam.members['M1'].min_deflection('dy', '1.2D+1.6L'), 'in')
 
 # The following lines can be uncommented to create a PDF report. Follow the instructions on the
 # wiki under "Generating PDF Reports" to prevent errors. The report will be output to the PyNite
