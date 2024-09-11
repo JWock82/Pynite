@@ -877,7 +877,7 @@ class Member3D():
             Values must be provided in local member coordinates (between 0 and L) and be in ascending order
         """
         
-        # Segment the member if necessary
+        # Segment the member into segments with mathematically continuous loads if not already done
         if self.__solved_combo == None or combo_name != self.__solved_combo.name:
             self._segment_member(combo_name)
             self.__solved_combo = self.model.load_combos[combo_name]
