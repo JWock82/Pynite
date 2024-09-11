@@ -442,4 +442,6 @@ class PhysMember(Member3D):
 
                 # Exit the 'for' loop
                 break
+        else:
+            raise ValueError(f"Location x={x} does not lie on this member")
             
