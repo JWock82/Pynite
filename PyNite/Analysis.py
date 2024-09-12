@@ -949,7 +949,7 @@ def _partition_D(model):
 
     D1_indices = [] # A list of the indices for the unknown nodal displacements
     D2_indices = [] # A list of the indices for the known nodal displacements
-    D2 = []         # A list of the values of the known nodal displacements (D != None)
+    D2 = []         # A list of the values of the known nodal displacements
 
     # Create the auxiliary table
     for node in model.nodes.values():
