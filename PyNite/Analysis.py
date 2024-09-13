@@ -392,47 +392,16 @@ def _unpartition_disp(model, D1, D2, D1_indices, D2_indices):
     # Step through each node in the model
     for node in model.nodes.values():
         
-        if node.ID*6 + 0 in D2_indices:
-            # Get the enforced displacement
-            D[(node.ID*6 + 0, 0)] = D2[D2_indices.index(node.ID*6 + 0), 0]
-        else:
-            # Get the calculated displacement
-            D[(node.ID*6 + 0, 0)] = D1[D1_indices.index(node.ID*6 + 0), 0]
+        # Step through each degree of freedom at the node
+        for i in range(6):
 
-        if node.ID*6 + 1 in D2_indices:
-            # Get the enforced displacement
-            D[(node.ID*6 + 1, 0)] = D2[D2_indices.index(node.ID*6 + 1), 0]
-        else:
-            # Get the calculated displacement
-            D[(node.ID*6 + 1, 0)] = D1[D1_indices.index(node.ID*6 + 1), 0]
-
-        if node.ID*6 + 2 in D2_indices:
-            # Get the enforced displacement
-            D[(node.ID*6 + 2, 0)] = D2[D2_indices.index(node.ID*6 + 2), 0]
-        else:
-            # Get the calculated displacement
-            D[(node.ID*6 + 2, 0)] = D1[D1_indices.index(node.ID*6 + 2), 0]
-
-        if node.ID*6 + 3 in D2_indices:
-            # Get the enforced rotation
-            D[(node.ID*6 + 3, 0)] = D2[D2_indices.index(node.ID*6 + 3), 0]
-        else:
-            # Get the calculated rotation
-            D[(node.ID*6 + 3, 0)] = D1[D1_indices.index(node.ID*6 + 3), 0]
-
-        if node.ID*6 + 4 in D2_indices:
-            # Get the enforced rotation
-            D[(node.ID*6 + 4, 0)] = D2[D2_indices.index(node.ID*6 + 4), 0]
-        else:
-            # Get the calculated rotation
-            D[(node.ID*6 + 4, 0)] = D1[D1_indices.index(node.ID*6 + 4), 0]
-
-        if node.ID*6 + 5 in D2_indices:
-            # Get the enforced rotation
-            D[(node.ID*6 + 5, 0)] = D2[D2_indices.index(node.ID*6 + 5), 0]
-        else:
-            # Get the calculated rotation
-            D[(node.ID*6 + 5, 0)] = D1[D1_indices.index(node.ID*6 + 5), 0]
+            # Check if the dof is in the list of enforced displacements
+            if node.ID*6 + i in D2_indices:
+                # Get the enforced displacement
+                D[(node.ID*6 + i, 0)] = D2[D2_indices.index(node.ID*6 + i), 0]
+            else:
+                # Get the calculated displacement
+                D[(node.ID*6 + i, 0)] = D1[D1_indices.index(node.ID*6 + i), 0]
     
     # Return the displacement vector
     return D
