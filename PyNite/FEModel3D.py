@@ -207,7 +207,7 @@ class FEModel3D():
                 count += 1
                 
         # Create a new material
-        new_material = Material(name, E, G, nu, rho, fy)
+        new_material = Material(self, name, E, G, nu, rho, fy)
         
         # Add the new material to the list
         self.materials[name] = new_material

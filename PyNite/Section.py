@@ -3,7 +3,7 @@ import numpy as np
 
 class Section():
     """
-    A class representing a section assigned to a 3D frame element in a finite element model.
+    A class representing a section assigned to a Member3D element in a finite element model.
 
     This class stores all properties related to the geometry of the member
     """
