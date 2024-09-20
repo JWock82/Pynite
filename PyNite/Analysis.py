@@ -472,9 +472,8 @@ def _sum_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
         node.RY[combo.name] += Delta_D[node.ID*6 + 4, 0]
         node.RZ[combo.name] += Delta_D[node.ID*6 + 5, 0]
 
-def _check_TC_convergence(
-    model, combo_name="Combo 1", log=True, spring_tolerance=0, member_tolerance=0
-):
+def _check_TC_convergence(model, combo_name="Combo 1", log=True, spring_tolerance=0, member_tolerance=0):
+
     # Assume the model has converged until we find out otherwise
     convergence = True
 
@@ -483,6 +482,7 @@ def _check_TC_convergence(
         print("- Checking for tension/compression-only support spring convergence")
     # Loop through each node and each directional spring to check and update their active status
     for node in model.nodes.values():
+
         for direction in ["DX", "DY", "DZ", "RX", "RY", "RZ"]:
             spring = getattr(node, f"spring_{direction}")
             displacement = getattr(node, direction)[combo_name]
@@ -501,7 +501,6 @@ def _check_TC_convergence(
     # TODO: Adjust the code below to allow elements to reactivate on subsequent iterations if deformations at element nodes indicate the member goes back into an active state. This will lead to a less conservative and more realistic analysis. Nodal springs (above) already do this.
 
     # Check tension/compression-only springs
-
     if log: print('- Checking for tension/compression-only spring convergence')
     for spring in model.springs.values():
 
@@ -543,6 +542,10 @@ def _check_TC_convergence(
             ):
                 phys_member.active[combo_name] = False
                 convergence = False
+
+        # Reset the sub-member's flag to unsolved. This will allow it to resolve for the same load combination after subsequent iterations have made further changes.
+        for sub_member in phys_member.sub_members.values():
+            sub_member._solved_combo = None
 
     # Return whether the TC analysis has converged
     return convergence
