@@ -74,8 +74,8 @@ class Member3D():
         # Members need to track whether they are active or not for any given load combination. They may become inactive for a load combination during a tension/compression-only analysis. This dictionary will be used when the model is solved.
         self.active = {} # Key = load combo name, Value = True or False
         
-        # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations the '__solved_combo' variable will be used to track whether the member needs to be resegmented before running calculations for any given load combination.
-        self.__solved_combo = None # The current solved load combination
+        # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations the '_solved_combo' variable will be used to track whether the member needs to be resegmented before running calculations for any given load combination.
+        self._solved_combo = None # The current solved load combination
 
         # Members need a link to the model they belong to
         self.model = model
@@ -704,35 +704,42 @@ class Member3D():
             The name of the load combination to get the results for (not the combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+        # Only calculate results if the member is currently active
+        if self.active:
 
-        # Check which direction is of interest
-        if Direction == 'Fy':
-            
-            # Check which segment 'x' falls on
-            for segment in self.SegmentsZ:
-                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                    return segment.Shear(x - segment.x1)
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+
+            # Check which direction is of interest
+            if Direction == 'Fy':
                 
-            if isclose(x, self.L()):  
-                lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].Shear(x - self.SegmentsZ[lastIndex].x1)
-                
-        elif Direction == 'Fz':
-            
-            for segment in self.SegmentsY:
-                
-                if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                # Check which segment 'x' falls on
+                for segment in self.SegmentsZ:
+                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                        return segment.Shear(x - segment.x1)
                     
-                    return segment.Shear(x - segment.x1)
+                if isclose(x, self.L()):  
+                    lastIndex = len(self.SegmentsZ) - 1
+                    return self.SegmentsZ[lastIndex].Shear(x - self.SegmentsZ[lastIndex].x1)
+                    
+            elif Direction == 'Fz':
                 
-            if isclose(x, self.L()):
-                
-                lastIndex = len(self.SegmentsY) - 1
-                return self.SegmentsY[lastIndex].Shear(x - self.SegmentsY[lastIndex].x1)
+                for segment in self.SegmentsY:
+                    
+                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                        
+                        return segment.Shear(x - segment.x1)
+                    
+                if isclose(x, self.L()):
+                    
+                    lastIndex = len(self.SegmentsY) - 1
+                    return self.SegmentsY[lastIndex].Shear(x - self.SegmentsY[lastIndex].x1)
+        
+        else:
+
+            return 0
             
 #%%
     def max_shear(self, Direction, combo_name='Combo 1'):
@@ -749,32 +756,39 @@ class Member3D():
             The name of the load combination to get the results for (not the combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-        
-        if Direction == 'Fy':
-            
-            Vmax = self.SegmentsZ[0].Shear(0)
+        # Only calculate results if the member is currently active
+        if self.active:
 
-            for segment in self.SegmentsZ:
-                
-                if segment.max_shear() > Vmax:
-                    
-                    Vmax = segment.max_shear()
-                    
-        if Direction == 'Fz':
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
             
-            Vmax = self.SegmentsY[0].Shear(0)
-
-            for segment in self.SegmentsY:
+            if Direction == 'Fy':
                 
-                if segment.max_shear() > Vmax:
+                Vmax = self.SegmentsZ[0].Shear(0)
+
+                for segment in self.SegmentsZ:
                     
-                    Vmax = segment.max_shear()
+                    if segment.max_shear() > Vmax:
+                        
+                        Vmax = segment.max_shear()
+                        
+            if Direction == 'Fz':
+                
+                Vmax = self.SegmentsY[0].Shear(0)
+
+                for segment in self.SegmentsY:
+                    
+                    if segment.max_shear() > Vmax:
+                        
+                        Vmax = segment.max_shear()
+            
+            return Vmax
         
-        return Vmax
+        else:
+
+            return 0
     
 #%%
     def min_shear(self, Direction, combo_name='Combo 1'):
@@ -791,32 +805,39 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]   
-        
-        if Direction == 'Fy':
-            
-            Vmin = self.SegmentsZ[0].Shear(0)
+        # Only calculate results if the member is currently active
+        if self.active:
 
-            for segment in self.SegmentsZ:
-                
-                if segment.min_shear() < Vmin:
-                    
-                    Vmin = segment.min_shear()
-                    
-        if Direction == 'Fz':
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]   
             
-            Vmin = self.SegmentsY[0].Shear(0)
-
-            for segment in self.SegmentsY:
+            if Direction == 'Fy':
                 
-                if segment.min_shear() < Vmin:
+                Vmin = self.SegmentsZ[0].Shear(0)
+
+                for segment in self.SegmentsZ:
                     
-                    Vmin = segment.min_shear()
+                    if segment.min_shear() < Vmin:
+                        
+                        Vmin = segment.min_shear()
+                        
+            if Direction == 'Fz':
+                
+                Vmin = self.SegmentsY[0].Shear(0)
+
+                for segment in self.SegmentsY:
+                    
+                    if segment.min_shear() < Vmin:
+                        
+                        Vmin = segment.min_shear()
+            
+            return Vmin
         
-        return Vmin
+        else:
+
+            return 0
     
 #%%
     def plot_shear(self, Direction, combo_name='Combo 1', n_points=20):
@@ -836,9 +857,9 @@ class Member3D():
         """
         
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -878,9 +899,9 @@ class Member3D():
         """
         
         # Segment the member into segments with mathematically continuous loads if not already done
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
 
         L = self.L()
         if x_array is None:
@@ -916,47 +937,54 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-        
-        # Determine if a P-Delta analysis has been run
-        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
-            # Include P-little-delta effects in the moment results
-            P_delta = True
-        else:
-            # Do not include P-little delta effects in the moment results
-            P_delta = False
+        # Only calculate results if the member is currently active
+        if self.active:
 
-        # Check which axis is of interest
-        if Direction == 'My':
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
             
-            # Check which segment 'x' falls on
-            for segment in self.SegmentsY:
+            # Determine if a P-Delta analysis has been run
+            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+                # Include P-little-delta effects in the moment results
+                P_delta = True
+            else:
+                # Do not include P-little delta effects in the moment results
+                P_delta = False
 
-                if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+            # Check which axis is of interest
+            if Direction == 'My':
+                
+                # Check which segment 'x' falls on
+                for segment in self.SegmentsY:
+
+                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                        
+                        return segment.moment(x - segment.x1, P_delta)
                     
-                    return segment.moment(x - segment.x1, P_delta)
+                if isclose(x, self.L()):
+                    
+                    return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1, P_delta)
+                    
+            elif Direction == 'Mz':
                 
-            if isclose(x, self.L()):
-                
-                return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1, P_delta)
-                
-        elif Direction == 'Mz':
+                for segment in self.SegmentsZ:
+                    
+                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                        
+                        return segment.moment(x - segment.x1, P_delta)
+                    
+                if isclose(x, self.L()):
+                    
+                    return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1, P_delta)
             
-            for segment in self.SegmentsZ:
-                
-                if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
-                    
-                    return segment.moment(x - segment.x1, P_delta)
-                
-            if isclose(x, self.L()):
-                
-                return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1, P_delta)
-        
+            else:
+                raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+    
         else:
-            raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+
+            return 0
             
 #%%
     def max_moment(self, Direction, combo_name='Combo 1'):
@@ -973,40 +1001,47 @@ class Member3D():
             The name of the load combination to get the results for (not the combination itself).
         """
 
-        # Determine if a P-Delta analysis has been run
-        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
-            # Include P-little-delta effects in the moment results
-            P_delta = True
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Determine if a P-Delta analysis has been run
+            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+                # Include P-little-delta effects in the moment results
+                P_delta = True
+            else:
+                # Do not include P-little delta effects in the moment results
+                P_delta = False
+            
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+            
+            if Direction == 'Mz':
+                
+                Mmax = self.SegmentsZ[0].moment(0, P_delta)
+
+                for segment in self.SegmentsZ:
+                    
+                    if segment.max_moment() > Mmax:
+                        
+                        Mmax = segment.max_moment()
+                        
+            if Direction == 'My':
+                
+                Mmax = self.SegmentsY[0].moment(0, P_delta)
+
+                for segment in self.SegmentsY:
+                    
+                    if segment.max_moment() > Mmax:
+                        
+                        Mmax = segment.max_moment()
+            
+            return Mmax
+        
         else:
-            # Do not include P-little delta effects in the moment results
-            P_delta = False
-        
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-        
-        if Direction == 'Mz':
-            
-            Mmax = self.SegmentsZ[0].moment(0, P_delta)
 
-            for segment in self.SegmentsZ:
-                
-                if segment.max_moment() > Mmax:
-                    
-                    Mmax = segment.max_moment()
-                    
-        if Direction == 'My':
-            
-            Mmax = self.SegmentsY[0].moment(0, P_delta)
-
-            for segment in self.SegmentsY:
-                
-                if segment.max_moment() > Mmax:
-                    
-                    Mmax = segment.max_moment()
-        
-        return Mmax
+            return 0
 
 #%%
     def min_moment(self, Direction, combo_name='Combo 1'):
@@ -1023,36 +1058,43 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)   
-            self.__solved_combo = self.model.load_combos[combo_name]
-        
-        # Determine if a P-Delta analysis has been run
-        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
-            # Include P-little-delta effects in the moment results
-            P_delta = True
-        else:
-            # Do not include P-little delta effects in the moment results
-            P_delta = False
+        # Only calculate results if the member is currently active
+        if self.active:
 
-        if Direction == 'Mz':
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)   
+                self._solved_combo = self.model.load_combos[combo_name]
             
-            Mmin = self.SegmentsZ[0].moment(0, P_delta)
+            # Determine if a P-Delta analysis has been run
+            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+                # Include P-little-delta effects in the moment results
+                P_delta = True
+            else:
+                # Do not include P-little delta effects in the moment results
+                P_delta = False
 
-            for segment in self.SegmentsZ:
+            if Direction == 'Mz':
                 
-                if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
+                Mmin = self.SegmentsZ[0].moment(0, P_delta)
+
+                for segment in self.SegmentsZ:
                     
-        if Direction == 'My':
-            
-            Mmin = self.SegmentsY[0].moment(0, P_delta)
-
-            for segment in self.SegmentsY:
+                    if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
+                        
+            if Direction == 'My':
                 
-                if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
+                Mmin = self.SegmentsY[0].moment(0, P_delta)
+
+                for segment in self.SegmentsY:
+                    
+                    if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
+            
+            return Mmin
         
-        return Mmin
+        else:
+
+            return 0
 
 #%%
     def plot_moment(self, Direction, combo_name='Combo 1', n_points=20):
@@ -1072,9 +1114,9 @@ class Member3D():
         """
         
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1112,9 +1154,9 @@ class Member3D():
             Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
 
         # Determine if a P-Delta analysis has been run
         if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
@@ -1161,19 +1203,26 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-            
-        # Check which segment 'x' falls on
-        for segment in self.SegmentsX:
-            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                return segment.Torsion()
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
                 
-            if isclose(x, self.L()):  
-                lastIndex = len(self.SegmentsX) - 1
-                return self.SegmentsX[lastIndex].Torsion()
+            # Check which segment 'x' falls on
+            for segment in self.SegmentsX:
+                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                    return segment.Torsion()
+                    
+                if isclose(x, self.L()):  
+                    lastIndex = len(self.SegmentsX) - 1
+                    return self.SegmentsX[lastIndex].Torsion()
+        
+        else:
+
+            return 0
 
 #%%
     def max_torque(self, combo_name='Combo 1'):
@@ -1186,20 +1235,27 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]       
-        
-        Tmax = self.SegmentsX[0].Torsion()   
-        
-        for segment in self.SegmentsX:
+        # Only calculate results if the member is currently active
+        if self.active:
 
-            if segment.MaxTorsion() > Tmax:
-                    
-                Tmax = segment.MaxTorsion()
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]       
+            
+            Tmax = self.SegmentsX[0].Torsion()   
+            
+            for segment in self.SegmentsX:
+
+                if segment.MaxTorsion() > Tmax:
+                        
+                    Tmax = segment.MaxTorsion()
+            
+            return Tmax
         
-        return Tmax
+        else:
+
+            return 0
     
 #%%
     def min_torque(self, combo_name='Combo 1'):
@@ -1212,20 +1268,27 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-        
-        Tmin = self.SegmentsX[0].Torsion()
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
             
-        for segment in self.SegmentsX:
+            Tmin = self.SegmentsX[0].Torsion()
                 
-            if segment.MinTorsion() < Tmin:
+            for segment in self.SegmentsX:
                     
-                Tmin = segment.MinTorsion()
+                if segment.MinTorsion() < Tmin:
+                        
+                    Tmin = segment.MinTorsion()
+            
+            return Tmin
         
-        return Tmin
+        else:
+
+            return 0
 
 #%%
     def plot_torque(self, combo_name='Combo 1', n_points=20):
@@ -1241,9 +1304,9 @@ class Member3D():
         """
         
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1277,9 +1340,9 @@ class Member3D():
             Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
 
         L = self.L()
 
@@ -1304,19 +1367,26 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-            
-        # Check which segment 'x' falls on
-        for segment in self.SegmentsZ:
-            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                return segment.axial(x - segment.x1)
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
                 
-            if isclose(x, self.L()):  
-                lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
+            # Check which segment 'x' falls on
+            for segment in self.SegmentsZ:
+                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                    return segment.axial(x - segment.x1)
+                    
+                if isclose(x, self.L()):  
+                    lastIndex = len(self.SegmentsZ) - 1
+                    return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
+                
+        else:
+
+            return 0
 
     def max_axial(self, combo_name='Combo 1'):
         """
@@ -1328,20 +1398,27 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-        
-        Pmax = self.SegmentsZ[0].axial(0)   
-        
-        for segment in self.SegmentsZ:
+        # Only calculate results if the member is currently active
+        if self.active:
 
-            if segment.max_axial() > Pmax:
-                    
-                Pmax = segment.max_axial()
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+            
+            Pmax = self.SegmentsZ[0].axial(0)   
+            
+            for segment in self.SegmentsZ:
+
+                if segment.max_axial() > Pmax:
+                        
+                    Pmax = segment.max_axial()
+            
+            return Pmax
         
-        return Pmax
+        else:
+
+            return 0
     
     def min_axial(self, combo_name='Combo 1'):
         """
@@ -1353,20 +1430,27 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
-        
-        Pmin = self.SegmentsZ[0].axial(0)
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
             
-        for segment in self.SegmentsZ:
+            Pmin = self.SegmentsZ[0].axial(0)
                 
-            if segment.min_axial() < Pmin:
+            for segment in self.SegmentsZ:
                     
-                Pmin = segment.min_axial()
+                if segment.min_axial() < Pmin:
+                        
+                    Pmin = segment.min_axial()
+            
+            return Pmin
         
-        return Pmin
+        else:
+
+            return 0
     
     def plot_axial(self, combo_name='Combo 1', n_points=20):
         """
@@ -1379,11 +1463,11 @@ class Member3D():
         n_points: int
             The number of points used to generate the plot
         """
-        
+
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
         
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1416,10 +1500,11 @@ class Member3D():
             A custom array of x values that may be provided by the user, otherwise an array is generated.
             Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
+
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
 
         L = self.L()
         if x_array is None:
@@ -1429,6 +1514,7 @@ class Member3D():
                 raise ValueError(f"All x values must be in the range 0 to {L}")
             
         return self._extract_vector_results(self.SegmentsZ, x_array, 'axial')
+
                         
     def deflection(self, Direction, x, combo_name='Combo 1'):
         """
@@ -1447,56 +1533,63 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+            
+            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+                P_delta = True
+            else:
+                P_delta = False
+
+            # Check which axis is of interest
+            if Direction == 'dx':
+                
+                # Check which segment 'x' falls on
+                for segment in self.SegmentsZ:
+                    
+                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                        return segment.AxialDeflection(x - segment.x1)
+                    
+                if isclose(x, self.L()):
+                    
+                    lastIndex = len(self.SegmentsZ) - 1
+                    return self.SegmentsZ[lastIndex].AxialDeflection(x - self.SegmentsZ[lastIndex].x1)
+
+            elif Direction == 'dy':
+                
+                # Check which segment 'x' falls on
+                for segment in self.SegmentsZ:
+                    
+                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                        
+                        return segment.deflection(x - segment.x1, P_delta)
+                    
+                if isclose(x, self.L()):
+                    
+                    lastIndex = len(self.SegmentsZ) - 1
+                    return self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1, P_delta)
+                    
+            elif Direction == 'dz':
+                
+                for segment in self.SegmentsY:
+                    
+                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                        
+                        return segment.deflection(x - segment.x1)
+                    
+                if isclose(x, self.L()):
+                    
+                    lastIndex = len(self.SegmentsY) - 1
+                    return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1) 
         
-        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
-            P_delta = True
         else:
-            P_delta = False
 
-        # Check which axis is of interest
-        if Direction == 'dx':
-            
-            # Check which segment 'x' falls on
-            for segment in self.SegmentsZ:
-                
-                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                    return segment.AxialDeflection(x - segment.x1)
-                
-            if isclose(x, self.L()):
-                
-                lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].AxialDeflection(x - self.SegmentsZ[lastIndex].x1)
-
-        elif Direction == 'dy':
-            
-            # Check which segment 'x' falls on
-            for segment in self.SegmentsZ:
-                
-                if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
-                    
-                    return segment.deflection(x - segment.x1, P_delta)
-                
-            if isclose(x, self.L()):
-                
-                lastIndex = len(self.SegmentsZ) - 1
-                return self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1, P_delta)
-                
-        elif Direction == 'dz':
-            
-            for segment in self.SegmentsY:
-                
-                if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
-                    
-                    return segment.deflection(x - segment.x1)
-                
-            if isclose(x, self.L()):
-                
-                lastIndex = len(self.SegmentsY) - 1
-                return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1) 
+            return 0
 
     def max_deflection(self, Direction, combo_name='Combo 1'):
         """
@@ -1510,22 +1603,29 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+            
+            # Initialize the maximum deflection
+            dmax = self.deflection(Direction, 0, combo_name)
+            
+            # Check the deflection at 100 locations along the member and find the largest value
+            for i in range(100):
+                d = self.deflection(Direction, self.L()*i/99, combo_name)
+                if d > dmax:
+                    dmax = d
+            
+            # Return the largest value
+            return dmax
         
-        # Initialize the maximum deflection
-        dmax = self.deflection(Direction, 0, combo_name)
-        
-        # Check the deflection at 100 locations along the member and find the largest value
-        for i in range(100):
-            d = self.deflection(Direction, self.L()*i/99, combo_name)
-            if d > dmax:
-                dmax = d
-        
-        # Return the largest value
-        return dmax
+        else:
+
+            return 0
     
     def min_deflection(self, Direction, combo_name='Combo 1'):
         """
@@ -1539,22 +1639,29 @@ class Member3D():
             The name of the load combination to get the results for (not the load combination itself).
         """
         
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+            
+            # Initialize the minimum deflection
+            dmin = self.deflection(Direction, 0, combo_name)
+            
+            # Check the deflection at 100 locations along the member and find the smallest value
+            for i in range(100):
+                d = self.deflection(Direction, self.L()*i/99, combo_name)
+                if d < dmin:
+                    dmin = d
+            
+            # Return the smallest value
+            return dmin
         
-        # Initialize the minimum deflection
-        dmin = self.deflection(Direction, 0, combo_name)
-        
-        # Check the deflection at 100 locations along the member and find the smallest value
-        for i in range(100):
-            d = self.deflection(Direction, self.L()*i/99, combo_name)
-            if d < dmin:
-                dmin = d
-        
-        # Return the smallest value
-        return dmin
+        else:
+
+            return 0
               
     def plot_deflection(self, Direction, combo_name='Combo 1', n_points=20):
         """
@@ -1571,9 +1678,9 @@ class Member3D():
         """
         
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1612,9 +1719,9 @@ class Member3D():
             Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
 
         # Determine if a P-Delta analysis has been run
         if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
@@ -1666,45 +1773,53 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
         """
-        # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
-            self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+
+        # Only calculate results if the member is currently active
+        if self.active:
+
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+            
+            d = self.d(combo_name)
+            dyi = d[1,0]
+            dyj = d[7,0]
+            dzi = d[2,0]
+            dzj = d[8,0]
+            L = self.L()
         
-        d = self.d(combo_name)
-        dyi = d[1,0]
-        dyj = d[7,0]
-        dzi = d[2,0]
-        dzj = d[8,0]
-        L = self.L()
-       
-        # Check which axis is of interest
-        if Direction == 'dy':
-            
-            # Check which segment 'x' falls on
-            for segment in self.SegmentsZ:
+            # Check which axis is of interest
+            if Direction == 'dy':
                 
-                if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                # Check which segment 'x' falls on
+                for segment in self.SegmentsZ:
                     
-                    return (segment.deflection(x - segment.x1)) - (dyi + (dyj-dyi)/L*x)
-                
-            if isclose(x, self.L()):
-                
-                lastIndex = len(self.SegmentsZ) - 1
-                return (self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
-                
-        elif Direction == 'dz':
-            
-            for segment in self.SegmentsY:
-                
-                if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                        
+                        return (segment.deflection(x - segment.x1)) - (dyi + (dyj-dyi)/L*x)
                     
-                    return (segment.deflection(x - segment.x1)) - (dzi + (dzj-dzi)/L*x)
+                if isclose(x, self.L()):
+                    
+                    lastIndex = len(self.SegmentsZ) - 1
+                    return (self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
+                    
+            elif Direction == 'dz':
                 
-            if isclose(x, self.L()):
-                
-                lastIndex = len(self.SegmentsY) - 1
-                return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
+                for segment in self.SegmentsY:
+                    
+                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                        
+                        return (segment.deflection(x - segment.x1)) - (dzi + (dzj-dzi)/L*x)
+                    
+                if isclose(x, self.L()):
+                    
+                    lastIndex = len(self.SegmentsY) - 1
+                    return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
+        
+        else:
+
+            return 0
 
     def plot_rel_deflection(self, Direction, combo_name='Combo 1', n_points=20):
         """
@@ -1719,9 +1834,9 @@ class Member3D():
         """
         
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
                 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
@@ -1759,9 +1874,9 @@ class Member3D():
             Values must be provided in local member coordinates (between 0 and L) and be in ascending order.
         """
         # Segment the member if necessary
-        if self.__solved_combo == None or combo_name != self.__solved_combo.name:
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
-            self.__solved_combo = self.model.load_combos[combo_name]
+            self._solved_combo = self.model.load_combos[combo_name]
 
         d = self.d(combo_name)
         dyi = d[1,0]
