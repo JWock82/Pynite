@@ -4,6 +4,8 @@ Created on Mon Nov  6 20:52:31 2017
 
 @author: D. Craig Brinck, SE
 """
+from numpy import full, array
+
 # %%
 # A mathematically continuous beam segment
 class BeamSegZ():
@@ -103,17 +105,16 @@ class BeamSegZ():
         V1 = self.V1
         M1 = self.M1
         P1 = self.P1
-        Px = self.axial(x)
         w1 = self.w1
         w2 = self.w2
-        delta_1 = self.delta1
-        delta_x = self.deflection(x)
         L = self.Length()
         
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
         # Include the P-little-delta moment if a P-Delta analysis was run
         if P_delta == True:
+            delta_1 = self.delta1
+            delta_x = self.deflection(x)
             M += P1*(delta_x - delta_1)
         
         # Return the computed moment
@@ -129,14 +130,20 @@ class BeamSegZ():
         
         return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
 
-    def Torsion(self):
+    def Torsion(self, x = 0):
         """
         Returns the torsional moment in the segment.
         """
         
         # The torsional moment is constant across the segment
         # This can be updated in the future for distributed torsional forces
-        return self.T1
+
+        #As the return value is not calculated as a function of x (for now), we need to check
+        #whether x is an array, and if so, return a results array of the same length
+        if isinstance(x, (int, float)):
+            return self.T1
+        else:
+            return full(len(x), self.T1)
     
     def slope(self, x, P_delta=False):
         """Returns the slope of the elastic curve at any point `x` along the segment.
@@ -154,8 +161,6 @@ class BeamSegZ():
         P1 = self.P1
         w1 = self.w1
         w2 = self.w2
-        delta_1 = self.delta1
-        delta_x = self.deflection(x, P_delta)
         theta_1 = self.theta1
         L = self.Length()
         EI = self.EI
@@ -164,6 +169,8 @@ class BeamSegZ():
         theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
 
         if P_delta == True:
+            delta_1 = self.delta1
+            delta_x = self.deflection(x, P_delta)
             theta_x -= x*(-P1*delta_1 + P1*delta_x)/EI
         
         # TODO: This is an old equation left for reference. Delete it after the new equation has been proved over time.

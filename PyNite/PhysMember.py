@@ -16,6 +16,7 @@ class PhysMember(Member3D):
                  tension_only=False, comp_only=False, section_name=None):
         
         super().__init__(name, i_node, j_node, material_name, model, Iy, Iz, J, A, aux_node, tension_only, comp_only, section_name)
+        
         self.sub_members = {}
 
     def descritize(self):
@@ -442,4 +443,6 @@ class PhysMember(Member3D):
 
                 # Exit the 'for' loop
                 break
+        else:
+            raise ValueError(f"Location x={x} does not lie on this member")
             
