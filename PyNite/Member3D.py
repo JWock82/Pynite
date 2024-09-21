@@ -705,7 +705,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -757,7 +757,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -806,7 +806,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -938,7 +938,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1002,7 +1002,7 @@ class Member3D():
         """
 
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Determine if a P-Delta analysis has been run
             if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
@@ -1059,7 +1059,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1204,7 +1204,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1236,7 +1236,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1269,7 +1269,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1368,7 +1368,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1399,7 +1399,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1431,7 +1431,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1534,7 +1534,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1604,7 +1604,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1640,7 +1640,7 @@ class Member3D():
         """
         
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1775,7 +1775,7 @@ class Member3D():
         """
 
         # Only calculate results if the member is currently active
-        if self.active:
+        if self.active[combo_name]:
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:

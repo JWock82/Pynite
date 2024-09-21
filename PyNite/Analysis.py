@@ -527,20 +527,35 @@ def _check_TC_convergence(model, combo_name="Combo 1", log=True, spring_toleranc
 
         # Only run the tension/compression only check if the member is still active
         if phys_member.active[combo_name] == True:
-            # Check if tension-only conditions exist
+
+            # Check if a tension-only conditions exist
             if (
                 phys_member.tension_only == True
                 and phys_member.max_axial(combo_name) > member_tolerance
             ):
+                # Deactivate the physical member
                 phys_member.active[combo_name] = False
+
+                # Deactivate all the sub-members
+                for sub_member in phys_member.sub_members.values():
+                    sub_member.active[combo_name] = False
+                
+                # Flag the analysis as not converged
                 convergence = False
 
-            # Check if compression-only conditions exist
+            # Check if a compression-only conditions exist
             elif (
                 phys_member.comp_only == True
                 and phys_member.min_axial(combo_name) < -member_tolerance
             ):
+                # Deactivate the physical member
                 phys_member.active[combo_name] = False
+                
+                # Deactivate all the sub-members
+                for sub_member in phys_member.sub_members.values():
+                    sub_member.active[combo_name] = False
+                
+                # Flag the analysis as not converged
                 convergence = False
 
         # Reset the sub-member's flag to unsolved. This will allow it to resolve for the same load combination after subsequent iterations have made further changes.
