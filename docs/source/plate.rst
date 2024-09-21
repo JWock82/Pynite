@@ -20,7 +20,7 @@ In-plane stresses (tension, compression, and in-plane shear) are accurate for bo
 
 Orthotropic behavior
 ====================
-One useful feature in Pynite is the ability to model orthotropic behavior in plates. This allows the user to specify a stiffness modification factor ``kx_mod`` and `ky_mod`` for each direction of a plate. This can be very useful for modeling stiffness reductions due to cracked concrete. A stiffness reduction factor of 0.35 would reduce the axial stiffness in the local y-direction by 65%.
+One useful feature in Pynite is the ability to model orthotropic behavior in plates. This allows the user to specify a stiffness modification factor ``kx_mod`` and ``ky_mod`` for each direction of a plate. This can be very useful for modeling stiffness reductions due to cracked concrete. A stiffness reduction factor of 0.35 would reduce the axial stiffness in the local y-direction by 65%.
 
 Note that right now the stiffness modification factor is always applied in the plate's local axes. If a surface contains plates with unaligned local axes it probably doesn't make sense to use this feature.
 
