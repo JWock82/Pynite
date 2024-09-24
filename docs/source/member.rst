@@ -14,11 +14,12 @@ material and section properties:
 
 .. code-block:: python
 
-    # Define a few section properties (W12x26)
+    # Define a section property (W12x26) to assign to the member
     Iy = 17.3  # (in**4) Weak axis moment of inertia
     Iz = 204   # (in**4) Strong axis moment of inertia
     J = 0.300  # (in**4) Torsional constant
-    A = 7.65   # (in**2) Cross-sectional area
+    A = 7.65   # (in**2) Cross-sectional area'
+    my_model.add_section('W12x26', A, Iy, Iz, J)
 
     # Define a new material (steel)
     E = 29000  # (ksi) Modulus of elasticity
@@ -29,8 +30,7 @@ material and section properties:
 
     # Add a member name 'M1' starting at node 'N1' and ending at node 'N2'
     # made from a previously defined material named 'Steel'
-    my_model.add_section('Section', A, Iy, Iz, J)
-    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'Section')
+    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26')
 
 Local Coordinate System
 =======================
