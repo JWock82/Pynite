@@ -2039,6 +2039,7 @@ class FEModel3D():
                 convergence = Analysis._check_TC_convergence(self, combo.name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
 
                 if convergence == False:
+
                     if log: print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
                 else:
                     if log: print('- Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
@@ -2057,7 +2058,7 @@ class FEModel3D():
         # Check statics if requested
         if check_statics == True:
             Analysis._check_statics(self, combo_tags)
-        
+
         # Flag the model as solved
         self.solution = 'Linear TC'
 

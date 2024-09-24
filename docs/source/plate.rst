@@ -12,7 +12,7 @@ Plates in Pynite can capture both out-of-plane (bending & shear) behavior and in
 ``Quad`` Plate elements
 =======================
 
-``Quad`` plate elements do not have to be rectangular. They can be generic quadrilaterals. These elements are isoparametric elements based on the popular MITC4 formulation, and are well suited to thick and thin plates. Out-of-plane bending stresses calculated for these elements are very accurate at the plate centers, but at the corners they tend to report center stresses. Pynite helps minimize this problem by "smoothing" plate stress results when displaying contours, which averages stresses from all plates connecting at a node. Smoothing does not help much at fixed supports, where there is no adjacent plate to average stresses with. Another workaround is to remember that while plate corner *stresses* are rough estimates for the MITC4 element, plate corner *forces* are highly accurate. One can obtain the plate corner stresses from the corner forces by dividing by 1/2 of the plate's edge length.
+``Quad`` plate elements do not have to be rectangular. They can be generic quadrilaterals. These elements are isoparametric elements based on the DKMQ formulation, and are well suited to thick and thin plates. Pynite "smoothes" plate stress results when displaying contours, which averages stresses from all plates connecting at a node.
 
 In-Plane (Membrane) Stresses
 ============================
@@ -20,7 +20,7 @@ In-plane stresses (tension, compression, and in-plane shear) are accurate for bo
 
 Orthotropic behavior
 ====================
-One useful feature in Pynite is the ability to model orthotropic behavior in plates. This allows the user to specify a stiffness modification factor ``kx_mod`` and `ky_mod`` for each direction of a plate. This can be very useful for modeling stiffness reductions due to cracked concrete. A stiffness reduction factor of 0.35 would reduce the axial stiffness in the local y-direction by 65%.
+One useful feature in Pynite is the ability to model orthotropic behavior in plates. This allows the user to specify a stiffness modification factor ``kx_mod`` and ``ky_mod`` for each direction of a plate. This can be very useful for modeling stiffness reductions due to cracked concrete. A stiffness reduction factor of 0.35 would reduce the axial stiffness in the local y-direction by 65%.
 
 Note that right now the stiffness modification factor is always applied in the plate's local axes. If a surface contains plates with unaligned local axes it probably doesn't make sense to use this feature.
 

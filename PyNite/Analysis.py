@@ -392,47 +392,16 @@ def _unpartition_disp(model, D1, D2, D1_indices, D2_indices):
     # Step through each node in the model
     for node in model.nodes.values():
         
-        if node.ID*6 + 0 in D2_indices:
-            # Get the enforced displacement
-            D[(node.ID*6 + 0, 0)] = D2[D2_indices.index(node.ID*6 + 0), 0]
-        else:
-            # Get the calculated displacement
-            D[(node.ID*6 + 0, 0)] = D1[D1_indices.index(node.ID*6 + 0), 0]
+        # Step through each degree of freedom at the node
+        for i in range(6):
 
-        if node.ID*6 + 1 in D2_indices:
-            # Get the enforced displacement
-            D[(node.ID*6 + 1, 0)] = D2[D2_indices.index(node.ID*6 + 1), 0]
-        else:
-            # Get the calculated displacement
-            D[(node.ID*6 + 1, 0)] = D1[D1_indices.index(node.ID*6 + 1), 0]
-
-        if node.ID*6 + 2 in D2_indices:
-            # Get the enforced displacement
-            D[(node.ID*6 + 2, 0)] = D2[D2_indices.index(node.ID*6 + 2), 0]
-        else:
-            # Get the calculated displacement
-            D[(node.ID*6 + 2, 0)] = D1[D1_indices.index(node.ID*6 + 2), 0]
-
-        if node.ID*6 + 3 in D2_indices:
-            # Get the enforced rotation
-            D[(node.ID*6 + 3, 0)] = D2[D2_indices.index(node.ID*6 + 3), 0]
-        else:
-            # Get the calculated rotation
-            D[(node.ID*6 + 3, 0)] = D1[D1_indices.index(node.ID*6 + 3), 0]
-
-        if node.ID*6 + 4 in D2_indices:
-            # Get the enforced rotation
-            D[(node.ID*6 + 4, 0)] = D2[D2_indices.index(node.ID*6 + 4), 0]
-        else:
-            # Get the calculated rotation
-            D[(node.ID*6 + 4, 0)] = D1[D1_indices.index(node.ID*6 + 4), 0]
-
-        if node.ID*6 + 5 in D2_indices:
-            # Get the enforced rotation
-            D[(node.ID*6 + 5, 0)] = D2[D2_indices.index(node.ID*6 + 5), 0]
-        else:
-            # Get the calculated rotation
-            D[(node.ID*6 + 5, 0)] = D1[D1_indices.index(node.ID*6 + 5), 0]
+            # Check if the dof is in the list of enforced displacements
+            if node.ID*6 + i in D2_indices:
+                # Get the enforced displacement
+                D[(node.ID*6 + i, 0)] = D2[D2_indices.index(node.ID*6 + i), 0]
+            else:
+                # Get the calculated displacement
+                D[(node.ID*6 + i, 0)] = D1[D1_indices.index(node.ID*6 + i), 0]
     
     # Return the displacement vector
     return D
@@ -503,9 +472,8 @@ def _sum_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
         node.RY[combo.name] += Delta_D[node.ID*6 + 4, 0]
         node.RZ[combo.name] += Delta_D[node.ID*6 + 5, 0]
 
-def _check_TC_convergence(
-    model, combo_name="Combo 1", log=True, spring_tolerance=0, member_tolerance=0
-):
+def _check_TC_convergence(model, combo_name="Combo 1", log=True, spring_tolerance=0, member_tolerance=0):
+
     # Assume the model has converged until we find out otherwise
     convergence = True
 
@@ -514,6 +482,7 @@ def _check_TC_convergence(
         print("- Checking for tension/compression-only support spring convergence")
     # Loop through each node and each directional spring to check and update their active status
     for node in model.nodes.values():
+
         for direction in ["DX", "DY", "DZ", "RX", "RY", "RZ"]:
             spring = getattr(node, f"spring_{direction}")
             displacement = getattr(node, direction)[combo_name]
@@ -532,7 +501,6 @@ def _check_TC_convergence(
     # TODO: Adjust the code below to allow elements to reactivate on subsequent iterations if deformations at element nodes indicate the member goes back into an active state. This will lead to a less conservative and more realistic analysis. Nodal springs (above) already do this.
 
     # Check tension/compression-only springs
-
     if log: print('- Checking for tension/compression-only spring convergence')
     for spring in model.springs.values():
 
@@ -559,21 +527,40 @@ def _check_TC_convergence(
 
         # Only run the tension/compression only check if the member is still active
         if phys_member.active[combo_name] == True:
-            # Check if tension-only conditions exist
+
+            # Check if a tension-only conditions exist
             if (
                 phys_member.tension_only == True
                 and phys_member.max_axial(combo_name) > member_tolerance
             ):
+                # Deactivate the physical member
                 phys_member.active[combo_name] = False
+
+                # Deactivate all the sub-members
+                for sub_member in phys_member.sub_members.values():
+                    sub_member.active[combo_name] = False
+                
+                # Flag the analysis as not converged
                 convergence = False
 
-            # Check if compression-only conditions exist
+            # Check if a compression-only conditions exist
             elif (
                 phys_member.comp_only == True
                 and phys_member.min_axial(combo_name) < -member_tolerance
             ):
+                # Deactivate the physical member
                 phys_member.active[combo_name] = False
+                
+                # Deactivate all the sub-members
+                for sub_member in phys_member.sub_members.values():
+                    sub_member.active[combo_name] = False
+                
+                # Flag the analysis as not converged
                 convergence = False
+
+        # Reset the sub-member's flag to unsolved. This will allow it to resolve for the same load combination after subsequent iterations have made further changes.
+        for sub_member in phys_member.sub_members.values():
+            sub_member._solved_combo = None
 
     # Return whether the TC analysis has converged
     return convergence
@@ -949,7 +936,7 @@ def _partition_D(model):
 
     D1_indices = [] # A list of the indices for the unknown nodal displacements
     D2_indices = [] # A list of the indices for the known nodal displacements
-    D2 = []         # A list of the values of the known nodal displacements (D != None)
+    D2 = []         # A list of the values of the known nodal displacements
 
     # Create the auxiliary table
     for node in model.nodes.values():
