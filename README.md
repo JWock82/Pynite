@@ -61,6 +61,9 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v0.0.97
+* Switched some commonly used python libraries to be installed by default with `Pynite`. Most `Pynite` users will want these libraries installed for full-featured use of `Pynite`. These libraries help with `Pynite` visualizations, plotting, the sparse solver, and `Jupyter Lab` functionality. This is just easier for new python users. I was getting a lot of questions about how to set up libraries, and this takes the guesswork away.
+
 v0.0.96
 * Changed quad elements from MITC4 formulation to DKMQ formulation. This greatly improves plate results at corners and increases the speed with which the plate's stiffness matrix is assembled. MITC4 element code has been retained as legacy code, but is no longer used by the program.
 * ***Breaking Changes***: Implemented snake-case for dictionary names (e.g. `FEModel3D.Nodes` is now `FEModel3D.nodes`). These changes were made to prepare `Pynite` for a v1.0 release that is consistent with the `PEP8` style guide for `python`.
