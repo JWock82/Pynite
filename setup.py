@@ -21,13 +21,17 @@ setuptools.setup(
     ],
     install_requires=[
         'numpy',
-        'PrettyTable'
+        'PrettyTable',
+        'scipy',
+        'matplotlib',
+        'vtk',
+        'pyvista[all,trame]',
+        'trame_jupyter_extension',
+        'ipywidgets'
     ],
     extras_require = {
-        'sparse': ['scipy'],
         'plotting': ['matplotlib'],
         'vtk':  ['vtk', 'IPython'],
-        'pyvista': ['vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets'],
         'reporting': ['pdfkit', 'Jinja2'],
         'derivations': ['jupyterlab', 'sympy']
     },
