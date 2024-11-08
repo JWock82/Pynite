@@ -62,7 +62,7 @@ Here's a list of projects that use PyNite:
 
 # What's New?
 v0.0.97
-* Switched some commonly used python libraries to be installed by default with `Pynite`. Most `Pynite` users will want these libraries installed for full-featured use of `Pynite`. These libraries help with `Pynite` visualizations, plotting, the sparse solver, and `Jupyter Lab` functionality. This is just easier for new python users. I was getting a lot of questions about how to set up libraries, and this takes the guesswork away.
+* Switched some commonly used python libraries to be installed by default with `Pynite`. Most `Pynite` users will want these libraries installed for full-featured use of `Pynite`. These libraries help with `Pynite` visualizations, plotting, the sparse solver, and `Jupyter Lab` functionality. This is just easier for new python users. I was getting a lot of questions about how to set up libraries, and this takes the guesswork away. This is part of `Pynite's` objective to stay easy to use.
 
 v0.0.96
 * Changed quad elements from MITC4 formulation to DKMQ formulation. This greatly improves plate results at corners and increases the speed with which the plate's stiffness matrix is assembled. MITC4 element code has been retained as legacy code, but is no longer used by the program.
