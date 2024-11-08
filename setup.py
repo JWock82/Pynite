@@ -30,8 +30,7 @@ setuptools.setup(
         'ipywidgets'
     ],
     extras_require = {
-        'plotting': ['matplotlib'],
-        'vtk':  ['vtk', 'IPython'],
+        'vtk':  ['IPython'],
         'reporting': ['pdfkit', 'Jinja2'],
         'derivations': ['jupyterlab', 'sympy']
     },
