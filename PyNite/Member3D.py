@@ -917,7 +917,7 @@ class Member3D():
             return self._extract_vector_results(self.SegmentsZ, x_array, 'shear')
         
         else:
-            raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+            raise ValueError(f"Direction must be 'Fy' or 'Fz'. {Direction} was given.")
 
 #%%
     def moment(self, Direction, x, combo_name='Combo 1'):
