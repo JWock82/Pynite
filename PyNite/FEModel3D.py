@@ -1993,10 +1993,7 @@ class FEModel3D():
                     try:
                         # Calculate the unknown displacements D1
                         if sparse == True:
-                            # The partitioned stiffness matrix is in `lil` format, which is great
-                            # for memory, but slow for mathematical operations. The stiffness
-                            # matrix will be converted to `csr` format for mathematical operations.
-                            # The `@` operator performs matrix multiplication on sparse matrices.
+                            # The partitioned stiffness matrix is in `lil` format, which is great for memory, but slow for mathematical operations. The stiffness matrix will be converted to `csr` format for mathematical operations. The `@` operator performs matrix multiplication on sparse matrices.
                             D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:

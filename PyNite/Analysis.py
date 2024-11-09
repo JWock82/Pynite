@@ -108,13 +108,19 @@ def _check_stability(model, K):
             # Flag the model as unstable
             unstable = True
 
-            # Identify which direction this instability effects
-            if i%6 == 0: direction = 'for translation in the global X direction.'
-            if i%6 == 1: direction = 'for translation in the global Y direction.'
-            if i%6 == 2: direction = 'for translation in the global Z direction.'
-            if i%6 == 3: direction = 'for rotation about the global X axis.'
-            if i%6 == 4: direction = 'for rotation about the global Y axis.'
-            if i%6 == 5: direction = 'for rotation about the global Z axis.'
+            # Identify which direction this instability affects
+            if i%6 == 0:
+                direction = 'for translation in the global X direction.'
+            if i%6 == 1:
+                direction = 'for translation in the global Y direction.'
+            if i%6 == 2:
+                direction = 'for translation in the global Z direction.'
+            if i%6 == 3:
+                direction = 'for rotation about the global X axis.'
+            if i%6 == 4:
+                direction = 'for rotation about the global Y axis.'
+            if i%6 == 5:
+                direction = 'for rotation about the global Z axis.'
 
             # Print a message to the console
             print('* Nodal instability detected: node ' + node.name + ' is unstable ' + direction)
@@ -942,7 +948,7 @@ def _partition_D(model):
     for node in model.nodes.values():
         
         # Unknown displacement DX
-        if node.support_DX==False and node.EnforcedDX == None:
+        if node.support_DX == False and node.EnforcedDX == None:
             D1_indices.append(node.ID*6 + 0)
         # Known displacement DX
         elif node.EnforcedDX != None:
