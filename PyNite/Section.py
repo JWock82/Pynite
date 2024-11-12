@@ -18,7 +18,8 @@ class Section():
         pass
 
     def G(self, fx, my, mz):
-        """Returns the gradient to the yield surface at a given point using numerical differentiation. This is a default solution. For a better solution, overwrite this method with a more precies one in the material/shape specific child class that inherits from this class.
+        """
+        Returns the gradient to the yield surface at a given point using numerical differentiation. This is a default solution. For a better solution, overwrite this method with a more precise one in the material/shape specific child class that inherits from this class.
         """
         
         # Small increment for numerical differentiation

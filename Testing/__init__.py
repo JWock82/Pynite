@@ -6,6 +6,7 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
+import os
 
 # Run the tests in this module
 # Use warnings flag to suppress the PendingDeprecationWarning 
@@ -18,7 +19,8 @@ test_suite = unittest.TestLoader().discover("Testing", pattern='test_*.py')
 result = unittest.TextTestRunner().run(test_suite)
 
 # Send the proper exit code for GitHub Actions CI to read
-if result.wasSuccessful():
-    exit(0)
-else:
-    exit(1)
+if os.getenv('GITHUB_ACTIONS'):  # Check if running in GitHub Actions
+    if result.wasSuccessful():
+        exit(0)
+    else:
+        exit(1)

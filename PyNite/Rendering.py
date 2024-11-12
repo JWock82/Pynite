@@ -483,6 +483,16 @@ class Renderer:
                                       color=color)
 
     def plot_member(self, member, theme='default'):
+        """
+        Adds a member to the plotter. This method generates a line representing a structural member between two nodes, and adds it to the plotter with specified theme settings.
+        
+        Parameters
+        ==========
+        :param member: The structural member to be plotted, containing information about its end nodes.
+        :type member: Member
+        :param theme: The theme for plotting the member. Default is 'default'.
+        :type theme: str
+        """
     
         # Generate a line for the member
         line = pv.Line()
