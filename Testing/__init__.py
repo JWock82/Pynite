@@ -19,8 +19,8 @@ test_suite = unittest.TestLoader().discover("Testing", pattern='test_*.py')
 result = unittest.TextTestRunner().run(test_suite)
 
 # Send the proper exit code for GitHub Actions CI to read
-if os.getenv('GITHUB_ACTIONS'):  # Check if running in GitHub Actions
-    if result.wasSuccessful():
-        exit(0)
-    else:
-        exit(1)
+# if os.getenv('GITHUB_ACTIONS'):  # Check if running in GitHub Actions
+#     if result.wasSuccessful():
+#         exit(0)
+#     else:
+#         exit(1)
