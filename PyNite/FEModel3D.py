@@ -757,9 +757,9 @@ class FEModel3D():
     def merge_duplicate_nodes(self, tolerance=0.001):
         """Removes duplicate nodes from the model and returns a list of the removed node names.
 
-        :param tolerance: The maximum distance between two nodes in order to consider them
-                          duplicates. Defaults to 0.001.
+        :param tolerance: The maximum distance between two nodes in order to consider them duplicates. Defaults to 0.001.
         :type tolerance: float, optional
+        :return: A list of the names of the nodes that were removed from the model.
         """
 
         # Initialize a dictionary marking where each node is used
@@ -857,6 +857,9 @@ class FEModel3D():
         
         # Flag the model as unsolved
         self.solution = None
+
+        # Return the list of removed nodes
+        return remove_list
 
     def delete_node(self, node_name):
         """Removes a node from the model. All nodal loads associated with the node and elements attached to the node will also be removed.
@@ -2020,10 +2023,7 @@ class FEModel3D():
                     try:
                         # Calculate the unknown displacements D1
                         if sparse == True:
-                            # The partitioned stiffness matrix is in `lil` format, which is great
-                            # for memory, but slow for mathematical operations. The stiffness
-                            # matrix will be converted to `csr` format for mathematical operations.
-                            # The `@` operator performs matrix multiplication on sparse matrices.
+                            # The partitioned stiffness matrix is in `lil` format, which is great for memory, but slow for mathematical operations. The stiffness matrix will be converted to `csr` format for mathematical operations. The `@` operator performs matrix multiplication on sparse matrices.
                             D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
                         else:

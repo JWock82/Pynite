@@ -11,7 +11,10 @@ class PhysMember(Member3D):
     Physical members can detect internal nodes and subdivide themselves into sub-members at those
     nodes.
     """
-
+    
+    # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
+    __plt = None  
+    
     def __init__(self, model, name, i_node, j_node, material_name, section_name, aux_node=None,
                  tension_only=False, comp_only=False):
         
@@ -204,6 +207,51 @@ class PhysMember(Member3D):
                 Vmin = V
         return Vmin
    
+    def plot_shear(self, Direction, combo_name='Combo 1', n_points=20):
+        """
+        Plots the shear diagram for the member
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to plot the shear force. Must be one of the following:
+                'Fy' = Shear in the local y-axis.
+                'Fz' = Shear in the local z-axis.
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        n_points: int
+            The number of points used to generate the plot
+        """
+
+        # Import 'pyplot' if not already done
+        if PhysMember.__plt is None:
+            from matplotlib import pyplot as plt
+            PhysMember.__plt = plt
+        
+        fig, ax = PhysMember.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        # Initialize the shear force diagram coordinates for each submember
+        x, V = [], []
+
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Get moment result for the sub-member
+            x_submember, V_submember = submember.shear_array(Direction, n_points, combo_name)
+            x_submember = [x_o + x for x in x_submember]
+            x.extend(x_submember)
+            V.extend(V_submember)
+            x_o += submember.L()
+
+        PhysMember.__plt.plot(x, V)
+        PhysMember.__plt.ylabel('Shear')
+        PhysMember.__plt.xlabel('Location')
+        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.show()
+
     def moment(self, Direction, x, combo_name='Combo 1'):
         """
         Returns the moment at a point along the member's length
@@ -265,6 +313,51 @@ class PhysMember(Member3D):
                 Mmin = M
         return Mmin
 
+    def plot_moment(self, Direction, combo_name='Combo 1', n_points=20):
+        """
+        Plots the moment diagram for the member
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to plot the moment. Must be one of the following:
+                'My' = Moment about the local y-axis.
+                'Mz' = moment about the local z-axis.
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        n_points: int
+            The number of points used to generate the plot
+        """
+
+        # Import 'pyplot' if not already done
+        if PhysMember.__plt is None:
+            from matplotlib import pyplot as plt
+            PhysMember.__plt = plt
+        
+        fig, ax = PhysMember.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        # Generate the moment diagram coordinates for each submember
+        x, M = [], []
+
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Get moment result for the sub-member
+            x_submember, M_submember = submember.moment_array(Direction, n_points, combo_name)
+            x_submember = [x_o + x for x in x_submember]
+            x.extend(x_submember)
+            M.extend(M_submember)
+            x_o += submember.L()
+
+        PhysMember.__plt.plot(x, M)
+        PhysMember.__plt.ylabel('Moment')
+        PhysMember.__plt.xlabel('Location')
+        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.show()
+    
     def torque(self, x, combo_name='Combo 1'):
         """
         Returns the torsional moment at a point along the member's length
@@ -306,6 +399,47 @@ class PhysMember(Member3D):
                 Tmin = T
         return Tmin
 
+    def plot_torque(self, combo_name='Combo 1', n_points=20):
+        """
+        Plots the torque diagram for the member
+        
+        Parameters
+        ----------
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        n_points: int
+            The number of points used to generate the plot
+        """
+
+        # Import 'pyplot' if not already done
+        if PhysMember.__plt is None:
+            from matplotlib import pyplot as plt
+            PhysMember.__plt = plt
+        
+        fig, ax = PhysMember.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        # Initialize the torque diagram coordinates for each submember
+        x, T = [], []
+
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Get moment result for the sub-member
+            x_submember, T_submember = submember.torque_array(n_points, combo_name)
+            x_submember = [x_o + x for x in x_submember]
+            x.extend(x_submember)
+            T.extend(T_submember)
+            x_o += submember.L()
+
+        PhysMember.__plt.plot(x, T)
+        PhysMember.__plt.ylabel('Torque')
+        PhysMember.__plt.xlabel('Location')
+        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.show()
+
     def axial(self, x, combo_name='Combo 1'):
         """
         Returns the axial force at a point along the member's length.
@@ -338,6 +472,47 @@ class PhysMember(Member3D):
             if Pmin is None or P < Pmin:
                 Pmin = P
         return Pmin
+
+    def plot_axial(self, combo_name='Combo 1', n_points=20):
+        """
+        Plots the axial force diagram for the member
+        
+        Parameters
+        ----------
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        n_points: int
+            The number of points used to generate the plot
+        """
+
+        # Import 'pyplot' if not already done
+        if PhysMember.__plt is None:
+            from matplotlib import pyplot as plt
+            PhysMember.__plt = plt
+        
+        fig, ax = PhysMember.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        # Initialize the axial force diagram coordinates for each submember
+        x, P = [], []
+
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Get moment result for the sub-member
+            x_submember, P_submember = submember.axial_array(n_points, combo_name)
+            x_submember = [x_o + x for x in x_submember]
+            x.extend(x_submember)
+            P.extend(P_submember)
+            x_o += submember.L()
+
+        PhysMember.__plt.plot(x, P)
+        PhysMember.__plt.ylabel('Axial Force')
+        PhysMember.__plt.xlabel('Location')
+        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.show()
 
     def deflection(self, Direction, x, combo_name='Combo 1'):
         """
@@ -416,10 +591,55 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.rel_deflection(Direction, x_mod, combo_name)
 
+    
+    def plot_deflection(self, Direction, combo_name='Combo 1', n_points=20):
+        """
+        Plots the deflection diagram for the member
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction in which to plot the deflection. Must be one of the following:
+                'dy' = Deflection in the local y-axis.
+                'dz' = Deflection in the local z-axis.
+        combo_name : string
+            The name of the load combination to get the results for (not the combination itself).
+        n_points: int
+            The number of points used to generate the plot
+        """
+
+        # Import 'pyplot' if not already done
+        if PhysMember.__plt is None:
+            from matplotlib import pyplot as plt
+            PhysMember.__plt = plt
+        
+        fig, ax = PhysMember.__plt.subplots()
+        ax.axhline(0, color='black', lw=1)
+        ax.grid()
+        
+        # Initialize the deflection diagram coordinates for each submember
+        x, d = [], []
+
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Get moment result for the sub-member
+            x_submember, d_submember = submember.deflection_array(Direction, n_points, combo_name)
+            x_submember = [x_o + x for x in x_submember]
+            x.extend(x_submember)
+            d.extend(d_submember)
+            x_o += submember.L()
+
+        PhysMember.__plt.plot(x, d)
+        PhysMember.__plt.ylabel('Deflection')
+        PhysMember.__plt.xlabel('Location')
+        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.show()
+
     def find_member(self, x):
         """
-        Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's
-        local coordinate system.
+        Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's local coordinate system.
         """
 
         # Initialize a summation of sub-member lengths

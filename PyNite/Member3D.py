@@ -17,8 +17,7 @@ class Member3D():
     objects will be more useful.
     """
 
-    # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows
-    # us to defer importing it until it's actually needed.
+    # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
     __plt = None
 
 #%%
@@ -911,7 +910,7 @@ class Member3D():
             return self._extract_vector_results(self.SegmentsZ, x_array, 'shear')
         
         else:
-            raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+            raise ValueError(f"Direction must be 'Fy' or 'Fz'. {Direction} was given.")
 
 #%%
     def moment(self, Direction, x, combo_name='Combo 1'):
@@ -1120,6 +1119,7 @@ class Member3D():
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
+        # Generate the moment diagram coordinates
         x, M = self.moment_array(Direction, n_points, combo_name)
 
         Member3D.__plt.plot(x, M)
@@ -2174,11 +2174,16 @@ class Member3D():
                             
     def _extract_vector_results(self, segments, x_array, result_name, P_delta=False):
         """Extract results from the given segments using vectorised numpy functions"""
-        
+
+        # Initialize variables
         segment_results = []
         last_index = 0
+        
+        # Step through each segment in the member
         for i, segment in enumerate(segments):
-            if i == len(segments)-1:
+
+            # Determine if the current index `i` is at the end of the member
+            if i == len(segments) - 1:
                 index2 = len(x_array)
             else:
                 try:
@@ -2189,7 +2194,7 @@ class Member3D():
             if last_index == index2: continue
 
             thisseg_x_array = x_array[last_index:index2]
-
+            
             if result_name == "moment":
                 thisseg_y_array = segment.moment(thisseg_x_array - segment.x1, P_delta)
             elif result_name == "shear":
