@@ -1,8 +1,7 @@
 import unittest
-from unittest.mock import MagicMock
-import vtk
 from PyNite import FEModel3D
-from PyNite.Visualization import Renderer, VisNode, VisSpring, VisMember
+from PyNite.Visualization import Renderer, render_model
+from PIL import Image
 
 class TestRenderer(unittest.TestCase):
 
@@ -35,6 +34,13 @@ class TestRenderer(unittest.TestCase):
         # Set the renderer window to render offscreen
         self.renderer.window.SetOffScreenRendering(1)
 
+        # Set up the load combo to be visualized
+        self.renderer.combo_name = '1.4D'
+        self.render_loads = True
+
+    def test_render_model_old(self):
+        self.render_model(self.model, combo_name='1.4D', render_loads=True, interact=False)
+    
     def test_set_annotation_size(self):
         self.renderer.set_annotation_size(10)
         self.assertEqual(self.renderer.annotation_size, 10)
@@ -93,19 +99,10 @@ class TestRenderer(unittest.TestCase):
         self.assertEqual(self.renderer.window.GetSize()[1], 768)
 
     def test_render_model(self):
-        self.renderer.update = MagicMock()
-        self.renderer.window.Render = MagicMock()
         self.renderer.render_model(interact=False)
         self.renderer.update.assert_called_once()
         self.renderer.window.Render.assert_called_once()
 
-    # def test_screenshot(self):
-    #     self.renderer.render_model = MagicMock()
-    #     self.renderer.render_model.return_value = self.renderer.window
-    #     self.renderer.window.Finalize = MagicMock()
-
-    #     result = self.renderer.screenshot(filepath='console', interact=False)
-    #     self.assertIsInstance(result, Image)
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_screenshot(self):
+        result = self.renderer.screenshot(filepath='console', interact=False)
+        self.assertIsInstance(result, Image)
