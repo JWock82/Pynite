@@ -42,7 +42,7 @@ jobs:
 
     - name: Test with unittest
       run: |
-        coverage run --source=PyNite -m unittest discover
+        xvfb-run -a coverage run --source=PyNite -m unittest discover
 
     - name: Convert coverage to XML
       run: |
