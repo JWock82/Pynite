@@ -1,6 +1,6 @@
 import unittest
 from PyNite import FEModel3D
-from PyNite.Visualization import Renderer, render_model
+from PyNite.Visualization import Renderer
 from PIL import Image
 
 class TestRenderer(unittest.TestCase):
