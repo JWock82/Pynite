@@ -17,10 +17,3 @@ test_suite = unittest.TestLoader().discover("Testing", pattern='test_*.py')
 # `TextTestRunner` does not exit the module. CI will get confused unless we save the result
 # and send the proper exit code.
 result = unittest.TextTestRunner().run(test_suite)
-
-# Send the proper exit code for GitHub Actions CI to read
-# if os.getenv('GITHUB_ACTIONS'):  # Check if running in GitHub Actions
-#     if result.wasSuccessful():
-#         exit(0)
-#     else:
-#         exit(1)
