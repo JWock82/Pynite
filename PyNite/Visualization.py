@@ -118,7 +118,7 @@ class Renderer():
         window.Render()
 
         # Handle user interaction if requested by the user
-        if interact == True:
+        if interact:
         
             # Set up an interactor. The interactor style determines how user interactions affect the
             # view. The trackball camera style behaves much like popular commercial CAD programs.
@@ -135,7 +135,6 @@ class Renderer():
             # omitted. I have noticed it will shut down the interactor.
             window.Finalize()
 
-        # Return the window
         return window
 
     def screenshot(self, filepath='console', interact=True, reset_camera=True):

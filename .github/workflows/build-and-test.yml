@@ -29,7 +29,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
-        python -m pip install scipy
+        python -m pip install vtk
         python -m pip install coverage
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
