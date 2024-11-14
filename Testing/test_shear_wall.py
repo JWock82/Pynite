@@ -8,6 +8,7 @@ Copyright (c) 2022 D. Craig Brinck, SE; tamalone1
 import unittest
 from PyNite import FEModel3D
 from PyNite.Mesh import CylinderMesh, RectangleMesh
+from PyNite.Rendering import Renderer
 import sys
 from io import StringIO
 from math import isclose
@@ -60,6 +61,13 @@ class TestShearWalls(unittest.TestCase):
         
         # Check that the solution matches the theoretical solution within 0.1%
         self.assertLess(abs(1 - delta1/delta2), 0.001, 'Failed quad shear wall test.')
+
+        rndr = Renderer(sw)
+        rndr.annotation_size = 5
+        rndr.window_width = 700
+        rndr.window_height = 700
+        rndr.plotter.off_screen = True
+        rndr.render_model()
 
     def test_rect_shear_wall(self):
 
