@@ -179,10 +179,10 @@ class Renderer:
         self.update(reset_camera)
 
         # Render the model (code execution will pause here until the user closes the window)
-        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python')
+        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', auto_close=False)
 
     def screenshot(self, filepath='./Pynite_Image.png', interact=True, reset_camera=True):
-        """Saves a screenshot of the rendered model. Press `q` to capture the screenshot after positioning the view. Pressing the close button in the corner of the window will ignore the positioning.
+        """Saves a screenshot of the rendered model. Important: Press `q` to capture the screenshot after positioning the view. Pressing the `X` button in the corner of the window will ignore the positioning and shut down the entire renderer against further use once the screenshot is taken.
 
         :param filepath: The filepath to write the image to. When set to 'jupyter', the resulting plot is placed inline in a jupyter notebook. Defaults to 'jupyter'.
         :type filepath: str, optional
@@ -195,17 +195,14 @@ class Renderer:
         # Update the plotter with the latest geometry
         self.update(reset_camera)
 
-        # Show the plotter for interaction
-        if interact == True:
-            # Use `q` for `quit` to take the screenshot. The window will not close until the `X` in
-            # the corner of the window is hit.
-            self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=filepath)
-        else:
+        # Determine if the user should interact with the window before capturing the screenshot
+        if interact == False:
+
             # Don't bother showing the image before capturing the screenshot
             self.plotter.off_screen = True
-
-            # Save the screenshot
-            self.plotter.screenshot(filename=filepath)
+        
+        # Save the screenshot to the specified filepath. Note that `auto_close` shuts down the entire plotter after the screenshot is taken, rather than just closing the window. We'll set `auto_close=False` to allow multiple screenshots to be taken. Note that the window must be closed with `q`. Closing it with the 'x' button will close the whole plotter down.
+        self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=filepath, auto_close=False)
 
     def update(self, reset_camera=True):
         """
