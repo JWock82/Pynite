@@ -100,18 +100,18 @@ braced_frame.def_support('N3', support_DZ=True)
 # to the full member length. Note also that the direction uses lowercase
 # notations to indicate member local coordinate systems. Brace loads have been
 # neglected.
-braced_frame.add_member_dist_load('Beam', Direction='Fy', w1=-0.024/12,
+braced_frame.add_member_dist_load('Beam', direction='Fy', w1=-0.024/12,
                               w2=-0.024/12, x1=0, x2=15*12, case='D')
-braced_frame.add_member_dist_load('Col1', Direction='Fx', w1=-0.033/12,
+braced_frame.add_member_dist_load('Col1', direction='Fx', w1=-0.033/12,
                               w2=-0.033/12, x1=0, x2=12*12, case='D')
-braced_frame.add_member_dist_load('Col2', Direction='Fx', w1=-0.033/12,
+braced_frame.add_member_dist_load('Col2', direction='Fx', w1=-0.033/12,
                               w2=-0.033/12, x1=0, x2=12*12, case='D')
 
 # Add nodal wind loads of 25 kips to each side of the frame. Note that the
 # direction uses uppercase notation to indicate model global coordinate
 # system.
-braced_frame.add_node_load('N2', Direction='FX', P=25, case='W')
-braced_frame.add_node_load('N3', Direction='FX', P=25, case='W')
+braced_frame.add_node_load('N2', direction='FX', P=25, case='W')
+braced_frame.add_node_load('N3', direction='FX', P=25, case='W')
 
 # Create load combinations
 # Note that the load combination '1.4D' has no lateral load, but does have
