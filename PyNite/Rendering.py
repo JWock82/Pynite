@@ -201,7 +201,7 @@ class Renderer:
             # Don't bother showing the image before capturing the screenshot
             self.plotter.off_screen = True
         
-        # Save the screenshot to the specified filepath. Note that `auto_close` shuts down the entire plotter after the screenshot is taken, rather than just closing the window. We'll set `auto_close=False` to allow multiple screenshots to be taken. Note that the window must be closed with `q`. Closing it with the 'x' button will close the whole plotter down.
+        # Save the screenshot to the specified filepath. Note that `auto_close` shuts down the entire plotter after the screenshot is taken, rather than just closing the window. We'll set `auto_close=False` to allow the plotter to remain active. Note that the window must be closed by pressing `q`. Closing it with the 'X' button in the window's corner will close the whole plotter down.
         self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=filepath, auto_close=False)
 
     def update(self, reset_camera=True):
@@ -286,7 +286,7 @@ class Renderer:
             
             # Render deformed springs
             for spring in self.model.springs.values():
-                self.plot_deformed_spring(spring, self.deformed_scale, self.combo_name)
+                self.plot_spring(spring, self.annotation_size, 'red', deformed=True)
 
             # _DeformedShape(self.model, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
 
@@ -506,29 +506,69 @@ class Renderer:
 
         self.plotter.add_mesh(line, color='black', line_width=2)
 
-    def plot_spring(self, spring, size, color='grey'):
+    def plot_spring(self, spring, size, color='grey', deformed=False):
+        """
+        Adds a spring to the plotter. This method generates a zig-zag line representing a spring between two nodes, and adds it to the plotter with specified theme settings."""
         
-        # Find the position of the i-node and j-node
+        # Find the spring's i-node and j-node
         i_node = spring.i_node
         j_node = spring.j_node
+
+        # Find the spring's node coordinates
         Xi, Yi, Zi = i_node.X, i_node.Y, i_node.Z
         Xj, Yj, Zj = j_node.X, j_node.Y, j_node.Z
 
-        # Create the line
-        line = pv.Line((Xi, Yi, Zi), (Xj, Yj, Zj))
+        # Determine if the spring should be plotted in its deformed shape
+        if deformed:
+            Xi = Xi + i_node.DX[self.combo_name]*self.deformed_scale
+            Yi = Yi + i_node.DY[self.combo_name]*self.deformed_scale
+            Zi = Zi + i_node.DZ[self.combo_name]*self.deformed_scale
+            Xj = Xj + j_node.DX[self.combo_name]*self.deformed_scale
+            Yj = Yj + j_node.DY[self.combo_name]*self.deformed_scale
+            Zj = Zj + j_node.DZ[self.combo_name]*self.deformed_scale
+
+        # Calculate the spring direction vector and length
+        direction = np.array([Xj, Yj, Zj]) - np.array([Xi, Yi, Zi])
+        length = ((Xj-Xi)**2 + (Yj-Yi)**2 - (Zj-Zi)**2)**0.5
+
+        # Normalize the direction vector
+        direction = direction/length
+
+        # Calculate perpendicular vectors for zig-zag plane
+        arbitrary_vector = np.array([1, 0, 0])
+        if np.allclose(direction, arbitrary_vector) or np.allclose(direction, -arbitrary_vector):
+            arbitrary_vector = np.array([0, 1, 0])
+        perp_vector1 = np.cross(direction, arbitrary_vector)
+        perp_vector1 /= np.linalg.norm(perp_vector1)
+        perp_vector2 = np.cross(direction, perp_vector1)
+        perp_vector2 /= np.linalg.norm(perp_vector2)
         
-        # Change the color
-        if color is None:
-            line.plot(color='magenta')
-        elif color == 'black':
-            line.plot(color='black')
+        # Generate points for the zig-zag line
+        num_zigs = 4
+        num_points = num_zigs * 2
+        amplitude = size
+        t = np.linspace(0, length, num_points)
+        zigzag_pattern = amplitude * np.tile([1, -1], num_zigs)
+        zigzag_points = np.outer(t, direction) + np.outer(zigzag_pattern, perp_vector1)
+        
+        # Adjust the zigzag points to start position
+        zigzag_points += np.array([Xi, Yi, Zi])
+        
+        # Add lines connecting the points
+        lines = np.zeros((num_points - 1, 3), dtype=int)
+        lines[:, 0] = np.full((num_points - 1), 2, dtype=int)
+        lines[:, 1] = np.arange(num_points - 1, dtype=int)
+        lines[:, 2] = np.arange(1, num_points, dtype=int)
+
+        # Create a PolyData object for the zig-zag line
+        zigzag_line = pv.PolyData(zigzag_points, lines=lines)
+        
+        # Create a plotter and add the zig-zag line
+        self.plotter.add_mesh(zigzag_line, color=color, line_width=2)
 
         # Add the spring label to the list of labels
         self._spring_labels.append(spring.name)
         self._spring_label_points.append([(Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2])
-
-        # Add the line to the plotter
-        self.plotter.add_mesh(line)
             
     def plot_plates(self, deformed_shape, deformed_scale, color_map, combo_name):
         
@@ -684,27 +724,6 @@ class Renderer:
             for i in range(len(D_plot)-1):
                 line = pv.Line(D_plot[i], D_plot[i+1])
                 self.plotter.add_mesh(line, color='red', line_width=2)
-    
-    def plot_deformed_spring(self, spring, scale_factor, combo_name='Combo 1'):
-
-        # Determine if the spring is active for the load combination
-        if spring.active[combo_name]:
-
-            # Get the spring's i-node and j-node
-            i_node = spring.i_node
-            j_node = spring.j_node
-            
-            # Calculate the deformed positions of the spring's end points
-            Xi = i_node.X + i_node.DX[combo_name]*scale_factor
-            Yi = i_node.Y + i_node.DY[combo_name]*scale_factor
-            Zi = i_node.Z + i_node.DZ[combo_name]*scale_factor
-            
-            Xj = j_node.X + j_node.DX[combo_name]*scale_factor
-            Yj = j_node.Y + j_node.DY[combo_name]*scale_factor
-            Zj = j_node.Z + j_node.DZ[combo_name]*scale_factor
-            
-            # Plot a line for the deformed spring
-            self.plotter.add_mesh(pv.Line((Xi, Yi, Zi), (Xj, Yj, Zj)))
 
     def plot_pt_load(self, position, direction, length, label_text=None, color='green'):
 
