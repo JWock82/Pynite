@@ -259,7 +259,7 @@ class Renderer:
 
             # Render the springs
             for spring in self.model.springs.values():
-                self.plot_spring(spring, self.annotation_size, 'grey')
+                self.plot_spring(spring, 'grey')
             
             # Render the spring labels
             self.plotter.add_point_labels(self._spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None, render_points_as_spheres=False)
@@ -286,7 +286,7 @@ class Renderer:
             
             # Render deformed springs
             for spring in self.model.springs.values():
-                self.plot_spring(spring, self.annotation_size, 'red', deformed=True)
+                self.plot_spring(spring, 'red', deformed=True)
 
             # _DeformedShape(self.model, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
 
@@ -506,10 +506,13 @@ class Renderer:
 
         self.plotter.add_mesh(line, color='black', line_width=2)
 
-    def plot_spring(self, spring, size, color='grey', deformed=False):
+    def plot_spring(self, spring, color='grey', deformed=False):
         """
         Adds a spring to the plotter. This method generates a zig-zag line representing a spring between two nodes, and adds it to the plotter with specified theme settings."""
         
+        # Scale the spring's zigzags
+        size = self.annotation_size
+
         # Find the spring's i-node and j-node
         i_node = spring.i_node
         j_node = spring.j_node
