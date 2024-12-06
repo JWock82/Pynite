@@ -74,7 +74,7 @@ renderer.deformed_shape = True
 renderer.deformed_scale = 1000
 renderer.color_map = 'Qy'
 renderer.combo_name = '1.4F'
-renderer.labels = True
+renderer.show_labels = True
 renderer.scalar_bar = True
 renderer.scalar_bar_text_size = 12
 renderer.render_model()
@@ -89,10 +89,10 @@ Mx = -0.0131*qo*a**2
 My = -0.0242*qo*a**2
 
 # Pynite solution
-Qx_pn = model.Quads['Q176'].shear(-1, 0, True, '1.4F')[0, 0]
-Qy_pn = model.Meshes['MSH1'].max_shear('Qy', '1.4F')
-Mx_pn = model.Quads['Q176'].moment(-1, 0, True, '1.4F')[0, 0]
-My_pn = model.Meshes['MSH1'].min_moment('My', '1.4F')
+Qx_pn = model.quads['Q176'].shear(-1, 0, True, '1.4F')[0, 0]
+Qy_pn = model.meshes['MSH1'].max_shear('Qy', '1.4F')
+Mx_pn = model.quads['Q176'].moment(-1, 0, True, '1.4F')[0, 0]
+My_pn = model.meshes['MSH1'].min_moment('My', '1.4F')
 
 # Comparison of solutions
 print('Max Moment at Side Mid-Height of Wall, Mx | Pynite: ', Mx_pn, '| Timoshenko: ', Mx)
