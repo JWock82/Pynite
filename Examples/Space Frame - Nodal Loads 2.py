@@ -5,7 +5,7 @@
 
 # Import 'FEModel3D' and 'Visualization' from 'PyNite'
 from PyNite import FEModel3D
-from PyNite import Visualization
+from PyNite.Visualization import Renderer
 
 # Create a new model
 frame = FEModel3D()
@@ -49,5 +49,11 @@ frame.analyze()
 print('Calculated results: ', frame.nodes['N2'].DY, frame.nodes['N3'].DZ)
 print('Expected results: ', -0.063, 1.825)
 
-# Render the model for viewing
-Visualization.render_model(frame, annotation_size=5, deformed_shape=True, deformed_scale=40, render_loads=True)
+# Render the deformed shape
+rndr = Renderer(frame)
+rndr.annotation_size = 5
+rndr.render_loads = True
+rndr.deformed_shape = True
+rndr.deformed_scale = 40
+rndr.render_loads = True
+rndr.render_model()
