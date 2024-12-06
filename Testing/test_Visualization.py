@@ -11,28 +11,28 @@ class TestRenderer(unittest.TestCase):
     def setUp(self):
 
         # Create a simple model to visualize
-        self.model = FEModel3D()
+        self.beam_model = FEModel3D()
 
-        self.model.add_node('N1', 0, 0, 0)
-        self.model.add_node('N2', 20, 0, 0)
+        self.beam_model.add_node('N1', 0, 0, 0)
+        self.beam_model.add_node('N2', 20, 0, 0)
 
-        self.model.def_support('N1', True, True, True, True, True, True)
-        self.model.def_support('N2', False, True, True, False, False, False)
+        self.beam_model.def_support('N1', True, True, True, True, True, True)
+        self.beam_model.def_support('N2', False, True, True, False, False, False)
 
-        self.model.add_material('Steel', 29000/144, 11200/144, 0.3, 0.49, 36/144)
+        self.beam_model.add_material('Steel', 29000/144, 11200/144, 0.3, 0.49, 36/144)
         
-        self.model.add_section('Custom', 20, 100, 200, 150)
+        self.beam_model.add_section('Custom', 20, 100, 200, 150)
         
-        self.model.add_member('M1', 'N1', 'N2', 'Steel', 'Custom')
+        self.beam_model.add_member('M1', 'N1', 'N2', 'Steel', 'Custom')
 
-        self.model.add_member_dist_load('M1', 'Fy', -1, -1, case='D')
+        self.beam_model.add_member_dist_load('M1', 'Fy', -1, -1, case='D')
 
-        self.model.add_load_combo('1.4D', {'D': 1.4})
+        self.beam_model.add_load_combo('1.4D', {'D': 1.4})
 
-        self.model.analyze_linear()
+        self.beam_model.analyze_linear()
 
         # Create the Renderer instance
-        self.renderer = Renderer(self.model)
+        self.renderer = Renderer(self.beam_model)
 
         # Set the renderer window to render offscreen
         self.renderer.window.SetOffScreenRendering(1)
@@ -130,38 +130,14 @@ class TestRenderer(unittest.TestCase):
         self.assertIsInstance(result, Image)
 
     def test_screenshot_bytesio(self):
-        
-        # Mock the render_model method
-        # self.renderer.render_model = MagicMock(return_value=self.renderer.window)
-
-        # Mock the vtkWindowToImageFilter and vtkPNGWriter
-        # vtk.vtkWindowToImageFilter = MagicMock()
-        # vtk.vtkPNGWriter = MagicMock()
 
         # Call the screenshot method
         result = self.renderer.screenshot(filepath='BytesIO', interact=False, reset_camera=True)
-
-        # Assert that the render_model method was called
-        # self.renderer.render_model.assert_called_once_with(False, True)
 
         # Assert that the result is an instance of BytesIO
         self.assertIsInstance(result, BytesIO)
 
     def test_screenshot_file(self):
-        
-        # Mock the render_model method
-        # self.renderer.render_model = MagicMock(return_value=self.renderer.window)
-
-        # Mock the vtkWindowToImageFilter and vtkPNGWriter
-        # vtk.vtkWindowToImageFilter = MagicMock()
-        # vtk.vtkPNGWriter = MagicMock()
 
         # Call the screenshot method
         self.renderer.screenshot(filepath='test.png', interact=False, reset_camera=True)
-
-        # Assert that the render_model method was called
-        # self.renderer.render_model.assert_called_once_with(False, True)
-
-        # Assert that the vtkPNGWriter's SetFileName and Write methods were called
-        # vtk.vtkPNGWriter().SetFileName.assert_called_once_with('test.png')
-        # vtk.vtkPNGWriter().Write.assert_called_once_with()
