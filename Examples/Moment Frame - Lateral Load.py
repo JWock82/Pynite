@@ -48,13 +48,13 @@ MomentFrame.def_support('N4', support_DX=True, support_DY=True, support_DZ=True,
 # Add self weight dead loads to the frame
 # Note that we could leave 'x1' and 'x2' undefined below and it would default to the full member length
 # Note also that the direction uses lowercase notations to indicate member local coordinate systems
-MomentFrame.add_member_dist_load('Beam', Direction='Fy', w1=-0.024/12, w2=-0.024/12, x1=0, x2=15*12, case='D')
-MomentFrame.add_member_dist_load('Col1', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
-MomentFrame.add_member_dist_load('Col2', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
+MomentFrame.add_member_dist_load('Beam', direction='Fy', w1=-0.024/12, w2=-0.024/12, x1=0, x2=15*12, case='D')
+MomentFrame.add_member_dist_load('Col1', direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
+MomentFrame.add_member_dist_load('Col2', direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
 
 # Add a nodal wind load of 10 kips at the left side of the frame
 # Note that the direction uses uppercase notation to indicate model global coordinate system
-MomentFrame.add_node_load('N2', Direction='FX', P=10, case='W')
+MomentFrame.add_node_load('N2', direction='FX', P=10, case='W')
 
 # Create two load combinations
 MomentFrame.add_load_combo('1.2D+1.0W', factors={'D':1.2, 'W':1.0})
