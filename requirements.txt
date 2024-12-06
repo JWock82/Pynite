@@ -1,3 +1,10 @@
 # Minimum requirements
 numpy
+scipy
 prettytable
+pyvista[all,trame]
+matplotlib
+
+# Required for jupyter interaction
+trame_jupyter_extension
+ipywidgets

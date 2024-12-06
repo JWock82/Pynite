@@ -5,7 +5,7 @@
 
 # Import 'FEModel3D' and 'Visualization' from 'PyNite'
 from PyNite import FEModel3D
-from PyNite import Visualization
+from PyNite.Visualization import Renderer
 
 # Create a new model
 frame = FEModel3D()
@@ -25,6 +25,7 @@ J = 100
 Iy = 200
 Iz = 1000
 A = 100
+frame.add_section('MySection', A, Iy, Iz, J)
 
 # Define a material
 E = 30000
@@ -33,9 +34,9 @@ nu = 0.3
 rho = 2.836e-4
 frame.add_material('Steel', E, G, nu, rho)
 
-frame.add_member('M12', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
-frame.add_member('M23', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
-frame.add_member('M34', 'N3', 'N4', 'Steel', Iy, Iz, J, A)
+frame.add_member('M12', 'N1', 'N2', 'Steel', 'MySection')
+frame.add_member('M23', 'N2', 'N3', 'Steel', 'MySection')
+frame.add_member('M34', 'N3', 'N4', 'Steel', 'MySection')
 
 # Add nodal loads
 frame.add_node_load('N2', 'FY', -5)
@@ -48,5 +49,11 @@ frame.analyze()
 print('Calculated results: ', frame.nodes['N2'].DY, frame.nodes['N3'].DZ)
 print('Expected results: ', -0.063, 1.825)
 
-# Render the model for viewing
-Visualization.render_model(frame, annotation_size=5, deformed_shape=True, deformed_scale=40, render_loads=True)
+# Render the deformed shape
+rndr = Renderer(frame)
+rndr.annotation_size = 5
+rndr.render_loads = True
+rndr.deformed_shape = True
+rndr.deformed_scale = 40
+rndr.render_loads = True
+rndr.render_model()

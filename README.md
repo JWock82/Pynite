@@ -5,6 +5,7 @@
 </div>
 
 ![Build Status](https://github.com/JWock82/PyNite/actions/workflows/build-and-test.yml/badge.svg)
+[![codecov](https://codecov.io/gh/JWock82/Pynite/branch/main/graph/badge.svg?token=ZH18US3A7P)](https://codecov.io/gh/JWock82/Pynite)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/PyNite">
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/PyNite)
@@ -61,7 +62,11 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v0.0.97 (in progress)
+v0.0.98
+* Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
+* Improvements to spring rendering in `pyvista`. Up until this point spring elements were being rendered as lines. They now render as zigzag lines in `pyvista`. There is still more work for improvement on spring rendering, but this is a good start.
+
+v0.0.97
 * Fixed physical member load and deflection diagrams. Physical members are a newer feature. Member internal results were being reported correctly, but the diagrams for these members had not been revised to plot correctly. The old method for plain members was still being used. Physical members were not considering that a physical member was made from multiple submembers, and results for each span needed to be combined to get the whole plot.
 * Switched some commonly used python libraries to be installed by default with `Pynite`. Most `Pynite` users will want these libraries installed for full-featured use of `Pynite`. These libraries help with `Pynite` visualizations, plotting, the sparse solver, and `Jupyter Lab` functionality. This is just easier for new python users. I was getting a lot of questions about how to set up libraries, and this takes the guesswork away. This is part of `Pynite's` objective to stay easy to use.
 

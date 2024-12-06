@@ -18,6 +18,7 @@ Iy = 36.6 # in^4
 Iz = 171 # in^4
 J = 0.58 # in^4
 A = 9.71 # in^2
+MomentFrame.add_section('W10x33', A, Iy, Iz, J)
 
 # Define a material
 E = 29000 # ksi
@@ -27,17 +28,18 @@ rho = 0.490/12**3  # Density (kci)
 MomentFrame.add_material('Steel', E, G, nu, rho)
 
 # Define the columns
-MomentFrame.add_member('Col1', 'N1', 'N2', 'Steel', Iy, Iz, J, A)
-MomentFrame.add_member('Col2', 'N4', 'N3', 'Steel', Iy, Iz, J, A)
+MomentFrame.add_member('Col1', 'N1', 'N2', 'Steel', 'W10x33')
+MomentFrame.add_member('Col2', 'N4', 'N3', 'Steel', 'W10x33')
 
 # Define beam properties (Use W8x24)
 Iy = 18.3 # in^4
 Iz = 82.7 # in^4
 J = 0.346 # in^4
 A = 7.08 # in^2
+MomentFrame.add_section('W8x24', A, Iy, Iz, J)
 
 # Define the beams
-MomentFrame.add_member('Beam', 'N2', 'N3', 'Steel', Iy, Iz, J, A)
+MomentFrame.add_member('Beam', 'N2', 'N3', 'Steel', 'W8x24')
 
 # Provide fixed supports at the bases of the columns
 MomentFrame.def_support('N1', support_DX=True, support_DY=True, support_DZ=True, support_RX=True, support_RY=True, support_RZ=True)
@@ -46,13 +48,13 @@ MomentFrame.def_support('N4', support_DX=True, support_DY=True, support_DZ=True,
 # Add self weight dead loads to the frame
 # Note that we could leave 'x1' and 'x2' undefined below and it would default to the full member length
 # Note also that the direction uses lowercase notations to indicate member local coordinate systems
-MomentFrame.add_member_dist_load('Beam', Direction='Fy', w1=-0.024/12, w2=-0.024/12, x1=0, x2=15*12, case='D')
-MomentFrame.add_member_dist_load('Col1', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
-MomentFrame.add_member_dist_load('Col2', Direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
+MomentFrame.add_member_dist_load('Beam', direction='Fy', w1=-0.024/12, w2=-0.024/12, x1=0, x2=15*12, case='D')
+MomentFrame.add_member_dist_load('Col1', direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
+MomentFrame.add_member_dist_load('Col2', direction='Fx', w1=-0.033/12, w2=-0.033/12, x1=0, x2=12*12, case='D')
 
 # Add a nodal wind load of 10 kips at the left side of the frame
 # Note that the direction uses uppercase notation to indicate model global coordinate system
-MomentFrame.add_node_load('N2', Direction='FX', P=10, case='W')
+MomentFrame.add_node_load('N2', direction='FX', P=10, case='W')
 
 # Create two load combinations
 MomentFrame.add_load_combo('1.2D+1.0W', factors={'D':1.2, 'W':1.0})
@@ -69,8 +71,13 @@ MomentFrame.analyze_PDelta(log=True)
 # MomentFrame.analyze_linear(log=True)
 
 # Display the deformed shape of the structure magnified 50 times with the text height 5 model units (inches) high
-from PyNite import Visualization
-Visualization.render_model(MomentFrame, annotation_size=5, deformed_shape=True, deformed_scale=50, combo_name='1.2D+1.0W')
+from PyNite.Visualization import Renderer
+rndr = Renderer(MomentFrame)
+rndr.annotation_size = 5
+rndr.deformed_shape = True
+rndr.deformed_scale = 50
+rndr.combo_name = '1.2D+1.0W'
+rndr.render_model(MomentFrame)
 
 # Plot the moment diagram for the beam
 MomentFrame.members['Beam'].plot_moment('Mz', combo_name='1.2D+1.0W')
