@@ -12,9 +12,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -26,6 +23,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
     - name: Build and publish
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYNITE }}
       run: |
         python setup.py sdist bdist_wheel
         twine upload --verbose dist/*
