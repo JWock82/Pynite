@@ -25,7 +25,7 @@ jobs:
     - name: Build and publish
       env:
         TWINE_USERNAME: "__token__"
-        TWINE_PASSWORD: ${{ secrets.PYNITE }}
+        TWINE_PASSWORD: ${{ secrets.PYNITE_PYPI_API_TOKEN }}
       run: |
         python setup.py sdist bdist_wheel
         twine upload --verbose dist/*
