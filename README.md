@@ -62,7 +62,7 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v0.0.98
+v0.0.98-100
 * Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
 * Improvements to spring rendering in `pyvista`. Up until this point spring elements were being rendered as lines. They now render as zigzag lines in `pyvista`. There is still more work for improvement on spring rendering, but this is a good start.
 
