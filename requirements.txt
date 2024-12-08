@@ -8,3 +8,6 @@ matplotlib
 # Required for jupyter interaction
 trame_jupyter_extension
 ipywidgets
+
+# Development
+pytest
