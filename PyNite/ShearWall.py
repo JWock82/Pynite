@@ -1,5 +1,6 @@
 from math import isclose
 from numpy import average
+import io
 
 from PyNite.FEModel3D import FEModel3D
 from prettytable import PrettyTable
@@ -563,21 +564,6 @@ class ShearWall():
         print('| Wall Pier Results |')
         print('+-------------------+')
         print(table)
-
-    def report(self):
-
-        from reporting import render_report, convert_image_to_html
-
-        image_stream = io.BytesIO()
-        self.draw_piers(show=False).savefig(image_stream, format='png')
-        image_data = image_stream.getvalue()
-
-        pier_sketch_html = convert_image_to_html(image_data)
-
-        kwargs = {}
-        kwargs['pier_sketch'] = pier_sketch_html
-
-        return render_report('report_SRMSW.html', kwargs)
 
 #%%
 class Pier():
