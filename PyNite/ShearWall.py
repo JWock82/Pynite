@@ -26,6 +26,7 @@ class ShearWall():
         self._axials = []
         self._materials = []
         self.piers = {}
+        self.coupling_beams = {}
     
     @property
     def L(self):
@@ -267,8 +268,10 @@ class ShearWall():
                     if story == story_name:
                         self.model.add_node_load(node.name, 'FY', -force/num_nodes, case)
 
-        # Create a dictionary of piers in the wall
+        # Populate dictionaries of piers and coupling beams for the wall
         self._identify_piers()
+        self._identify_coupling_beams()
+
 
     def _identify_piers(self):
         
@@ -424,6 +427,162 @@ class ShearWall():
                     and round(Y_avg, 10) <= round (pier.y + pier.height, 10)):
                     pier.plates.append(plate)
     
+    def _identify_coupling_beams(self):
+        
+        # Reset all coupling beams in the wall
+        self.coupling_beams = {}
+
+        # Create a list of x and y coordinates that represent the edges of the wall
+        x_vals = [0, self._L]
+        y_vals = [0, self._H]
+
+        # Add the edges of the openings to the lists
+        for opng in self._openings:
+            x_vals.append(opng[1])
+            x_vals.append(opng[1] + opng[3])
+            y_vals.append(opng[2])
+            y_vals.append(opng[2] + opng[4])
+        
+        # Sort the lists (ascending)
+        x_vals = sorted(x_vals)
+        y_vals = sorted(y_vals)
+
+        # Remove duplicate (or near duplicate) values
+        unique_list = []
+        for i in range(len(x_vals) - 1):
+            # Only keep the value at `i` if it's not a duplicate or near duplicate of the next value
+            if not isclose(x_vals[i], x_vals[i+1]):
+                unique_list.append(x_vals[i])
+        unique_list.append(x_vals[-1])  # The last value will always be a keeper
+        x_vals = unique_list
+
+        unique_list = []
+        for i in range(len(y_vals) - 1):
+            # Only keep the value at `i` if it's not a duplicate or near duplicate of the next value
+            if not isclose(y_vals[i], y_vals[i+1]):
+                unique_list.append(y_vals[i])
+        unique_list.append(y_vals[-1])  # The last value will always be a keeper
+        y_vals = unique_list
+
+        # Divide the wall into horizontal strips using the bottom and top edges of each opening as strip boundaries
+        self.coupling_beams = {}
+        for i in range(len(y_vals) - 1):
+            height = y_vals[i+1] - y_vals[i]
+            length = self._L
+            y = y_vals[i]
+            x = 0
+            self.coupling_beams['B' + str(i+1)] = CouplingBeam('B' + str(i+1), x, y, length, height)
+
+        # Divide the strips further into rectanglular beams using the left and right of each opening as beam boundaries
+        new_beams = {}
+        beam_count = 1
+        for beam in self.coupling_beams.values():
+            for i in range(len(x_vals) - 1):
+                height = beam.height
+                length = x_vals[i+1] - x_vals[i]
+                y = beam.y
+                x = x_vals[i]
+                new_beams['B' + str(beam_count)] = CouplingBeam('B' + str(beam_count), x, y, length, height)
+                beam_count += 1
+        self.coupling_beams = new_beams
+
+        # Delete any beams that fall within an opening
+        delete_list = []
+        for beam in self.coupling_beams.values():
+           
+           # Check if this beam is inside any of the openings
+           for opng in self._openings:
+               
+               if (round(beam.x, 10) >= round(opng[1], 10)
+                   and round(beam.x + beam.length, 10) <= round(opng[1] + opng[3], 10)
+                   and round(beam.y, 10) >= round(opng[2], 10)
+                   and round(beam.y + beam.height, 10) <= round(opng[2] + opng[4], 10)):
+                    delete_list.append(beam.name)
+                    break
+        
+        for beam in delete_list:
+            del self.coupling_beams[beam]
+        
+        # Working vertically (bottom to top), rejoin any rectangles that share a horizontal edge to form a larger rectangle
+        found_duplicate = True
+        while found_duplicate == True:
+
+            found_duplicate = False
+            beams_copy = self.coupling_beams.copy()
+
+            for key1, beam1 in beams_copy.items():
+
+                for key2, beam2 in beams_copy.items():
+
+                    # Check for beams that need to be merged
+                    if (key1 != key2
+                        and isclose(beam1.x, beam2.x)
+                        and isclose(beam1.y + beam1.height, beam2.y)
+                        and isclose(beam1.length, beam2.length)):
+
+                        # Merge the beams in the `self.coupling_beams` dictionary
+                        self.coupling_beams[key1].height = beam1.height + beam2.height
+
+                        # Delete the 2nd beam from the `self.coupling_beams` dictionary
+                        del self.coupling_beams[key2]
+
+                        # Since the `self.coupling_beams` dictionary has changed we need `beams_copy` to get updated. Flag that we found a duplicate and break the loops.
+                        found_duplicate = True
+                        break
+
+                # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.coupling_beams`
+                if found_duplicate == True:
+                    break
+
+        # Working horizontally (left to right), rejoin any rectangles that share a vertical edge to form a larger rectangle
+        found_duplicate = True
+        while found_duplicate == True:
+            
+            found_duplicate = False
+            beams_copy = self.coupling_beams.copy()
+
+            for key1, beam1 in beams_copy.items():
+
+                for key2, beam2 in beams_copy.items():
+
+                    if (key1 != key2
+                        and isclose(beam1.y, beam2.y)
+                        and isclose(beam1.x + beam1.length, beam2.x)
+                        and isclose(beam1.height, beam2.height)):
+
+                        # Merge the beams in the `self.coupling_beams` dictionary
+                        self.coupling_beams[key1].length = beam1.length + beam2.length
+
+                        # Delete the 2nd beam from the `self.coupling_beams` dictionary
+                        del self.coupling_beams[key2]
+
+                        # Since the `self.couping_beams` dictionary has changed we need `beams_copy` to get updated. Flag that we found a duplicate and break the loops.
+                        found_duplicate = True
+                        break
+                
+                # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.coupling_beams`
+                if found_duplicate == True:
+                    break
+
+        # Generate a list of new keys in ascending order
+        new_keys = [f'B{i + 1}' for i in range(len(self.coupling_beams))]
+
+        # Replace the old dicionary with one that has updated keys
+        self.coupling_beams = dict(zip(new_keys, self.coupling_beams.values()))
+        for key, beam in self.coupling_beams.items():
+            beam.name = key
+        
+        # Assign plates to each beam
+        for plate in self.model.quads.values():
+            Y_avg = (plate.i_node.Y + plate.m_node.Y)/2
+            X_avg = (plate.i_node.X + plate.m_node.X)/2
+            for beam in self.coupling_beams.values():
+                if (round(X_avg, 10) >= round(beam.x, 10)
+                    and round(X_avg, 10) <= round(beam.x + beam.length, 10)
+                    and round(Y_avg, 10) >= round(beam.y, 10)
+                    and round(Y_avg, 10) <= round (beam.y + beam.height, 10)):
+                    beam.plates.append(plate)
+
     def draw_piers(self, show=False):
         
         fig, ax = plt.subplots()
@@ -432,6 +591,25 @@ class ShearWall():
 
         for pier in self.piers.values():
             self._add_rectangle(ax, pier.x, pier.y, pier.width, pier.height, pier.name)
+        
+        # Adjust the aspect ratio of the plot
+        ax.set_aspect('equal')
+
+        # Slim down the margins
+        plt.tight_layout()
+
+        # show plot or return it
+        if show == True: plt.show()
+        else: return plt
+    
+    def draw_coupling_beams(self, show=False):
+        
+        fig, ax = plt.subplots()
+
+        ax.patch.set_facecolor((0.8, 0.8, 0.8))
+
+        for beam in self.coupling_beams.values():
+            self._add_rectangle(ax, beam.x, beam.y, beam.length, beam.height, beam.name)
         
         # Adjust the aspect ratio of the plot
         ax.set_aspect('equal')
@@ -564,6 +742,27 @@ class ShearWall():
         print('| Wall Pier Results |')
         print('+-------------------+')
         print(table)
+    
+    def print_coupling_beams(self, combo_name='Combo 1'):
+        """Tabulates and prints coupling beam results for the shear wall
+        """
+
+        # Create a PrettyTable object
+        table = PrettyTable()
+
+        # Define the headers
+        table.field_names = ["ID", "Length", "Height", "M/(VH)", "V", "M", "P"]
+
+        # Add rows to the table
+        for beam_id, beam in self.coupling_beams.items():
+            P, M, V, M_VL = beam.sum_forces(combo_name)
+            table.add_row([beam.name, beam.length, beam.height, M_VL, V, M, P])
+
+        # Print the table
+        print('+----------------------------+')
+        print('| Wall Coupling Beam Results |')
+        print('+----------------------------+')
+        print(table)
 
 #%%
 class Pier():
@@ -614,3 +813,57 @@ class Pier():
 
         # Return the summed forces and shear span ratio
         return P, M, V, M_VL
+
+#%%
+class CouplingBeam():
+    
+    def __init__(self, name, x, y, length, height):
+        self.name = name
+        self.x = x  # The location of the left side of the coupling beam
+        self.y = y  # The height to the bottom of the coupling beam
+        self.length = length
+        self.height = height
+        self.plates = []
+    
+    def sum_forces(self, combo_name='Combo 1'):
+
+        # Initialize plate forces to zero
+        P, M, V = 0, 0, 0
+
+        # Step through each plate in the coupling beam
+        for plate in self.plates:
+
+            # Determine if this plate is at the left edge of the coupling beam
+            if isclose(plate.i_node.X, self.x):
+                
+                # Check if this is a wall flange plate or a wall web plate
+                if isclose(plate.i_node.X, plate.j_node.X):
+
+                    # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
+                    pass
+                
+                else:
+
+                    # Find and sum the axial forces in this plate
+                    Pi = plate.F(combo_name)[0][0]
+                    Pn = plate.F(combo_name)[18][0]
+                    P += -Pi - Pn
+
+                    # Find and sum the moments about the coupling beam's center in this plate
+                    xi = plate.i_node.Y - (self.y + self.height/2)
+                    xn = plate.n_node.Y - (self.y + self.height/2)
+                    Mi = plate.F(combo_name)[0][0]*xi
+                    Mn = plate.F(combo_name)[18][0]*xn
+                    M += -Mi - Mn
+
+                    # Find and sum the shear forces in this plate
+                    Vi = -plate.F(combo_name)[1][0]
+                    Vn = -plate.F(combo_name)[19][0]
+
+                    V += -Vi - Vn
+        
+        # Calculate the shear span ratio
+        M_VH = M/(V*self.height)
+
+        # Return the summed forces and shear span ratio
+        return P, M, V, M_VH
