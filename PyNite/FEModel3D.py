@@ -1099,8 +1099,7 @@ class FEModel3D():
 
         :param node_name: The name of the node where the load is being applied.
         :type node_name: str
-        :param direction: The global direction the load is being applied in. Forces are `'FX'`,
-                          `'FY'`, and `'FZ'`. Moments are `'MX'`, `'MY'`, and `'MZ'`.
+        :param direction: The global direction the load is being applied in. Forces are `'FX'`, `'FY'`, and `'FZ'`. Moments are `'MX'`, `'MY'`, and `'MZ'`.
         :type direction: str
         :param P: The numeric value (magnitude) of the load.
         :type P: float
