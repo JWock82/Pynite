@@ -13,3 +13,11 @@ If you would like to contribute to PyNite, please review the following guideline
 5. Provide all pieces necessary in your pull request.
 6. Follow the coding guidelines above. This will make review go much faster.
 7. Pull requests for any active repository `Projects` will usually be given first priorty.
+
+## Testing
+
+Run tests using `pytest`.
+
+```bash
+pytest
+```
