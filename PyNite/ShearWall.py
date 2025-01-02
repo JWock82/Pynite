@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 class ShearWall():
+    """Creates a new shear wall model that allows for modeling of complex shear walls. Shear wall models are 2D (aside from flanges) standalone models. You can add openings and flanges (wall returns). Diaphragm levels can be defined in order to apply shear forces along the length of the wall. Diaphgrams can be full or partial length. Supports can be applied at any level in the shear wall. Supports can also be full or partial length. A `ky_mod` factor is built in to account for cracking. Shear walls can automatically detect shear wall piers and coupling beams, and sum internal forces in those components.
+    """
 
     def __init__(self):
 
@@ -467,7 +469,7 @@ class ShearWall():
         # Divide the wall into horizontal strips using the bottom and top edges of each opening as strip boundaries
         self.coupling_beams = {}
         for i in range(len(y_vals) - 1):
-            height = y_vals[i+1] - y_vals[i]
+            height = y_vals[i + 1] - y_vals[i]
             length = self._L
             y = y_vals[i]
             x = 0
@@ -563,6 +565,15 @@ class ShearWall():
                 # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.coupling_beams`
                 if found_duplicate == True:
                     break
+        
+        # Check for any coupling beams at the bottom of the wall. There should not be any. Delete them as they are found
+        delete_list = []
+        for beam in self.coupling_beams.values():
+            if beam.y == 0:
+                delete_list.append(beam.name)
+        
+        for beam in delete_list:
+            del self.coupling_beams[beam]
 
         # Generate a list of new keys in ascending order
         new_keys = [f'B{i + 1}' for i in range(len(self.coupling_beams))]
@@ -608,8 +619,15 @@ class ShearWall():
 
         ax.patch.set_facecolor((0.8, 0.8, 0.8))
 
+        # Draw the overall Wall
+        self._add_rectangle(ax, 0, 0, self.L, self.H, "", 'white')
+
+        # Draw the openings
+        for opng in self._openings:
+            self._add_rectangle(ax, opng[1], opng[2], opng[3], opng[4], '', 'grey')
+
         for beam in self.coupling_beams.values():
-            self._add_rectangle(ax, beam.x, beam.y, beam.length, beam.height, beam.name)
+            self._add_rectangle(ax, beam.x, beam.y, beam.length, beam.height, beam.name, 'white')
         
         # Adjust the aspect ratio of the plot
         ax.set_aspect('equal')
@@ -621,10 +639,12 @@ class ShearWall():
         if show == True: plt.show()
         else: return plt
 
-    def _add_rectangle(self, ax, x, y, w, h, name):
+    def _add_rectangle(self, ax, x, y, w, h, name, color='white'):
+        """Adds a rectangle to the pyplot
+        """
 
         # create rectangle
-        rect = Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='white')
+        rect = Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor=color)
         ax.add_patch(rect)
 
         # add name to center of rectangle
