@@ -7,7 +7,6 @@
 
 # Import a few libraries from PyNite that we'll need
 from PyNite.FEModel3D import FEModel3D
-from PyNite.Mesh import RectangleMesh, RectOpening
 from math import isclose
 
 # Create a finite element model
