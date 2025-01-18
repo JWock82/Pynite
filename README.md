@@ -31,9 +31,10 @@ For a more detailed discussion on installation options and dependencies see http
 * Spring supports: two-way and one-way.
 * Quadrilateral plate elements (DKMQ formulation).
 * Rectangular plate elements (12-term polynomial formulation).
-* Basic meshing algorithms for some common shapes and for openings in rectangular walls.
+* Basic meshing algorithms for some common shapes and for openings in rectangular meshes.
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
+* Advanced tools for modeling and analyzing complex shear walls.
 * Generates PDF reports for models and model results.
 
 # Project Objectives
@@ -62,6 +63,10 @@ Here's a list of projects that use PyNite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+*v1.0?
+* Currently working toward 1.0 in the next few releases. Not sure if this next release will be it, but it is nearly ready.
+* Added a new `ShearWall` class that assists you in constructing and analyzing shear walls. This tool automatically detects piers and coupling beams, and finds the forces inside them and calculates their ascpect ratios, which can be handy for seismic design. It reports stiffness of multi-story shear walls at each story to help with rigid diaphragm analysis. It allows for modeling walls with openings, steps, and partial depth diaphragm loading.
+
 v0.0.98-100
 * Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
 * Improvements to spring rendering in `pyvista`. Up until this point spring elements were being rendered as lines. They now render as zigzag lines in `pyvista`. There is still more work for improvement on spring rendering, but this is a good start.
