@@ -450,7 +450,7 @@ class FEModel3D():
 
         #Lookup node names and safely handle exceptions
         try:
-            pn_nodes = [self.nodes[node_name] for node_name in (i_node, j_node)]
+            pn_nodes = [self.nodes[node_name] for node_name in (i_node, j_node, m_node, n_node)]
         except KeyError as e:
             raise NameError(f"Node '{e.args[0]}' does not exist in the model")
         
@@ -516,7 +516,7 @@ class FEModel3D():
 
         #Lookup node names and safely handle exceptions
         try:
-            pn_nodes = [self.nodes[node_name] for node_name in (i_node, j_node)]
+            pn_nodes = [self.nodes[node_name] for node_name in (i_node, j_node, m_node, n_node)]
         except KeyError as e:
             raise NameError(f"Node '{e.args[0]}' does not exist in the model")
                 
