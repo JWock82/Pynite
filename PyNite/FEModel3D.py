@@ -93,7 +93,7 @@ class FEModel3D():
         # Remove duplicates and return the list (sorted ascending)
         return sorted(list(dict.fromkeys(cases)))
 
-    def add_node(self, name, X, Y, Z):
+    def add_node(self, name:str, X:float, Y:float, Z:float):
         """Adds a new node to the model.
 
         :param name: A unique user-defined name for the node. If set to None or "" a name will be
@@ -125,7 +125,7 @@ class FEModel3D():
         # Create a new node
         new_node = Node3D(name, X, Y, Z)
         
-        # Add the new node to the list
+        # Add the new node to the model
         self.nodes[name] = new_node
         
         # Flag the model as unsolved
@@ -134,7 +134,7 @@ class FEModel3D():
         #Return the node name
         return name
 
-    def add_auxnode(self, name, X, Y, Z):
+    def add_auxnode(self, name:str, X:float, Y:float, Z:float):
         """Adds a new auxiliary node to the model. Together with a member's `i` and `j` nodes, an
         auxiliary node defines the plane in which the member's local z-axis lies, and the side of
         the member the z-axis points toward. If no auxiliary node is specified for a member, PyNite
@@ -169,7 +169,7 @@ class FEModel3D():
         # Create a new node
         new_node = Node3D(name, X, Y, Z)
         
-        # Add the new node to the list
+        # Add the new node to the model
         self.aux_nodes[name] = new_node
 
         # Flag the model as unsolved
@@ -178,7 +178,7 @@ class FEModel3D():
         #Return the node name
         return name 
 
-    def add_material(self, name, E, G, nu, rho, fy=None):
+    def add_material(self, name: str, E:float, G:float, nu:float, rho: float, fy:float | None = None):
         """Adds a new material to the model.
 
         :param name: A unique user-defined name for the material.
@@ -209,11 +209,14 @@ class FEModel3D():
         # Create a new material
         new_material = Material(self, name, E, G, nu, rho, fy)
         
-        # Add the new material to the list
+        # Add the new material to the model
         self.materials[name] = new_material
         
         # Flag the model as unsolved
         self.solution = None
+
+        #Return the materal name
+        return name
 
     def add_section(self, name:str, A:float, Iy:float, Iz:float, J:float):
         """Adds a cross-section to the model.
@@ -232,14 +235,24 @@ class FEModel3D():
         :type J: float
         """
 
-        # Check if the section name has already been used
-        if name not in self.sections:
-            # Store the section in the `Sections` dictionary
-            self.sections[name] = Section(self, name, A, Iy, Iz, J)
+        # Name the section or check it doesn't already exist
+        if name:
+            if name in self.sections:
+                raise NameError(f"Section name '{name}' already exists")
         else:
-            # Stop execution and notify the user that the section name is already being used
-            raise Exception('Cross-section name ' + name + ' already exists in the model.')
+            # As a guess, start with the length of the dictionary
+            name = "SC" + str(len(self.sections))
+            count = 1
+            while name in self.sections: 
+                name = "SC" + str(len(self.sections) + count)
+                count += 1
 
+        # Add the new section to the model
+        self.sections[name] = Section(self, name, A, Iy, Iz, J)
+
+        #Return the section name
+        return name
+    
     def add_steel_section(self, name:str, A:float, Iy:float, Iz:float, J:float,
                            Zy:float, Zz:float, material_name:str):
         """Adds a cross-section to the model.
@@ -264,15 +277,25 @@ class FEModel3D():
         :type material_name: str
         """
 
-        # Check if the section name has already been used
-        if name not in self.sections:
-            # Store the section in the `Sections` dictionary
-            self.sections[name] = SteelSection(self, name, A, Iy, Iz, J, Zy, Zz, material_name)
+        # Name the section or check it doesn't already exist
+        if name:
+            if name in self.sections:
+                raise NameError(f"Section name '{name}' already exists")
         else:
-            # Stop execution and notify the user that the section name is already being used
-            raise Exception('Cross-section name ' + name + ' already exists in the model.')
-        
-    def add_spring(self, name, i_node, j_node, ks, tension_only=False, comp_only=False):
+            # As a guess, start with the length of the dictionary
+            name = "SC" + str(len(self.sections))
+            count = 1
+            while name in self.sections: 
+                name = "SC" + str(len(self.sections) + count)
+                count += 1
+
+        # Add the new section to the model
+        self.sections[name] = SteelSection(self, name, A, Iy, Iz, J, Zy, Zz, material_name)
+
+        #Return the section name
+        return name
+
+    def add_spring(self, name:str, i_node:str, j_node:str, ks:float, tension_only: bool=False, comp_only: bool=False):
         """Adds a new spring to the model.
 
         :param name: A unique user-defined name for the member. If None or "", a name will be
@@ -305,12 +328,18 @@ class FEModel3D():
                 name = "S" + str(len(self.springs) + count)
                 count += 1
                 
+        #Lookup node names and safely handle exceptions
+        try:
+            pn_nodes = (self.nodes[node_name] for node_name in (i_node, j_node))
+        except KeyError as e:
+            raise NameError(f"Node '{e.args[0]}' does not exist in the model")
+
         # Create a new spring
-        new_spring = Spring3D(name, self.nodes[i_node], self.nodes[j_node],
+        new_spring = Spring3D(name, pn_nodes[0], pn_nodes[1],
                               ks, self.load_combos, tension_only=tension_only,
                               comp_only=comp_only)
         
-        # Add the new spring to the list
+        # Add the new spring to the model
         self.springs[name] = new_spring
         
         # Flag the model as unsolved
@@ -319,7 +348,8 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name, i_node, j_node, material_name, section_name, aux_node=None, tension_only=False, comp_only=False):
+    def add_member(self, name:str, i_node:str, j_node:str, material_name:str, section_name:str,
+                    aux_node: str | None = None, tension_only: bool = False, comp_only:bool = False):
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -353,12 +383,18 @@ class FEModel3D():
             while name in self.members: 
                 name = "M" + str(len(self.members)+count)
                 count += 1
-                
+
+        #Lookup node names and safely handle exceptions
+        try:
+            pn_nodes = (self.nodes[node_name] for node_name in (i_node, j_node))
+        except KeyError as e:
+            raise NameError(f"Node '{e.args[0]}' does not exist in the model")
+                        
         # Create a new member
         if aux_node is not None: aux_node = self.aux_nodes[aux_node]
-        new_member = PhysMember(self, name, self.nodes[i_node], self.nodes[j_node], material_name, section_name, aux_node=aux_node, tension_only=tension_only, comp_only=comp_only)
+        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, aux_node=aux_node, tension_only=tension_only, comp_only=comp_only)
         
-        # Add the new member to the list
+        # Add the new member to the model
         self.members[name] = new_member
         
         # Flag the model as unsolved
@@ -367,7 +403,8 @@ class FEModel3D():
         # Return the member name
         return name
 
-    def add_plate(self, name, i_node, j_node, m_node, n_node, t, material_name, kx_mod=1.0, ky_mod=1.0):
+    def add_plate(self, name:str, i_node:str, j_node:str, m_node:str, n_node:str,
+                   t:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0):
         """Adds a new rectangular plate to the model. The plate formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on a 12-term
         polynomial formulation. This element must be rectangular, and must not be used where a
@@ -410,12 +447,18 @@ class FEModel3D():
             while name in self.plates: 
                 name = "P" + str(len(self.plates)+count)
                 count += 1
+
+        #Lookup node names and safely handle exceptions
+        try:
+            pn_nodes = (self.nodes[node_name] for node_name in (i_node, j_node, m_node, n_node))
+        except KeyError as e:
+            raise NameError(f"Node '{e.args[0]}' does not exist in the model")
         
         # Create a new plate
-        new_plate = Plate3D(name, self.nodes[i_node], self.nodes[j_node], self.nodes[m_node],
-                           self.nodes[n_node], t, material_name, self, kx_mod, ky_mod)
+        new_plate = Plate3D(name, pn_nodes[0], pn_nodes[1], pn_nodes[2], pn_nodes[3],
+                            t, material_name, self, kx_mod, ky_mod)
         
-        # Add the new plate to the list
+        # Add the new plate to the model
         self.plates[name] = new_plate
 
         # Flag the model as unsolved
@@ -424,7 +467,8 @@ class FEModel3D():
         # Return the plate name
         return name
 
-    def add_quad(self, name, i_node, j_node, m_node, n_node, t, material_name, kx_mod=1.0, ky_mod=1.0):
+    def add_quad(self, name:str, i_node:str, j_node:str, m_node:str, n_node:str,
+                 t:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0):
         """Adds a new quadrilateral to the model. The quad formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on an MITC4
         formulation. This element handles distortion relatively well, and is appropriate for thick
@@ -469,12 +513,18 @@ class FEModel3D():
             while name in self.quads: 
                 name = "Q" + str(len(self.quads) + count)
                 count += 1
-        
+
+        #Lookup node names and safely handle exceptions
+        try:
+            pn_nodes = (self.nodes[node_name] for node_name in (i_node, j_node, m_node, n_node))
+        except KeyError as e:
+            raise NameError(f"Node '{e.args[0]}' does not exist in the model")
+                
         # Create a new member
-        new_quad = Quad3D(name, self.nodes[i_node], self.nodes[j_node], self.nodes[m_node],
-                         self.nodes[n_node], t, material_name, self, kx_mod, ky_mod)
+        new_quad = Quad3D(name, pn_nodes[0], pn_nodes[1], pn_nodes[2], pn_nodes[3],
+                          t, material_name, self, kx_mod, ky_mod)
         
-        # Add the new member to the list
+        # Add the new member to the model
         self.quads[name] = new_quad
 
         # Flag the model as unsolved
@@ -483,7 +533,12 @@ class FEModel3D():
         #Return the quad name
         return name
 
-    def add_rectangle_mesh(self, name, mesh_size, width, height, thickness, material_name, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node=None, start_element = None, element_type='Quad'):
+    def add_rectangle_mesh(self, name:str, mesh_size:float, width:float, height:float,
+                            thickness:float, material_name:str, kx_mod:float = 1.0,
+                            ky_mod:float = 1.0, origin: list | tuple = (0, 0, 0),
+                            plane:str = 'XY', x_control:list | None = None,
+                            y_control: list | None = None, start_node: str | None = None,
+                            start_element:str | None = None, element_type:str = 'Quad'):
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
@@ -551,8 +606,10 @@ class FEModel3D():
         #Return the mesh's name
         return name
     
-    def add_annulus_mesh(self, name, mesh_size, outer_radius, inner_radius, thickness, material_name, kx_mod=1.0, 
-            ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
+    def add_annulus_mesh(self, name:str, mesh_size:float, outer_radius:float, inner_radius:float,
+                         thickness:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0,
+                         origin:list | tuple = (0, 0, 0), axis:str = 'Y',
+                         start_node:str | None = None, start_element:str | None = None):
         """Adds a mesh of quadrilaterals forming an annulus (a donut).
 
         :param name: A unique name for the mesh.
@@ -615,7 +672,11 @@ class FEModel3D():
         #Return the mesh's name
         return name
 
-    def add_frustrum_mesh(self, name, mesh_size, large_radius, small_radius, height, thickness,material_name, kx_mod=1.0, ky_mod=1.0, origin=[0, 0, 0], axis='Y', start_node=None, start_element=None):
+    def add_frustrum_mesh(self, name:str, mesh_size:float, large_radius:float,
+                          small_radius:float, height:float, thickness:float,
+                          material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0,
+                          origin: list | tuple = (0, 0, 0), axis:str = 'Y',
+                          start_node:str | None = None, start_element:str | None = None):
         """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
 
         :param name: A unique name for the mesh.
@@ -677,9 +738,12 @@ class FEModel3D():
         #Return the mesh's name
         return name
     
-    def add_cylinder_mesh(self, name, mesh_size, radius, height, thickness, material_name, kx_mod=1,
-                          ky_mod=1, origin=[0, 0, 0], axis='Y', num_elements=None, start_node=None,
-                          start_element=None, element_type='Quad'):
+    def add_cylinder_mesh(self, name:str, mesh_size:float, radius:float, height:float,
+                          thickness:float, material_name:str, kx_mod:float = 1,
+                          ky_mod:float = 1, origin:list | tuple = (0, 0, 0),
+                          axis:str = 'Y', num_elements:int | None = None,
+                          start_node: str | None = None, start_element:str | None = None,
+                          element_type:str = 'Quad'):
         """Adds a mesh of elements forming a cylinder.
 
         :param name: A unique name for the mesh.
@@ -754,7 +818,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
 
-    def merge_duplicate_nodes(self, tolerance=0.001):
+    def merge_duplicate_nodes(self, tolerance:float = 0.001):
         """Removes duplicate nodes from the model and returns a list of the removed node names.
 
         :param tolerance: The maximum distance between two nodes in order to consider them duplicates. Defaults to 0.001.
@@ -861,7 +925,7 @@ class FEModel3D():
         # Return the list of removed nodes
         return remove_list
 
-    def delete_node(self, node_name):
+    def delete_node(self, node_name:str):
         """Removes a node from the model. All nodal loads associated with the node and elements attached to the node will also be removed.
 
         :param node_name: The name of the node to be removed.
@@ -880,7 +944,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def delete_auxnode(self, auxnode_name):
+    def delete_auxnode(self, auxnode_name:str):
         """Removes an auxiliary node from the model.
 
         :param auxnode_name: The name of the auxiliary node to be removed.
@@ -898,7 +962,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def delete_spring(self, spring_name):
+    def delete_spring(self, spring_name:str):
         """Removes a spring from the model.
 
         :param spring_name: The name of the spring to be removed.
@@ -911,7 +975,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def delete_member(self, member_name):
+    def delete_member(self, member_name:str):
         """Removes a member from the model. All member loads associated with the member will also
            be removed.
 
@@ -926,7 +990,9 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
         
-    def def_support(self, node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False):
+    def def_support(self, node_name:str, support_DX:bool=False, support_DY:bool=False,
+                    support_DZ:bool=False, support_RX:bool=False, support_RY:bool=False,
+                    support_RZ:bool=False):
         """Defines the support conditions at a node. Nodes will default to fully unsupported
            unless specified otherwise.
 
@@ -953,8 +1019,11 @@ class FEModel3D():
         """            
         
         # Get the node to be supported
-        node = self.nodes[node_name]
-                
+        try:
+            node = self.nodes[node_name]
+        except KeyError:
+            raise NameError(f"Node '{node_name}' does not exist in the model")
+                   
         # Set the node's support conditions
         node.support_DX = support_DX
         node.support_DY = support_DY
@@ -966,7 +1035,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def def_support_spring(self, node_name, dof, stiffness, direction=None):
+    def def_support_spring(self, node_name:str, dof:str, stiffness:float, direction:str | None = None):
         """Defines a spring support at a node.
 
         :param node_name: The name of the node to apply the spring support to.
@@ -983,18 +1052,21 @@ class FEModel3D():
         
         if dof in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             if direction in ('+', '-', None):
-                if dof == 'DX':
-                    self.nodes[node_name].spring_DX = [stiffness, direction, True]
-                elif dof == 'DY':
-                    self.nodes[node_name].spring_DY = [stiffness, direction, True]
-                elif dof == 'DZ':
-                    self.nodes[node_name].spring_DZ = [stiffness, direction, True]
-                elif dof == 'RX':
-                    self.nodes[node_name].spring_RX = [stiffness, direction, True]
-                elif dof == 'RY':
-                    self.nodes[node_name].spring_RY = [stiffness, direction, True]
-                elif dof == 'RZ':
-                    self.nodes[node_name].spring_RZ = [stiffness, direction, True]
+                try:
+                    if dof == 'DX':
+                        self.nodes[node_name].spring_DX = [stiffness, direction, True]
+                    elif dof == 'DY':
+                        self.nodes[node_name].spring_DY = [stiffness, direction, True]
+                    elif dof == 'DZ':
+                        self.nodes[node_name].spring_DZ = [stiffness, direction, True]
+                    elif dof == 'RX':
+                        self.nodes[node_name].spring_RX = [stiffness, direction, True]
+                    elif dof == 'RY':
+                        self.nodes[node_name].spring_RY = [stiffness, direction, True]
+                    elif dof == 'RZ':
+                        self.nodes[node_name].spring_RZ = [stiffness, direction, True]
+                except KeyError:
+                    raise NameError(f"Node '{node_name}' does not exist in the model")
             else:
                 raise ValueError('Invalid support spring direction. Specify \'+\', \'-\', or None.')
         else:
@@ -1003,7 +1075,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def def_node_disp(self, node_name, direction, magnitude): 
+    def def_node_disp(self, node_name:str, direction:str, magnitude:float): 
         """Defines a nodal displacement at a node.
 
         :param node_name: The name of the node where the nodal displacement is being applied.
@@ -1018,8 +1090,12 @@ class FEModel3D():
         # Validate the value of direction
         if direction not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             raise ValueError(f"direction must be 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'. {direction} was given.")
+        
         # Get the node
-        node = self.nodes[node_name]
+        try:
+            node = self.nodes[node_name]
+        except KeyError:
+            raise NameError(f"Node '{node_name}' does not exist in the model")
 
         if direction == 'DX':
             node.EnforcedDX = magnitude
@@ -1037,7 +1113,10 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def def_releases(self, member_name, Dxi=False, Dyi=False, Dzi=False, Rxi=False, Ryi=False, Rzi=False, Dxj=False, Dyj=False, Dzj=False, Rxj=False, Ryj=False, Rzj=False):
+    def def_releases(self, member_name:str, Dxi:bool=False, Dyi:bool=False, Dzi:bool=False,
+                     Rxi:bool=False, Ryi:bool=False, Rzi:bool=False,
+                     Dxj:bool=False, Dyj:bool=False, Dzj:bool=False,
+                     Rxj:bool=False, Ryj:bool=False, Rzj:bool=False):
         """Defines member end realeses for a member. All member end releases will default to unreleased unless specified otherwise.
 
         :param member_name: The name of the member to have its releases modified.
@@ -1069,12 +1148,15 @@ class FEModel3D():
         """
         
         # Apply the end releases to the member
-        self.members[member_name].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]     
+        try:
+            self.members[member_name].Releases = [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj] 
+        except KeyError:
+            raise NameError(f"Member '{member_name}' does not exist in the model")
 
         # Flag the model as unsolved
         self.solution = None
 
-    def add_load_combo(self, name, factors, combo_tags=None):
+    def add_load_combo(self, name:str, factors:dict, combo_tags:list | None = None):
         """Adds a load combination to the model.
 
         :param name: A unique name for the load combination (e.g. '1.2D+1.6L+0.5S' or 'Gravity Combo').
@@ -1094,7 +1176,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = None
 
-    def add_node_load(self, node_name, direction, P, case='Case 1'):
+    def add_node_load(self, node_name:str, direction:str, P:float, case:str = 'Case 1'):
         """Adds a nodal load to the model.
 
         :param node_name: The name of the node where the load is being applied.
@@ -1111,13 +1193,17 @@ class FEModel3D():
         # Validate the value of direction
         if direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
             raise ValueError(f"direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {direction} was given.")
+        
         # Add the node load to the model
-        self.nodes[node_name].NodeLoads.append((direction, P, case))
+        try:
+            self.nodes[node_name].NodeLoads.append((direction, P, case))
+        except KeyError:
+            raise NameError(f"Node '{node_name}' does not exist in the model")
 
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_pt_load(self, member_name, direction, P, x, case='Case 1'):
+    def add_member_pt_load(self, member_name:str, direction:str, P:float, x:float, case:str = 'Case 1'):
         """Adds a member point load to the model.
 
         :param member_name: The name of the member the load is being applied to.
@@ -1142,12 +1228,17 @@ class FEModel3D():
             raise ValueError(f"direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {direction} was given.")
         
         # Add the point load to the member
-        self.members[member_name].PtLoads.append((direction, P, x, case))
-        
+        try:
+            self.members[member_name].PtLoads.append((direction, P, x, case))
+        except KeyError:
+            raise NameError(f"Member '{member_name}' does not exist in the model")
+                
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_dist_load(self, member_name, direction, w1, w2, x1=None, x2=None, case='Case 1'):
+    def add_member_dist_load(self, member_name:str, direction:str, w1:float, w2:float,
+                             x1:float | None = None, x2:float | None = None,
+                             case:str = 'Case 1'):
         """Adds a member distributed load to the model.
 
         :param member_name: The name of the member the load is being appied to.
@@ -1189,12 +1280,15 @@ class FEModel3D():
             end = x2
 
         # Add the distributed load to the member
-        self.members[member_name].DistLoads.append((direction, w1, w2, start, end, case))
-        
+        try:
+            self.members[member_name].DistLoads.append((direction, w1, w2, start, end, case))
+        except KeyError:
+            raise NameError(f"Member '{member_name}' does not exist in the model")
+                
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_self_weight(self, global_direction, factor, case='Case 1'):
+    def add_member_self_weight(self, global_direction:str, factor:float, case:str = 'Case 1'):
         """Adds self weight to all members in the model. Note that this only works for members. Plate and Quad elements will be ignored by this command.
 
         :param global_direction: The global direction to apply the member load in: 'FX', 'FY', or 'FZ'.
@@ -1216,7 +1310,7 @@ class FEModel3D():
         
         # No need to flag the model as unsolved. That has already been taken care of by our call to `add_member_dist_load`
 
-    def add_plate_surface_pressure(self, plate_name, pressure, case='Case 1'):
+    def add_plate_surface_pressure(self, plate_name:str, pressure:float, case:str = 'Case 1'):
         """Adds a surface pressure to the rectangular plate element.
         
 
@@ -1230,15 +1324,15 @@ class FEModel3D():
         """   
 
         # Add the surface pressure to the rectangle
-        if plate_name in self.plates.keys():
+        try:
             self.plates[plate_name].pressures.append([pressure, case])
-        else:
-            raise Exception('Invalid plate name specified for plate surface pressure.')
+        except KeyError:
+            raise NameError(f"Plate '{plate_name}' does not exist in the model")
         
         # Flag the model as unsolved
         self.solution = None
 
-    def add_quad_surface_pressure(self, quad_name, pressure, case='Case 1'):
+    def add_quad_surface_pressure(self, quad_name:str, pressure:float, case:str = 'Case 1'):
         """Adds a surface pressure to the quadrilateral element.
 
         :param quad_name: The name for the quad to add the surface pressure to.
@@ -1251,10 +1345,10 @@ class FEModel3D():
         """
 
         # Add the surface pressure to the quadrilateral
-        if quad_name in self.quads.keys():
+        try:
             self.quads[quad_name].pressures.append([pressure, case])
-        else:
-            raise Exception('Invalid quad name specified for quad surface pressure.')
+        except KeyError:
+            raise NameError(f"Quad '{quad_name}' does not exist in the model")
         
         # Flag the model as unsolved
         self.solution = None
