@@ -1,4 +1,7 @@
 # %%
+#futures import required to use bar operators for optional type annotations
+from __future__ import annotations
+
 from os import rename
 import warnings
 from math import isclose
@@ -17,6 +20,7 @@ from PyNite.Plate3D import Plate3D
 from PyNite.LoadCombo import LoadCombo
 from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
 from PyNite import Analysis
+
 
 # %%
 class FEModel3D():
@@ -93,7 +97,7 @@ class FEModel3D():
         # Remove duplicates and return the list (sorted ascending)
         return sorted(list(dict.fromkeys(cases)))
 
-    def add_node(self, name:str, X:float, Y:float, Z:float):
+    def add_node(self, name:str, X:float, Y:float, Z:float) -> str:
         """Adds a new node to the model.
 
         :param name: A unique user-defined name for the node. If set to None or "" a name will be
@@ -134,7 +138,7 @@ class FEModel3D():
         #Return the node name
         return name
 
-    def add_auxnode(self, name:str, X:float, Y:float, Z:float):
+    def add_auxnode(self, name:str, X:float, Y:float, Z:float) -> str:
         """Adds a new auxiliary node to the model. Together with a member's `i` and `j` nodes, an
         auxiliary node defines the plane in which the member's local z-axis lies, and the side of
         the member the z-axis points toward. If no auxiliary node is specified for a member, PyNite
@@ -178,7 +182,7 @@ class FEModel3D():
         #Return the node name
         return name 
 
-    def add_material(self, name: str, E:float, G:float, nu:float, rho: float, fy:float | None = None):
+    def add_material(self, name: str, E:float, G:float, nu:float, rho: float, fy:float | None = None) -> str:
         """Adds a new material to the model.
 
         :param name: A unique user-defined name for the material.
@@ -218,7 +222,7 @@ class FEModel3D():
         #Return the materal name
         return name
 
-    def add_section(self, name:str, A:float, Iy:float, Iz:float, J:float):
+    def add_section(self, name:str, A:float, Iy:float, Iz:float, J:float) -> str:
         """Adds a cross-section to the model.
 
         :param name: A unique name for the cross-section.
@@ -254,7 +258,7 @@ class FEModel3D():
         return name
     
     def add_steel_section(self, name:str, A:float, Iy:float, Iz:float, J:float,
-                           Zy:float, Zz:float, material_name:str):
+                           Zy:float, Zz:float, material_name:str) -> str:
         """Adds a cross-section to the model.
 
         :param name: A unique name for the cross-section.
@@ -295,7 +299,7 @@ class FEModel3D():
         #Return the section name
         return name
 
-    def add_spring(self, name:str, i_node:str, j_node:str, ks:float, tension_only: bool=False, comp_only: bool=False):
+    def add_spring(self, name:str, i_node:str, j_node:str, ks:float, tension_only: bool=False, comp_only: bool=False) -> str:
         """Adds a new spring to the model.
 
         :param name: A unique user-defined name for the member. If None or "", a name will be
@@ -349,7 +353,7 @@ class FEModel3D():
         return name
 
     def add_member(self, name:str, i_node:str, j_node:str, material_name:str, section_name:str,
-                    aux_node: str | None = None, tension_only: bool = False, comp_only:bool = False):
+                    aux_node: str | None = None, tension_only: bool = False, comp_only:bool = False) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -404,7 +408,7 @@ class FEModel3D():
         return name
 
     def add_plate(self, name:str, i_node:str, j_node:str, m_node:str, n_node:str,
-                   t:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0):
+                   t:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0) -> str:
         """Adds a new rectangular plate to the model. The plate formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on a 12-term
         polynomial formulation. This element must be rectangular, and must not be used where a
@@ -468,7 +472,7 @@ class FEModel3D():
         return name
 
     def add_quad(self, name:str, i_node:str, j_node:str, m_node:str, n_node:str,
-                 t:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0):
+                 t:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0) -> str:
         """Adds a new quadrilateral to the model. The quad formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on an MITC4
         formulation. This element handles distortion relatively well, and is appropriate for thick
@@ -538,7 +542,7 @@ class FEModel3D():
                             ky_mod:float = 1.0, origin: list | tuple = (0, 0, 0),
                             plane:str = 'XY', x_control:list | None = None,
                             y_control: list | None = None, start_node: str | None = None,
-                            start_element:str | None = None, element_type:str = 'Quad'):
+                            start_element:str | None = None, element_type:str = 'Quad') -> str:
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
@@ -609,7 +613,7 @@ class FEModel3D():
     def add_annulus_mesh(self, name:str, mesh_size:float, outer_radius:float, inner_radius:float,
                          thickness:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0,
                          origin:list | tuple = (0, 0, 0), axis:str = 'Y',
-                         start_node:str | None = None, start_element:str | None = None):
+                         start_node:str | None = None, start_element:str | None = None) -> str:
         """Adds a mesh of quadrilaterals forming an annulus (a donut).
 
         :param name: A unique name for the mesh.
@@ -676,7 +680,7 @@ class FEModel3D():
                           small_radius:float, height:float, thickness:float,
                           material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0,
                           origin: list | tuple = (0, 0, 0), axis:str = 'Y',
-                          start_node:str | None = None, start_element:str | None = None):
+                          start_node:str | None = None, start_element:str | None = None) -> str:
         """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
 
         :param name: A unique name for the mesh.
@@ -743,7 +747,7 @@ class FEModel3D():
                           ky_mod:float = 1, origin:list | tuple = (0, 0, 0),
                           axis:str = 'Y', num_elements:int | None = None,
                           start_node: str | None = None, start_element:str | None = None,
-                          element_type:str = 'Quad'):
+                          element_type:str = 'Quad') -> str:
         """Adds a mesh of elements forming a cylinder.
 
         :param name: A unique name for the mesh.
@@ -818,7 +822,7 @@ class FEModel3D():
         #Return the mesh's name
         return name
 
-    def merge_duplicate_nodes(self, tolerance:float = 0.001):
+    def merge_duplicate_nodes(self, tolerance:float = 0.001) -> list:
         """Removes duplicate nodes from the model and returns a list of the removed node names.
 
         :param tolerance: The maximum distance between two nodes in order to consider them duplicates. Defaults to 0.001.
