@@ -24,13 +24,11 @@ setuptools.setup(
         'PrettyTable',
         'scipy',
         'matplotlib',
-        'vtk',
-        'pyvista[all,trame]',
-        'trame_jupyter_extension',
-        'ipywidgets'
     ],
     extras_require = {
-        'vtk':  ['IPython'],
+        'all': ['Ipython', 'vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets', 'pdfkit', 'Jinja2'],
+        'vtk':  ['IPython', 'vtk'],
+        'pyvista': ['pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets'],
         'reporting': ['pdfkit', 'Jinja2'],
         'derivations': ['jupyterlab', 'sympy']
     },

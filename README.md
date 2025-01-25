@@ -15,7 +15,7 @@
 An easy to use elastic 3D structural engineering finite element analysis library for Python.
 
 # Installation
-The easiest way to install Pynite is with pip: `pip install PyniteFEA`
+The easiest way to install Pynite is with pip: `pip install PyniteFEA[all]`.
 
 For a more detailed discussion on installation options and dependencies see https://pynite.readthedocs.io/en/latest/installation.html
 

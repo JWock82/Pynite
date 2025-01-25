@@ -6,10 +6,9 @@ Installation
 
 .. code-block:: console
 
-    $ pip install PyniteFEA
+    $ pip install PyniteFEA[all]
 
-Be sure to install ``PyniteFEA`` rather than ``Pynite``. The second one is a different package that
-has nothing to do with finite element analysis.
+Be sure to install ``PyniteFEA`` rather than ``Pynite``. The second one is a different package that has nothing to do with finite element analysis. the ``[all]`` in the line above is only needed if you want to use `Pynite's` built in visualization and reporting features. For a lighter-weight installation you can omit ``[all]``.
 
 For engineers who may be new to `python`, the ``$`` symbol in the line above represents any directory in your system that ``pip`` is accessible from. If you checked the box to place `python` on your system ``PATH`` during installation (recommended) you can run ``pip`` from any directory (see image below). Otherwise it's sitting in the ``Scripts`` folder in the directory where Python was installed, and you'll need to either add it to your system ``PATH`` or navigate to that directory via the console and run the ``pip`` command above.
 
