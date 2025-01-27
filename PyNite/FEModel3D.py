@@ -38,8 +38,6 @@ class FEModel3D():
 
         self.nodes = {str:Node3D}          # A dictionary of the model's nodes
         self.nodes.pop(str)
-        self.aux_nodes = {str:Node3D}       # A dictionary of the model's auxiliary nodes
-        self.aux_nodes.pop(str)
         self.materials = {str:Material}    # A dictionary of the model's materials
         self.materials.pop(str)
         self.sections = {str:Section}      # A dictonary of the model's cross-sections
@@ -137,50 +135,6 @@ class FEModel3D():
 
         #Return the node name
         return name
-
-    def add_auxnode(self, name:str, X:float, Y:float, Z:float) -> str:
-        """Adds a new auxiliary node to the model. Together with a member's `i` and `j` nodes, an
-        auxiliary node defines the plane in which the member's local z-axis lies, and the side of
-        the member the z-axis points toward. If no auxiliary node is specified for a member, PyNite
-        uses its own default configuration.
-
-        :param name: A unique user-defined name for the node. If None or "", a name will be
-                     automatically assigned.
-        :type name: str
-        :param X: The global X-coordinate of the node.
-        :type X: number
-        :param Y: The global Y-coordinate of the node.
-        :type Y: number
-        :param Z: The global Z-coordinate of the node.
-        :type Z: number
-        :raises NameError: Occurs when the specified name already exists in the model.
-        :return: The name of the auxiliary node that was added to the model.
-        :rtype: str
-        """ 
-        
-        # Name the node or check it doesn't already exist
-        if name:
-            if name in self.aux_nodes:
-                raise NameError(f"Auxnode name '{name}' already exists")
-        else:
-            # As a guess, start with the length of the dictionary
-            name = "AN" + str(len(self.aux_nodes))
-            count = 1
-            while name in self.aux_nodes: 
-                name = "AN" + str(len(self.aux_nodes)+count)
-                count += 1
-                
-        # Create a new node
-        new_node = Node3D(name, X, Y, Z)
-        
-        # Add the new node to the model
-        self.aux_nodes[name] = new_node
-
-        # Flag the model as unsolved
-        self.solution = None
-        
-        #Return the node name
-        return name 
 
     def add_material(self, name: str, E:float, G:float, nu:float, rho: float, fy:float | None = None) -> str:
         """Adds a new material to the model.
@@ -353,7 +307,7 @@ class FEModel3D():
         return name
 
     def add_member(self, name:str, i_node:str, j_node:str, material_name:str, section_name:str,
-                    aux_node: str | None = None, tension_only: bool = False, comp_only:bool = False) -> str:
+                    rotation: float = 0.0, tension_only: bool = False, comp_only:bool = False) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -366,8 +320,8 @@ class FEModel3D():
         :type material_name: str
         :param section_name: The name of the cross section to use for section properties.
         :type section_name: string
-        :param aux_node: The name of the auxiliary node used to define the local z-axis. The default is ``None``, in which case the program defines the axis instead of using an auxiliary node.
-        :type aux_node: str, optional
+        :param rotation: The angle of rotation (degrees) of the member cross-section about its longitudinal (local x) axis. Default is 0.
+        :type rotation: float, optional
         :param tension_only: Indicates if the member is tension-only, defaults to False
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
@@ -395,8 +349,7 @@ class FEModel3D():
             raise NameError(f"Node '{e.args[0]}' does not exist in the model")
                         
         # Create a new member
-        if aux_node is not None: aux_node = self.aux_nodes[aux_node]
-        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, aux_node=aux_node, tension_only=tension_only, comp_only=comp_only)
+        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only)
         
         # Add the new member to the model
         self.members[name] = new_member
@@ -945,24 +898,6 @@ class FEModel3D():
         self.plates = {name: plate for name, plate in self.plates.items() if plate.i_node.name != node_name and plate.j_node.name != node_name and plate.m_node.name != node_name and plate.n_node.name != node_name}
         self.quads = {name: quad for name, quad in self.quads.items() if quad.i_node.name != node_name and quad.j_node.name != node_name and quad.m_node.name != node_name and quad.n_node.name != node_name}
 
-        # Flag the model as unsolved
-        self.solution = None
-
-    def delete_auxnode(self, auxnode_name:str):
-        """Removes an auxiliary node from the model.
-
-        :param auxnode_name: The name of the auxiliary node to be removed.
-        :type auxnode_name: str
-        """
-
-        # Remove the auxiliary node
-        self.aux_nodes.pop(auxnode_name)
-
-        # Remove the auxiliary node from any members that were using it
-        for member in self.members.values():
-            if member.auxNode == auxnode_name:
-                member.auxNode = None
-        
         # Flag the model as unsolved
         self.solution = None
 

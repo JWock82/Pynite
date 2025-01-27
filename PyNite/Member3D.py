@@ -1,5 +1,5 @@
 # %%
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose, where
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose, where, radians, sin, cos
 from numpy.linalg import inv, pinv
 from math import isclose
 from PyNite.BeamSegZ import BeamSegZ
@@ -21,7 +21,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, model, name, i_node, j_node, material_name, section_name, auxNode=None,
+    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0,
                  tension_only=False, comp_only=False):
         """
         Initializes a new member.
@@ -53,12 +53,12 @@ class Member3D():
         self.i_reversal = False
         self.j_reversal = False
 
-        self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
-        self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
-        self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
-        self.SegmentsZ = [] # A list of mathematically continuous beam segments for z-bending
-        self.SegmentsY = [] # A list of mathematically continuous beam segments for y-bending
-        self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
+        self.rotation = rotation  # Member rotation (degrees) about its local x-axis
+        self.PtLoads = []         # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
+        self.DistLoads = []       # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
+        self.SegmentsZ = []       # A list of mathematically continuous beam segments for z-bending
+        self.SegmentsY = []       # A list of mathematically continuous beam segments for y-bending
+        self.SegmentsX = []       # A list of mathematically continuous beam segments for torsion
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.tension_only = tension_only # Indicates whether the member is tension-only
         self.comp_only = comp_only # Indicates whether the member is compression-only
@@ -496,78 +496,70 @@ class Member3D():
         
         # Calculate the direction cosines for the local x-axis
         x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
+            
+        # Calculate the remaining direction cosines.
+        # For now, the local z-axis will be kept parallel to the global XZ plane in all cases. It will be adjusted later if a rotation has been applied to the member.
+        # Vertical members
+        if isclose(x1, x2) and isclose(z1, z2):
+            
+            # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
+            if y2 > y1:
+                y = [-1, 0, 0]
+                z = [0, 0, 1]
+            else:
+                y = [1, 0, 0]
+                z = [0, 0, 1]
+
+        # Horizontal members
+        elif isclose(y1, y2):
         
-        # Calculate the direction cosines for the local z-axis based on the auxiliary node
-        if self.auxNode != None:
-            
-            xa = self.auxNode.X
-            ya = self.auxNode.Y
-            za = self.auxNode.Z
-            
-            # Define a vector in the local xz plane using the auxiliary point 
-            z = [xa-x1, ya-y1, za-z1]
+            # Find a vector in the direction of the local z-axis by taking the cross-product
+            # of the local x-axis and the local y-axis. This vector will be perpendicular to
+            # both the local x-axis and the local y-axis.
+            y = [0, 1, 0]
+            z = cross(x, y)
+
+            # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+
+        # Members neither vertical or horizontal
+        else:
+
+            # Find the projection of x on the global XZ plane
+            proj = [x2-x1, 0, z2-z1]
+
+            # Find a vector in the direction of the local z-axis by taking the cross-product
+            # of the local x-axis and its projection on a plane parallel to the XZ plane. This
+            # produces a vector perpendicular to both the local x-axis and its projection. This
+            # vector will always be horizontal since it's parallel to the XZ plane. The order
+            # in which the vectors are 'crossed' has been selected to ensure the y-axis always
+            # has an upward component (i.e. the top of the beam is always on top).
+            if y2 > y1:
+                z = cross(proj, x)
+            else:
+                z = cross(x, proj)
+
+            # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
             
             # Find the direction cosines for the local y-axis
             y = cross(z, x)
             y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
-            
-            # Ensure the z-axis is perpendicular to the x-axis.
-            # If the vector from the i-node to the auxiliary node is not perpendicular to the member, this will ensure the local coordinate system is orthogonal
-            z = cross(x, y)
-            
-            # Turn the z-vector into a unit vector of direction cosines
-            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
-        
-        # If no auxiliary node is specified the program will determine the member's local z-axis automatically
-        else:
-            
-            # Calculate the remaining direction cosines. The local z-axis will be kept parallel to the global XZ plane in all cases
-            # Vertical members
-            if isclose(x1, x2) and isclose(z1, z2):
-                
-                # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
-                if y2 > y1:
-                    y = [-1, 0, 0]
-                    z = [0, 0, 1]
-                else:
-                    y = [1, 0, 0]
-                    z = [0, 0, 1]
 
-            # Horizontal members
-            elif isclose(y1, y2):
-            
-                # Find a vector in the direction of the local z-axis by taking the cross-product
-                # of the local x-axis and the local y-axis. This vector will be perpendicular to
-                # both the local x-axis and the local y-axis.
-                y = [0, 1, 0]
-                z = cross(x, y)
+        # Check if the member is rotated
+        if self.rotation != 0.0:
 
-                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
-                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+            # Get the member rotation angle
+            theta = radians(self.rotation)
 
-            # Members neither vertical or horizontal
-            else:
+            # Define the rotation matrix for rotation about the x-axis
+            R = array([[1, 0, 0],
+                    [0, cos(theta), -sin(theta)],
+                    [0, sin(theta), cos(theta)]])
 
-                # Find the projection of x on the global XZ plane
-                proj = [x2-x1, 0, z2-z1]
-
-                # Find a vector in the direction of the local z-axis by taking the cross-product
-                # of the local x-axis and its projection on a plane parallel to the XZ plane. This
-                # produces a vector perpendicular to both the local x-axis and its projection. This
-                # vector will always be horizontal since it's parallel to the XZ plane. The order
-                # in which the vectors are 'crossed' has been selected to ensure the y-axis always
-                # has an upward component (i.e. the top of the beam is always on top).
-                if y2 > y1:
-                    z = cross(proj, x)
-                else:
-                    z = cross(x, proj)
-
-                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
-                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
-                
-                # Find the direction cosines for the local y-axis
-                y = cross(z, x)
-                y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
+            # Rotate the y and z axes about the x axis
+            y = R @ y
+            z = R @ z
 
         # Create the direction cosines matrix
         dirCos = array([x, y, z])
