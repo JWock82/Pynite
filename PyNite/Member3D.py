@@ -21,7 +21,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0,
+    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0.0,
                  tension_only=False, comp_only=False):
         """
         Initializes a new member.

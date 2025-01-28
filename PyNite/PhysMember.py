@@ -15,10 +15,10 @@ class PhysMember(Member3D):
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
     __plt = None  
     
-    def __init__(self, model, name, i_node, j_node, material_name, section_name, aux_node=None,
+    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0.0,
                  tension_only=False, comp_only=False):
         
-        super().__init__(model, name, i_node, j_node, material_name, section_name, aux_node, tension_only, comp_only)
+        super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
         self.sub_members = {}
 
     def descritize(self):
