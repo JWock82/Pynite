@@ -80,7 +80,7 @@ class PhysMember(Member3D):
             xj = int_nodes[i+1][1]
 
             # Create a new sub-member
-            new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, self.section.name, self.auxNode, self.tension_only, self.comp_only)
+            new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, self.section.name, self.rotation, self.tension_only, self.comp_only)
             
             # Flag the sub-member as active
             for combo_name in self.model.load_combos.keys():
