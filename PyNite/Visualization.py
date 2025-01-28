@@ -227,11 +227,6 @@ class Renderer():
             vis_nodes = []
             for node in self.model.nodes.values():
                 vis_nodes.append(VisNode(node, self.annotation_size, color))
-            
-            # Create a visual auxiliary node for each auxiliary node in the model
-            vis_aux_nodes = []
-            for aux_node in self.model.aux_nodes.values():
-                vis_aux_nodes.append(VisNode(aux_node, self.annotation_size, color))
         
         # Create a visual spring for each spring in the model
         vis_springs = []
@@ -319,21 +314,6 @@ class Renderer():
             
             # Add the node actor to the renderer
             renderer.AddActor(node_actor)
-
-            # Add actors for each auxiliary node. There are usually only a few of these, so they shouldn't bog down interaction if we do them individually rather than with a `vtkAppendFilter`
-            for vis_aux_node in vis_aux_nodes:
-
-                # Add the actor for the auxiliary node
-                renderer.AddActor(vis_aux_node.actor)
-
-                if self.labels == True:
-                    
-                    # Add the actor for the auxiliary node label
-                    renderer.AddActor(vis_aux_node.lblActor)
-            
-                    # Set the text to follow the camera as the user interacts. This will
-                    # require a reset of the camera (see below)
-                    vis_aux_node.lblActor.SetCamera(renderer.GetActiveCamera())
 
         # Render the deformed shape if requested
         if self.deformed_shape == True:
