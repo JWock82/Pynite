@@ -66,6 +66,8 @@ Here's a list of projects that use PyNite:
 *v1.0?
 * Currently working toward 1.0 in the next few releases. Not sure if this next release will be it, but it is nearly ready.
 * Added a new `ShearWall` class that assists you in constructing and analyzing shear walls. This tool automatically detects piers and coupling beams, and finds the forces inside them and calculates their ascpect ratios, which can be handy for seismic design. It reports stiffness of multi-story shear walls at each story to help with rigid diaphragm analysis. It allows for modeling walls with openings, steps, and partial depth diaphragm loading.
+* `vtk` and `pyvista` are now optional dependencies. This change streamlines installation for users who don't rely on `Pynite's` built-in visualization tools. From now on, `Pynite` should be installed using `$ pip install PyNiteFEA[all]` for most users.
+* `Pynite` no longer uses auxiliary nodes to define member cross-section rotation. You can now directly specify the rotation (in degrees) when you define a member using the `rotation` argument.
 
 v0.0.98-100
 * Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
