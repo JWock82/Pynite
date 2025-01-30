@@ -243,10 +243,6 @@ class Renderer:
             # Plot each node in the model
             for node in self.model.nodes.values():
                 self.plot_node(node, color)
-            
-            # Plot each auxiliary node in the model
-            for aux_node in self.model.aux_nodes.values():
-                self.plot_node(aux_node, color)
         
         # Render node labels
         label_points = [[node.X, node.Y, node.Z] for node in self.model.nodes.values()]
