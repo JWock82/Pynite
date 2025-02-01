@@ -28,7 +28,7 @@ def test_beam_rotation():
     beam.analyze()
 
     # Obtain the max/min moment about each axis
-    Mz_max = beam.members['M1'].min_moment('Mz')
+    Mz_max = beam.members['M1'].max_moment('Mz')
     Mz_min = beam.members['M1'].min_moment('Mz')
     My_max = beam.members['M1'].max_moment('My')
     My_min = beam.members['M1'].min_moment('My')
