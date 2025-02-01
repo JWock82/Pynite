@@ -31,7 +31,7 @@ class TestRenderer(unittest.TestCase):
         
         self.beam_model.add_section('Custom', 20, 100, 200, 150)
         
-        self.beam_model.add_member('M1', 'N1', 'N4', 'Steel', 'Custom')
+        self.beam_model.add_member('M1', 'N1', 'N5', 'Steel', 'Custom')
 
         self.beam_model.add_member_dist_load('M1', 'Fy', -1, -1, case='D')
 
