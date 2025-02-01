@@ -1,0 +1,120 @@
+* {
+	box-sizing: border-box;
+}
+
+html, body {
+	width: 100vw;
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: white;
+	margin: 0;
+	font-family: Arial, Helvetica, sans-serif;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	grid-template-columns: auto 1fr auto;
+}
+
+canvas {
+	border: 1px solid black;
+}
+
+header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-content: center;
+	background-color: #314C53;
+	padding: 0;
+	grid-column: 1 / 4;
+}
+
+header img {
+	width: 300px;
+	border: none;
+}
+
+header h1 {
+	width: auto;
+	height: auto;
+	right: 20px;
+	margin: auto 20px auto 0;
+}
+
+img
+{
+	background-color: #94BBC5;
+	color: #314C53;
+}
+
+main {
+	overflow: scroll;
+	padding: 12px;
+}
+
+h1 {
+	margin: 0;
+	width: 100%;
+}
+
+h2 {
+	width: 100%;
+	margin: 0;
+	padding: 3px;
+	font-size: 16px;
+}
+
+img {
+	margin: 6px 0px;
+	border: 1px solid black;
+}
+
+/* Table Formatting */
+table {
+	padding: 6px 0;
+	border: 1px solid black;
+	border-collapse: collapse;
+	overflow: scroll;
+}
+
+/* Table headers will be dark with light text */
+th {
+	background-color: #314C53;
+	color: #DAE9EE;
+}
+
+/* For 2-row table headers, apply a light line to separate the two rows */
+tr:last-child th {
+	border-top: 1px solid #DAE9EE;
+}
+
+/* Table data borders will match the table header background */
+td {
+	border-bottom: 1px solid #314C53
+}
+
+th, td {
+	margin: 0px;
+	padding: 5px;
+	text-align: center;
+	vertical-align: center;
+	font-size: 14px;
+}
+
+/* Every odd row of table data will have a white background */
+tr {
+	background-color: white;
+}
+
+/* Every even row of table data will be off-white */
+tr:nth-child(even) {
+	background-color: #f2f2f2;
+}
+
+/* Make the upper border of the first data row blend in with the table header */
+tr:first-child td {
+	border-top: 1px solid #314C53;
+}

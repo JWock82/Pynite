@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <h1>Pynite Analysis Report</h1>
+    </head>
+
+    <body>
+
+        {% if node_table == True %}
+        <h3>Nodes & Supports</h3>     
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Node</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>Z</th>
+                    <th>Support X</th>
+                    <th>Support Y</th>
+                    <th>Support Z</th>
+                    <th>Support RX</th>
+                    <th>Support RY</th>
+                    <th>Support RZ</th>
+            </thead>
+
+            <tbody>
+            {% for node in nodes %}
+                <tr>
+                    <td>{{ node.name }}</td>
+                    <td>{{ "%.4g" | format(node.X) }}</td>
+                    <td>{{ "%.4g" | format(node.Y) }}</td>
+                    <td>{{ "%.4g" | format(node.Z) }}</td>
+                    <td>{{ node.support_DX }}</td>
+                    <td>{{ node.support_DY }}</td>
+                    <td>{{ node.support_DZ }}</td>
+                    <td>{{ node.support_RX }}</td>
+                    <td>{{ node.support_RY }}</td>
+                    <td>{{ node.support_RZ }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {% endif %}
+
+        {% if member_table == True %}
+        <h3>Members</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>i-Node</th>
+                    <th>j-Node</th>
+                    <th>A</th>
+                    <th>I<sub>y</sub></th>
+                    <th>I<sub>z</sub></th>
+                    <th>J</th>
+                    <th>E</th>
+                    <th>G</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.name }}</td>
+                    <td>{{ member.i_node.name }}</td>
+                    <td>{{ member.j_node.name }}</td>
+                    <td>{{ "%.4g" | format(member.section.A) }}</td>
+                    <td>{{ "%.4g" | format(member.section.Iy) }}</td>
+                    <td>{{ "%.4g" | format(member.section.Iz) }}</td>
+                    <td>{{ "%.4g" | format(member.section.J) }}</td>
+                    <td>{{ "%.4g" | format(member.material.E) }}</td>
+                    <td>{{ "%.4g" | format(member.material.G) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if member_releases == True %}
+        <h3>Member End Releases</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>&Delta;<sub>xi</sub></th>
+                    <th>&Delta;<sub>yi</sub></th>
+                    <th>&Delta;<sub>zi</sub></th>
+                    <th>&theta;<sub>xi</sub></th>
+                    <th>&theta;<sub>yi</sub></th>
+                    <th>&theta;<sub>zi</sub></th>
+                    <th>&Delta;<sub>xj</sub></th>
+                    <th>&Delta;<sub>yj</sub></th>
+                    <th>&Delta;<sub>zj</sub></th>
+                    <th>&theta;<sub>xj</sub></th>
+                    <th>&theta;<sub>yj</sub></th>
+                    <th>&theta;<sub>zj</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.name }}</td>
+                    <td>{{ member.Releases[0] }}</td>
+                    <td>{{ member.Releases[1] }}</td>
+                    <td>{{ member.Releases[2] }}</td>
+                    <td>{{ member.Releases[3] }}</td>
+                    <td>{{ member.Releases[4] }}</td>
+                    <td>{{ member.Releases[5] }}</td>
+                    <td>{{ member.Releases[6] }}</td>
+                    <td>{{ member.Releases[7] }}</td>
+                    <td>{{ member.Releases[8] }}</td>
+                    <td>{{ member.Releases[9] }}</td>
+                    <td>{{ member.Releases[10] }}</td>
+                    <td>{{ member.Releases[11] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if plate_table == True %}
+        <h3>Plates</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Plate</th>
+                    <th>i-Node</th>
+                    <th>j-Node</th>
+                    <th>m-Node</th>
+                    <th>n-Node</th>
+                    <th>t</th>
+                    <th>E</th>
+                    <th>&nu;</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for plate in plates %}
+                <tr>
+                    <td>{{ plate.name }}</td>
+                    <td>{{ plate.i_node.name }}</td>
+                    <td>{{ plate.j_node.name }}</td>
+                    <td>{{ plate.m_node.name }}</td>
+                    <td>{{ plate.n_node.name }}</td>
+                    <td>{{ "%.4g" | format(plate.t) }}</td>
+                    <td>{{ "%.4g" | format(plate.E) }}</td>
+                    <td>{{ "%.4g" | format(plate.nu) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if plate_table == True %}
+        <h3>Quads</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Quad</th>
+                    <th>i-Node</th>
+                    <th>j-Node</th>
+                    <th>m-Node</th>
+                    <th>n-Node</th>
+                    <th>t</th>
+                    <th>E</th>
+                    <th>&nu;</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.name }}</td>
+                    <td>{{ quad.i_node.name }}</td>
+                    <td>{{ quad.j_node.name }}</td>
+                    <td>{{ quad.m_node.name }}</td>
+                    <td>{{ quad.n_node.name }}</td>
+                    <td>{{ "%.4g" | format(quad.t) }}</td>
+                    <td>{{ "%.4g" | format(quad.E) }}</td>
+                    <td>{{ "%.4g" | format(quad.nu) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if node_reactions == True %}
+        <h3>Node Reactions</h3>     
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Node</th>
+                    <th>LC</th>
+                    <th>FX</th>
+                    <th>FY</th>
+                    <th>FZ</th>
+                    <th>MX</th>
+                    <th>MY</th>
+                    <th>MZ</th>
+            </thead>
+
+            <tbody>
+            {% for combo in load_combos %}
+                {% for node in nodes %}
+                <tr>
+                    <td>{{ node.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.4g" | format(node.RxnFX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnFY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnFZ[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnMX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnMY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RxnMZ[combo]) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {% endif %}
+
+        {% if node_displacements == True %}
+        <h3>Node Displacements</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Node</th>
+                    <th>LC</th>
+                    <th>&Delta;<sub>X</sub></th>
+                    <th>&Delta;<sub>Y</sub></th>
+                    <th>&Delta;<sub>Z</sub></th>
+                    <th>&theta;<sub>X</sub></th>
+                    <th>&theta;<sub>Y</sub></th>
+                    <th>&theta;<sub>Z</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for combo in load_combos %}
+                {% for node in nodes %}
+                <tr>
+                    <td>{{ node.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.4g" | format(node.DX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.DY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.DZ[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RX[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RY[combo]) }}</td>
+                    <td>{{ "%.4g" | format(node.RZ[combo]) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if member_end_forces == True %}
+        <h3>Member End Forces</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>LC</th>
+                    <th>P<sub>i</sub></th>
+                    <th>P<sub>j</sub></th>
+                    <th>V<sub>yi</sub></th>
+                    <th>V<sub>zi</sub></th>
+                    <th>V<sub>yj</sub></th>
+                    <th>V<sub>zj</sub></th>
+                    <th>M<sub>yi</sub></th>
+                    <th>M<sub>zi</sub></th>
+                    <th>M<sub>yj</sub></th>
+                    <th>M<sub>zj</sub></th>
+                    <th>T<sub>i</sub></th>
+                    <th>T<sub>j</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for combo in load_combos %}
+                {% for member in members %}
+                <tr>
+                    <td>{{ member.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.4g" | format(member.axial(0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.axial(member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.shear("Fy", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.shear("Fz", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.shear("Fy", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.shear("Fz", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("My", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("Mz", 0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("My", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.moment("Mz", member.L(), combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.torque(0, combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.torque(member.L(), combo)) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if member_internal_forces == True %}
+        <h3>Member Max/Min Internal Forces</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>LC</th>
+                    <th>P<sub>max</sub></th>
+                    <th>P<sub>min</sub></th>
+                    <th>V<sub>y,max</sub></th>
+                    <th>V<sub>y,min</sub></th>
+                    <th>V<sub>z,max</sub></th>
+                    <th>V<sub>z,min</sub></th>
+                    <th>M<sub>y,max</sub></th>
+                    <th>M<sub>y,min</sub></th>
+                    <th>M<sub>z,max</sub></th>
+                    <th>M<sub>z,min</sub></th>
+                    <th>T<sub>max</sub></th>
+                    <th>T<sub>min</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for combo in load_combos %}
+                {% for member in members %}
+                <tr>
+                    <td>{{ member.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.4g" | format(member.max_axial(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_axial(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_shear("Fy", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_shear("Fy", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_shear("Fz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_shear("Fz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_moment("My", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_moment("My", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_moment("Mz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_moment("Mz", combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.max_torque(combo)) }}</td>
+                    <td>{{ "%.4g" | format(member.min_torque(combo)) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if plate_corner_forces == True %}
+        <h3>Plate Out-of-Plane Corner Forces</h3>
+        <table
+        >
+            <thead>
+                <tr>
+                    <th rowspan="2">Plate</th>
+                    <th rowspan="2">LC</th>
+                    <th colspan="5">i-Node</th>
+                    <th colspan="5">j-Node</th>
+                    <th colspan="5">m-Node</th>
+                    <th colspan="5">n-Node</th>
+                </tr>
+                <tr>
+                    <th>Q<sub>x</sub></th>
+                    <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
+
+                    <th>Q<sub>x</sub></th>
+                    <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
+
+                    <th>Q<sub>x</sub></th>
+                    <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
+
+                    <th>Q<sub>x</sub></th>
+                    <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for combo in load_combos %}
+                {% for plate in plates %}
+                <tr>
+                    <td>{{ plate.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo)[2][0]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {% endif %}
+
+        {% if plate_center_forces == True %}
+        <h3>Plate Out-of-Plane Center Forces</h3>
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Plate</th>
+                    <th>LC</th>
+                    <th>Q<sub>x</sub></th>
+                    <th>Q<sub>y</sub></th>
+                    <th>M<sub>x</sub></th>
+                    <th>M<sub>y</sub></th>
+                    <th>M<sub>xy</sub></th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for combo in load_combos %}
+
+                {% for plate in plates %}
+                <tr>
+                    <td>{{ plate.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {% endif %}
+
+        {% if plate_corner_membrane == True %}
+        <h3>In-Plane (Membrane) Corner Stresses</h3>
+        <table>
+
+            <thead>
+                <tr>
+                    <th rowspan="2">Plate</th>
+                    <th rowspan="2">LC</th>
+                    <th colspan="3">i-Node</th>
+                    <th colspan="3">j-Node</th>
+                    <th colspan="3">m-Node</th>
+                    <th colspan="3">n-Node</th>
+                </tr>
+                <tr>
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
+
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
+
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
+
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for combo in load_combos %}
+
+                {% for plate in plates %}
+                <tr>
+                    <td>{{ plate.name }}</td>
+                    <td>{{ combo }}</td>
+
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo)[2]) }}</td>
+                </tr>
+                {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.name }}</td>
+                    <td>{{ combo }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo)[2]) }}</td>
+
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo)[0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo)[1]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo)[2]) }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {% endif %}
+
+        {% if plate_center_membrane == True %}
+        <h3>In-Plane (Membrane) Center Stresses</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Plate</th>
+                    <th>LC</th>
+                    <th>&sigma;<sub>x</sub></th>
+                    <th>&sigma;<sub>y</sub></th>
+                    <th>&tau;<sub>xy</sub></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for combo in load_combos %}
+
+                {% for plate in plates %}
+                <tr>
+                    <td>{{ plate.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+
+                {% for quad in quads %}
+                <tr>
+                    <td>{{ quad.name }}</td>
+                    <td>{{ combo }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo)[2][0]) }}</td>
+                </tr>
+                {% endfor %}
+
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+    </body>
+
+</html>
