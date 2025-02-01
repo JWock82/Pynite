@@ -2,28 +2,36 @@ from io import BytesIO
 import unittest
 from unittest.mock import MagicMock
 import vtk
-from PyNite import FEModel3D
-from PyNite.Visualization import Renderer
+from Pynite import FEModel3D
+from Pynite.Visualization import Renderer
 from IPython.display import Image
 
 class TestRenderer(unittest.TestCase):
 
     def setUp(self):
 
-        # Create a simple model to visualize
+        # Create a model to visualize
         self.beam_model = FEModel3D()
 
+        # Add nodes
         self.beam_model.add_node('N1', 0, 0, 0)
-        self.beam_model.add_node('N2', 20, 0, 0)
+        self.beam_model.add_node('N2', 10, 0, 0)
+        self.beam_model.add_node('N3', 20, 0, 0)
+        self.beam_model.add_node('N4', 30, 0, 0)
+        self.beam_model.add_node('N5', 40, 0, 0)
 
-        self.beam_model.def_support('N1', True, True, True, True, True, True)
-        self.beam_model.def_support('N2', False, True, True, False, False, False)
+        # Add various support conditions for rendering
+        self.beam_model.def_support('N1', True, True, True, True, True, True)      # Fully Fixed
+        self.beam_model.def_support('N2', True, True, True, False, False, False)   # Pinned
+        self.beam_model.def_support('N3', True, True, False, False, False, False)  # Fixed in XY
+        self.beam_model.def_support('N4', False, True, True, False, False, False)  # Fixed in YZ
+        self.beam_model.def_support('N5', False, False, False, True, True, True)   # Rotational Fixity Only
 
         self.beam_model.add_material('Steel', 29000/144, 11200/144, 0.3, 0.49, 36/144)
         
         self.beam_model.add_section('Custom', 20, 100, 200, 150)
         
-        self.beam_model.add_member('M1', 'N1', 'N2', 'Steel', 'Custom')
+        self.beam_model.add_member('M1', 'N1', 'N5', 'Steel', 'Custom')
 
         self.beam_model.add_member_dist_load('M1', 'Fy', -1, -1, case='D')
 

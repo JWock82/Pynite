@@ -5,7 +5,7 @@ in this model are expressed in terms of kips (force) and inches (length).
 """
 
 # Create a new model for the beam
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 boef = FEModel3D()
 
 # Assign the length of the beam
@@ -50,7 +50,7 @@ boef.add_section('W8x35', A, Iy, Iz, J)
 boef.add_member('M1', 'N1', 'N' + str(num_nodes), 'Steel', 'W8x35')
 
 # In the next few lines no load case or load combination is being specified. When this is the case,
-# PyNite internally creates a default load case ('Case 1') and a default load combination
+# Pynite internally creates a default load case ('Case 1') and a default load combination
 # ('Combo 1'). This can be handy for quick calculations that don't need the added complexity of
 # using load combinations.
 
@@ -61,13 +61,13 @@ else:
     mid_node = 'N' + str(int(num_nodes/2))
     boef.add_node_load(mid_node, 'FY', -40)
 
-# Analyze the model. PyNite's standard solver is most appropriate or this model since there are
+# Analyze the model. Pynite's standard solver is most appropriate or this model since there are
 # non-linear features (compression-only springs) but no large axial forces that would cause P-Delta
 # effects.
 boef.analyze(log=True, check_statics=True)
 
-# Render the mdoel with the deformed shape using PyNite's buit-in renderer
-from PyNite.Rendering import Renderer
+# Render the mdoel with the deformed shape using Pynite's buit-in renderer
+from Pynite.Rendering import Renderer
 renderer = Renderer(boef)
 renderer.annotation_size = 1.5
 renderer.deformed_shape = True

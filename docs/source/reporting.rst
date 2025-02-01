@@ -33,7 +33,7 @@ Syntax:
 
 .. code-block:: python
 
-    create_report(model, output_filepath='.//PyNite Report.pdf', nodes=True,
+    create_report(model, output_filepath='.//Pynite Report.pdf', nodes=True,
                   members=True, plates=True, member_releases=True,
                   node_reactions=True, node_displacements=True,
                   member_end_forces=True, member_internal_forces=True,
@@ -45,12 +45,12 @@ Example:
 .. code-block:: python
 
     # Import the reporting module
-    from PyNite import Reporting
+    from Pynite import Reporting
     
     # Create the report
     Reporting.create_report(my_model, output_filepath='./My Report.pdf')
 
 Reporting Class Reference
 =========================
-.. automodule:: PyNite.Reporting
+.. automodule:: Pynite.Reporting
     :members: create_report

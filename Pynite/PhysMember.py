@@ -2,7 +2,7 @@ from numpy import array, dot, cross
 from numpy.linalg import norm
 from math import isclose, acos
 
-from PyNite.Member3D import Member3D
+from Pynite.Member3D import Member3D
 
 class PhysMember(Member3D):
     """
@@ -15,10 +15,10 @@ class PhysMember(Member3D):
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
     __plt = None  
     
-    def __init__(self, model, name, i_node, j_node, material_name, section_name, aux_node=None,
+    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0.0,
                  tension_only=False, comp_only=False):
         
-        super().__init__(model, name, i_node, j_node, material_name, section_name, aux_node, tension_only, comp_only)
+        super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
         self.sub_members = {}
 
     def descritize(self):
@@ -80,7 +80,7 @@ class PhysMember(Member3D):
             xj = int_nodes[i+1][1]
 
             # Create a new sub-member
-            new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, self.section.name, self.auxNode, self.tension_only, self.comp_only)
+            new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, self.section.name, self.rotation, self.tension_only, self.comp_only)
             
             # Flag the sub-member as active
             for combo_name in self.model.load_combos.keys():

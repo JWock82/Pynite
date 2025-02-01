@@ -3,9 +3,9 @@
 # Example 5.4
 # Units for this model are kilonewtons and meters
 
-# Import 'FEModel3D' and 'Visualization' from 'PyNite'
-from PyNite import FEModel3D
-from PyNite import Visualization
+# Import 'FEModel3D' and 'Visualization' from 'Pynite'
+from Pynite import FEModel3D
+from Pynite import Visualization
 
 # Create a new model
 truss = FEModel3D()

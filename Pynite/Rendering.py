@@ -243,10 +243,6 @@ class Renderer:
             # Plot each node in the model
             for node in self.model.nodes.values():
                 self.plot_node(node, color)
-            
-            # Plot each auxiliary node in the model
-            for aux_node in self.model.aux_nodes.values():
-                self.plot_node(aux_node, color)
         
         # Render node labels
         label_points = [[node.X, node.Y, node.Z] for node in self.model.nodes.values()]
@@ -508,7 +504,8 @@ class Renderer:
 
     def plot_spring(self, spring, color='grey', deformed=False):
         """
-        Adds a spring to the plotter. This method generates a zig-zag line representing a spring between two nodes, and adds it to the plotter with specified theme settings."""
+        Adds a spring to the plotter. This method generates a zig-zag line representing a spring between two nodes, and adds it to the plotter with specified theme settings.
+        """
         
         # Scale the spring's zigzags
         size = self.annotation_size
@@ -532,10 +529,10 @@ class Renderer:
 
         # Calculate the spring direction vector and length
         direction = np.array([Xj, Yj, Zj]) - np.array([Xi, Yi, Zi])
-        length = ((Xj-Xi)**2 + (Yj-Yi)**2 - (Zj-Zi)**2)**0.5
+        length = np.linalg.norm(direction)
 
         # Normalize the direction vector
-        direction = direction/length
+        direction = direction / length
 
         # Calculate perpendicular vectors for zig-zag plane
         arbitrary_vector = np.array([1, 0, 0])
@@ -545,33 +542,48 @@ class Renderer:
         perp_vector1 /= np.linalg.norm(perp_vector1)
         perp_vector2 = np.cross(direction, perp_vector1)
         perp_vector2 /= np.linalg.norm(perp_vector2)
-        
+
+        # Define the length of the straight segments
+        straight_segment_length = length / 10
+        zigzag_length = length - 2 * straight_segment_length
+
         # Generate points for the zig-zag line
         num_zigs = 4
         num_points = num_zigs * 2
         amplitude = size
-        t = np.linspace(0, length, num_points)
+        t = np.linspace(0, zigzag_length, num_points)
         zigzag_pattern = amplitude * np.tile([1, -1], num_zigs)
         zigzag_points = np.outer(t, direction) + np.outer(zigzag_pattern, perp_vector1)
-        
-        # Adjust the zigzag points to start position
-        zigzag_points += np.array([Xi, Yi, Zi])
-        
+
+        # Add the straight segments to the start and end
+        start_point = np.array([Xi, Yi, Zi])
+        end_point = np.array([Xj, Yj, Zj])
+        start_segment = start_point + direction * straight_segment_length
+        end_segment = end_point - direction * straight_segment_length
+
+        # Adjust the zigzag points to the correct position
+        zigzag_points += start_segment
+
+        # Combine the points
+        points = np.vstack([start_point, start_segment, zigzag_points, end_segment, end_point])
+
         # Add lines connecting the points
+        num_points = len(points)
         lines = np.zeros((num_points - 1, 3), dtype=int)
-        lines[:, 0] = np.full((num_points - 1), 2, dtype=int)
+        lines[:, 0] = 2
         lines[:, 1] = np.arange(num_points - 1, dtype=int)
         lines[:, 2] = np.arange(1, num_points, dtype=int)
 
         # Create a PolyData object for the zig-zag line
-        zigzag_line = pv.PolyData(zigzag_points, lines=lines)
-        
+        zigzag_line = pv.PolyData(points, lines=lines)
+
         # Create a plotter and add the zig-zag line
         self.plotter.add_mesh(zigzag_line, color=color, line_width=2)
 
         # Add the spring label to the list of labels
         self._spring_labels.append(spring.name)
-        self._spring_label_points.append([(Xi+Xj)/2, (Yi+Yj)/2, (Zi+Zj)/2])
+        self._spring_label_points.append([(Xi + Xj) / 2, (Yi + Yj) / 2, (Zi + Zj) / 2])
+
             
     def plot_plates(self, deformed_shape, deformed_scale, color_map, combo_name):
         
@@ -1281,12 +1293,13 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
                 node.contour = sum(node.contour)/len(node.contour)
 
 def sig_fig_round(number, sig_figs):
+
     # Check for strings or other convertible data types
     if not isinstance(number, (float, int)):
         try:
             number = float(number)
         except:
-            raise ValueError(f"{number} is not a number. Ensure that all labels are numeric.")
+            raise ValueError(f"{number} is not a number. Ensure that `number` is numeric.")
 
     if number == 0:
         return 0

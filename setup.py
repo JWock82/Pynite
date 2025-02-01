@@ -5,15 +5,15 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="PyNiteFEA",
-    version="0.0.100",
+    version="1.0.0",
     author="D. Craig Brinck, PE, SE",
     author_email="Building.Code@outlook.com",
     description="A simple elastic 3D structural finite element library for Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/JWock82/PyNite.git",
-    packages=setuptools.find_packages(include=['PyNite', 'Pynite.*']),
-    package_data = {'PyNite': ['*html', '*.css', '*Full Logo No Buffer - Transparent.png']},
+    url="https://github.com/JWock82/Pynite.git",
+    packages=setuptools.find_packages(include=['Pynite', 'Pynite.*']),
+    package_data = {'Pynite': ['*html', '*.css', '*Full Logo No Buffer - Transparent.png']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -24,13 +24,11 @@ setuptools.setup(
         'PrettyTable',
         'scipy',
         'matplotlib',
-        'vtk',
-        'pyvista[all,trame]',
-        'trame_jupyter_extension',
-        'ipywidgets'
     ],
     extras_require = {
-        'vtk':  ['IPython'],
+        'all': ['Ipython', 'vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets', 'pdfkit', 'Jinja2'],
+        'vtk':  ['IPython', 'vtk'],
+        'pyvista': ['pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets'],
         'reporting': ['pdfkit', 'Jinja2'],
         'derivations': ['jupyterlab', 'sympy']
     },

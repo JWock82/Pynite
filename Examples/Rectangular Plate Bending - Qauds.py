@@ -1,11 +1,11 @@
 # This is an example of quadrilateral elements used to model a rectangular wall under uniform load.
-# This example demonstrates some of the nuances of using quadrilaterals in PyNite. PyNite's
+# This example demonstrates some of the nuances of using quadrilaterals in Pynite. Pynite's
 # quadrilaterals are based on an MITC4 formulation, which produces very accurate results for thick
 # and thin plates for the most part. One problem however is that stress results at quadrilateral
 # corners can be difficult to determine. This example highlights the issue and shows how to work
 # around it.
 
-# PyNite has another element which is a rectangular plate bending element. Usually for this type of
+# Pynite has another element which is a rectangular plate bending element. Usually for this type of
 # problem that element is better suited, as long as the wall does not have significant transverse
 # shear deformations, and the elements are not skewed. See the "Rectangular Tank Wall - 
 # Hydrostatic Loads" example using that element.
@@ -17,7 +17,7 @@ mesh_size = 1  # ft
 load = 250  # psf
 
 # Create a finite element model
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 model = FEModel3D()
 
 # Define concrete in the model
@@ -27,7 +27,7 @@ model.add_material('Concrete', E, 0.4*E, 0.17, 150)
 # Add the mesh to the model
 model.add_rectangle_mesh('MSH1', mesh_size, width, height, t, 'Concrete', 1, 1, [0, 0, 0], 'XY', element_type='Quad')
 
-# PyNite automatically generates each mesh when it analyzes. Sometimes it's convenient to generate
+# Pynite automatically generates each mesh when it analyzes. Sometimes it's convenient to generate
 # the nodes and elements in the mesh in advance so that we can manipulate the mesh prior to
 # analysis.
 model.meshes['MSH1'].generate()
@@ -54,7 +54,7 @@ model.analyze(check_statics=True)
 # +-----------------------+
 
 # Set up a renderer for the wall. The quad mesh will be set to show 'Mx' results.
-from PyNite.Rendering import Renderer
+from Pynite.Rendering import Renderer
 renderer = Renderer(model)
 renderer.annotation_size = mesh_size/6
 renderer.deformed_shape = False
@@ -70,7 +70,7 @@ renderer.render_model()
 # An unsmoothed plot would essentially show quad center stresses at the quad element corners.
 
 # Here are the expected results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202.
-# Note that the deflection values for the PyNite solution are slightly larger, due to transverse
+# Note that the deflection values for the Pynite solution are slightly larger, due to transverse
 # shear deformations being accounted for.
 D = E*t**3/(12*(1-nu**2))
 print('Solution from Timoshenko Table 35 for b/a = 2.0:')
@@ -81,7 +81,7 @@ print('Expected My at Center:', 0.0158*load*width**2)
 print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 
 # It should be noted that even the smoothed Mx contours are off by nearly 30% from the theoretical
-# solution at the wall boundaries. Because there are no adjacent quads at the boundaries, PyNite
+# solution at the wall boundaries. Because there are no adjacent quads at the boundaries, Pynite
 # cannot smooth the results there, and center stresses are being reported at the boundaries
 # instead of corner stresses. So what's really going on here?
 

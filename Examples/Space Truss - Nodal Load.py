@@ -3,9 +3,9 @@
 # Problem 6.64
 # Units for this model are meters and kilonewtons
 
-# Import 'FEModel3D' and 'Rendering' from 'PyNite'
-from PyNite import FEModel3D
-from PyNite.Rendering import Renderer
+# Import 'FEModel3D' and 'Rendering' from 'Pynite'
+from Pynite import FEModel3D
+from Pynite.Rendering import Renderer
 
 # Create a new model
 truss = FEModel3D()

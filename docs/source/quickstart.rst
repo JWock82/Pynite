@@ -3,7 +3,7 @@ Quickstart
 ==========
 
 Here's a simple example of how to analyze a simple beam. Many more examples are available here:
-`Examples <https://github.com/JWock82/PyNite/tree/main/Examples>`_.
+`Examples <https://github.com/JWock82/Pynite/tree/main/Examples>`_.
 
 .. code-block:: python
 
@@ -12,8 +12,8 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
     # This example does not use load combinations. The program will create a
     # default load combindation called 'Combo 1'
 
-    # Import `FEModel3D` from `PyNite`
-    from PyNite import FEModel3D
+    # Import `FEModel3D` from `Pynite`
+    from Pynite import FEModel3D
 
     # Create a new finite element model
     beam = FEModel3D()
@@ -61,7 +61,7 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
 
     # Render the deformed shape of the beam magnified 100 times, with a text
     # height of 5 inches
-    from PyNite.Visualization import Renderer
+    from Pynite.Visualization import Renderer
     renderer = Renderer(beam)
     renderer.annotation_size = 6
     renderer.deformed_shape = True

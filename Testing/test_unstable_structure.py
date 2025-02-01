@@ -8,7 +8,7 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 import unittest
 
 from numpy import True_
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 import sys
 from io import StringIO
 
@@ -25,7 +25,7 @@ class Test_Unstable(unittest.TestCase):
         
     def test_unstable_supports(self):
 
-        # This test checks the PyNite's ability to detect unstable support conditions
+        # This test checks the Pynite's ability to detect unstable support conditions
         # Units used in this test are inches, and kips
         MomentFrame = FEModel3D()
 

@@ -57,6 +57,6 @@ You can also create a screenshot using ``screenshot``. Pass the ``filepath`` for
 Renderer Class Reference
 ========================
 
-.. autoclass:: PyNite.Rendering.Renderer
+.. autoclass:: Pynite.Rendering.Renderer
    :members:
    :undoc-members:

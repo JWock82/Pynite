@@ -1,8 +1,8 @@
 # This example demonstrates how to analyze a tank wall for hydrostatic loads.
 
-# Import a few libraries from PyNite that we'll need
-from PyNite.FEModel3D import FEModel3D
-from PyNite.Mesh import RectangleMesh
+# Import a few libraries from Pynite that we'll need
+from Pynite.FEModel3D import FEModel3D
+from Pynite.Mesh import RectangleMesh
 
 # Create a finite element model
 model = FEModel3D()
@@ -66,7 +66,7 @@ model.add_load_combo('1.4F', {'F': 1.4})
 model.analyze(log=True, check_statics=True)
 
 # Render the model and plot the `Mx` moments.
-from PyNite.Rendering import Renderer
+from Pynite.Rendering import Renderer
 renderer = Renderer(model)
 renderer.annotation_size = 0.2
 renderer.render_loads = True

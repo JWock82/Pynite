@@ -1,11 +1,11 @@
 # Example of a simply supported beam with a point load.
 # Units used for the model in this example are inches and kips
 
-# Import `FEModel3D` from `PyNite`
-from PyNite import FEModel3D
+# Import `FEModel3D` from `Pynite`
+from Pynite import FEModel3D
 
 # Import 'Visualization' for rendering the model
-from PyNite import Visualization
+from Pynite import Visualization
 
 # Create a new finite element model
 simple_beam = FEModel3D()
@@ -44,7 +44,7 @@ simple_beam.add_load_combo('1.2D+1.6L', {'D':1.2, 'L':1.6})
 simple_beam.analyze(check_statics=True)
 
 # Render the model
-from PyNite.Visualization import Renderer
+from Pynite.Visualization import Renderer
 renderer = Renderer(simple_beam)
 renderer.annotation_size = 10
 renderer.deformed_shape = True
@@ -73,8 +73,8 @@ print('Maximum Deflection:', simple_beam.members['M1'].max_deflection('dy', '1.2
 print('Minimum Deflection:', simple_beam.members['M1'].min_deflection('dy', '1.2D+1.6L'), 'in')
 
 # The following lines can be uncommented to create a PDF report. Follow the instructions on the
-# wiki under "Generating PDF Reports" to prevent errors. The report will be output to the PyNite
+# wiki under "Generating PDF Reports" to prevent errors. The report will be output to the Pynite
 # folder unless the 'output_path' variable below is modified.
 
-from PyNite import Reporting
+from Pynite import Reporting
 Reporting.create_report(simple_beam, output_filepath='./Pynite Report.pdf', node_table=False, plate_table=False, plate_corner_forces=False, plate_center_forces=False, plate_corner_membrane=False, plate_center_membrane=False)

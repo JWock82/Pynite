@@ -9,7 +9,7 @@ PyNiteFEA.egg-info/*
 build/*
 dist/*
 Derivations/*.ipynb_checkpoints
-PyNite Report.pdf
+Pynite Report.pdf
 *.fbp
 gui.py
 wxTableBases.py

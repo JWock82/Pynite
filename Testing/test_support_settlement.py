@@ -11,7 +11,7 @@ Example 13.14
 """
 
 import unittest
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 import math
 import sys
 from io import StringIO
@@ -77,7 +77,7 @@ class Test_Support_Settlement(unittest.TestCase):
                          ('C', -61.451),
                          ('D',  60.176)]
 
-        # Check each textbook value against the PyNite calculated value
+        # Check each textbook value against the Pynite calculated value
         for name, text_rxn in textbook_rxns:
 
             # The `subTest` context manager prints which, if any, of the nodes fail the test
@@ -88,5 +88,5 @@ class Test_Support_Settlement(unittest.TestCase):
 
                 # There are some known rounding errors in the "textbook values" listed above. These
                 # rounding errors cause up to a 7.6% difference from the theoretical solution.
-                # Check that the PyNite reactions are within 7.6% of the textbook values
+                # Check that the Pynite reactions are within 7.6% of the textbook values
                 self.assertLess(abs(PyNite_rxn/text_rxn - 1), 0.076)

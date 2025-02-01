@@ -1,10 +1,10 @@
 # %%
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose, where
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose, where, radians, sin, cos
 from numpy.linalg import inv, pinv
 from math import isclose
-from PyNite.BeamSegZ import BeamSegZ
-from PyNite.BeamSegY import BeamSegY
-import PyNite.FixedEndReactions
+from Pynite.BeamSegZ import BeamSegZ
+from Pynite.BeamSegY import BeamSegY
+import Pynite.FixedEndReactions
 import warnings
 
 #%%
@@ -21,7 +21,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, model, name, i_node, j_node, material_name, section_name, auxNode=None,
+    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0.0,
                  tension_only=False, comp_only=False):
         """
         Initializes a new member.
@@ -53,12 +53,12 @@ class Member3D():
         self.i_reversal = False
         self.j_reversal = False
 
-        self.auxNode = auxNode # Optional auxiliary node used to define the member's local z-axis
-        self.PtLoads = []   # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
-        self.DistLoads = [] # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
-        self.SegmentsZ = [] # A list of mathematically continuous beam segments for z-bending
-        self.SegmentsY = [] # A list of mathematically continuous beam segments for y-bending
-        self.SegmentsX = [] # A list of mathematically continuous beam segments for torsion
+        self.rotation = rotation  # Member rotation (degrees) about its local x-axis
+        self.PtLoads = []         # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
+        self.DistLoads = []       # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
+        self.SegmentsZ = []       # A list of mathematically continuous beam segments for z-bending
+        self.SegmentsY = []       # A list of mathematically continuous beam segments for y-bending
+        self.SegmentsX = []       # A list of mathematically continuous beam segments for torsion
         self.Releases = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.tension_only = tension_only # Indicates whether the member is tension-only
         self.comp_only = comp_only # Indicates whether the member is compression-only
@@ -367,35 +367,35 @@ class Member3D():
                 if ptLoad[3] == case:
 
                     if ptLoad[0] == 'Fx':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(factor*ptLoad[1], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialPtLoad(factor*ptLoad[1], ptLoad[2], self.L()))
                     elif ptLoad[0] == 'Fy':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fy'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fy'))
                     elif ptLoad[0] == 'Fz':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fz'))
                     elif ptLoad[0] == 'Mx':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Torque(factor*ptLoad[1], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Torque(factor*ptLoad[1], ptLoad[2], self.L()))
                     elif ptLoad[0] == 'My':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My'))
                     elif ptLoad[0] == 'Mz':     
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz'))
                     elif ptLoad[0] == 'FX' or ptLoad[0] == 'FY' or ptLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
                         if ptLoad[0] == 'FX': FX = 1
                         if ptLoad[0] == 'FY': FY = 1
                         if ptLoad[0] == 'FZ': FZ = 1
                         f = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
                     elif ptLoad[0] == 'MX' or ptLoad[0] == 'MY' or ptLoad[0] == 'MZ':
                         MX, MY, MZ = 0, 0, 0
                         if ptLoad[0] == 'MX': MX = 1
                         if ptLoad[0] == 'MY': MY = 1
                         if ptLoad[0] == 'MZ': MZ = 1
                         f = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
                     else:
                         raise Exception('Invalid member point load direction specified.')
                 
@@ -406,9 +406,9 @@ class Member3D():
                 if distLoad[5] == case:
 
                     if distLoad[0] == 'Fx':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialLinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L()))
                     elif distLoad[0] == 'Fy' or distLoad[0] == 'Fz':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
                     elif distLoad[0] == 'FX' or distLoad[0] == 'FY' or distLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
                         if distLoad[0] =='FX': FX = 1
@@ -416,9 +416,9 @@ class Member3D():
                         if distLoad[0] =='FZ': FZ = 1
                         w1 = self.T()[:3, :][:, :3] @ array([FX*distLoad[1], FY*distLoad[1], FZ*distLoad[1]])
                         w2 = self.T()[:3, :][:, :3] @ array([FX*distLoad[2], FY*distLoad[2], FZ*distLoad[2]])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(factor*w1[0], factor*w2[0], distLoad[3], distLoad[4], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*w1[1], factor*w2[1], distLoad[3], distLoad[4], self.L(), 'Fy'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*w1[2], factor*w2[2], distLoad[3], distLoad[4], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialLinLoad(factor*w1[0], factor*w2[0], distLoad[3], distLoad[4], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[1], factor*w2[1], distLoad[3], distLoad[4], self.L(), 'Fy'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[2], factor*w2[2], distLoad[3], distLoad[4], self.L(), 'Fz'))
 
         # Return the fixed end reaction vector, uncondensed
         return fer
@@ -496,78 +496,70 @@ class Member3D():
         
         # Calculate the direction cosines for the local x-axis
         x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
+            
+        # Calculate the remaining direction cosines.
+        # For now, the local z-axis will be kept parallel to the global XZ plane in all cases. It will be adjusted later if a rotation has been applied to the member.
+        # Vertical members
+        if isclose(x1, x2) and isclose(z1, z2):
+            
+            # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
+            if y2 > y1:
+                y = [-1, 0, 0]
+                z = [0, 0, 1]
+            else:
+                y = [1, 0, 0]
+                z = [0, 0, 1]
+
+        # Horizontal members
+        elif isclose(y1, y2):
         
-        # Calculate the direction cosines for the local z-axis based on the auxiliary node
-        if self.auxNode != None:
-            
-            xa = self.auxNode.X
-            ya = self.auxNode.Y
-            za = self.auxNode.Z
-            
-            # Define a vector in the local xz plane using the auxiliary point 
-            z = [xa-x1, ya-y1, za-z1]
+            # Find a vector in the direction of the local z-axis by taking the cross-product
+            # of the local x-axis and the local y-axis. This vector will be perpendicular to
+            # both the local x-axis and the local y-axis.
+            y = [0, 1, 0]
+            z = cross(x, y)
+
+            # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+
+        # Members neither vertical or horizontal
+        else:
+
+            # Find the projection of x on the global XZ plane
+            proj = [x2-x1, 0, z2-z1]
+
+            # Find a vector in the direction of the local z-axis by taking the cross-product
+            # of the local x-axis and its projection on a plane parallel to the XZ plane. This
+            # produces a vector perpendicular to both the local x-axis and its projection. This
+            # vector will always be horizontal since it's parallel to the XZ plane. The order
+            # in which the vectors are 'crossed' has been selected to ensure the y-axis always
+            # has an upward component (i.e. the top of the beam is always on top).
+            if y2 > y1:
+                z = cross(proj, x)
+            else:
+                z = cross(x, proj)
+
+            # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
+            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
             
             # Find the direction cosines for the local y-axis
             y = cross(z, x)
             y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
-            
-            # Ensure the z-axis is perpendicular to the x-axis.
-            # If the vector from the i-node to the auxiliary node is not perpendicular to the member, this will ensure the local coordinate system is orthogonal
-            z = cross(x, y)
-            
-            # Turn the z-vector into a unit vector of direction cosines
-            z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
-        
-        # If no auxiliary node is specified the program will determine the member's local z-axis automatically
-        else:
-            
-            # Calculate the remaining direction cosines. The local z-axis will be kept parallel to the global XZ plane in all cases
-            # Vertical members
-            if isclose(x1, x2) and isclose(z1, z2):
-                
-                # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
-                if y2 > y1:
-                    y = [-1, 0, 0]
-                    z = [0, 0, 1]
-                else:
-                    y = [1, 0, 0]
-                    z = [0, 0, 1]
 
-            # Horizontal members
-            elif isclose(y1, y2):
-            
-                # Find a vector in the direction of the local z-axis by taking the cross-product
-                # of the local x-axis and the local y-axis. This vector will be perpendicular to
-                # both the local x-axis and the local y-axis.
-                y = [0, 1, 0]
-                z = cross(x, y)
+        # Check if the member is rotated
+        if self.rotation != 0.0:
 
-                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
-                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
+            # Get the member rotation angle
+            theta = radians(self.rotation)
 
-            # Members neither vertical or horizontal
-            else:
+            # Define the rotation matrix for rotation about the x-axis
+            R = array([[1, 0, 0],
+                    [0, cos(theta), -sin(theta)],
+                    [0, sin(theta), cos(theta)]])
 
-                # Find the projection of x on the global XZ plane
-                proj = [x2-x1, 0, z2-z1]
-
-                # Find a vector in the direction of the local z-axis by taking the cross-product
-                # of the local x-axis and its projection on a plane parallel to the XZ plane. This
-                # produces a vector perpendicular to both the local x-axis and its projection. This
-                # vector will always be horizontal since it's parallel to the XZ plane. The order
-                # in which the vectors are 'crossed' has been selected to ensure the y-axis always
-                # has an upward component (i.e. the top of the beam is always on top).
-                if y2 > y1:
-                    z = cross(proj, x)
-                else:
-                    z = cross(x, proj)
-
-                # Divide the z-vector by its magnitude to produce a unit vector of direction cosines
-                z = divide(z, (z[0]**2 + z[1]**2 + z[2]**2)**0.5)
-                
-                # Find the direction cosines for the local y-axis
-                y = cross(z, x)
-                y = divide(y, (y[0]**2 + y[1]**2 + y[2]**2)**0.5)
+            # Rotate the y and z axes about the x axis
+            y = R @ y
+            z = R @ z
 
         # Create the direction cosines matrix
         dirCos = array([x, y, z])
@@ -1962,7 +1954,7 @@ class Member3D():
         
         # Get the local deflections and calculate the slope at the start of the member
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used, so slope-deflection has been applied to solve for it.
-        # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what PyNite uses for moments about the local y-axis, so a negative value has been applied to those values specifically.
+        # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what Pynite uses for moments about the local y-axis, so a negative value has been applied to those values specifically.
         m1z = f[5, 0]       # local z-axis moment at start of member
         m2z = f[11, 0]      # local z-axis moment at end of member
         m1y = -f[4, 0]      # local y-axis moment at start of member

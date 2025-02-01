@@ -1,8 +1,8 @@
 # Example of a basic 2D tension-only braced frame with gravity and lateral
 # loads. Units used for the model in this example are inches and kips.
 
-# Import `FEModel3D` from `PyNite`
-from PyNite import FEModel3D
+# Import `FEModel3D` from `Pynite`
+from Pynite import FEModel3D
 
 # Create a new finite element model
 braced_frame = FEModel3D()
@@ -84,7 +84,7 @@ braced_frame.def_support('N4', support_DX=True, support_DZ=True, support_RY=True
 # be in the Y-direction, due to the fact that the spring only has stiffness in
 # that direction. We fix the node so that it's not free to spin or translate
 # in the other directions however. If we didn't the node would be unstable and
-# the model would crash. PyNite is unforgiving in this regard. Every degree of
+# the model would crash. Pynite is unforgiving in this regard. Every degree of
 # freedom (3 translations and 3 rotations) at every node must be stabilized so
 # it's not free to move infinitely.
 braced_frame.def_support('N1s', support_DX=True, support_DY=True, support_DZ=True, support_RX=True, support_RY=True, support_RZ=True)
@@ -133,7 +133,7 @@ braced_frame.analyze()
 
 # Display the deformed shape of the structure magnified 50 times with the text
 # height 5 model units (inches) high.
-from PyNite.Rendering import Renderer
+from Pynite.Rendering import Renderer
 rndr = Renderer(braced_frame)
 rndr.annotation_size = 5
 rndr.deformed_shape = True

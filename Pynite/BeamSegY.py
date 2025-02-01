@@ -1,4 +1,4 @@
-from PyNite.BeamSegZ import BeamSegZ
+from Pynite.BeamSegZ import BeamSegZ
 
 # %%
 class BeamSegY(BeamSegZ):

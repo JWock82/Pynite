@@ -2,9 +2,9 @@ from numpy import zeros, array, matmul, cross, add
 from numpy.linalg import inv, norm, det
 
 #%%
-class Plate3D():
+class Tri3D():
 
-    def __init__(self, name, i_node, j_node, m_node, n_node, t, material_name, model, kx_mod=1.0,
+    def __init__(self, name, i_node, j_node, k_node, t, material_name, model, kx_mod=1.0,
                  ky_mod=1.0):
         """
         A rectangular plate element
@@ -17,10 +17,8 @@ class Plate3D():
             The plate's i-node
         j_node : Node3D
             The plate's j-node
-        m_node : Node3D
-            The plate's m-node
-        n_node : Node3D
-            The plate's n-node
+        k_node : Node3D
+            The plate's k-node
         t : number
             Plate thickness
         material_name : string
@@ -31,7 +29,7 @@ class Plate3D():
         ky_mod : number
             Modification factor for stiffness in the plate's local y-direction. Default value is
             1.0, which indicates no stiffness modification (100% stiffness).
-        model : FEModel3D
+        model : FEModel3m
             The model the plate is a part of
         """
 
@@ -41,8 +39,7 @@ class Plate3D():
 
         self.i_node = i_node
         self.j_node = j_node
-        self.m_node = m_node
-        self.n_node = n_node
+        self.k_node = k_node
 
         self.t = t
         
@@ -56,8 +53,8 @@ class Plate3D():
 
         # Get material properties for the plate from the model
         try:
-            self.E = self.model.materials[material_name].E
-            self.nu = self.model.materials[material_name].nu
+            self.E = self.model.Materials[material_name].E
+            self.nu = self.model.Materials[material_name].nu
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
     
@@ -322,7 +319,7 @@ class Plate3D():
         fer = zeros((12, 1))
 
         # Get the requested load combination
-        combo = self.model.load_combos[combo_name]
+        combo = self.model.LoadCombos[combo_name]
 
         # Initialize the element's surface pressure to zero
         p = 0
@@ -404,33 +401,33 @@ class Plate3D():
         D = zeros((24, 1))
         
         # Read in the global displacements from the nodes
-        D[0, 0] = self.i_node.DX[combo_name]
-        D[1, 0] = self.i_node.DY[combo_name]
-        D[2, 0] = self.i_node.DZ[combo_name]
-        D[3, 0] = self.i_node.RX[combo_name]
-        D[4, 0] = self.i_node.RY[combo_name]
-        D[5, 0] = self.i_node.RZ[combo_name]
+        D.itemset((0, 0), self.i_node.DX[combo_name])
+        D.itemset((1, 0), self.i_node.DY[combo_name])
+        D.itemset((2, 0), self.i_node.DZ[combo_name])
+        D.itemset((3, 0), self.i_node.RX[combo_name])
+        D.itemset((4, 0), self.i_node.RY[combo_name])
+        D.itemset((5, 0), self.i_node.RZ[combo_name])
 
-        D[6, 0] = self.j_node.DX[combo_name]
-        D[7, 0] = self.j_node.DY[combo_name]
-        D[8, 0] = self.j_node.DZ[combo_name]
-        D[9, 0] = self.j_node.RX[combo_name]
-        D[10, 0] = self.j_node.RY[combo_name]
-        D[11, 0] = self.j_node.RZ[combo_name]
+        D.itemset((6, 0), self.j_node.DX[combo_name])
+        D.itemset((7, 0), self.j_node.DY[combo_name])
+        D.itemset((8, 0), self.j_node.DZ[combo_name])
+        D.itemset((9, 0), self.j_node.RX[combo_name])
+        D.itemset((10, 0), self.j_node.RY[combo_name])
+        D.itemset((11, 0), self.j_node.RZ[combo_name])
 
-        D[12, 0] = self.m_node.DX[combo_name]
-        D[13, 0] = self.m_node.DY[combo_name]
-        D[14, 0] = self.m_node.DZ[combo_name]
-        D[15, 0] = self.m_node.RX[combo_name]
-        D[16, 0] = self.m_node.RY[combo_name]
-        D[17, 0] = self.m_node.RZ[combo_name]
+        D.itemset((12, 0), self.m_node.DX[combo_name])
+        D.itemset((13, 0), self.m_node.DY[combo_name])
+        D.itemset((14, 0), self.m_node.DZ[combo_name])
+        D.itemset((15, 0), self.m_node.RX[combo_name])
+        D.itemset((16, 0), self.m_node.RY[combo_name])
+        D.itemset((17, 0), self.m_node.RZ[combo_name])
 
-        D[18, 0] = self.n_node.DX[combo_name]
-        D[19, 0] = self.n_node.DY[combo_name]
-        D[20, 0] = self.n_node.DZ[combo_name]
-        D[21, 0] = self.n_node.RX[combo_name]
-        D[22, 0] = self.n_node.RY[combo_name]
-        D[23, 0] = self.n_node.RZ[combo_name]
+        D.itemset((18, 0), self.n_node.DX[combo_name])
+        D.itemset((19, 0), self.n_node.DY[combo_name])
+        D.itemset((20, 0), self.n_node.DZ[combo_name])
+        D.itemset((21, 0), self.n_node.RX[combo_name])
+        D.itemset((22, 0), self.n_node.RY[combo_name])
+        D.itemset((23, 0), self.n_node.RZ[combo_name])
         
         # Return the global displacement vector
         return D
@@ -574,7 +571,7 @@ class Plate3D():
         # Return the plate bending constants
         return inv(self._C()) @ d
 
-    def moment(self, x, y, local=True, combo_name='Combo 1'):
+    def moment(self, x, y, combo_name='Combo 1'):
         """
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
@@ -592,10 +589,10 @@ class Plate3D():
         
         # Calculate and return internal moments
         # A negative sign will be applied to change the sign convention to match that of
-        # PyNite's quadrilateral elements.
+        # Pynite's quadrilateral elements.
         return -self.Db() @ self._Q(x, y) @ self._a(combo_name)
  
-    def shear(self, x, y, local=True, combo_name='Combo 1'):
+    def shear(self, x, y, combo_name='Combo 1'):
         """
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
@@ -638,9 +635,9 @@ class Plate3D():
 
         # Return internal shears
         return array([[Qx], 
-                      [Qy]])
+                       [Qy]])
 
-    def membrane(self, x, y, local=True, combo_name='Combo 1'):
+    def membrane(self, x, y, combo_name='Combo 1'):
         
         # Convert the (x, y) coordinates to (r, x) coordinates
         r = -1 + 2*x/self.width()

@@ -6,7 +6,7 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 import math
 import sys
 from io import StringIO
@@ -63,7 +63,7 @@ class Test_2D_Frame(unittest.TestCase):
         # Analyze the model
         beam.analyze_PDelta()
 
-        # from PyNite.Visualization import Renderer
+        # from Pynite.Visualization import Renderer
         # renderer = Renderer(beam)
         # renderer.combo_name = '1.4D'
         # renderer.annotation_size = 1
