@@ -18,10 +18,10 @@ def test_beam_rotation():
     # Analyze the beam
     beam.analyze()
 
-    # Obtain the minimum moment about each axis
+    # Obtain the max/min moment about each axis
     Mz = beam.members['M1'].min_moment('Mz')
-    My = beam.members['M1'].min_moment('My')
+    My = beam.members['M1'].max_moment('My')
 
     # The moment about each axis should be identical
     assert Mz == pt.approx(-17.677, rel=1e-2)
-    assert My == pt.approx(-17.677, rel=1e-2)
+    assert My == pt.approx(17.677, rel=1e-2)
