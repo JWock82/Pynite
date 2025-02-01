@@ -11,9 +11,9 @@ setuptools.setup(
     description="A simple elastic 3D structural finite element library for Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/JWock82/PyNite.git",
-    packages=setuptools.find_packages(include=['PyNite', 'Pynite.*']),
-    package_data = {'PyNite': ['*html', '*.css', '*Full Logo No Buffer - Transparent.png']},
+    url="https://github.com/JWock82/Pynite.git",
+    packages=setuptools.find_packages(include=['Pynite', 'Pynite.*']),
+    package_data = {'Pynite': ['*html', '*.css', '*Full Logo No Buffer - Transparent.png']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

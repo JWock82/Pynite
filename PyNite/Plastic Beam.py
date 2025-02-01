@@ -1,7 +1,7 @@
 # Matrix Structural Analysis, 2nd Ed, Problem 8.6
 
-from PyNite import FEModel3D
-from PyNite.Section import SteelSection
+from Pynite import FEModel3D
+from Pynite.Section import SteelSection
 
 # Create the model
 plastic_beam = FEModel3D()
@@ -47,7 +47,7 @@ plastic_beam.members['M1'].plot_moment('Mz', '1.4D')
 # plastic_beam.members['M1'].plot_deflection('dy', '1.4D')
 
 # Render the model
-# from PyNite.Visualization import Renderer
+# from Pynite.Visualization import Renderer
 # rndr = Renderer(plastic_beam)
 # rndr.combo_name = '1.4D'
 # rndr.render_loads = True

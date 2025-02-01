@@ -6,8 +6,8 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
-from PyNite import FEModel3D
-from PyNite.Mesh import CylinderMesh
+from Pynite import FEModel3D
+from Pynite.Mesh import CylinderMesh
 import sys
 from io import StringIO
 
@@ -90,7 +90,7 @@ class Test_Tanks(unittest.TestCase):
         # Find the maximum reaction at the base of the tank
         RMy = max([node.RxnMX['Combo 1'] for node in tank_model.nodes.values()])/mesh_size
         
-        # Check that the PyNite calculated values are within 3% of the calculated PCA values.
+        # Check that the Pynite calculated values are within 3% of the calculated PCA values.
         self.assertLess(abs(1 - My_max/My_max_PCA), 0.03, 'Failed quad cylinder flexure test.')
         self.assertLess(abs(1 - RMy/My_max_PCA), 0.03, 'Failed quad cylinder flexure test.')
         self.assertLess(abs(1 - My_min/My_min_PCA), 0.03, 'Failed quad cylinder flexure test.')
@@ -102,7 +102,7 @@ class Test_Tanks(unittest.TestCase):
         self.assertLess(abs(1 - Sx/20000), 0.03, 'Failed quad cylinder hoop tension test.')
 
         # Render the model
-        # from PyNite.Visualization import render_model
+        # from Pynite.Visualization import render_model
         # render_model(tank_model, 0.25, True, 100, True, 'My', True, 'Combo 1', labels=False, screenshot=None)
 
     def test_PCA_7_rect(self):
@@ -169,14 +169,14 @@ class Test_Tanks(unittest.TestCase):
         My_min = tank_model.meshes['MSH1'].min_moment('My')
         Sx = max([element.membrane(element.width()/2, element.height()/2)[0, 0] for element in tank_model.plates.values()])*t
 
-        # Check that the PyNite calculated values are within 8% of expected values. With a finer mesh the results are known to converge even closer, but 8% allows the model to run faster.
+        # Check that the Pynite calculated values are within 8% of expected values. With a finer mesh the results are known to converge even closer, but 8% allows the model to run faster.
         self.assertLess(abs(1 - My_max/My_max_PCA), 0.08, 'Failed plate cylinder flexure test.')
         self.assertLess(abs(1 - My_min/My_min_PCA), 0.08, 'Failed plate cylinder flexure test.')
         self.assertGreater(My_max, 0, 'Failed plate cylinder sign convention test')
         self.assertLess(abs(1 - Sx/20000), 0.05, 'Failed plate cylinder hoop tension test.')
 
         # # Render the model
-        # from PyNite.Visualization import render_model
+        # from Pynite.Visualization import render_model
         # render_model(tank_model, 0.25, True, 100, True, 'My', True, 'Combo 1', labels=False, screenshot=None)
 
 

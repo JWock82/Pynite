@@ -2,9 +2,9 @@
 from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose, where, radians, sin, cos
 from numpy.linalg import inv, pinv
 from math import isclose
-from PyNite.BeamSegZ import BeamSegZ
-from PyNite.BeamSegY import BeamSegY
-import PyNite.FixedEndReactions
+from Pynite.BeamSegZ import BeamSegZ
+from Pynite.BeamSegY import BeamSegY
+import Pynite.FixedEndReactions
 import warnings
 
 #%%
@@ -367,35 +367,35 @@ class Member3D():
                 if ptLoad[3] == case:
 
                     if ptLoad[0] == 'Fx':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(factor*ptLoad[1], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialPtLoad(factor*ptLoad[1], ptLoad[2], self.L()))
                     elif ptLoad[0] == 'Fy':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fy'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fy'))
                     elif ptLoad[0] == 'Fz':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fz'))
                     elif ptLoad[0] == 'Mx':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Torque(factor*ptLoad[1], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Torque(factor*ptLoad[1], ptLoad[2], self.L()))
                     elif ptLoad[0] == 'My':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My'))
                     elif ptLoad[0] == 'Mz':     
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz'))
                     elif ptLoad[0] == 'FX' or ptLoad[0] == 'FY' or ptLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
                         if ptLoad[0] == 'FX': FX = 1
                         if ptLoad[0] == 'FY': FY = 1
                         if ptLoad[0] == 'FZ': FZ = 1
                         f = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
                     elif ptLoad[0] == 'MX' or ptLoad[0] == 'MY' or ptLoad[0] == 'MZ':
                         MX, MY, MZ = 0, 0, 0
                         if ptLoad[0] == 'MX': MX = 1
                         if ptLoad[0] == 'MY': MY = 1
                         if ptLoad[0] == 'MZ': MZ = 1
                         f = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
                     else:
                         raise Exception('Invalid member point load direction specified.')
                 
@@ -406,9 +406,9 @@ class Member3D():
                 if distLoad[5] == case:
 
                     if distLoad[0] == 'Fx':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialLinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L()))
                     elif distLoad[0] == 'Fy' or distLoad[0] == 'Fz':
-                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
                     elif distLoad[0] == 'FX' or distLoad[0] == 'FY' or distLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
                         if distLoad[0] =='FX': FX = 1
@@ -416,9 +416,9 @@ class Member3D():
                         if distLoad[0] =='FZ': FZ = 1
                         w1 = self.T()[:3, :][:, :3] @ array([FX*distLoad[1], FY*distLoad[1], FZ*distLoad[1]])
                         w2 = self.T()[:3, :][:, :3] @ array([FX*distLoad[2], FY*distLoad[2], FZ*distLoad[2]])
-                        fer = add(fer, PyNite.FixedEndReactions.FER_AxialLinLoad(factor*w1[0], factor*w2[0], distLoad[3], distLoad[4], self.L()))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*w1[1], factor*w2[1], distLoad[3], distLoad[4], self.L(), 'Fy'))
-                        fer = add(fer, PyNite.FixedEndReactions.FER_LinLoad(factor*w1[2], factor*w2[2], distLoad[3], distLoad[4], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_AxialLinLoad(factor*w1[0], factor*w2[0], distLoad[3], distLoad[4], self.L()))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[1], factor*w2[1], distLoad[3], distLoad[4], self.L(), 'Fy'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[2], factor*w2[2], distLoad[3], distLoad[4], self.L(), 'Fz'))
 
         # Return the fixed end reaction vector, uncondensed
         return fer
@@ -1954,7 +1954,7 @@ class Member3D():
         
         # Get the local deflections and calculate the slope at the start of the member
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used, so slope-deflection has been applied to solve for it.
-        # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what PyNite uses for moments about the local y-axis, so a negative value has been applied to those values specifically.
+        # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what Pynite uses for moments about the local y-axis, so a negative value has been applied to those values specifically.
         m1z = f[5, 0]       # local z-axis moment at start of member
         m2z = f[11, 0]      # local z-axis moment at end of member
         m1y = -f[4, 0]      # local y-axis moment at start of member

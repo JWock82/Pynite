@@ -8,7 +8,7 @@ all the members available within the class. To begin modeling create a new insta
 
 .. code-block:: python
 
-    from PyNite import FEModel3D
+    from Pynite import FEModel3D
     my_model = FEModel3D()
 
 That's it! now you have a finite element model named ``my_model``. Usually you'll want to give it
@@ -54,5 +54,5 @@ Avaliable dictionaries are:
 FEModel3D Class Reference
 =========================
 
-.. autoclass:: PyNite.FEModel3D
+.. autoclass:: Pynite.FEModel3D
    :members:

@@ -1,4 +1,4 @@
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 import pytest as pt
 
 # Tests

@@ -2,8 +2,8 @@ from io import BytesIO
 import unittest
 from unittest.mock import MagicMock
 import vtk
-from PyNite import FEModel3D
-from PyNite.Visualization import Renderer
+from Pynite import FEModel3D
+from Pynite.Visualization import Renderer
 from IPython.display import Image
 
 class TestRenderer(unittest.TestCase):

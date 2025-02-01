@@ -9,17 +9,17 @@ from math import isclose
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d, all
 from numpy.linalg import solve
 
-from PyNite.Node3D import Node3D
-from PyNite.Material import Material
-from PyNite.Section import Section, SteelSection
-from PyNite.PhysMember import PhysMember
-from PyNite.Spring3D import Spring3D
-from PyNite.Member3D import Member3D
-from PyNite.Quad3D import Quad3D
-from PyNite.Plate3D import Plate3D
-from PyNite.LoadCombo import LoadCombo
-from PyNite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
-from PyNite import Analysis
+from Pynite.Node3D import Node3D
+from Pynite.Material import Material
+from Pynite.Section import Section, SteelSection
+from Pynite.PhysMember import PhysMember
+from Pynite.Spring3D import Spring3D
+from Pynite.Member3D import Member3D
+from Pynite.Quad3D import Quad3D
+from Pynite.Plate3D import Plate3D
+from Pynite.LoadCombo import LoadCombo
+from Pynite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
+from Pynite import Analysis
 
 
 # %%

@@ -42,7 +42,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        xvfb-run -a coverage run --source=PyNite -m pytest
+        xvfb-run -a coverage run --source=Pynite -m pytest
 
     - name: Convert coverage to XML
       run: |

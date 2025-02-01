@@ -1,12 +1,12 @@
 # Units used for the model in this example are inches and kips
 
-# Import `FEModel3D` from `PyNite`
-from PyNite import FEModel3D
+# Import `FEModel3D` from `Pynite`
+from Pynite import FEModel3D
 from matplotlib import pyplot as plt
 import numpy as np
 
 # Import 'Visualization' for rendering the model
-from PyNite import Visualization
+from Pynite import Visualization
 
 # Create a new finite element model
 simple_beam = FEModel3D()

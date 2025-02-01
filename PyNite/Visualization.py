@@ -34,7 +34,7 @@ class Renderer():
         # Initialize VTK objects
         self.renderer = vtk.vtkRenderer()
         self.window = vtk.vtkRenderWindow()
-        self.window.SetWindowName('PyNite - Simple Finite Element Analysis in Python')
+        self.window.SetWindowName('Pynite - Simple Finite Element Analysis in Python')
         self.window.AddRenderer(self.renderer)
 
     @property
@@ -1192,7 +1192,7 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
       
             # Determine which stress result has been requested by the user
             if stress_type == 'dz':
-                # Internally PyNite defines the nodes for a rectangular element in the order (i, j, m, n),
+                # Internally Pynite defines the nodes for a rectangular element in the order (i, j, m, n),
                 # while it defines the nodes for a quadrilateral element in the order (m, n, i, j)
                 if element.type == 'Rect':
                     i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]

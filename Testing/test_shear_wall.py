@@ -6,9 +6,9 @@ Copyright (c) 2022 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
-from PyNite import FEModel3D
-from PyNite.Mesh import CylinderMesh, RectangleMesh
-from PyNite.Rendering import Renderer
+from Pynite import FEModel3D
+from Pynite.Mesh import CylinderMesh, RectangleMesh
+from Pynite.Rendering import Renderer
 import sys
 from io import StringIO
 from math import isclose
@@ -228,7 +228,7 @@ class TestShearWalls(unittest.TestCase):
         # # window = render_model(model, text_height=1, render_loads=True, deformed_shape=True,
         # #                       deformed_scale=200, color_map='Txy', scalar_bar=False,
         # #                       combo_name='Seismic', labels=False, screenshot='console')
-        # from PyNite.Visualization import Renderer
+        # from Pynite.Visualization import Renderer
         # renderer = Renderer(model)
         # renderer.combo_name = 'Seismic'
         # renderer.color_map = 'Txy'

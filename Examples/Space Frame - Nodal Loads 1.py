@@ -3,9 +3,9 @@
 # Example 5.8
 # Units for this model are kips and inches
 
-# Import 'FEModel3D' and 'Visualization' from 'PyNite'
-from PyNite import FEModel3D
-from PyNite.Rendering import Renderer
+# Import 'FEModel3D' and 'Visualization' from 'Pynite'
+from Pynite import FEModel3D
+from Pynite.Rendering import Renderer
 
 # Create a new model
 frame = FEModel3D()

@@ -2,7 +2,7 @@ from math import isclose
 from numpy import average
 import io
 
-from PyNite.FEModel3D import FEModel3D
+from Pynite.FEModel3D import FEModel3D
 from prettytable import PrettyTable
 
 import matplotlib.pyplot as plt
@@ -703,7 +703,7 @@ class ShearWall():
 
     def render(self, color_map='Txy', combo_name='Combo 1'):
         
-        from PyNite.Visualization import Renderer
+        from Pynite.Visualization import Renderer
         renderer = Renderer(self.model)
         renderer.annotation_size = 0.25
         renderer.render_loads = True
@@ -717,7 +717,7 @@ class ShearWall():
     
     def screenshots(self, combo_name='Combo 1', dir_path='./'):
 
-        from PyNite.Rendering import Renderer
+        from Pynite.Rendering import Renderer
         
         renderer = Renderer(self.model)
         renderer.window_width = 750

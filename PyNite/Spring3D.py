@@ -2,8 +2,8 @@
 from numpy import zeros, array, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
 from math import isclose
-import PyNite.FixedEndReactions
-from PyNite.LoadCombo import LoadCombo
+import Pynite.FixedEndReactions
+from Pynite.LoadCombo import LoadCombo
 
 # %%
 class Spring3D():

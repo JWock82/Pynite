@@ -6,7 +6,7 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 import math
 import sys
 from io import StringIO
@@ -270,7 +270,7 @@ class Test_2D_Frame(unittest.TestCase):
         frame.add_member_dist_load('CE', 'FX', -1.5, -1.5)
         frame.add_member_dist_load('ED', 'FX', -1.5, -1.5)
 
-        # from PyNite.Visualization import render_model
+        # from Pynite.Visualization import render_model
         # render_model(frame, text_height=0.5, case='Case 1')
 
         frame.analyze()

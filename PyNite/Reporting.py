@@ -3,13 +3,13 @@ from jinja2 import Environment, PackageLoader
 import pdfkit
 
 
-# Determine the filepath to the local PyNite installation
+# Determine the filepath to the local Pynite installation
 from pathlib import Path
 path = Path(__file__).parent
 
 # Set up the jinja2 template environment
 env = Environment(
-    loader=PackageLoader('PyNite', '.'),
+    loader=PackageLoader('Pynite', '.'),
 )
 
 # Get the report template

@@ -1,7 +1,7 @@
 # This example uses Pynite's new `ShearWall` object instead of its `FEModel3D` object. The `ShearWall` object has a built-in `FEModel3D` and includes additional features built in to simplify analysis of complex shear wall shapes and loadings. It can automatically subdivide the wall into piers and coupling beams, help you quickly identify loads acting on individual piers or coupling beams (handy for seismic design), and report wall stiffness (used for rigid diaphragm analysis). I built this because many of the provisions in the seismic building codes are difficult to apply without a good tool, and many of the wall geometries used in modern structures are much more complex than simple rectangles without openings or wall intersections. Enjoy!
 
 # Model units will be kips and feet   
-from PyNite.ShearWall import ShearWall
+from Pynite.ShearWall import ShearWall
 
 # Create the shear wall
 wall = ShearWall()
@@ -54,7 +54,7 @@ wall.model.analyze_linear(log=True, check_statics=False, check_stability=False)
 print('Roof level stiffness: ', wall.stiffness('Roof')/12)
 
 # Let's render the wall shear stresses
-from PyNite.Rendering import Renderer
+from Pynite.Rendering import Renderer
 rndr = Renderer(wall.model)
 rndr.annotation_size = 2
 rndr.combo_name = '1.2D+1.0E'

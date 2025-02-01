@@ -7,7 +7,7 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 
 import enum
 import unittest
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 import math
 import sys
 from io import StringIO
@@ -70,7 +70,7 @@ class Test_AISC_Benchmark(unittest.TestCase):
         # Perform 2nd order analysis
         cantilever.analyze_PDelta()
 
-        # from PyNite.Visualization import Renderer
+        # from Pynite.Visualization import Renderer
         # renderer = Renderer(cantilever)
         # renderer.annotation_size = 0.5
         # renderer.window_width = 750
@@ -137,7 +137,7 @@ class Test_AISC_Benchmark(unittest.TestCase):
         column.add_load_combo('Combo 3', {'P3':1})
         column.add_load_combo('Combo 4', {'P4':1})
 
-        # from PyNite.Visualization import Renderer
+        # from Pynite.Visualization import Renderer
         # renderer = Renderer(column)
         # renderer.annotation_size = 1
         # renderer.combo_name = 'Combo 2'
@@ -203,7 +203,7 @@ class Test_AISC_Benchmark(unittest.TestCase):
         column.add_load_combo('Combo 3', {'P3':1})
         column.add_load_combo('Combo 4', {'P4':1})
 
-        # from PyNite.Visualization import Renderer
+        # from Pynite.Visualization import Renderer
         # renderer = Renderer(column)
         # renderer.annotation_size = 1
         # renderer.combo_name = 'Combo 2'

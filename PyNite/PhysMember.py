@@ -2,7 +2,7 @@ from numpy import array, dot, cross
 from numpy.linalg import norm
 from math import isclose, acos
 
-from PyNite.Member3D import Member3D
+from Pynite.Member3D import Member3D
 
 class PhysMember(Member3D):
     """

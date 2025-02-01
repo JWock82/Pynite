@@ -1,4 +1,4 @@
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 from math import tan
 
 # Create the cantilever model
@@ -39,7 +39,7 @@ cantilever.add_node_load('N6', 'FX', H)
 # Perform 2nd order analysis
 cantilever.analyze_PDelta()
 
-from PyNite.Visualization import Renderer
+from Pynite.Visualization import Renderer
 renderer = Renderer(cantilever)
 renderer.annotation_size = 0.5
 renderer.window_width = 750

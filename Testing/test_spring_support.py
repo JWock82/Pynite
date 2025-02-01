@@ -6,7 +6,7 @@ Copyright (c) 2021 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
-from PyNite import FEModel3D
+from Pynite import FEModel3D
 import sys
 from io import StringIO
 

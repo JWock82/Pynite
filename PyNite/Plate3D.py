@@ -592,7 +592,7 @@ class Plate3D():
         
         # Calculate and return internal moments
         # A negative sign will be applied to change the sign convention to match that of
-        # PyNite's quadrilateral elements.
+        # Pynite's quadrilateral elements.
         return -self.Db() @ self._Q(x, y) @ self._a(combo_name)
  
     def shear(self, x, y, local=True, combo_name='Combo 1'):

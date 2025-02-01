@@ -1,6 +1,6 @@
 import unittest
-from PyNite import FEModel3D
-from PyNite.Section import SteelSection
+from Pynite import FEModel3D
+from Pynite.Section import SteelSection
 import math
 import sys
 from io import StringIO

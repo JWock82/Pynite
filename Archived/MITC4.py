@@ -138,7 +138,7 @@ class MITC4():
         Returns the [B] matrix for shear.
 
         This is provided for reference only and is not actually used by
-        PyNite. This is the theoretical solution, but it is known to
+        Pynite. This is the theoretical solution, but it is known to
         produce spurious shear forces. It is prone to a phenomenon called
         shear locking. Instead of this matrix, the MITC4 [B] matrix is used,
         which eliminates shear-locking and can be used for thick and thin
@@ -355,7 +355,7 @@ class MITC4():
         # combined bending plus membrane stiffness matrix. Some of those terms
         # relate to translational stiffness. It seems more rational to only
         # look at the terms relating to rotational stiffness. That will be
-        # PyNite's approach.
+        # Pynite's approach.
         k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
                    abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
                    )/1000
