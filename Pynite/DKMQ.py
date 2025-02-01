@@ -53,10 +53,10 @@ class Quad3D():
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
 
     # def _local_coords(self):
-    #     """
+    #     '''
     #     Calculates or recalculates and stores the local (x, y) coordinates for each node of the
     #     quadrilateral.
-    #     """
+    #     '''
 
     #     # Get the global coordinates for each node
     #     X1, Y1, Z1 = self.i_node.X, self.i_node.Y, self.i_node.Z
@@ -204,10 +204,9 @@ class Quad3D():
             return 1/2*(1 - xi)*(1 - eta**2)
         else:
             raise Exception('Unable to calculate shape function. Invalid value specified for k.')
-    
-    def Co(self, xi, eta):
-        """This alternate calculation of the Jacobian matrix follows "The development of DKMQ plate bending element for thick to thin shell analysis based on the Naghdi/Reissner/Mindlin shell theory" by Katili, Batoz, Maknun and Hamdouni (2015). In the reference "C^o" is used instead of "J" to refer to the Jacobian. This method does not seem to produce correct results, but will be kept for future reference. It is helpful for understanding this plate element and may prove a useful simplification to the code base if implemented correctly someday.
-        """
+
+
+    def J(self, xi, eta):
 
         # Nodal global coordinates (i=1, j=2, m=3, n=4)
         x_1 = np.array([[self.i_node.X, self.i_node.Y, self.i_node.Z]])
@@ -230,38 +229,37 @@ class Quad3D():
         a_2 = N1_eta*x_1 + N2_eta*x_2 + N3_eta*x_3 + N4_eta*x_4
 
         # Normal vector
-        n = np.cross(a_1, a_2)/np.linalg.norm(np.cross(a_1, a_2))
+        n = np.cross(a_1, a_2)/np.norm(np.cros(a_1, a_2))
 
         # Global unit vectors
-        i = np.array([[1.0, 0.0, 0.0]])
-        k = np.array([[0.0, 0.0, 1.0]])
+        i = np.array([1.0, 0.0, 0.0])
+        k = np.array([0.0, 0.0, 1.0])
 
-        if np.array_equal(n, k) or np.array_equal(n, -k):
-            t_1 = i
-        else:
-            t_1 = np.cross(n, k)
-
+        t_1 = np.cross(n, k)
         t_2 = np.cross(n, t_1)
 
-        a_11 = np.dot(a_1, a_1.T)[0, 0]
-        a_12 = np.dot(a_1, a_2.T)[0, 0]
-        a_21 = np.dot(a_2, a_1.T)[0, 0]
-        a_22 = np.dot(a_2, a_2.T)[0, 0]
+        if n == k or n == -k:
+            t_1 = i
+
+        a_11 = np.dot(a_1, a_1)
+        a_12 = np.dot(a_1, a_2)
+        a_21 = np.dot(a_2, a_1)
+        a_22 = np.dot(a_2, a_2)
 
         a = np.array([[a_11, a_12],
                       [a_21, a_22]])
         
         a_det = np.linalg.det(a)
 
+        t_1 = np.cross(n, k)
+
         a1 = 1/a_det*(a_22*a_1 - a_12*a_2)
         a2 = 1/a_det*(-a_21*a_1 + a_11*a_2)
 
-        Co = np.array([[np.dot(a1, t_1.T)[0, 0], np.dot(a1, t_2.T)[0, 0]],
-                       [np.dot(a2, t_1.T)[0, 0], np.dot(a2, t_2.T)[0, 0]]])
-        
-        return Co
+        return np.array([[a1*t_1, a1*t_2],
+                         [a2*t_1, a2*t_2]])
 
-    def J(self, xi, eta):
+    def oldJ(self, xi, eta):
         """
         Returns the Jacobian matrix for the element
         """
