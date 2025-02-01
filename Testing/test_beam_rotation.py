@@ -34,6 +34,7 @@ def test_beam_rotation():
     My_min = beam.members['M1'].min_moment('My')
 
     # Check the maximum and minimum moments
+    # Note that the strong and weak axis have different positive moment sign conventions due to the right hand rule
     assert Mz_max == pt.approx(0.0, rel=1e-2)
     assert Mz_min == pt.approx(-17.677, rel=1e-2)
     assert My_max == pt.approx(17.677, rel=1e-2)
