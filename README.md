@@ -63,6 +63,10 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.0.1 - In Progress
+* Changes to testing code coverage less than 2% no longer trigger build failure.
+* Code cleanup: removed `DKMQ.py` from the repository that was no longer in use. The code for the DKMQ element now lives in `Quad3D.py` instead.
+
 v1.0.0
 * v1.0 is here! I feel the program is stable enough and has been around long enough to be battle tested and to call it v1.0.
 * Important!!! - Changed all calls to `Pynite` to `Pynite` this matches the logo, and made more sense. I'm not sure why I ever capitalized that N to begin with, but going forward from v1.0, `Pynite` has a lowercase n. I've been wanting to make this change as part of the v1.0 release.
