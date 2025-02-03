@@ -8,13 +8,13 @@ Installation
 
     $ pip install PyniteFEA[all]
 
-Be sure to install ``PyniteFEA`` rather than ``Pynite``. The second one is a different package that has nothing to do with finite element analysis. the ``[all]`` in the line above is only needed if you want to use `Pynite's` built in visualization and reporting features. For a lighter-weight installation you can omit ``[all]``.
+Be sure to install ``PyniteFEA`` rather than ``Pynite``. The second one is a different package that has nothing to do with finite element analysis. The ``[all]`` in the line above is only needed if you want to use `Pynite's` built in visualization and reporting features. For a lighter-weight installation you can omit ``[all]``.
 
 For engineers who may be new to `python`, the ``$`` symbol in the line above represents any directory in your system that ``pip`` is accessible from. If you checked the box to place `python` on your system ``PATH`` during installation (recommended) you can run ``pip`` from any directory (see image below). Otherwise it's sitting in the ``Scripts`` folder in the directory where Python was installed, and you'll need to either add it to your system ``PATH`` or navigate to that directory via the console and run the ``pip`` command above.
 
 .. figure:: ../img/pip_installation_example.png
 
-To get the most out of `Pynite` you can use the following commands to install a few more optional dependences. A list of what each of these dependencies does for `Pynite` can be found below:
+Adding the [all] command is equivalent to running the following additional installation commands:
 
 .. code-block:: console
 
@@ -22,11 +22,21 @@ To get the most out of `Pynite` you can use the following commands to install a 
     $ pip install scipy
     $ pip install pdfkit
     $ pip install jinja2
-    $ pip install pyvista
+    $ pip install vtk
+    $ pip install pyvista[all,trame]
+    $ pip install ipywidgets
+    $ pip install trame_jupyter_extension
 
-It is recommended to at least install `scipy` if you choose not to install all the optional dependencies. This will allow you to still use the sparse matrix solver which is usually faster and uses less memory. By default `Pynite` uses the sparse solver, so if you don't install `scipy` you'll need to pass the parameter ``sparse=False`` to the solver when you go to analyze, otherwise the program will throw an exception.
+These dependecies are used for the following:
 
-If you plan to use Pynite in `Jupyter` notebooks it is recommended to run the following commands instead of the last line of the previous set of commands.
+* matplotlib - General plotting
+* scipy - Allows for a sparse solver to be used
+* pdfkit - Used for printing reports to pdf
+* jinja2 - Used for templating/formatting reports prior to printing
+* vtk - Used for visualizing the model
+* pyvista[all, trame] - For visualizing the model in a way that is friendly to web applications and jupyter notebooks
+* ipywidgets - Used for jupyter notebook visualization
+* trame_jupyter_extension - Used for jupyter notebook visualization
 
 .. code-block:: console
 

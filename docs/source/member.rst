@@ -144,7 +144,7 @@ It can be seen that when applying loads, capitalization is used to distinguish b
 Member Results
 ==============
 
-Once your model is solved you can access members and their results from the ``Members`` dictionary in the ``FEModel3D`` class. Below are some examples.
+You can access members and their results from the ``members`` dictionary in the ``FEModel3D`` class. Below are some examples.
 
 Shear Results:
 
