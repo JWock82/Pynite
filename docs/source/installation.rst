@@ -38,19 +38,13 @@ These dependecies are used for the following:
 * ipywidgets - Used for jupyter notebook visualization
 * trame_jupyter_extension - Used for jupyter notebook visualization
 
-.. code-block:: console
-
-    $ pip install pyvista[all,trame]
-    $ pip install ipywidgets
-    $ pip install trame_jupyter_extension
-
-`Jupyter` can be installed using the following command. Note that in order to install the `trame` libraries you'll need to install `Jupyter` first if you haven't already.
+Note that if you use [all] without `Jupyter` installed you may get installation errors regarding installation of the last two libraries. `Pynite` should still work fine without them. If you want `Jupyter`, it can be installed using the command below:
 
 .. code-block:: console
 
     $ pip install jupyterlab
 
-After installing `Jupyter` you'll be able to view some of the documents used to help derive `Pynite` if you also install `sympy`. You'll find these documents in the installation directory. `sympy` can be installed as follows:
+After installing `Jupyter` you'll be able to view some of the documents used to help derive `Pynite` located in the `GitHub` repository, if you also install `sympy`. `sympy` can be installed as follows:
 
 .. code-block:: console
     
