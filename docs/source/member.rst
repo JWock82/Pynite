@@ -9,8 +9,7 @@ at any internal nodes. Transverse shear deformations are not currently considere
 Creating a New Member
 =====================
 
-To create a new member use the ``FEModel3D.add_member()`` method. First we'll set up some
-material and section properties:
+To create a new member use the ``FEModel3D.add_member()`` method. For the example below, we'll assume 3 nodes have already been defined ('N1', 'N2', and 'N3'). The next step is to set up some material and section properties for the members we'll be creating:
 
 .. code-block:: python
 
@@ -28,9 +27,16 @@ material and section properties:
     rho = 0.000283  # (kci) Density
     my_model.add_material('Steel', E, G, nu, rho)
 
+With a cross-section and material properties defined we can now create members:
+
+.. code-block:: python
+
     # Add a member name 'M1' starting at node 'N1' and ending at node 'N2'
     # made from a previously defined material named 'Steel'
     my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26')
+
+    # Add another member 'M2'
+    my_model.add_member('M2', 'N2', 'N3', 'Steel', 'W12x26')
 
 Local Coordinate System
 =======================
@@ -74,6 +80,16 @@ about the local x-axis should only be done at one end (if at all). The same goes
 Releasing Rxi and Rxj simultaneously, or Dxi and Dxj simultaneously will cause an instability in the
 member. You should exercise caution when releasing the shears at the ends of the member too.
 
+Member Rotations
+================
+
+The member can be rotated about its own longitudinal (x) axis by passing a rotation angle (in degrees) to the ``rotation`` argument in the ``FEModel3D.add_member()`` method. Here's an example:
+
+.. code-block:: python
+    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26', rotation=35)
+
+The member created by the code above will be rotated 35 degrees about its x-axis.
+
 Tension/Compression Only Members
 ================================
 
@@ -81,9 +97,8 @@ Members can be changed to tension or compression only by passing ``tension_only=
 ``comp_only=True`` to the ``FEModel3D.add_member()`` method. Here's an example:
 
 .. code-block:: python
-    my_model.add_section('Section', A, Iy, Iz, J)
-    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'Section', tension-only=True)
-    my_model.add_member('M2', 'N1', 'N2', 'Steel', 'Section', comp-only=True)
+    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26', tension-only=True)
+    my_model.add_member('M2', 'N2', 'N3', 'Steel', 'W12x26', comp-only=True)
 
 Tension-only and compression-only analysis is an iterative process. When using these types of
 members be sure to perform a non-linear analysis. Do not use the ``FEModel3D.analyze_linear()``
