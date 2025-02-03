@@ -40,7 +40,7 @@ These dependecies are used for the following:
 
 Note that if you use [all] without `Jupyter Lab` installed, it will install `Jupyter Lab` for you. If you don't want `Jupyter Lab` installed it's best to install `Pynite` without the [all] command, and individually install the optional dependences listed above that you do want.
 
-With `Jupyter Lab` installed you'll be able to view some of the documents used to help derive `Pynite` located in the `GitHub` repository, if you also install `sympy`. `sympy` can be installed as follows:
+With `Jupyter Lab` installed you'll be able to view some of the documents used to help derive `Pynite` located in the `GitHub` repository, if you also install `Sympy`. It can be installed as follows:
 
 .. code-block:: console
     
