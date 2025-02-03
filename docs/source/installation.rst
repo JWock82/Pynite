@@ -27,17 +27,6 @@ Adding the [all] command is equivalent to running the following additional insta
     $ pip install ipywidgets
     $ pip install trame_jupyter_extension
 
-These dependecies are used for the following:
-
-* matplotlib - General plotting
-* scipy - Allows for a sparse solver to be used
-* pdfkit - Used for printing reports to pdf
-* jinja2 - Used for templating/formatting reports prior to printing
-* vtk - Used for visualizing the model
-* pyvista[all, trame] - For visualizing the model in a way that is friendly to web applications and jupyter notebooks
-* ipywidgets - Used for jupyter notebook visualization
-* trame_jupyter_extension - Used for jupyter notebook visualization
-
 Note that if you use [all] without `Jupyter Lab` installed, it will install `Jupyter Lab` for you. If you don't want `Jupyter Lab` installed it's best to install `Pynite` without the [all] command, and individually install the optional dependences listed above that you do want.
 
 With `Jupyter Lab` installed you'll be able to view some of the documents used to help derive `Pynite` located in the `GitHub` repository, if you also install `Sympy`. It can be installed as follows:
@@ -49,25 +38,27 @@ With `Jupyter Lab` installed you'll be able to view some of the documents used t
 Dependencies
 ============
 
-`Pynite` depends on the following packages:
+Below is a detailed description of how `Pynite` uses each of its dependencies to help you decide which (if any) installation customizations you may want to make.
 
-Required Dependencies
+Required Dependencies Installed No Matter What
 ---------------------
 
 * `numpy`: Used for matrix algebra and dense matrix solver
 * `PrettyTable`: Used to format tabular output
-
-Optional Dependencies
----------------------
-
 * `scipy`: Used for sparse matrix solver to improve solution speed and memory management. In most cases you'll want to install scipy. It is highly recommended for large models.
+
+Additional Optional Dependencies Included with ``[all]``
+--------------------------------------------------------
+
 * `matplotlib`: used for plotting member diagrams.
 * `PDFKit`: Used for generating pdf reports. In order to generate pdf reports, PDFKit requires you to have wkhtmltopdf installed on your computer. This is a free program available for download at https://wkhtmltopdf.org/downloads.html. Once installed, you'll need to help Pynite find it. On Windows, this can be done by setting your PATH environment variable to include the path to "wkhtmltopdf.exe" after installation. For example, mine is installed at "C:\Program Files\wkhtmltopdf\bin"
 * `jinja2`: Used by `Pynite` for templating reports into HTML prior to HTML-to-pdf conversion. Only needed if you plan to use the PDF reporting features.
-* jupyterlab: Only needed if you want to view the derivations used to build Pynite.
-* sympy: Only needed if you want to view the derivations used to build Pynite.
-* `pyvista`: Used for visualization.
 * `pyvista[all, trame]`: Used for interactive visualization in `Jupyter` notebooks.
 * `ipywidgets`: Used for interactive visualization in `Jupyter` notebooks.
 * `trame_jupyter_extension`: Used for interactive visualization in `Jupyter` notebooks.
 * `VTK`: (Legacy) used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. VTK is published by Kitware. I've noticed Kitware takes a little time updating VTK to be compatible anytime a new version of Python is released. If you're having trouble installing VTK, you can see which versions of Python are supported by visiting https://pypi.org/project/vtk/#files. VTK does not need to be installed if you don't plan to use the visualization tools built into Pynite.
+* `jupyterlab``: Installed by default with some of the other libraries if not already installed.
+
+Other Dependencies You May Want to consider
+-------------------------------------------
+* `sympy`: Only needed if you want to view the derivations used to build Pynite.
