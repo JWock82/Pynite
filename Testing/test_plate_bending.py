@@ -7,9 +7,8 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 
 from Pynite import FEModel3D
 import math
-import pytest as pt
 
-def test_plate_displacement(self):
+def test_plate_displacement():
     """
     # A First Course in the Finite Element Method, 4th Edition
     # Daryl L. Logan
@@ -66,7 +65,7 @@ def test_plate_displacement(self):
     # Check that results are withing 1% of the expected value
     assert abs(calculated_displacement/expected_displacement - 1.0) < 0.01
 
-def test_hydrostatic_plate(self):
+def test_hydrostatic_plate():
 
     # Create the model
     plate_model = FEModel3D()
@@ -120,7 +119,7 @@ def test_hydrostatic_plate(self):
     # values.
     assert abs(DZ_calcd/DZ_expected - 1) < 0.15, 'Failed Timoshenko rectangle hydrostatic test.'
 
-def test_hydrostatic_quad(self):
+def test_hydrostatic_quad():
 
     # Create the model
     quad_model = FEModel3D()
