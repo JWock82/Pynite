@@ -170,3 +170,33 @@ def test_hydrostatic_quad():
     # Check that the Pynite calculated values are within 15% of the Timoshenko calculated
     # values.
     assert abs(DZ_calcd/DZ_expected - 1) < 0.15, 'Failed Timoshenko quadrilateral hydrostatic test.'
+
+def test_circular_hopper():
+    """This test currently only tests that the code runs with no exceptions. It doesn't necessarily mean it's checking stresses correctly."""
+
+    model = FEModel3D()
+    model.add_material('Steel', 29000*144, 11200*144, 0.3, 0.490)
+    model.add_frustrum_mesh('Hopper', 1, 10, 2, 10, 0.25, 'Steel')
+    model.meshes['Hopper'].generate()
+
+    # Add supports at the top/springline of the hopper
+    for node in model.nodes.values():
+        if math.isclose(node.Y, 0, abs_tol=0.01):
+            model.def_support(node.name, True, True, True, False, False, False)
+    
+    # Add loads to each quad
+    for quad in model.quads.values():
+        model.add_quad_surface_pressure(quad.name, -0.2)
+
+    # Solve the model
+    model.analyze_linear()
+
+    # from Pynite.Rendering import Renderer
+    # rndr = Renderer(model)
+    # rndr.annotation_size = 0.25
+    # rndr.color_map = 'Sy'
+    # rndr.render_loads = False
+    # rndr.render_model()
+
+if __name__ == '__main__':
+    test_circular_hopper()

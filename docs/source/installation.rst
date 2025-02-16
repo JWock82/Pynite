@@ -56,8 +56,8 @@ Additional Optional Dependencies Included with ``[all]``
 * `pyvista[all, trame]`: Used for interactive visualization in `Jupyter` notebooks.
 * `ipywidgets`: Used for interactive visualization in `Jupyter` notebooks.
 * `trame_jupyter_extension`: Used for interactive visualization in `Jupyter` notebooks.
-* `VTK`: (Legacy) used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. VTK is published by Kitware. I've noticed Kitware takes a little time updating VTK to be compatible anytime a new version of Python is released. If you're having trouble installing VTK, you can see which versions of Python are supported by visiting https://pypi.org/project/vtk/#files. VTK does not need to be installed if you don't plan to use the visualization tools built into Pynite.
-* `jupyterlab``: Installed by default with some of the other libraries if not already installed.
+* `VTK`: (legacy) Used for visualization - Note that VTK is a little picky about which version of Python you are running. You must run a 64 bit installation of Python, rather than a 32 bit version. VTK is published by Kitware. I've noticed Kitware takes a little time updating VTK to be compatible anytime a new version of Python is released. If you're having trouble installing VTK, you can see which versions of Python are supported by visiting https://pypi.org/project/vtk/#files. VTK does not need to be installed if you don't plan to use the visualization tools built into Pynite. Pynite is moving away from `VTK` and toward `pyvista` in an effort to simplify.
+* `jupyterlab`: Installed by default with some of the other libraries if not already installed.
 
 Other Dependencies You May Want to consider
 -------------------------------------------
