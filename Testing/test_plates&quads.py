@@ -191,6 +191,13 @@ def test_circular_hopper():
     # Solve the model
     model.analyze_linear()
 
+    from Pynite.Visualization import Renderer
+    rndr = Renderer(model)
+    rndr.annotation_size = 0.25
+    rndr.color_map = 'Sy'
+    rndr.render_loads = False
+    rndr.render_model()
+
     # from Pynite.Rendering import Renderer
     # rndr = Renderer(model)
     # rndr.annotation_size = 0.25
