@@ -196,8 +196,8 @@ def test_circular_hopper():
     rndr.annotation_size = 0.25
     rndr.color_map = 'Sy'
     rndr.render_loads = False
-    rndr.render_model()
-
+    rndr.render_model(interact=False) # interact=False prevents the test from stalling in a headless environment
+    
     # from Pynite.Rendering import Renderer
     # rndr = Renderer(model)
     # rndr.annotation_size = 0.25
@@ -205,5 +205,5 @@ def test_circular_hopper():
     # rndr.render_loads = False
     # rndr.render_model()
 
-# if __name__ == '__main__':
-#     test_circular_hopper()
+if __name__ == '__main__':
+    test_circular_hopper()
