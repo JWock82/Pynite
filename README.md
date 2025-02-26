@@ -67,6 +67,7 @@ v1.0.1 - In Progress
 * Changes to testing code coverage less than 2% no longer trigger build failure.
 * Code cleanup: removed `DKMQ.py` from the repository that was no longer in use. The code for the DKMQ element now lives in `Quad3D.py` instead.
 * Frustrum meshes generated about the global X and Z axes are now being generated correctly.
+* Fixed a bug that was not letting plate contours render for `VTK` users using load combinations other than 'Combo 1'. This bug was introduced recently when the option for global stress results was added. Global stress results for `VTK` rendering are still not supported yet. Users are urged to switch to using `pyvista` rendering instead as `VTK` rendering is on its way out of `Pynite` and may be only minimally maintained going forward.
 
 v1.0.0
 * v1.0 is here! I feel the program is stable enough and has been around long enough to be battle tested and to call it v1.0.

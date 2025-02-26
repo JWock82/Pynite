@@ -206,4 +206,4 @@ def test_circular_hopper():
     # rndr.render_model()
 
 if __name__ == '__main__':
-    test_circular_hopper()
+    test_hydrostatic_quad()
