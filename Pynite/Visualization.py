@@ -79,12 +79,12 @@ class Renderer():
         self.color_map = color_map
     
     def set_combo_name(self, combo_name='Combo 1'):
-        self.combo_name = combo_name
         self.case = None
+        self.combo_name = combo_name
     
     def set_case(self, case=None):
-        self.case = case
         self.combo_name = None
+        self.case = case
     
     def set_show_labels(self, show_labels=True):
         self.labels = show_labels
