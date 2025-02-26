@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-MIT License
-
-Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
-"""
-
 from Pynite import FEModel3D
 import math
 
@@ -20,7 +13,7 @@ def test_beam_internal_forces():
     beam.add_node('N1', 0, 0, 0)
     beam.add_node('N2', 10, 0, 0)
 
-    # Define the supports
+    # Define the supports (simply supported)
     beam.def_support('N1', True, True, True, True, False, False)
     beam.def_support('N2', True, True, True, False, False, False)
 
@@ -85,5 +78,5 @@ def test_beam_internal_forces():
     assert math.isclose(beam.members['M1'].deflection('dy', 10, 'D')*12, 0, abs_tol=0.00001), 'dy internal deflection test failed at end of member.'
     assert math.isclose(beam.members['M1'].deflection('dz', 10, 'D')*12, 0, abs_tol=0.00001), 'dz internal deflection test failed at end of member.'
 
-if __name__ == '__main__':
-    test_beam_internal_forces()
+# if __name__ == '__main__':
+#     test_beam_internal_forces()
