@@ -63,7 +63,7 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.0.1 - In Progress
+v1.0.1
 * Changes to testing code coverage less than 2% no longer trigger build failure.
 * Code cleanup: removed `DKMQ.py` from the repository that was no longer in use. The code for the DKMQ element now lives in `Quad3D.py` instead.
 * Frustrum meshes generated about the global X and Z axes are now being generated correctly.
@@ -71,7 +71,7 @@ v1.0.1 - In Progress
 
 v1.0.0
 * v1.0 is here! I feel the program is stable enough and has been around long enough to be battle tested and to call it v1.0.
-* Important!!! - Changed all calls to `Pynite` to `Pynite` this matches the logo, and made more sense. I'm not sure why I ever capitalized that N to begin with, but going forward from v1.0, `Pynite` has a lowercase n. I've been wanting to make this change as part of the v1.0 release.
+* Important!!! - Changed all calls from `PyNite` to `Pynite` this matches the logo, and made more sense. I'm not sure why I ever capitalized that N to begin with, but going forward from v1.0, `Pynite` has a lowercase n. I've been wanting to make this change as part of the v1.0 release.
 * Added a new `ShearWall` class that assists you in constructing and analyzing shear walls. This tool automatically detects piers and coupling beams, and finds the forces inside them and calculates their ascpect ratios, which can be handy for seismic design. It reports stiffness of multi-story shear walls at each story to help with rigid diaphragm analysis. It allows for modeling walls with openings, steps, and partial depth diaphragm loading.
 * `vtk` and `pyvista` are now optional dependencies. This change streamlines installation for users who don't rely on `Pynite's` built-in visualization tools. From now on, `Pynite` should be installed using `$ pip install PyNiteFEA[all]` for most users.
 * `Pynite` no longer uses auxiliary nodes to define member cross-section rotation. You can now directly specify the rotation (in degrees) when you define a member using the `rotation` argument.
@@ -107,9 +107,3 @@ v0.0.92
 
 v0.0.89-0.0.91
 * Migrating visualizaton code from VTK to PyVista. PyVista greatly simplifies the rendering code, and simplifies adding new features to the renderings. This feature is only partially complete and partially functional.
-
-v0.0.88
-* Reorganized physical member code to match member code more consistently.
-
-v0.0.87
-* Fine-tuned P-$\delta$ effects. P-$\delta$ effects are now included in member internal slope and deflection calculations.
