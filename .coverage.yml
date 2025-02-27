@@ -1,0 +1,13 @@
+coverage:  # Main section controlling coverage reporting behavior
+  status:  # Defines how Codecov evaluates coverage changes
+    project:  # Settings for overall project coverage
+      default:  # Applies to all project coverage rules unless otherwise specified
+        target: auto  # Dynamically adjusts the expected coverage target to avoid failing due to small drops
+        threshold: 2%  # Allows the total project coverage to decrease by up to 2% before failing
+        if_no_uploads: success  # Prevents Codecov from failing the check if no coverage data is uploaded
+    patch:  # Settings for coverage of new or modified code in pull requests
+      default:  # Applies to all patch coverage rules unless otherwise specified
+        target: auto  # Dynamically adjusts the expected target for patch coverage
+        threshold: 2%  # Allows new/changed code coverage to decrease by up to 2% before failing
+        if_no_uploads: success  # Ensures that missing coverage data does not cause a failed status
+

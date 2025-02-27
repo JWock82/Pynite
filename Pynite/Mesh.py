@@ -379,6 +379,150 @@ class Mesh():
         # Return the smallest value encountered from all the elements
         return M_min
     
+    def max_membrane(self, direction='Sx', combo=None):
+        """
+        Returns the maximum membrane stress in the mesh.
+        
+        Checks corner and center stresses in all the elements in the mesh. The mesh must be part of
+        a solved model prior to using this method.
+
+        Parameters
+        ----------
+        direction : string, optional
+            The direction to ge the maximum membrane force for. Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
+        combo : string, optional
+            The name of the load combination to get the maximum membrane force for. If omitted, all load combinations will be evaluated.
+        """
+        
+        # Determine if local or global coordinate results have been requested
+        if direction in ['SX', 'SY']:
+            local = False
+        else:
+            local = True
+
+        # Identify which stress component needs to be extracted
+        if direction.upper() == 'SX':
+            i = 0
+        elif direction.upper() == 'SY':
+            i = 1
+        elif direction == 'Sxy':
+            i = 2
+        else:
+            raise Exception('Invalid direction specified for mesh membrane stress results. Valid values are \'Sx\', \'Sy\', or \'Sxy\'')
+
+        # Initialize the maximum value to None
+        S_max = None
+
+        # Step through each element in the mesh
+        for element in self.elements.values():
+
+            # Determine whether the element is a rectangle or a quadrilateral
+            if element.type == 'Rect':
+                # Use the rectangle's local (x, y) coordinate system
+                xi, yi = 0, 0
+                xj, yj = element.width(), 0
+                xm, ym = element.width(), element.height()
+                xn, yn, = 0, element.height()
+            elif element.type == 'Quad':
+                # Use the quad's natural (r, s) coordinate system
+                xi, yi = -1, -1
+                xj, yj = 1, -1
+                xm, ym = 1, 1
+                xn, yn = -1, 1
+
+            # Step through each load combination the element utilizes
+            for load_combo in self.model.load_combos.values():
+
+                # Determine if this load combination should be evaluated
+                if combo is None or load_combo.name == combo:
+                    
+                    # Find the maximum membrane stress in the element, checking each corner and the center of the element
+                    M_element = max([element.membrane(xi, yi, local, load_combo.name)[i, 0],
+                                        element.membrane(xj, yj, local, load_combo.name)[i, 0],
+                                        element.membrane(xm, ym, local, load_combo.name)[i, 0],
+                                        element.membrane(xn, yn, local, load_combo.name)[i, 0],
+                                        element.membrane((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+
+                    # Determine if the maximum membrane stress calculated is the largest encountered so far
+                    if S_max == None or S_max < M_element:
+                        # Save this value if it's the smallest
+                        S_max = M_element
+            
+        # Return the smallest value encountered from all the elements
+        return S_max
+    
+    def min_membrane(self, direction='Sx', combo=None):
+        """
+        Returns the minimum membrane stress in the mesh.
+        
+        Checks corner and center stresses in all the elements in the mesh. The mesh must be part of
+        a solved model prior to using this method.
+
+        Parameters
+        ----------
+        direction : string, optional
+            The direction to ge the minimum membrane force for. Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
+        combo : string, optional
+            The name of the load combination to get the minimum membrane force for. If omitted, all load combinations will be evaluated.
+        """
+        
+        # Determine if local or global coordinate results have been requested
+        if direction in ['SX', 'SY']:
+            local = False
+        else:
+            local = True
+
+        # Identify which stress component needs to be extracted
+        if direction.upper() == 'SX':
+            i = 0
+        elif direction.upper() == 'SY':
+            i = 1
+        elif direction == 'Sxy':
+            i = 2
+        else:
+            raise Exception('Invalid direction specified for mesh membrane stress results. Valid values are \'Sx\', \'Sy\', or \'Sxy\'')
+
+        # Initialize the maximum value to None
+        S_min = None
+
+        # Step through each element in the mesh
+        for element in self.elements.values():
+
+            # Determine whether the element is a rectangle or a quadrilateral
+            if element.type == 'Rect':
+                # Use the rectangle's local (x, y) coordinate system
+                xi, yi = 0, 0
+                xj, yj = element.width(), 0
+                xm, ym = element.width(), element.height()
+                xn, yn, = 0, element.height()
+            elif element.type == 'Quad':
+                # Use the quad's natural (r, s) coordinate system
+                xi, yi = -1, -1
+                xj, yj = 1, -1
+                xm, ym = 1, 1
+                xn, yn = -1, 1
+
+            # Step through each load combination the element utilizes
+            for load_combo in self.model.load_combos.values():
+
+                # Determine if this load combination should be evaluated
+                if combo is None or load_combo.name == combo:
+                    
+                    # Find the minimum membrane stress in the element, checking each corner and the center of the element
+                    M_element = min([element.membrane(xi, yi, local, load_combo.name)[i, 0],
+                                        element.membrane(xj, yj, local, load_combo.name)[i, 0],
+                                        element.membrane(xm, ym, local, load_combo.name)[i, 0],
+                                        element.membrane(xn, yn, local, load_combo.name)[i, 0],
+                                        element.membrane((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+
+                    # Determine if the minimum membrane stress calculated is the smallest encountered so far
+                    if S_min == None or S_min > M_element:
+                        # Save this value if it's the smallest
+                        S_min = M_element
+            
+        # Return the smallest value encountered from all the elements
+        return S_min
+    
 #%%
 class RectangleMesh(Mesh):
 
@@ -1199,20 +1343,30 @@ class FrustrumMesh(AnnulusMesh):
         super().generate()
         
         Xo = self.origin[0]
-        Yo = self.origin[1]  # Not used
+        Yo = self.origin[1]
         Zo = self.origin[2]
 
-        # Adjust the cooridnates of each node to make a frustrum
+        # Adjust the coordinates of each node to make a frustrum
         for node in self.nodes.values():
+
             X = node.X
             Y = node.Y
             Z = node.Z
-            r = ((X - Xo)**2 + (Z - Zo)**2)**0.5
+            
             if self.axis == 'Y':
+                # Calculate the radius to the node
+                r = ((X - Xo)**2 + (Z - Zo)**2)**0.5
+                # Adjust the height of the node
                 node.Y += (r - self.outer_radius)/(self.outer_radius - self.inner_radius)*self.height
             elif self.axis == 'X':
+                # Calculate the radius to the node
+                r = ((Y - Yo)**2 + (Z - Zo)**2)**0.5
+                # Adjust the height of the node
                 node.X += (r - self.outer_radius)/(self.outer_radius - self.inner_radius)*self.height
             elif self.axis == 'Z':
+                # Calculate the radius to the node
+                r = ((X - Xo)**2 + (Y - Yo)**2)**0.5
+                # Adjust the height of the node
                 node.Z += (r - self.outer_radius)/(self.outer_radius - self.inner_radius)*self.height
             else:
                 raise Exception('Invalid axis specified for frustrum mesh.')

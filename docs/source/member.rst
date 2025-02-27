@@ -9,8 +9,7 @@ at any internal nodes. Transverse shear deformations are not currently considere
 Creating a New Member
 =====================
 
-To create a new member use the ``FEModel3D.add_member()`` method. First we'll set up some
-material and section properties:
+To create a new member use the ``FEModel3D.add_member()`` method. For the example below, we'll assume 3 nodes have already been defined ('N1', 'N2', and 'N3'). The next step is to set up some material and section properties for the members we'll be creating:
 
 .. code-block:: python
 
@@ -28,9 +27,16 @@ material and section properties:
     rho = 0.000283  # (kci) Density
     my_model.add_material('Steel', E, G, nu, rho)
 
+With a cross-section and material properties defined we can now create members:
+
+.. code-block:: python
+
     # Add a member name 'M1' starting at node 'N1' and ending at node 'N2'
     # made from a previously defined material named 'Steel'
     my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26')
+
+    # Add another member 'M2'
+    my_model.add_member('M2', 'N2', 'N3', 'Steel', 'W12x26')
 
 Local Coordinate System
 =======================
@@ -74,6 +80,16 @@ about the local x-axis should only be done at one end (if at all). The same goes
 Releasing Rxi and Rxj simultaneously, or Dxi and Dxj simultaneously will cause an instability in the
 member. You should exercise caution when releasing the shears at the ends of the member too.
 
+Member Rotations
+================
+
+The member can be rotated about its own longitudinal (x) axis by passing a rotation angle (in degrees) to the ``rotation`` argument in the ``FEModel3D.add_member()`` method. Here's an example:
+
+.. code-block:: python
+    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26', rotation=35)
+
+The member created by the code above will be rotated 35 degrees about its local x-axis.
+
 Tension/Compression Only Members
 ================================
 
@@ -81,9 +97,8 @@ Members can be changed to tension or compression only by passing ``tension_only=
 ``comp_only=True`` to the ``FEModel3D.add_member()`` method. Here's an example:
 
 .. code-block:: python
-    my_model.add_section('Section', A, Iy, Iz, J)
-    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'Section', tension-only=True)
-    my_model.add_member('M2', 'N1', 'N2', 'Steel', 'Section', comp-only=True)
+    my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26', tension-only=True)
+    my_model.add_member('M2', 'N2', 'N3', 'Steel', 'W12x26', comp-only=True)
 
 Tension-only and compression-only analysis is an iterative process. When using these types of
 members be sure to perform a non-linear analysis. Do not use the ``FEModel3D.analyze_linear()``
@@ -92,12 +107,44 @@ method.
 Member loads
 ============
 
-Pynite supports member distributed loads and member point loads. It can also calculate self-weight for members (note that self-weight is not supported for plate elements at this time). Distributed loads can be full length or partial length, and can vary linearly in magnitude. Loads can be applied in member local (`'Fx'`, `'Fy'`, `'Fz'`, `'Mx'`, `'My'`, `'Mz'`) or model global coordinate directions (`'FX'`, `'FY'`, `'FZ'`, `'MX'`, `'MY'`, `'MZ'`).
+Pynite supports member distributed loads and member point loads. It can also calculate self-weight for members (note that self-weight is not supported for plate elements at this time).
+
+.. code-block:: python
+
+    # Add a point load of -5 to member 'M1' in the global Y-direction at 3
+    # units from the start of the member. We'll classify it as a live load.
+    my_model.add_member_pt_load('M1', 'FY', -5, 3, 'LL')
+
+    # Add a moment load of 15 to member 'M2' about its weak axis at 4  units
+    # from the start of the member. We'll classify it as a snow load.
+    my_model.add_member_pt_load('M2', 'My', 15, 4, 'SL')
+
+Distributed loads can be full length or partial length, and can vary linearly in magnitude:
+
+.. code-block:: python
+
+    # Add a linearly varying member distributed load to member 'M1' in its
+    # local y-direction. The load will start at a magnitude of -0.100 at 2
+    # units from the start of the member, and end 5 units from the start of
+    # the member with a magnitude of -0.200. We'll classify it as a dead load.
+    my_model.add_member_dist_load('M1', 'Fy', -0.100, -0.200, 2, 5, 'DL')
+
+Here's an example of how to add self-weight to all members (not plates) currently defined in the model.
+
+.. code-block:: python
+
+    # Add self-weight to all members (note that any plates in the model will
+    # not be affected by this command). We'll at 10% to account for connection
+    # hardware and other misc items. Self-weight is normally a dead load
+    # acting in the global Y-direction.
+    my_model.add_member_self_weight('FY', 1.10, 'DL'):
+
+It can be seen that when applying loads, capitalization is used to distinguish between the local and global coordinate systems. Loads can be applied in member local (`'Fx'`, `'Fy'`, `'Fz'`, `'Mx'`, `'My'`, `'Mz'`) or model global coordinate directions (`'FX'`, `'FY'`, `'FZ'`, `'MX'`, `'MY'`, `'MZ'`).
 
 Member Results
 ==============
 
-Once your model is solved you can access members and their results from the ``Members`` dictionary in the ``FEModel3D`` class. Below are some examples.
+You can access members and their results from the ``members`` dictionary in the ``FEModel3D`` class. Below are some examples.
 
 Shear Results:
 
