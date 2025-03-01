@@ -11,17 +11,9 @@ from math import sin, cos
 
 class Quad3D():
     """
-    An isoparametric general quadrilateral element, formulated by superimposing an isoparametric
-    DKMQ bending element with an isoparametric plane stress element. Drilling stability is
-    provided by adding a weak rotational spring stiffness at each node. Isotropic behavior is the
-    default, but orthotropic in-plane behavior can be modeled by specifying stiffness modification
-    factors for the element's local x and y axes. Orthotropic behavior is only available for
-    rectangular plates.
-
-    This element performs well for thick and thin plates, and for skewed plates. Element center
-    stresses and corner FORCES converge rapidly; however, corner STRESSES are more representative
-    of center stresses. Minor errors are introduced into the solution due to the drilling
-    approximation. Orthotropic behavior is limited to acting along the plate's local axes.
+    An isoparametric general quadrilateral element, formulated by superimposing an isoparametric DKMQ bending element with an isoparametric plane stress element. Drilling stability is provided by adding a weak rotational spring stiffness at each node. Isotropic behavior is the default, but orthotropic in-plane behavior can be modeled by specifying stiffness modification factors for the element's local x and y axes.
+    
+    This element performs well for thick and thin plates, and for skewed plates. Minor errors are introduced into the solution due to the drilling approximation. Orthotropic behavior is limited to acting along the plate's local axes.
     """
 
     def __init__(self, name, i_node, j_node, m_node, n_node, t, material_name, model, kx_mod=1.0,
@@ -206,7 +198,8 @@ class Quad3D():
             raise Exception('Unable to calculate shape function. Invalid value specified for k.')
     
     def Co(self, xi, eta):
-        """This alternate calculation of the Jacobian matrix follows "The development of DKMQ plate bending element for thick to thin shell analysis based on the Naghdi/Reissner/Mindlin shell theory" by Katili, Batoz, Maknun and Hamdouni (2015). In the reference "C^o" is used instead of "J" to refer to the Jacobian. This method does not seem to produce correct results, but will be kept for future reference. It is helpful for understanding this plate element and may prove a useful simplification to the code base if implemented correctly someday.
+        """
+        This alternate calculation of the Jacobian matrix follows "The development of DKMQ plate bending element for thick to thin shell analysis based on the Naghdi/Reissner/Mindlin shell theory" by Katili, Batoz, Maknun and Hamdouni (2015). In the reference "C^o" is used instead of "J" to refer to the Jacobian. This method does not seem to produce incorrect results, but will be kept for future reference. It is helpful for understanding this plate element and may prove a useful simplification to the code base if implemented correctly someday.
         """
 
         # Nodal global coordinates (i=1, j=2, m=3, n=4)
@@ -236,6 +229,7 @@ class Quad3D():
         i = np.array([[1.0, 0.0, 0.0]])
         k = np.array([[0.0, 0.0, 1.0]])
 
+        # Equation (13)
         if np.array_equal(n, k) or np.array_equal(n, -k):
             t_1 = i
         else:
@@ -243,16 +237,19 @@ class Quad3D():
 
         t_2 = np.cross(n, t_1)
 
+        # Equation (7)
         a_11 = np.dot(a_1, a_1.T)[0, 0]
         a_12 = np.dot(a_1, a_2.T)[0, 0]
         a_21 = np.dot(a_2, a_1.T)[0, 0]
         a_22 = np.dot(a_2, a_2.T)[0, 0]
 
+        # Matrix tensor of the middle surface
         a = np.array([[a_11, a_12],
                       [a_21, a_22]])
         
         a_det = np.linalg.det(a)
 
+        # Contravariant vectors
         a1 = 1/a_det*(a_22*a_1 - a_12*a_2)
         a2 = 1/a_det*(-a_21*a_1 + a_11*a_2)
 
@@ -424,6 +421,15 @@ class Quad3D():
         
         # Return the [B] matrix for shear
         return inv(self.J(xi, eta)) @ self.N_gamma(xi, eta) @ self.A_gamma() @ self.A_phi_Delta() @ self.A_u()
+
+    def B_s_gamma(self, xi, eta):
+        """Returns the [B_s_gamma] matrix for shear (Equation 39 in Reference 1)
+
+        :param xi: _description_
+        :type xi: _type_
+        :param eta: _description_
+        :type eta: _type_
+        """
 
     def B_m(self, xi, eta):
 
