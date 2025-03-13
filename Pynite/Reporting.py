@@ -57,6 +57,7 @@ def create_report(model, output_filepath=path/'./Pynite Report.pdf', **kwargs):
     kwargs['members'] = model.members.values()
     kwargs['plates'] = model.plates.values()
     kwargs['quads'] = model.quads.values()
+    kwargs['load_combos'] = model.load_combos.values()
 
     # Create the report HTML using jinja2
     HTML = template.render(**kwargs)
