@@ -63,6 +63,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.0.2 (in progress)
+* Fixed a bug in the pdf reports. Load combos were not being sent to the report template, which was preventing any load results from being displayed in the report.
+
 v1.0.1
 * Changes to testing code coverage less than 2% no longer trigger build failure.
 * Code cleanup: removed `DKMQ.py` from the repository that was no longer in use. The code for the DKMQ element now lives in `Quad3D.py` instead.
