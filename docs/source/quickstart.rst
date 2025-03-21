@@ -31,7 +31,7 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
 
     # Add a section with the following properties:
     # Iy = 100 in^4, Iz = 150 in^4, J = 250 in^4, A = 20 in^2
-    my_model.add_section('MySection', 20, 100, 150, 250)
+    beam.add_section('MySection', 20, 100, 150, 250)
 
     #Add a member
     beam.add_member('M1', 'N1', 'N2', 'Steel', 'MySection')
@@ -45,7 +45,7 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
 
     # Alternatively the following line would do apply the load to the full
     # length of the member as well
-    # beam.add_member_dist_load('M1', 'Fy', 200/1000/12, 200/1000/12)
+    # beam.add_member_dist_load('M1', 'Fy', -200/1000/12, -200/1000/12)
 
     # Analyze the beam
     beam.analyze()
