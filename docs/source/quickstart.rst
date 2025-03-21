@@ -56,8 +56,8 @@ Here's a simple example of how to analyze a simple beam. Many more examples are 
     beam.members['M1'].plot_deflection('dy')
 
     # Print reactions at each end of the beam
-    print('Left Support Reaction:', beam.nodes['N1'].RxnFY, 'kip')
-    print('Right Support Reacton:', beam.nodes['N2'].RxnFY, 'kip')
+    print(f"Left Support Reaction: { {k: float(v) for k, v in beam.nodes['N1'].RxnFY.items()} }")
+    print(f"Right Support Reaction: { {k: float(v) for k, v in beam.nodes['N2'].RxnFY.items()} }")
 
     # Render the deformed shape of the beam magnified 100 times, with a text
     # height of 5 inches
