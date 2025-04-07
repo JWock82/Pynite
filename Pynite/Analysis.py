@@ -1,9 +1,21 @@
+from __future__ import annotations # Allows more recent type hints features
+from typing import TYPE_CHECKING
 from math import isclose
-from Pynite.LoadCombo import LoadCombo
+
 from numpy import array, atleast_2d, zeros, subtract, matmul, divide, seterr, nanmax
 from numpy.linalg import solve
 
-def _prepare_model(model):
+from Pynite.LoadCombo import LoadCombo
+
+if TYPE_CHECKING:
+    from typing import List, Tuple
+    from Pynite.FEModel3D import FEModel3D
+    from numpy import float64
+    from numpy.typing import NDArray
+    from scipy.sparse import lil_matrix
+
+
+def _prepare_model(model: FEModel3D) -> None:
     """Prepares a model for analysis by ensuring at least one load combination is defined, generating all meshes that have not already been generated, activating all non-linear members, and internally numbering all nodes and elements.
 
     :param model: The model being prepared for analysis.
@@ -43,7 +55,7 @@ def _prepare_model(model):
     # Assign an internal ID to all nodes and elements in the model. This number is different from the name used by the user to identify nodes and elements.
     _renumber(model)
 
-def _identify_combos(model, combo_tags=None):
+def _identify_combos(model: FEModel3D, combo_tags: List[str] | None = None) -> List[LoadCombo]:
     """Returns a list of load combinations that are to be run based on tags given by the user.
 
     :param model: The model being analyzed.
@@ -57,7 +69,7 @@ def _identify_combos(model, combo_tags=None):
     # Identify which load combinations to evaluate
     if combo_tags is None:
         # Evaluate all load combinations if not tags have been provided
-        combo_list = model.load_combos.values()
+        combo_list = list(model.load_combos.values())
     else:
         # Initialize the list of load combinations to be evaluated
         combo_list = []
@@ -71,7 +83,7 @@ def _identify_combos(model, combo_tags=None):
     # Return the list of load combinations to be evaluated
     return combo_list
 
-def _check_stability(model, K):
+def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
     """
     Identifies nodal instabilities in a model's stiffness matrix.
     """
@@ -130,7 +142,7 @@ def _check_stability(model, K):
 
     return
 
-def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False, max_iter=30, first_step=True):
+def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30, first_step: bool = True) -> None:
     """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material-specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
     :param combo_name: The name of the load combination to evaluate P-Delta effects for.
@@ -269,7 +281,7 @@ def _PDelta_step(model, combo_name, P1, FER1, D1_indices, D2_indices, D2, log=Tr
     # Flag the model as solved
     model.solution = 'P-Delta'
 
-def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices, D2_indices, D2, log=True, sparse=True, check_stability=False):
+def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False) -> None:
 
     # Run at least one iteration
     run_step = True
@@ -376,7 +388,7 @@ def _pushover_step(model, combo_name, push_combo, step_num, P1, FER1, D1_indices
     # Flag the model as solved
     model.solution = 'Pushover'
 
-def _unpartition_disp(model, D1, D2, D1_indices, D2_indices):
+def _unpartition_disp(model: FEModel3D, D1: NDArray[float64], D2: NDArray[float64], D1_indices: List[int], D2_indices: List[int]) -> NDArray[float64]:
     """Unpartitions displacements from the solver and returns them as a global displacement vector
 
     :param model: The finite element model being evaluated
@@ -412,7 +424,7 @@ def _unpartition_disp(model, D1, D2, D1_indices, D2_indices):
     # Return the displacement vector
     return D
 
-def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
+def _store_displacements(model: FEModel3D, D1: NDArray[float64], D2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], combo: LoadCombo) -> None:
     """Stores calculated displacements from the solver into the model's displacement vector `_D` and into each node object in the model
 
     :param model: The finite element model being evaluated.
@@ -445,7 +457,7 @@ def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
         node.RY[combo.name] = D[node.ID*6 + 4, 0]
         node.RZ[combo.name] = D[node.ID*6 + 5, 0]
 
-def _sum_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, combo):
+def _sum_displacements(model: FEModel3D, Delta_D1: NDArray[float64], Delta_D2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], combo: LoadCombo) -> None:
     """Sums calculated displacements for a load step from the solver into the model's displacement vector `_D` and into each node object in the model.
 
     :param model: The finite element model being evaluated.
@@ -478,7 +490,7 @@ def _sum_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
         node.RY[combo.name] += Delta_D[node.ID*6 + 4, 0]
         node.RZ[combo.name] += Delta_D[node.ID*6 + 5, 0]
 
-def _check_TC_convergence(model, combo_name="Combo 1", log=True, spring_tolerance=0, member_tolerance=0):
+def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bool = True, spring_tolerance: float = 0, member_tolerance: float = 0) -> bool:
 
     # Assume the model has converged until we find out otherwise
     convergence = True
@@ -571,7 +583,7 @@ def _check_TC_convergence(model, combo_name="Combo 1", log=True, spring_toleranc
     # Return whether the TC analysis has converged
     return convergence
   
-def _calc_reactions(model, log=False, combo_tags=None):
+def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] | None = None) -> None:
     """
     Calculates reactions internally once the model is solved.
 
@@ -838,7 +850,7 @@ def _calc_reactions(model, log=False, combo_tags=None):
                 RZ = node.RZ[combo.name]
                 node.RxnMZ[combo.name] += k*RZ
 
-def _check_statics(model, combo_tags=None):
+def _check_statics(model: FEModel3D, combo_tags: List[str] | None = None) -> None:
     '''
     Checks static equilibrium and prints results to the console.
 
@@ -933,7 +945,7 @@ def _check_statics(model, combo_tags=None):
     print(statics_table)
     print('')
     
-def _partition_D(model):
+def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float64]]:
     """Builds a list with known nodal displacements and with the positions in global stiffness matrix of known and unknown nodal displacements
 
     :return: A list of the global matrix indices for the unknown nodal displacements (D1_indices). A list of the global matrix indices for the known nodal displacements (D2_indices). A list of the known nodal displacements (D2).
@@ -1028,7 +1040,7 @@ def _partition_D(model):
     # Return the indices and the known displacements
     return D1_indices, D2_indices, D2
 
-def _partition(model, unp_matrix, D1_indices, D2_indices):
+def _partition(model: FEModel3D, unp_matrix: NDArray[float64] | lil_matrix, D1_indices: List[int], D2_indices: List[int]) -> Tuple[NDArray[float64], NDArray[float64]] | Tuple[NDArray[float64], NDArray[float64], NDArray[float64], NDArray[float64]]:
     """Partitions a matrix (or vector) into submatrices (or subvectors) based on degree of freedom boundary conditions.
 
     :param unp_matrix: The unpartitioned matrix (or vector) to be partitioned.
@@ -1058,7 +1070,7 @@ def _partition(model, unp_matrix, D1_indices, D2_indices):
         m22 = unp_matrix[D2_indices, :][:, D2_indices]
         return m11, m12, m21, m22
 
-def _renumber(model):
+def _renumber(model: FEModel3D) -> None:
     """
     Assigns node and element ID numbers to be used internally by the program. Numbers are
     assigned according to the order in which they occur in each dictionary.

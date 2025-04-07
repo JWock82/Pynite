@@ -1,8 +1,15 @@
+from __future__ import annotations # Allows more recent type hints features
+from typing import Dict, List, Literal, Tuple, TYPE_CHECKING
+from Pynite.Member3D import Member3D
+
+if TYPE_CHECKING:
+    from Pynite.Node3D import Node3D
+    from Pynite.FEModel3D import FEModel3D
+    import numpy.typing as npt
+
 from numpy import array, dot, cross
 from numpy.linalg import norm
 from math import isclose, acos
-
-from Pynite.Member3D import Member3D
 
 class PhysMember(Member3D):
     """
@@ -15,13 +22,13 @@ class PhysMember(Member3D):
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
     __plt = None  
     
-    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0.0,
-                 tension_only=False, comp_only=False):
+    def __init__(self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D, material_name: str, section_name: str, rotation: float = 0.0,
+                 tension_only: bool = False, comp_only: bool = False) -> None:
         
         super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
-        self.sub_members = {}
+        self.sub_members: Dict[str, Member3D] = {}
 
-    def descritize(self):
+    def descritize(self) -> None:
         """
         Subdivides the physical member into sub-members at each node along the physical member
         """
@@ -30,7 +37,7 @@ class PhysMember(Member3D):
         self.sub_members = {}
 
         # Start a new list of nodes along the member
-        int_nodes = []
+        int_nodes: List[Tuple[Node3D, float]] = []
 
         # Create a vector from the i-node to the j-node
         Xi, Yi, Zi = self.i_node.X, self.i_node.Y, self.i_node.Z
@@ -38,8 +45,8 @@ class PhysMember(Member3D):
         vector_ij = array([Xj-Xi, Yj-Yi, Zj-Zi])
 
         # Add the i-node and j-node to the list
-        int_nodes.append([self.i_node, 0])
-        int_nodes.append([self.j_node, norm(vector_ij)])
+        int_nodes.append((self.i_node, 0))
+        int_nodes.append((self.j_node, norm(vector_ij)))
 
         # Step through each node in the model
         for node in self.model.nodes.values():
@@ -61,7 +68,7 @@ class PhysMember(Member3D):
                     if norm(vector_in) < norm(vector_ij):
 
                         # Add the node to the list of intermediate nodes
-                        int_nodes.append([node, norm(vector_in)])
+                        int_nodes.append((node, norm(vector_in)))
         
         # Create a list of sorted intermediate nodes by distance from the i-node
         int_nodes = sorted(int_nodes, key=lambda x: x[1])
@@ -146,7 +153,7 @@ class PhysMember(Member3D):
             # Add the new sub-member to the sub-member dictionary for this physical member
             self.sub_members[name] = new_sub_member
     
-    def shear(self, Direction, x, combo_name='Combo 1'):
+    def shear(self, Direction: Literal['Fy', 'Fz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the shear at a point along the member's length.
         
@@ -165,7 +172,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.shear(Direction, x_mod, combo_name)
     
-    def max_shear(self, Direction, combo_name='Combo 1'):
+    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the maximum shear in the member for the given direction
         
@@ -186,7 +193,7 @@ class PhysMember(Member3D):
                 Vmax = V
         return Vmax
     
-    def min_shear(self, Direction, combo_name='Combo 1'):
+    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum shear in the member for the given direction
         
@@ -207,7 +214,7 @@ class PhysMember(Member3D):
                 Vmin = V
         return Vmin
    
-    def plot_shear(self, Direction, combo_name='Combo 1', n_points=20):
+    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the shear diagram for the member
         
@@ -252,7 +259,7 @@ class PhysMember(Member3D):
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
 
-    def moment(self, Direction, x, combo_name='Combo 1'):
+    def moment(self, Direction: Literal['My', 'Mz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the moment at a point along the member's length
         
@@ -271,7 +278,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.moment(Direction, x_mod, combo_name)
     
-    def max_moment(self, Direction, combo_name='Combo 1'):
+    def max_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the maximum moment in the member for the given direction.
         
@@ -292,7 +299,7 @@ class PhysMember(Member3D):
                 Mmax = M
         return Mmax
     
-    def min_moment(self, Direction, combo_name='Combo 1'):
+    def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum moment in the member for the given direction
         
@@ -313,12 +320,13 @@ class PhysMember(Member3D):
                 Mmin = M
         return Mmin
 
-    def plot_moment(self, Direction, combo_name='Combo 1', n_points=20):
+    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the moment diagram for the member
         
         Parameters
         ----------
+
         Direction : string
             The direction in which to plot the moment. Must be one of the following:
                 'My' = Moment about the local y-axis.
@@ -358,7 +366,7 @@ class PhysMember(Member3D):
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
     
-    def torque(self, x, combo_name='Combo 1'):
+    def torque(self, x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the torsional moment at a point along the member's length
         
@@ -373,7 +381,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.torque(x_mod, combo_name)
     
-    def max_torque(self, combo_name='Combo 1'):
+    def max_torque(self, combo_name: str = 'Combo 1') -> float:
         
         Tmax = None
         for member in self.sub_members.values():
@@ -382,7 +390,7 @@ class PhysMember(Member3D):
                 Tmax = T
         return Tmax
     
-    def min_torque(self, combo_name='Combo 1'):
+    def min_torque(self, combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum torsional moment in the member.
 
@@ -399,7 +407,7 @@ class PhysMember(Member3D):
                 Tmin = T
         return Tmin
 
-    def plot_torque(self, combo_name='Combo 1', n_points=20):
+    def plot_torque(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the torque diagram for the member
         
@@ -440,7 +448,7 @@ class PhysMember(Member3D):
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
 
-    def axial(self, x, combo_name='Combo 1'):
+    def axial(self, x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the axial force at a point along the member's length.
         
@@ -455,7 +463,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.axial(x_mod, combo_name)
     
-    def max_axial(self, combo_name='Combo 1'):
+    def max_axial(self, combo_name: str = 'Combo 1') -> float:
         
         Pmax = None
         for member in self.sub_members.values():
@@ -464,7 +472,7 @@ class PhysMember(Member3D):
                 Pmax = P
         return Pmax
     
-    def min_axial(self, combo_name='Combo 1'):
+    def min_axial(self, combo_name: str = 'Combo 1') -> float:
 
         Pmin = None
         for member in self.sub_members.values():
@@ -473,7 +481,7 @@ class PhysMember(Member3D):
                 Pmin = P
         return Pmin
 
-    def plot_axial(self, combo_name='Combo 1', n_points=20):
+    def plot_axial(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the axial force diagram for the member
         
@@ -514,7 +522,7 @@ class PhysMember(Member3D):
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
 
-    def deflection(self, Direction, x, combo_name='Combo 1'):
+    def deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the deflection at a point along the member's length.
         
@@ -534,7 +542,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.deflection(Direction, x_mod, combo_name)
 
-    def max_deflection(self, Direction, combo_name='Combo 1'):
+    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the maximum deflection in the member.
         
@@ -553,7 +561,7 @@ class PhysMember(Member3D):
                 dmax = d
         return dmax
     
-    def min_deflection(self, Direction, combo_name='Combo 1'):
+    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum deflection in the member.
         
@@ -572,12 +580,13 @@ class PhysMember(Member3D):
                 dmin = d
         return dmin
 
-    def rel_deflection(self, Direction, x, combo_name='Combo 1'):
+    def rel_deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the relative deflection at a point along the member's length
         
         Parameters
         ----------
+
         Direction : string
             The direction in which to find the relative deflection. Must be one of the following:
                 'dy' = Deflection in the local y-axis
@@ -591,8 +600,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.rel_deflection(Direction, x_mod, combo_name)
 
-    
-    def plot_deflection(self, Direction, combo_name='Combo 1', n_points=20):
+    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the deflection diagram for the member
         
@@ -637,7 +645,7 @@ class PhysMember(Member3D):
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
 
-    def find_member(self, x):
+    def find_member(self, x: float) -> Tuple[Member3D, float]:
         """
         Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's local coordinate system.
         """
@@ -662,4 +670,3 @@ class PhysMember(Member3D):
                 break
         else:
             raise ValueError(f"Location x={x} does not lie on this member")
-            

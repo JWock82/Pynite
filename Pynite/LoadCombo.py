@@ -1,8 +1,11 @@
+from __future__ import annotations # Allows more recent type hints features
+from typing import Dict, List
+
 class LoadCombo():
     """A class that stores all the information necessary to define a load combination.
     """
 
-    def __init__(self, name, combo_tags=None, factors={}):
+    def __init__(self, name: str, combo_tags: List[str] | None = None, factors: Dict[str, float] = {}) -> None:
         """Initializes a new load combination.
 
         :param name: A unique name for the load combination.
@@ -13,20 +16,28 @@ class LoadCombo():
         :type factors: dict, optional
         """
         
-        self.name = name             # A unique user-defined name for the load combination
-        self.combo_tags = combo_tags   # Used to categorize the load combination (e.g. strength or serviceability)
-        self.factors = factors       # A dictionary containing each load case name and associated load factor
+        self.name: str = name             # A unique user-defined name for the load combination
+        self.combo_tags: List[str] | None = combo_tags   # Used to categorize the load combination (e.g. strength or serviceability)
+        self.factors: Dict[str, float] = factors       # A dictionary containing each load case name and associated load factor
     
-    def AddLoadCase(self, case_name, factor):
+    def AddLoadCase(self, case_name: str, factor: float) -> None:
         '''
         Adds a load case with its associated load factor
+
+        :param case_name: The name of the load case
+        :type case_name: str
+        :param factor: The load factor to apply to the load case
+        :type factor: float
         '''
 
         self.factors[case_name] = factor
     
-    def DeleteLoadCase(self, case_name):
+    def DeleteLoadCase(self, case_name: str) -> None:
         '''
         Deletes a load case with its associated load factor
+
+        :param case_name: The name of the load case to delete
+        :type case_name: str
         '''
 
         del self.factors[case_name]

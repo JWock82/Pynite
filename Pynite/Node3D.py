@@ -4,13 +4,16 @@ Created on Thu Nov  2 18:04:56 2017
 
 @author: D. Craig Brinck, SE
 """
+from __future__ import annotations # Allows more recent type hints features
 # %%      
+from typing import List, Tuple, Dict
+
 class Node3D():
     """
     A class representing a node in a 3D finite element model.
     """
     
-    def __init__(self, name, X, Y, Z):
+    def __init__(self, name: str, X: float, Y: float, Z: float):
         
         self.name = name    # A unique name for the node assigned by the user
         self.ID = None      # A unique index number for the node assigned by the program
@@ -19,52 +22,52 @@ class Node3D():
         self.Y = Y          # Global Y coordinate
         self.Z = Z          # Global Z coordinate
         
-        self.NodeLoads = [] # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
+        self.NodeLoads: List[Tuple[str, float, str]] = [] # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
         
         # Initialize the dictionaries of calculated node displacements
-        self.DX = {}
-        self.DY = {}
-        self.DZ = {}
-        self.RX = {}
-        self.RY = {}
-        self.RZ = {}
+        self.DX: Dict[str, float] = {}
+        self.DY: Dict[str, float] = {}
+        self.DZ: Dict[str, float] = {}
+        self.RX: Dict[str, float] = {}
+        self.RY: Dict[str, float] = {}
+        self.RZ: Dict[str, float] = {}
         
         # Initialize the dictionaries of calculated node reactions
-        self.RxnFX = {}
-        self.RxnFY = {}
-        self.RxnFZ = {}
-        self.RxnMX = {}
-        self.RxnMY = {}
-        self.RxnMZ = {}
+        self.RxnFX: Dict[str, float] = {}
+        self.RxnFY: Dict[str, float] = {}
+        self.RxnFZ: Dict[str, float] = {}
+        self.RxnMX: Dict[str, float] = {}
+        self.RxnMY: Dict[str, float] = {}
+        self.RxnMZ: Dict[str, float] = {}
 
         # Initialize all support conditions to `False`
-        self.support_DX = False
-        self.support_DY = False
-        self.support_DZ = False
-        self.support_RX = False
-        self.support_RY = False
-        self.support_RZ = False
+        self.support_DX: bool = False
+        self.support_DY: bool = False
+        self.support_DZ: bool = False
+        self.support_RX: bool = False
+        self.support_RY: bool = False
+        self.support_RZ: bool = False
 
         # Inititialize all support springs
-        self.spring_DX = [None, None, None]  # [stiffness, direction, active]
-        self.spring_DY = [None, None, None]
-        self.spring_DZ = [None, None, None]
-        self.spring_RX = [None, None, None]
-        self.spring_RY = [None, None, None]
-        self.spring_RZ = [None, None, None]
+        self.spring_DX: List[float | str | bool | None] = [None, None, None]  # [stiffness, direction, active]
+        self.spring_DY: List[float | str | bool | None] = [None, None, None]
+        self.spring_DZ: List[float | str | bool | None] = [None, None, None]
+        self.spring_RX: List[float | str | bool | None] = [None, None, None]
+        self.spring_RY: List[float | str | bool | None] = [None, None, None]
+        self.spring_RZ: List[float | str | bool | None] = [None, None, None]
 
         # Initialize all enforced displacements to `None`
-        self.EnforcedDX = None
-        self.EnforcedDY = None
-        self.EnforcedDZ = None
-        self.EnforcedRX = None
-        self.EnforcedRY = None
-        self.EnforcedRZ = None
+        self.EnforcedDX: float | None = None
+        self.EnforcedDY: float | None = None
+        self.EnforcedDZ: float | None = None
+        self.EnforcedRX: float | None = None
+        self.EnforcedRY: float | None = None
+        self.EnforcedRZ: float | None = None
 
         # Initialize the color contour value for the node. This will be used for contour smoothing.
-        self.contour = []
+        self.contour: List[float] = []
 
-    def distance(self, other):
+    def distance(self, other: 'Node3D') -> float:
         """
         Returns the distance to another node.
 
