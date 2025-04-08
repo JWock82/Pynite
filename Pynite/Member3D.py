@@ -1741,7 +1741,7 @@ class Member3D():
                 return self._extract_vector_results(self.SegmentsZ, x_array, 'axial_deflection', P_delta)
             
             else:
-                raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+                raise ValueError(f"Direction must be 'dx', 'dy' or 'dz'. {Direction} was given.")
 
     def rel_deflection(self, Direction, x, combo_name='Combo 1'):
         """
