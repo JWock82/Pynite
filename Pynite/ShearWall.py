@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 if TYPE_CHECKING:
-    from typing import List, Dict
+    from typing import List, Dict, Tuple
     from Pynite.Quad3D import Quad3D
     import matplotlib.figure
 
