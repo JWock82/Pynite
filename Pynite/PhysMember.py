@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from numpy import array, dot, cross
 from numpy.linalg import norm
 from math import isclose, acos

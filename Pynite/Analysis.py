@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from math import isclose
 from Pynite.LoadCombo import LoadCombo
 from numpy import array, atleast_2d, zeros, subtract, matmul, divide, seterr, nanmax
