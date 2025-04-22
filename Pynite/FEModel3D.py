@@ -2,6 +2,7 @@
 #futures import required to use bar operators for optional type annotations
 from __future__ import annotations
 
+from typing import Dict, Optional
 from os import rename
 import warnings
 from math import isclose
@@ -32,32 +33,20 @@ class FEModel3D():
         """Creates a new 3D finite element model.
         """
         
-        # Initialize the model's various dictionaries. The dictionaries will be prepopulated with
-        # the data types they store, and then those types will be removed. This will give us the
-        # ability to get type-based hints when using the dictionaries.
+        # Initialize the model's various dictionaries. Using from __future__ import ensures
+        # compatibility with older Python Versions
 
-        self.nodes = {str:Node3D}          # A dictionary of the model's nodes
-        self.nodes.pop(str)
-        self.materials = {str:Material}    # A dictionary of the model's materials
-        self.materials.pop(str)
-        self.sections = {str:Section}      # A dictonary of the model's cross-sections
-        self.sections.pop(str)
-        self.springs = {str:Spring3D}      # A dictionary of the model's springs
-        self.springs.pop(str)
-        self.members = {str:PhysMember}    # A dictionary of the model's physical members
-        self.members.pop(str)
-        self.quads = {str:Quad3D}          # A dictionary of the model's quadiralterals
-        self.quads.pop(str)
-        self.plates = {str:Plate3D}        # A dictionary of the model's rectangular plates
-        self.plates.pop(str)
-        self.meshes = {str:Mesh}           # A dictionary of the model's meshes
-        self.meshes.pop(str)         
-        self.load_combos = {str:LoadCombo}  # A dictionary of the model's load combinations
-        self.load_combos.pop(str)
-        self._D = {str:[]}                 # A dictionary of the model's nodal displacements by load combination
-        self._D.pop(str)
-        
-        self.solution = None  # Indicates the solution type for the latest run of the model
+        self.nodes: Dict[str, Node3D] = {}           # A dictionary of the model's nodes
+        self.materials: Dict[str, Material] = {}     # A dictionary of the model's materials
+        self.sections: Dict[str, Section] = {}       # A dictonary of the model's cross-sections
+        self.springs: Dict[str, Spring3D] = {}       # A dictionary of the model's springs
+        self.members: Dict[str, PhysMember] = {}     # A dictionary of the model's physical members
+        self.quads: Dict[str, Quad3D] = {}           # A dictionary of the model's quadiralterals
+        self.plates: Dict[str, Plate3D] = {}         # A dictionary of the model's rectangular plates
+        self.meshes: Dict[str, Mesh] = {}            # A dictionary of the model's meshes
+        self.load_combos: Dict[str, LoadCombo] = {}  # A dictionary of the model's load combinations
+        self._D: Dict[str, list] = {}                # A dictionary of the model's nodal displacements by load combination        
+        self.solution: Optional[str] = None          # Indicates the solution type for the latest run of the model
 
     @property
     def load_cases(self):
