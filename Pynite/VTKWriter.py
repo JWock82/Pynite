@@ -1,6 +1,7 @@
 import vtk
 import os
 import tempfile
+import subprocess
 from typing import Dict
 
 from Pynite.FEModel3D import FEModel3D
@@ -75,4 +76,19 @@ class VTKWriter:
         writer.Write()
 
     def open_in_paraview(self):
-        raise NotImplementedError
+        """
+        Open the Model inside Paraview, if installed. Paraview must be accessible with the `paraview` command for this method to work.
+        """
+        # Create a temporary file with .vtk extension
+        with tempfile.NamedTemporaryFile(suffix='.vtk', delete=False) as tmp:
+            temp_path = tmp.name
+        
+        # Write the VTK file
+        self.write_to_vtk(temp_path)
+        
+        try:
+            # Open paraview with the temporary file
+            subprocess.run(['paraview', temp_path], check=True)
+        finally:
+            # Clean up the temporary file
+            os.remove(temp_path)
