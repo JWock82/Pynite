@@ -7,6 +7,12 @@ from Pynite.BeamSegY import BeamSegY
 import Pynite.FixedEndReactions
 import warnings
 
+from typing import TYPE_CHECKING
+# Imports for typechecking only to prevent circular imports
+if TYPE_CHECKING:
+    from Pynite.Node3D import Node3D
+    from Pynite.FEModel3D import FEModel3D
+
 #%%
 class Member3D():
     """
@@ -21,7 +27,7 @@ class Member3D():
     __plt = None
 
 #%%
-    def __init__(self, model, name, i_node, j_node, material_name, section_name, rotation=0.0,
+    def __init__(self, model:"FEModel3D", name:str, i_node:"Node3D", j_node:"Node3D", material_name:str, section_name:str, rotation=0.0,
                  tension_only=False, comp_only=False):
         """
         Initializes a new member.
