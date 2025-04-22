@@ -7,7 +7,7 @@ from os import rename
 import warnings
 from math import isclose
 
-from numpy import array, zeros, matmul, divide, subtract, atleast_2d, all
+from numpy import array, zeros, matmul, divide, subtract, atleast_2d, all, ndarray
 from numpy.linalg import solve
 
 from Pynite.Node3D import Node3D
@@ -45,7 +45,7 @@ class FEModel3D():
         self.plates: Dict[str, Plate3D] = {}         # A dictionary of the model's rectangular plates
         self.meshes: Dict[str, Mesh] = {}            # A dictionary of the model's meshes
         self.load_combos: Dict[str, LoadCombo] = {}  # A dictionary of the model's load combinations
-        self._D: Dict[str, list] = {}                # A dictionary of the model's nodal displacements by load combination        
+        self._D: Dict[str, ndarray] = {}                # A dictionary of the model's nodal displacements by load combination        
         self.solution: Optional[str] = None          # Indicates the solution type for the latest run of the model
 
     @property

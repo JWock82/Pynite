@@ -4,7 +4,7 @@ from math import isclose, acos
 
 from Pynite.Member3D import Member3D
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 # Imports for typechecking only to prevent circular imports
 if TYPE_CHECKING:
     from Pynite.Node3D import Node3D
@@ -25,7 +25,7 @@ class PhysMember(Member3D):
                  tension_only=False, comp_only=False):
         
         super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
-        self.sub_members = {}
+        self.sub_members: Dict[str, Member3D] = {}
 
     def descritize(self):
         """

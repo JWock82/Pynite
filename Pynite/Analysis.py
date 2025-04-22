@@ -3,7 +3,11 @@ from Pynite.LoadCombo import LoadCombo
 from numpy import array, atleast_2d, zeros, subtract, matmul, divide, seterr, nanmax
 from numpy.linalg import solve
 
-def _prepare_model(model):
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from Pynite.FEModel3D import FEModel3D
+
+def _prepare_model(model:"FEModel3D"):
     """Prepares a model for analysis by ensuring at least one load combination is defined, generating all meshes that have not already been generated, activating all non-linear members, and internally numbering all nodes and elements.
 
     :param model: The model being prepared for analysis.
@@ -412,7 +416,7 @@ def _unpartition_disp(model, D1, D2, D1_indices, D2_indices):
     # Return the displacement vector
     return D
 
-def _store_displacements(model, D1, D2, D1_indices, D2_indices, combo):
+def _store_displacements(model:"FEModel3D", D1, D2, D1_indices, D2_indices, combo):
     """Stores calculated displacements from the solver into the model's displacement vector `_D` and into each node object in the model
 
     :param model: The finite element model being evaluated.
