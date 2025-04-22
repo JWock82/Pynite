@@ -34,8 +34,8 @@ class VTKWriter:
             displacement_arrays[combo_name].SetName(f"Displacement_{combo_name}")
             displacement_arrays[combo_name].SetNumberOfComponents(3)
 
-        node_ids = {}
-        for i, (node_name, node) in enumerate(self.model.nodes.items()):
+        node_ids: Dict[str, int] = {}
+        for node_name, node in self.model.nodes.items():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
             node_ids[node_name] = point_id
 
@@ -43,18 +43,28 @@ class VTKWriter:
             verts.InsertCellPoint(point_id)
 
             for combo_name in self.model._D.keys():
-                try:
-                    DX = self.model._D[combo_name][node.ID * 6 + 0, 0]
-                    DY = self.model._D[combo_name][node.ID * 6 + 1, 0]
-                    DZ = self.model._D[combo_name][node.ID * 6 + 2, 0]
-                except:
-                    DX = 0.0
-                    DY = 0.0
-                    DZ = 0.0
+                if node.ID is None:
+                    raise ValueError(
+                        f"Node {node.name} has a Node-ID of None! Check if the solver was run succesfully before using this writer."
+                    )
+
+                # Extract the displacement values
+                DX = self.model._D[combo_name][node.ID * 6 + 0, 0]
+                DY = self.model._D[combo_name][node.ID * 6 + 1, 0]
+                DZ = self.model._D[combo_name][node.ID * 6 + 2, 0]
+
                 displacement_arrays[combo_name].InsertNextTuple3(DX, DY, DZ)
 
+        lines = vtk.vtkCellArray()
+        for member in self.model.members.values():
+            for submember in member.sub_members.values():
+                line = vtk.vtkLine()
+                line.GetPointIds().SetId(0, node_ids[submember.i_node.name])
+                line.GetPointIds().SetId(1, node_ids[submember.j_node.name])
+                lines.InsertNextCell(line)
+
         ugrid.SetPoints(points)
-        ugrid.SetCells(vtk.VTK_VERTEX, verts)
+        ugrid.SetCells(vtk.VTK_LINE, lines)
 
         for combo_name, array in displacement_arrays.items():
             ugrid.GetPointData().AddArray(array)
