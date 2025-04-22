@@ -36,9 +36,13 @@ class VTKWriter:
             displacement_arrays[combo_name].SetNumberOfComponents(3)
 
         node_ids: Dict[str, int] = {}
+        node_name_array = vtk.vtkStringArray()
+        node_name_array.SetName("Node_Names")
+
         for node_name, node in self.model.nodes.items():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
             node_ids[node_name] = point_id
+            node_name_array.InsertNextValue(node_name)
 
             verts.InsertNextCell(1)
             verts.InsertCellPoint(point_id)
@@ -65,6 +69,7 @@ class VTKWriter:
                 lines.InsertNextCell(line)
 
         ugrid.SetPoints(points)
+        ugrid.GetPointData().AddArray(node_name_array)
         ugrid.SetCells(vtk.VTK_LINE, lines)
 
         for combo_name, array in displacement_arrays.items():
@@ -80,15 +85,15 @@ class VTKWriter:
         Open the Model inside Paraview, if installed. Paraview must be accessible with the `paraview` command for this method to work.
         """
         # Create a temporary file with .vtk extension
-        with tempfile.NamedTemporaryFile(suffix='.vtk', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmp:
             temp_path = tmp.name
-        
+
         # Write the VTK file
         self.write_to_vtk(temp_path)
-        
+
         try:
             # Open paraview with the temporary file
-            subprocess.run(['paraview', temp_path], check=True)
+            subprocess.run(["paraview", temp_path], check=True)
         finally:
             # Clean up the temporary file
             os.remove(temp_path)
