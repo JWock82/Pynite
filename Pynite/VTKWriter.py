@@ -15,10 +15,11 @@ class VTKWriter:
     def write_to_vtk(self, path: str):
         """
         Writes model data into a VTK file using vtkUnstructuredGrid. The resulting file can
-        then be postprocessed in ParaView.
+        then be postprocessed in ParaView. If multiple mesh types exist, they will be written as
+        multiple .vtk files.
 
         Args:
-            path (str): The path to the VTK file to be created.
+            path (str): The path to the VTK file(s) to be created.
         """
 
         # remove Filetype if supplied explicitly
@@ -35,26 +36,16 @@ class VTKWriter:
         node_name_array.SetName("Node_Names")
 
         points = vtk.vtkPoints()
-        verts = vtk.vtkCellArray()
         for node_name, node in self.model.nodes.items():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
             node_ids[node_name] = point_id
             node_name_array.InsertNextValue(node_name)
 
-            verts.InsertNextCell(1)
-            verts.InsertCellPoint(point_id)
-
             for combo_name in self.model._D.keys():
-                if node.ID is None:
-                    raise ValueError(f"Node {node.name} has a Node-ID of None!")
+                node_displacement_arrays[combo_name].InsertNextTuple3(node.DX[combo_name], node.DY[combo_name], node.DZ[combo_name])
 
-                # Extract the displacement values
-                DX = self.model._D[combo_name][node.ID * 6 + 0, 0]
-                DY = self.model._D[combo_name][node.ID * 6 + 1, 0]
-                DZ = self.model._D[combo_name][node.ID * 6 + 2, 0]
 
-                node_displacement_arrays[combo_name].InsertNextTuple3(DX, DY, DZ)
-
+        #### CREATE LINE CELLS ####
         lines = vtk.vtkCellArray()
         for member in self.model.members.values():
             for submember in member.sub_members.values():
@@ -63,7 +54,7 @@ class VTKWriter:
                 line.GetPointIds().SetId(1, node_ids[submember.j_node.name])
                 lines.InsertNextCell(line)
 
-        # Reads Quad Data and saves them to the quads Array
+        #### CREATE QUAD CELLS ####
         quads = vtk.vtkCellArray()
         for quad in self.model.quads.values():
             vtkquad = vtk.vtkQuad()
@@ -113,15 +104,17 @@ class VTKWriter:
                 ugrid_quads.GetPointData().AddArray(array)
 
         #### WRITE DATA TO DISK ####
-        member_writer = vtk.vtkUnstructuredGridWriter()
-        member_writer.SetFileName(path + "_members.vtk")
-        member_writer.SetInputData(ugrid_members)
-        member_writer.Write()
+        if len(self.model.members)>0:
+            member_writer = vtk.vtkUnstructuredGridWriter()
+            member_writer.SetFileName(path + "_members.vtk")
+            member_writer.SetInputData(ugrid_members)
+            member_writer.Write()
 
-        quads_writer = vtk.vtkUnstructuredGridWriter()
-        quads_writer.SetFileName(path + "_quads.vtk")
-        quads_writer.SetInputData(ugrid_quads)
-        quads_writer.Write()
+        if len(self.model.quads)>0:
+            quads_writer = vtk.vtkUnstructuredGridWriter()
+            quads_writer.SetFileName(path + "_quads.vtk")
+            quads_writer.SetInputData(ugrid_quads)
+            quads_writer.Write()
 
     def open_in_paraview(self):
         """
@@ -133,13 +126,19 @@ class VTKWriter:
 
         # Write the VTK file
         self.write_to_vtk(temp_path)
+        files = []
+        if len(self.model.members) > 0:
+            files.append(temp_path + "_members.vtk")
+        if len(self.model.quads) > 0:
+            files.append(temp_path + "_quads.vtk")
 
         try:
             # Open paraview with the temporary file
             subprocess.run(
-                ["paraview", temp_path + "_members.vtk", temp_path + "_quads.vtk"],
+                ["paraview", *files],
                 check=True,
             )
         finally:
             # Clean up the temporary file
-            os.remove(temp_path)
+            for f in files:
+                os.remove(f)
