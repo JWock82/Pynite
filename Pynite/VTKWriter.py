@@ -22,13 +22,7 @@ class VTKWriter:
         """
 
         # remove Filetype if supplied explicitly
-        if path.endswith(".vtk"):
-            path.removesuffix(".vtk")
-
-        # Initialize empty containers
-        points = vtk.vtkPoints()
-        verts = vtk.vtkCellArray()
-        quads = vtk.vtkCellArray()
+        path.removesuffix(".vtk")
 
         node_displacement_arrays: Dict[str, vtk.vtkFloatArray] = {}
         for combo_name in self.model._D.keys():
@@ -40,6 +34,8 @@ class VTKWriter:
         node_name_array = vtk.vtkStringArray()
         node_name_array.SetName("Node_Names")
 
+        points = vtk.vtkPoints()
+        verts = vtk.vtkCellArray()
         for node_name, node in self.model.nodes.items():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
             node_ids[node_name] = point_id
@@ -68,6 +64,7 @@ class VTKWriter:
                 lines.InsertNextCell(line)
 
         # Reads Quad Data and saves them to the quads Array
+        quads = vtk.vtkCellArray()
         for quad in self.model.quads.values():
             vtkquad = vtk.vtkQuad()
             vtkquad.GetPointIds().SetId(0, node_ids[quad.i_node.name])
@@ -92,20 +89,28 @@ class VTKWriter:
 
         #### EXTRACT QUAD DATA ####
         for combo in self.model.load_combos.keys():
-            quad_displacement_data = vtk.vtkFloatArray()
-            quad_displacement_data.SetNumberOfComponents(3)
-            quad_displacement_data.SetName(f'Displacement "{combo}"')
-            
+            quad_data: Dict[str, vtk.vtkFloatArray] = {}
+            for key in ("D", "F"): # Displacement, Force
+                quad_data[key] = vtk.vtkFloatArray()
+                quad_data[key].SetNumberOfComponents(3)
+                quad_data[key].SetName(f'{key} "{combo}"')
+
             # fill zeros
             for node_id in node_ids.values():
-                quad_displacement_data.InsertTuple3(node_id,0,0,0)
+                for array in quad_data.values():
+                    array.InsertTuple3(node_id, 0, 0, 0)
 
+            # get data and write into quad_data array
             for quad in self.model.quads.values():
-                disp_matrix = quad.D().reshape((4, 6))
-                for node, disp_vec in zip((quad.i_node, quad.j_node, quad.m_node, quad.n_node), disp_matrix):
-                    quad_displacement_data.InsertTuple3(node_ids[node.name], *disp_vec[:3])
-            ugrid_quads.GetPointData().AddArray(quad_displacement_data)
+                data = {"D": quad.D().reshape((4, 6)), "F": quad.F().reshape((4, 6))}
 
+                for i,node in enumerate((quad.i_node, quad.j_node, quad.m_node, quad.n_node)):
+                    for key in data.keys():
+                        quad_data[key].InsertTuple3(node_ids[node.name], *data[key][i][:3])
+            
+            # add the data arrays to the points
+            for array in quad_data.values():
+                ugrid_quads.GetPointData().AddArray(array)
 
         #### WRITE DATA TO DISK ####
         member_writer = vtk.vtkUnstructuredGridWriter()
