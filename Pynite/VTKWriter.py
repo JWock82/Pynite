@@ -25,12 +25,7 @@ class VTKWriter:
         # remove Filetype if supplied explicitly
         path.removesuffix(".vtk")
 
-        node_displacement_arrays: Dict[str, vtk.vtkFloatArray] = {}
-        for combo_name in self.model._D.keys():
-            node_displacement_arrays[combo_name] = vtk.vtkFloatArray()
-            node_displacement_arrays[combo_name].SetName(f"Displacement_{combo_name}")
-            node_displacement_arrays[combo_name].SetNumberOfComponents(3)
-
+        #### CREATE POINTS ####
         node_ids: Dict[str, int] = {}
         node_name_array = vtk.vtkStringArray()
         node_name_array.SetName("Node_Names")
@@ -40,10 +35,6 @@ class VTKWriter:
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
             node_ids[node_name] = point_id
             node_name_array.InsertNextValue(node_name)
-
-            for combo_name in self.model._D.keys():
-                node_displacement_arrays[combo_name].InsertNextTuple3(node.DX[combo_name], node.DY[combo_name], node.DZ[combo_name])
-
 
         #### CREATE LINE CELLS ####
         lines = vtk.vtkCellArray()
@@ -64,6 +55,7 @@ class VTKWriter:
             vtkquad.GetPointIds().SetId(3, node_ids[quad.n_node.name])
             quads.InsertNextCell(vtkquad)
 
+        #### CREATE DATA CONTAINERS ####
         ugrid_members = vtk.vtkUnstructuredGrid()
         ugrid_members.SetPoints(points)
         ugrid_members.GetPointData().AddArray(node_name_array)
@@ -74,9 +66,16 @@ class VTKWriter:
         ugrid_quads.GetPointData().AddArray(node_name_array)
         ugrid_quads.SetCells(vtk.VTK_QUAD, quads)
 
-        # writes displacement data into points
-        for combo_name, array in node_displacement_arrays.items():
-            ugrid_members.GetPointData().AddArray(array)
+        #### EXTRACT NODE DISPLACEMENT DATA ####
+        for combo_name in self.model._D.keys():
+            node_displacement_array = vtk.vtkFloatArray()
+            node_displacement_array.SetName(f"D \"{combo_name}\"")
+            node_displacement_array.SetNumberOfComponents(3)
+            
+            for node in self.model.nodes.values():
+                node_displacement_array.InsertTuple3(node_ids[node.name], node.DX[combo_name], node.DY[combo_name], node.DZ[combo_name])
+        
+            ugrid_members.GetPointData().AddArray(node_displacement_array)
 
         #### EXTRACT QUAD DATA ####
         for combo in self.model.load_combos.keys():
@@ -133,7 +132,7 @@ class VTKWriter:
             files.append(temp_path + "_quads.vtk")
 
         try:
-            # Open paraview with the temporary file
+            # Open paraview with the temporary file(s)
             subprocess.run(
                 ["paraview", *files],
                 check=True,
