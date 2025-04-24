@@ -9,6 +9,10 @@ from Pynite.FEModel3D import FEModel3D
 
 
 class VTKWriter:
+    """
+    The `VTKWriter` Class allows for writing `FEModel3D` data into .vtk files. These can then be postprocessed
+    using external Software i.e. Paraview.
+    """
     def __init__(self, model: FEModel3D) -> None:
         self.model = model
 
