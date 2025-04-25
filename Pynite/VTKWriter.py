@@ -96,7 +96,7 @@ class VTKWriter:
 
             # get data and write into quad_data array
             for quad in self.model.quads.values():
-                data = {"D": quad.D().reshape((4, 6)), "F": quad.F().reshape((4, 6))}
+                data = {"D": quad.D(combo).reshape((4, 6)), "F": quad.F(combo).reshape((4, 6))}
 
                 for i,node in enumerate((quad.i_node, quad.j_node, quad.m_node, quad.n_node)):
                     for key in data.keys():
