@@ -18,8 +18,8 @@ class VTKWriter:
 
     def __init__(self, model: FEModel3D) -> None:
         self.model = model
-        self.members_written = False
-        self.quads_written = False
+        self._members_written = False
+        self._quads_written = False
 
     def write_to_vtk(self, path: str):
         """
@@ -42,7 +42,7 @@ class VTKWriter:
         node_ids: Dict[str, int] = {}
         node_name_array = vtk.vtkStringArray()
         node_name_array.SetName("Node_Names")
-        
+
         points = vtk.vtkPoints()
         for node_name, node in self.model.nodes.items():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
@@ -78,14 +78,13 @@ class VTKWriter:
             member_writer.SetFileName(path + "_members.vtk")
             member_writer.SetInputData(ugrid_members)
             member_writer.Write()
-            self.members_written = True
+            self._members_written = True
 
     def _write_quad_data(self, path: str):
-        
+
         # xi and eta natural coordinates [0-1] for the VTK_BIQUADRATIC_QUAD point positions
         xis = (0,1,1,0,0.5,1,0.5,0,0.5)
         etas = (0,0,1,1,0,0.5,1,0.5,0.5)
-
 
         #### CREATE QUAD CELLS ####
         quads = vtk.vtkCellArray()
@@ -112,6 +111,8 @@ class VTKWriter:
         for quad_name, vtkquad in quad_refs.items():
             for combo in self.model.load_combos.keys():
                 quad = self.model.quads[quad_name]
+
+                # DISPLACEMENT
                 D = vtk.vtkFloatArray()
                 D.SetName(f"D - {combo}")
                 D.SetNumberOfComponents(3)
@@ -120,10 +121,18 @@ class VTKWriter:
                     dj = np.array([quad.j_node.DX[combo], quad.j_node.DY[combo], quad.j_node.DZ[combo]])
                     dm = np.array([quad.m_node.DX[combo], quad.m_node.DY[combo], quad.m_node.DZ[combo]])
                     dn = np.array([quad.n_node.DX[combo], quad.n_node.DY[combo], quad.n_node.DZ[combo]])
-                    
+
                     d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
                     D.InsertTuple3(vtkquad.GetPointId(i), *d)
                 ugrid_quads.GetPointData().AddArray(D)
+
+                # MEMBRANE STRESSES
+                membrane = vtk.vtkFloatArray()
+                membrane.SetName(f"Membrane - {combo}")
+                membrane.SetNumberOfComponents(3)
+                for i, (xi, eta) in enumerate(zip(xis, etas)):
+                    membrane.InsertTuple3(vtkquad.GetPointId(i), *quad.membrane(xi, eta, False, combo)) # type: ignore
+                ugrid_quads.GetPointData().AddArray(membrane)
 
         #### WRITE DATA TO DISK ####
 
@@ -132,7 +141,7 @@ class VTKWriter:
             quads_writer.SetFileName(path + "_quads.vtk")
             quads_writer.SetInputData(ugrid_quads)
             quads_writer.Write()
-            self.quads_written = True
+            self._quads_written = True
 
     @staticmethod
     def _interpolate_quad_corner_data(i:np.ndarray, j:np.ndarray, m:np.ndarray, n:np.ndarray, xi:float, eta:float) -> Tuple[float,float,float]:
@@ -158,9 +167,9 @@ class VTKWriter:
         # Write the VTK file
         self.write_to_vtk(temp_path)
         files = []
-        if self.members_written:
+        if self._members_written:
             files.append(temp_path + "_members.vtk")
-        if self.quads_written:
+        if self._quads_written:
             files.append(temp_path + "_quads.vtk")
 
         try:
