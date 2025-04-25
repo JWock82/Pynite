@@ -42,7 +42,7 @@ class VTKWriter:
         node_ids: Dict[str, int] = {}
         node_name_array = vtk.vtkStringArray()
         node_name_array.SetName("Node_Names")
-
+        
         points = vtk.vtkPoints()
         for node_name, node in self.model.nodes.items():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
@@ -63,6 +63,16 @@ class VTKWriter:
         ugrid_members.GetPointData().AddArray(node_name_array)
         ugrid_members.SetCells(vtk.VTK_LINE, lines)
 
+        #### Node Data ####
+        for combo in self.model.load_combos.keys():
+            node_D_array = vtk.vtkFloatArray()
+            node_D_array.SetNumberOfComponents(3)
+            node_D_array.SetName(f"D - {combo}")
+            for node_name, node_id in node_ids.items():
+                node = self.model.nodes[node_name]
+                node_D_array.InsertTuple3(node_id, node.DX[combo], node.DY[combo], node.DZ[combo])
+            ugrid_members.GetPointData().AddArray(node_D_array)
+
         if len(self.model.members) > 0:
             member_writer = vtk.vtkUnstructuredGridWriter()
             member_writer.SetFileName(path + "_members.vtk")
@@ -71,24 +81,49 @@ class VTKWriter:
             self.members_written = True
 
     def _write_quad_data(self, path: str):
+        
+        # xi and eta natural coordinates [0-1] for the VTK_BIQUADRATIC_QUAD point positions
+        xis = (0,1,1,0,0.5,1,0.5,0,0.5)
+        etas = (0,0,1,1,0,0.5,1,0.5,0.5)
+
+
         #### CREATE QUAD CELLS ####
         quads = vtk.vtkCellArray()
         points = vtk.vtkPoints()
+        quad_refs: Dict[str, vtk.vtkBiQuadraticQuad] = {}
         for quad in self.model.quads.values():
-            # xi and eta coordinates for the VTK_BIQUADRATIC_QUAD
-            xis = (0,1,1,0,0.5,1,0.5,0,0.5)
-            etas = (0,0,1,1,0,0.5,1,0.5,0.5)
-
             vtkquad = vtk.vtkBiQuadraticQuad()
             for i, (xi, eta) in enumerate(zip(xis, etas)):
-                coords = self._interpolate_quad_coords(quad, xi, eta)
-                vtkquad.GetPointIds().SetId(i, points.InsertNextPoint(coords))
+                pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
+                pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
+                pm = np.array([quad.m_node.X, quad.m_node.Y, quad.m_node.Z])
+                pn = np.array([quad.n_node.X, quad.n_node.Y, quad.n_node.Z])
 
+                coords = self._interpolate_quad_corner_data(pi, pj, pm, pn, xi, eta)
+                vtkquad.GetPointIds().SetId(i, points.InsertNextPoint(coords))
+            quad_refs[quad.name] = vtkquad
             quads.InsertNextCell(vtkquad)
 
         ugrid_quads = vtk.vtkUnstructuredGrid()
         ugrid_quads.SetPoints(points)
         ugrid_quads.SetCells(vtk.VTK_BIQUADRATIC_QUAD, quads)
+
+        #### READ QUAD DATA ####
+        for quad_name, vtkquad in quad_refs.items():
+            for combo in self.model.load_combos.keys():
+                quad = self.model.quads[quad_name]
+                D = vtk.vtkFloatArray()
+                D.SetName(f"D - {combo}")
+                D.SetNumberOfComponents(3)
+                for i,(xi,eta) in enumerate(zip(xis,etas)):
+                    di = np.array([quad.i_node.DX[combo], quad.i_node.DY[combo], quad.i_node.DZ[combo]])
+                    dj = np.array([quad.j_node.DX[combo], quad.j_node.DY[combo], quad.j_node.DZ[combo]])
+                    dm = np.array([quad.m_node.DX[combo], quad.m_node.DY[combo], quad.m_node.DZ[combo]])
+                    dn = np.array([quad.n_node.DX[combo], quad.n_node.DY[combo], quad.n_node.DZ[combo]])
+                    
+                    d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
+                    D.InsertTuple3(vtkquad.GetPointId(i), *d)
+                ugrid_quads.GetPointData().AddArray(D)
 
         #### WRITE DATA TO DISK ####
 
@@ -100,21 +135,16 @@ class VTKWriter:
             self.quads_written = True
 
     @staticmethod
-    def _interpolate_quad_coords(quad: Quad3D, xi: float, eta: float) -> Tuple[float,float,float]:
+    def _interpolate_quad_corner_data(i:np.ndarray, j:np.ndarray, m:np.ndarray, n:np.ndarray, xi:float, eta:float) -> Tuple[float,float,float]:
         """
-        Helper Method to return the global coordinates of a point on the quad, given the natural coordinates
+        Helper Method to return the linearly interpolated data of a point on the quad, given the natural coordinates
         xi and eta. We should consider moving this over to Quad3D in the future.
         """
-        pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
-        pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
-        pm = np.array([quad.m_node.X, quad.m_node.Y, quad.m_node.Z])
-        pn = np.array([quad.n_node.X, quad.n_node.Y, quad.n_node.Z])
-
         return tuple(
-            (1 - xi) * (1 - eta) * pi
-            + xi * (1 - eta) * pj
-            + xi * eta * pm
-            + (1 - xi) * eta * pn
+            (1 - xi) * (1 - eta) * i
+            + xi * (1 - eta) * j
+            + xi * eta * m
+            + (1 - xi) * eta * n
         )
 
     def open_in_paraview(self):
