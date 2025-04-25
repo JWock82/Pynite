@@ -148,6 +148,17 @@ class VTKWriter:
             membrane.SetName(f"Membrane - {combo}")
             membrane.SetNumberOfComponents(3)
 
+            # Moment Data
+            moments = vtk.vtkDoubleArray()
+            moments.SetName(f"Moments - {combo}")
+            moments.SetNumberOfComponents(3)
+
+            # SHEAR Data
+            shear = vtk.vtkDoubleArray()
+            shear.SetName(f"Shear - {combo}")
+            shear.SetNumberOfComponents(3)
+
+
             for quad_name, vtkquad in quad_refs.items():
                 quad = self.model.quads[quad_name]
 
@@ -162,11 +173,20 @@ class VTKWriter:
                     D.InsertTuple3(vtkquad.GetPointId(i), *d)
                     
                     # MEMBRANE STRESSES
-                    res = quad.membrane(xi, eta, False, combo).flatten() # type: ignore
-                    membrane.InsertTuple3(vtkquad.GetPointId(i), *res)
+                    membrane.InsertTuple3(vtkquad.GetPointId(i), *quad.membrane(xi, eta, False, combo).flatten()) # type: ignore
+
+                    # MOMENTS
+                    m = quad.moment(xi, eta, False, combo) # type: ignore
+                    moments.InsertTuple3(vtkquad.GetPointId(i), *m)
+
+                    # SHEAR
+                    s = quad.shear(xi, eta, False, combo) # type: ignore
+                    shear.InsertTuple3(vtkquad.GetPointId(i), *s)
                 
                 ugrid_quads.GetPointData().AddArray(D)
                 ugrid_quads.GetPointData().AddArray(membrane)
+                ugrid_quads.GetPointData().AddArray(moments)
+                ugrid_quads.GetPointData().AddArray(shear)
 
         #### WRITE DATA TO DISK ####
 
