@@ -90,16 +90,27 @@ class VTKWriter:
         quads = vtk.vtkCellArray()
         points = vtk.vtkPoints()
         quad_refs: Dict[str, vtk.vtkBiQuadraticQuad] = {}
+        node_register: Dict[int,Tuple[float,float,float]] = {} # Contains all existing point ids and their positions
         for quad in self.model.quads.values():
+            # Node corner coords
+            pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
+            pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
+            pm = np.array([quad.m_node.X, quad.m_node.Y, quad.m_node.Z])
+            pn = np.array([quad.n_node.X, quad.n_node.Y, quad.n_node.Z])
+
             vtkquad = vtk.vtkBiQuadraticQuad()
             for i, (xi, eta) in enumerate(zip(xis, etas)):
-                pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
-                pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
-                pm = np.array([quad.m_node.X, quad.m_node.Y, quad.m_node.Z])
-                pn = np.array([quad.n_node.X, quad.n_node.Y, quad.n_node.Z])
-
                 coords = self._interpolate_quad_corner_data(pi, pj, pm, pn, xi, eta)
-                vtkquad.GetPointIds().SetId(i, points.InsertNextPoint(coords))
+                # search existing nodes by position if node already exists (from other quad)
+                for node_id, node_coords in node_register.items():
+                    if sum(abs(coords[i] - node_coords[i]) for i in range(3)) <= 1e-10:
+                        vtkquad.GetPointIds().SetId(i, node_id)
+                        break
+                else:
+                    new_id = points.InsertNextPoint(*coords)
+                    node_register[new_id] = coords
+                    vtkquad.GetPointIds().SetId(i, new_id)
+
             quad_refs[quad.name] = vtkquad
             quads.InsertNextCell(vtkquad)
 
