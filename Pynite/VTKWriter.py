@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 import subprocess
 from typing import Dict, Tuple
-from tqdm import tqdm
 
 import numpy as np
 
@@ -97,7 +96,7 @@ class VTKWriter:
 
         node_register = np.empty((0,4), dtype=np.float64) # (i,x,y,z)
 
-        for quad in tqdm(self.model.quads.values(), "Creating Quads"):
+        for quad in self.model.quads.values():
             # Node corner coords
             pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
             pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
