@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 import subprocess
 from typing import Dict, Tuple
+from tqdm import tqdm
 
 import numpy as np
 
@@ -81,6 +82,9 @@ class VTKWriter:
             self._members_written = True
 
     def _write_quad_data(self, path: str):
+        """
+        Collects all quads in the model and writes their data into a VTK mesh.
+        """
 
         # xi and eta natural coordinates [0-1] for the VTK_BIQUADRATIC_QUAD point positions
         xis = (0,1,1,0,0.5,1,0.5,0,0.5)
@@ -90,8 +94,10 @@ class VTKWriter:
         quads = vtk.vtkCellArray()
         points = vtk.vtkPoints()
         quad_refs: Dict[str, vtk.vtkBiQuadraticQuad] = {}
-        node_register: Dict[int,Tuple[float,float,float]] = {} # Contains all existing point ids and their positions
-        for quad in self.model.quads.values():
+
+        node_register = np.empty((0,4), dtype=np.float64) # (i,x,y,z)
+
+        for quad in tqdm(self.model.quads.values(), "Creating Quads"):
             # Node corner coords
             pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
             pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
@@ -100,16 +106,29 @@ class VTKWriter:
 
             vtkquad = vtk.vtkBiQuadraticQuad()
             for i, (xi, eta) in enumerate(zip(xis, etas)):
-                coords = self._interpolate_quad_corner_data(pi, pj, pm, pn, xi, eta)
+                coords = np.array(self._interpolate_quad_corner_data(pi, pj, pm, pn, xi, eta))
                 # search existing nodes by position if node already exists (from other quad)
-                for node_id, node_coords in node_register.items():
-                    if sum(abs(coords[i] - node_coords[i]) for i in range(3)) <= 1e-10:
+                if node_register.shape[0] > 0:
+                    # This was done in Numpy for necessary performance reasons, hence the unintuitive code.
+                    # The (x,y,z) coords array gets subtracted from every entry in the register and summed up per entry,
+                    # resulting in a vector of absolute distances. This is then checked for the smallest entry, that needs to
+                    # be below a numeric threshold to be counted as a match. The index can then be used to get the node_id.
+                    search = np.sum(np.abs(node_register[:,1:] - coords), axis=1)
+                    query = node_register[:,0][np.where((search == np.min(search)) & (np.min(search)<1e-10))[0]]
+                    if len(query)>0:
+                        node_id = int(query[0])
+                        # existing node found on position coords
                         vtkquad.GetPointIds().SetId(i, node_id)
-                        break
+                    else:
+                        # no existing node found at positiion coords, create a new point
+                        node_id = points.InsertNextPoint(*coords)
+                        node_register = np.vstack((node_register,np.array([node_id, *coords])))
                 else:
-                    new_id = points.InsertNextPoint(*coords)
-                    node_register[new_id] = coords
-                    vtkquad.GetPointIds().SetId(i, new_id)
+                    # in case of very first node
+                    node_id = points.InsertNextPoint(*coords)
+                    node_register = np.vstack((node_register,np.array([node_id, *coords])))
+                
+                vtkquad.GetPointIds().SetId(i, node_id)
 
             quad_refs[quad.name] = vtkquad
             quads.InsertNextCell(vtkquad)
