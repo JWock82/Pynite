@@ -3,9 +3,11 @@ import os
 import tempfile
 from pathlib import Path
 import subprocess
-from typing import Dict
+from typing import Dict, Tuple
 
-from Pynite.FEModel3D import FEModel3D
+import numpy as np
+
+from Pynite.FEModel3D import FEModel3D, Quad3D
 
 
 class VTKWriter:
@@ -13,8 +15,11 @@ class VTKWriter:
     The `VTKWriter` Class allows for writing `FEModel3D` data into .vtk files. These can then be postprocessed
     using external Software i.e. Paraview.
     """
+
     def __init__(self, model: FEModel3D) -> None:
         self.model = model
+        self.members_written = False
+        self.quads_written = False
 
     def write_to_vtk(self, path: str):
         """
@@ -29,6 +34,10 @@ class VTKWriter:
         # remove Filetype if supplied explicitly
         path.removesuffix(".vtk")
 
+        self._write_member_data(path)
+        self._write_quad_data(path)
+
+    def _write_member_data(self, path: str):
         #### CREATE POINTS ####
         node_ids: Dict[str, int] = {}
         node_name_array = vtk.vtkStringArray()
@@ -49,75 +58,64 @@ class VTKWriter:
                 line.GetPointIds().SetId(1, node_ids[submember.j_node.name])
                 lines.InsertNextCell(line)
 
-        #### CREATE QUAD CELLS ####
-        quads = vtk.vtkCellArray()
-        for quad in self.model.quads.values():
-            vtkquad = vtk.vtkQuad()
-            vtkquad.GetPointIds().SetId(0, node_ids[quad.i_node.name])
-            vtkquad.GetPointIds().SetId(1, node_ids[quad.j_node.name])
-            vtkquad.GetPointIds().SetId(2, node_ids[quad.m_node.name])
-            vtkquad.GetPointIds().SetId(3, node_ids[quad.n_node.name])
-            quads.InsertNextCell(vtkquad)
-
-        #### CREATE DATA CONTAINERS ####
         ugrid_members = vtk.vtkUnstructuredGrid()
         ugrid_members.SetPoints(points)
         ugrid_members.GetPointData().AddArray(node_name_array)
         ugrid_members.SetCells(vtk.VTK_LINE, lines)
 
-        ugrid_quads = vtk.vtkUnstructuredGrid()
-        ugrid_quads.SetPoints(points)
-        ugrid_quads.GetPointData().AddArray(node_name_array)
-        ugrid_quads.SetCells(vtk.VTK_QUAD, quads)
-
-        #### EXTRACT NODE DISPLACEMENT DATA ####
-        for combo_name in self.model._D.keys():
-            node_displacement_array = vtk.vtkFloatArray()
-            node_displacement_array.SetName(f"D \"{combo_name}\"")
-            node_displacement_array.SetNumberOfComponents(3)
-            
-            for node in self.model.nodes.values():
-                node_displacement_array.InsertTuple3(node_ids[node.name], node.DX[combo_name], node.DY[combo_name], node.DZ[combo_name])
-        
-            ugrid_members.GetPointData().AddArray(node_displacement_array)
-
-        #### EXTRACT QUAD DATA ####
-        for combo in self.model.load_combos.keys():
-            quad_data: Dict[str, vtk.vtkFloatArray] = {}
-            for key in ("D", "F"): # Displacement, Force
-                quad_data[key] = vtk.vtkFloatArray()
-                quad_data[key].SetNumberOfComponents(3)
-                quad_data[key].SetName(f'{key} "{combo}"')
-
-            # fill zeros
-            for node_id in node_ids.values():
-                for array in quad_data.values():
-                    array.InsertTuple3(node_id, 0, 0, 0)
-
-            # get data and write into quad_data array
-            for quad in self.model.quads.values():
-                data = {"D": quad.D(combo).reshape((4, 6)), "F": quad.F(combo).reshape((4, 6))}
-
-                for i,node in enumerate((quad.i_node, quad.j_node, quad.m_node, quad.n_node)):
-                    for key in data.keys():
-                        quad_data[key].InsertTuple3(node_ids[node.name], *data[key][i][:3])
-            
-            # add the data arrays to the points
-            for array in quad_data.values():
-                ugrid_quads.GetPointData().AddArray(array)
-
-        #### WRITE DATA TO DISK ####
-        if len(self.model.members)>0:
+        if len(self.model.members) > 0:
             member_writer = vtk.vtkUnstructuredGridWriter()
             member_writer.SetFileName(path + "_members.vtk")
             member_writer.SetInputData(ugrid_members)
             member_writer.Write()
+            self.members_written = True
 
-        if len(self.model.quads)>0:
+    def _write_quad_data(self, path: str):
+        #### CREATE QUAD CELLS ####
+        quads = vtk.vtkCellArray()
+        points = vtk.vtkPoints()
+        for quad in self.model.quads.values():
+            # xi and eta coordinates for the VTK_BIQUADRATIC_QUAD
+            xis = (0,1,1,0,0.5,1,0.5,0,0.5)
+            etas = (0,0,1,1,0,0.5,1,0.5,0.5)
+
+            vtkquad = vtk.vtkBiQuadraticQuad()
+            for i, (xi, eta) in enumerate(zip(xis, etas)):
+                coords = self._interpolate_quad_coords(quad, xi, eta)
+                vtkquad.GetPointIds().SetId(i, points.InsertNextPoint(coords))
+
+            quads.InsertNextCell(vtkquad)
+
+        ugrid_quads = vtk.vtkUnstructuredGrid()
+        ugrid_quads.SetPoints(points)
+        ugrid_quads.SetCells(vtk.VTK_BIQUADRATIC_QUAD, quads)
+
+        #### WRITE DATA TO DISK ####
+
+        if len(self.model.quads) > 0:
             quads_writer = vtk.vtkUnstructuredGridWriter()
             quads_writer.SetFileName(path + "_quads.vtk")
             quads_writer.SetInputData(ugrid_quads)
             quads_writer.Write()
+            self.quads_written = True
+
+    @staticmethod
+    def _interpolate_quad_coords(quad: Quad3D, xi: float, eta: float) -> Tuple[float,float,float]:
+        """
+        Helper Method to return the global coordinates of a point on the quad, given the natural coordinates
+        xi and eta. We should consider moving this over to Quad3D in the future.
+        """
+        pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
+        pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
+        pm = np.array([quad.m_node.X, quad.m_node.Y, quad.m_node.Z])
+        pn = np.array([quad.n_node.X, quad.n_node.Y, quad.n_node.Z])
+
+        return tuple(
+            (1 - xi) * (1 - eta) * pi
+            + xi * (1 - eta) * pj
+            + xi * eta * pm
+            + (1 - xi) * eta * pn
+        )
 
     def open_in_paraview(self):
         """
@@ -130,9 +128,9 @@ class VTKWriter:
         # Write the VTK file
         self.write_to_vtk(temp_path)
         files = []
-        if len(self.model.members) > 0:
+        if self.members_written:
             files.append(temp_path + "_members.vtk")
-        if len(self.model.quads) > 0:
+        if self.quads_written:
             files.append(temp_path + "_quads.vtk")
 
         try:
