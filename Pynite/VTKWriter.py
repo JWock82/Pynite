@@ -119,15 +119,22 @@ class VTKWriter:
         ugrid_quads.SetCells(vtk.VTK_BIQUADRATIC_QUAD, quads)
 
         #### READ QUAD DATA ####
-        for quad_name, vtkquad in quad_refs.items():
-            for combo in self.model.load_combos.keys():
+        for combo in self.model.load_combos.keys():
+            # Displacement Data
+            D = vtk.vtkDoubleArray()
+            D.SetName(f"D - {combo}")
+            D.SetNumberOfComponents(3)
+
+            # Membrane Data
+            membrane = vtk.vtkDoubleArray()
+            membrane.SetName(f"Membrane - {combo}")
+            membrane.SetNumberOfComponents(3)
+
+            for quad_name, vtkquad in quad_refs.items():
                 quad = self.model.quads[quad_name]
 
-                # DISPLACEMENT
-                D = vtk.vtkFloatArray()
-                D.SetName(f"D - {combo}")
-                D.SetNumberOfComponents(3)
                 for i,(xi,eta) in enumerate(zip(xis,etas)):
+                    # DISPLACEMENT
                     di = np.array([quad.i_node.DX[combo], quad.i_node.DY[combo], quad.i_node.DZ[combo]])
                     dj = np.array([quad.j_node.DX[combo], quad.j_node.DY[combo], quad.j_node.DZ[combo]])
                     dm = np.array([quad.m_node.DX[combo], quad.m_node.DY[combo], quad.m_node.DZ[combo]])
@@ -135,14 +142,12 @@ class VTKWriter:
 
                     d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
                     D.InsertTuple3(vtkquad.GetPointId(i), *d)
+                    
+                    # MEMBRANE STRESSES
+                    res = quad.membrane(xi, eta, False, combo).flatten() # type: ignore
+                    membrane.InsertTuple3(vtkquad.GetPointId(i), *res)
+                
                 ugrid_quads.GetPointData().AddArray(D)
-
-                # MEMBRANE STRESSES
-                membrane = vtk.vtkFloatArray()
-                membrane.SetName(f"Membrane - {combo}")
-                membrane.SetNumberOfComponents(3)
-                for i, (xi, eta) in enumerate(zip(xis, etas)):
-                    membrane.InsertTuple3(vtkquad.GetPointId(i), *quad.membrane(xi, eta, False, combo)) # type: ignore
                 ugrid_quads.GetPointData().AddArray(membrane)
 
         #### WRITE DATA TO DISK ####
@@ -160,12 +165,13 @@ class VTKWriter:
         Helper Method to return the linearly interpolated data of a point on the quad, given the natural coordinates
         xi and eta. We should consider moving this over to Quad3D in the future.
         """
-        return tuple(
+        result = tuple(
             (1 - xi) * (1 - eta) * i
             + xi * (1 - eta) * j
             + xi * eta * m
             + (1 - xi) * eta * n
         )
+        return tuple(float(res) for res in result) # type: ignore
 
     def open_in_paraview(self):
         """
