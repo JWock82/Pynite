@@ -3,7 +3,7 @@ import os
 import tempfile
 from pathlib import Path
 import subprocess
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import numpy as np
 from numpy.linalg import inv
@@ -40,35 +40,39 @@ class VTKWriter:
 
     def _write_member_data(self, path: str):
         #### CREATE POINTS FOR USER DEFINED NODES ####
-        node_ids: Dict[str, int] = {}
 
         points = vtk.vtkPoints()
-        for node_name, node in self.model.nodes.items():
-            point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
-            node_ids[node_name] = point_id
 
         #### CREATE LINE CELLS ####
+        # each (sub)member is subdivided into line segments
         lines = vtk.vtkCellArray()
-        member_refs:Dict[str, Tuple[Member3D,vtk.vtkQuadraticEdge]] = {}
+        submembers: List[Tuple[Tuple[float, float], Member3D, vtk.vtkLine]] = []
         for member in self.model.members.values():
             for subm in member.sub_members.values():
-                # Calculate intermediary point positions
-                pm = self._interpolate_member_data(
-                    np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
-                    np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
-                    0.5,
-                )
-                line = vtk.vtkQuadraticEdge()
-                line.SetObjectName(member.name)
-                line.GetPointIds().SetId(0, node_ids[subm.i_node.name])
-                line.GetPointIds().SetId(1, node_ids[subm.j_node.name])
-                line.GetPointIds().SetId(2, points.InsertNextPoint(*pm))
-                member_refs[subm.name] = subm, line
-                lines.InsertNextCell(line)
+                n = 11 # Number of submembers + 1
+                for start,end in zip(np.linspace(0,1,n)[:-1], np.roll(np.linspace(0,1,n),-1)[:-1]):
+                    # Calculate intermediary point positions
+                    p1 = self._interpolate_member_data(
+                        np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
+                        np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
+                        start,
+                    )
+                    p2 = self._interpolate_member_data(
+                        np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
+                        np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
+                        end,
+                    )
+
+                    line = vtk.vtkLine()
+                    line.SetObjectName(member.name)
+                    line.GetPointIds().SetId(0, points.InsertNextPoint(*p1))
+                    line.GetPointIds().SetId(1, points.InsertNextPoint(*p2))
+                    submembers.append(((start, end), subm, line))
+                    lines.InsertNextCell(line)
 
         ugrid_members = vtk.vtkUnstructuredGrid()
         ugrid_members.SetPoints(points)
-        ugrid_members.SetCells(vtk.VTK_QUADRATIC_EDGE, lines)
+        ugrid_members.SetCells(vtk.VTK_LINE, lines)
 
         #### MEMBER Data ####
         for combo in self.model.load_combos.keys():
@@ -76,42 +80,57 @@ class VTKWriter:
             D_array = vtk.vtkDoubleArray()
             D_array.SetNumberOfComponents(3)
             D_array.SetName(f"Displacement - {combo}")
-            
+
             # Moments
             moment = vtk.vtkDoubleArray()
             moment.SetNumberOfComponents(3)
             moment.SetName(f"Moments - {combo}")
-            
+
             # Forces
             force = vtk.vtkDoubleArray()
             force.SetNumberOfComponents(3)
             force.SetName(f"Forces - {combo}")
 
             # Bending Stress increase
-            # Can be used with the Paraview Calculator Filter to get bending stresses at a given location by multiplying with the axial distance 
+            # Can be used with the Paraview Calculator Filter to get bending stresses at a given location by multiplying with the axial distance
             sigma_b = vtk.vtkDoubleArray()
             sigma_b.SetNumberOfComponents(3)
             sigma_b.SetName(f"Sigma/r - {combo}")
 
-            for member_name, (subm, cubic_line) in member_refs.items():
-                for i,x in enumerate([0,1,0.5]):
-                    point_id = cubic_line.GetPointId(i)
+            for line_range,subm,line in submembers:
+                for i,x in enumerate(line_range):
+                    x = 1-x # go backwards
+                    point_id = line.GetPointId(i)
                     T = inv(subm.T()[:3,:3]) # Transformation Matrix Local -> Global
                     # Displacement
                     deflection = T @ np.array([float(subm.deflection(direction,x*subm.L(),combo)) for direction in ("dx", "dy", "dz")]) # type: ignore
                     D_array.InsertTuple3(point_id, *deflection)
 
                     # moment
-                    m = T @ np.array([subm.torque(x, combo), subm.moment("My",x,combo), subm.moment("Mz",x,combo)])
+                    res = np.array([subm.torque(x, combo), subm.moment("My",x,combo), subm.moment("Mz",x,combo)])
+                    if all(res):
+                        m = T @ res
+                    else:
+                        m = (0,0,0)
                     moment.InsertTuple3(point_id, *m)
 
                     # forces
-                    s = T @ np.array([subm.axial(x, combo), subm.shear("Fy",x,combo), subm.shear("Fz",x,combo)])
+                    res = np.array([subm.axial(x, combo), subm.shear("Fy",x,combo), subm.shear("Fz",x,combo)])
+                    if all(res):
+                        s = T @ res
+                    else:
+                        s = (0,0,0)
                     force.InsertTuple3(point_id, *s)
 
                     # bending stress increase
                     sec = subm.section
-                    sig_b = T @ np.array([0, subm.moment("My", x, combo)/sec.Iy, subm.moment("Mz", x, combo)/sec.Iz]) # type: ignore
+                    my = subm.moment("My", x, combo)
+                    mz = subm.moment("Mz", x, combo)
+                    if all((my,mz)):
+                        res = np.array([0, my/sec.Iy, mz/sec.Iz]) # type: ignore
+                        sig_b = T @ res
+                    else:
+                        sig_b = (0,0,0)
                     sigma_b.InsertTuple3(point_id, *sig_b)
 
             ugrid_members.GetPointData().AddArray(D_array)
