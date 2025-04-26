@@ -6,8 +6,9 @@ import subprocess
 from typing import Dict, Tuple
 
 import numpy as np
+from numpy.linalg import inv
 
-from Pynite.FEModel3D import FEModel3D, Quad3D
+from Pynite.FEModel3D import FEModel3D, Quad3D, Member3D
 
 
 class VTKWriter:
@@ -38,40 +39,50 @@ class VTKWriter:
         self._write_quad_data(path)
 
     def _write_member_data(self, path: str):
-        #### CREATE POINTS ####
+        #### CREATE POINTS FOR USER DEFINED NODES ####
         node_ids: Dict[str, int] = {}
-        node_name_array = vtk.vtkStringArray()
-        node_name_array.SetName("Node_Names")
 
         points = vtk.vtkPoints()
         for node_name, node in self.model.nodes.items():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
             node_ids[node_name] = point_id
-            node_name_array.InsertNextValue(node_name)
 
         #### CREATE LINE CELLS ####
         lines = vtk.vtkCellArray()
+        member_refs:Dict[str, Tuple[Member3D,vtk.vtkQuadraticEdge]] = {}
         for member in self.model.members.values():
-            for submember in member.sub_members.values():
-                line = vtk.vtkLine()
-                line.GetPointIds().SetId(0, node_ids[submember.i_node.name])
-                line.GetPointIds().SetId(1, node_ids[submember.j_node.name])
+            for subm in member.sub_members.values():
+                # Calculate intermediary point positions
+                pm = self._interpolate_member_data(
+                    np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
+                    np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
+                    0.5,
+                )
+                line = vtk.vtkQuadraticEdge()
+                line.SetObjectName(member.name)
+                line.GetPointIds().SetId(0, node_ids[subm.i_node.name])
+                line.GetPointIds().SetId(1, node_ids[subm.j_node.name])
+                line.GetPointIds().SetId(2, points.InsertNextPoint(*pm))
+                member_refs[subm.name] = subm, line
                 lines.InsertNextCell(line)
 
         ugrid_members = vtk.vtkUnstructuredGrid()
         ugrid_members.SetPoints(points)
-        ugrid_members.GetPointData().AddArray(node_name_array)
-        ugrid_members.SetCells(vtk.VTK_LINE, lines)
+        ugrid_members.SetCells(vtk.VTK_QUADRATIC_EDGE, lines)
 
-        #### Node Data ####
+        #### MEMBER Data ####
         for combo in self.model.load_combos.keys():
-            node_D_array = vtk.vtkFloatArray()
-            node_D_array.SetNumberOfComponents(3)
-            node_D_array.SetName(f"D - {combo}")
-            for node_name, node_id in node_ids.items():
-                node = self.model.nodes[node_name]
-                node_D_array.InsertTuple3(node_id, node.DX[combo], node.DY[combo], node.DZ[combo])
-            ugrid_members.GetPointData().AddArray(node_D_array)
+            # Displacement
+            D_array = vtk.vtkDoubleArray()
+            D_array.SetNumberOfComponents(3)
+            D_array.SetName(f"D - {combo}")
+
+            for member_name, (subm, cubic_line) in member_refs.items():
+                for i,x in enumerate([0,1,0.5]):
+                    deflection = inv(subm.T()[:3,:3]) @ np.array([float(subm.deflection(direction,x*subm.L(),combo)) for direction in ("dx", "dy", "dz")]) # type: ignore
+                    D_array.InsertTuple3(cubic_line.GetPointId(i), *deflection)
+
+            ugrid_members.GetPointData().AddArray(D_array)
 
         if len(self.model.members) > 0:
             member_writer = vtk.vtkUnstructuredGridWriter()
@@ -104,6 +115,7 @@ class VTKWriter:
             pn = np.array([quad.n_node.X, quad.n_node.Y, quad.n_node.Z])
 
             vtkquad = vtk.vtkBiQuadraticQuad()
+            vtkquad.SetObjectName(quad.name)
             for i, (xi, eta) in enumerate(zip(xis, etas)):
                 coords = np.array(self._interpolate_quad_corner_data(pi, pj, pm, pn, xi, eta))
                 # search existing nodes by position if node already exists (from other quad)
@@ -126,7 +138,7 @@ class VTKWriter:
                     # in case of very first node
                     node_id = points.InsertNextPoint(*coords)
                     node_register = np.vstack((node_register,np.array([node_id, *coords])))
-                
+
                 vtkquad.GetPointIds().SetId(i, node_id)
 
             quad_refs[quad.name] = vtkquad
@@ -158,7 +170,6 @@ class VTKWriter:
             shear.SetName(f"Shear - {combo}")
             shear.SetNumberOfComponents(3)
 
-
             for quad_name, vtkquad in quad_refs.items():
                 quad = self.model.quads[quad_name]
 
@@ -171,7 +182,7 @@ class VTKWriter:
 
                     d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
                     D.InsertTuple3(vtkquad.GetPointId(i), *d)
-                    
+
                     # MEMBRANE STRESSES
                     membrane.InsertTuple3(vtkquad.GetPointId(i), *quad.membrane(xi, eta, False, combo).flatten()) # type: ignore
 
@@ -182,7 +193,7 @@ class VTKWriter:
                     # SHEAR
                     s = quad.shear(xi, eta, False, combo) # type: ignore
                     shear.InsertTuple3(vtkquad.GetPointId(i), *s)
-                
+
                 ugrid_quads.GetPointData().AddArray(D)
                 ugrid_quads.GetPointData().AddArray(membrane)
                 ugrid_quads.GetPointData().AddArray(moments)
@@ -196,6 +207,13 @@ class VTKWriter:
             quads_writer.SetInputData(ugrid_quads)
             quads_writer.Write()
             self._quads_written = True
+
+    @staticmethod
+    def _interpolate_member_data(p1:np.ndarray,p2:np.ndarray, x:float) -> np.ndarray:
+        """
+        Takes in vectors of size n from both ends of the member and interpolates linearly to relative position x on the member [0-1].
+        """
+        return x*p1 + (1-x)*p2
 
     @staticmethod
     def _interpolate_quad_corner_data(i:np.ndarray, j:np.ndarray, m:np.ndarray, n:np.ndarray, xi:float, eta:float) -> Tuple[float,float,float]:
