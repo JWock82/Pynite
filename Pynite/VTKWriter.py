@@ -76,14 +76,22 @@ class VTKWriter:
             D_array = vtk.vtkDoubleArray()
             D_array.SetNumberOfComponents(3)
             D_array.SetName(f"Displacement - {combo}")
+            
             # Moments
             moment = vtk.vtkDoubleArray()
             moment.SetNumberOfComponents(3)
             moment.SetName(f"Moments - {combo}")
+            
             # Forces
             force = vtk.vtkDoubleArray()
             force.SetNumberOfComponents(3)
             force.SetName(f"Forces - {combo}")
+
+            # Bending Stress increase
+            # Can be used with the Paraview Calculator Filter to get bending stresses at a given location by multiplying with the axial distance 
+            sigma_b = vtk.vtkDoubleArray()
+            sigma_b.SetNumberOfComponents(3)
+            sigma_b.SetName(f"Sigma/r - {combo}")
 
             for member_name, (subm, cubic_line) in member_refs.items():
                 for i,x in enumerate([0,1,0.5]):
@@ -101,9 +109,15 @@ class VTKWriter:
                     s = T @ np.array([subm.axial(x, combo), subm.shear("Fy",x,combo), subm.shear("Fz",x,combo)])
                     force.InsertTuple3(point_id, *s)
 
+                    # bending stress increase
+                    sec = subm.section
+                    sig_b = T @ np.array([0, subm.moment("My", x, combo)/sec.Iy, subm.moment("Mz", x, combo)/sec.Iz]) # type: ignore
+                    sigma_b.InsertTuple3(point_id, *sig_b)
+
             ugrid_members.GetPointData().AddArray(D_array)
             ugrid_members.GetPointData().AddArray(moment)
             ugrid_members.GetPointData().AddArray(force)
+            ugrid_members.GetPointData().AddArray(sigma_b)
 
         if len(self.model.members) > 0:
             member_writer = vtk.vtkUnstructuredGridWriter()
