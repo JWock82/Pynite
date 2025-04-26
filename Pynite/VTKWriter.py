@@ -154,6 +154,14 @@ class VTKWriter:
             ugrid_members.GetPointData().AddArray(sigma_b_G)
             ugrid_members.GetPointData().AddArray(sigma_b_lok)
 
+        # clean the data from duplicate points
+        cleaner = vtk.vtkStaticCleanUnstructuredGrid()
+        cleaner.SetInputData(ugrid_members)
+        cleaner.SetToleranceIsAbsolute(True)
+        cleaner.SetAbsoluteTolerance(0.01)
+        cleaner.Update()
+        ugrid_members = cleaner.GetOutput()
+
         if len(self.model.members) > 0:
             member_writer = vtk.vtkUnstructuredGridWriter()
             member_writer.SetFileName(path + "_members.vtk")
@@ -291,6 +299,7 @@ class VTKWriter:
     def _interpolate_member_data(p1:np.ndarray,p2:np.ndarray, x:float) -> np.ndarray:
         """
         Takes in vectors of size n from both ends of the member and interpolates linearly to relative position x on the member [0-1].
+        This can be used i.e. to calculate every point position on a member given by a relative coordinate.
         """
         return x*p1 + (1-x)*p2
 
