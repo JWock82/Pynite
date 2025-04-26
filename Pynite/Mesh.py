@@ -1,8 +1,14 @@
+from __future__ import annotations # Allows more recent type hints features
+from typing import TYPE_CHECKING
+from math import pi, sin, cos, ceil, isclose
+
 from Pynite.Node3D import Node3D
 from Pynite.Quad3D import Quad3D
 from Pynite.Plate3D import Plate3D
-from math import pi, sin, cos, ceil, isclose
-from bisect import bisect
+
+if TYPE_CHECKING:
+    from typing import List, Union, Dict
+    from Pynite.FEModel3D import FEModel3D
 
 #%%
 class Mesh():
@@ -10,7 +16,7 @@ class Mesh():
     A parent class for meshes to inherit from.
     """
 
-    def __init__(self, thickness, material_name, model, kx_mod=1, ky_mod=1, start_node='N1', start_element='Q1'):
+    def __init__(self, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1, start_node: str = 'N1', start_element: str = 'Q1') -> None:
 
         self.thickness = thickness          # Thickness
         self.material_name = material_name            # The name of the element material
@@ -21,21 +27,21 @@ class Mesh():
         self.last_node = None               # The name of the last node in the mesh
         self.start_element = start_element  # The name of the first element in the mesh
         self.last_element = None            # The name of the last element in the mesh
-        self.nodes = {}                     # A dictionary containing the nodes in the mesh
-        self.elements = {}                  # A dictionary containing the elements in the mesh
+        self.nodes: Dict[str, Node3D] = {}  # A dictionary containing the nodes in the mesh
+        self.elements: Dict[str, Union[Quad3D, Plate3D]] = {}  # A dictionary containing the elements in the mesh
         self.element_type = 'Quad'          # The type of element used in the mesh
         self._is_generated = False          # A flag indicating whether the mesh has been generated
     
-    def is_generated(self):
+    def is_generated(self) -> bool:
         return self._is_generated
     
-    def _rename_duplicates(self):
+    def _rename_duplicates(self) -> None:
         """Renames any nodes or elements in the mesh that are already in the model
         """
 
         # Initialize lists to track node and element name changes
-        revised_nodes = {}
-        revised_elements = {}
+        revised_nodes: Dict[str, Node3D] = {}
+        revised_elements: Dict[str, Union[Quad3D, Plate3D]] = {}
 
         # Step through each node in the mesh
         for node in self.nodes.values():
@@ -85,13 +91,13 @@ class Mesh():
         self.nodes = revised_nodes
         self.elements = revised_elements
             
-    def generate(self):
+    def generate(self) -> None:
         """
         A placeholder to be overwritten by subclasses inheriting from this class
         """
         pass
 
-    def max_shear(self, direction='Qx', combo=None):
+    def max_shear(self, direction: str = 'Qx', combo: str | None = None) -> float:
         """
         Returns the maximum shear in the mesh.
         
@@ -100,6 +106,7 @@ class Mesh():
 
         Parameters
         ----------
+
         direction : string, optional
             The direction to ge the maximum shear for. Options are 'Qx' or 'Qy'. Default
             is 'Qx'.
@@ -155,14 +162,14 @@ class Mesh():
                                      element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum shear calculated is the largest encountered so far
-                    if Q_max == None or Q_max < Q_element:
+                    if Q_max is None or Q_max < Q_element:
                         # Save this value if it's the largest
                         Q_max = Q_element
             
         # Return the largest value encountered from all the elements
-        return Q_max
+        return 0.0 if Q_max is None else Q_max
     
-    def min_shear(self, direction='Qx', combo=None):
+    def min_shear(self, direction: str = 'Qx', combo: str | None = None) -> float:
         """
         Returns the minimum shear in the mesh.
         
@@ -171,6 +178,7 @@ class Mesh():
 
         Parameters
         ----------
+
         direction : string, optional
             The direction to ge the minimum shear for. Options are 'Qx' or 'Qy'. Default
             is 'Qx'.
@@ -226,14 +234,14 @@ class Mesh():
                                      element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum shear calculated is the smallest encountered so far
-                    if Q_min == None or Q_min > Q_element:
+                    if Q_min is None or Q_min > Q_element:
                         # Save this value if it's the smallest
                         Q_min = Q_element
             
         # Return the smallest value encountered from all the elements
-        return Q_min
+        return 0.0 if Q_min is None else Q_min
 
-    def max_moment(self, direction='Mx', combo=None):
+    def max_moment(self, direction: str = 'Mx', combo: str | None = None) -> float:
         """
         Returns the maximum moment in the mesh.
         
@@ -242,6 +250,7 @@ class Mesh():
 
         Parameters
         ----------
+
         direction : string, optional
             The direction to ge the maximum moment for. Options are 'Mx', 'My', or 'Mxy'. Default
             is 'Mx'.
@@ -299,14 +308,14 @@ class Mesh():
                                      element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum moment calculated is the largest encountered so far
-                    if M_max == None or M_max < M_element:
+                    if M_max is None or M_max < M_element:
                         # Save this value if it's the largest
                         M_max = M_element
             
         # Return the largest value encountered from all the elements
-        return M_max
+        return 0.0 if M_max is None else M_max
     
-    def min_moment(self, direction='Mx', combo=None):
+    def min_moment(self, direction: str = 'Mx', combo: str | None = None) -> float:
         """
         Returns the minimum moment in the mesh.
         
@@ -315,6 +324,7 @@ class Mesh():
 
         Parameters
         ----------
+
         direction : string, optional
             The direction to ge the minimum moment for. Options are 'Mx', 'My', or 'Mxy'. Default
             is 'Mx'.
@@ -372,14 +382,14 @@ class Mesh():
                                      element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum moment calculated is the smallest encountered so far
-                    if M_min == None or M_min > M_element:
+                    if M_min is None or M_min > M_element:
                         # Save this value if it's the smallest
                         M_min = M_element
             
         # Return the smallest value encountered from all the elements
-        return M_min
+        return 0.0 if M_min is None else M_min
     
-    def max_membrane(self, direction='Sx', combo=None):
+    def max_membrane(self, direction: str = 'Sx', combo: str | None = None) -> float:
         """
         Returns the maximum membrane stress in the mesh.
         
@@ -388,6 +398,7 @@ class Mesh():
 
         Parameters
         ----------
+
         direction : string, optional
             The direction to ge the maximum membrane force for. Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
         combo : string, optional
@@ -444,14 +455,14 @@ class Mesh():
                                         element.membrane((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum membrane stress calculated is the largest encountered so far
-                    if S_max == None or S_max < M_element:
+                    if S_max is None or S_max < M_element:
                         # Save this value if it's the smallest
                         S_max = M_element
             
         # Return the smallest value encountered from all the elements
-        return S_max
+        return 0.0 if S_max is None else S_max
     
-    def min_membrane(self, direction='Sx', combo=None):
+    def min_membrane(self, direction: str = 'Sx', combo: str | None = None) -> float:
         """
         Returns the minimum membrane stress in the mesh.
         
@@ -460,6 +471,7 @@ class Mesh():
 
         Parameters
         ----------
+
         direction : string, optional
             The direction to ge the minimum membrane force for. Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
         combo : string, optional
@@ -516,22 +528,23 @@ class Mesh():
                                         element.membrane((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum membrane stress calculated is the smallest encountered so far
-                    if S_min == None or S_min > M_element:
+                    if S_min is None or S_min > M_element:
                         # Save this value if it's the smallest
                         S_min = M_element
             
         # Return the smallest value encountered from all the elements
-        return S_min
+        return 0.0 if S_min is None else S_min
     
 #%%
 class RectangleMesh(Mesh):
 
-    def __init__(self, mesh_size, width, height, thickness, material_name, model, kx_mod=1, ky_mod=1, origin=[0, 0, 0], plane='XY', x_control=None, y_control=None, start_node='N1', start_element='Q1', element_type='Quad'):
+    def __init__(self, mesh_size: float, width: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0, ky_mod: float = 1.0, origin: List[float] = [0, 0, 0], plane: str = 'XY', x_control: List[float] | None = None, y_control: List[float] | None = None, start_node: str = 'N1', start_element: str = 'Q1', element_type: str = 'Quad') -> None:
         """
         A rectangular mesh of elements.
 
         Parameters
         ----------
+
         mesh_size : number
             Desired mesh size.
         width : number
@@ -570,6 +583,7 @@ class RectangleMesh(Mesh):
 
         Returns
         -------
+
         A new rectangular mesh object.
 
         """
@@ -588,9 +602,9 @@ class RectangleMesh(Mesh):
         else: self.y_control = y_control
 
         self.element_type = element_type
-        self.openings = {}
+        self.openings: Dict[str, RectOpening] = {}
     
-    def generate(self):
+    def generate(self) -> None:
 
         mesh_size = self.mesh_size
         width = self.width
@@ -850,7 +864,7 @@ class RectangleMesh(Mesh):
         # Flag the mesh as generated
         self._is_generated = True
 
-    def node_local_coords(self, node):
+    def node_local_coords(self, node: Node3D) -> tuple[float, float]:
         """
         Calculates a node's position in the mesh's local coordinate system
         """
@@ -867,12 +881,13 @@ class RectangleMesh(Mesh):
         
         return x, y
 
-    def add_rect_opening(self, name, x_left, y_bott, width, height):
+    def add_rect_opening(self, name: str, x_left: float, y_bott: float, width: float, height: float) -> None:
         """
         Adds a rectangular opening to the mesh.
 
         Parameters
         ----------
+
         name : string
             A unique name for the opening that can be used to access it later
             on.
@@ -903,10 +918,11 @@ class RectOpening():
     Represents a rectangular opening in a rectangular mesh.
     """
 
-    def __init__(self, x_left, y_bott, width, height):
+    def __init__(self, x_left: float, y_bott: float, width: float, height: float) -> None:
         """
         Parameters
         ----------
+
         x_left : number
             The x-coordinate for the left side of the opening in the mesh's
             local coordinate system.
@@ -930,8 +946,8 @@ class AnnulusMesh(Mesh):
     A mesh of quadrilaterals forming an annulus (a donut).
     """
 
-    def __init__(self, mesh_size, outer_radius, inner_radius, thickness, material_name, model, kx_mod=1,
-        ky_mod=1, origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1'):
+    def __init__(self, mesh_size: float, outer_radius: float, inner_radius: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1,
+        ky_mod: float = 1, origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
 
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node, start_element)
 
@@ -946,7 +962,7 @@ class AnnulusMesh(Mesh):
         
         # self.generate()
     
-    def generate(self):
+    def generate(self) -> None:
         
         mesh_size = self.mesh_size
         r_outer = self.outer_radius
@@ -1027,8 +1043,8 @@ class AnnulusRingMesh(Mesh):
     A mesh of quadrilaterals forming an annular ring (a donut).
     """
 
-    def __init__(self, outer_radius, inner_radius, num_quads, thickness, material_name, model, kx_mod=1, ky_mod=1,
-                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1'):
+    def __init__(self, outer_radius: float, inner_radius: float, num_quads: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
+                 origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
 
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node=start_node,
                          start_element=start_element)
@@ -1045,7 +1061,7 @@ class AnnulusRingMesh(Mesh):
         # Generate the nodes and elements
         self.generate()
 
-    def generate(self):
+    def generate(self) -> None:
 
         n = self.n  # Number of plates in the initial ring
 
@@ -1153,12 +1169,13 @@ class AnnulusTransRingMesh(Mesh):
     edge.
     """
 
-    def __init__(self, outer_radius, inner_radius, num_inner_quads, thickness, material_name, model,
-                 kx_mod=1, ky_mod=1, origin=[0, 0, 0], axis='Y', start_node='N1',
-                 start_element='Q1'):
+    def __init__(self, outer_radius: float, inner_radius: float, num_inner_quads: int, thickness: float, material_name: str, model: FEModel3D,
+                 kx_mod: float = 1, ky_mod: float = 1, origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1',
+                 start_element: str = 'Q1') -> None:
         """
         Parameters
         ----------
+
         direction : array
             A vector indicating the direction normal to the ring.
         """
@@ -1178,7 +1195,7 @@ class AnnulusTransRingMesh(Mesh):
         # Create the mesh
         self.generate()
 
-    def generate(self):
+    def generate(self) -> None:
 
         n = self.n  # Number of plates in the outside of the ring (coarse mesh)
 
@@ -1329,8 +1346,8 @@ class FrustrumMesh(AnnulusMesh):
     A mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
     """
 
-    def __init__(self, mesh_size, large_radius, small_radius, height, thickness, material_name, model, kx_mod=1, ky_mod=1,
-                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1'):
+    def __init__(self, mesh_size: float, large_radius: float, small_radius: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
+                 origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
         
         # Create an annulus mesh
         super().__init__(mesh_size, large_radius, small_radius, thickness, material_name, model, kx_mod,
@@ -1338,7 +1355,7 @@ class FrustrumMesh(AnnulusMesh):
         
         self.height = height
     
-    def generate(self):
+    def generate(self) -> None:
 
         super().generate()
         
@@ -1381,6 +1398,7 @@ class CylinderMesh(Mesh):
 
     Parameters
     ----------
+
     mesh_size : number
         The desired mesh element edge size. This value will only be used to mesh vertically if `num_elements` is
         specified. Otherwise it will be used to mesh the circumference too.
@@ -1414,7 +1432,7 @@ class CylinderMesh(Mesh):
         The type of element to use for the mesh: 'Quad' or 'Rect'
     """
 
-    def __init__(self, mesh_size, radius, height, thickness, material_name, model, kx_mod=1, ky_mod=1,origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1', num_elements=None, element_type='Quad'):
+    def __init__(self, mesh_size: float, radius: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1', num_elements: int | None = None, element_type: str = 'Quad') -> None:
 
         # Inherit properties and methods from the parent `Mesh` class
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node, start_element)
@@ -1440,7 +1458,7 @@ class CylinderMesh(Mesh):
         # Generate the mesh
         self.generate()
     
-    def generate(self):
+    def generate(self) -> None:
         
         # Get the mesh thickness and the material name
         thickness = self.thickness
@@ -1522,6 +1540,7 @@ class CylinderRingMesh(Mesh):
 
     Parameters
     ----------
+
     radius : number
         Radius to the center of the plates in the cylindrical ring.
     height : number
@@ -1555,9 +1574,9 @@ class CylinderRingMesh(Mesh):
     
     """
 
-    def __init__(self, radius, height, num_elements, thickness, material_name, model, kx_mod=1, ky_mod=1,
-                 origin=[0, 0, 0], axis='Y', start_node='N1', start_element='Q1',
-                 element_type='Quad'):
+    def __init__(self, radius: float, height: float, num_elements: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
+                 origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1',
+                 element_type: str = 'Quad') -> None:
 
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node=start_node, start_element=start_element)
 
@@ -1573,7 +1592,7 @@ class CylinderRingMesh(Mesh):
         # Generate the nodes and elements
         self.generate()
 
-    def generate(self):
+    def generate(self) -> None:
         """
         Generates the nodes and elements in the mesh.
         """
@@ -1698,7 +1717,7 @@ class CylinderRingMesh(Mesh):
         # Flag the mesh as generated
         self._is_generated = True
         
-def check_mesh_integrity(mesh, console_log=True):
+def check_mesh_integrity(mesh: Mesh, console_log: bool = True) -> Union[str, List[str], None]:
     """Runs basic integrity checks to ensure the mesh is in sync with its model. Usually you don't
     want to run this check unless the mesh has been generated since generating the mesh is what
     syncs it to the model.

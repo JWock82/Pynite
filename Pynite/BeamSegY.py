@@ -1,11 +1,12 @@
 from Pynite.BeamSegZ import BeamSegZ
 
+
 # %%
 class BeamSegY(BeamSegZ):
 
 #%% 
     # Returns the moment at a location on the segment
-    def moment(self, x, P_delta=False):
+    def moment(self, x: float, P_delta: bool = False) -> float:
         '''
         Returns the moment at a location on the segment.
 
@@ -32,7 +33,7 @@ class BeamSegY(BeamSegZ):
         
         return M
 
-    def slope(self, x, P_delta=False):
+    def slope(self, x: float, P_delta: bool = False) -> float:
         """Returns the slope of the elastic curve at any point `x` along the segment.
 
         :param x: Location (relative to start of segment) where slope is to be calculated.
@@ -62,7 +63,7 @@ class BeamSegY(BeamSegZ):
 
 #%%
     # Returns the deflection at a location on the segment
-    def deflection(self, x, P_delta=False):
+    def deflection(self, x: float, P_delta: bool = False) -> float:
         
         V1 = self.V1
         M1 = self.M1
@@ -109,7 +110,7 @@ class BeamSegY(BeamSegZ):
     
 #%%
     # Returns the maximum moment in the segment
-    def max_moment(self, P_delta=False):
+    def max_moment(self, P_delta: bool = False) -> float:
         
         w1 = self.w1
         w2 = self.w2
@@ -155,7 +156,7 @@ class BeamSegY(BeamSegZ):
 
 #%%
     # Returns the minimum moment in the segment
-    def min_moment(self, P_delta=False):
+    def min_moment(self, P_delta: bool = False) -> float:
         
         w1 = self.w1
         w2 = self.w2
@@ -198,4 +199,3 @@ class BeamSegY(BeamSegZ):
     
         # Return the minimum moment
         return min(M1, M2, M3, M4)
-    

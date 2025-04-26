@@ -1,11 +1,20 @@
-from numpy import zeros, array, matmul, cross, add
+from __future__ import annotations # Allows more recent type hints features
+from typing import List, TYPE_CHECKING
+
+from numpy import zeros, array, matmul, cross, add, float64
 from numpy.linalg import inv, norm, det
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+    from Pynite.Node3D import Node3D
+    from Pynite.FEModel3D import FEModel3D
 
 #%%
 class Tri3D():
 
-    def __init__(self, name, i_node, j_node, k_node, t, material_name, model, kx_mod=1.0,
-                 ky_mod=1.0):
+    def __init__(self, name: str, i_node: Node3D, j_node: Node3D, k_node: Node3D, 
+                 t: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0,
+                 ky_mod: float = 1.0) -> None:
         """
         A rectangular plate element
 
@@ -53,8 +62,8 @@ class Tri3D():
 
         # Get material properties for the plate from the model
         try:
-            self.E = self.model.Materials[material_name].E
-            self.nu = self.model.Materials[material_name].nu
+            self.E = self.model.materials[material_name].E
+            self.nu = self.model.materials[material_name].nu
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
     
@@ -64,13 +73,13 @@ class Tri3D():
         """
         return self.i_node.distance(self.j_node)
 
-    def height(self):
+    def height(self) -> float:
         """
         Returns the height of the plate along its local y-axis
         """
         return self.i_node.distance(self.n_node)
     
-    def Dm(self):
+    def Dm(self) -> NDArray[float64]:
         """
         Returns the plane stress constitutive matrix for orthotropic materials [Dm]
         """
@@ -96,7 +105,7 @@ class Tri3D():
         # Return the constitutive matrix [Dm]
         return Dm
 
-    def Db(self):
+    def Db(self) -> NDArray[float64]:
         """
         Returns the bending constitutive matrix for orthotropic materials [Db]
         """
@@ -117,7 +126,7 @@ class Tri3D():
         # Return the constitutive matrix [Db]
         return Db
 
-    def J(self, r, s):
+    def J(self, r: float, s: float) -> NDArray[float64]:
         '''
         Returns the Jacobian matrix for the element
         '''
@@ -146,13 +155,13 @@ class Tri3D():
         
         return B_m
     
-    def k(self):
+    def k(self) -> NDArray[float64]:
         """
         returns the plate's local stiffness matrix
         """
         return add(self.k_b(), self.k_m())
     
-    def k_m(self):
+    def k_m(self) -> NDArray[float64]:
         '''
         Returns the local stiffness matrix for membrane (in-plane) stresses.
 
@@ -210,7 +219,7 @@ class Tri3D():
         
         return k_exp
     
-    def k_b(self):
+    def k_b(self) -> NDArray[float64]:
         """
         Returns the local stiffness matrix for bending
         """
@@ -297,7 +306,7 @@ class Tri3D():
         # Return the local stiffness matrix
         return k_exp
 
-    def f(self, combo_name='Combo 1'):
+    def f(self, combo_name='Combo 1') -> NDArray[float64]:
         """
         Returns the plate's local end force vector
         """
@@ -319,7 +328,7 @@ class Tri3D():
         fer = zeros((12, 1))
 
         # Get the requested load combination
-        combo = self.model.LoadCombos[combo_name]
+        combo = self.model.load_combos[combo_name]
 
         # Initialize the element's surface pressure to zero
         p = 0
@@ -376,7 +385,7 @@ class Tri3D():
 
         return fer_exp
         
-    def d(self, combo_name='Combo 1'):
+    def d(self, combo_name: str='Combo 1') -> NDArray[float64]:
        """
        Returns the plate's local displacement vector
        """
@@ -384,7 +393,7 @@ class Tri3D():
        # Calculate and return the local displacement vector
        return matmul(self.T(), self.D(combo_name))
 
-    def F(self, combo_name='Combo 1'):
+    def F(self, combo_name:str ='Combo 1') -> NDArray[float64]:
         """
         Returns the plate's global nodal force vector
         """
@@ -392,7 +401,7 @@ class Tri3D():
         # Calculate and return the global force vector
         return matmul(inv(self.T()), self.f(combo_name))
 
-    def D(self, combo_name='Combo 1'):
+    def D(self, combo_name:str ='Combo 1') -> NDArray[float64]:
         """
         Returns the plate's global displacement vector for the given load combination.
         """
@@ -432,7 +441,7 @@ class Tri3D():
         # Return the global displacement vector
         return D
  
-    def T(self):
+    def T(self) -> NDArray[float64]:
         """
         Returns the plate's transformation matrix
         """
@@ -483,7 +492,7 @@ class Tri3D():
         
         return transMatrix
 
-    def K(self):
+    def K(self) -> NDArray[float64]:
         """
         Returns the plate's global stiffness matrix
         """
@@ -491,7 +500,7 @@ class Tri3D():
         # Calculate and return the stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.k()), self.T())
 
-    def FER(self, combo_name='Combo 1'):
+    def FER(self, combo_name='Combo 1') -> NDArray[float64]:
         """
         Returns the global fixed end reaction vector.
 
@@ -505,7 +514,7 @@ class Tri3D():
         # Calculate and return the fixed end reaction vector
         return matmul(inv(self.T()), self.fer(combo_name))
 
-    def _C(self):
+    def _C(self) -> NDArray[float64]:
         """
         Returns the plate's displacement coefficient matrix [C]
         """
@@ -540,7 +549,7 @@ class Tri3D():
         # Return the coefficient matrix
         return C
 
-    def _Q(self, x, y):
+    def _Q(self, x:float, y:float) -> NDArray[float64]:
         """
         Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y)
         in the plate's local system.
@@ -554,7 +563,7 @@ class Tri3D():
         # Return the [Q] coefficient matrix
         return Q
 
-    def _a(self, combo_name='Combo 1'):
+    def _a(self, combo_name:str ='Combo 1') -> NDArray[float64]:
         """
         Returns the vector of plate bending constants for the displacement function.
 
@@ -571,7 +580,7 @@ class Tri3D():
         # Return the plate bending constants
         return inv(self._C()) @ d
 
-    def moment(self, x, y, combo_name='Combo 1'):
+    def moment(self, x:float, y:float, combo_name:str ='Combo 1') -> NDArray[float64]:
         """
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
@@ -592,7 +601,7 @@ class Tri3D():
         # Pynite's quadrilateral elements.
         return -self.Db() @ self._Q(x, y) @ self._a(combo_name)
  
-    def shear(self, x, y, combo_name='Combo 1'):
+    def shear(self, x:float, y:float, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
@@ -637,7 +646,7 @@ class Tri3D():
         return array([[Qx], 
                        [Qy]])
 
-    def membrane(self, x, y, combo_name='Combo 1'):
+    def membrane(self, x:float, y:float, combo_name:str='Combo 1') -> NDArray[float64]:
         
         # Convert the (x, y) coordinates to (r, x) coordinates
         r = -1 + 2*x/self.width()

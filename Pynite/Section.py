@@ -1,5 +1,12 @@
+from __future__ import annotations # Allows more recent type hints features
 
 import numpy as np
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from numpy import float64
+    from numpy.typing import NDArray
+    from Pynite.FEModel3D import FEModel3D
 
 class Section():
     """
@@ -7,7 +14,7 @@ class Section():
 
     This class stores all properties related to the geometry of the member
     """
-    def __init__(self, model, name:str, A:float, Iy:float, Iz:float, J:float) -> None:
+    def __init__(self, model: 'FEModel3D', name: str, A: float, Iy: float, Iz: float, J: float) -> None:
         """
         :param model: The finite element model to which this section belongs
         :type model: FEModel3D
@@ -22,25 +29,43 @@ class Section():
         :param J: The torsion constant of the section
         :type J: float
         """        
-        self.model = model
-        self.name = name
-        self.A = A
-        self.Iy = Iy
-        self.Iz = Iz
-        self.J = J
+        self.model: 'FEModel3D' = model
+        self.name: str = name
+        self.A: float = A
+        self.Iy: float = Iy
+        self.Iz: float = Iz
+        self.J: float = J
     
-    def Phi(self):
-        pass
-
-    def G(self, fx, my, mz):
+    def Phi(self, fx: float = 0, my: float = 0, mz: float = 0):
         """
-<<<<<<< HEAD
-        Returns the gradient to the yield surface at a given point using numerical differentiation. This is a default solution. For a better solution, overwrite this method with a more precise one in the material/shape specific child class that inherits from this class.
-=======
-        Returns the gradient to the yield surface at a given point using numerical differentiation.
-        This is a default solution. For a better solution, overwrite this method with a more precies
+        Method to be overridden by subclasses for determining whether the cross section is
+        elastic or plastic.
+        
+        :param fx: Axial force
+        :type fx: float
+        :param my: y-axis (weak) moment
+        :type my: float
+        :param mz: z-axis (strong) moment
+        :type mz: float
+        :return: The stress ratio
+        :rtype: float
+        """
+        raise NotImplementedError("Phi method must be implemented in subclasses.")
+
+    def G(self, fx: float, my: float, mz: float) -> NDArray:
+        """
+        Returns the gradient to the yield surface at a given point using numerical differentiation. 
+        This is a default solution. For a better solution, overwrite this method with a more precise 
         one in the material/shape specific child class that inherits from this class.
->>>>>>> e49bff2e7890fa6b4069c6c9e2b013a2a90fe7e1
+        
+        :param fx: Axial force at the cross-section
+        :type fx: float
+        :param my: y-axis (weak) moment at the cross-section
+        :type my: float
+        :param mz: z-axis (strong) moment at the cross-section
+        :type mz: float
+        :return: The gradient to the yield surface at the cross-section
+        :rtype: NDArray
         """
         
         # Small increment for numerical differentiation
@@ -61,20 +86,43 @@ class Section():
 
 class SteelSection(Section):
 
-    def __init__(self, model, name, A, Iy, Iz, J, Zy, Zz, material_name):
+    def __init__(self, model: 'FEModel3D', name: str, A: float, Iy: float, Iz: float, J: float, 
+                 Zy: float, Zz: float, material_name: str) -> None:
+        """
+        Initialize a steel section
+
+        :param model: The finite element model to which this section belongs
+        :type model: FEModel3D
+        :param name: Name of the section
+        :type name: str
+        :param A: Cross-sectional area of the section
+        :type A: float
+        :param Iy: The second moment of area the section about the Y (minor) axis
+        :type Iy: float
+        :param Iz: The second moment of area the section about the Z (major) axis
+        :type Iz: float
+        :param J: The torsion constant of the section
+        :type J: float
+        :param Zy: Plastic section modulus about the Y (minor) axis
+        :type Zy: float
+        :param Zz: Plastic section modulus about the Z (major) axis
+        :type Zz: float
+        :param material_name: Name of the material used for this section
+        :type material_name: str
+        """
 
         # Basic section properties
-        super().__init__(model, name, A, Iy, Iz, J, material_name)
+        super().__init__(model, name, A, Iy, Iz, J)
 
         # Additional section properties for steel
-        self.ry = (Iy/A)**0.5
-        self.rz = (Iz/A)**0.5
-        self.Zy = Zy
-        self.Zz = Zz
+        self.ry: float = (Iy/A)**0.5
+        self.rz: float = (Iz/A)**0.5
+        self.Zy: float = Zy
+        self.Zz: float = Zz
 
         self.material = model.materials[material_name]
     
-    def Phi(self, fx, my, mz):
+    def Phi(self, fx: float = 0, my: float = 0, mz: float = 0) -> float:
         """
         A method used to determine whether the cross section is elastic or plastic. 
         Values less than 1 indicate the section is elastic.
@@ -102,7 +150,7 @@ class SteelSection(Section):
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
     
-    def G(self, fx, my, mz):
+    def G(self, fx: float, my: float, mz: float) -> NDArray[float64]:
         """Returns the gradient to the material's yield surface for the given load. Used to construct the plastic reduction matrix for nonlinear behavior.
 
         :param fx: Axial force at the cross-section.
@@ -112,7 +160,7 @@ class SteelSection(Section):
         :param mz: z-axis (strong) moment at the cross-section.
         :type mz: float
         :return: The gradient to the material's yield surface at the cross-section.
-        :rtype: array
+        :rtype: NDArray
         """
         
         # Plastic strengths for material nonlinearity

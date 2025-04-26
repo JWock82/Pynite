@@ -1,7 +1,12 @@
 # Import libraries necessary for report printing
+from __future__ import annotations # Allows more recent type hints features
+from typing import TYPE_CHECKING
+
 from jinja2 import Environment, PackageLoader
 import pdfkit
 
+if TYPE_CHECKING:
+    from Pynite import FEModel3D
 
 # Determine the filepath to the local Pynite installation
 from pathlib import Path
@@ -15,14 +20,14 @@ env = Environment(
 # Get the report template
 template = env.get_template('Report_Template.html')
 
-def create_report(model, output_filepath=path/'./Pynite Report.pdf', **kwargs):
+def create_report(model: FEModel3D, output_filepath:Path=path/'./Pynite Report.pdf', **kwargs):
     """Creates a pdf report for a given finite element model.
 
     :param model: The model to generate the report for.
     :type model: ``FEModel3D``
     :param output_filepath: The filepath to send the report to. Defaults to 'Pynite Report.pdf' in your ``PYTHONPATH``
     :type output_filepath: ``str``, optional
-    :param \**kwargs: See below for a list of valid arguments.
+    :param \\**kwargs: See below for a list of valid arguments.
     :Keyword Arguments:
         * *node_table* (``bool``) -- Set to ``True`` if you want node data included in the report. Defaults to ``True``.
         * *member_table* (``bool``) -- Set to ``True`` if you want member data included in the report. Defaults to ``True``.
