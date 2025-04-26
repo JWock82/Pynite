@@ -69,17 +69,36 @@ class VTKWriter:
         
         #### LOAD SPECIFIC DATA ####
         for combo in self.model.load_combos.keys():
-            reactions = vtk.vtkIntArray()
-            reactions.SetName("Reactions")
-            reactions.SetNumberOfComponents(6)
+            reaction_constraints = vtk.vtkIntArray()
+            reaction_constraints.SetName("Reaction Constraints")
+            reaction_constraints.SetNumberOfComponents(6)
+
+            displacements = vtk.vtkDoubleArray()
+            displacements.SetName("Displacements D")
+            displacements.SetNumberOfComponents(3)
+
+            forces = vtk.vtkDoubleArray()
+            forces.SetName(f"Force Reactions F - {combo}")
+            forces.SetNumberOfComponents(3)
+
+            moments = vtk.vtkDoubleArray()
+            moments.SetName(f"Moment Reactions M - {combo}")
+            moments.SetNumberOfComponents(3)
+
             for i, name in enumerate(["DX", "DY", "DZ", "RX", "RY", "RZ"]):
-                reactions.SetComponentName(i,name)
+                reaction_constraints.SetComponentName(i,name)
             
             for node_name, node_id in node_ids.items():
                 node = self.model.nodes[node_name]
-                reactions.InsertTuple6(node_id, int(node.support_DX), int(node.support_DY), int(node.support_DZ), int(node.support_RX), int(node.support_RY), int(node.support_RZ))
-            
-            ugrid.GetPointData().AddArray(reactions)
+                reaction_constraints.InsertTuple6(node_id, int(node.support_DX), int(node.support_DY), int(node.support_DZ), int(node.support_RX), int(node.support_RY), int(node.support_RZ))
+                displacements.InsertTuple3(node_id, node.DX[combo], node.DY[combo], node.DZ[combo]) # type: ignore
+                forces.InsertTuple3(node_id, node.RxnFX[combo], node.RxnFY[combo], node.RxnFZ[combo])
+                moments.InsertTuple3(node_id, node.RxnMX[combo], node.RxnMY[combo], node.RxnMZ[combo])
+                
+            ugrid.GetPointData().AddArray(reaction_constraints)
+            ugrid.GetPointData().AddArray(displacements)
+            ugrid.GetPointData().AddArray(forces)
+            ugrid.GetPointData().AddArray(moments)
         
 
         writer = vtk.vtkUnstructuredGridWriter()
