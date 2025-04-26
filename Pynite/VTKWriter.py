@@ -75,14 +75,35 @@ class VTKWriter:
             # Displacement
             D_array = vtk.vtkDoubleArray()
             D_array.SetNumberOfComponents(3)
-            D_array.SetName(f"D - {combo}")
+            D_array.SetName(f"Displacement - {combo}")
+            # Moments
+            moment = vtk.vtkDoubleArray()
+            moment.SetNumberOfComponents(3)
+            moment.SetName(f"Moments - {combo}")
+            # Forces
+            force = vtk.vtkDoubleArray()
+            force.SetNumberOfComponents(3)
+            force.SetName(f"Forces - {combo}")
 
             for member_name, (subm, cubic_line) in member_refs.items():
                 for i,x in enumerate([0,1,0.5]):
-                    deflection = inv(subm.T()[:3,:3]) @ np.array([float(subm.deflection(direction,x*subm.L(),combo)) for direction in ("dx", "dy", "dz")]) # type: ignore
-                    D_array.InsertTuple3(cubic_line.GetPointId(i), *deflection)
+                    point_id = cubic_line.GetPointId(i)
+                    T = inv(subm.T()[:3,:3]) # Transformation Matrix Local -> Global
+                    # Displacement
+                    deflection = T @ np.array([float(subm.deflection(direction,x*subm.L(),combo)) for direction in ("dx", "dy", "dz")]) # type: ignore
+                    D_array.InsertTuple3(point_id, *deflection)
+
+                    # moment
+                    m = T @ np.array([subm.torque(x, combo), subm.moment("My",x,combo), subm.moment("Mz",x,combo)])
+                    moment.InsertTuple3(point_id, *m)
+
+                    # forces
+                    s = T @ np.array([subm.axial(x, combo), subm.shear("Fy",x,combo), subm.shear("Fz",x,combo)])
+                    force.InsertTuple3(point_id, *s)
 
             ugrid_members.GetPointData().AddArray(D_array)
+            ugrid_members.GetPointData().AddArray(moment)
+            ugrid_members.GetPointData().AddArray(force)
 
         if len(self.model.members) > 0:
             member_writer = vtk.vtkUnstructuredGridWriter()
@@ -152,7 +173,7 @@ class VTKWriter:
         for combo in self.model.load_combos.keys():
             # Displacement Data
             D = vtk.vtkDoubleArray()
-            D.SetName(f"D - {combo}")
+            D.SetName(f"Displacement - {combo}")
             D.SetNumberOfComponents(3)
 
             # Membrane Data
