@@ -54,17 +54,33 @@ class VTKWriter:
         node_names.SetName("Name")
         
         node_cells = vtk.vtkCellArray()
-
+        node_ids: Dict[str, int] = {}
         for node in self.model.nodes.values():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
+            node_ids[node.name] = point_id
             node_names.InsertValue(point_id, node.name)
             vert = vtk.vtkVertex()
             vert.GetPointIds().SetId(0, point_id)
             node_cells.InsertNextCell(vert)
-        
+
         ugrid.SetPoints(points)
         ugrid.SetCells(vtk.VTK_POINT_DATA, node_cells)
         ugrid.GetPointData().AddArray(node_names)
+        
+        #### LOAD SPECIFIC DATA ####
+        for combo in self.model.load_combos.keys():
+            reactions = vtk.vtkIntArray()
+            reactions.SetName("Reactions")
+            reactions.SetNumberOfComponents(6)
+            for i, name in enumerate(["DX", "DY", "DZ", "RX", "RY", "RZ"]):
+                reactions.SetComponentName(i,name)
+            
+            for node_name, node_id in node_ids.items():
+                node = self.model.nodes[node_name]
+                reactions.InsertTuple6(node_id, int(node.support_DX), int(node.support_DY), int(node.support_DZ), int(node.support_RX), int(node.support_RY), int(node.support_RZ))
+            
+            ugrid.GetPointData().AddArray(reactions)
+        
 
         writer = vtk.vtkUnstructuredGridWriter()
         writer.SetFileName(path + "_nodes.vtk")
