@@ -104,37 +104,24 @@ class VTKWriter:
             for line_range,subm,line in submembers:
                 for i,x in enumerate(line_range):
                     x = 1-x # go backwards
+                    xt = x * subm.L()
                     point_id = line.GetPointId(i)
                     T = inv(subm.T()[:3,:3]) # Transformation Matrix Local -> Global
                     # Displacement
-                    deflection = T @ np.array([float(subm.deflection(direction,x*subm.L(),combo)) for direction in ("dx", "dy", "dz")]) # type: ignore
+                    deflection = T @ np.array([float(subm.deflection(direction,xt,combo)) for direction in ("dx", "dy", "dz")]) # type: ignore
                     D_array.InsertTuple3(point_id, *deflection)
 
                     # moment
-                    res = np.array([subm.torque(x, combo), subm.moment("My",x,combo), subm.moment("Mz",x,combo)])
-                    if all(res):
-                        m = T @ res
-                    else:
-                        m = (0,0,0)
+                    m = T @ np.array([subm.torque(xt, combo), subm.moment("My",xt,combo), subm.moment("Mz",xt,combo)])
                     moment.InsertTuple3(point_id, *m)
 
                     # forces
-                    res = np.array([subm.axial(x, combo), subm.shear("Fy",x,combo), subm.shear("Fz",x,combo)])
-                    if all(res):
-                        s = T @ res
-                    else:
-                        s = (0,0,0)
+                    s = T @ np.array([subm.axial(xt, combo), subm.shear("Fy",xt,combo), subm.shear("Fz",xt,combo)])
                     force.InsertTuple3(point_id, *s)
 
                     # bending stress increase
                     sec = subm.section
-                    my = subm.moment("My", x, combo)
-                    mz = subm.moment("Mz", x, combo)
-                    if all((my,mz)):
-                        res = np.array([0, my/sec.Iy, mz/sec.Iz]) # type: ignore
-                        sig_b = T @ res
-                    else:
-                        sig_b = (0,0,0)
+                    sig_b = T @ np.array([0, subm.moment("My", xt, combo)/sec.Iy, subm.moment("Mz", xt, combo)/sec.Iz]) # type: ignore
                     sigma_b.InsertTuple3(point_id, *sig_b)
 
             ugrid_members.GetPointData().AddArray(D_array)
