@@ -85,6 +85,14 @@ class VTKWriter:
             moments.SetName(f"Moment Reactions M - {combo}")
             moments.SetNumberOfComponents(3)
 
+            force_loads = vtk.vtkDoubleArray()
+            force_loads.SetName(f"Loads F - {combo}")
+            force_loads.SetNumberOfComponents(3)
+
+            moment_loads = vtk.vtkDoubleArray()
+            moment_loads.SetName(f"Loads M - {combo}")
+            moment_loads.SetNumberOfComponents(3)
+
             for i, name in enumerate(["DX", "DY", "DZ", "RX", "RY", "RZ"]):
                 reaction_constraints.SetComponentName(i,name)
             
@@ -94,11 +102,33 @@ class VTKWriter:
                 displacements.InsertTuple3(node_id, node.DX[combo], node.DY[combo], node.DZ[combo]) # type: ignore
                 forces.InsertTuple3(node_id, node.RxnFX[combo], node.RxnFY[combo], node.RxnFZ[combo])
                 moments.InsertTuple3(node_id, node.RxnMX[combo], node.RxnMY[combo], node.RxnMZ[combo])
+
+                # calculate the NodeLoad for each node
+                flx, fly, flz, mlx, mly, mlz = [[]]*6
+                for direction, magnitude, case in node.NodeLoads:
+                    match direction:
+                        case "FX":
+                            flx.append(magnitude)
+                        case "FY":
+                            fly.append(magnitude)
+                        case "FZ":
+                            flz.append(magnitude)
+                        case "MX":
+                            mlx.append(magnitude)
+                        case "MY":
+                            mly.append(magnitude)
+                        case "MZ":
+                            mlz.append(magnitude)
+                force_loads.InsertTuple3(node_id, sum(flx), sum(fly), sum(flz))
+                moment_loads.InsertTuple3(node_id, sum(mlx), sum(mly), sum(mlz))
+
                 
             ugrid.GetPointData().AddArray(reaction_constraints)
             ugrid.GetPointData().AddArray(displacements)
             ugrid.GetPointData().AddArray(forces)
             ugrid.GetPointData().AddArray(moments)
+            ugrid.GetPointData().AddArray(force_loads)
+            ugrid.GetPointData().AddArray(moment_loads)
         
 
         writer = vtk.vtkUnstructuredGridWriter()
