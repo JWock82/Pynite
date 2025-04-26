@@ -17,10 +17,11 @@ class VTKWriter:
     using external Software i.e. Paraview.
     """
 
-    def __init__(self, model: FEModel3D) -> None:
+    def __init__(self, model: FEModel3D, log=False) -> None:
         self.model = model
         self._members_written = False
         self._quads_written = False
+        self.log = log
 
     def write_to_vtk(self, path: str):
         """
@@ -33,13 +34,16 @@ class VTKWriter:
         """
 
         # remove Filetype if supplied explicitly
-        path.removesuffix(".vtk")
+        path = path.removesuffix(".vtk")
+        if self.log:
+            print(f"Writing Data to {path}...")
 
         self._write_member_data(path)
         self._write_quad_data(path)
 
     def _write_member_data(self, path: str):
-        #### CREATE POINTS FOR USER DEFINED NODES ####
+        if self.log:
+            print("- collecting member data...")
 
         points = vtk.vtkPoints()
 
@@ -144,12 +148,17 @@ class VTKWriter:
             member_writer.SetInputData(ugrid_members)
             member_writer.Write()
             self._members_written = True
+            if self.log:
+                print("- members written!")
+        elif self.log:
+            print("- no members detected")
 
     def _write_quad_data(self, path: str):
         """
         Collects all quads in the model and writes their data into a VTK mesh.
         """
-
+        if self.log:
+            print("- collecting quad data...")
         # xi and eta natural coordinates [0-1] for the VTK_BIQUADRATIC_QUAD point positions
         xis = (0,1,1,0,0.5,1,0.5,0,0.5)
         etas = (0,0,1,1,0,0.5,1,0.5,0.5)
@@ -261,6 +270,10 @@ class VTKWriter:
             quads_writer.SetInputData(ugrid_quads)
             quads_writer.Write()
             self._quads_written = True
+            if self.log:
+                print("- quads written!")
+        elif self.log:
+            print("- no quads detected")
 
     @staticmethod
     def _interpolate_member_data(p1:np.ndarray,p2:np.ndarray, x:float) -> np.ndarray:
