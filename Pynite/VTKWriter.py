@@ -19,6 +19,7 @@ class VTKWriter:
 
     def __init__(self, model: FEModel3D, log=False) -> None:
         self.model = model
+        self._nodes_written = False
         self._members_written = False
         self._quads_written = False
         self.log = log
@@ -38,8 +39,39 @@ class VTKWriter:
         if self.log:
             print(f"Writing Data to {path}...")
 
+        self._write_node_data(path)
         self._write_member_data(path)
         self._write_quad_data(path)
+
+    def _write_node_data(self, path:str):
+        if self.log:
+            print("- collecting node data...")
+
+        ugrid = vtk.vtkUnstructuredGrid()
+        points = vtk.vtkPoints()
+
+        node_names = vtk.vtkStringArray()
+        node_names.SetName("Name")
+        
+        node_cells = vtk.vtkCellArray()
+
+        for node in self.model.nodes.values():
+            point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
+            node_names.InsertValue(point_id, node.name)
+            vert = vtk.vtkVertex()
+            vert.GetPointIds().SetId(0, point_id)
+            node_cells.InsertNextCell(vert)
+        
+        ugrid.SetPoints(points)
+        ugrid.SetCells(vtk.VTK_POINT_DATA, node_cells)
+        ugrid.GetPointData().AddArray(node_names)
+
+        writer = vtk.vtkUnstructuredGridWriter()
+        writer.SetFileName(path + "_nodes.vtk")
+        writer.SetInputData(ugrid)
+        writer.Write()
+        self._nodes_written = True
+        
 
     def _write_member_data(self, path: str):
         if self.log:
@@ -321,6 +353,8 @@ class VTKWriter:
             files.append(temp_path + "_members.vtk")
         if self._quads_written:
             files.append(temp_path + "_quads.vtk")
+        if self._nodes_written:
+            files.append(temp_path + "_nodes.vtk")
 
         try:
             # Open paraview with the temporary file(s)
