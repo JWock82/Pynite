@@ -201,26 +201,7 @@ class VTKWriter:
             vtkquad.SetObjectName(quad.name)
             for i, (xi, eta) in enumerate(zip(xis, etas)):
                 coords = np.array(self._interpolate_quad_corner_data(pi, pj, pm, pn, xi, eta))
-                # search existing nodes by position if node already exists (from other quad)
-                if node_register.shape[0] > 0:
-                    # This was done in Numpy for necessary performance reasons, hence the unintuitive code.
-                    # The (x,y,z) coords array gets subtracted from every entry in the register and summed up per entry,
-                    # resulting in a vector of absolute distances. This is then checked for the smallest entry, that needs to
-                    # be below a numeric threshold to be counted as a match. The index can then be used to get the node_id.
-                    search = np.sum(np.abs(node_register[:,1:] - coords), axis=1)
-                    query = node_register[:,0][np.where((search == np.min(search)) & (np.min(search)<1e-10))[0]]
-                    if len(query)>0:
-                        node_id = int(query[0])
-                        # existing node found on position coords
-                        vtkquad.GetPointIds().SetId(i, node_id)
-                    else:
-                        # no existing node found at positiion coords, create a new point
-                        node_id = points.InsertNextPoint(*coords)
-                        node_register = np.vstack((node_register,np.array([node_id, *coords])))
-                else:
-                    # in case of very first node
-                    node_id = points.InsertNextPoint(*coords)
-                    node_register = np.vstack((node_register,np.array([node_id, *coords])))
+                node_id = points.InsertNextPoint(*coords)
 
                 vtkquad.GetPointIds().SetId(i, node_id)
 
@@ -281,6 +262,14 @@ class VTKWriter:
                 ugrid_quads.GetPointData().AddArray(membrane)
                 ugrid_quads.GetPointData().AddArray(moments)
                 ugrid_quads.GetPointData().AddArray(shear)
+
+        # clean the data from duplicate points
+        cleaner = vtk.vtkStaticCleanUnstructuredGrid()
+        cleaner.SetInputData(ugrid_quads)
+        cleaner.SetToleranceIsAbsolute(True)
+        cleaner.SetAbsoluteTolerance(0.01)
+        cleaner.Update()
+        ugrid_quads = cleaner.GetOutput()
 
         #### WRITE DATA TO DISK ####
 
