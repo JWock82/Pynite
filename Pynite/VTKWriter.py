@@ -6,6 +6,7 @@ from typing import Dict, Tuple, List
 
 import numpy as np
 from numpy.linalg import inv
+from scipy.interpolate import RegularGridInterpolator
 
 from Pynite.FEModel3D import FEModel3D, Quad3D, Member3D
 
@@ -303,6 +304,7 @@ class VTKWriter:
                     point_coords = self._interpolate_quad_corner_data(i_coords, j_coords, m_coords, n_coords, xi, eta)
 
                     subquad.GetPointIds().SetId(vert_id, points.InsertNextPoint(point_coords))
+                subquad.SetObjectName(quad.name)
                 quads.InsertNextCell(subquad)
 
         #### READ QUAD DATA ####
@@ -313,22 +315,51 @@ class VTKWriter:
             D.SetNumberOfComponents(3)
 
             # Membrane Data
-            membrane = vtk.vtkDoubleArray()
-            membrane.SetName(f"Membrane - {combo}")
-            membrane.SetNumberOfComponents(3)
+            membrane_loc = vtk.vtkDoubleArray()
+            membrane_loc.SetName(f"Membrane Stresses sigma - {combo}")
+            membrane_loc.SetNumberOfComponents(3)
+            
+            membrane_glob = vtk.vtkDoubleArray()
+            membrane_glob.SetName(f"Membrane Stresses Sigma - {combo}")
+            membrane_glob.SetNumberOfComponents(3)
 
             # Moment Data
-            moments = vtk.vtkDoubleArray()
-            moments.SetName(f"Moments - {combo}")
-            moments.SetNumberOfComponents(3)
+            moments_loc = vtk.vtkDoubleArray()
+            moments_loc.SetName(f"Moments m - {combo}")
+            moments_loc.SetNumberOfComponents(3)
+
+            moments_glob = vtk.vtkDoubleArray()
+            moments_glob.SetName(f"Moments M - {combo}")
+            moments_glob.SetNumberOfComponents(3)
 
             # SHEAR Data
-            shear = vtk.vtkDoubleArray()
-            shear.SetName(f"Shear - {combo}")
-            shear.SetNumberOfComponents(3)
+            shear_loc = vtk.vtkDoubleArray()
+            shear_loc.SetName(f"Forces f - {combo}")
+            shear_loc.SetNumberOfComponents(3)
+
+            shear_glob = vtk.vtkDoubleArray()
+            shear_glob.SetName(f"Forces F - {combo}")
+            shear_glob.SetNumberOfComponents(3)
 
             for quad_name, subquads in quad_references.items():
                 quad = self.model.quads[quad_name]
+                xi_range = np.linspace(0,1,50)
+                eta_range = np.linspace(0,1,50)
+                XI, ETA = np.meshgrid(xi_range,eta_range) # 2D Coordinate Grids
+                T = quad.T()[:3,:3] # transformation matrix local -> global
+
+                # Calculate data inside the quad at a bunch of points at once
+                # to avoid calling quad.moments, .shear and .membrane inside the hotloop
+                # for every points inside every subquad element
+                MO = quad.moment(XI, ETA, True, combo) # type: ignore
+                S = quad.shear(XI, ETA, True, combo) # type: ignore
+                MB = quad.membrane(XI, ETA, True, combo) # type: ignore
+                
+                # Create Scipy interpolators to speed this up. Points are given in (eta,xi)
+                # because a transpose was needed for correct dimensions 
+                MO_interp = RegularGridInterpolator((xi_range, eta_range), MO.T)
+                S_interp  = RegularGridInterpolator((xi_range, eta_range), S.T)
+                MB_interp = RegularGridInterpolator((xi_range, eta_range), MB.T)
 
                 for i, subquad in enumerate(subquads):
                     for vert_id in range(9):
@@ -344,21 +375,29 @@ class VTKWriter:
                         d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
                         D.InsertTuple3(subquad.GetPointId(vert_id), *d)
 
-                        # MEMBRANE STRESSES
-                        membrane.InsertTuple3(subquad.GetPointId(vert_id), *quad.membrane(xi, eta, False, combo).flatten()) # type: ignore
+                        p_membrane = MB_interp((eta,xi)).flatten()
+                        p_moment = MO_interp((eta,xi)).flatten()
+                        p_shear = np.insert(S_interp((eta,xi)).flatten(),0,(0))
 
-                        # MOMENTS
-                        m = quad.moment(xi, eta, False, combo) # type: ignore
-                        moments.InsertTuple3(subquad.GetPointId(vert_id), *m)
+                        p_membrane_glob = T.T @ p_membrane
+                        p_moment_glob  = T.T @ p_moment
+                        p_shear_glob    = T.T @ p_shear
 
-                        # SHEAR
-                        s = quad.shear(xi, eta, False, combo) # type: ignore
-                        shear.InsertTuple3(subquad.GetPointId(vert_id), *s)
+                        membrane_loc.InsertTuple3(subquad.GetPointId(vert_id), *p_membrane) # type: ignore
+                        moments_loc.InsertTuple3(subquad.GetPointId(vert_id), *p_moment) # type: ignore
+                        shear_loc.InsertTuple3(subquad.GetPointId(vert_id), *p_shear) # type: ignore
+
+                        membrane_glob.InsertTuple3(subquad.GetPointId(vert_id), *p_membrane_glob) # type: ignore
+                        moments_glob.InsertTuple3(subquad.GetPointId(vert_id), *p_moment_glob) # type: ignore
+                        shear_glob.InsertTuple3(subquad.GetPointId(vert_id), *p_shear_glob) # type: ignore
 
                 ugrid.GetPointData().AddArray(D)
-                ugrid.GetPointData().AddArray(membrane)
-                ugrid.GetPointData().AddArray(moments)
-                ugrid.GetPointData().AddArray(shear)
+                ugrid.GetPointData().AddArray(membrane_loc)
+                ugrid.GetPointData().AddArray(membrane_glob)
+                ugrid.GetPointData().AddArray(moments_loc)
+                ugrid.GetPointData().AddArray(moments_glob)
+                ugrid.GetPointData().AddArray(shear_loc)
+                ugrid.GetPointData().AddArray(shear_glob)
 
 
         ugrid.SetPoints(points)
