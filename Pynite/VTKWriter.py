@@ -1,7 +1,6 @@
 import vtk
 import os
 import tempfile
-from pathlib import Path
 import subprocess
 from typing import Dict, Tuple, List
 
@@ -104,23 +103,16 @@ class VTKWriter:
                 moments.InsertTuple3(node_id, node.RxnMX[combo], node.RxnMY[combo], node.RxnMZ[combo])
 
                 # calculate the NodeLoad for each node
-                flx, fly, flz, mlx, mly, mlz = [[]]*6
-                for direction, magnitude, case in node.NodeLoads:
-                    match direction:
-                        case "FX":
-                            flx.append(magnitude)
-                        case "FY":
-                            fly.append(magnitude)
-                        case "FZ":
-                            flz.append(magnitude)
-                        case "MX":
-                            mlx.append(magnitude)
-                        case "MY":
-                            mly.append(magnitude)
-                        case "MZ":
-                            mlz.append(magnitude)
-                force_loads.InsertTuple3(node_id, sum(flx), sum(fly), sum(flz))
-                moment_loads.InsertTuple3(node_id, sum(mlx), sum(mly), sum(mlz))
+                fl: Dict[str,float] = {"X":0,"Y":0,"Z":0}
+                ml: Dict[str,float] = {"X":0,"Y":0,"Z":0}
+                for (f_or_m, direction), magnitude, case in node.NodeLoads:
+                    if f_or_m == "F":
+                        fl[direction] += magnitude
+                    elif f_or_m == "M":
+                        ml[direction] += magnitude
+
+                force_loads.InsertTuple3(node_id, fl["X"], fl["Y"], fl["Z"])
+                moment_loads.InsertTuple3(node_id, ml["X"], ml["Y"], ml["Z"])
 
                 
             ugrid.GetPointData().AddArray(reaction_constraints)
