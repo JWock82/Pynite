@@ -51,7 +51,7 @@ class VTKWriter:
 
         node_names = vtk.vtkStringArray()
         node_names.SetName("Name")
-        
+
         node_cells = vtk.vtkCellArray()
         node_ids: Dict[str, int] = {}
         for node in self.model.nodes.values():
@@ -65,7 +65,7 @@ class VTKWriter:
         ugrid.SetPoints(points)
         ugrid.SetCells(vtk.VTK_POINT_DATA, node_cells)
         ugrid.GetPointData().AddArray(node_names)
-        
+
         #### LOAD SPECIFIC DATA ####
         for combo in self.model.load_combos.keys():
             reaction_constraints = vtk.vtkIntArray()
@@ -94,7 +94,7 @@ class VTKWriter:
 
             for i, name in enumerate(["DX", "DY", "DZ", "RX", "RY", "RZ"]):
                 reaction_constraints.SetComponentName(i,name)
-            
+
             for node_name, node_id in node_ids.items():
                 node = self.model.nodes[node_name]
                 reaction_constraints.InsertTuple6(node_id, int(node.support_DX), int(node.support_DY), int(node.support_DZ), int(node.support_RX), int(node.support_RY), int(node.support_RZ))
@@ -114,14 +114,12 @@ class VTKWriter:
                 force_loads.InsertTuple3(node_id, fl["X"], fl["Y"], fl["Z"])
                 moment_loads.InsertTuple3(node_id, ml["X"], ml["Y"], ml["Z"])
 
-                
             ugrid.GetPointData().AddArray(reaction_constraints)
             ugrid.GetPointData().AddArray(displacements)
             ugrid.GetPointData().AddArray(forces)
             ugrid.GetPointData().AddArray(moments)
             ugrid.GetPointData().AddArray(force_loads)
             ugrid.GetPointData().AddArray(moment_loads)
-        
 
         writer = vtk.vtkUnstructuredGridWriter()
         writer.SetFileName(path + "_nodes.vtk")
@@ -131,11 +129,10 @@ class VTKWriter:
 
         if self.log:
             print("- nodes written!")
-        
 
     def _write_member_data(self, path: str):
         if self.log:
-            print("- collecting member data...")
+            print(f"- collecting member data ({len(self.model.members)})...")
 
         points = vtk.vtkPoints()
 
@@ -267,42 +264,46 @@ class VTKWriter:
 
     def _write_quad_data(self, path: str):
         """
-        Collects all quads in the model and writes their data into a VTK mesh.
+        Collects all quads in the model and writes their data into a VTK mesh. Each Pynite Quad gets subdivided in 4 vtkBiquadraticQuads,
+        to avoid sampling datapoints only in the corners, where the quad results are least accurate.
         """
         if self.log:
-            print("- collecting quad data...")
-        # xi and eta natural coordinates [0-1] for the VTK_BIQUADRATIC_QUAD point positions
-        xis = (0,1,1,0,0.5,1,0.5,0,0.5)
-        etas = (0,0,1,1,0,0.5,1,0.5,0.5)
+            print(f"- collecting quad data ({len(self.model.quads)})...")
 
-        #### CREATE QUAD CELLS ####
-        quads = vtk.vtkCellArray()
+        # Define the natural coordinates xi,eta for every point-id inside a vtk_biquadratic_quad element as node_id:(xi,eta)
+        coordinates = {
+            0:(0,0),
+            1:(1,0),
+            2:(1,1),
+            3:(0,1),
+            4:(0.5,0),
+            5:(1,0.5),
+            6:(0.5,1),
+            7:(0,0.5),
+            8:(0.5,0.5),
+        }
+        ugrid = vtk.vtkUnstructuredGrid()
         points = vtk.vtkPoints()
-        quad_refs: Dict[str, vtk.vtkBiQuadraticQuad] = {}
+        quads = vtk.vtkCellArray()
 
-        node_register = np.empty((0,4), dtype=np.float64) # (i,x,y,z)
+        # keeps track of all vtk subquads for every "real" Pynite Quad
+        quad_references: Dict[str, List[vtk.vtkBiQuadraticQuad]] = {}
 
         for quad in self.model.quads.values():
-            # Node corner coords
-            pi = np.array([quad.i_node.X, quad.i_node.Y, quad.i_node.Z])
-            pj = np.array([quad.j_node.X, quad.j_node.Y, quad.j_node.Z])
-            pm = np.array([quad.m_node.X, quad.m_node.Y, quad.m_node.Z])
-            pn = np.array([quad.n_node.X, quad.n_node.Y, quad.n_node.Z])
+            quad_references[quad.name] = [vtk.vtkBiQuadraticQuad() for i in range(4)]
+            i_coords = np.array((quad.i_node.X, quad.i_node.Y, quad.i_node.Z))
+            j_coords = np.array((quad.j_node.X, quad.j_node.Y, quad.j_node.Z))
+            m_coords = np.array((quad.m_node.X, quad.m_node.Y, quad.m_node.Z))
+            n_coords = np.array((quad.n_node.X, quad.n_node.Y, quad.n_node.Z))
 
-            vtkquad = vtk.vtkBiQuadraticQuad()
-            vtkquad.SetObjectName(quad.name)
-            for i, (xi, eta) in enumerate(zip(xis, etas)):
-                coords = np.array(self._interpolate_quad_corner_data(pi, pj, pm, pn, xi, eta))
-                node_id = points.InsertNextPoint(*coords)
+            for i, subquad in enumerate(quad_references[quad.name]):
+                for vert_id in range(9):
+                    xi  = coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5)
+                    eta = coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5)
+                    point_coords = self._interpolate_quad_corner_data(i_coords, j_coords, m_coords, n_coords, xi, eta)
 
-                vtkquad.GetPointIds().SetId(i, node_id)
-
-            quad_refs[quad.name] = vtkquad
-            quads.InsertNextCell(vtkquad)
-
-        ugrid_quads = vtk.vtkUnstructuredGrid()
-        ugrid_quads.SetPoints(points)
-        ugrid_quads.SetCells(vtk.VTK_BIQUADRATIC_QUAD, quads)
+                    subquad.GetPointIds().SetId(vert_id, points.InsertNextPoint(point_coords))
+                quads.InsertNextCell(subquad)
 
         #### READ QUAD DATA ####
         for combo in self.model.load_combos.keys():
@@ -326,49 +327,56 @@ class VTKWriter:
             shear.SetName(f"Shear - {combo}")
             shear.SetNumberOfComponents(3)
 
-            for quad_name, vtkquad in quad_refs.items():
+            for quad_name, subquads in quad_references.items():
                 quad = self.model.quads[quad_name]
 
-                for i,(xi,eta) in enumerate(zip(xis,etas)):
-                    # DISPLACEMENT
-                    di = np.array([quad.i_node.DX[combo], quad.i_node.DY[combo], quad.i_node.DZ[combo]])
-                    dj = np.array([quad.j_node.DX[combo], quad.j_node.DY[combo], quad.j_node.DZ[combo]])
-                    dm = np.array([quad.m_node.DX[combo], quad.m_node.DY[combo], quad.m_node.DZ[combo]])
-                    dn = np.array([quad.n_node.DX[combo], quad.n_node.DY[combo], quad.n_node.DZ[combo]])
+                for i, subquad in enumerate(subquads):
+                    for vert_id in range(9):
+                        xi  = coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5)
+                        eta = coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5)
+                        
+                        # DISPLACEMENT
+                        di = np.array([quad.i_node.DX[combo], quad.i_node.DY[combo], quad.i_node.DZ[combo]])
+                        dj = np.array([quad.j_node.DX[combo], quad.j_node.DY[combo], quad.j_node.DZ[combo]])
+                        dm = np.array([quad.m_node.DX[combo], quad.m_node.DY[combo], quad.m_node.DZ[combo]])
+                        dn = np.array([quad.n_node.DX[combo], quad.n_node.DY[combo], quad.n_node.DZ[combo]])
 
-                    d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
-                    D.InsertTuple3(vtkquad.GetPointId(i), *d)
+                        d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
+                        D.InsertTuple3(subquad.GetPointId(vert_id), *d)
 
-                    # MEMBRANE STRESSES
-                    membrane.InsertTuple3(vtkquad.GetPointId(i), *quad.membrane(xi, eta, False, combo).flatten()) # type: ignore
+                        # MEMBRANE STRESSES
+                        membrane.InsertTuple3(subquad.GetPointId(vert_id), *quad.membrane(xi, eta, False, combo).flatten()) # type: ignore
 
-                    # MOMENTS
-                    m = quad.moment(xi, eta, False, combo) # type: ignore
-                    moments.InsertTuple3(vtkquad.GetPointId(i), *m)
+                        # MOMENTS
+                        m = quad.moment(xi, eta, False, combo) # type: ignore
+                        moments.InsertTuple3(subquad.GetPointId(vert_id), *m)
 
-                    # SHEAR
-                    s = quad.shear(xi, eta, False, combo) # type: ignore
-                    shear.InsertTuple3(vtkquad.GetPointId(i), *s)
+                        # SHEAR
+                        s = quad.shear(xi, eta, False, combo) # type: ignore
+                        shear.InsertTuple3(subquad.GetPointId(vert_id), *s)
 
-                ugrid_quads.GetPointData().AddArray(D)
-                ugrid_quads.GetPointData().AddArray(membrane)
-                ugrid_quads.GetPointData().AddArray(moments)
-                ugrid_quads.GetPointData().AddArray(shear)
+                ugrid.GetPointData().AddArray(D)
+                ugrid.GetPointData().AddArray(membrane)
+                ugrid.GetPointData().AddArray(moments)
+                ugrid.GetPointData().AddArray(shear)
+
+
+        ugrid.SetPoints(points)
+        ugrid.SetCells(vtk.VTK_BIQUADRATIC_QUAD, quads)
 
         # clean the data from duplicate points
         cleaner = vtk.vtkStaticCleanUnstructuredGrid()
-        cleaner.SetInputData(ugrid_quads)
+        cleaner.SetInputData(ugrid)
         cleaner.SetToleranceIsAbsolute(True)
         cleaner.SetAbsoluteTolerance(0.01)
         cleaner.Update()
-        ugrid_quads = cleaner.GetOutput()
+        ugrid = cleaner.GetOutput()
 
         #### WRITE DATA TO DISK ####
-
         if len(self.model.quads) > 0:
             quads_writer = vtk.vtkUnstructuredGridWriter()
             quads_writer.SetFileName(path + "_quads.vtk")
-            quads_writer.SetInputData(ugrid_quads)
+            quads_writer.SetInputData(ugrid)
             quads_writer.Write()
             self._quads_written = True
             if self.log:
