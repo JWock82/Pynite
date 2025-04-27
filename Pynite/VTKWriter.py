@@ -128,6 +128,9 @@ class VTKWriter:
         writer.SetInputData(ugrid)
         writer.Write()
         self._nodes_written = True
+
+        if self.log:
+            print("- nodes written!")
         
 
     def _write_member_data(self, path: str):
