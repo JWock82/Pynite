@@ -1,11 +1,10 @@
 # %%
 #futures import required to use bar operators for optional type annotations
-from __future__ import annotations
-
-from typing import Dict, Optional
+from __future__ import annotations # Allows more recent type hints features
 from os import rename
 import warnings
 from math import isclose
+from typing import TYPE_CHECKING
 
 from numpy import array, zeros, matmul, divide, subtract, atleast_2d, all, ndarray
 from numpy.linalg import solve
@@ -22,6 +21,10 @@ from Pynite.LoadCombo import LoadCombo
 from Pynite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
 from Pynite import Analysis
 
+if TYPE_CHECKING:
+    from typing import Dict, List
+    from numpy import float64
+    from numpy.typing import NDArray
 
 # %%
 class FEModel3D():
@@ -29,32 +32,33 @@ class FEModel3D():
        and retrieve results from a finite element model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Creates a new 3D finite element model.
         """
         
         # Initialize the model's various dictionaries. Using from __future__ import ensures
         # compatibility with older Python Versions
 
-        self.nodes: Dict[str, Node3D] = {}           # A dictionary of the model's nodes
-        self.materials: Dict[str, Material] = {}     # A dictionary of the model's materials
-        self.sections: Dict[str, Section] = {}       # A dictonary of the model's cross-sections
-        self.springs: Dict[str, Spring3D] = {}       # A dictionary of the model's springs
-        self.members: Dict[str, PhysMember] = {}     # A dictionary of the model's physical members
-        self.quads: Dict[str, Quad3D] = {}           # A dictionary of the model's quadiralterals
-        self.plates: Dict[str, Plate3D] = {}         # A dictionary of the model's rectangular plates
-        self.meshes: Dict[str, Mesh] = {}            # A dictionary of the model's meshes
-        self.load_combos: Dict[str, LoadCombo] = {}  # A dictionary of the model's load combinations
-        self._D: Dict[str, ndarray] = {}                # A dictionary of the model's nodal displacements by load combination        
-        self.solution: Optional[str] = None          # Indicates the solution type for the latest run of the model
+        self.nodes: Dict[str, Node3D] = {}             # A dictionary of the model's nodes
+        self.materials: Dict[str, Material] = {}       # A dictionary of the model's materials
+        self.sections: Dict[str, Section] = {}         # A dictonary of the model's cross-sections
+        self.springs: Dict[str, Spring3D] = {}         # A dictionary of the model's springs
+        self.members: Dict[str, PhysMember] = {}       # A dictionary of the model's physical members
+        self.quads: Dict[str, Quad3D] = {}             # A dictionary of the model's quadiralterals
+        self.plates: Dict[str, Plate3D] = {}           # A dictionary of the model's rectangular plates
+        self.meshes: Dict[str, Mesh] = {}              # A dictionary of the model's meshes
+        self.load_combos: Dict[str, LoadCombo] = {}    # A dictionary of the model's load combinations
+        self._D: Dict[str, NDArray[float64]] = {}      # A dictionary of the model's nodal displacements by load combination
+        
+        self.solution: str | None = None  # Indicates the solution type for the latest run of the model
 
     @property
-    def load_cases(self):
+    def load_cases(self) -> List[str]:
         """Returns a list of all the load cases in the model (in alphabetical order).
         """
         
         # Create an empty list of load cases
-        cases = []
+        cases: List[str] = []
 
         # Step through each node
         for node in self.nodes.values():
@@ -1809,14 +1813,14 @@ class FEModel3D():
         # Return the global plastic reduction matrix
         return Km 
 
-    def FER(self, combo_name='Combo 1'):
+    def FER(self, combo_name='Combo 1') -> NDArray[float64]:
         """Assembles and returns the global fixed end reaction vector for any given load combo.
 
         :param combo_name: The name of the load combination to get the fixed end reaction vector
                            for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
         :return: The fixed end reaction vector
-        :rtype: array
+        :rtype: NDArray[float64]
         """        
         
         # Initialize a zero vector to hold all the terms
@@ -1909,14 +1913,14 @@ class FEModel3D():
         # Return the global fixed end reaction vector
         return FER
     
-    def P(self, combo_name='Combo 1'):
+    def P(self, combo_name='Combo 1') -> NDArray[float64]:
         """Assembles and returns the global nodal force vector.
 
         :param combo_name: The name of the load combination to get the force vector for. Defaults
                            to 'Combo 1'.
         :type combo_name: str, optional
         :return: The global nodal force vector.
-        :rtype: array
+        :rtype: NDArray[float64]
         """
             
         # Initialize a zero vector to hold all the terms
@@ -1955,14 +1959,14 @@ class FEModel3D():
         # Return the global nodal force vector
         return P
 
-    def D(self, combo_name='Combo 1'):
+    def D(self, combo_name='Combo 1') -> NDArray[float64]:
         """Returns the global displacement vector for the model.
 
         :param combo_name: The name of the load combination to get the results for. Defaults to
                            'Combo 1'.
         :type combo_name: str, optional
         :return: The global displacement vector for the model
-        :rtype: array
+        :rtype: NDArray[float64]
         """
  
         # Return the global displacement vector
@@ -2453,4 +2457,4 @@ class FEModel3D():
                 orphans.append(node.name)
         
         return orphans
-      
+

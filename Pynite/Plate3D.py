@@ -1,11 +1,21 @@
+from __future__ import annotations # Allows more recent type hints features
+from typing import List, Tuple, Optional,TYPE_CHECKING
+
 from numpy import zeros, array, matmul, cross, add
 from numpy.linalg import inv, norm, det
+from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from numpy import float64
+    from Pynite.FEModel3D import FEModel3D
+    from Pynite.Node3D import Node3D
 
 #%%
 class Plate3D():
 
-    def __init__(self, name, i_node, j_node, m_node, n_node, t, material_name, model, kx_mod=1.0,
-                 ky_mod=1.0):
+    def __init__(self, name: str, i_node: Node3D, j_node: Node3D, m_node: Node3D, n_node: Node3D, 
+                 t: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0,
+                 ky_mod: float = 1.0):
         """
         A rectangular plate element
 
@@ -35,45 +45,45 @@ class Plate3D():
             The model the plate is a part of
         """
 
-        self.name = name
-        self.ID = None
-        self.type = 'Rect'
+        self.name: str = name
+        self.ID: Optional[int] = None
+        self.type: str = 'Rect'
 
-        self.i_node = i_node
-        self.j_node = j_node
-        self.m_node = m_node
-        self.n_node = n_node
+        self.i_node: Node3D = i_node
+        self.j_node: Node3D = j_node
+        self.m_node: Node3D = m_node
+        self.n_node: Node3D = n_node
 
-        self.t = t
+        self.t: float = t
         
-        self.kx_mod = kx_mod
-        self.ky_mod = ky_mod
+        self.kx_mod: float = kx_mod
+        self.ky_mod: float = ky_mod
 
-        self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
+        self.pressures: List[Tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
 
         # Plates need a link to the model they belong to
-        self.model = model
+        self.model: FEModel3D = model
 
         # Get material properties for the plate from the model
         try:
-            self.E = self.model.materials[material_name].E
-            self.nu = self.model.materials[material_name].nu
+            self.E: float = self.model.materials[material_name].E
+            self.nu: float = self.model.materials[material_name].nu
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
     
-    def width(self):
+    def width(self) -> float:
         """
         Returns the width of the plate along its local x-axis
         """
         return self.i_node.distance(self.j_node)
 
-    def height(self):
+    def height(self) -> float:
         """
         Returns the height of the plate along its local y-axis
         """
         return self.i_node.distance(self.n_node)
     
-    def Dm(self):
+    def Dm(self) -> NDArray[float64]:
         """
         Returns the plane stress constitutive matrix for orthotropic materials [Dm]
         """
@@ -99,7 +109,7 @@ class Plate3D():
         # Return the constitutive matrix [Dm]
         return Dm
 
-    def Db(self):
+    def Db(self) -> NDArray[float64]:
         """
         Returns the bending constitutive matrix for orthotropic materials [Db]
         """
@@ -120,7 +130,7 @@ class Plate3D():
         # Return the constitutive matrix [Db]
         return Db
 
-    def J(self, r, s):
+    def J(self, r: float, s: float) -> NDArray[float64]:
         '''
         Returns the Jacobian matrix for the element
         '''
@@ -132,7 +142,7 @@ class Plate3D():
         return 1/4*array([[x1*(s - 1) - x2*(s - 1) + x3*(s + 1) - x4*(s + 1), y1*(s - 1) - y2*(s - 1) + y3*(s + 1) - y4*(s + 1)],
                           [x1*(r - 1) - x2*(r + 1) + x3*(r + 1) - x4*(r - 1), y1*(r - 1) - y2*(r + 1) + y3*(r + 1) - y4*(r - 1)]])
     
-    def B_m(self, r, s):
+    def B_m(self, r: float, s: float) -> NDArray[float64]:
 
         # Differentiate the interpolation functions
         # Row 1 = interpolation functions differentiated with respect to x
@@ -149,13 +159,13 @@ class Plate3D():
         
         return B_m
     
-    def k(self):
+    def k(self) -> NDArray[float64]:
         """
         returns the plate's local stiffness matrix
         """
         return add(self.k_b(), self.k_m())
     
-    def k_m(self):
+    def k_m(self) -> NDArray[float64]:
         '''
         Returns the local stiffness matrix for membrane (in-plane) stresses.
 
@@ -213,7 +223,7 @@ class Plate3D():
         
         return k_exp
     
-    def k_b(self):
+    def k_b(self) -> NDArray[float64]:
         """
         Returns the local stiffness matrix for bending
         """
@@ -300,7 +310,7 @@ class Plate3D():
         # Return the local stiffness matrix
         return k_exp
 
-    def f(self, combo_name='Combo 1'):
+    def f(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the plate's local end force vector
         """
@@ -308,7 +318,7 @@ class Plate3D():
         # Calculate and return the plate's local end force vector
         return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
-    def fer(self, combo_name='Combo 1'):
+    def fer(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the rectangle's local fixed end reaction vector.
 
@@ -379,7 +389,7 @@ class Plate3D():
 
         return fer_exp
         
-    def d(self, combo_name='Combo 1'):
+    def d(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
        """
        Returns the plate's local displacement vector
        """
@@ -387,7 +397,7 @@ class Plate3D():
        # Calculate and return the local displacement vector
        return matmul(self.T(), self.D(combo_name))
 
-    def F(self, combo_name='Combo 1'):
+    def F(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the plate's global nodal force vector
         """
@@ -395,7 +405,7 @@ class Plate3D():
         # Calculate and return the global force vector
         return matmul(inv(self.T()), self.f(combo_name))
 
-    def D(self, combo_name='Combo 1'):
+    def D(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the plate's global displacement vector for the given load combination.
         """
@@ -435,7 +445,7 @@ class Plate3D():
         # Return the global displacement vector
         return D
  
-    def T(self):
+    def T(self) -> NDArray[float64]:
         """
         Returns the plate's transformation matrix
         """
@@ -486,7 +496,7 @@ class Plate3D():
         
         return transMatrix
 
-    def K(self):
+    def K(self) -> NDArray[float64]:
         """
         Returns the plate's global stiffness matrix
         """
@@ -494,7 +504,7 @@ class Plate3D():
         # Calculate and return the stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.k()), self.T())
 
-    def FER(self, combo_name='Combo 1'):
+    def FER(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the global fixed end reaction vector.
 
@@ -508,7 +518,7 @@ class Plate3D():
         # Calculate and return the fixed end reaction vector
         return matmul(inv(self.T()), self.fer(combo_name))
 
-    def _C(self):
+    def _C(self) -> NDArray[float64]:
         """
         Returns the plate's displacement coefficient matrix [C]
         """
@@ -543,7 +553,7 @@ class Plate3D():
         # Return the coefficient matrix
         return C
 
-    def _Q(self, x, y):
+    def _Q(self, x: float, y: float) -> NDArray[float64]:
         """
         Calculates and returns the plate curvature coefficient matrix [Q] at a given point (x, y)
         in the plate's local system.
@@ -557,7 +567,7 @@ class Plate3D():
         # Return the [Q] coefficient matrix
         return Q
 
-    def _a(self, combo_name='Combo 1'):
+    def _a(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the vector of plate bending constants for the displacement function.
 
@@ -574,7 +584,7 @@ class Plate3D():
         # Return the plate bending constants
         return inv(self._C()) @ d
 
-    def moment(self, x, y, local=True, combo_name='Combo 1'):
+    def moment(self, x: float, y: float, local: bool = True, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the internal moments (Mx, My, and Mxy) at any point (x, y) in the plate's local
         coordinate system
@@ -595,7 +605,7 @@ class Plate3D():
         # Pynite's quadrilateral elements.
         return -self.Db() @ self._Q(x, y) @ self._a(combo_name)
  
-    def shear(self, x, y, local=True, combo_name='Combo 1'):
+    def shear(self, x: float, y: float, local: bool = True, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the internal shears (Qx and Qy) at any point (x, y) in the plate's local
         coordinate system
@@ -640,7 +650,7 @@ class Plate3D():
         return array([[Qx], 
                       [Qy]])
 
-    def membrane(self, x, y, local=True, combo_name='Combo 1'):
+    def membrane(self, x: float, y: float, local: bool = True, combo_name: str = 'Combo 1') -> NDArray[float64]:
         
         # Convert the (x, y) coordinates to (r, x) coordinates
         r = -1 + 2*x/self.width()
