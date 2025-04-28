@@ -42,10 +42,14 @@ class VTKWriter:
             path (str): The path to the VTK file(s) to be created.
         """
 
+
         # remove Filetype if supplied explicitly
         path = path.removesuffix(".vtk")
         if self.log:
             print(f"Writing Data to {path}...")
+        
+        if len(self.model.plates)>0:
+            print("[WARNING] Plate export is not supported at this time. If needed, you can substitude them by Quad3D Elements.")
 
         self._write_node_data(path+"_nodes.vtk")
         self._write_member_data(path+"_members.vtk")
