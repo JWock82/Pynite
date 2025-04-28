@@ -157,31 +157,39 @@ class VTKWriter:
         points = vtk.vtkPoints()
 
         #### CREATE LINE CELLS ####
-        # each (sub)member is subdivided into line segments
+        # each (sub)member is further subdivided into line segments
         lines = vtk.vtkCellArray()
         submembers: List[Tuple[Tuple[float, float], Member3D, vtk.vtkLine]] = []
         for member in self.model.members.values():
-            for subm in member.sub_members.values():
-                n = 11 # Number of submembers + 1
-                for start,end in zip(np.linspace(0,1,n)[:-1], np.roll(np.linspace(0,1,n),-1)[:-1]):
-                    # Calculate intermediary point positions
-                    p1 = self._interpolate_member_data(
-                        np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
-                        np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
-                        start,
-                    )
-                    p2 = self._interpolate_member_data(
-                        np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
-                        np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
-                        end,
-                    )
+            if len(member.sub_members) == 0:
+                # The model has not been analyzed yet. Only add straight lines between the nodes
+                line = vtk.vtkLine()
+                line.SetObjectName(member.name)
+                line.GetPointIds().SetId(0, points.InsertNextPoint(member.i_node.X, member.i_node.Y, member.i_node.Z))
+                line.GetPointIds().SetId(1, points.InsertNextPoint(member.j_node.X, member.j_node.Y, member.j_node.Z))
+                lines.InsertNextCell(line)
+            else:
+                for subm in member.sub_members.values():
+                    n = 11 # Number of submembers + 1
+                    for start,end in zip(np.linspace(0,1,n)[:-1], np.roll(np.linspace(0,1,n),-1)[:-1]):
+                        # Calculate intermediary point positions
+                        p1 = self._interpolate_member_data(
+                            np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
+                            np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
+                            start,
+                        )
+                        p2 = self._interpolate_member_data(
+                            np.array([subm.i_node.X, subm.i_node.Y, subm.i_node.Z]),
+                            np.array([subm.j_node.X, subm.j_node.Y, subm.j_node.Z]),
+                            end,
+                        )
 
-                    line = vtk.vtkLine()
-                    line.SetObjectName(member.name)
-                    line.GetPointIds().SetId(0, points.InsertNextPoint(*p1))
-                    line.GetPointIds().SetId(1, points.InsertNextPoint(*p2))
-                    submembers.append(((start, end), subm, line))
-                    lines.InsertNextCell(line)
+                        line = vtk.vtkLine()
+                        line.SetObjectName(member.name)
+                        line.GetPointIds().SetId(0, points.InsertNextPoint(*p1))
+                        line.GetPointIds().SetId(1, points.InsertNextPoint(*p2))
+                        submembers.append(((start, end), subm, line))
+                        lines.InsertNextCell(line)
 
         ugrid_members = vtk.vtkUnstructuredGrid()
         ugrid_members.SetPoints(points)
