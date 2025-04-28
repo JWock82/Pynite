@@ -1,3 +1,8 @@
+"""
+This module contains the VTKWriter class, which fetches the FEModel3D data and writes it into one or multiple
+`.vtk` files. The VTK fileformat is a commonly supported format designed for postprocessing of mesh results.
+"""
+
 from __future__ import annotations # Allows more recent type hints features
 
 import vtk
@@ -42,9 +47,9 @@ class VTKWriter:
         if self.log:
             print(f"Writing Data to {path}...")
 
-        self._write_node_data(path)
-        self._write_member_data(path)
-        self._write_quad_data(path)
+        self._write_node_data(path+"_nodes.vtk")
+        self._write_member_data(path+"_members.vtk")
+        self._write_quad_data(path+"_quads.vtk")
 
     def _write_node_data(self, path:str):
         """
@@ -129,7 +134,7 @@ class VTKWriter:
             ugrid.GetPointData().AddArray(moment_loads)
 
         writer = vtk.vtkUnstructuredGridWriter()
-        writer.SetFileName(path + "_nodes.vtk")
+        writer.SetFileName(path)
         writer.SetInputData(ugrid)
         writer.Write()
         self._nodes_written = True
@@ -264,7 +269,7 @@ class VTKWriter:
 
         if len(self.model.members) > 0:
             member_writer = vtk.vtkUnstructuredGridWriter()
-            member_writer.SetFileName(path + "_members.vtk")
+            member_writer.SetFileName(path)
             member_writer.SetInputData(ugrid_members)
             member_writer.Write()
             self._members_written = True
@@ -460,7 +465,7 @@ class VTKWriter:
         #### WRITE DATA TO DISK ####
         if len(self.model.quads) > 0:
             quads_writer = vtk.vtkUnstructuredGridWriter()
-            quads_writer.SetFileName(path + "_quads.vtk")
+            quads_writer.SetFileName(path)
             quads_writer.SetInputData(ugrid)
             quads_writer.Write()
             self._quads_written = True
@@ -495,7 +500,7 @@ class VTKWriter:
         """
         Open the Model inside Paraview, if installed. Paraview must be accessible with the `paraview` command for this method to work.
         """
-        # Create a temporary file with .vtk extension
+        # Create a temporary file
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             temp_path = tmp.name
 
