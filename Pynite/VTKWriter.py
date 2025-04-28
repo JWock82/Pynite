@@ -44,6 +44,9 @@ class VTKWriter:
         self._write_quad_data(path)
 
     def _write_node_data(self, path:str):
+        """
+        Collect all Nodes inside the model and write their data into a .vtk file.
+        """
         if self.log:
             print("- collecting node data...")
 
@@ -132,6 +135,10 @@ class VTKWriter:
             print("- nodes written!")
 
     def _write_member_data(self, path: str):
+        """
+        Collects all members inside the model and writes their data into a .vtk file. Each member is represented by 10 lines
+        that sample its data along its length.
+        """
         if self.log:
             print(f"- collecting member data ({len(self.model.members)})...")
 
@@ -272,17 +279,17 @@ class VTKWriter:
             print(f"- collecting quad data ({len(self.model.quads)})...")
 
         # Define the natural coordinates xi,eta for every point-id inside a vtk_biquadratic_quad element as node_id:(xi,eta)
-        # Biquadratic Quad Element Vertex IDs
-        #3_____6_____2
-        # |   /|\   |
-        # |  / | \  |
-        # | /  |  \ |
-        # |/___|___\|
-        #7|\   |8  /|5
-        # | \  |  / |
-        # |  \ | /  |
-        # |   \|/   |
-        #0¯¯¯¯¯4¯¯¯¯¯1
+        # BiQuadraticQuad Element Vertex IDs
+        #   3_____6_____2
+        #    |   /|\   |
+        #    |  / | \  |
+        #    | /  |  \ |
+        #    |/___|___\|
+        #   7|\   |8  /|5
+        #    | \  |  / |
+        #    |  \ | /  |
+        #    |   \|/   |
+        #   0¯¯¯¯¯4¯¯¯¯¯1
 
         coordinates = {
             0:(0,0),
@@ -295,32 +302,43 @@ class VTKWriter:
             7:(0,0.5),
             8:(0.5,0.5),
         }
-        ugrid = vtk.vtkUnstructuredGrid()
-        points = vtk.vtkPoints()
-        quads = vtk.vtkCellArray()
+        ugrid = vtk.vtkUnstructuredGrid() # this holds all data and gets written to .vtk at the end
+        points = vtk.vtkPoints() # this holds all Point data
+        quads = vtk.vtkCellArray() # this holds all cell data. A cell is in this case the vtkBiQuadraticQuads
 
-        # keeps track of all vtk subquads for every "real" Pynite Quad
+        # keeps track of all vtk subquads for every Pynite Quad by name
         quad_references: Dict[str, List[vtk.vtkBiQuadraticQuad]] = {}
 
+        # this loops through every Pynite quad and creates 4 vtkBiQuadraticQuad elements and their point data
         for quad in self.model.quads.values():
             quad_references[quad.name] = [vtk.vtkBiQuadraticQuad() for i in range(4)]
+            # corner coordinates of the Pynite quad
             i_coords = np.array((quad.i_node.X, quad.i_node.Y, quad.i_node.Z))
             j_coords = np.array((quad.j_node.X, quad.j_node.Y, quad.j_node.Z))
             m_coords = np.array((quad.m_node.X, quad.m_node.Y, quad.m_node.Z))
             n_coords = np.array((quad.n_node.X, quad.n_node.Y, quad.n_node.Z))
 
+            # goes through newly created subquads and calculates their vertex coordinates
             for i, subquad in enumerate(quad_references[quad.name]):
                 for vert_id in range(9):
+                    # this calculates the normalized coordinates (xi, eta) corresponding to the vertex by first looking up
+                    # the natural coordinates in the whole grid and scaling/shifting them to the correct sector
                     xi  = coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5)
                     eta = coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5)
                     point_coords = self._interpolate_quad_corner_data(i_coords, j_coords, m_coords, n_coords, xi, eta)
 
+                    # set the Vertex ID of the subquad to the global ID of the newly created point at the calculated coordinates
                     subquad.GetPointIds().SetId(vert_id, points.InsertNextPoint(point_coords))
                 subquad.SetObjectName(quad.name)
+                # insert the quad into the cell array
                 quads.InsertNextCell(subquad)
 
         #### READ QUAD DATA ####
+        # After creating all the subquads, it is now necessary to fetch all relevant quad data from the Pynite model.
+        # This is done for every vertex of every subquad, thus making this loop the bottleneck of the entire VTKWriter.
+        # It needed to be heavily optimized to get the computation time to a reasonable level (~5s for 1000 Pynite Quads)
         for combo in self.model.load_combos.keys():
+            # firstly, instantiate all data arrays for every load combo
             # Displacement Data
             D = vtk.vtkDoubleArray()
             D.SetName(f"Displacement - {combo}")
@@ -353,17 +371,18 @@ class VTKWriter:
             shear_glob.SetName(f"Forces F - {combo}")
             shear_glob.SetNumberOfComponents(3)
 
+            # go trough every pynite quad
             for quad_name, subquads in quad_references.items():
                 quad = self.model.quads[quad_name]
                 xi_range = np.linspace(0,1,50)
                 eta_range = np.linspace(0,1,50)
                 XI, ETA = np.meshgrid(xi_range,eta_range) # 2D Coordinate Grids
-                T = quad.T()[:3,:3] # transformation matrix local -> global
+                T = quad.T()[:3,:3] # transformation matrix of the quad
 
-                # Calculate data inside the quad at a bunch of points at once
+                # Collect data inside the Pynite Quad at a bunch of points at once
                 # to avoid calling quad.moments, .shear and .membrane inside the hotloop
-                # for every points inside every subquad element. This data is then interpolated to
-                # the requested coordinate.
+                # for every points inside every subquad element. This data is then
+                # interpolated to the requested vertex coordinate.
                 MO = quad.moment(XI, ETA, True, combo) # type: ignore
                 S = quad.shear(XI, ETA, True, combo) # type: ignore
                 MB = quad.membrane(XI, ETA, True, combo) # type: ignore
@@ -374,11 +393,15 @@ class VTKWriter:
                 S_interp  = RegularGridInterpolator((xi_range, eta_range), S.T)
                 MB_interp = RegularGridInterpolator((xi_range, eta_range), MB.T)
 
+                # go through every subquad of the Pynite Quad
                 for i, subquad in enumerate(subquads):
+                    # calculate the (eta,xi) coordinates for every vertex in advance
                     xi  = [coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5) for vert_id in range(9)]
                     eta = [coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5) for vert_id in range(9)]
 
-                    # precalculate all vertex results at once to avoid calling the interpolator for every vertex
+                    # Precalculate all vertex results at once to avoid calling the interpolator for every vertex.
+                    # This gets the precomputed 2D Grid data from earlier and interpolates its data to the correct position.local -> global
+                    # go trough every vertex of the subquad
                     p_membranes = MB_interp((eta,xi))
                     p_moments = MO_interp((eta,xi))
                     p_shears = S_interp((eta,xi))
@@ -390,12 +413,15 @@ class VTKWriter:
                         dn = np.array([quad.n_node.DX[combo], quad.n_node.DY[combo], quad.n_node.DZ[combo]])
 
                         d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi[vert_id], eta[vert_id])
+                        # The fetched data now gets inserted into the corresponding data array by the id of the vertex in the
+                        # points array
                         D.InsertTuple3(subquad.GetPointId(vert_id), *d)
                         
                         p_membrane = p_membranes[vert_id]
                         p_moment = p_moments[vert_id]
                         p_shear = np.insert(p_shears[vert_id].flatten(),0,(0))
 
+                        # transform the local quad data into global coordinates
                         p_membrane_glob = T.T @ p_membrane
                         p_moment_glob  = T.T @ p_moment
                         p_shear_glob    = T.T @ p_shear
@@ -452,7 +478,7 @@ class VTKWriter:
     def _interpolate_quad_corner_data(i:np.ndarray, j:np.ndarray, m:np.ndarray, n:np.ndarray, xi:float, eta:float) -> Tuple[float,float,float]:
         """
         Helper Method to return the linearly interpolated data of a point on the quad, given the natural coordinates
-        xi and eta. We should consider moving this over to Quad3D in the future.
+        xi and eta.
         """
         result = tuple(
             (1 - xi) * (1 - eta) * i
