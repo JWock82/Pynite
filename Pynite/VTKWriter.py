@@ -1,15 +1,18 @@
+from __future__ import annotations # Allows more recent type hints features
+
 import vtk
 import os
 import tempfile
 import subprocess
-from typing import Dict, Tuple, List
 
 import numpy as np
 from numpy.linalg import inv
 from scipy.interpolate import RegularGridInterpolator
 
-from Pynite.FEModel3D import FEModel3D, Quad3D, Member3D
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Dict, Tuple, List
+    from Pynite.FEModel3D import FEModel3D, Member3D
 
 class VTKWriter:
     """
