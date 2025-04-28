@@ -6,7 +6,7 @@ import warnings
 from math import isclose
 from typing import TYPE_CHECKING
 
-from numpy import array, zeros, matmul, divide, subtract, atleast_2d, all, ndarray
+from numpy import array, zeros, matmul, divide, subtract, atleast_2d, all
 from numpy.linalg import solve
 
 from Pynite.Node3D import Node3D
@@ -36,8 +36,9 @@ class FEModel3D():
         """Creates a new 3D finite element model.
         """
         
-        # Initialize the model's various dictionaries. Using from __future__ import ensures
-        # compatibility with older Python Versions
+        # Initialize the model's various dictionaries. The dictionaries will be prepopulated with
+        # the data types they store, and then those types will be removed. This will give us the
+        # ability to get type-based hints when using the dictionaries.
 
         self.nodes: Dict[str, Node3D] = {}             # A dictionary of the model's nodes
         self.materials: Dict[str, Material] = {}       # A dictionary of the model's materials
@@ -2457,4 +2458,3 @@ class FEModel3D():
                 orphans.append(node.name)
         
         return orphans
-
