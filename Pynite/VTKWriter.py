@@ -362,34 +362,39 @@ class VTKWriter:
 
                 # Calculate data inside the quad at a bunch of points at once
                 # to avoid calling quad.moments, .shear and .membrane inside the hotloop
-                # for every points inside every subquad element
+                # for every points inside every subquad element. This data is then interpolated to
+                # the requested coordinate.
                 MO = quad.moment(XI, ETA, True, combo) # type: ignore
                 S = quad.shear(XI, ETA, True, combo) # type: ignore
                 MB = quad.membrane(XI, ETA, True, combo) # type: ignore
                 
-                # Create Scipy interpolators to speed this up. Points are given in (eta,xi)
-                # because a transpose was needed for correct dimensions 
+                # Create Scipy interpolators to speed this up. Points are given reversed as (eta,xi) because
+                # a transpose was needed for the correct dimensions 
                 MO_interp = RegularGridInterpolator((xi_range, eta_range), MO.T)
                 S_interp  = RegularGridInterpolator((xi_range, eta_range), S.T)
                 MB_interp = RegularGridInterpolator((xi_range, eta_range), MB.T)
 
                 for i, subquad in enumerate(subquads):
+                    xi  = [coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5) for vert_id in range(9)]
+                    eta = [coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5) for vert_id in range(9)]
+
+                    # precalculate all vertex results at once to avoid calling the interpolator for every vertex
+                    p_membranes = MB_interp((eta,xi))
+                    p_moments = MO_interp((eta,xi))
+                    p_shears = S_interp((eta,xi))
                     for vert_id in range(9):
-                        xi  = coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5)
-                        eta = coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5)
-                        
                         # DISPLACEMENT
                         di = np.array([quad.i_node.DX[combo], quad.i_node.DY[combo], quad.i_node.DZ[combo]])
                         dj = np.array([quad.j_node.DX[combo], quad.j_node.DY[combo], quad.j_node.DZ[combo]])
                         dm = np.array([quad.m_node.DX[combo], quad.m_node.DY[combo], quad.m_node.DZ[combo]])
                         dn = np.array([quad.n_node.DX[combo], quad.n_node.DY[combo], quad.n_node.DZ[combo]])
 
-                        d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi, eta)
+                        d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi[vert_id], eta[vert_id])
                         D.InsertTuple3(subquad.GetPointId(vert_id), *d)
-
-                        p_membrane = MB_interp((eta,xi)).flatten()
-                        p_moment = MO_interp((eta,xi)).flatten()
-                        p_shear = np.insert(S_interp((eta,xi)).flatten(),0,(0))
+                        
+                        p_membrane = p_membranes[vert_id]
+                        p_moment = p_moments[vert_id]
+                        p_shear = np.insert(p_shears[vert_id].flatten(),0,(0))
 
                         p_membrane_glob = T.T @ p_membrane
                         p_moment_glob  = T.T @ p_moment
