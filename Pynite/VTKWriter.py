@@ -272,6 +272,18 @@ class VTKWriter:
             print(f"- collecting quad data ({len(self.model.quads)})...")
 
         # Define the natural coordinates xi,eta for every point-id inside a vtk_biquadratic_quad element as node_id:(xi,eta)
+        # Biquadratic Quad Element Vertex IDs
+        #3_____6_____2
+        # |   /|\   |
+        # |  / | \  |
+        # | /  |  \ |
+        # |/___|___\|
+        #7|\   |8  /|5
+        # | \  |  / |
+        # |  \ | /  |
+        # |   \|/   |
+        #0¯¯¯¯¯4¯¯¯¯¯1
+
         coordinates = {
             0:(0,0),
             1:(1,0),
