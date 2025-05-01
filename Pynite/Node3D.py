@@ -6,7 +6,7 @@ Created on Thu Nov  2 18:04:56 2017
 """
 from __future__ import annotations # Allows more recent type hints features
 # %%      
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 class Node3D():
     """
