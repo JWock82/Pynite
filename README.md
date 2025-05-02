@@ -63,7 +63,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.0.2 (in progress)
+v1.1.0 (in progress)
+* Added a `VTKWriter` class to allow for easy exporting to `Paraview`.
+* Improved type hints for a simpler user experience.
 * Fixed a bug in the pdf reports. Load combos were not being sent to the report template, which was preventing any load results from being displayed in the report.
 
 v1.0.1
