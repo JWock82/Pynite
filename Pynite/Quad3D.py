@@ -3,11 +3,20 @@
 # 2. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 3. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
 # 4. "Finite Element Analysis Fundamentals", Richard H. Gallagher
+from __future__ import annotations # Allows more recent type hints features
+from math import sin, cos
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from numpy import add
 from numpy.linalg import inv, det, norm
-from math import sin, cos
+
+if TYPE_CHECKING:
+    from typing import List, Tuple, Optional
+    from numpy import float64
+    from numpy.typing import NDArray
+    from Pynite.FEModel3D import FEModel3D
+    from Pynite.Node3D import Node3D
 
 class Quad3D():
     """
@@ -16,31 +25,32 @@ class Quad3D():
     This element performs well for thick and thin plates, and for skewed plates. Minor errors are introduced into the solution due to the drilling approximation. Orthotropic behavior is limited to acting along the plate's local axes.
     """
 
-    def __init__(self, name, i_node, j_node, m_node, n_node, t, material_name, model, kx_mod=1.0,
-                 ky_mod=1.0):
+    def __init__(self, name: str, i_node: Node3D, j_node: Node3D, m_node: Node3D, n_node: Node3D, 
+                 t: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0,
+                 ky_mod: float = 1.0):
 
-        self.name = name
-        self.ID = None
-        self.type = 'Quad'
+        self.name: str = name
+        self.ID: Optional[int] = None
+        self.type: str = 'Quad'
 
-        self.i_node = i_node
-        self.j_node = j_node
-        self.m_node = m_node
-        self.n_node = n_node
+        self.i_node: Node3D = i_node
+        self.j_node: Node3D = j_node
+        self.m_node: Node3D = m_node
+        self.n_node: Node3D = n_node
 
-        self.t = t
-        self.kx_mod = kx_mod
-        self.ky_mod = ky_mod
+        self.t: float = t
+        self.kx_mod: float = kx_mod
+        self.ky_mod: float = ky_mod
 
-        self.pressures = []  # A list of surface pressures [pressure, case='Case 1']
+        self.pressures: List[Tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
     
         # Quads need a link to the model they belong to
-        self.model = model
+        self.model: FEModel3D = model
 
         # Get material properties for the plate from the model
         try:
-            self.E = self.model.materials[material_name].E
-            self.nu = self.model.materials[material_name].nu
+            self.E: float = self.model.materials[material_name].E
+            self.nu: float = self.model.materials[material_name].nu
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
 
@@ -116,16 +126,16 @@ class Quad3D():
         y_axis = y_axis/norm(y_axis)
 
         # Calculate the local (x, y) coordinates for each node
-        self.x1 = 0
-        self.x2 = np.dot(vector_12, x_axis)
-        self.x3 = np.dot(vector_13, x_axis)
-        self.x4 = np.dot(vector_14, x_axis)
-        self.y1 = 0
-        self.y2 = np.dot(vector_12, y_axis)
-        self.y3 = np.dot(vector_13, y_axis)
-        self.y4 = np.dot(vector_14, y_axis)
+        self.x1: float = 0.0
+        self.x2: float = np.dot(vector_12, x_axis)
+        self.x3: float = np.dot(vector_13, x_axis)
+        self.x4: float = np.dot(vector_14, x_axis)
+        self.y1: float = 0.0
+        self.y2: float = np.dot(vector_12, y_axis)
+        self.y3: float = np.dot(vector_13, y_axis)
+        self.y4: float = np.dot(vector_14, y_axis)
 
-    def L_k(self, k):
+    def L_k(self, k: Literal[5, 6, 7, 8]) -> float:
         
         # Figures 3 and 5
         if k == 5:
@@ -139,7 +149,7 @@ class Quad3D():
         else:
             raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
     
-    def dir_cos(self, k):
+    def dir_cos(self, k: Literal[5, 6, 7, 8]) -> Tuple[float, float]:
 
         L_k = self.L_k(k)
 
@@ -161,14 +171,14 @@ class Quad3D():
 
         return C, S
 
-    def phi_k(self, k):
+    def phi_k(self, k: Literal[5, 6, 7, 8]) -> float:
 
         kappa = 5/6
 
         # Equation 74
         return 2/(kappa*(1-self.nu))*(self.t/self.L_k(k))**2
 
-    def N_i(self, i, xi, eta):
+    def N_i(self, i: Literal[1, 2, 3, 4], xi: float, eta: float) -> float:
         """
         Returns the interpolation function for any given coordinate in the natural (xi, eta) coordinate system
         """
@@ -184,7 +194,7 @@ class Quad3D():
         else:
             raise Exception('Unable to calculate interpolation function. Invalid value specifed for i.')
     
-    def P_k(self, k, xi, eta):
+    def P_k(self, k: Literal[5, 6, 7, 8], xi: float, eta: float) -> float:
 
         if k == 5:
             return 1/2*(1 - xi**2)*(1 - eta)
@@ -197,7 +207,7 @@ class Quad3D():
         else:
             raise Exception('Unable to calculate shape function. Invalid value specified for k.')
     
-    def Co(self, xi, eta):
+    def Co(self, xi: float, eta: float) -> NDArray[float64]:
         """
         This alternate calculation of the Jacobian matrix follows "The development of DKMQ plate bending element for thick to thin shell analysis based on the Naghdi/Reissner/Mindlin shell theory" by Katili, Batoz, Maknun and Hamdouni (2015). In the reference "C^o" is used instead of "J" to refer to the Jacobian. This method does not seem to produce incorrect results, but will be kept for future reference. It is helpful for understanding this plate element and may prove a useful simplification to the code base if implemented correctly someday.
         """
@@ -258,7 +268,7 @@ class Quad3D():
         
         return Co
 
-    def J(self, xi, eta):
+    def J(self, xi: float, eta: float) -> NDArray[float64]:
         """
         Returns the Jacobian matrix for the element
         """
@@ -270,13 +280,13 @@ class Quad3D():
         return 1/4*np.array([[x1*(eta - 1) - x2*(eta - 1) + x3*(eta + 1) - x4*(eta + 1), y1*(eta - 1) - y2*(eta - 1) + y3*(eta + 1) - y4*(eta + 1)],
                              [x1*(xi - 1)  - x2*(xi + 1)  + x3*(xi + 1)  - x4*(xi - 1),  y1*(xi - 1)  - y2*(xi + 1)  + y3*(xi + 1)  - y4*(xi - 1)]])
 
-    def N_gamma(self, xi, eta):
+    def N_gamma(self, xi: float, eta: float) -> NDArray[float64]:
 
         # Equation 44
         return np.array([[1/2*(1 - eta),       0,      1/2*(1 + eta),       0     ],
                          [     0,        1/2*(1 + xi),       0,       1/2*(1 - xi)]])
 
-    def A_gamma(self):
+    def A_gamma(self) -> NDArray[float64]:
 
         L5 = self.L_k(5)
         L6 = self.L_k(6)
@@ -289,7 +299,7 @@ class Quad3D():
                          [  0,    0,  -L7/2,    0 ],
                          [  0,    0,     0,  -L8/2]])
 
-    def A_u(self):
+    def A_u(self) -> NDArray[float64]:
 
         # Calculate the length of each side of the quad
         L5 = self.L_k(5)
@@ -309,7 +319,7 @@ class Quad3D():
                              [  0,    0,  0,   0,    0,  0, -2/L7, C7, S7,  2/L7, C7, S7],
                              [ 2/L8, C8, S8,   0,    0,  0,   0,    0,  0, -2/L8, C8, S8]])
 
-    def A_Delta_inv_DKMQ(self):
+    def A_Delta_inv_DKMQ(self) -> NDArray[float64]:
 
         phi5 = self.phi_k(5)
         phi6 = self.phi_k(6)
@@ -321,7 +331,7 @@ class Quad3D():
                               [   0,           0,      1/(1+phi7),     0     ],
                               [   0,           0,          0,      1/(1+phi8)]])
 
-    def A_phi_Delta(self):
+    def A_phi_Delta(self) -> NDArray[float64]:
 
         phi5 = self.phi_k(5)
         phi6 = self.phi_k(6)
@@ -333,7 +343,7 @@ class Quad3D():
                          [      0,             0,       phi7/(1+phi7),       0      ],
                          [      0,             0,             0,       phi8/(1+phi8)]])
     
-    def B_b_beta(self, xi, eta):
+    def B_b_beta(self, xi: float, eta: float) -> NDArray[float64]:
 
         # Get the inverse of the Jacobian matrix
         J_inv = inv(self.J(xi, eta))
@@ -367,7 +377,7 @@ class Quad3D():
                          [0,  0,  N1y, 0,  0,  N2y, 0,  0,  N3y, 0,  0,  N4y],
                          [0, N1y, N1x, 0, N2y, N2x, 0, N3y, N3x, 0, N4y, N4x]])
     
-    def B_b_Delta_beta(self, xi, eta):
+    def B_b_Delta_beta(self, xi: float, eta: float) -> NDArray[float64]:
 
         # Get the inverse of the Jacobian matrix
         J_inv = inv(self.J(xi, eta))
@@ -406,7 +416,7 @@ class Quad3D():
                          [    P5y*S5,          P6y*S6,          P7y*S7,          P8y*S8,    ],
                          [P5y*C5 + P5x*S5, P6y*C6 + P6x*S6, P7y*C7 + P7x*S7, P8y*C8 + P8x*S8]])
     
-    def B_b(self, xi, eta):
+    def B_b(self, xi: float, eta: float) -> NDArray[float64]:
         """
         Returns the [B_b] matrix for bending
         """
@@ -414,7 +424,7 @@ class Quad3D():
         # Return the [B] matrix for bending
         return add(self.B_b_beta(xi, eta), self.B_b_Delta_beta(xi, eta) @ self.A_Delta_inv_DKMQ() @ self.A_u())
 
-    def B_s(self, xi, eta):
+    def B_s(self, xi: float, eta: float) -> NDArray[float64]:
         """
         Returns the [B_s] matrix for shear
         """
@@ -422,7 +432,7 @@ class Quad3D():
         # Return the [B] matrix for shear
         return inv(self.J(xi, eta)) @ self.N_gamma(xi, eta) @ self.A_gamma() @ self.A_phi_Delta() @ self.A_u()
 
-    def B_s_gamma(self, xi, eta):
+    def B_s_gamma(self, xi:float , eta: float) -> None:
         """Returns the [B_s_gamma] matrix for shear (Equation 39 in Reference 1)
 
         :param xi: _description_
@@ -430,8 +440,9 @@ class Quad3D():
         :param eta: _description_
         :type eta: _type_
         """
+        raise NotImplementedError('This function is not implemented yet. It is not needed for the current implementation of the Quad3D element.')
 
-    def B_m(self, xi, eta):
+    def B_m(self, xi: float, eta: float) -> NDArray[float64]:
 
         # Differentiate the interpolation functions
         # Row 1 = interpolation functions differentiated with respect to x
@@ -448,7 +459,7 @@ class Quad3D():
 
         return B_m
 
-    def Hb(self):
+    def Hb(self) -> NDArray[float64]:
         '''
         Returns the stress-strain matrix for plate bending.
         '''
@@ -464,7 +475,7 @@ class Quad3D():
         
         return Hb
 
-    def Hs(self):
+    def Hs(self) -> NDArray[float64]:
         '''
         Returns the stress-strain matrix for shear.
         '''
@@ -479,7 +490,7 @@ class Quad3D():
 
         return Hs
 
-    def Cm(self):
+    def Cm(self) -> NDArray[float64]:
         """
         Returns the stress-strain matrix for an isotropic or orthotropic plane stress element
         """
@@ -504,7 +515,7 @@ class Quad3D():
         
         return Cm
 
-    def k_b(self):
+    def k_b(self) -> NDArray[float64]:
         '''
         Returns the local stiffness matrix for bending and shear stresses
         '''
@@ -616,7 +627,7 @@ class Quad3D():
 
         return k_exp
 
-    def k_m(self):
+    def k_m(self) -> NDArray[float64]:
         '''
         Returns the local stiffness matrix for membrane (in-plane) stresses.
 
@@ -674,7 +685,7 @@ class Quad3D():
         
         return k_exp
 
-    def k(self):
+    def k(self) -> NDArray[float64]:
         '''
         Returns the quad element's local stiffness matrix.
         '''
@@ -685,7 +696,7 @@ class Quad3D():
         # Sum the bending and membrane stiffness matrices
         return np.add(self.k_b(), self.k_m())
    
-    def f(self, combo_name='Combo 1'):
+    def f(self, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the quad element's local end force vector
         """
@@ -693,7 +704,7 @@ class Quad3D():
         # Calculate and return the plate's local end force vector
         return np.add(self.k() @ self.d(combo_name), self.fer(combo_name))
 
-    def fer(self, combo_name='Combo 1'):
+    def fer(self, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the quadrilateral's local fixed end reaction vector.
 
@@ -759,7 +770,7 @@ class Quad3D():
 
         return fer_exp
 
-    def d(self, combo_name='Combo 1'):
+    def d(self, combo_name='Combo 1') -> NDArray[float64]:
        """
        Returns the quad element's local displacement vector
        """
@@ -767,7 +778,7 @@ class Quad3D():
        # Calculate and return the local displacement vector
        return self.T() @ self.D(combo_name)
 
-    def F(self, combo_name='Combo 1'):
+    def F(self, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the quad element's global force vector
 
@@ -780,7 +791,7 @@ class Quad3D():
         # Calculate and return the global force vector
         return inv(self.T()) @ self.f(combo_name)
 
-    def D(self, combo_name='Combo 1'):
+    def D(self, combo_name:str='Combo 1') -> NDArray[float64]:
         '''
         Returns the quad element's global displacement vector for the given
         load combination.
@@ -827,7 +838,7 @@ class Quad3D():
         # Return the global displacement vector
         return D
 
-    def K(self):
+    def K(self) -> NDArray[float64]:
         '''
         Returns the quad element's global stiffness matrix
         '''
@@ -839,7 +850,7 @@ class Quad3D():
         return inv(T) @ self.k() @ T
  
     # Global fixed end reaction vector
-    def FER(self, combo_name='Combo 1'):
+    def FER(self, combo_name:str='Combo 1') -> NDArray[float64]:
         '''
         Returns the global fixed end reaction vector.
 
@@ -853,7 +864,7 @@ class Quad3D():
         # Calculate and return the fixed end reaction vector
         return inv(self.T()) @ self.fer(combo_name)
   
-    def T(self):
+    def T(self) -> NDArray[float64]:
         """
         Returns the coordinate transformation matrix for the quad element.
         """
@@ -986,7 +997,7 @@ class Quad3D():
     #     # Return the transformation matrix.
     #     return T
     
-    def shear(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
+    def shear(self, xi:float=0.0, eta:float=0.0, local:bool=True, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the interal shears at any point in the quad element.
 
@@ -995,9 +1006,9 @@ class Quad3D():
 
         Parameters
         ----------
-        xi : number
+        xi : float
             The xi-coordinate. Default is 0.
-        eta : number
+        eta : float
             The eta-coordinate. Default is 0.
         
         Returns
@@ -1051,7 +1062,7 @@ class Quad3D():
                                                   Qy,
                                                   [0]]))
    
-    def moment(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
+    def moment(self, xi:float=0.0, eta:float=0.0, local:bool=True, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the interal moments at any point in the quad element.
 
@@ -1060,9 +1071,9 @@ class Quad3D():
 
         Parameters
         ----------
-        xi : number
+        xi : float
             The xi-coordinate. Default is 0.
-        eta : number
+        eta : float
             The eta-coordinate. Default is 0.
         
         Returns
@@ -1123,7 +1134,7 @@ class Quad3D():
 
             return M_global
 
-    def membrane(self, xi=0, eta=0, local=True, combo_name='Combo 1'):
+    def membrane(self, xi:float=0, eta: float=0, local:bool=True, combo_name:str='Combo 1') -> NDArray[float64]:
         
         # Get the plate's local displacement vector. Slice out terms not related to membrane stresses.
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]

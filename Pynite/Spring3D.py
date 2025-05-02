@@ -1,9 +1,17 @@
 # %%
+from __future__ import annotations # Allows more recent type hints features
 from numpy import zeros, array, add, subtract, matmul, insert, cross, divide
 from numpy.linalg import inv
 from math import isclose
 import Pynite.FixedEndReactions
 from Pynite.LoadCombo import LoadCombo
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Dict, Optional
+    from numpy import float64
+    from numpy.typing import NDArray
+    from Pynite.Node3D import Node3D
 
 # %%
 class Spring3D():
@@ -14,27 +22,28 @@ class Spring3D():
     __plt = None
 
 #%%
-    def __init__(self, name, i_node, j_node, ks, LoadCombos={'Combo 1':LoadCombo('Combo 1', factors={'Case 1':1.0})},
-                 tension_only=False, comp_only=False):
+    def __init__(self, name: str, i_node: Node3D, j_node: Node3D, ks: float, 
+                 LoadCombos: Dict[str, LoadCombo] = {'Combo 1': LoadCombo('Combo 1', factors={'Case 1': 1.0})},
+                 tension_only: bool = False, comp_only: bool = False) -> None:
         '''
         Initializes a new spring.
         '''
-        self.name = name      # A unique name for the spring given by the user
-        self.ID = None        # Unique index number for the spring assigned by the program
-        self.i_node = i_node  # The spring's i-node
-        self.j_node = j_node  # The spring's j-node
-        self.ks = ks          # The spring constant (force/displacement)
-        self.load_combos = LoadCombos # The dictionary of load combinations in the model this spring belongs to
-        self.tension_only = tension_only # Indicates whether the spring is tension-only
-        self.comp_only = comp_only # Indicates whether the spring is compression-only
+        self.name: str = name      # A unique name for the spring given by the user
+        self.ID: Optional[int] = None        # Unique index number for the spring assigned by the program
+        self.i_node: Node3D = i_node  # The spring's i-node
+        self.j_node: Node3D = j_node  # The spring's j-node
+        self.ks: float = ks          # The spring constant (force/displacement)
+        self.load_combos: Dict[str, LoadCombo] = LoadCombos # The dictionary of load combinations in the model this spring belongs to
+        self.tension_only: bool = tension_only # Indicates whether the spring is tension-only
+        self.comp_only: bool = comp_only # Indicates whether the spring is compression-only
 
         # Springs need to track whether they are active or not for any given load combination.
         # They may become inactive for a load combination during a tension/compression-only
         # analysis. This dictionary will be used when the model is solved.
-        self.active = {} # Key = load combo name, Value = True or False
+        self.active: Dict[str, bool] = {} # Key = load combo name, Value = True or False
 
 #%%
-    def L(self):
+    def L(self) -> float:
         '''
         Returns the length of the spring.
         '''
@@ -43,7 +52,7 @@ class Spring3D():
         return self.i_node.distance(self.j_node)
 
 #%%
-    def k(self):
+    def k(self) -> NDArray[float64]:
         '''
         Returns the local stiffness matrix for the spring.
         '''
@@ -70,7 +79,7 @@ class Spring3D():
         return k
 
 #%%   
-    def f(self, combo_name='Combo 1'):
+    def f(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         '''
         Returns the spring's local end force vector for the given load combination.
 
@@ -84,7 +93,7 @@ class Spring3D():
         return matmul(self.k(), self.d(combo_name))
 
 #%%
-    def d(self, combo_name='Combo 1'):
+    def d(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         '''
         Returns the spring's local displacement vector.
 
@@ -98,7 +107,7 @@ class Spring3D():
         return matmul(self.T(), self.D(combo_name))
         
 #%%
-    def T(self):
+    def T(self) -> NDArray[float64]:
         '''
         Returns the transformation matrix for the spring.
         '''
@@ -175,7 +184,7 @@ class Spring3D():
         return transMatrix
 
 #%%
-    def K(self):
+    def K(self) -> NDArray[float64]:
         '''
         Spring global stiffness matrix
         '''
@@ -184,7 +193,7 @@ class Spring3D():
         return matmul(matmul(inv(self.T()), self.k()), self.T())
 
 #%%
-    def F(self, combo_name='Combo 1'):
+    def F(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         '''
         Returns the spring's global end force vector for the given load combination.
         '''
@@ -193,7 +202,7 @@ class Spring3D():
         return matmul(inv(self.T()), self.f(combo_name))
 
 #%%
-    def D(self, combo_name='Combo 1'):
+    def D(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         '''
         Returns the spring's global displacement vector.
 
@@ -229,7 +238,7 @@ class Spring3D():
         return D
 
 #%%
-    def axial(self, combo_name='Combo 1'):
+    def axial(self, combo_name: str = 'Combo 1') -> float:
         '''
         Returns the axial force in the spring.
         

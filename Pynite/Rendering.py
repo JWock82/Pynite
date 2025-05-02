@@ -1,11 +1,20 @@
-
+from __future__ import annotations # Allows more recent type hints features
 from json import load
 import warnings
+from typing import TYPE_CHECKING
 
 from IPython.display import Image
 import numpy as np
 import pyvista as pv
 import math
+
+# For type checking only - these imports are only used during type checking
+if TYPE_CHECKING:
+    from typing import List, Union, Tuple, Optional
+    from Pynite.Node3D import Node3D
+    from Pynite.Member3D import Member3D
+    from Pynite.Spring3D import Spring3D
+    from Pynite.FEModel3D import FEModel3D
 
 # Allow for 3D interaction within jupyter notebook using trame
 try:
@@ -19,27 +28,27 @@ class Renderer:
     """Used to render finite element models.
     """
 
-    scalar = None
+    scalar: Optional[str] = None
 
-    def __init__(self, model):
+    def __init__(self, model: FEModel3D) -> None:
 
-        self.model = model
+        self.model: FEModel3D = model
 
         # Default settings for rendering
-        self._annotation_size = 5
-        self._deformed_shape = False
-        self._deformed_scale = 30
-        self._render_nodes = True
-        self._render_loads = True
-        self._color_map = None
-        self._combo_name = 'Combo 1'
-        self._case = None
-        self._labels = True
-        self._scalar_bar = False
-        self._scalar_bar_text_size = 24
-        self.theme = 'default'
+        self._annotation_size: float = 5.0
+        self._deformed_shape: bool = False
+        self._deformed_scale: float = 30.0
+        self._render_nodes: bool = True
+        self._render_loads: bool = True
+        self._color_map: Optional[str] = None
+        self._combo_name: Optional[str] = 'Combo 1'
+        self._case: Optional[str] = None
+        self._labels: bool = True
+        self._scalar_bar: bool = False
+        self._scalar_bar_text_size: int = 24
+        self.theme: str = 'default'
 
-        self.plotter = pv.Plotter()
+        self.plotter: pv.Plotter = pv.Plotter()
         self.plotter.set_background('white')  # Setting background color
         # self.plotter.add_logo_widget('./Resources/Full Logo No Buffer - Transparent.png')
         # self.plotter.view_isometric()
@@ -47,130 +56,127 @@ class Renderer:
         self.plotter.show_axes()
 
         # Initialize load labels
-        self._load_label_points = []
-        self._load_labels = []
+        self._load_label_points: List[List[float]] = []
+        self._load_labels: List[Union[str, float, int]] = []
 
         # Initialize spring labels
-        self._spring_label_points = []
-        self._spring_labels = []
+        self._spring_label_points: List[List[float]] = []
+        self._spring_labels: List[str] = []
 
     @property
-    def window_width(self):
+    def window_width(self) -> int:
         return self.plotter.window_size[0]
 
     @window_width.setter
-    def window_width(self, width):
+    def window_width(self, width: int) -> None:
         height = self.plotter.window_size[1]
         self.plotter.window_size = (width, height)
 
     @property
-    def window_height(self):
+    def window_height(self) -> int:
         return self.plotter.window_size[1]
 
     @window_height.setter
-    def window_height(self, height):
+    def window_height(self, height: int) -> None:
         width = self.plotter.window_size[0]
         self.plotter.window_size = (width, height)
 
     @property
-    def annotation_size(self):
+    def annotation_size(self) -> float:
         return self._annotation_size
     
     @annotation_size.setter
-    def annotation_size(self, size):
+    def annotation_size(self, size: float) -> None:
         self._annotation_size = size
     
     @property
-    def deformed_shape(self):
+    def deformed_shape(self) -> bool:
         return self._deformed_shape
     
     @deformed_shape.setter
-    def deformed_shape(self, deformed_shape):
+    def deformed_shape(self, deformed_shape: bool) -> None:
         self._deformed_shape = deformed_shape
     
     @property
-    def deformed_scale(self):
+    def deformed_scale(self) -> float:
         return self._deformed_scale
     
     @deformed_scale.setter
-    def deformed_scale(self, scale):
+    def deformed_scale(self, scale: float) -> None:
         self._deformed_scale = scale
     
     @property
-    def render_nodes(self):
+    def render_nodes(self) -> bool:
         return self._render_nodes
     
     @render_nodes.setter
-    def render_nodes(self, render_nodes):
+    def render_nodes(self, render_nodes: bool) -> None:
         self._render_nodes = render_nodes
 
     @property
-    def render_loads(self):
+    def render_loads(self) -> bool:
         return self._render_loads
     
     @render_loads.setter
-    def render_loads(self, render_loads):
+    def render_loads(self, render_loads: bool) -> None:
         self._render_loads = render_loads
     
     @property
-    def color_map(self):
+    def color_map(self) -> Optional[str]:
         return self._color_map
     
     @color_map.setter
-    def color_map(self, color_map):
+    def color_map(self, color_map: Optional[str]) -> None:
         self._color_map = color_map
     
     @property
-    def combo_name(self):
+    def combo_name(self) -> Optional[str]:
         return self._combo_name
     
     @combo_name.setter
-    def combo_name(self, combo_name):
+    def combo_name(self, combo_name: Optional[str]) -> None:
         self._combo_name = combo_name
         self._case = None
     
     @property
-    def case(self):
+    def case(self) -> Optional[str]:
         return self._case
     
     @case.setter
-    def case(self, case):
+    def case(self, case: Optional[str]) -> None:
         self._case = case
         self._combo_name = None
     
     @property
-    def show_labels(self):
+    def show_labels(self) -> bool:
         return self._labels
     
     @show_labels.setter
-    def show_labels(self, show_labels):
+    def show_labels(self, show_labels: bool) -> None:
         self._labels = show_labels
     
     @property
-    def scalar_bar(self):
+    def scalar_bar(self) -> bool:
         return self._scalar_bar
     
     @scalar_bar.setter
-    def scalar_bar(self, scalar_bar):
+    def scalar_bar(self, scalar_bar: bool) -> None:
         self._scalar_bar = scalar_bar
     
     @property
-    def scalar_bar_text_size(self):
+    def scalar_bar_text_size(self) -> int:
         return self._scalar_bar_text_size
     
     @scalar_bar_text_size.setter
-    def scalar_bar_text_size(self, text_size):
+    def scalar_bar_text_size(self, text_size: int) -> None:
         self._scalar_bar_text_size = text_size
 
-    def render_model(self, reset_camera=True):
+    def render_model(self, reset_camera: bool = True) -> None:
         """
         Renders the model in a window
 
         Parameters
         ----------
-        interact : bool
-            Suppresses interacting with the window if set to `False`. This can be used to capture a
-            screenshot without pausing the program for the user to interact. Default is `True`.
         reset_camera : bool
             Resets the camera if set to `True`. Default is `True`.
         """
@@ -181,7 +187,7 @@ class Renderer:
         # Render the model (code execution will pause here until the user closes the window)
         self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', auto_close=False)
 
-    def screenshot(self, filepath='./Pynite_Image.png', interact=True, reset_camera=True):
+    def screenshot(self, filepath: str = './Pynite_Image.png', interact: bool = True, reset_camera: bool = True) -> None:
         """Saves a screenshot of the rendered model. Important: Press `q` to capture the screenshot after positioning the view. Pressing the `X` button in the corner of the window will ignore the positioning and shut down the entire renderer against further use once the screenshot is taken.
 
         :param filepath: The filepath to write the image to. When set to 'jupyter', the resulting plot is placed inline in a jupyter notebook. Defaults to 'jupyter'.
@@ -204,7 +210,7 @@ class Renderer:
         # Save the screenshot to the specified filepath. Note that `auto_close` shuts down the entire plotter after the screenshot is taken, rather than just closing the window. We'll set `auto_close=False` to allow the plotter to remain active. Note that the window must be closed by pressing `q`. Closing it with the 'X' button in the window's corner will close the whole plotter down.
         self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=filepath, auto_close=False)
 
-    def update(self, reset_camera=True):
+    def update(self, reset_camera: bool = True) -> None:
         """
         Builds or rebuilds the pyvista plotter
 
@@ -307,7 +313,7 @@ class Renderer:
         if reset_camera:
             self.plotter.reset_camera()
     
-    def plot_node(self, node, color='grey'):
+    def plot_node(self, node: Node3D, color: str = 'grey') -> None:
         """Adds a node to the plotter
 
         :param node: node
@@ -475,7 +481,7 @@ class Renderer:
                                               z_length=self.annotation_size*0.6),
                                       color=color)
 
-    def plot_member(self, member, theme='default'):
+    def plot_member(self, member: Member3D, theme: str = 'default') -> None:
         """
         Adds a member to the plotter. This method generates a line representing a structural member between two nodes, and adds it to the plotter with specified theme settings.
         
@@ -502,7 +508,7 @@ class Renderer:
 
         self.plotter.add_mesh(line, color='black', line_width=2)
 
-    def plot_spring(self, spring, color='grey', deformed=False):
+    def plot_spring(self, spring: Spring3D, color: str = 'grey', deformed: bool = False) -> None:
         """
         Adds a spring to the plotter. This method generates a zig-zag line representing a spring between two nodes, and adds it to the plotter with specified theme settings.
         """
@@ -585,7 +591,7 @@ class Renderer:
         self._spring_label_points.append([(Xi + Xj) / 2, (Yi + Yj) / 2, (Zi + Zj) / 2])
 
             
-    def plot_plates(self, deformed_shape, deformed_scale, color_map, combo_name):
+    def plot_plates(self, deformed_shape: bool, deformed_scale: float, color_map: Optional[str], combo_name: Optional[str]) -> None:
         
         # Start a list of vertices
         plate_vertices = []
@@ -672,7 +678,7 @@ class Renderer:
         else:
             self.plotter.add_mesh(plate_polydata)
       
-    def plot_deformed_node(self, node, scale_factor, color='grey'):
+    def plot_deformed_node(self, node: Node3D, scale_factor: float, color: str = 'grey') -> None:
 
         # Calculate the node's deformed position
         newX = node.X + scale_factor * (node.DX[self.combo_name])
@@ -685,7 +691,7 @@ class Renderer:
         # Add the mesh to the plotter
         self.plotter.add_mesh(sphere, color=color)
   
-    def plot_deformed_member(self, member, scale_factor):
+    def plot_deformed_member(self, member: Member3D, scale_factor: float) -> None:
         
         # Determine if this member is active for each load combination
         if member.active:
@@ -740,7 +746,8 @@ class Renderer:
                 line = pv.Line(D_plot[i], D_plot[i+1])
                 self.plotter.add_mesh(line, color='red', line_width=2)
 
-    def plot_pt_load(self, position, direction, length, label_text=None, color='green'):
+    def plot_pt_load(self, position: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray], 
+                    length: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
 
         # Create a unit vector in the direction of the 'direction' vector
         unitVector = direction/np.linalg.norm(direction)
@@ -777,7 +784,10 @@ class Renderer:
         # Plot the shaft
         self.plotter.add_mesh(shaft, line_width=2, color=color)                         
 
-    def plot_dist_load(self, position1, position2, direction, length1, length2, label_text1, label_text2, color='green'):
+    def plot_dist_load(self, position1: Tuple[float, float, float], position2: Tuple[float, float, float], 
+                      direction: Union[np.ndarray, Tuple[float, float, float]], length1: float, length2: float,
+                      label_text1: Optional[Union[str, float, int]], label_text2: Optional[Union[str, float, int]], 
+                      color: str = 'green') -> None:
 
         # Calculate the length of the distributed load
         load_length = ((position2[0] - position1[0])**2 + (position2[1] - position1[1])**2 + (position2[2] - position1[2])**2)**0.5
@@ -827,7 +837,8 @@ class Renderer:
         # Combine all geometry into a single PolyData object
         self.plotter.add_mesh(tail_line, color=color)
 
-    def plot_moment(self, center, direction, radius, label_text=None, color='green'):
+    def plot_moment(self, center: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray], 
+                    radius: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
 
         # Convert the direction vector into a unit vector
         v1 = direction/np.linalg.norm(direction)

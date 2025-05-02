@@ -1,6 +1,8 @@
+from __future__ import annotations # Allows more recent type hints features
 from math import isclose
 from numpy import average
 import io
+from typing import TYPE_CHECKING
 
 from Pynite.FEModel3D import FEModel3D
 from prettytable import PrettyTable
@@ -8,83 +10,88 @@ from prettytable import PrettyTable
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
+if TYPE_CHECKING:
+    from typing import List, Dict, Tuple
+    from Pynite.Quad3D import Quad3D
+    import matplotlib.figure
+
 class ShearWall():
     """Creates a new shear wall model that allows for modeling of complex shear walls. Shear wall models are 2D (aside from flanges) standalone models. You can add openings and flanges (wall returns). Diaphragm levels can be defined in order to apply shear forces along the length of the wall. Diaphgrams can be full or partial length. Supports can be applied at any level in the shear wall. Supports can also be full or partial length. A `ky_mod` factor is built in to account for cracking. Shear walls can automatically detect shear wall piers and coupling beams, and sum internal forces in those components.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self.model = FEModel3D()
-        self._L = None
-        self._H = None
-        self._t = None
-        self._ky_mod = 0.35
-        self._mesh_size = 1
-        self._openings = []
-        self._flanges = []
-        self._supports = []
-        self._stories = []
-        self._shears = []
-        self._axials = []
-        self._materials = []
-        self.piers = {}
-        self.coupling_beams = {}
+        self.model: FEModel3D = FEModel3D()
+        self._L: float | None = None
+        self._H: float | None = None
+        self._t: float | None = None
+        self._ky_mod: float = 0.35
+        self._mesh_size: float = 1
+        self._openings: List[List[str | float | None]] = []
+        self._flanges: List[List[str | float]] = []
+        self._supports: List[List[float]] = []
+        self._stories: List[List[str | float]] = []
+        self._shears: List[List[str | float]] = []
+        self._axials: List[List[str | float]] = []
+        self._materials: List[List[str | float]] = []
+        self.piers: Dict[str, Pier] = {}
+        self.coupling_beams: Dict[str, CouplingBeam] = {}
     
     @property
-    def L(self):
+    def L(self) -> float | None:
         return self._L
 
     @L.setter
-    def L(self, value):
+    def L(self, value: float) -> None:
         self._L = value
     
     @property
-    def H(self):
+    def H(self) -> float | None:
         return self._H
 
     @H.setter
-    def H(self, value):
+    def H(self, value: float) -> None:
         self._H = value
 
     @property
-    def mesh_size(self):
+    def mesh_size(self) -> float:
         return self._mesh_size
     
     @mesh_size.setter
-    def mesh_size(self, value):
+    def mesh_size(self, value: float) -> None:
         self._mesh_size = value
     
     @property
-    def ky_mod(self):
+    def ky_mod(self) -> float:
         return self._ky_mod
     
     @ky_mod.setter
-    def ky_mod(self, value):
+    def ky_mod(self, value: float) -> None:
         self._ky_mod = value
     
-    def add_load_combo(self, name, factors, combo_type='strength'):
+    def add_load_combo(self, name: str, factors: Dict[str, float], combo_type: str = 'strength') -> None:
         self.model.add_load_combo(name, factors, combo_type)
 
-    def add_material(self, name, E, G, nu, rho, t, x_start=None, x_end=None, y_start=None, y_end=None):
+    def add_material(self, name: str, E: float, G: float, nu: float, rho: float, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
         if x_start is None: x_start = 0
         if x_end is None: x_end = self._L
         if y_start is None: y_start = 0
         if y_end is None: y_end = self._H
         self._materials.append([name, E, G, nu, rho, t, x_start, x_end, y_start, y_end])
 
-    def add_opening(self, name, x_start, y_start, width, height, tie=None):
+    def add_opening(self, name: str, x_start: float, y_start: float, width: float, height: float, tie: float | None = None) -> None:
         self._openings.append([name, x_start, y_start, width, height, None])
     
-    def add_flange(self, thickness, width, x, y_start, y_end, material, side):
+    def add_flange(self, thickness: float, width: float, x: float, y_start: float, y_end: float, material: str, side: str) -> None:
         self._flanges.append([thickness, width, x, y_start, y_end, material, side])
     
-    def add_support(self, elevation=None, x_start=None, x_end=None):
+    def add_support(self, elevation: float | None = None, x_start: float | None = None, x_end: float | None = None) -> None:
         if elevation is None: elevation = 0
         if x_start is None: x_start = 0
         if x_end is None: x_end = self._L
         self._supports.append([elevation, x_start, x_end])
         
-    def add_story(self, story_name, elevation, x_start=None, x_end=None):
+    def add_story(self, story_name: str, elevation: float, x_start: float | None = None, x_end: float | None = None) -> None:
 
         # Validate input
         if elevation is None: elevation = self._H
@@ -100,13 +107,13 @@ class ShearWall():
         # Add a 100 kip story shear to the model to use when calculating the story's stiffness
         self.add_shear(story_name, 100, case=story_name)
 
-    def add_shear(self, story_name, force, case='Case 1'):
+    def add_shear(self, story_name: str, force: float, case: str = 'Case 1') -> None:
         self._shears.append([story_name, force, case])
     
-    def add_axial(self, story_name, force, case='Case 1'):
+    def add_axial(self, story_name: str, force: float, case: str = 'Case 1') -> None:
         self._axials.append([story_name, force, case])
 
-    def generate(self):
+    def generate(self) -> None:
 
         # Add materials to the model
         for material in self._materials:
@@ -114,8 +121,8 @@ class ShearWall():
             self.model.add_material(name, E, G, nu, rho)
         
         # Identify mesh control points
-        x_control = [0, self._L]
-        y_control = [0, self._H]
+        x_control: List[float] = [0, self._L]
+        y_control: List[float] = [0, self._H]
 
         for material in self._materials:
             x_control.append(material[6])
@@ -123,7 +130,7 @@ class ShearWall():
             y_control.append(material[8])
             y_control.append(material[9])
 
-        z_control = [0]
+        z_control: List[float] = [0]
         for flg in self._flanges:
             if flg[6] == 'NS': z_control.append(flg[1])
             else: z_control.append(-flg[1])
@@ -275,14 +282,14 @@ class ShearWall():
         self._identify_coupling_beams()
 
 
-    def _identify_piers(self):
+    def _identify_piers(self) -> None:
         
         # Reset all piers in the wall
         self.piers = {}
 
         # Create a list of x and y coordinates that represent the edges of the wall
-        x_vals = [0, self._L]
-        y_vals = [0, self._H]
+        x_vals: List[float] = [0, self._L]
+        y_vals: List[float] = [0, self._H]
 
         # Add the edges of the openings to the lists
         for opng in self._openings:
@@ -296,7 +303,7 @@ class ShearWall():
         y_vals = sorted(y_vals)
 
         # Remove duplicate (or near duplicate) values
-        unique_list = []
+        unique_list: List[float] = []
         for i in range(len(x_vals) - 1):
             # Only keep the value at `i` if it's not a duplicate or near duplicate of the next value
             if not isclose(x_vals[i], x_vals[i+1]):
@@ -322,7 +329,7 @@ class ShearWall():
             self.piers['P' + str(i+1)] = Pier('P' + str(i+1), x, y, width, height)
 
         # Divide the strip piers further into rectanglular piers using the top and bottom of each opening as pier boundaries
-        new_piers = {}
+        new_piers: Dict[str, Pier] = {}
         pier_count = 1
         for pier in self.piers.values():
             for i in range(len(y_vals) - 1):
@@ -335,7 +342,7 @@ class ShearWall():
         self.piers = new_piers
 
         # Delete any piers that fall within an opening
-        delete_list = []
+        delete_list: List[str] = []
         for pier in self.piers.values():
            # Check if this pier is inside any of the openings
            for opng in self._openings:
@@ -411,7 +418,7 @@ class ShearWall():
                     break
 
         # Generate a list of new keys in ascending order
-        new_keys = [f'P{i+1}' for i in range(len(self.piers))]
+        new_keys: List[str] = [f'P{i+1}' for i in range(len(self.piers))]
 
         # Replace the old dicionary with one that has updated keys
         self.piers = dict(zip(new_keys, self.piers.values()))
@@ -429,14 +436,14 @@ class ShearWall():
                     and round(Y_avg, 10) <= round (pier.y + pier.height, 10)):
                     pier.plates.append(plate)
     
-    def _identify_coupling_beams(self):
+    def _identify_coupling_beams(self) -> None:
         
         # Reset all coupling beams in the wall
         self.coupling_beams = {}
 
         # Create a list of x and y coordinates that represent the edges of the wall
-        x_vals = [0, self._L]
-        y_vals = [0, self._H]
+        x_vals: List[float] = [0, self._L]
+        y_vals: List[float] = [0, self._H]
 
         # Add the edges of the openings to the lists
         for opng in self._openings:
@@ -450,7 +457,7 @@ class ShearWall():
         y_vals = sorted(y_vals)
 
         # Remove duplicate (or near duplicate) values
-        unique_list = []
+        unique_list: List[float] = []
         for i in range(len(x_vals) - 1):
             # Only keep the value at `i` if it's not a duplicate or near duplicate of the next value
             if not isclose(x_vals[i], x_vals[i+1]):
@@ -476,7 +483,7 @@ class ShearWall():
             self.coupling_beams['B' + str(i+1)] = CouplingBeam('B' + str(i+1), x, y, length, height)
 
         # Divide the strips further into rectanglular beams using the left and right of each opening as beam boundaries
-        new_beams = {}
+        new_beams: Dict[str, CouplingBeam] = {}
         beam_count = 1
         for beam in self.coupling_beams.values():
             for i in range(len(x_vals) - 1):
@@ -489,7 +496,7 @@ class ShearWall():
         self.coupling_beams = new_beams
 
         # Delete any beams that fall within an opening
-        delete_list = []
+        delete_list: List[str] = []
         for beam in self.coupling_beams.values():
            
            # Check if this beam is inside any of the openings
@@ -576,7 +583,7 @@ class ShearWall():
             del self.coupling_beams[beam]
 
         # Generate a list of new keys in ascending order
-        new_keys = [f'B{i + 1}' for i in range(len(self.coupling_beams))]
+        new_keys: List[str] = [f'B{i + 1}' for i in range(len(self.coupling_beams))]
 
         # Replace the old dicionary with one that has updated keys
         self.coupling_beams = dict(zip(new_keys, self.coupling_beams.values()))
@@ -594,7 +601,7 @@ class ShearWall():
                     and round(Y_avg, 10) <= round (beam.y + beam.height, 10)):
                     beam.plates.append(plate)
 
-    def draw_piers(self, show=False):
+    def draw_piers(self, show: bool = False) -> None | matplotlib.figure.Figure:
         
         fig, ax = plt.subplots()
 
@@ -613,7 +620,7 @@ class ShearWall():
         if show == True: plt.show()
         else: return plt
     
-    def draw_coupling_beams(self, show=False):
+    def draw_coupling_beams(self, show: bool = False) -> None | matplotlib.figure.Figure:
         
         fig, ax = plt.subplots()
 
@@ -639,7 +646,7 @@ class ShearWall():
         if show == True: plt.show()
         else: return plt
 
-    def _add_rectangle(self, ax, x, y, w, h, name, color='white'):
+    def _add_rectangle(self, ax: matplotlib.axes.Axes, x: float, y: float, w: float, h: float, name: str, color: str = 'white') -> None:
         """Adds a rectangle to the pyplot
         """
 
@@ -654,7 +661,7 @@ class ShearWall():
         ax.set_xlim(0, max(ax.get_xlim()[1], x + w))
         ax.set_ylim(0, max(ax.get_ylim()[1], y + h))
     
-    def _sort_openings(self):
+    def _sort_openings(self) -> None:
 
         # Sort the openings based on y-coordinates
         n = len(self._openings)
@@ -670,7 +677,7 @@ class ShearWall():
                 if self._openings[j][1] > self._openings[j+1][1]:
                     self._openings[j], self._openings[j+1] = self._openings[j+1], self._openings[j]
 
-    def stiffness(self, story_name):
+    def stiffness(self, story_name: str) -> float:
 
         # TODO: Validate that the specified story exists in the shear wall
 
@@ -701,7 +708,7 @@ class ShearWall():
         # Return the story's stiffness:
         return V/(d_max*12)
 
-    def render(self, color_map='Txy', combo_name='Combo 1'):
+    def render(self, color_map: str = 'Txy', combo_name: str = 'Combo 1') -> None:
         
         from Pynite.Visualization import Renderer
         renderer = Renderer(self.model)
@@ -715,7 +722,7 @@ class ShearWall():
         renderer.labels = False
         renderer.render_model()
     
-    def screenshots(self, combo_name='Combo 1', dir_path='./'):
+    def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './') -> None:
 
         from Pynite.Rendering import Renderer
         
@@ -742,7 +749,7 @@ class ShearWall():
         pier_sketch = self.draw_piers(show=False)
         pier_sketch.savefig(dir_path + '/shear_wall_piers.png', format='png')
 
-    def print_piers(self, combo_name='Combo 1'):
+    def print_piers(self, combo_name: str = 'Combo 1') -> None:
         """Tabulates and prints pier results for the shear wall
         """
 
@@ -763,7 +770,7 @@ class ShearWall():
         print('+-------------------+')
         print(table)
     
-    def print_coupling_beams(self, combo_name='Combo 1'):
+    def print_coupling_beams(self, combo_name: str = 'Combo 1') -> None:
         """Tabulates and prints coupling beam results for the shear wall
         """
 
@@ -787,15 +794,15 @@ class ShearWall():
 #%%
 class Pier():
     
-    def __init__(self, name, x, y, width, height):
-        self.name = name
-        self.x = x  # The location of the left side of the pier
-        self.y = y  # The height of the bottom of the pier
-        self.width = width
-        self.height = height
-        self.plates = []
+    def __init__(self, name: str, x: float, y: float, width: float, height: float) -> None:
+        self.name: str = name
+        self.x: float = x  # The location of the left side of the pier
+        self.y: float = y  # The height of the bottom of the pier
+        self.width: float = width
+        self.height: float = height
+        self.plates: List[Quad3D] = []
     
-    def sum_forces(self, combo_name='Combo 1'):
+    def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
 
         # Initialize the forces in the plate
         P, M, V = 0, 0, 0
@@ -837,15 +844,15 @@ class Pier():
 #%%
 class CouplingBeam():
     
-    def __init__(self, name, x, y, length, height):
-        self.name = name
-        self.x = x  # The location of the left side of the coupling beam
-        self.y = y  # The height to the bottom of the coupling beam
-        self.length = length
-        self.height = height
-        self.plates = []
+    def __init__(self, name: str, x: float, y: float, length: float, height: float) -> None:
+        self.name: str = name
+        self.x: float = x  # The location of the left side of the coupling beam
+        self.y: float = y  # The height to the bottom of the coupling beam
+        self.length: float = length
+        self.height: float = height
+        self.plates: List[Quad3D] = []
     
-    def sum_forces(self, combo_name='Combo 1'):
+    def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
 
         # Initialize plate forces to zero
         P, M, V = 0, 0, 0

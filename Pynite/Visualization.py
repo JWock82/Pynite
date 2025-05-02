@@ -1,4 +1,4 @@
-
+from __future__ import annotations # Allows more recent type hints features
 from json import load
 import warnings
 
@@ -864,7 +864,7 @@ class VisPtLoad():
     Creates a point load for the viewer
     '''
     
-    def __init__(self, position, direction, length, label_text=None, annotation_size=5, color=None):
+    def __init__(self, position, direction, length, label_text: str | None = None, annotation_size=5, color: str | None = None):
         '''
         Constructor.
       
@@ -878,7 +878,7 @@ class VisPtLoad():
           The length of the load arrow.
         tip_length : number
           The height of the arrow head.
-        label_text : string
+        label_text : string | None
           Text that will show up at the tail of the arrow. If set to 'None' no text will be displayed.
         '''
       
