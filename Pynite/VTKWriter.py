@@ -50,10 +50,18 @@ class VTKWriter:
         
         if len(self.model.plates)>0:
             print("[WARNING] Plate export is not supported at this time. If needed, you can substitude them by Quad3D Elements.")
-
+        
         self._write_node_data(path+"_nodes.vtk")
-        self._write_member_data(path+"_members.vtk")
-        self._write_quad_data(path+"_quads.vtk")
+
+        if len(self.model.members)>0:
+            self._write_member_data(path+"_members.vtk")
+        elif self.log:
+            print("- no members detected")
+
+        if len(self.model.quads)>0:
+            self._write_quad_data(path+"_quads.vtk")
+        elif self.log:
+            print("- no quads detected")
 
     def _write_node_data(self, path:str):
         """
@@ -279,16 +287,13 @@ class VTKWriter:
         cleaner.Update()
         ugrid_members = cleaner.GetOutput()
 
-        if len(self.model.members) > 0:
-            member_writer = vtk.vtkUnstructuredGridWriter()
-            member_writer.SetFileName(path)
-            member_writer.SetInputData(ugrid_members)
-            member_writer.Write()
-            self._members_written = True
-            if self.log:
-                print("- members written!")
-        elif self.log:
-            print("- no members detected")
+        member_writer = vtk.vtkUnstructuredGridWriter()
+        member_writer.SetFileName(path)
+        member_writer.SetInputData(ugrid_members)
+        member_writer.Write()
+        self._members_written = True
+        if self.log:
+            print("- members written!")
 
     def _write_quad_data(self, path: str):
         """
@@ -312,15 +317,15 @@ class VTKWriter:
         #   0¯¯¯¯¯4¯¯¯¯¯1
 
         coordinates = {
-            0:(0,0),
-            1:(1,0),
+            0:(-1,-1),
+            1:(1,-1),
             2:(1,1),
-            3:(0,1),
-            4:(0.5,0),
-            5:(1,0.5),
-            6:(0.5,1),
-            7:(0,0.5),
-            8:(0.5,0.5),
+            3:(-1,1),
+            4:(0,-1),
+            5:(1,0),
+            6:(0,1),
+            7:(-1,0),
+            8:(0,0),
         }
         ugrid = vtk.vtkUnstructuredGrid() # this holds all data and gets written to .vtk at the end
         points = vtk.vtkPoints() # this holds all Point data
@@ -343,12 +348,12 @@ class VTKWriter:
                 for vert_id in range(9):
                     # this calculates the normalized coordinates (xi, eta) corresponding to the vertex by first looking up
                     # the natural coordinates in the whole grid and scaling/shifting them to the correct sector
-                    xi  = coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5)
-                    eta = coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5)
+                    xi  = coordinates[vert_id][0] * 0.5 + (i % 2) - 0.5  # Scale and shift xi
+                    eta = coordinates[vert_id][1] * 0.5 + (i // 2) - 0.5 # Scale and shift eta
                     point_coords = self._interpolate_quad_corner_data(i_coords, j_coords, m_coords, n_coords, xi, eta)
 
                     # set the Vertex ID of the subquad to the global ID of the newly created point at the calculated coordinates
-                    subquad.GetPointIds().SetId(vert_id, points.InsertNextPoint(point_coords))
+                    subquad.GetPointIds().SetId(vert_id, points.InsertNextPoint(point_coords)) # type: ignore
                 subquad.SetObjectName(quad.name)
                 # insert the quad into the cell array
                 quads.InsertNextCell(subquad)
@@ -394,8 +399,8 @@ class VTKWriter:
             # go trough every pynite quad
             for quad_name, subquads in quad_references.items():
                 quad = self.model.quads[quad_name]
-                xi_range = np.linspace(0,1,50)
-                eta_range = np.linspace(0,1,50)
+                xi_range = np.linspace(-1,1,50)
+                eta_range = np.linspace(-1,1,50)
                 XI, ETA = np.meshgrid(xi_range,eta_range) # 2D Coordinate Grids
                 T = quad.T()[:3,:3] # transformation matrix of the quad
 
@@ -416,8 +421,8 @@ class VTKWriter:
                 # go through every subquad of the Pynite Quad
                 for i, subquad in enumerate(subquads):
                     # calculate the (eta,xi) coordinates for every vertex in advance
-                    xi  = [coordinates[vert_id][0] * 0.5 + ((i % 2) * 0.5) for vert_id in range(9)]
-                    eta = [coordinates[vert_id][1] * 0.5 + ((i//2)  * 0.5) for vert_id in range(9)]
+                    xi  = [coordinates[vert_id][0] * 0.5 + (i % 2) - 0.5 for vert_id in range(9)]
+                    eta = [coordinates[vert_id][1] * 0.5 + (i // 2) - 0.5 for vert_id in range(9)]
 
                     # Precalculate all vertex results at once to avoid calling the interpolator for every vertex.
                     # This gets the precomputed 2D Grid data from earlier and interpolates its data to the correct position.local -> global
@@ -435,7 +440,7 @@ class VTKWriter:
                         d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi[vert_id], eta[vert_id])
                         # The fetched data now gets inserted into the corresponding data array by the id of the vertex in the
                         # points array
-                        D.InsertTuple3(subquad.GetPointId(vert_id), *d)
+                        D.InsertTuple3(subquad.GetPointId(vert_id), *d) # type: ignore
                         
                         p_membrane = p_membranes[vert_id]
                         p_moment = p_moments[vert_id]
@@ -475,16 +480,13 @@ class VTKWriter:
         ugrid = cleaner.GetOutput()
 
         #### WRITE DATA TO DISK ####
-        if len(self.model.quads) > 0:
-            quads_writer = vtk.vtkUnstructuredGridWriter()
-            quads_writer.SetFileName(path)
-            quads_writer.SetInputData(ugrid)
-            quads_writer.Write()
-            self._quads_written = True
-            if self.log:
-                print("- quads written!")
-        elif self.log:
-            print("- no quads detected")
+        quads_writer = vtk.vtkUnstructuredGridWriter()
+        quads_writer.SetFileName(path)
+        quads_writer.SetInputData(ugrid)
+        quads_writer.Write()
+        self._quads_written = True
+        if self.log:
+            print("- quads written!")
 
     @staticmethod
     def _interpolate_member_data(p1:np.ndarray,p2:np.ndarray, x:float) -> np.ndarray:
@@ -495,18 +497,20 @@ class VTKWriter:
         return x*p1 + (1-x)*p2
 
     @staticmethod
-    def _interpolate_quad_corner_data(i:np.ndarray, j:np.ndarray, m:np.ndarray, n:np.ndarray, xi:float, eta:float) -> Tuple[float,float,float]:
+    def _interpolate_quad_corner_data(i:float|np.ndarray, j:float|np.ndarray, m:float|np.ndarray, n:float|np.ndarray, xi:float, eta:float) -> float|np.ndarray:
         """
         Helper Method to return the linearly interpolated data of a point on the quad, given the natural coordinates
         xi and eta.
         """
-        result = tuple(
-            (1 - xi) * (1 - eta) * i
-            + xi * (1 - eta) * j
-            + xi * eta * m
-            + (1 - xi) * eta * n
-        )
-        return tuple(float(res) for res in result) # type: ignore
+        # Bilinear shape functions for natural coordinates [-1, 1]
+        N1 = 0.25 * (1 - xi) * (1 - eta)  # Shape function for corner i @ (-1, -1)
+        N2 = 0.25 * (1 + xi) * (1 - eta)  # Shape function for corner j @ ( 1, -1)
+        N3 = 0.25 * (1 + xi) * (1 + eta)  # Shape function for corner m @ ( 1,  1)
+        N4 = 0.25 * (1 - xi) * (1 + eta)  # Shape function for corner n @ (-1,  1)
+
+        result_vector = N1 * i + N2 * j + N3 * m + N4 * n
+
+        return result_vector
 
     def open_in_paraview(self):
         """
