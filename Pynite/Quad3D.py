@@ -517,7 +517,7 @@ class Quad3D():
 
     def k_b(self) -> NDArray[float64]:
         '''
-        Returns the local stiffness matrix for bending stresses
+        Returns the local stiffness matrix for bending and shear stresses
         '''
 
         Hb = self.Hb()
@@ -619,7 +619,9 @@ class Quad3D():
         k_exp[[4, 10, 16, 22], :] *= -1
         k_exp[:, [4, 10, 16, 22]] *= -1
 
-        # The way the DKMQ element was derived, the local x and y axes of the element are swapped from Pynite's global definitions of x and y. Swap them to match Pynite.
+        # The way the DKMQ element was derived, the positions relating to x
+        # and y in the element's stiffness matrix are swapped from Pynite's.
+        # Swap them to match Pynite.
         k_exp[[3, 4, 9, 10, 15, 16, 21, 22], :] = k_exp[[4, 3, 10, 9, 16, 15, 22, 21], :]
         k_exp[:, [3, 4, 9, 10, 15, 16, 21, 22]] = k_exp[:, [4, 3, 10, 9, 16, 15, 22, 21]]
 
@@ -1176,4 +1178,3 @@ class Quad3D():
             return np.matmul(dir_cos.T, np.array([Sx,
                                                   Sy,
                                                   [0]]))
-
