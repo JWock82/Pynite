@@ -15,7 +15,7 @@ def test_PCA_7_quad():
     t = 10/12  # Tank wall thickness (ft)
 
     w = 62.5   # Liquid unit weight (pcf)
-    
+
     fc = 4000                    # Concrete compressive strength (psi)
     E = 57000*(fc)**0.5*(12**2)  # Concrete modulus of elasticity (psf)
     nu = 0.25 #0.17              # Poisson's ratio for concrete
@@ -37,7 +37,7 @@ def test_PCA_7_quad():
         p = (H - avg_Y)*w
 
         tank_model.add_quad_surface_pressure(element.name, p)
-    
+
 
     # Add fixed supports to the base
     for node in tank_model.nodes.values():
@@ -67,7 +67,7 @@ def test_PCA_7_quad():
 
     # Find the maximum reaction at the base of the tank
     RMy = max([node.RxnMX['Combo 1'] for node in tank_model.nodes.values()])/mesh_size
-    
+
     # Check that the Pynite calculated values are within 3% of the calculated PCA values.
     assert abs(1 - My_max/My_max_PCA) < 0.03, 'Failed quad cylinder flexure test.'
     assert abs(1 - RMy/My_max_PCA) < 0.03, 'Failed quad cylinder flexure test.'
@@ -80,12 +80,12 @@ def test_PCA_7_quad():
     assert abs(1 - Sx/20000) < 0.03, 'Failed quad cylinder hoop tension test.'
 
     # Render the model
-    # from Pynite.Visualization import Renderer
+    # from Pynite.Rendering import Renderer
     # rndr = Renderer(tank_model)
     # rndr.annotation_size = 0.25
     # rndr.color_map = 'Sx'
     # rndr.render_loads = False
-    # rndr.render_model(interact=True) # interact=False prevents the test from stalling in a headless environment
+    # rndr.render_model()
 
 def test_PCA_7_rect():
     """
