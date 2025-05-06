@@ -1,7 +1,7 @@
 from __future__ import annotations # Allows more recent type hints features
 from json import load
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, List, Any
 
 from IPython.display import Image
 import numpy as np
@@ -47,6 +47,9 @@ class Renderer:
         self._scalar_bar: bool = False
         self._scalar_bar_text_size: int = 24
         self.theme: str = 'default'
+
+        # List to hold user-defined functions to be called after internal update
+        self.post_update_callbacks: List[Callable[[pv.Plotter], None]] = []
 
         self.plotter: pv.Plotter = pv.Plotter()
         self.plotter.set_background('white')  # Setting background color
@@ -308,10 +311,24 @@ class Renderer:
         # Determine whether to show or hide the scalar bar
         # if self._scalar_bar == False:
         #     self.plotter.scalar_bar.VisibilityOff()
-            
+
+        # Execute user-defined post-update callbacks (for customizing self.plotter by the user)
+        if hasattr(self, 'post_update_callbacks') and self.post_update_callbacks:
+            for func in self.post_update_callbacks:
+                if callable(func):
+                    try:
+                        # Pass the plotter instance to the user's function
+                        func(self.plotter)
+                    except Exception as e:
+                        warnings.warn(f"Error executing post-update callback {func.__name__}: {e}")
+                else:
+                    warnings.warn(f"Item in post_update_callbacks is not callable: {func}")
+
         # Reset the camera if requested by the user
         if reset_camera:
             self.plotter.reset_camera()
+
+
     
     def plot_node(self, node: Node3D, color: str = 'grey') -> None:
         """Adds a node to the plotter
