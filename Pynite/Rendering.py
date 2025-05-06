@@ -48,7 +48,10 @@ class Renderer:
         self._scalar_bar_text_size: int = 24
         self.theme: str = 'default'
 
-        # List to hold user-defined functions to be called after internal update
+        # Callback list for post-update customization:
+        # This is added because `self.update()` clears the plotter, removing user self.plotter configurations.
+        # Functions in this list run after Pynite adds actors, allowing further PyVista customizations 
+        # (e.g., grid, axes) before render. Each func in this list must accept a `pyvista.Plotter` argument.
         self.post_update_callbacks: List[Callable[[pv.Plotter], None]] = []
 
         self.plotter: pv.Plotter = pv.Plotter()
@@ -312,7 +315,8 @@ class Renderer:
         # if self._scalar_bar == False:
         #     self.plotter.scalar_bar.VisibilityOff()
 
-        # Execute user-defined post-update callbacks (for customizing self.plotter by the user)
+        # Execute user-defined post-update callbacks.
+        # Allows plotter customization after internal Pynite updates. See __init__.
         if hasattr(self, 'post_update_callbacks') and self.post_update_callbacks:
             for func in self.post_update_callbacks:
                 if callable(func):
@@ -329,7 +333,6 @@ class Renderer:
             self.plotter.reset_camera()
 
 
-    
     def plot_node(self, node: Node3D, color: str = 'grey') -> None:
         """Adds a node to the plotter
 
