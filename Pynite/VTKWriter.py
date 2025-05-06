@@ -353,7 +353,7 @@ class VTKWriter:
                     point_coords = self._interpolate_quad_corner_data(i_coords, j_coords, m_coords, n_coords, xi, eta)
 
                     # set the Vertex ID of the subquad to the global ID of the newly created point at the calculated coordinates
-                    subquad.GetPointIds().SetId(vert_id, points.InsertNextPoint(point_coords))
+                    subquad.GetPointIds().SetId(vert_id, points.InsertNextPoint(point_coords)) # type: ignore
                 subquad.SetObjectName(quad.name)
                 # insert the quad into the cell array
                 quads.InsertNextCell(subquad)
@@ -440,7 +440,7 @@ class VTKWriter:
                         d = self._interpolate_quad_corner_data(di, dj, dm, dn, xi[vert_id], eta[vert_id])
                         # The fetched data now gets inserted into the corresponding data array by the id of the vertex in the
                         # points array
-                        D.InsertTuple3(subquad.GetPointId(vert_id), *d)
+                        D.InsertTuple3(subquad.GetPointId(vert_id), *d) # type: ignore
                         
                         p_membrane = p_membranes[vert_id]
                         p_moment = p_moments[vert_id]
