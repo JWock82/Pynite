@@ -6,7 +6,7 @@ Created on Thu Nov  2 18:04:56 2017
 """
 from __future__ import annotations # Allows more recent type hints features
 # %%      
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 class Node3D():
     """
@@ -15,8 +15,8 @@ class Node3D():
     
     def __init__(self, name: str, X: float, Y: float, Z: float):
         
-        self.name = name    # A unique name for the node assigned by the user
-        self.ID = None      # A unique index number for the node assigned by the program
+        self.name = name                 # A unique name for the node assigned by the user
+        self.ID: Optional[int] = None    # A unique index number for the node assigned by the program
         
         self.X = X          # Global X coordinate
         self.Y = Y          # Global Y coordinate
