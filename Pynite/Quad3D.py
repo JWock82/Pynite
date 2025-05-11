@@ -529,10 +529,10 @@ class Quad3D():
         gp = 1/3**0.5
 
         # Get the determinant of the Jacobian matrix for each gauss point. Doing this now will save us from doing it twice below.
-        J1 = det(self.J(-gp, -gp))
-        J2 = det(self.J( gp, -gp))
-        J3 = det(self.J( gp,  gp))
-        J4 = det(self.J(-gp,  gp))
+        det_J1 = det(self.J(-gp, -gp))
+        det_J2 = det(self.J( gp, -gp))
+        det_J3 = det(self.J( gp,  gp))
+        det_J4 = det(self.J(-gp,  gp))
 
         # Get the bending [B_b] matrices for each gauss point
         B1 = self.B_b(-gp, -gp)
@@ -542,10 +542,10 @@ class Quad3D():
 
         # Create the stiffness matrix with bending stiffness terms
         # See 2, Equation 5.94
-        k = ((B1.T @ Hb @ B1)*J1 +
-             (B2.T @ Hb @ B2)*J2 +
-             (B3.T @ Hb @ B3)*J3 +
-             (B4.T @ Hb @ B4)*J4)
+        k = ((B1.T @ Hb @ B1)*det_J1 +
+             (B2.T @ Hb @ B2)*det_J2 +
+             (B3.T @ Hb @ B3)*det_J3 +
+             (B4.T @ Hb @ B4)*det_J4)
 
         # Get the shear [B_s] matrices for each gauss point
         B1 = self.B_s(-gp, -gp)
@@ -554,10 +554,10 @@ class Quad3D():
         B4 = self.B_s(-gp,  gp)
 
         # Add shear stiffness terms to the stiffness matrix
-        k += ((B1.T @ Hs @ B1)*J1 +
-              (B2.T @ Hs @ B2)*J2 +
-              (B3.T @ Hs @ B3)*J3 +
-              (B4.T @ Hs @ B4)*J4)
+        k += ((B1.T @ Hs @ B1)*det_J1 +
+              (B2.T @ Hs @ B2)*det_J2 +
+              (B3.T @ Hs @ B3)*det_J3 +
+              (B4.T @ Hs @ B4)*det_J4)
         
         # Following Bathe's recommendation for the drilling degree of freedom
         # from Example 4.19 in "Finite Element Procedures, 2nd Ed.", calculate
