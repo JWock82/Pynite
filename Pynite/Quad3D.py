@@ -3,13 +3,15 @@
 # 2. "Finite Element Procedures, 2nd Edition", Klaus-Jurgen Bathe
 # 3. "A First Course in the Finite Element Method, 4th Edition", Daryl L. Logan
 # 4. "Finite Element Analysis Fundamentals", Richard H. Gallagher
+
 from __future__ import annotations # Allows more recent type hints features
-from math import sin, cos
 from typing import TYPE_CHECKING, Literal
 
+from math import sin, cos
 import numpy as np
 from numpy import add
 from numpy.linalg import inv, det, norm
+import warnings
 
 if TYPE_CHECKING:
     from typing import List, Tuple, Optional
@@ -647,11 +649,20 @@ class Quad3D():
         B3 = self.B_m( gp,  gp)
         B4 = self.B_m(-gp,  gp)
 
+        # Calculate the determinant of the Jacobian matrix at each gauss point
+        det_J1 = det(self.J(-gp, -gp))
+        det_J2 = det(self.J(gp, -gp))
+        det_J3 = det(self.J(gp, gp))
+        det_J4 = det(self.J(-gp, gp))
+
+        if det_J1 <= 0 or det_J2 <= 0 or det_J3 <= 0 or det_J4 <= 0:
+            warnings.warn(f'The Jacobian matrix for quad element {self.name} is less than or equal to zero, indicating the element is invalid or badly distorted.')
+
         # See reference 2 at the bottom of page 353, and reference 2 page 466
-        k = t*((B1.T @ Cm @ B1)*det(self.J(-gp, -gp)) +
-               (B2.T @ Cm @ B2)*det(self.J( gp, -gp)) +
-               (B3.T @ Cm @ B3)*det(self.J( gp,  gp)) +
-               (B4.T @ Cm @ B4)*det(self.J(-gp,  gp)))
+        k = t*((B1.T @ Cm @ B1)*det_J1 +
+               (B2.T @ Cm @ B2)*det_J2 +
+               (B3.T @ Cm @ B3)*det_J3 +
+               (B4.T @ Cm @ B4)*det_J4)
         
         k_exp = np.zeros((24, 24))
 
