@@ -1230,7 +1230,19 @@ class FEModel3D():
         :type factor: float
         :param case: The load case to apply the self-weight to. Defaults to 'Case 1'
         :type case: str, optional
+        :raises ValueError: IF a local direction ('Fx', 'Fy', or 'Fz') is used instead of a global direction.
         """
+
+        # Validate that a global direction was provided, not a local direction
+        if global_direction in ('Fx', 'Fy', 'Fz'):
+            raise ValueError(
+                f"Local direction '{global_direction}' is not allowed for self-weight.  \
+                    Use global directions 'FX', 'FY', or 'FZ' instead."
+            )
+
+        # Validate the value of direction
+        if global_direction not in ('FX', 'FY', 'FZ'):
+            raise ValueError(f"Direction must be 'FX', 'FY', or 'FZ'. {global_direction} was given.")
 
         # Step through each member in the model
         for member in self.members.values():

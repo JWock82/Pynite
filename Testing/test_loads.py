@@ -40,6 +40,32 @@ class TestLoads(unittest.TestCase):
             self.assertAlmostEqual(member.DistLoads[0][1], 0.034, 4)
             self.assertAlmostEqual(member.DistLoads[0][2], 0.034, 4)
 
+    def test_member_self_weight_local_direction(self):
+        '''
+        Tests that a ValueError is raised when local directions (Fx, Fy, Fz)
+        are used for member self-weight.
+        '''
+        model = FEModel3D()
+        model.add_node('N1', 0, 0, 0)
+        model.add_node('N2', 10, 0, 0)
+        model.add_material('Steel', 29000*144, 11200*144, 0.3, 0.490)
+        model.add_section('Section', 10/12**2, 23.3/12**4, 340/12**4, 0.569/12**4)
+        model.add_member('M1', 'N1', 'N2', 'Steel', 'Section')
+
+        # Test local directions
+        local_directions = ['Fx', 'Fy', 'Fz']
+        for direction in local_directions:
+            with self.assertRaises(ValueError, msg=f"Local direction '{direction}' should raise ValueError"):
+                model.add_member_self_weight(global_direction=direction, factor=1, case='D')
+
+        # Global directions should not raise a ValueError
+        global_directions = ['FX', 'FY', 'FZ']
+        for direction in global_directions:
+            try:
+                model.add_member_self_weight(global_direction=direction, factor=1, case='D')
+            except ValueError:
+                self.fail(f"add_member_self_weight raised ValueError unexpectedly with global direction {direction}.")
+
     def test_axial_distributed_load(self):
 
         # Units N e m
