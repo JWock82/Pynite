@@ -2240,46 +2240,38 @@ class Member3D():
                                 SegmentsY[i].V1 += (f1[2] + f2[2])/2*(x2 - x1)
                                 SegmentsY[i].M1 += (x1 - x2)*(2*f1[2]*x1 - 3*f1[2]*x + f1[2]*x2 + f2[2]*x1 - 3*f2[2]*x + 2*f2[2]*x2)/6
                             
-    def _extract_vector_results(self, segments: List, x_array: NDArray[float64], 
-                          result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], 
-                          P_delta: bool = False) -> NDArray[float64]:
+    def _extract_vector_results(self, segments: List, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
         """Extract results from the given segments using vectorised numpy functions"""
 
         # Initialize variables
         segment_results = []
-        last_index = 0
+
+        # Since segment boundaries represent mathematical discontinuities, there are two possible y-values at the segment boundaries. The `x_array` needs to be expanded to account for duplicate y-values at one x-value. `x_array2` will be used to expand `x_array` and capture the duplicates.
+        x_array2 = []
         
         # Step through each segment in the member
         for i, segment in enumerate(segments):
-
-            # Determine if the current index `i` is at the end of the member
-            if i == len(segments) - 1:
-                index2 = len(x_array)
-            else:
-                try:
-                    index2 = where(x_array > segment.x2)[0][0]
-                except IndexError:
-                    index2 = len(x_array)
             
-            if last_index == index2: continue
-
-            thisseg_x_array = x_array[last_index:index2]
+            # Get all the locations that lie within the current segment from `x_array`
+            segment_x_array = array([x for x in x_array if x >= segment.x1 and x <= segment.x2])
             
+            # Get the applicable results at each of the locations in `segment_x_array`
             if result_name == "moment":
-                thisseg_y_array = segment.moment(thisseg_x_array - segment.x1, P_delta)
+                segment_y_array = segment.moment(segment_x_array - segment.x1, P_delta)
             elif result_name == "shear":
-                thisseg_y_array = segment.Shear(thisseg_x_array - segment.x1)
+                segment_y_array = segment.Shear(segment_x_array - segment.x1)
             elif result_name == "axial":
-                thisseg_y_array = segment.axial(thisseg_x_array - segment.x1)
+                segment_y_array = segment.axial(segment_x_array - segment.x1)
             elif result_name == "torque":
-                thisseg_y_array = segment.Torsion(thisseg_x_array - segment.x1)
+                segment_y_array = segment.Torsion(segment_x_array - segment.x1)
             elif result_name == "deflection":
-                thisseg_y_array = segment.deflection(thisseg_x_array - segment.x1, P_delta)
+                segment_y_array = segment.deflection(segment_x_array - segment.x1, P_delta)
             elif result_name == "axial_deflection":
-                thisseg_y_array = segment.AxialDeflection(thisseg_x_array - segment.x1)
+                segment_y_array = segment.AxialDeflection(segment_x_array - segment.x1)
 
-            segment_results.append(thisseg_y_array)
+            # Append the segment's results to the overall results
+            x_array2.append(segment_x_array)
+            segment_results.append(segment_y_array)
 
-            last_index = index2
-
-        return vstack((x_array, hstack(segment_results)))
+        # Return the results a numpy array, with the x-values in the first row and the y-values in the second row
+        return vstack((x_array2, hstack(segment_results)))
