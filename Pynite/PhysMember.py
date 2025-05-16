@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from Pynite.FEModel3D import FEModel3D
     import numpy.typing as npt
 
-from numpy import array, dot, cross
+from numpy import array, dot, cross, linspace
 from numpy.linalg import norm
 from math import isclose, acos
 
@@ -259,6 +259,74 @@ class PhysMember(Member3D):
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
 
+    def shear_array(self, Direction: Literal['Fy', 'Fz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+        """
+        Returns the array of the shear in the physical member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction to plot the shear for. Must be one of the following:
+                'Fy' = Shear acting on the local y-axis.
+                'Fz' = Shear acting on the local z-axis.
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order
+        """
+
+        # `v_array2` will be used to store the shear values for the overall member
+        v_array2 = []
+
+        # Create an array of locations along the physical member to obtain results at
+        L = self.L()
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array < 0) or any(x_array > L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+        
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Segment the submember into segments with mathematically continuous loads if not already done
+            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+                submember._segment_member(combo_name)
+                submember._solved_combo = self.model.load_combos[combo_name]
+
+            # Check if this is the last submember
+            if isclose(x_o + submember.L(), self.L()):
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+            
+            # Not the last submember
+            else:
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+
+            # Check which axis is of interest
+            if Direction == 'Fz':
+                v_array = self._extract_vector_results(self.SegmentsY, x_subm_array, 'shear')
+            elif Direction == 'Fy':
+                v_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'shear')
+            else:
+                raise ValueError(f"Direction must be 'Fy' or 'Fz'. {Direction} was given.")
+
+            # Add the submember shear values to the overall member shear values in `v_array2`
+            v_array2.extend(v_array)
+
+            # Get the starting position of the next submember
+            x_o += submember.L()
+        
+        # Return the results
+        return v_array2
+        
     def moment(self, Direction: Literal['My', 'Mz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the moment at a point along the member's length
@@ -365,6 +433,74 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
+        
+    def moment_array(self, Direction: Literal['My', 'Mz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+        """
+        Returns the array of the moment in the physical member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction to plot the moment for. Must be one of the following:
+                'My' = Moment acting about the local y-axis (usually the weak-axis).
+                'Mz' = Moment acting about the local z-axis (usually the strong-axis).
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated.
+            Values must be provided in local member coordinates (between 0 and L) and be in ascending order
+        """
+
+        # `m_array2` will be used to store the moment values for the overall member
+        m_array2 = []
+
+        # Create an array of locations along the physical member to obtain results at
+        L = self.L()
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array < 0) or any(x_array > L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+        
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Segment the submember into segments with mathematically continuous loads if not already done
+            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+                submember._segment_member(combo_name)
+                submember._solved_combo = self.model.load_combos[combo_name]
+
+            # Check if this is the last submember
+            if isclose(x_o + submember.L(), self.L()):
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+            
+            # Not the last submember
+            else:
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+
+            # Check which axis is of interest
+            if Direction == 'My':
+                m_array = self._extract_vector_results(self.SegmentsY, x_subm_array, 'moment')
+            elif Direction == 'Mz':
+                m_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'moment')
+            else:
+                raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+
+            # Add the submember moment values to the overall member shear values in `m_array2`
+            m_array2.extend(m_array)
+
+            # Get the starting position of the next submember
+            x_o += submember.L()
+        
+        # Return the results
+        return m_array2
     
     def torque(self, x: float, combo_name: str = 'Combo 1') -> float:
         """
@@ -447,6 +583,64 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
+    
+    def torque_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+        """
+        Returns the array of the torque in the physical member.
+        
+        Parameters
+        ----------
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated. Values must be provided in local member coordinates (between 0 and L) and be in ascending order
+        """
+
+        # `t_array2` will be used to store the torque values for the overall member
+        t_array2 = []
+
+        # Create an array of locations along the physical member to obtain results at
+        L = self.L()
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array < 0) or any(x_array > L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+        
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Segment the submember into segments with mathematically continuous loads if not already done
+            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+                submember._segment_member(combo_name)
+                submember._solved_combo = self.model.load_combos[combo_name]
+
+            # Check if this is the last submember
+            if isclose(x_o + submember.L(), self.L()):
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+            
+            # Not the last submember
+            else:
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+
+            # Check which axis is of interest
+            t_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'torque')
+
+            # Add the submember moment values to the overall member shear values in `t_array2`
+            t_array2.extend(t_array)
+
+            # Get the starting position of the next submember
+            x_o += submember.L()
+        
+        # Return the results
+        return t_array2
 
     def axial(self, x: float, combo_name: str = 'Combo 1') -> float:
         """
@@ -521,7 +715,65 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
+    
+    def axial_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+        """
+        Returns the array of the axial force in the physical member.
+        
+        Parameters
+        ----------
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated. Values must be provided in local member coordinates (between 0 and L) and be in ascending order
+        """
 
+        # `a_array2` will be used to store the axial force values for the overall member
+        a_array2 = []
+
+        # Create an array of locations along the physical member to obtain results at
+        L = self.L()
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array < 0) or any(x_array > L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+        
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Segment the submember into segments with mathematically continuous loads if not already done
+            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+                submember._segment_member(combo_name)
+                submember._solved_combo = self.model.load_combos[combo_name]
+
+            # Check if this is the last submember
+            if isclose(x_o + submember.L(), self.L()):
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+            
+            # Not the last submember
+            else:
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+
+            # Check which axis is of interest
+            a_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'axial')
+
+            # Add the submember axial force values to the overall member shear values in `a_array2`
+            a_array2.extend(a_array)
+
+            # Get the starting position of the next submember
+            x_o += submember.L()
+        
+        # Return the results
+        return a_array2
+    
     def deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the deflection at a point along the member's length.
@@ -644,7 +896,74 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
+    
+    def deflection_array(self, Direction: Literal['dy', 'dz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+        """
+        Returns the array of the deflection in the physical member for the given direction
+        
+        Parameters
+        ----------
+        Direction : string
+            The direction to plot the deflection for. Must be one of the following:
+                'dy' = Deflection in the local y-direction (usually the strong-axis).
+                'dz' = Deflection in the local z-direction (usually the weak-axis).
+        n_points: int
+            The number of points in the array to generate over the full length of the member.
+        combo_name : string
+            The name of the load combination to get the results for (not the load combination itself).
+        x_array : array = None
+            A custom array of x values that may be provided by the user, otherwise an array is generated. Values must be provided in local member coordinates (between 0 and L) and be in ascending order
+        """
 
+        # `d_array2` will be used to store the deflection values for the overall member
+        d_array2 = []
+
+        # Create an array of locations along the physical member to obtain results at
+        L = self.L()
+        if x_array is None:
+            x_array = linspace(0, L, n_points)
+        else:
+            if any(x_array < 0) or any(x_array > L):
+                raise ValueError(f"All x values must be in the range 0 to {L}")
+        
+        # Step through each submember in the physical member
+        x_o = 0
+        for submember in self.sub_members.values():
+
+            # Segment the submember into segments with mathematically continuous loads if not already done
+            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+                submember._segment_member(combo_name)
+                submember._solved_combo = self.model.load_combos[combo_name]
+
+            # Check if this is the last submember
+            if isclose(x_o + submember.L(), self.L()):
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+            
+            # Not the last submember
+            else:
+
+                # Find any points from `x_array` that lie along this submember
+                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+
+            # Check which axis is of interest
+            if Direction == 'dy':
+                d_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'deflection')
+            elif Direction == 'dz':
+                d_array = self._extract_vector_results(self.SegmentsY, x_subm_array, 'deflection')
+            else:
+                raise ValueError(f"Direction must be 'dy' or 'dz'. {Direction} was given.")
+
+            # Add the submember moment values to the overall member deflection values in `d_array2`
+            d_array2.extend(d_array)
+
+            # Get the starting position of the next submember
+            x_o += submember.L()
+        
+        # Return the results
+        return d_array2
+    
     def find_member(self, x: float) -> Tuple[Member3D, float]:
         """
         Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's local coordinate system.
