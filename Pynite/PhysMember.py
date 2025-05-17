@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from Pynite.Node3D import Node3D
     from Pynite.FEModel3D import FEModel3D
     import numpy.typing as npt
+    from numpy import float64
     from numpy.typing import NDArray
 
 from numpy import array, dot, linspace
