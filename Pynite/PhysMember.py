@@ -3,11 +3,13 @@ from typing import Dict, List, Literal, Tuple, TYPE_CHECKING
 from Pynite.Member3D import Member3D
 
 if TYPE_CHECKING:
+
     from Pynite.Node3D import Node3D
     from Pynite.FEModel3D import FEModel3D
     import numpy.typing as npt
+    from numpy.typing import NDArray
 
-from numpy import array, dot, cross, linspace
+from numpy import array, dot, linspace
 from numpy.linalg import norm
 from math import isclose, acos
 

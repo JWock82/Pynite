@@ -10,6 +10,7 @@ from Pynite.BeamSegZ import BeamSegZ
 from Pynite.BeamSegY import BeamSegY
 
 if TYPE_CHECKING:
+    
     from typing import Dict, List, Tuple, Optional, Any, Literal
 
     from numpy import float64
