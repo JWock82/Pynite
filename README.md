@@ -54,6 +54,9 @@ Whether you just need help getting started with Pynite, or are looking to build 
 * Documentation is a work in progress and can be found on readthedocs here: https://pynite.readthedocs.io/en/latest/index.html.
 * If you're looking for more direct guidance on using Pynite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com to discuss options.
 
+# Sponsors
+* A special thanks to @edson-gusmoes for sponsoring `Pynite`!
+
 # Example Projects
 Here's a list of projects that use Pynite:
 
@@ -63,10 +66,12 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.1.0 (in progress)
+v1.1.0
 * Added a `VTKWriter` class to allow for easy exporting to `Paraview`.
 * Improved type hints for a simpler user experience.
 * Fixed a bug in the pdf reports. Load combos were not being sent to the report template, which was preventing any load results from being displayed in the report.
+* Simplified code for vector extraction of member segment results, and improved results reporting at load discontinuities along beams. Two results values are possible at mathematical discontinues, and only one was being reported. Now both are reported. This issue was only noticable if array results along a member were requested at large intervals rather than small intervals.
+* Bug fix for array results format for physical members. This only affected users who used the array results functions.
 
 v1.0.1
 * Changes to testing code coverage less than 2% no longer trigger build failure.
