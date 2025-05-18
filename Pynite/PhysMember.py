@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from numpy import float64
     from numpy.typing import NDArray
 
-from numpy import array, dot, linspace
+from numpy import array, dot, linspace, hstack, empty
 from numpy.linalg import norm
 from math import isclose, acos
 
@@ -282,7 +282,7 @@ class PhysMember(Member3D):
         """
 
         # `v_array2` will be used to store the shear values for the overall member
-        v_array2 = []
+        v_array2 = empty((2, 1))
 
         # Create an array of locations along the physical member to obtain results at
         L = self.L()
@@ -294,7 +294,7 @@ class PhysMember(Member3D):
         
         # Step through each submember in the physical member
         x_o = 0
-        for submember in self.sub_members.values():
+        for i, submember in enumerate(self.sub_members.values()):
 
             # Segment the submember into segments with mathematically continuous loads if not already done
             if submember._solved_combo is None or combo_name != submember._solved_combo.name:
@@ -315,14 +315,20 @@ class PhysMember(Member3D):
 
             # Check which axis is of interest
             if Direction == 'Fz':
-                v_array = self._extract_vector_results(self.SegmentsY, x_subm_array, 'shear')
+                v_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'shear')
             elif Direction == 'Fy':
-                v_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'shear')
+                v_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'shear')
             else:
                 raise ValueError(f"Direction must be 'Fy' or 'Fz'. {Direction} was given.")
 
+            # Adjust from the submember's coordinate system to the physical member's coordinate system
+            v_array[0] = [x_o + x for x in v_array[0]]
+
             # Add the submember shear values to the overall member shear values in `v_array2`
-            v_array2.extend(v_array)
+            if i != 0:
+                v_array2 = hstack((v_array2, v_array))
+            else:
+                v_array2 = v_array
 
             # Get the starting position of the next submember
             x_o += submember.L()
@@ -457,7 +463,7 @@ class PhysMember(Member3D):
         """
 
         # `m_array2` will be used to store the moment values for the overall member
-        m_array2 = []
+        m_array2 = empty((2, 1))
 
         # Create an array of locations along the physical member to obtain results at
         L = self.L()
@@ -469,7 +475,7 @@ class PhysMember(Member3D):
         
         # Step through each submember in the physical member
         x_o = 0
-        for submember in self.sub_members.values():
+        for i, submember in enumerate(self.sub_members.values()):
 
             # Segment the submember into segments with mathematically continuous loads if not already done
             if submember._solved_combo is None or combo_name != submember._solved_combo.name:
@@ -490,14 +496,20 @@ class PhysMember(Member3D):
 
             # Check which axis is of interest
             if Direction == 'My':
-                m_array = self._extract_vector_results(self.SegmentsY, x_subm_array, 'moment')
+                m_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'moment')
             elif Direction == 'Mz':
-                m_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'moment')
+                m_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'moment')
             else:
                 raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
 
+            # Adjust from the submember's coordinate system to the physical member's coordinate system
+            m_array[0] = [x_o + x for x in m_array[0]]
+
             # Add the submember moment values to the overall member shear values in `m_array2`
-            m_array2.extend(m_array)
+            if i != 0:
+                m_array2 = hstack((m_array2, m_array))
+            else:
+                m_array2 = m_array
 
             # Get the starting position of the next submember
             x_o += submember.L()
@@ -602,7 +614,7 @@ class PhysMember(Member3D):
         """
 
         # `t_array2` will be used to store the torque values for the overall member
-        t_array2 = []
+        t_array2 = empty((2, 1))
 
         # Create an array of locations along the physical member to obtain results at
         L = self.L()
@@ -614,7 +626,7 @@ class PhysMember(Member3D):
         
         # Step through each submember in the physical member
         x_o = 0
-        for submember in self.sub_members.values():
+        for i, submember in enumerate(self.sub_members.values()):
 
             # Segment the submember into segments with mathematically continuous loads if not already done
             if submember._solved_combo is None or combo_name != submember._solved_combo.name:
@@ -634,10 +646,16 @@ class PhysMember(Member3D):
                 x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
 
             # Check which axis is of interest
-            t_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'torque')
+            t_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'torque')
 
-            # Add the submember moment values to the overall member shear values in `t_array2`
-            t_array2.extend(t_array)
+            # Adjust from the submember's coordinate system to the physical member's coordinate system
+            t_array[0] = [x_o + x for x in t_array[0]]
+
+            # Add the submember torque values to the overall member shear values in `t_array2`
+            if i != 0:
+                t_array2 = hstack((t_array2, t_array))
+            else:
+                t_array2 = t_array
 
             # Get the starting position of the next submember
             x_o += submember.L()
@@ -734,7 +752,7 @@ class PhysMember(Member3D):
         """
 
         # `a_array2` will be used to store the axial force values for the overall member
-        a_array2 = []
+        a_array2 = empty((2, 1))
 
         # Create an array of locations along the physical member to obtain results at
         L = self.L()
@@ -746,7 +764,7 @@ class PhysMember(Member3D):
         
         # Step through each submember in the physical member
         x_o = 0
-        for submember in self.sub_members.values():
+        for i, submember in enumerate(self.sub_members.values()):
 
             # Segment the submember into segments with mathematically continuous loads if not already done
             if submember._solved_combo is None or combo_name != submember._solved_combo.name:
@@ -766,10 +784,16 @@ class PhysMember(Member3D):
                 x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
 
             # Check which axis is of interest
-            a_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'axial')
+            a_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'axial')
 
-            # Add the submember axial force values to the overall member shear values in `a_array2`
-            a_array2.extend(a_array)
+            # Adjust from the submember's coordinate system to the physical member's coordinate system
+            a_array[0] = [x_o + x for x in a_array[0]]
+
+            # Add the submember axial values to the overall member shear values in `a_array2`
+            if i != 0:
+                a_array2 = hstack((a_array2, a_array))
+            else:
+                a_array2 = a_array
 
             # Get the starting position of the next submember
             x_o += submember.L()
@@ -919,7 +943,7 @@ class PhysMember(Member3D):
         """
 
         # `d_array2` will be used to store the deflection values for the overall member
-        d_array2 = []
+        d_array2 = empty((2, 1))
 
         # Create an array of locations along the physical member to obtain results at
         L = self.L()
@@ -931,7 +955,7 @@ class PhysMember(Member3D):
         
         # Step through each submember in the physical member
         x_o = 0
-        for submember in self.sub_members.values():
+        for i, submember in enumerate(self.sub_members.values()):
 
             # Segment the submember into segments with mathematically continuous loads if not already done
             if submember._solved_combo is None or combo_name != submember._solved_combo.name:
@@ -952,14 +976,20 @@ class PhysMember(Member3D):
 
             # Check which axis is of interest
             if Direction == 'dy':
-                d_array = self._extract_vector_results(self.SegmentsZ, x_subm_array, 'deflection')
+                d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'deflection')
             elif Direction == 'dz':
-                d_array = self._extract_vector_results(self.SegmentsY, x_subm_array, 'deflection')
+                d_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'deflection')
             else:
                 raise ValueError(f"Direction must be 'dy' or 'dz'. {Direction} was given.")
 
-            # Add the submember moment values to the overall member deflection values in `d_array2`
-            d_array2.extend(d_array)
+            # Adjust from the submember's coordinate system to the physical member's coordinate system
+            d_array[0] = [x_o + x for x in d_array[0]]
+
+            # Add the submember deflection values to the overall member shear values in `d_array2`
+            if i != 0:
+                d_array2 = hstack((d_array2, d_array))
+            else:
+                d_array2 = d_array
 
             # Get the starting position of the next submember
             x_o += submember.L()

@@ -28,8 +28,8 @@ def create_model():
 def test_continuous_beam_moments():
     model = create_model()
     member = model.members['M1']
-    assert math.isclose(member.max_moment("Mz", "1.0D"), 18000.0)
-    assert math.isclose(max(member.moment_array("Mz", 10000, "1.0D")[1]), 18000.00)
+    assert math.isclose(member.max_moment('Mz', '1.0D'), 18000.0), 'Incorrect max moment during continuous beam test'
+    assert math.isclose(max(member.moment_array('Mz', 15, '1.0D')[1]), 18000.00), 'Incorrect max moment in moment array during continuous beam test.'
 
 if __name__ == '__main__':
     test_continuous_beam_moments()   
