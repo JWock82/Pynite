@@ -68,6 +68,7 @@ Here's a list of projects that use Pynite:
 # What's New?
 v1.1.1
 * Bug fix for member array results. Exceptions were being thrown in some cases.
+* Simnplified code for array functions by removing redundant algorithms.
 
 v1.1.0
 * Added a `VTKWriter` class to allow for easy exporting to `Paraview`.
