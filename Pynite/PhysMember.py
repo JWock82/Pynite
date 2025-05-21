@@ -241,20 +241,11 @@ class PhysMember(Member3D):
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
-        # Initialize the shear force diagram coordinates for each submember
-        x, V = [], []
 
-        # Step through each submember in the physical member
-        x_o = 0
-        for submember in self.sub_members.values():
-
-            # Get moment result for the sub-member
-            x_submember, V_submember = submember.shear_array(Direction, n_points, combo_name)
-            x_submember = [x_o + x for x in x_submember]
-            x.extend(x_submember)
-            V.extend(V_submember)
-            x_o += submember.L()
+        # Generate the shear diagram
+        V_array = self.shear_array(Direction, n_points, combo_name)
+        x = V_array[0]
+        V = V_array[1]
 
         PhysMember.__plt.plot(x, V)
         PhysMember.__plt.ylabel('Shear')
@@ -423,19 +414,10 @@ class PhysMember(Member3D):
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        # Generate the moment diagram coordinates for each submember
-        x, M = [], []
-
-        # Step through each submember in the physical member
-        x_o = 0
-        for submember in self.sub_members.values():
-
-            # Get moment result for the sub-member
-            x_submember, M_submember = submember.moment_array(Direction, n_points, combo_name)
-            x_submember = [x_o + x for x in x_submember]
-            x.extend(x_submember)
-            M.extend(M_submember)
-            x_o += submember.L()
+        # Generate the moment diagram
+        M_array = self.moment_array(Direction, n_points, combo_name)
+        x = M_array[0]
+        M = M_array[1]
 
         PhysMember.__plt.plot(x, M)
         PhysMember.__plt.ylabel('Moment')
@@ -579,19 +561,10 @@ class PhysMember(Member3D):
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        # Initialize the torque diagram coordinates for each submember
-        x, T = [], []
-
-        # Step through each submember in the physical member
-        x_o = 0
-        for submember in self.sub_members.values():
-
-            # Get moment result for the sub-member
-            x_submember, T_submember = submember.torque_array(n_points, combo_name)
-            x_submember = [x_o + x for x in x_submember]
-            x.extend(x_submember)
-            T.extend(T_submember)
-            x_o += submember.L()
+        # Generate the torque diagram
+        T_array = self.torque_array(n_points, combo_name)
+        x = T_array[0]
+        T = T_array[1]
 
         PhysMember.__plt.plot(x, T)
         PhysMember.__plt.ylabel('Torque')
@@ -717,19 +690,10 @@ class PhysMember(Member3D):
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        # Initialize the axial force diagram coordinates for each submember
-        x, P = [], []
-
-        # Step through each submember in the physical member
-        x_o = 0
-        for submember in self.sub_members.values():
-
-            # Get moment result for the sub-member
-            x_submember, P_submember = submember.axial_array(n_points, combo_name)
-            x_submember = [x_o + x for x in x_submember]
-            x.extend(x_submember)
-            P.extend(P_submember)
-            x_o += submember.L()
+        # Generate the axial force array
+        P_array = self.axial_array(n_points, combo_name)
+        x = P_array[0]
+        P = P_array[1]
 
         PhysMember.__plt.plot(x, P)
         PhysMember.__plt.ylabel('Axial Force')
@@ -904,19 +868,9 @@ class PhysMember(Member3D):
         ax.axhline(0, color='black', lw=1)
         ax.grid()
         
-        # Initialize the deflection diagram coordinates for each submember
-        x, d = [], []
-
-        # Step through each submember in the physical member
-        x_o = 0
-        for submember in self.sub_members.values():
-
-            # Get moment result for the sub-member
-            x_submember, d_submember = submember.deflection_array(Direction, n_points, combo_name)
-            x_submember = [x_o + x for x in x_submember]
-            x.extend(x_submember)
-            d.extend(d_submember)
-            x_o += submember.L()
+        d_array = self.deflection_array(Direction, n_points, combo_name)
+        x = d_array[0]
+        d = d_array[1]
 
         PhysMember.__plt.plot(x, d)
         PhysMember.__plt.ylabel('Deflection')
