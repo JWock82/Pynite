@@ -66,6 +66,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.1.1
+* Bug fix for member array results. Exceptions were being thrown in some cases.
+
 v1.1.0
 * Added a `VTKWriter` class to allow for easy exporting to `Paraview`.
 * Improved type hints for a simpler user experience.
@@ -114,6 +117,3 @@ v0.0.93
 
 v0.0.92
 * Added member self-weight calculations via `FEModel3D.add_member_self_weight()`. This only applies to members. This feature does not calculate self-weight for plate and quad elements.
-
-v0.0.89-0.0.91
-* Migrating visualizaton code from VTK to PyVista. PyVista greatly simplifies the rendering code, and simplifies adding new features to the renderings. This feature is only partially complete and partially functional.
