@@ -2271,8 +2271,8 @@ class Member3D():
                 segment_y_array = segment.AxialDeflection(segment_x_array - segment.x1)
 
             # Append the segment's results to the overall results
-            x_array2.append(segment_x_array)
-            segment_results.append(segment_y_array)
+            x_array2 = hstack((x_array2, segment_x_array))
+            segment_results = hstack((segment_results, segment_y_array))
 
         # Return the results a numpy array, with the x-values in the first row and the y-values in the second row
         return vstack((x_array2, hstack(segment_results)))
