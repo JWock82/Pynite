@@ -1,5 +1,6 @@
 from Pynite import FEModel3D
 import math
+import matplotlib, matplotlib.pyplot as plt
 
 def create_model():
 
@@ -32,12 +33,23 @@ def test_continuous_beam_moments():
     assert math.isclose(max(member.moment_array('Mz', 15, '1.0D')[1]), 18000.00), 'Incorrect max moment in moment array during continuous beam test.'
 
 def test_plots():
+
     model = create_model()
-    model.members['M1'].plot_shear('Fy', '1.0D', 100)
-    model.members['M1'].plot_moment('Mz', '1.0D', 100)
-    model.members['M1'].plot_torque('1.0D', 100)
-    model.members['M1'].plot_axial('1.0D', 100)
-    model.members['M1'].plot_deflection('dy', '1.0D', 100)
+
+    assert isinstance(model.members['M1'].plot_shear('Fy', '1.0D', 100), matplotlib.figure.Figure)
+    plt.close()
+
+    assert isinstance(model.members['M1'].plot_moment('Mz', '1.0D', 100), matplotlib.figure.Figure)
+    plt.close()
+    
+    assert isinstance(model.members['M1'].plot_torque('1.0D', 100), matplotlib.figure.Figure)
+    plt.close()
+    
+    assert isinstance(model.members['M1'].plot_axial('1.0D', 100), matplotlib.figure.Figure)
+    plt.close()
+    
+    assert isinstance(model.members['M1'].plot_deflection('dy', '1.0D', 100), matplotlib.figure.Figure)
+    plt.close()
 
 if __name__ == '__main__':
     test_continuous_beam_moments()
