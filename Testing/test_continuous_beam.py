@@ -51,6 +51,6 @@ def test_continuous_beam_moments():
 #     assert isinstance(model.members['M1'].plot_deflection('dy', '1.0D', 100), matplotlib.figure.Figure)
 #     plt.close()
 
-if __name__ == '__main__':
-    test_continuous_beam_moments()
-    test_plots()
+# if __name__ == '__main__':
+#     test_continuous_beam_moments()
+#     test_plots()
