@@ -13,10 +13,15 @@ extend-ignore =
 
 # Optionally exclude some directories from linting
 exclude =
-    .git,
-    __pycache__,
+    .github,
+    .ipynb_checkpoints,
+    .pytest_cache,
+    .vscode,
+    .Archived,
     build,
+    Derivations,
     dist,
-    docs/conf.py
+    docs,
+    Resources
 
 # Enable flake8 plugins if installed (these don’t need to be listed here explicitly)
