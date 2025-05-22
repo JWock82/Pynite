@@ -1,6 +1,6 @@
 [flake8]
 # Allow longer lines (especially for docstrings used by ReadTheDocs)
-max-line-length = 120
+max-line-length = 100
 
 # Ignore specific docstring formatting/style warnings from flake8-docstrings (pydocstyle)
 extend-ignore =
