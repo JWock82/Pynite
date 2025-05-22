@@ -1,8 +1,9 @@
-from __future__ import annotations # Allows more recent type hints features
+from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING
-from math import isclose, radians, cos, sin
+from math import isclose
 
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, linspace, vstack, hstack, allclose, where, radians, sin, cos
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide
+from numpy import linspace, vstack, hstack, allclose, radians, sin, cos
 from numpy.linalg import inv, pinv
 
 import Pynite.FixedEndReactions
@@ -10,7 +11,7 @@ from Pynite.BeamSegZ import BeamSegZ
 from Pynite.BeamSegY import BeamSegY
 
 if TYPE_CHECKING:
-    
+
     from typing import Dict, List, Tuple, Optional, Any, Literal
 
     from numpy import float64
@@ -21,26 +22,24 @@ if TYPE_CHECKING:
     from Pynite.Material import Material
     from Pynite.Section import Section
     from Pynite.LoadCombo import LoadCombo
-    from Pynite.BeamSegY import BeamSegY
-    from Pynite.BeamSegZ import BeamSegZ
 
-#%%
+
+# %%
 class Member3D():
     """
     A class representing a 3D frame element in a finite element model.
 
-    Most users will not need to interface with this class directly. Rather, the physical member
-    class, which inherits from this class and stitches together a seires of colinear `Member3D`
-    objects will be more useful.
+    Most users will not need to interface with this class directly. Rather, the physical member class, which inherits from this class and stitches together a seires of colinear `Member3D` objects will be more useful.
     """
 
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
     __plt = None
 
-#%%
-    def __init__(self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D, 
-                 material_name: str, section_name: str, rotation: float = 0.0,
-                 tension_only: bool = False, comp_only: bool = False) -> None:
+# %%
+    def __init__(self, model: FEModel3D, name: str, i_node: Node3D,
+                 j_node: Node3D, material_name: str, section_name: str,
+                 rotation: float = 0.0, tension_only: bool = False,
+                 comp_only: bool = False) -> None:
         """
         Initializes a new member.
         
@@ -69,12 +68,12 @@ class Member3D():
         self.j_node: Node3D = j_node  # The element's j-node
 
         try:
-            self.material: Material = model.materials[material_name] # The element's material
+            self.material: Material = model.materials[material_name]  # The element's material
         except KeyError:
             raise NameError(f"No material named '{material_name}'")
         
         try:
-            self.section: Section = model.sections[section_name] # The element's section
+            self.section: Section = model.sections[section_name]  # The element's section
         except KeyError:
             raise NameError(f"No section names '{section_name}'")
         
@@ -91,25 +90,25 @@ class Member3D():
         self.j_reversal: bool = False
 
         self.rotation: float = rotation  # Member rotation (degrees) about its local x-axis
-        self.PtLoads: List[Tuple] = []         # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
+        self.PtLoads: List[Tuple] = []  # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
         self.DistLoads: List[Tuple] = []       # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
         self.SegmentsZ: List[BeamSegZ] = []       # A list of mathematically continuous beam segments for z-bending
         self.SegmentsY: List[BeamSegY] = []       # A list of mathematically continuous beam segments for y-bending
         self.SegmentsX: List[BeamSegZ] = []       # A list of mathematically continuous beam segments for torsion
         self.Releases: List[bool] = [False, False, False, False, False, False, False, False, False, False, False, False]
-        self.tension_only: bool = tension_only # Indicates whether the member is tension-only
-        self.comp_only: bool = comp_only # Indicates whether the member is compression-only
+        self.tension_only: bool = tension_only  # Indicates whether the member is tension-only
+        self.comp_only: bool = comp_only  # Indicates whether the member is compression-only
 
         # Members need to track whether they are active or not for any given load combination. They may become inactive for a load combination during a tension/compression-only analysis. This dictionary will be used when the model is solved.
-        self.active: Dict[str, bool] = {} # Key = load combo name, Value = True or False
+        self.active: Dict[str, bool] = {}  # Key = load combo name, Value = True or False
         
         # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations the '_solved_combo' variable will be used to track whether the member needs to be resegmented before running calculations for any given load combination.
-        self._solved_combo: LoadCombo | None = None # The current solved load combination
+        self._solved_combo: LoadCombo | None = None  # The current solved load combination
 
         # Members need a link to the model they belong to
         self.model: FEModel3D = model
 
-#%%
+# %%
     def L(self) -> float:
         """
         Returns the length of the member.
@@ -121,7 +120,7 @@ class Member3D():
         # Return the distance between the two nodes
         return self.i_node.distance(self.j_node)
 
-#%%
+# %%
     def _partition_D(self) -> Tuple[List[int], List[int]]:
         """
         Builds lists of unreleased and released degree of freedom indices for the member.
@@ -137,14 +136,14 @@ class Member3D():
         R1_indices = []
         R2_indices = []
         for i in range(12):
-            if self.Releases[i] == False:
+            if self.Releases[i] is False:
                 R1_indices.append(i)
             else:
                 R2_indices.append(i)
         
         return R1_indices, R2_indices
 
-#%%
+# %%
     def k(self) -> NDArray[Any]:
         """
         Returns the condensed (and expanded) local stiffness matrix for the member.
@@ -161,19 +160,19 @@ class Member3D():
         k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
         
         # Expand the condensed local stiffness matrix
-        i=0
+        i = 0
         for DOF in self.Releases:
             
-            if DOF == True:
-                k_Condensed = insert(k_Condensed, i, 0, axis = 0)
-                k_Condensed = insert(k_Condensed, i, 0, axis = 1)
+            if DOF is True:
+                k_Condensed = insert(k_Condensed, i, 0, axis=0)
+                k_Condensed = insert(k_Condensed, i, 0, axis=1)
                 
             i += 1
 
         # Return the local stiffness matrix, with end releases applied
         return k_Condensed
 
-#%%
+# %%
     def _k_unc(self) -> NDArray[float64]:
         """
         Returns the uncondensed local stiffness matrix for the member.
@@ -208,7 +207,7 @@ class Member3D():
         # Return the uncondensed local stiffness matrix
         return k
 
-#%%
+# %%
     def kg(self, P: float = 0) -> NDArray[float64]:
         """
         Returns the condensed (expanded) local geometric stiffness matrix for the member.
