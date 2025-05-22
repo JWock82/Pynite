@@ -3,13 +3,19 @@
 max-line-length = 100
 
 # Ignore specific docstring formatting/style warnings from flake8-docstrings (pydocstyle)
+#    D200: One-line docstring should fit on one line
+#    D203: 1 blank line required before class docstring
+#    D212: Multi-line docstring summary should start at the first line
+#    D213: Multi-line docstring summary should start at the second line
+#    D400: First line should end with a period
+#    D401: First line should be in imperative mood
 extend-ignore =
-    D200,  # One-line docstring should fit on one line
-    D203,  # 1 blank line required before class docstring
-    D212,  # Multi-line docstring summary should start at the first line
-    D213,  # Multi-line docstring summary should start at the second line
-    D400,  # First line should end with a period
-    D401,  # First line should be in imperative mood
+    D200,
+    D203,
+    D212,
+    D213,
+    D400,
+    D401
 
 # Optionally exclude some directories from linting
 exclude =
