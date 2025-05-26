@@ -159,7 +159,7 @@ class Mesh():
                                      element.shear(xj, yj, local, load_combo.name)[i, 0],
                                      element.shear(xm, ym, local, load_combo.name)[i, 0],
                                      element.shear(xn, yn, local, load_combo.name)[i, 0],
-                                     element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+                                     element.shear((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum shear calculated is the largest encountered so far
                     if Q_max is None or Q_max < Q_element:
@@ -196,8 +196,10 @@ class Mesh():
             i = 0
         elif direction.upper() == 'QY':
             i = 1
+        elif direction.upper() == 'QZ':
+            i = 2
         else:
-            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', or \'QY\'')
+            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', \'QY\' or \'QZ\'')
 
         # Initialize the minimum value to None
         Q_min = None
@@ -231,7 +233,7 @@ class Mesh():
                                      element.shear(xj, yj, local, load_combo.name)[i, 0],
                                      element.shear(xm, ym, local, load_combo.name)[i, 0],
                                      element.shear(xn, yn, local, load_combo.name)[i, 0],
-                                     element.shear((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+                                     element.shear((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum shear calculated is the smallest encountered so far
                     if Q_min is None or Q_min > Q_element:
@@ -305,7 +307,7 @@ class Mesh():
                                      element.moment(xj, yj, local, load_combo.name)[i, 0],
                                      element.moment(xm, ym, local, load_combo.name)[i, 0],
                                      element.moment(xn, yn, local, load_combo.name)[i, 0],
-                                     element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+                                     element.moment((xi + xj+ xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum moment calculated is the largest encountered so far
                     if M_max is None or M_max < M_element:
@@ -379,7 +381,7 @@ class Mesh():
                                      element.moment(xj, yj, local, load_combo.name)[i, 0],
                                      element.moment(xm, ym, local, load_combo.name)[i, 0],
                                      element.moment(xn, yn, local, load_combo.name)[i, 0],
-                                     element.moment((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+                                     element.moment((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum moment calculated is the smallest encountered so far
                     if M_min is None or M_min > M_element:
@@ -452,7 +454,7 @@ class Mesh():
                                         element.membrane(xj, yj, local, load_combo.name)[i, 0],
                                         element.membrane(xm, ym, local, load_combo.name)[i, 0],
                                         element.membrane(xn, yn, local, load_combo.name)[i, 0],
-                                        element.membrane((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+                                        element.membrane((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
 
                     # Determine if the maximum membrane stress calculated is the largest encountered so far
                     if S_max is None or S_max < M_element:
@@ -525,7 +527,7 @@ class Mesh():
                                         element.membrane(xj, yj, local, load_combo.name)[i, 0],
                                         element.membrane(xm, ym, local, load_combo.name)[i, 0],
                                         element.membrane(xn, yn, local, load_combo.name)[i, 0],
-                                        element.membrane((xi + xj)/2, (yi + yn)/2, local, load_combo.name)[i, 0]])
+                                        element.membrane((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum membrane stress calculated is the smallest encountered so far
                     if S_min is None or S_min > M_element:

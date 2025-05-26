@@ -1069,9 +1069,22 @@ class Quad3D():
             # Get the direction cosines for the plate's local coordinate system
             dir_cos = self.T()[:3, :3]
 
-            return np.matmul(dir_cos.T, np.array([Qx,
-                                                  Qy,
-                                                  [0]]))
+            # Transform the results to a global vector
+            Qx = float(Qx)
+            Qy = float(Qy)
+            Q_global = np.matmul(dir_cos.T, np.array([[Qx, 0,  0],
+                                                      [0,  Qy, 0],
+                                                      [0,  0,  0]]))
+            
+            # Extract results acting along each global axis
+            Qx_global = Q_global[0, 0]
+            Qy_global = Q_global[1, 1]
+            Qz_global = Q_global[2, 1]
+
+            # Return the results as a 2D matrix
+            return np.array([[Qx_global],
+                             [Qy_global],
+                             [Qz_global]])
    
     def moment(self, xi:float=0.0, eta:float=0.0, local:bool=True, combo_name:str='Combo 1') -> NDArray[float64]:
         """
@@ -1148,6 +1161,7 @@ class Quad3D():
 
             M_global_tensor = dir_cos @ M_local @ dir_cos.T
 
+            # Extract the results for each direction
             Mx_global = M_global_tensor[0, 0]
             My_global = M_global_tensor[1, 1]
             Mxy_global = M_global_tensor[0, 1]
@@ -1197,7 +1211,23 @@ class Quad3D():
             # Get the direction cosines for the plate's local coordinate system
             dir_cos = self.T()[:3, :3]
 
-            # Convert the plate membrane stresses to global coordinates
-            return np.matmul(dir_cos.T, np.array([Sx,
-                                                  Sy,
-                                                  [0]]))
+            # Convert the local results to global results
+            Sx = float(Sx)
+            Sy = float(Sy)
+            Txy = float(Txy)
+            S_local = np.array([
+                [Sx, Txy, 0.0],
+                [Txy, Sy, 0.0],
+                [0.0, 0.0, 0.0]
+            ])
+
+            S_global_tensor = dir_cos @ S_local @ dir_cos.T
+
+            # Extract the results for each direction
+            Sx_global = S_global_tensor[0, 0]
+            Sy_global = S_global_tensor[1, 1]
+            Sxy_global = S_global_tensor[0, 1]
+
+            return np.array([[Sx_global],
+                             [Sy_global],
+                             [Sxy_global]])
