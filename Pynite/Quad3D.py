@@ -1137,13 +1137,25 @@ class Quad3D():
             dir_cos = self.T()[:3, :3]
 
             # Convert the local results to global results
-            M_global = np.matmul(dir_cos, np.array([ -My,
-                                                      Mx,
-                                                      [0]]))
-            
-            M_global = M_global[[1, 0, 2], :]
+            Mx = float(Mx)
+            My = float(-My)
+            Mxy = float(Mxy)
+            M_local = np.array([
+                [Mx, Mxy, 0.0],
+                [Mxy, My, 0.0],
+                [0.0, 0.0, 0.0]
+            ])
 
-            return M_global
+            M_global_tensor = dir_cos @ M_local @ dir_cos.T
+
+            Mx_global = M_global_tensor[0, 0]
+            My_global = M_global_tensor[1, 1]
+            Mxy_global = M_global_tensor[0, 1]
+
+            return np.array([[Mx_global],
+                             [My_global],
+                             [Mxy_global]])
+
 
     def membrane(self, xi:float=0, eta: float=0, local:bool=True, combo_name:str='Combo 1') -> NDArray[float64]:
         
