@@ -2,7 +2,7 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING
 from math import isclose
 
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide
+from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, count_nonzero, concatenate
 from numpy import linspace, vstack, hstack, allclose, radians, sin, cos
 from numpy.linalg import inv, pinv
 
@@ -2241,36 +2241,99 @@ class Member3D():
                                 SegmentsY[i].M1 += (x1 - x2)*(2*f1[2]*x1 - 3*f1[2]*x + f1[2]*x2 + f2[2]*x1 - 3*f2[2]*x + 2*f2[2]*x2)/6
 
     def _extract_vector_results(self, segments: List, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
-        """Extract results from the given segments using vectorised numpy functions"""
+        """
+        Extracts result values at specified locations along a structural member using efficient, 
+        vectorized evaluation of piecewise segment functions.
 
-        # Initialize variables
-        segment_results = []
+        Assumes:
+            - `segments` are ordered from left to right (increasing x).
+            - `x_array` is sorted in ascending order.
+            - Each `segment` provides a method for evaluating the requested result type.
 
-        # Step through each segment in the member
+        Parameters
+        ----------
+        segments : List
+            List of segment objects. Each segment represents a portion of a structural member
+            and must have properties `x1`, `x2`, and appropriate result methods (e.g. `moment()`, `Shear()`, etc.).
+
+        x_array : NDArray[float64]
+            1D NumPy array of x-coordinates (global positions along the member) at which to evaluate results.
+
+        result_name : Literal
+            The type of result to extract. Must be one of:
+            'moment', 'shear', 'axial', 'torque', 'deflection', or 'axial_deflection'.
+
+        P_delta : bool, optional
+            Whether to include second-order (P-Delta) effects for applicable result types 
+            ('moment' and 'deflection'). Default is False.
+
+        Returns
+        -------
+        NDArray[float64]
+            A 2D NumPy array of shape (2, N), where:
+                - Row 0 contains the x-locations (same order as x_array, filtered by segment coverage).
+                - Row 1 contains the corresponding result values (same order).
+
+        Raises
+        ------
+        ValueError
+            If `result_name` is not a supported option.
+        """
+        
+        # Prepare storage for results
+        segment_results = []  # Stores y-values per segment
+        x_results = []        # Stores x-values that belong to each segment
+
+        # Dispatch table maps the result name to the correct evaluation function
+        method_map = {
+            "moment": lambda s, x: s.moment(x, P_delta),
+            "shear": lambda s, x: s.Shear(x),
+            "axial": lambda s, x: s.axial(x),
+            "torque": lambda s, x: s.Torsion(x),
+            "deflection": lambda s, x: s.deflection(x, P_delta),
+            "axial_deflection": lambda s, x: s.AxialDeflection(x),
+        }
+
+        # Lookup the result computation method
+        compute_result = method_map.get(result_name)
+        if compute_result is None:
+            raise ValueError(f"Unsupported result_name: {result_name}")
+
+        idx = 0  # Tracks current position in x_array
+        n = x_array.size
+
         for i, segment in enumerate(segments):
 
-            # Get all the locations that lie within the current segment from `x_array`
+            # For the last segment, include points up to and including x2
             if i == len(segments) - 1:
-                segment_x_array = array([x for x in x_array if x >= segment.x1 and x <= segment.x2])
+                mask = (x_array[idx:] >= segment.x1) & (x_array[idx:] <= segment.x2)
             else:
-                segment_x_array = array([x for x in x_array if x >= segment.x1 and x < segment.x2])
+                # For intermediate segments, include points up to but not including x2
+                mask = (x_array[idx:] >= segment.x1) & (x_array[idx:] < segment.x2)
 
-            # Get the applicable results at each of the locations in `segment_x_array`
-            if result_name == "moment":
-                segment_y_array = segment.moment(segment_x_array - segment.x1, P_delta)
-            elif result_name == "shear":
-                segment_y_array = segment.Shear(segment_x_array - segment.x1)
-            elif result_name == "axial":
-                segment_y_array = segment.axial(segment_x_array - segment.x1)
-            elif result_name == "torque":
-                segment_y_array = segment.Torsion(segment_x_array - segment.x1)
-            elif result_name == "deflection":
-                segment_y_array = segment.deflection(segment_x_array - segment.x1, P_delta)
-            elif result_name == "axial_deflection":
-                segment_y_array = segment.AxialDeflection(segment_x_array - segment.x1)
+            # Count how many x-values fall within this segment
+            count = count_nonzero(mask)
+            if count == 0:
+                continue  # No points to evaluate in this segment
 
-            # Append the segment's results to the overall results
-            segment_results = hstack((segment_results, segment_y_array))
+            # Extract the relevant x-values for this segment
+            segment_x = x_array[idx:][mask]
+            local_x = segment_x - segment.x1  # Convert global x to local segment coordinates
 
-        # Return the results a numpy array, with the x-values in the first row and the y-values in the second row
-        return vstack((x_array, hstack(segment_results)))
+            # Evaluate the selected result at each local x
+            segment_y = compute_result(segment, local_x)
+
+            # Store for final output
+            x_results.append(segment_x)
+            segment_results.append(segment_y)
+
+            # Advance the index so we don't re-check already-processed x values
+            idx += count
+            if idx >= n:
+                break  # All x-values have been processed
+
+        # Assemble full x and y arrays
+        all_x = concatenate(x_results)
+        all_y = concatenate(segment_results)
+
+        return vstack((all_x, all_y))
