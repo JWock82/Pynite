@@ -195,11 +195,11 @@ class PhysMember(Member3D):
             if Vmax is None or V > Vmax:
                 Vmax = V
         return Vmax
-    
+
     def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum shear in the member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -209,14 +209,14 @@ class PhysMember(Member3D):
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         """
-        
+
         Vmin = None
         for member in self.sub_members.values():
             V = member.min_shear(Direction, combo_name)
             if Vmin is None or V < Vmin:
                 Vmin = V
         return Vmin
-   
+
     def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the shear diagram for the member
@@ -256,7 +256,7 @@ class PhysMember(Member3D):
     def shear_array(self, Direction: Literal['Fy', 'Fz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
         """
         Returns the array of the shear in the physical member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -282,7 +282,7 @@ class PhysMember(Member3D):
         else:
             if any(x_array < 0) or any(x_array > L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
-        
+
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
@@ -293,11 +293,11 @@ class PhysMember(Member3D):
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
-            if isclose(x_o + submember.L(), self.L()):
+            if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
                 x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
-            
+
             # Not the last submember
             else:
 
@@ -323,10 +323,10 @@ class PhysMember(Member3D):
 
             # Get the starting position of the next submember
             x_o += submember.L()
-        
+
         # Return the results
         return v_array2
-        
+
     def moment(self, Direction: Literal['My', 'Mz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the moment at a point along the member's length
@@ -424,11 +424,11 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
-        
+
     def moment_array(self, Direction: Literal['My', 'Mz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
         """
         Returns the array of the moment in the physical member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -454,7 +454,7 @@ class PhysMember(Member3D):
         else:
             if any(x_array < 0) or any(x_array > L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
-        
+
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
@@ -465,11 +465,11 @@ class PhysMember(Member3D):
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
-            if isclose(x_o + submember.L(), self.L()):
+            if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
                 x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
-            
+
             # Not the last submember
             else:
 
@@ -543,7 +543,7 @@ class PhysMember(Member3D):
     def plot_torque(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the torque diagram for the member
-        
+
         Parameters
         ----------
         combo_name : string
@@ -556,11 +556,11 @@ class PhysMember(Member3D):
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
-        
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
+
         # Generate the torque diagram
         T_array = self.torque_array(n_points, combo_name)
         x = T_array[0]
@@ -571,11 +571,11 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
-    
+
     def torque_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
         """
         Returns the array of the torque in the physical member.
-        
+
         Parameters
         ----------
         n_points: int
@@ -596,7 +596,7 @@ class PhysMember(Member3D):
         else:
             if any(x_array < 0) or any(x_array > L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
-        
+
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
@@ -607,11 +607,11 @@ class PhysMember(Member3D):
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
-            if isclose(x_o + submember.L(), self.L()):
+            if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
                 x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
-            
+
             # Not the last submember
             else:
 
@@ -632,7 +632,7 @@ class PhysMember(Member3D):
 
             # Get the starting position of the next submember
             x_o += submember.L()
-        
+
         # Return the results
         return t_array2
 
@@ -672,7 +672,7 @@ class PhysMember(Member3D):
     def plot_axial(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the axial force diagram for the member
-        
+
         Parameters
         ----------
         combo_name : string
@@ -685,11 +685,11 @@ class PhysMember(Member3D):
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
-        
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
+
         # Generate the axial force array
         P_array = self.axial_array(n_points, combo_name)
         x = P_array[0]
@@ -700,11 +700,11 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
-    
+
     def axial_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
         """
         Returns the array of the axial force in the physical member.
-        
+
         Parameters
         ----------
         n_points: int
@@ -725,7 +725,7 @@ class PhysMember(Member3D):
         else:
             if any(x_array < 0) or any(x_array > L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
-        
+
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
@@ -736,11 +736,11 @@ class PhysMember(Member3D):
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
-            if isclose(x_o + submember.L(), self.L()):
+            if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
                 x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
-            
+
             # Not the last submember
             else:
 
@@ -863,11 +863,11 @@ class PhysMember(Member3D):
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
-        
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
+
         d_array = self.deflection_array(Direction, n_points, combo_name)
         x = d_array[0]
         d = d_array[1]
@@ -877,11 +877,11 @@ class PhysMember(Member3D):
         PhysMember.__plt.xlabel('Location')
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
-    
+
     def deflection_array(self, Direction: Literal['dy', 'dz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
         """
         Returns the array of the deflection in the physical member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -902,11 +902,13 @@ class PhysMember(Member3D):
         # Create an array of locations along the physical member to obtain results at
         L = self.L()
         if x_array is None:
+            # Create an array of evenly spaced points
             x_array = linspace(0, L, n_points)
         else:
+            # Ensure the requested points are within the member
             if any(x_array < 0) or any(x_array > L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
-        
+
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
@@ -917,11 +919,11 @@ class PhysMember(Member3D):
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
-            if isclose(x_o + submember.L(), self.L()):
+            if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
                 x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
-            
+
             # Not the last submember
             else:
 
@@ -947,10 +949,10 @@ class PhysMember(Member3D):
 
             # Get the starting position of the next submember
             x_o += submember.L()
-        
+
         # Return the results
         return d_array2
-    
+
     def find_member(self, x: float) -> Tuple[Member3D, float]:
         """
         Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's local coordinate system.

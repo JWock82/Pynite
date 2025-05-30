@@ -521,13 +521,13 @@ class Mesh():
 
                 # Determine if this load combination should be evaluated
                 if combo is None or load_combo.name == combo:
-                    
+
                     # Find the minimum membrane stress in the element, checking each corner and the center of the element
                     M_element = min([element.membrane(xi, yi, local, load_combo.name)[i, 0],
-                                        element.membrane(xj, yj, local, load_combo.name)[i, 0],
-                                        element.membrane(xm, ym, local, load_combo.name)[i, 0],
-                                        element.membrane(xn, yn, local, load_combo.name)[i, 0],
-                                        element.membrane((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
+                                     element.membrane(xj, yj, local, load_combo.name)[i, 0],
+                                     element.membrane(xm, ym, local, load_combo.name)[i, 0],
+                                     element.membrane(xn, yn, local, load_combo.name)[i, 0],
+                                     element.membrane((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
 
                     # Determine if the minimum membrane stress calculated is the smallest encountered so far
                     if S_min is None or S_min > M_element:

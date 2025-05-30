@@ -1075,7 +1075,7 @@ class Quad3D():
             Q_global = np.matmul(dir_cos.T, np.array([[Qx, 0,  0],
                                                       [0,  Qy, 0],
                                                       [0,  0,  0]]))
-            
+
             # Extract results acting along each global axis
             Qx_global = Q_global[0, 0]
             Qy_global = Q_global[1, 1]
@@ -1085,7 +1085,7 @@ class Quad3D():
             return np.array([[Qx_global],
                              [Qy_global],
                              [Qz_global]])
-   
+
     def moment(self, xi:float=0.0, eta:float=0.0, local:bool=True, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the interal moments at any point in the quad element.
@@ -1099,7 +1099,7 @@ class Quad3D():
             The xi-coordinate. Default is 0.
         eta : float
             The eta-coordinate. Default is 0.
-        
+
         Returns
         -------
         Internal moment per unit length of the quad element: [[Mx], [My], [Mxy]]
@@ -1107,7 +1107,7 @@ class Quad3D():
 
         # Get the plate's local displacement vector
         d = self.d(combo_name)
-                
+
         # Correct the sign convention for x-axis rotation - note that +x bending and +x rotation are opposite in the DKMQ derivation. Hence when correcting d we correct the x terms, but when correcting k we correct the y terms
         d[[3, 9, 15, 21], :] *= -1
 
@@ -1137,15 +1137,15 @@ class Quad3D():
         Mx = H[0]*m1[0] + H[1]*m2[0] + H[2]*m3[0] + H[3]*m4[0]
         My = H[0]*m1[1] + H[1]*m2[1] + H[2]*m3[1] + H[3]*m4[1]
         Mxy = H[0]*m1[2] + H[1]*m2[2] + H[2]*m3[2] + H[3]*m4[2]
-        
+
         if local:
 
             return np.array([Mx,
                              My,
                              Mxy])
-        
+
         else:
-            
+
             # Get the direction cosines for the plate's local coordinate system
             dir_cos = self.T()[:3, :3]
 
@@ -1172,7 +1172,7 @@ class Quad3D():
 
 
     def membrane(self, xi:float=0, eta: float=0, local:bool=True, combo_name:str='Combo 1') -> NDArray[float64]:
-        
+
         # Get the plate's local displacement vector. Slice out terms not related to membrane stresses.
         d = self.d(combo_name)[[0, 1, 6, 7, 12, 13, 18, 19], :]
 
@@ -1188,7 +1188,7 @@ class Quad3D():
 
         # Get the stress-strain matrix
         Cm = self.Cm()
-        
+
         # Calculate the internal stresses [Sx, Sy, Txy] at each gauss point
         s1 = np.matmul(Cm, np.matmul(self.B_m(-gp, -gp), d))
         s2 = np.matmul(Cm, np.matmul(self.B_m(gp, -gp), d))
@@ -1205,7 +1205,7 @@ class Quad3D():
             return np.array([Sx,
                              Sy,
                              Txy])
-        
+
         else:
 
             # Get the direction cosines for the plate's local coordinate system
