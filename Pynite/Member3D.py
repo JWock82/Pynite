@@ -2239,22 +2239,22 @@ class Member3D():
 
                                 SegmentsY[i].V1 += (f1[2] + f2[2])/2*(x2 - x1)
                                 SegmentsY[i].M1 += (x1 - x2)*(2*f1[2]*x1 - 3*f1[2]*x + f1[2]*x2 + f2[2]*x1 - 3*f2[2]*x + 2*f2[2]*x2)/6
-                            
+
     def _extract_vector_results(self, segments: List, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
         """Extract results from the given segments using vectorised numpy functions"""
 
         # Initialize variables
         segment_results = []
 
-        # Since segment boundaries represent mathematical discontinuities, there are two possible y-values at the segment boundaries. The `x_array` needs to be expanded to account for duplicate y-values at one x-value. `x_array2` will be used to expand `x_array` and capture the duplicates.
-        x_array2 = []
-        
         # Step through each segment in the member
         for i, segment in enumerate(segments):
-            
+
             # Get all the locations that lie within the current segment from `x_array`
-            segment_x_array = array([x for x in x_array if x >= segment.x1 and x <= segment.x2])
-            
+            if i == len(segments) - 1:
+                segment_x_array = array([x for x in x_array if x >= segment.x1 and x <= segment.x2])
+            else:
+                segment_x_array = array([x for x in x_array if x >= segment.x1 and x < segment.x2])
+
             # Get the applicable results at each of the locations in `segment_x_array`
             if result_name == "moment":
                 segment_y_array = segment.moment(segment_x_array - segment.x1, P_delta)
@@ -2270,8 +2270,7 @@ class Member3D():
                 segment_y_array = segment.AxialDeflection(segment_x_array - segment.x1)
 
             # Append the segment's results to the overall results
-            x_array2 = hstack((x_array2, segment_x_array))
             segment_results = hstack((segment_results, segment_y_array))
 
         # Return the results a numpy array, with the x-values in the first row and the y-values in the second row
-        return vstack((x_array2, hstack(segment_results)))
+        return vstack((x_array, hstack(segment_results)))
