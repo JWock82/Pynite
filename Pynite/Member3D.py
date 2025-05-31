@@ -2279,7 +2279,7 @@ class Member3D():
         ValueError
             If `result_name` is not a supported option.
         """
-        
+
         # Prepare storage for results
         segment_results = []  # Stores y-values per segment
         x_results = []        # Stores x-values that belong to each segment
@@ -2306,18 +2306,18 @@ class Member3D():
 
             # For the last segment, include points up to and including x2
             if i == len(segments) - 1:
-                mask = (x_array[idx:] >= segment.x1) & (x_array[idx:] <= segment.x2)
+                filter = (x_array[idx:] >= segment.x1) & (x_array[idx:] <= segment.x2)
             else:
                 # For intermediate segments, include points up to but not including x2
-                mask = (x_array[idx:] >= segment.x1) & (x_array[idx:] < segment.x2)
+                filter = (x_array[idx:] >= segment.x1) & (x_array[idx:] < segment.x2)
 
             # Count how many x-values fall within this segment
-            count = count_nonzero(mask)
+            count = count_nonzero(filter)
             if count == 0:
                 continue  # No points to evaluate in this segment
 
             # Extract the relevant x-values for this segment
-            segment_x = x_array[idx:][mask]
+            segment_x = x_array[idx:][filter]
             local_x = segment_x - segment.x1  # Convert global x to local segment coordinates
 
             # Evaluate the selected result at each local x

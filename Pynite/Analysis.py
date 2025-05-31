@@ -21,7 +21,7 @@ def _prepare_model(model: FEModel3D) -> None:
     :param model: The model being prepared for analysis.
     :type model: FEModel3D
     """
-    
+
     # Reset any nodal displacements
     model._D = {}
     for node in model.nodes.values():
@@ -36,24 +36,25 @@ def _prepare_model(model: FEModel3D) -> None:
     if model.load_combos == {}:
         # Create and add a default load combination to the dictionary of load combinations
         model.load_combos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
-    
+
     # Generate all meshes
     for mesh in model.meshes.values():
-        if mesh.is_generated == False:
+        if mesh.is_generated is False:
             mesh.generate()
 
     # Activate all springs and members for all load combinations
     for spring in model.springs.values():
         for combo_name in model.load_combos.keys():
             spring.active[combo_name] = True
-    
+
     # Activate all physical members for all load combinations
     for phys_member in model.members.values():
         for combo_name in model.load_combos.keys():
             phys_member.active[combo_name] = True
-    
+
     # Assign an internal ID to all nodes and elements in the model. This number is different from the name used by the user to identify nodes and elements.
     _renumber(model)
+
 
 def _identify_combos(model: FEModel3D, combo_tags: List[str] | None = None) -> List[LoadCombo]:
     """Returns a list of load combinations that are to be run based on tags given by the user.
@@ -65,7 +66,7 @@ def _identify_combos(model: FEModel3D, combo_tags: List[str] | None = None) -> L
     :return: A list containing the load combinations to be analyzed.
     :rtype: list
     """
-    
+
     # Identify which load combinations to evaluate
     if combo_tags is None:
         # Evaluate all load combinations if not tags have been provided
@@ -142,6 +143,7 @@ def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
 
     return
 
+
 def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30, first_step: bool = True) -> None:
     """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material-specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
@@ -164,7 +166,7 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
     """
 
     # Import `scipy` features if the sparse solver is being used
-    if sparse == True:
+    if sparse is True:
         from scipy.sparse.linalg import spsolve
 
     iter_count_TC = 1    # Tracks tension/compression-only iterations
@@ -174,30 +176,27 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
     divergence_TC = False  # Tracks tension/compression-only divergence
 
     # Iterate until either T/C convergence or divergence occurs. Perform at least 2 iterations for the P-Delta analysis.
-    while (convergence_TC == False and divergence_TC == False) or iter_count_PD <= 2:
+    while (convergence_TC is False and divergence_TC is False) or iter_count_PD <= 2:
 
         # Inform the user which iteration we're on
         if log:
             print('- Beginning tension/compression-only iteration #' + str(iter_count_TC))
 
         # Calculate the partitioned global stiffness matrices
-        if sparse == True:
+        if sparse is True:
 
             # Calculate the initial stiffness matrix
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
 
             # Calculate the geometric stiffness matrix
             if iter_count_PD == 1 and first_step:
-                # For the first iteration of the first load step P=0
+                # For the first iteration of the first load step P == 0
                 Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, True), D1_indices, D2_indices)
             else:
                 # For subsequent iterations P will be calculated based on member end displacements
                 Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
-            
-            # The stiffness matrices are currently `lil` format which is great for
-            # memory, but slow for mathematical operations. They will be converted to
-            # `csr` format. The `+` operator performs matrix addition on `csr`
-            # matrices.
+
+            # The stiffness matrices are currently `lil` format which is great for memory, but slow for mathematical operations. They will be converted to `csr` format. The `+` operator performs matrix addition on `csr` matrices.
             K11 = K11.tocsr() + Kg11.tocsr()
             K12 = K12.tocsr() + Kg12.tocsr()
             K21 = K21.tocsr() + Kg21.tocsr()
@@ -207,7 +206,7 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
 
             # Initial stiffness matrix
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
-            
+
             # Geometric stiffness matrix
             if iter_count_PD == 1 and first_step:
                 # For the first iteration of the first load step P=0
@@ -215,21 +214,22 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
             else:
                 # For subsequent iterations P will be calculated based on member end displacements
                 Kg11, Kg12, Kg21, Kg22 = _partition(model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
-            
+
             K11 = K11 + Kg11
             K12 = K12 + Kg12
             K21 = K21 + Kg21
             K22 = K22 + Kg22
 
         # Calculate the changes to the global displacement vector
-        if log: print('- Calculating changes to the global displacement vector')
+        if log:
+            print('- Calculating changes to the global displacement vector')
         if K11.shape == (0, 0):
             # All displacements are known, so D1 is an empty vector
             Delta_D1 = []
         else:
             try:
-                # Calculate the change in the displacements Delta_D1
-                if sparse == True:
+                # Calculate the change in the displacements, `Delta_D1`
+                if sparse is True:
                     # The partitioned stiffness matrix is already in `csr` format. The `@`
                     # operator performs matrix multiplication on sparse matrices.
                     Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
@@ -280,6 +280,7 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
     
     # Flag the model as solved
     model.solution = 'P-Delta'
+
 
 def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False) -> None:
 
@@ -388,6 +389,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
     # Flag the model as solved
     model.solution = 'Pushover'
 
+
 def _unpartition_disp(model: FEModel3D, D1: NDArray[float64], D2: NDArray[float64], D1_indices: List[int], D2_indices: List[int]) -> NDArray[float64]:
     """Unpartitions displacements from the solver and returns them as a global displacement vector
 
@@ -423,6 +425,7 @@ def _unpartition_disp(model: FEModel3D, D1: NDArray[float64], D2: NDArray[float6
     
     # Return the displacement vector
     return D
+
 
 def _store_displacements(model: FEModel3D, D1: NDArray[float64], D2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], combo: LoadCombo) -> None:
     """Stores calculated displacements from the solver into the model's displacement vector `_D` and into each node object in the model

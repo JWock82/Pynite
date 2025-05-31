@@ -268,8 +268,7 @@ class PhysMember(Member3D):
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         x_array : array = None
-            A custom array of x values that may be provided by the user, otherwise an array is generated.
-            Values must be provided in local member coordinates (between 0 and L) and be in ascending order
+            A custom array of x values that may be provided by the user, otherwise an array is generated. Values must be provided in local member coordinates (between 0 and L) and be in ascending order
         """
 
         # `v_array2` will be used to store the shear values for the overall member
@@ -296,13 +295,15 @@ class PhysMember(Member3D):
             if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array < x_o + submember.L())
+
+            x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
             if Direction == 'Fz':
@@ -391,7 +392,7 @@ class PhysMember(Member3D):
     def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the moment diagram for the member
-        
+
         Parameters
         ----------
 
@@ -409,11 +410,11 @@ class PhysMember(Member3D):
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
-        
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
+
         # Generate the moment diagram
         M_array = self.moment_array(Direction, n_points, combo_name)
         x = M_array[0]
@@ -468,13 +469,15 @@ class PhysMember(Member3D):
             if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array < x_o + submember.L())
+
+            x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
             if Direction == 'My':
@@ -495,7 +498,7 @@ class PhysMember(Member3D):
 
             # Get the starting position of the next submember
             x_o += submember.L()
-        
+
         # Return the results
         return m_array2
     
@@ -610,13 +613,16 @@ class PhysMember(Member3D):
             if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+                # x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array < x_o + submember.L())
+
+            x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
             t_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'torque')
@@ -739,13 +745,15 @@ class PhysMember(Member3D):
             if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array < x_o + submember.L())
+
+            x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
             a_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'axial')
@@ -846,7 +854,7 @@ class PhysMember(Member3D):
     def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the deflection diagram for the member
-        
+
         Parameters
         ----------
         Direction : string
@@ -922,13 +930,15 @@ class PhysMember(Member3D):
             if i == len(self.sub_members.values()) - 1:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x <= x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
 
                 # Find any points from `x_array` that lie along this submember
-                x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
+                filter = (x_array >= x_o) & (x_array < x_o + submember.L())
+
+            x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
             if Direction == 'dy':
