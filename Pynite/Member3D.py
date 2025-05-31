@@ -1612,7 +1612,7 @@ class Member3D():
                 # Check which segment 'x' falls on
                 for segment in self.SegmentsZ:
                     
-                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                         
                         return segment.deflection(x - segment.x1, P_delta)
                     
@@ -1625,7 +1625,7 @@ class Member3D():
                 
                 for segment in self.SegmentsY:
                     
-                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
+                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                         
                         return segment.deflection(x - segment.x1)
                     
@@ -1960,12 +1960,12 @@ class Member3D():
         elif Direction == 'dz':
             deflections = self._extract_vector_results(self.SegmentsY, x_array, 'deflection')[1]
             return vstack((x_array, deflections - (dzi + (dzj-dzi)/L*x_array)))        
-        
+
     def _segment_member(self, combo_name='Combo 1'):
         """
         Divides the element up into mathematically continuous segments along each axis
         """
-        
+
         # Get the member's length and stiffness properties
         L = self.L()
         E = self.material.E
@@ -1975,59 +1975,59 @@ class Member3D():
         SegmentsZ = self.SegmentsZ
         SegmentsY = self.SegmentsY
         SegmentsX = self.SegmentsX
-        
+
         # Get the load combination to segment the member for
         combo = self.model.load_combos[combo_name]
 
         # Create a list of discontinuity locations
-        disconts = [0, L] # Member ends
-        
-        for load in self.PtLoads: 
-            disconts.append(load[2]) # Point load locations
-        
-        for load in self.DistLoads: 
-            disconts.append(load[3]) # Distributed load start locations
-            disconts.append(load[4]) # Distributed load end locations
-        
+        disconts = [0, L]  # Member ends
+
+        for load in self.PtLoads:
+            disconts.append(load[2])  # Point load locations
+
+        for load in self.DistLoads:
+            disconts.append(load[3])  # Distributed load start locations
+            disconts.append(load[4])  # Distributed load end locations
+
         # Sort the list and eliminate duplicate values
         disconts = sorted(set(disconts))
-        
+
         # Clear out old data from any previous analyses
         SegmentsZ.clear()
         SegmentsY.clear()
         SegmentsX.clear()
-        
+
         # Create a list of mathematically continuous segments for each direction
         for index in range(len(disconts) - 1):
-            
+
             # z-direction segments (bending about local z-axis)
-            newSeg = BeamSegZ()           # Create the new segment
-            newSeg.x1 = disconts[index]   # Segment start location
-            newSeg.x2 = disconts[index+1] # Segment end location
-            newSeg.EI = E*Iz              # Segment flexural stiffness
-            newSeg.EA = E*A               # Segment axial stiffness
-            SegmentsZ.append(newSeg)      # Add the segment to the list
-            
+            newSeg = BeamSegZ()            # Create the new segment
+            newSeg.x1 = disconts[index]    # Segment start location
+            newSeg.x2 = disconts[index+1]  # Segment end location
+            newSeg.EI = E*Iz               # Segment flexural stiffness
+            newSeg.EA = E*A                # Segment axial stiffness
+            SegmentsZ.append(newSeg)       # Add the segment to the list
+
             # y-direction segments (bending about local y-axis)
-            newSeg = BeamSegY()           # Create the new segment
-            newSeg.x1 = disconts[index]   # Segment start location
-            newSeg.x2 = disconts[index+1] # Segment end location
-            newSeg.EI = E*Iy              # Segment flexural stiffness
-            newSeg.EA = E*A               # Segment axial stiffness
-            SegmentsY.append(newSeg)      # Add the segment to the list
-            
+            newSeg = BeamSegY()            # Create the new segment
+            newSeg.x1 = disconts[index]    # Segment start location
+            newSeg.x2 = disconts[index+1]  # Segment end location
+            newSeg.EI = E*Iy               # Segment flexural stiffness
+            newSeg.EA = E*A                # Segment axial stiffness
+            SegmentsY.append(newSeg)       # Add the segment to the list
+
             # x-direction segments (for torsional moment)
             newSeg = BeamSegZ()           # Create the new segment
             newSeg.x1 = disconts[index]   # Segment start location
             newSeg.x2 = disconts[index+1] # Segment end location
             newSeg.EA = E*A               # Segment axial stiffness
             SegmentsX.append(newSeg)      # Add the segment to the list
-        
+
         # Get the element local end forces, local fixed end reactions, and local displacements
         f = self.f(combo_name)           # Member local end force vector
         fer = self._fer_unc(combo_name)  # Member local fixed end reaction vector
         d = self.d(combo_name)           # Member local displacement vector
-        
+
         # Get the local deflections and calculate the slope at the start of the member
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used, so slope-deflection has been applied to solve for it.
         # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what Pynite uses for moments about the local y-axis, so a negative value has been applied to those values specifically.
@@ -2052,13 +2052,13 @@ class Member3D():
         SegmentsZ[0].delta_x1 = d[0, 0]
         SegmentsY[0].delta_x1 = d[0, 0]
         SegmentsX[0].delta_x1 = d[0, 0]
-        
+
         # Add loads to each segment
         for i in range(len(SegmentsZ)):
-            
+
             # Get the starting point of the segment
             x = SegmentsZ[i].x1
-            
+
             # Initialize the distributed loads on the segment to zero
             SegmentsZ[i].w1 = 0
             SegmentsZ[i].w2 = 0
@@ -2068,16 +2068,16 @@ class Member3D():
             SegmentsY[i].w2 = 0
             SegmentsY[i].p1 = 0
             SegmentsY[i].p2 = 0
-            
+
             # Initialize the slope and displacement at the start of the segment
-            if i > 0: # The first segment has already been initialized
+            if i > 0:  # The first segment has already been initialized
                 SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].Length())
                 SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].Length())
                 SegmentsZ[i].delta_x1 = SegmentsZ[i-1].AxialDeflection(SegmentsZ[i-1].Length())
                 SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].Length())
                 SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].Length())
                 SegmentsY[i].delta_x1 = SegmentsY[i-1].AxialDeflection(SegmentsY[i-1].Length())
-                
+
             # Add the effects of the beam end forces to the segment
             SegmentsZ[i].P1 = f[0, 0]
             SegmentsZ[i].V1 = f[1, 0]
@@ -2086,15 +2086,15 @@ class Member3D():
             SegmentsY[i].V1 = f[2, 0]
             SegmentsY[i].M1 = f[4, 0] + f[2, 0]*x
             SegmentsX[i].T1 = f[3, 0]
-            
+
             # Step through each load case in the specified load combination
             for case, factor in combo.factors.items():
-            
+
                 # Add effects of point loads occuring prior to this segment
                 for ptLoad in self.PtLoads:
-                    
+
                     if round(ptLoad[2], 10) <= round(x, 10) and case == ptLoad[3]:
-                    
+
                         if ptLoad[0] == 'Fx':
                             SegmentsZ[i].P1 += factor*ptLoad[1]
                         elif ptLoad[0] == 'Fy':

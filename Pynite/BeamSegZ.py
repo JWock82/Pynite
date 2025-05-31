@@ -200,21 +200,21 @@ class BeamSegZ():
         EI = self.EI
         
         # Iteration is required to calculate P-little-delta effects
-        if P_delta == True:
+        if P_delta is True:
 
             # Initialize the deflection at `x` to match the deflection at the start of the segment
             delta_x = delta_1
 
             # Iterate until we reach a deflection convergence of 1%
-            while d_delta > 0.01: 
-                
+            while d_delta > 0.01:
+
                 # Save the deflection value from the last iteration
                 delta_last = delta_x
 
                 # Compute the deflection
                 # delta_x = delta1 + theta1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
                 delta_x = delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
-                
+
                 # Check the change in deflection between iterations
                 if delta_last != 0:
                     d_delta = abs(delta_x/delta_last - 1)
@@ -222,10 +222,10 @@ class BeamSegZ():
                     # Members with no relative deflection after at least one iteration need no further iterations
                     if delta_1 - delta_x == 0:
                         break
-            
+
             # Return the calculated deflection
             return delta_x
-        
+
         # Non-P-delta solutions are not iterative
         else:
 
