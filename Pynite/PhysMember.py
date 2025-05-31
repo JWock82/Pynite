@@ -886,7 +886,7 @@ class PhysMember(Member3D):
         PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
         PhysMember.__plt.show()
 
-    def deflection_array(self, Direction: Literal['dy', 'dz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+    def deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
         """
         Returns the array of the deflection in the physical member for the given direction
 
@@ -894,6 +894,7 @@ class PhysMember(Member3D):
         ----------
         Direction : string
             The direction to plot the deflection for. Must be one of the following:
+                'dx' = Deflection in the local x-direction (axial deflection)
                 'dy' = Deflection in the local y-direction (usually the strong-axis).
                 'dz' = Deflection in the local z-direction (usually the weak-axis).
         n_points: int
@@ -941,7 +942,9 @@ class PhysMember(Member3D):
             x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
-            if Direction == 'dy':
+            if Direction == 'dx':
+                d_array = self._extract_vector_results(submember.SegmentsX, x_subm_array, 'axial_deflection')
+            elif Direction == 'dy':
                 d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'deflection')
             elif Direction == 'dz':
                 d_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'deflection')
