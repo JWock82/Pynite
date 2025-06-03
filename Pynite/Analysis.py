@@ -80,9 +80,10 @@ def _identify_combos(model: FEModel3D, combo_tags: List[str] | None = None) -> L
             if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags):
                 # Add the load combination to the list of load combinations to be evaluated
                 combo_list.append(combo)
-    
+
     # Return the list of load combinations to be evaluated
     return combo_list
+
 
 def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
     """
@@ -144,11 +145,17 @@ def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
     return
 
 
-def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30, first_step: bool = True) -> None:
+def _PDelta_step(model: FEModel3D, combo_name: str, Delta_P1: NDArray[float64], Delta_FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30, first_step: bool = True) -> None:
     """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material-specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
-    :param combo_name: The name of the load combination to evaluate P-Delta effects for.
+    :param model: The finite element model to be solved.
+    :type: FEModel3D
+    :param combo_name: The name of the load combination to evaluate.
     :type combo_name: string
+    :param Delta_P1: An array of the loads to apply for the load step.
+    :type Delta_P1: numpy array
+    :param Delta_FER1: An array of the fixed end reactions for the load step.
+    :type Delta_FER1: numpy array
     :param log: Prints updates to the console if set to True. Default is False.
     :type log: bool, optional
     :param check_stability: When set to True, checks the stiffness matrix for any unstable degrees of freedom and reports them back to the console. This does add to the solution time. Defaults to True.
@@ -173,7 +180,7 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
     iter_count_PD = 1    # Tracks P-Delta iterations
 
     convergence_TC = False  # Tracks tension/compression-only convergence
-    divergence_TC = False  # Tracks tension/compression-only divergence
+    divergence_TC = False   # Tracks tension/compression-only divergence
 
     # Iterate until either T/C convergence or divergence occurs. Perform at least 2 iterations for the P-Delta analysis.
     while (convergence_TC is False and divergence_TC is False) or iter_count_PD <= 2:
@@ -185,7 +192,7 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
         # Calculate the partitioned global stiffness matrices
         if sparse is True:
 
-            # Calculate the initial stiffness matrix
+            # Calculate the initial stiffness matrix. This matrix must be recalculated on each iteration due to tension/compression-only members deactivating or reactivating.
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
 
             # Calculate the geometric stiffness matrix
@@ -204,7 +211,7 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
 
         else:
 
-            # Initial stiffness matrix
+            # Calculate the initial stiffness matrix. This matrix must be recalculated on each iteration due to tension/compression-only members deactivating or reactivating.
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
             # Geometric stiffness matrix
@@ -232,12 +239,12 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
                 if sparse is True:
                     # The partitioned stiffness matrix is already in `csr` format. The `@`
                     # operator performs matrix multiplication on sparse matrices.
-                    Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
+                    Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(Delta_P1, Delta_FER1), K12.tocsr() @ D2))
                     Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
                 else:
                     # The partitioned stiffness matrix is in `csr` format. It will be
                     # converted to a 2D dense array for mathematical operations.
-                    Delta_D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                    Delta_D1 = solve(K11, subtract(subtract(Delta_P1, Delta_FER1), matmul(K12, D2)))
 
             except:
                 # Return out of the method if 'K' is singular and provide an error message
@@ -248,18 +255,18 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
             _store_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
         else:
             _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
-        
+
         # Check whether the tension/compression-only analysis has converged and deactivate any members that are showing forces they can't hold
         convergence_TC = _check_TC_convergence(model, combo_name, log)
-        
+
         # Report on convergence of tension/compression only analysis
-        if convergence_TC == False:
-            
+        if convergence_TC is False:
+
             if log:
                 print('- Tension/compression-only analysis did not converge on this iteration')
                 print('- Stiffness matrix will be adjusted')
                 print('- P-Delta analysis will be restarted')
-            
+
             # Increment the tension/compression-only iteration count
             iter_count_TC += 1
 
@@ -268,8 +275,9 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
             iter_count_PD = 0
 
         else:
-            if log: print('- Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
-        
+            if log:
+                print('- Tension/compression-only analysis converged after ' + str(iter_count_TC) + ' iteration(s)')
+
         # Check for divergence in the tension/compression-only analysis
         if iter_count_TC > max_iter:
             divergence_TC = True
@@ -277,7 +285,7 @@ def _PDelta_step(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
 
         # Increment the P-Delta iteration count
         iter_count_PD += 1
-    
+
     # Flag the model as solved
     model.solution = 'P-Delta'
 
@@ -443,10 +451,10 @@ def _store_displacements(model: FEModel3D, D1: NDArray[float64], D2: NDArray[flo
     :param combo: The load combination to store the displacements for
     :type combo: LoadCombo
     """
-    
+
     # The raw results from the solver are partitioned. Unpartition them.
     D = _unpartition_disp(model, D1, D2, D1_indices, D2_indices)
-    
+
     # Store the displacements in the model's global displacement vector
     model._D[combo.name] = D
 
@@ -459,6 +467,7 @@ def _store_displacements(model: FEModel3D, D1: NDArray[float64], D2: NDArray[flo
         node.RX[combo.name] = D[node.ID*6 + 3, 0]
         node.RY[combo.name] = D[node.ID*6 + 4, 0]
         node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+
 
 def _sum_displacements(model: FEModel3D, Delta_D1: NDArray[float64], Delta_D2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], combo: LoadCombo) -> None:
     """Sums calculated displacements for a load step from the solver into the model's displacement vector `_D` and into each node object in the model.
@@ -476,7 +485,7 @@ def _sum_displacements(model: FEModel3D, Delta_D1: NDArray[float64], Delta_D2: N
     :param combo: The load combination to store the displacements for
     :type combo: LoadCombo
     """
-    
+
     # The raw results from the solver are partitioned. Unpartition them.
     Delta_D = _unpartition_disp(model, Delta_D1, Delta_D2, D1_indices, D2_indices)
 
@@ -492,6 +501,7 @@ def _sum_displacements(model: FEModel3D, Delta_D1: NDArray[float64], Delta_D2: N
         node.RX[combo.name] += Delta_D[node.ID*6 + 3, 0]
         node.RY[combo.name] += Delta_D[node.ID*6 + 4, 0]
         node.RZ[combo.name] += Delta_D[node.ID*6 + 5, 0]
+
 
 def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bool = True, spring_tolerance: float = 0, member_tolerance: float = 0) -> bool:
 
@@ -522,28 +532,26 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
     # TODO: Adjust the code below to allow elements to reactivate on subsequent iterations if deformations at element nodes indicate the member goes back into an active state. This will lead to a less conservative and more realistic analysis. Nodal springs (above) already do this.
 
     # Check tension/compression-only springs
-    if log: print('- Checking for tension/compression-only spring convergence')
+    if log:
+        print('- Checking for tension/compression-only spring convergence')
+
     for spring in model.springs.values():
 
-        if spring.active[combo_name] == True:
+        if spring.active[combo_name] is True:
+
             # Check if tension-only conditions exist
-            if (
-                spring.tension_only == True
-                and spring.axial(combo_name) > spring_tolerance
-            ):
+            if (spring.tension_only is True) and (spring.axial(combo_name) > spring_tolerance):
                 spring.active[combo_name] = False
                 convergence = False
 
             # Check if compression-only conditions exist
-            elif (
-                spring.comp_only == True
-                and spring.axial(combo_name) < -spring_tolerance
-            ):
+            elif (spring.comp_only is True) and (spring.axial(combo_name) < -spring_tolerance):
                 spring.active[combo_name] = False
                 convergence = False
 
     # Check tension/compression only members
-    if log: print('- Checking for tension/compression-only member convergence')
+    if log:
+        print('- Checking for tension/compression-only member convergence')
     for phys_member in model.members.values():
 
         # Only run the tension/compression only check if the member is still active
@@ -571,11 +579,11 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
             ):
                 # Deactivate the physical member
                 phys_member.active[combo_name] = False
-                
+
                 # Deactivate all the sub-members
                 for sub_member in phys_member.sub_members.values():
                     sub_member.active[combo_name] = False
-                
+
                 # Flag the analysis as not converged
                 convergence = False
 
@@ -585,7 +593,8 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
 
     # Return whether the TC analysis has converged
     return convergence
-  
+
+
 def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] | None = None) -> None:
     """
     Calculates reactions internally once the model is solved.
@@ -853,6 +862,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                 RZ = node.RZ[combo.name]
                 node.RxnMZ[combo.name] += k*RZ
 
+
 def _check_statics(model: FEModel3D, combo_tags: List[str] | None = None) -> None:
     '''
     Checks static equilibrium and prints results to the console.
@@ -947,7 +957,8 @@ def _check_statics(model: FEModel3D, combo_tags: List[str] | None = None) -> Non
     # Print the static check table
     print(statics_table)
     print('')
-    
+
+
 def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float64]]:
     """Builds a list with known nodal displacements and with the positions in global stiffness matrix of known and unknown nodal displacements
 
@@ -955,13 +966,13 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
     :rtype: list, list, list
     """
 
-    D1_indices = [] # A list of the indices for the unknown nodal displacements
-    D2_indices = [] # A list of the indices for the known nodal displacements
-    D2 = []         # A list of the values of the known nodal displacements
+    D1_indices = []  # A list of the indices for the unknown nodal displacements
+    D2_indices = []  # A list of the indices for the known nodal displacements
+    D2 = []          # A list of the values of the known nodal displacements
 
     # Create the auxiliary table
     for node in model.nodes.values():
-        
+
         # Unknown displacement DX
         if node.support_DX == False and node.EnforcedDX == None:
             D1_indices.append(node.ID*6 + 0)
