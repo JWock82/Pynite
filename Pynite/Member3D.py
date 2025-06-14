@@ -227,45 +227,45 @@ class Member3D():
         L = self.L()
         
         # Create the uncondensed local geometric stiffness matrix
-        kg = array([ [0, 0,    0,     0,     0,         0,         0, 0,     0,    0,     0,         0],
-                     [0, 6/5,  0,     0,     0,         L/10,      0, -6/5,  0,    0,     0,         L/10],
-                     [0, 0,    6/5,   0,     -L/10,     0,         0, 0,     -6/5, 0,     -L/10,     0],
-                     [0, 0,    0,     Ip/A,  0,         0,         0, 0,     0,    -Ip/A, 0,         0],
-                     [0, 0,    -L/10, 0,     2*L**2/15, 0,         0, 0,     L/10, 0,     -L**2/30,  0],
-                     [0, L/10, 0,     0,     0,         2*L**2/15, 0, -L/10, 0,    0,     0,         -L**2/30],
-                     [0, 0,    0,     0,     0,         0,         0, 0,     0,    0,     0,         0],
-                     [0, -6/5, 0,     0,     0,         -L/10,     0, 6/5,   0,    0,     0,         -L/10],
-                     [0, 0,    -6/5,  0,     L/10,      0,         0, 0,     6/5,  0,     L/10,      0],
-                     [0, 0,    0,     -Ip/A, 0,         0,         0, 0,     0,    Ip/A,  0,         0],
-                     [0, 0,    -L/10, 0,     -L**2/30,  0,         0, 0,     L/10, 0,     2*L**2/15, 0],
-                     [0, L/10, 0,     0,     0,         -L**2/30,  0, -L/10, 0,    0,     0,         2*L**2/15]])
-        
+        kg = array([[1,  0,    0,     0,     0,         0,         -1, 0,     0,    0,     0,         0        ],
+                    [0,  6/5,  0,     0,     0,         L/10,      0,  -6/5,  0,    0,     0,         L/10     ],
+                    [0,  0,    6/5,   0,     -L/10,     0,         0,  0,     -6/5, 0,     -L/10,     0        ],
+                    [0,  0,    0,     Ip/A,  0,         0,         0,  0,     0,    -Ip/A, 0,         0        ],
+                    [0,  0,    -L/10, 0,     2*L**2/15, 0,         0,  0,     L/10, 0,     -L**2/30,  0        ],
+                    [0,  L/10, 0,     0,     0,         2*L**2/15, 0,  -L/10, 0,    0,     0,         -L**2/30 ],
+                    [-1, 0,    0,     0,     0,         0,         1,  0,     0,    0,     0,         0        ],
+                    [0,  -6/5, 0,     0,     0,         -L/10,     0,  6/5,   0,    0,     0,         -L/10    ],
+                    [0,  0,    -6/5,  0,     L/10,      0,         0,  0,     6/5,  0,     L/10,      0        ],
+                    [0,  0,    0,     -Ip/A, 0,         0,         0,  0,     0,    Ip/A,  0,         0        ],
+                    [0,  0,    -L/10, 0,     -L**2/30,  0,         0,  0,     L/10, 0,     2*L**2/15, 0        ],
+                    [0,  L/10, 0,     0,     0,         -L**2/30,  0,  -L/10, 0,    0,     0,         2*L**2/15]])
+
         kg = kg*P/L
 
         # Partition the geometric stiffness matrix as 4 submatrices in
         # preparation for static condensation
         kg11, kg12, kg21, kg22 = self._partition(kg)
-               
+
         # Calculate the condensed local geometric stiffness matrix
         # Note that a matrix of zeros cannot be inverted, so if P is 0 an error will occur
         if isclose(P, 0.0):
             kg_Condensed = zeros(kg11.shape)
         else:
             kg_Condensed = subtract(kg11, matmul(matmul(kg12, inv(kg22)), kg21))
-        
+
         # Expand the condensed local geometric stiffness matrix
-        i=0
+        i = 0
         for DOF in self.Releases:
-            
-            if DOF == True:
+
+            if DOF is True:
                 kg_Condensed = insert(kg_Condensed, i, 0, axis = 0)
                 kg_Condensed = insert(kg_Condensed, i, 0, axis = 1)
-                
+
             i += 1
 
         # Return the local geomtric stiffness matrix, with end releases applied
         return kg_Condensed
-    
+
     def km(self, combo_name: str = 'Combo 1', push_combo: str = 'Push', step_num: int = 1) -> NDArray[float64]:
         """Returns the local plastic reduction matrix for the element.
 
