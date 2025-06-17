@@ -29,10 +29,9 @@ For a more detailed description of the options available for P-:math:`\Delta` an
 The procedure Pynite uses is as follows:
 
 1. Run a load combination using a simple linear-elastic analysis in order to calculate member axial loads.
-2. Perform tension-only and compression-only iterations. If tension/compression-only analysis did not converge, undo the analysis, deactivate/reactivate members as needed, and go back to step 1.
-3. Run P-:math:`\Delta` analysis using the axial loads determined from step 1.
-4. Perform tension-only and compression-only iterations. If tension/compression-only analysis did not converge, undo the P-:math:`\Delta` analysis, deactivate/reactivate members as needed, and go back to step 3.
-5. Go back to step 1 for the next load combination. Repeat until all applicable load combinations have been evaluated.
+2. Run P-:math:`\Delta` analysis using the axial loads determined from step 1.
+3. Check for tension/compression-only element and support convergence. If elements or supports are carrying loads they cannot carry they are deactivated. If inactive elements or supports should be seeing load, they are reactivated. We then start over at step 1 with the newly deactivated or activated elements and supports. If nothing needed to be activated or deactivated we move to step 4.
+4. Go back to step 1 for the next load combination. Repeat until all applicable load combinations have been evaluated.
 
 Validation
 ==========
@@ -42,7 +41,5 @@ AISC has provided benchmark tests found in AISC 360-16 commentary C2.1 that can 
 Limitations
 ===========
 *Note that P-:math:`\Delta` and P-:math:`\delta` analysis is just one part of an overall second-order analysis. See the building code for additional requirements that may be applicable, such as stiffness reductions and notional loads.
-
-*Loads are applied in a single load step. This is sufficient for most common cases.
 
 *P-:math:`\Delta` effects are not considered for plate elements.
