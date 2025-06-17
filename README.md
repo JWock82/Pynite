@@ -66,10 +66,11 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v.1.1.2 (In Progress)
+v.1.1.2
 * Corrected a long-standing issue transforming quad local bending and membrane stresses to global coordinates. This did not affect quad local stress results. Only if you were converting the results to global coordinates would the issue arise.
 * Array results no longer include extra points at discontinutities. This was affecting some users who were using array results. Note that without the extra points, you may need to use a larger number of points to identify max/min values at discontinuities.
 * Added axial stiffness adjustments to P-&Delta; analysis. P-&Delta; effects primarily affect bending stiffness, but axial stiffness is affected too. While these axial stiffness adjustments are often negligible, they can be important in some cases. `Pynite` now considers axial stiffness adjustments when running P-&Delta; analysis.
+* Greatly simplified code for P-&Delta; analysis. P-&Delta; analysis should converge quicker with fewer unecessary iterations. `Pynite` was not taking full advantage of the fact that the geometric stiffness matrix eliminates the need to iterate when solving for P-&Delta; effects. Extra solutions were being run for no reason.
 * Cleaned up many "code smells".
 
 v1.1.1
@@ -121,6 +122,3 @@ v0.0.94
 v0.0.93
 * Fixed phantom reactions showing up at unsupported nodes. If there was a support defined at a node, the program was summing reactions for all directions at the node, rather than just the supported directions. This caused the program to report "extra" reaction directions at any supported node (if the user queried them). Element forces/stresses were not affected as this was a post-processing reaction summing issue. Reactions for supported directions were summed correctly, except in the case of nodes with both spring supports and other supports. Only unsupported directions, and nodes with both spring supports and other supports, were showing phantom reactions. This bug also caused statics checks to fail from time to time.
 * Reorganized physical member code to match member code more consistently.
-
-v0.0.92
-* Added member self-weight calculations via `FEModel3D.add_member_self_weight()`. This only applies to members. This feature does not calculate self-weight for plate and quad elements.
