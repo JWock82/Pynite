@@ -188,21 +188,23 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
         # There will be 2 solution steps in the P-Delta analysis:
         # Step 1 - Analyze based on initial stiffness
         # Step 2 - Calculate geometric stiffness and add its effects
-        for solution_step in range(1, 3):
+        for solution_step in [1, 2]:
 
             # Determine if the user has selected a sparse solution
             if sparse is True:
 
-                # Calculate the partitioned initial stiffness matrices. These matrices must be recalculated on each T/C iteration due to tension/compression-only members deactivating or reactivating.
-                if log:
-                    print('- Calculating initial stiffness matrix')
-                K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+                if solution_step == 1:
 
-                # The initial stiffness matrices are currently `lil` format which is great for memory, but slow for mathematical operations. They will be converted to `csr` format.
-                K11 = K11.tocsr()
-                K12 = K12.tocsr()
-                K21 = K21.tocsr()
-                K22 = K22.tocsr()
+                    # Calculate the partitioned initial stiffness matrices. These matrices must be recalculated on each T/C iteration due to tension/compression-only members deactivating or reactivating.
+                    if log:
+                        print('- Calculating initial stiffness matrix')
+                    K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+
+                    # The initial stiffness matrices are currently `lil` format which is great for memory, but slow for mathematical operations. They will be converted to `csr` format.
+                    K11 = K11.tocsr()
+                    K12 = K12.tocsr()
+                    K21 = K21.tocsr()
+                    K22 = K22.tocsr()
 
                 # Check if we are ready to calculate the geometric stiffness
                 if solution_step == 2:
@@ -222,8 +224,10 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
             # Determine if the user has selected a dense solution
             else:
 
-                # Calculate the partitioned initial stiffness matrices. These matrices must be recalculated on each T/C iteration due to tension/compression-only members deactivating or reactivating.
-                K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+                if solution_step == 1:
+
+                    # Calculate the partitioned initial stiffness matrices. These matrices must be recalculated on each T/C iteration due to tension/compression-only members deactivating or reactivating.
+                    K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
                 # Check if we are ready to calculate the geometric stiffness
                 if solution_step == 2:
