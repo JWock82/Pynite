@@ -336,7 +336,7 @@ class FEModel3D():
                 name = "M" + str(len(self.members)+count)
                 count += 1
 
-        #Lookup node names and safely handle exceptions
+        # Lookup node names and safely handle exceptions
         try:
             pn_nodes = [self.nodes[node_name] for node_name in (i_node, j_node)]
         except KeyError as e:
@@ -1672,20 +1672,21 @@ class FEModel3D():
         :return: The global geometric stiffness matrix for the structure.
         :rtype: ndarray or coo_matrix
         """
-        
-        if sparse == True:
+
+        if sparse is True:
             # Initialize a zero matrix to hold all the stiffness terms. The matrix will be stored as a scipy sparse `lil_matrix`. This matrix format has several advantages. It uses less memory if the matrix is sparse, supports slicing, and can be converted to other formats (sparse or dense) later on for mathematical operations.
             from scipy.sparse import lil_matrix
             Kg = lil_matrix((len(self.nodes)*6, len(self.nodes)*6))
         else:
             Kg = zeros(len(self.nodes)*6, len(self.nodes)*6)
-        
+
         # Add stiffness terms for each physical member in the model
-        if log: print('- Adding member geometric stiffness terms to global geometric stiffness matrix')
+        if log:
+            print('- Adding member geometric stiffness terms to global geometric stiffness matrix')
         for phys_member in self.members.values():
-            
+
             # Check to see if the physical member is active for the given load combination
-            if phys_member.active[combo_name] == True:
+            if phys_member.active[combo_name] is True:
 
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
@@ -1712,7 +1713,7 @@ class FEModel3D():
                     # 'a' & 'b' below are row/column indices in the member's stiffness matrix
                     # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
                     for a in range(12):
-                    
+
                         # Determine if index 'a' is related to the i-node or j-node
                         if a < 6:
                             # Find the corresponding index 'm' in the global stiffness matrix
@@ -1720,9 +1721,9 @@ class FEModel3D():
                         else:
                             # Find the corresponding index 'm' in the global stiffness matrix
                             m = member.j_node.ID*6 + (a-6)
-                        
+
                         for b in range(12):
-                        
+
                             # Determine if index 'b' is related to the i-node or j-node
                             if b < 6:
                                 # Find the corresponding index 'n' in the global stiffness matrix
@@ -1730,13 +1731,13 @@ class FEModel3D():
                             else:
                                 # Find the corresponding index 'n' in the global stiffness matrix
                                 n = member.j_node.ID*6 + (b-6)
-                        
+
                             # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                             Kg[m, n] += member_Kg[(a, b)]
 
         # Return the global geometric stiffness matrix
         return Kg
-      
+
     def Km(self, combo_name='Combo 1', push_combo='Push', step_num=1, log=False, sparse=True):
         """Calculates the structure's global plastic reduction matrix, which is used for nonlinear inelastic analysis.
 
@@ -2154,14 +2155,15 @@ class FEModel3D():
             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)          
 
             # Calculate the global displacement vector
-            if log: print('- Calculating global displacement vector')
+            if log:
+                print('- Calculating global displacement vector')
             if K11.shape == (0, 0):
                 # All displacements are known, so D1 is an empty vector
                 D1 = []
             else:
                 try:
                     # Calculate the unknown displacements D1
-                    if sparse == True:
+                    if sparse is True:
                         # The partitioned stiffness matrix is in `lil` format, which is great
                         # for memory, but slow for mathematical operations. The stiffness
                         # matrix will be converted to `csr` format for mathematical operations.
@@ -2186,9 +2188,9 @@ class FEModel3D():
             print('')
 
         # Check statics if requested
-        if check_statics == True:
+        if check_statics is True:
             Analysis._check_statics(self, combo_tags)
-        
+
         # Flag the model as solved
         self.solution = 'Linear'
 
@@ -2206,19 +2208,19 @@ class FEModel3D():
         :raises ValueError: Occurs when there is a singularity in the stiffness matrix, which indicates an unstable structure.
         :raises Exception: Occurs when a model fails to converge.
         """
-        
+
         if log:
             print('+--------------------+')
             print('| Analyzing: P-Delta |')
             print('+--------------------+')
 
         # Import `scipy` features if the sparse solver is being used
-        if sparse == True:
+        if sparse is True:
             from scipy.sparse.linalg import spsolve
 
         # Prepare the model for analysis
         Analysis._prepare_model(self)
-        
+
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
@@ -2231,12 +2233,12 @@ class FEModel3D():
             # Get the partitioned global fixed end reaction vector
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
-            # Get the partitioned global nodal force vector       
+            # Get the partitioned global nodal force vector
             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
             # Run the P-Delta analysis for this load combination
-            Analysis._PDelta_step(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter, True)
-        
+            Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter)
+
         # Calculate reactions
         Analysis._calc_reactions(self, log, combo_tags)
 
@@ -2244,24 +2246,24 @@ class FEModel3D():
             print('')
             print('- Analysis complete')
             print('')
-        
+
         # Flag the model as solved
         self.solution = 'P-Delta'
-    
+
     def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
 
         if log:
             print('+---------------------+')
             print('| Analyzing: Pushover |')
             print('+---------------------+')
-        
+
         # Import `scipy` features if the sparse solver is being used
-        if sparse == True:
+        if sparse is True:
             from scipy.sparse.linalg import spsolve
 
         # Prepare the model for analysis
         Analysis._prepare_model(self)
-        
+
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
@@ -2284,7 +2286,7 @@ class FEModel3D():
 
         # Step through each load combination
         for combo in combo_list:
-            
+
             # Skip the pushover combo
             if combo.name == push_combo:
                 continue
@@ -2292,7 +2294,7 @@ class FEModel3D():
             if log:
                 print('')
                 print('- Analyzing load combination ' + combo.name)
-            
+
             # Reset nonlinear material member end forces to zero
             for member in self.members.values():
                 member._fxi, member._myi, member._mzi = 0, 0, 0
@@ -2302,7 +2304,7 @@ class FEModel3D():
             load_step = list(self.load_combos[push_combo].factors.values())[0]
             load_factor = load_step
             step_num = 1
-            
+
             # Get the partitioned global fixed end reaction vector
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
@@ -2325,18 +2327,18 @@ class FEModel3D():
             # Apply the pushover load in steps, summing deformations as we go, until the full
             # pushover load has been analyzed
             while load_factor <= 1:
-                
+
                 # Inform the user which pushover load step we're on
                 if log:
                     print('- Beginning pushover load step #' + str(step_num))
-                
+
                 # Reset all member plastic load reversal flags to be `False`
                 for member in self.members.values():
                     member.pl_reverse = False
 
                 # Run/rerun this load step until no new unloaded member flags exist
                 run_step = True
-                while run_step == True:
+                while run_step is True:
 
                     # Assume this iteration will converge
                     run_step = False
@@ -2367,10 +2369,10 @@ class FEModel3D():
             print('')
             print('- Analysis complete')
             print('')
-        
+
         # Flag the model as solved
         self.solution = 'Pushover'
-    
+
     def unique_name(self, dictionary, prefix):
         """Returns the next available unique name for a dictionary of objects.
 
@@ -2388,10 +2390,11 @@ class FEModel3D():
         while name in dictionary.keys():
             name = prefix + str(len(dictionary) + i)
             i += 1
-        
+
         # Return the next available name
         return name
-    
+
+
     def rename(self):
         """
         Renames all the nodes and elements in the model.
@@ -2405,7 +2408,7 @@ class FEModel3D():
             self.nodes[new_key] = self.nodes.pop(old_key)
             self.nodes[new_key].name = new_key
             id += 1
-        
+
         # Rename each spring in the model
         temp = self.springs.copy()
         id = 1
@@ -2423,7 +2426,7 @@ class FEModel3D():
             self.members[new_key] = self.members.pop(old_key)
             self.members[new_key].name = new_key
             id += 1
-        
+
         # Rename each plate in the model
         temp = self.plates.copy()
         id = 1
@@ -2432,7 +2435,7 @@ class FEModel3D():
             self.plates[new_key] = self.plates.pop(old_key)
             self.plates[new_key].name = new_key
             id += 1
-        
+
         # Rename each quad in the model
         temp = self.quads.copy()
         id = 1

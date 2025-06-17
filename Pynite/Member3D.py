@@ -147,7 +147,7 @@ class Member3D():
     def k(self) -> NDArray[Any]:
         """
         Returns the condensed (and expanded) local stiffness matrix for the member.
-        
+
         :return: The condensed local stiffness matrix
         :rtype: ndarray
         """
@@ -155,18 +155,18 @@ class Member3D():
         # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
         k11, k12, k21, k22 = self._partition(self._k_unc())
-               
+
         # Calculate the condensed local stiffness matrix
         k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
-        
+
         # Expand the condensed local stiffness matrix
         i = 0
         for DOF in self.Releases:
-            
+
             if DOF is True:
                 k_Condensed = insert(k_Condensed, i, 0, axis=0)
                 k_Condensed = insert(k_Condensed, i, 0, axis=1)
-                
+
             i += 1
 
         # Return the local stiffness matrix, with end releases applied
@@ -176,7 +176,7 @@ class Member3D():
     def _k_unc(self) -> NDArray[float64]:
         """
         Returns the uncondensed local stiffness matrix for the member.
-        
+
         :return: The uncondensed local stiffness matrix
         :rtype: NDArray[float64]
         """
@@ -189,21 +189,21 @@ class Member3D():
         J = self.section.J
         A = self.section.A
         L = self.L()
-        
+
         # Create the uncondensed local stiffness matrix
-        k = array([ [A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0],
-                    [0,      12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2,  0,      -12*E*Iz/L**3, 0,             0,      0,            6*E*Iz/L**2],
-                    [0,      0,             12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0,            0,      0,             -12*E*Iy/L**3, 0,      -6*E*Iy/L**2, 0],
-                    [0,      0,             0,             G*J/L,  0,            0,            0,      0,             0,             -G*J/L, 0,            0],
-                    [0,      0,             -6*E*Iy/L**2,  0,      4*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      2*E*Iy/L,     0],
-                    [0,      6*E*Iz/L**2,   0,             0,      0,            4*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            2*E*Iz/L],
-                    [-A*E/L, 0,             0,             0,      0,            0,            A*E/L,  0,             0,             0,      0,            0],
-                    [0,      -12*E*Iz/L**3, 0,             0,      0,            -6*E*Iz/L**2, 0,      12*E*Iz/L**3,  0,             0,      0,            -6*E*Iz/L**2],
-                    [0,      0,             -12*E*Iy/L**3, 0,      6*E*Iy/L**2,  0,            0,      0,             12*E*Iy/L**3,  0,      6*E*Iy/L**2,  0],
-                    [0,      0,             0,             -G*J/L, 0,            0,            0,      0,             0,             G*J/L,  0,            0],
-                    [0,      0,             -6*E*Iy/L**2,  0,      2*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      4*E*Iy/L,     0],
-                    [0,      6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            4*E*Iz/L]])
-        
+        k = array([[A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0           ],
+                   [0,      12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2,  0,      -12*E*Iz/L**3, 0,             0,      0,            6*E*Iz/L**2 ],
+                   [0,      0,             12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0,            0,      0,             -12*E*Iy/L**3, 0,      -6*E*Iy/L**2, 0           ],
+                   [0,      0,             0,             G*J/L,  0,            0,            0,      0,             0,             -G*J/L, 0,            0           ],
+                   [0,      0,             -6*E*Iy/L**2,  0,      4*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      2*E*Iy/L,     0           ],
+                   [0,      6*E*Iz/L**2,   0,             0,      0,            4*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            2*E*Iz/L    ],
+                   [-A*E/L, 0,             0,             0,      0,            0,            A*E/L,  0,             0,             0,      0,            0           ],
+                   [0,      -12*E*Iz/L**3, 0,             0,      0,            -6*E*Iz/L**2, 0,      12*E*Iz/L**3,  0,             0,      0,            -6*E*Iz/L**2],
+                   [0,      0,             -12*E*Iy/L**3, 0,      6*E*Iy/L**2,  0,            0,      0,             12*E*Iy/L**3,  0,      6*E*Iy/L**2,  0           ],
+                   [0,      0,             0,             -G*J/L, 0,            0,            0,      0,             0,             G*J/L,  0,            0           ],
+                   [0,      0,             -6*E*Iy/L**2,  0,      2*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      4*E*Iy/L,     0           ],
+                   [0,      6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            4*E*Iz/L    ]])
+
         # Return the uncondensed local stiffness matrix
         return k
 
@@ -216,7 +216,7 @@ class Member3D():
         ----------
         P : number, optional
             The axial force acting on the member (compression = +, tension = -)
-            
+
         :return: The condensed local geometric stiffness matrix
         :rtype: NDArray[float64]
         """
@@ -225,7 +225,7 @@ class Member3D():
         Ip = self.section.Iy + self.section.Iz
         A = self.section.A
         L = self.L()
-        
+
         # Create the uncondensed local geometric stiffness matrix
         kg = array([[1,  0,    0,     0,     0,         0,         -1, 0,     0,    0,     0,         0        ],
                     [0,  6/5,  0,     0,     0,         L/10,      0,  -6/5,  0,    0,     0,         L/10     ],
@@ -258,8 +258,8 @@ class Member3D():
         for DOF in self.Releases:
 
             if DOF is True:
-                kg_Condensed = insert(kg_Condensed, i, 0, axis = 0)
-                kg_Condensed = insert(kg_Condensed, i, 0, axis = 1)
+                kg_Condensed = insert(kg_Condensed, i, 0, axis=0)
+                kg_Condensed = insert(kg_Condensed, i, 0, axis=1)
 
             i += 1
 
@@ -635,7 +635,7 @@ class Member3D():
         
         return transMatrix
 
-#%%
+# %%
     # Member global stiffness matrix
     def K(self) -> NDArray[float64]:
         """Returns the global elastic stiffness matrix for the member.
@@ -643,7 +643,7 @@ class Member3D():
         :return: The global elastic stiffness matrix for the member.
         :rtype: array
         """
-        
+
         # Calculate and return the stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.k()), self.T())
 
@@ -655,11 +655,11 @@ class Member3D():
         :return: The global geometric stiffness matrix for the member.
         :rtype: array
         """
-        
+
         # Calculate and return the geometric stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.kg(P)), self.T())
 
-    def Km(self, combo_name:str, push_combo:str, step_num:int) -> NDArray[float64]:
+    def Km(self, combo_name: str, push_combo: str, step_num: int) -> NDArray[float64]:
         """Returns the global plastic reduction matrix for the member. Used to modify member behavior for plastic hinges at the ends.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for.
@@ -674,15 +674,15 @@ class Member3D():
 
         # Calculate and return the plastic reduction matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.km(combo_name, push_combo, step_num)), self.T())
-    
-    def F(self, combo_name:str='Combo 1') -> NDArray[float64]:
+
+    def F(self, combo_name: str='Combo 1') -> NDArray[float64]:
         """
         Returns the member's global end force vector for the given load combination.
         """
-        
+
         # Calculate and return the global force vector
         return matmul(inv(self.T()), self.f(combo_name))
-    
+
     def FER(self, combo_name:str='Combo 1') -> NDArray[float64]:
         """
         Returns the global fixed end reaction vector
@@ -696,7 +696,7 @@ class Member3D():
         # Calculate and return the fixed end reaction vector
         return matmul(inv(self.T()), self.fer(combo_name))
 
-#%%
+# %%
     def D(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the member's global displacement vector.
