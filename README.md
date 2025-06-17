@@ -68,7 +68,7 @@ Here's a list of projects that use Pynite:
 # What's New?
 v.1.1.2
 * Corrected a long-standing issue transforming quad local bending and membrane stresses to global coordinates. This did not affect quad local stress results. Only if you were converting the results to global coordinates would the issue arise.
-* Array results no longer include extra points at discontinutities. This was affecting some users who were using array results. Note that without the extra points, you may need to use a larger number of points to identify max/min values at discontinuities.
+* Array results no longer include extra points at discontinuities. This was affecting some users who were using array results. Note that without the extra points, you may need to use a larger number of points to identify max/min values at discontinuities.
 * Added axial stiffness adjustments to P-&Delta; analysis. P-&Delta; effects primarily affect bending stiffness, but axial stiffness is affected too. While these axial stiffness adjustments are often negligible, they can be important in some cases. `Pynite` now considers axial stiffness adjustments when running P-&Delta; analysis.
 * Greatly simplified code for P-&Delta; analysis. P-&Delta; analysis should converge quicker with fewer unecessary iterations. `Pynite` was not taking full advantage of the fact that the geometric stiffness matrix eliminates the need to iterate when solving for P-&Delta; effects. Extra solutions were being run for no reason.
 * Cleaned up many "code smells".
