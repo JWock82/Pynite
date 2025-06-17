@@ -5,14 +5,14 @@ from math import tan
 cantilever = FEModel3D()
 
 # Define the column and its section properties
-L = 20 # ft
-H = 5 # kips lateral load
-P = 100 # kips axial load
-I = 100/12**4 # moment of inertia (ft^4)
+L = 20  # ft
+H = 5  # kips lateral load
+P = 100  # kips axial load
+I = 100/12**4  # moment of inertia (ft^4)
 
 # Define a material
-G = 11200*12**2 # shear modulus (ksf)
-E = 29000*12**2 # modulus of elasticity (ksf)
+G = 11200*12**2  # shear modulus (ksf)
+E = 29000*12**2  # modulus of elasticity (ksf)
 nu = 0.3
 rho = 0.490  # kcf
 cantilever.add_material('Steel', E, G, nu, rho)
@@ -37,7 +37,7 @@ cantilever.add_node_load('N6', 'FY', -P)
 cantilever.add_node_load('N6', 'FX', H)
 
 # Perform 2nd order analysis
-cantilever.analyze_PDelta()
+cantilever.analyze_PDelta(log=True)
 
 from Pynite.Visualization import Renderer
 renderer = Renderer(cantilever)
@@ -51,8 +51,14 @@ renderer.render_model()
 calculated_moment = cantilever.nodes['N1'].RxnMZ['Combo 1']
 calculated_moment2 = cantilever.members['M1'].plot_moment('Mz', 'Combo 1', 100)
 
-# the deflection at the top of the column
+# The deflection at the top of the column
 calculated_displacement = cantilever.nodes['N6'].DX['Combo 1']*12
+
+# The axial reaction at the base of the column
+# calculated_reaction = cantilever.members['M1'].axial(0, 'Combo 1')
+node_rxn_FY = cantilever.nodes['N1'].RxnFY['Combo 1']
+node_rxn_FX = cantilever.nodes['N1'].RxnFX['Combo 1']
+node_rxn_MZ = cantilever.nodes['N1'].RxnMZ['Combo 1']
 
 # Calculate the AISC benchmark problem solution:
 alpha = (P*L**2/(E*I))**0.5
@@ -64,4 +70,8 @@ print('Expected Moment, M_max: ', Mmax)
 print('Calculated Moment, M_calc: ', calculated_moment)
 print('')
 print('Expected Displacement, y_max: ', ymax*12)
-print('Calculated Displacement, y_calc:', calculated_displacement)
+print('Calculated Displacement, y_calc: ', calculated_displacement)
+print('')
+print('Axial Reaction: ', node_rxn_FY)
+print('Shear Reaction: ', node_rxn_FX)
+print('Moment Reaction: ', node_rxn_MZ)
