@@ -66,9 +66,15 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v.1.1.2 (In Progress)
+* Corrected a long-standing issue transforming quad local bending and membrane stresses to global coordinates. This did not affect quad local stress results. Only if you were converting the results to global coordinates would the issue arise.
+* Array results no longer include extra points at discontinutities. This was affecting some users who were using array results. Note that without the extra points, you may need to use a larger number of points to identify max/min values at discontinuities.
+* Added axial stiffness adjustments to P-&Delta; analysis. P-&Delta; effects primarily affect bending stiffness, but axial stiffness is affected too. While these axial stiffness adjustments are often negligible, they can be important in some cases. `Pynite` now considers axial stiffness adjustments when running P-&Delta; analysis.
+* Cleaned up many "code smells".
+
 v1.1.1
 * Bug fix for member array results. Exceptions were being thrown in some cases.
-* Simnplified code for array functions by removing redundant algorithms.
+* Simplified code for array functions by removing redundant algorithms.
 
 v1.1.0
 * Added a `VTKWriter` class to allow for easy exporting to `Paraview`.
