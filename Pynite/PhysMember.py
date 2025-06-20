@@ -331,7 +331,7 @@ class PhysMember(Member3D):
     def moment(self, Direction: Literal['My', 'Mz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the moment at a point along the member's length
-        
+
         Parameters
         ----------
         Direction : string
@@ -343,10 +343,10 @@ class PhysMember(Member3D):
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         """
-        
+
         member, x_mod = self.find_member(x)
         return member.moment(Direction, x_mod, combo_name)
-    
+
     def max_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the maximum moment in the member for the given direction.

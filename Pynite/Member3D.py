@@ -506,8 +506,8 @@ class Member3D():
             m22 = unp_matrix[R2_indices, :][:, R2_indices]
             return  m11, m12, m21, m22
 
-#%%   
-    def f(self, combo_name:str='Combo 1', push_combo:str='Push', step_num=1) -> NDArray[float64]:
+# %%   
+    def f(self, combo_name: str='Combo 1', push_combo: str='Push', step_num=1) -> NDArray[float64]:
         """Returns the member's elastic local end force vector for the given load combination.
 
         :param combo_name: The load combination to get the local end for vector for. Defaults to 'Combo 1'.
@@ -515,7 +515,7 @@ class Member3D():
         :return: The member's local end force vector for the given load combination.
         :rtype: array
         """
-        
+
         # Calculate and return the member's local end force vector
         if self.model.solution == 'P-Delta':
             # Back-calculate the axial force on the member from the axial strain
@@ -527,7 +527,7 @@ class Member3D():
         else:
             return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
 
-#%%
+# %%
     def d(self, combo_name='Combo 1') -> NDArray[float64]:
         """
         Returns the member's local displacement vector.
@@ -537,10 +537,10 @@ class Member3D():
         combo_name : string
             The name of the load combination to construct the displacement vector for (not the load combination itself).
         """
-        
+
         # Calculate and return the local displacement vector
         return self.T() @ self.D(combo_name)
-        
+
 #%%  
     # Transformation matrix
     def T(self) -> NDArray[float64]:
@@ -966,11 +966,11 @@ class Member3D():
         else:
             raise ValueError(f"Direction must be 'Fy' or 'Fz'. {Direction} was given.")
 
-#%%
+# %%
     def moment(self, Direction: Literal['My', 'Mz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the moment at a point along the member's length
-        
+
         Parameters
         ----------
         Direction : string
@@ -982,7 +982,7 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         """
-        
+
         # Only calculate results if the member is currently active
         if self.active[combo_name]:
 
@@ -990,7 +990,7 @@ class Member3D():
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
+
             # Determine if a P-Delta analysis has been run
             if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
                 # Include P-little-delta effects in the moment results
@@ -1001,42 +1001,42 @@ class Member3D():
 
             # Check which axis is of interest
             if Direction == 'My':
-                
+
                 # Check which segment 'x' falls on
                 for segment in self.SegmentsY:
 
-                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
-                        
+                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+
                         return segment.moment(x - segment.x1, P_delta)
-                    
+
                 if isclose(x, self.L()):
-                    
+
                     return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1, P_delta)
-                    
+
             elif Direction == 'Mz':
-                
+
                 for segment in self.SegmentsZ:
-                    
-                    if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
-                        
+
+                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+
                         return segment.moment(x - segment.x1, P_delta)
-                    
+
                 if isclose(x, self.L()):
-                    
+
                     return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1, P_delta)
-            
+
             else:
                 raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
-    
+
         else:
 
             return 0
-            
-#%%
+
+# %%
     def max_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the maximum moment in the member for the given direction.
-        
+
         Parameters
         ----------
         Direction : string
@@ -1057,39 +1057,39 @@ class Member3D():
             else:
                 # Do not include P-little delta effects in the moment results
                 P_delta = False
-            
+
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
+
             if Direction == 'Mz':
-                
+
                 Mmax = self.SegmentsZ[0].moment(0, P_delta)
 
                 for segment in self.SegmentsZ:
-                    
+
                     if segment.max_moment() > Mmax:
-                        
+
                         Mmax = segment.max_moment()
-                        
+
             if Direction == 'My':
-                
+
                 Mmax = self.SegmentsY[0].moment(0, P_delta)
 
                 for segment in self.SegmentsY:
-                    
+
                     if segment.max_moment() > Mmax:
-                        
+
                         Mmax = segment.max_moment()
-            
+
             return Mmax
-        
+
         else:
 
             return 0
 
-#%%
+# %%
     def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum moment in the member for the given direction

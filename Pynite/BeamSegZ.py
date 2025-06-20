@@ -114,15 +114,15 @@ class BeamSegZ():
         w1 = self.w1
         w2 = self.w2
         L = self.Length()
-        
+
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
         # Include the P-little-delta moment if a P-Delta analysis was run
-        if P_delta == True:
+        if P_delta is True:
             delta_1 = self.delta1
             delta_x = self.deflection(x)
-            M += P1*(delta_x - delta_1)
-        
+            M -= P1*(delta_x - delta_1)
+
         # Return the computed moment
         return M
 
@@ -171,23 +171,19 @@ class BeamSegZ():
         L = self.Length()
         EI = self.EI
 
-        theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
-        theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
-
-        if P_delta == True:
+        if P_delta is True:
             delta_1 = self.delta1
             delta_x = self.deflection(x, P_delta)
-            theta_x -= x*(-P1*delta_1 + P1*delta_x)/EI
-        
-        # TODO: This is an old equation left for reference. Delete it after the new equation has been proved over time.
-        # return theta_1 - (M1*x - V1*x**2/2 - w1*x**3/6 + x**4*(w1 - w2)/(24*L))/(EI)
-        
+            theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 + P1*delta_1 - P1*delta_x) + x**4*(w1 - w2)/(24*L))/(EI)
+        else:
+            theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
+
         # Return the calculated slope
         return theta_x
 
     # Returns the deflection at a location on the segment
     def deflection(self, x: float, P_delta: bool = False) -> float:
-        
+
         V1 = self.V1
         M1 = self.M1
         P1 = self.P1
@@ -212,8 +208,7 @@ class BeamSegZ():
                 delta_last = delta_x
 
                 # Compute the deflection
-                # delta_x = delta1 + theta1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
-                delta_x = delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
+                delta_x = delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 - P1*delta_1 + P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
                 # Check the change in deflection between iterations
                 if delta_last != 0:
@@ -230,7 +225,6 @@ class BeamSegZ():
         else:
 
             # Return the calcuated deflection
-            # return delta1 + theta1*x - M1*x**2/(2*EI) + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**5*(-w1 + w2)/(120*EI*L)
             return delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
     def AxialDeflection(self, x: float) -> float:
