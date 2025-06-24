@@ -117,11 +117,11 @@ class BeamSegZ():
 
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
-        # Include the P-little-delta moment if a P-Delta analysis was run
+        # Include the P-Delta moment if a P-Delta analysis was run
         if P_delta is True:
             delta_1 = self.delta1
             delta_x = self.deflection(x)
-            M -= P1*(delta_x - delta_1)
+            M += P1*(delta_x - delta_1)
 
         # Return the computed moment
         return M
@@ -194,7 +194,7 @@ class BeamSegZ():
         d_delta = 1
         L = self.Length()
         EI = self.EI
-        
+
         # Iteration is required to calculate P-little-delta effects
         if P_delta is True:
 
