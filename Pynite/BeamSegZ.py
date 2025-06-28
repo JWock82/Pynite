@@ -92,17 +92,17 @@ class BeamSegZ():
         """
         Returns the length of the segment
         """
-        
+
         return self.x2 - self.x1
 
     # Returns the shear force at a location 'x' on the segment
     def Shear(self, x: float) -> float:
-        
+
         V1 = self.V1
         w1 = self.w1
         w2 = self.w2
         L = self.Length()
-        
+
         return V1 + w1*x + x**2*(-w1 + w2)/(2*L)
 
     # Returns the moment at a location on the segment
@@ -128,29 +128,28 @@ class BeamSegZ():
 
     # Returns the axial force at a location on the segment
     def axial(self, x: float) -> float:
-        
+
         P1 = self.P1
         p1 = self.p1
         p2 = self.p2
         L = self.Length()
-        
+
         return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
 
     def Torsion(self, x: float | List[float] = 0) -> float | None | NDArray[Any]:
         """
         Returns the torsional moment in the segment.
         """
-        
+
         # The torsional moment is constant across the segment
         # This can be updated in the future for distributed torsional forces
 
-        #As the return value is not calculated as a function of x (for now), we need to check
-        #whether x is an array, and if so, return a results array of the same length
+        # As the return value is not calculated as a function of x (for now), we need to check whether x is an array, and if so, return a results array of the same length
         if isinstance(x, (int, float)):
             return self.T1
         else:
             return full(len(x), self.T1)
-    
+
     def slope(self, x: float, P_delta: bool = False) -> float:
         """Returns the slope of the elastic curve at any point `x` along the segment.
 
@@ -161,7 +160,7 @@ class BeamSegZ():
         :return: The slope of the elastic curve (radians) at location `x`.
         :rtype: float
         """
-        
+
         V1 = self.V1
         M1 = self.M1
         P1 = self.P1
@@ -208,7 +207,7 @@ class BeamSegZ():
                 delta_last = delta_x
 
                 # Compute the deflection
-                delta_x = delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 - P1*delta_1 + P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
+                delta_x = delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1 - P1*delta_x)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
                 # Check the change in deflection between iterations
                 if delta_last != 0:
