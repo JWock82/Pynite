@@ -66,7 +66,10 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v.1.1.2
+v1.1.3
+* Added P-&Delta; effects to vectorized results. Prior to this fix, member end forces and internal forces were being calculated correctly, but the P-&Delta; flag was not triggered in the methods that used vectorized results. Moment plots and moment arrays were the only items that were affected. Spot checking moments, and checking max/min moments were not affected.
+
+v1.1.2
 * Corrected a long-standing issue transforming quad local bending and membrane stresses to global coordinates. This did not affect quad local stress results. Only if you were converting the results to global coordinates would the issue arise.
 * Array results no longer include extra points at discontinuities. This was affecting some users who were using array results. Note that without the extra points, you may need to use a larger number of points to identify max/min values at discontinuities.
 * Added axial stiffness adjustments to P-&Delta; analysis. P-&Delta; effects primarily affect bending stiffness, but axial stiffness is affected too. While these axial stiffness adjustments are often negligible, they can be important in some cases. `Pynite` now considers axial stiffness adjustments when running P-&Delta; analysis.
