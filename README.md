@@ -66,7 +66,7 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.1.3
+v1.1.3 (In Progress)
 * Added P-&Delta; effects to vectorized results. Prior to this fix, member end forces and internal forces were being calculated correctly, but the P-&Delta; flag was not triggered in the methods that used vectorized results. Moment plots and moment arrays were the only items that were affected. Spot checking moments, and checking max/min moments were not affected.
 
 v1.1.2
