@@ -1940,26 +1940,26 @@ class Member3D():
             self._solved_combo = self.model.load_combos[combo_name]
 
         d = self.d(combo_name)
-        dyi = d[1,0]
-        dyj = d[7,0]
-        dzi = d[2,0]
-        dzj = d[8,0]
+        dyi = d[1, 0]
+        dyj = d[7, 0]
+        dzi = d[2, 0]
+        dzj = d[8, 0]
 
         L = self.L()
         if x_array is None:
             x_array = linspace(0, L, n_points)
         else:
-            if any(x_array<0) or any(x_array>L):
+            if any(x_array < 0) or any(x_array > L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
 
         # Check which axis is of interest
         if Direction == 'dy':
             deflections = self._extract_vector_results(self.SegmentsZ, x_array, 'deflection')[1]
             return vstack((x_array, deflections - (dyi + (dyj-dyi)/L*x_array)))
-        
+
         elif Direction == 'dz':
             deflections = self._extract_vector_results(self.SegmentsY, x_array, 'deflection')[1]
-            return vstack((x_array, deflections - (dzi + (dzj-dzi)/L*x_array)))        
+            return vstack((x_array, deflections - (dzi + (dzj-dzi)/L*x_array)))
 
     def _segment_member(self, combo_name='Combo 1'):
         """
@@ -2017,11 +2017,11 @@ class Member3D():
             SegmentsY.append(newSeg)       # Add the segment to the list
 
             # x-direction segments (for torsional moment)
-            newSeg = BeamSegZ()           # Create the new segment
-            newSeg.x1 = disconts[index]   # Segment start location
-            newSeg.x2 = disconts[index+1] # Segment end location
-            newSeg.EA = E*A               # Segment axial stiffness
-            SegmentsX.append(newSeg)      # Add the segment to the list
+            newSeg = BeamSegZ()            # Create the new segment
+            newSeg.x1 = disconts[index]    # Segment start location
+            newSeg.x2 = disconts[index+1]  # Segment end location
+            newSeg.EA = E*A                # Segment axial stiffness
+            SegmentsX.append(newSeg)       # Add the segment to the list
 
         # Get the element local end forces, local fixed end reactions, and local displacements
         f = self.f(combo_name)           # Member local end force vector
@@ -2031,18 +2031,18 @@ class Member3D():
         # Get the local deflections and calculate the slope at the start of the member
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used, so slope-deflection has been applied to solve for it.
         # Note 2: The traditional slope-deflection equations assume a sign convention opposite of what Pynite uses for moments about the local y-axis, so a negative value has been applied to those values specifically.
-        m1z = f[5, 0]       # local z-axis moment at start of member
-        m2z = f[11, 0]      # local z-axis moment at end of member
-        m1y = -f[4, 0]      # local y-axis moment at start of member
-        m2y = -f[10, 0]     # local y-axis moment at end of member
-        fem1z = fer[5, 0]   # local z-axis fixed end moment at start of member
-        fem2z = fer[11, 0]  # local z-axis fixed end moment at end of member
-        fem1y = -fer[4, 0]  # local y-axis fixed end moment at start of member
-        fem2y = -fer[10, 0] # local y-axis fixed end moment at end of member
-        delta1y = d[1, 0]   # local y displacement at start of member
-        delta2y = d[7, 0]   # local y displacement at end of member
-        delta1z = d[2, 0]   # local z displacement at start of member
-        delta2z = d[8, 0]   # local z displacement at end of member
+        m1z = f[5, 0]        # local z-axis moment at start of member
+        m2z = f[11, 0]       # local z-axis moment at end of member
+        m1y = -f[4, 0]       # local y-axis moment at start of member
+        m2y = -f[10, 0]      # local y-axis moment at end of member
+        fem1z = fer[5, 0]    # local z-axis fixed end moment at start of member
+        fem2z = fer[11, 0]   # local z-axis fixed end moment at end of member
+        fem1y = -fer[4, 0]   # local y-axis fixed end moment at start of member
+        fem2y = -fer[10, 0]  # local y-axis fixed end moment at end of member
+        delta1y = d[1, 0]    # local y displacement at start of member
+        delta2y = d[7, 0]    # local y displacement at end of member
+        delta1z = d[2, 0]    # local z displacement at start of member
+        delta2z = d[8, 0]    # local z displacement at end of member
         SegmentsZ[0].delta1 = delta1y
         SegmentsY[0].delta1 = delta1z
         SegmentsZ[0].theta1 = 1/3*((m1z - fem1z)*L/(E*Iz) - (m2z - fem2z)*L/(2*E*Iz) + 3*(delta2y - delta1y)/L)
@@ -2111,9 +2111,12 @@ class Member3D():
                             SegmentsZ[i].M1 += factor*ptLoad[1]
                         elif ptLoad[0] == 'FX' or ptLoad[0] == 'FY' or ptLoad[0] == 'FZ':
                             FX, FY, FZ = 0, 0, 0
-                            if ptLoad[0] == 'FX': FX = 1
-                            if ptLoad[0] == 'FY': FY = 1
-                            if ptLoad[0] == 'FZ': FZ = 1
+                            if ptLoad[0] == 'FX':
+                                FX = 1
+                            if ptLoad[0] == 'FY':
+                                FY = 1
+                            if ptLoad[0] == 'FZ':
+                                FZ = 1
                             force = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
                             SegmentsZ[i].P1 += factor*force[0]
                             SegmentsZ[i].V1 += factor*force[1]
@@ -2122,86 +2125,89 @@ class Member3D():
                             SegmentsY[i].M1 += factor*force[2]*(x - ptLoad[2])
                         elif ptLoad[0] == 'MX' or ptLoad[0] == 'MY' or ptLoad[0] == 'MZ':
                             MX, MY, MZ = 0, 0, 0
-                            if ptLoad[0] == 'MX': MX = 1
-                            if ptLoad[0] == 'MY': MY = 1
-                            if ptLoad[0] == 'MZ': MZ = 1
+                            if ptLoad[0] == 'MX':
+                                MX = 1
+                            if ptLoad[0] == 'MY':
+                                MY = 1
+                            if ptLoad[0] == 'MZ':
+                                MZ = 1
                             force = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
                             SegmentsX[i].T1 += factor*force[0]
                             SegmentsY[i].M1 += factor*force[1]
                             SegmentsZ[i].M1 += factor*force[2]
-                
+
                 # Add distributed loads to the segment
                 for distLoad in self.DistLoads:
-                    
+
                     if case == distLoad[5]:
-                    
+
                         # Get the parameters for the distributed load
                         Direction = distLoad[0]
                         w1 = factor*distLoad[1]
                         w2 = factor*distLoad[2]
                         x1 = distLoad[3]
                         x2 = distLoad[4]
-            
+
                         # Determine if the load affects the segment
                         if round(x1, 10) <= round(x, 10):
-                    
+
                             if Direction == 'Fx':
-                        
+
                                 # Determine if the load is on this segment
-                                if round(x2,10) > round(x,10):
-                                                            
+                                if round(x2, 10) > round(x, 10):
+
                                     # Break up the load and place it on the segment
                                     # Note that 'w1' and 'w2' are really the axial loads 'p1' and 'p2' here
                                     SegmentsZ[i].p1 += (w2 - w1)/(x2 - x1)*(x - x1) + w1
                                     SegmentsZ[i].p2 += (w2 - w1)/(x2 - x1)*(SegmentsZ[i].x2 - x1) + w1
                                     SegmentsY[i].p1 += (w2 - w1)/(x2 - x1)*(x - x1) + w1
                                     SegmentsY[i].p2 += (w2 - w1)/(x2 - x1)*(SegmentsY[i].x2 - x1) + w1
-                                
+
                                     # Calculate the magnitude of the load at the start of the segment
                                     w2 = w1+(w2-w1)/(x2-x1)*(x-x1)
                                     x2 = x
-                        
+
                                 # Calculate the axial force at the start of the segment
                                 SegmentsZ[i].P1 += (w1 + w2)/2*(x2 - x1)
                                 SegmentsY[i].P1 += (w1 + w2)/2*(x2 - x1)
-                    
+
                             elif Direction == 'Fy':
-                        
+
                                 # Determine if the load is on this segment
-                                if round(x2,10) > round(x,10):
-                                                            
+                                if round(x2, 10) > round(x, 10):
+
                                     # Break up the load and place it on the segment
                                     SegmentsZ[i].w1 += (w2 - w1)/(x2 - x1)*(x - x1) + w1
                                     SegmentsZ[i].w2 += (w2 - w1)/(x2 - x1)*(SegmentsZ[i].x2 - x1) + w1
-                                
+
                                     # Calculate the magnitude of the load at the start of the segment
                                     # This will be used as the 'x2' value for the load prior to the start of the segment
                                     w2 = w1 + (w2 - w1)/(x2 - x1)*(x - x1)
                                     x2 = x
-                        
+
                                 # Calculate the shear and moment at the start of the segment due to the load
                                 SegmentsZ[i].V1 += (w1 + w2)/2*(x2 - x1)
                                 SegmentsZ[i].M1 -= (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
-                    
+
                             elif Direction == 'Fz':
-                        
+
                                 # Determine if the load is on this segment
-                                if round(x2,10) > round(x,10):
-                                                            
+                                if round(x2, 10) > round(x, 10):
+
                                     # Break up the load and place it on the segment
                                     SegmentsY[i].w1 += (w2 - w1)/(x2 - x1)*(SegmentsY[i].x1 - x1) + w1
                                     SegmentsY[i].w2 += (w2 - w1)/(x2 - x1)*(SegmentsY[i].x2 - x1) + w1
-                                
+
                                     # Calculate the magnitude of the load at the start of the segment
                                     w2 = w1 + (w2 - w1)/(x2 - x1)*(x - x1)
                                     x2 = x
-                        
+
                                 # Calculate the shear and moment at the start of the segment due to the load
                                 SegmentsY[i].V1 += (w1 + w2)/2*(x2 - x1)
                                 SegmentsY[i].M1 += (x1 - x2)*(2*w1*x1 - 3*w1*x + w1*x2 + w2*x1 - 3*w2*x + 2*w2*x2)/6
 
                             elif Direction == 'FX' or Direction == 'FY' or Direction == 'FZ':
-                                
+
                                 FX, FY, FZ = 0, 0, 0
                                 if Direction == 'FX': FX = 1
                                 if Direction == 'FY': FY = 1
@@ -2212,7 +2218,7 @@ class Member3D():
 
                                 # Determine if the load is on this segment
                                 if round(x2, 10) > round(x, 10):
-                                                            
+
                                     # Break up the load and place it on the segment
                                     SegmentsZ[i].p1 += (f2[0] - f1[0])/(x2 - x1)*(x - x1) + f1[0]
                                     SegmentsZ[i].p2 += (f2[0] - f1[0])/(x2 - x1)*(SegmentsZ[i].x2 - x1) + f1[0]

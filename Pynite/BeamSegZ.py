@@ -117,7 +117,7 @@ class BeamSegZ():
 
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
-        # Include the P-Delta moment if a P-Delta analysis was run
+        # # Include the P-Delta moment if a P-Delta analysis was run
         if P_delta is True:
             delta_1 = self.delta1
             delta_x = self.deflection(x)
@@ -173,7 +173,7 @@ class BeamSegZ():
         if P_delta is True:
             delta_1 = self.delta1
             delta_x = self.deflection(x, P_delta)
-            theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 + P1*delta_1 - P1*delta_x) + x**4*(w1 - w2)/(24*L))/(EI)
+            theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
         else:
             theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
 
@@ -239,44 +239,44 @@ class BeamSegZ():
 
     # Returns the maximum shear in the segment
     def max_shear(self) -> float:
-        
+
         w1 = self.w1
         w2 = self.w2
         L = self.Length()
-        
+
         # Determine possible locations of maximum shear
         if w1-w2 == 0:
             x1 = 0
         else:
             x1 = w1*L/(w1-w2)
-    
+
         if round(x1, 10) < 0 or round(x1, 10) > round(L, 10):
             x1 = 0
-    
+
         x2 = 0
         x3 = L
-    
+
         # Find the shear at each location of interest
         V1 = self.Shear(x1)
         V2 = self.Shear(x2)
         V3 = self.Shear(x3)
-    
+
         # Return the maximum shear
         return max(V1, V2, V3)
 
     # Returns the minimum shear in the segment
     def min_shear(self) -> float:
-        
+
         w1 = self.w1
         w2 = self.w2
         L = self.Length()
-        
+
         # Determine possible locations of minimum shear
         if w1-w2 == 0:
             x1 = 0
         else:
             x1 = w1*L/(w1-w2)
-    
+
         if round(x1, 10) < 0 or round(x1, 10) > round(L, 10):
             x1 = 0
     
