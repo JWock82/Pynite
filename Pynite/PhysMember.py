@@ -367,7 +367,7 @@ class PhysMember(Member3D):
             if Mmax is None or M > Mmax:
                 Mmax = M
         return Mmax
-    
+
     def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum moment in the member for the given direction
@@ -479,11 +479,17 @@ class PhysMember(Member3D):
 
             x_subm_array = x_array[filter] - x_o
 
+            # Check if P-Delta analysis was run
+            if self.model.solution == 'P-Delta':
+                PDelta = True
+            else:
+                PDelta = False
+
             # Check which axis is of interest
             if Direction == 'My':
-                m_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'moment')
+                m_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'moment', PDelta)
             elif Direction == 'Mz':
-                m_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'moment')
+                m_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'moment', PDelta)
             else:
                 raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
 
@@ -501,7 +507,7 @@ class PhysMember(Member3D):
 
         # Return the results
         return m_array2
-    
+
     def torque(self, x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the torsional moment at a point along the member's length
@@ -516,7 +522,7 @@ class PhysMember(Member3D):
         
         member, x_mod = self.find_member(x)
         return member.torque(x_mod, combo_name)
-    
+
     def max_torque(self, combo_name: str = 'Combo 1') -> float:
         
         Tmax = None
@@ -525,7 +531,7 @@ class PhysMember(Member3D):
             if Tmax is None or T > Tmax:
                 Tmax = T
         return Tmax
-    
+
     def min_torque(self, combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum torsional moment in the member.
@@ -656,7 +662,7 @@ class PhysMember(Member3D):
 
         member, x_mod = self.find_member(x)
         return member.axial(x_mod, combo_name)
-    
+
     def max_axial(self, combo_name: str = 'Combo 1') -> float:
         
         Pmax = None
@@ -665,7 +671,7 @@ class PhysMember(Member3D):
             if Pmax is None or P > Pmax:
                 Pmax = P
         return Pmax
-    
+
     def min_axial(self, combo_name: str = 'Combo 1') -> float:
 
         Pmin = None
@@ -772,7 +778,7 @@ class PhysMember(Member3D):
         
         # Return the results
         return a_array2
-    
+
     def deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the deflection at a point along the member's length.
@@ -811,7 +817,7 @@ class PhysMember(Member3D):
             if dmax is None or d > dmax:
                 dmax = d
         return dmax
-    
+
     def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the minimum deflection in the member.

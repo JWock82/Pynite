@@ -1796,7 +1796,7 @@ class Member3D():
                 raise ValueError(f"All x values must be in the range 0 to {L}")
                 
         if P_delta:
-            #P-delta analysis is not vectorised yet, do it element-wise
+            # P-delta analysis is not vectorised yet, do it element-wise
             y_arr = array([self.deflection(Direction, x, combo_name) for x in x_array])
             return array([x_array, y_arr])
 
