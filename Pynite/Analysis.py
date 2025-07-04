@@ -297,11 +297,11 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
     run_step = True
 
     # Run/rerun the load step until convergence occurs
-    while run_step == True:
+    while run_step is True:
 
         # Calculate the partitioned global stiffness matrices
         # Sparse solver
-        if sparse == True:
+        if sparse is True:
 
             from scipy.sparse.linalg import spsolve
             
@@ -350,7 +350,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         else:
             try:
                 # Calculate the change in the displacements Delta_D1
-                if sparse == True:
+                if sparse is True:
                     # The partitioned stiffness matrix is already in `csr` format. The `@`
                     # operator performs matrix multiplication on sparse matrices.
                     Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
@@ -371,7 +371,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         for member in model.members.values():
                         
             # Check for plastic load reversal at the i-node in this load step
-            if member.i_reversal == False and member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 1] < 0:
+            if member.i_reversal is False and member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 1] < 0:
 
                 # Flag the member as having plastic load reversal at the i-node
                 i_reversal = True
@@ -380,7 +380,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                 run_step = True
 
             # Check for plastic load reversal at the j-node in this load step
-            if member.j_reversal == False and member.lamb(Delta_D, combo_name, push_combo, step_num)[1, 1] < 0:
+            if member.j_reversal is False and member.lamb(Delta_D, combo_name, push_combo, step_num)[1, 1] < 0:
 
                 # Flag the member as having plastic load reversal at the j-node
                 j_reversal = True
@@ -389,7 +389,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                 run_step = True
 
         # Undo the last loadstep if plastic load reversal was discovered. We'll rerun it with the corresponding gradients set to zero vectors.
-        if run_step == True:
+        if run_step is True:
             _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
     
     # Sum the calculated displacements
@@ -556,11 +556,11 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
     for phys_member in model.members.values():
 
         # Only run the tension/compression only check if the member is still active
-        if phys_member.active[combo_name] == True:
+        if phys_member.active[combo_name] is True:
 
             # Check if a tension-only conditions exist
             if (
-                phys_member.tension_only == True
+                phys_member.tension_only is True
                 and phys_member.max_axial(combo_name) > member_tolerance
             ):
                 # Deactivate the physical member
@@ -575,7 +575,7 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
 
             # Check if a compression-only conditions exist
             elif (
-                phys_member.comp_only == True
+                phys_member.comp_only is True
                 and phys_member.min_axial(combo_name) < -member_tolerance
             ):
                 # Deactivate the physical member
@@ -637,7 +637,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                 # Sum the spring end forces at the node
                 for spring in model.springs.values():
 
-                    if spring.i_node == node and spring.active[combo.name] == True:
+                    if spring.i_node == node and spring.active[combo.name] is True:
                         
                         # Get the spring's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -650,7 +650,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         if node.support_RY: node.RxnMY[combo.name] += spring_F[4, 0]
                         if node.support_RZ: node.RxnMZ[combo.name] += spring_F[5, 0]
 
-                    elif spring.j_node == node and spring.active[combo.name] == True:
+                    elif spring.j_node == node and spring.active[combo.name] is True:
                     
                         # Get the spring's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -669,7 +669,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     # Sum the sub-member end forces at the node
                     for member in phys_member.sub_members.values():
                         
-                        if member.i_node == node and phys_member.active[combo.name] == True:
+                        if member.i_node == node and phys_member.active[combo.name] is True:
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -682,7 +682,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                             if node.support_RY: node.RxnMY[combo.name] += member_F[4, 0]
                             if node.support_RZ: node.RxnMZ[combo.name] += member_F[5, 0]
 
-                        elif member.j_node == node and phys_member.active[combo.name] == True:
+                        elif member.j_node == node and phys_member.active[combo.name] is True:
                         
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
@@ -826,37 +826,37 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                                 node.RxnMZ[combo.name] -= load[1]*factor
             
             # Calculate any reactions due to active spring supports at the node
-            if node.spring_DX[0] != None and node.spring_DX[2] == True:
+            if node.spring_DX[0] != None and node.spring_DX[2] is True:
                 sign = node.spring_DX[1]
                 k = node.spring_DX[0]
                 if sign != None: k = float(sign + str(k))
                 DX = node.DX[combo.name]
                 node.RxnFX[combo.name] += k*DX
-            if node.spring_DY[0] != None and node.spring_DY[2] == True:
+            if node.spring_DY[0] != None and node.spring_DY[2] is True:
                 sign = node.spring_DY[1]
                 k = node.spring_DY[0]
                 if sign != None: k = float(sign + str(k))
                 DY = node.DY[combo.name]
                 node.RxnFY[combo.name] += k*DY
-            if node.spring_DZ[0] != None and node.spring_DZ[2] == True:
+            if node.spring_DZ[0] != None and node.spring_DZ[2] is True:
                 sign = node.spring_DZ[1]
                 k = node.spring_DZ[0]
                 if sign != None: k = float(sign + str(k))
                 DZ = node.DZ[combo.name]
                 node.RxnFZ[combo.name] += k*DZ
-            if node.spring_RX[0] != None and node.spring_RX[2] == True:
+            if node.spring_RX[0] != None and node.spring_RX[2] is True:
                 sign = node.spring_RX[1]
                 k = node.spring_RX[0]
                 if sign != None: k = float(sign + str(k))
                 RX = node.RX[combo.name]
                 node.RxnMX[combo.name] += k*RX
-            if node.spring_RY[0] != None and node.spring_RY[2] == True:
+            if node.spring_RY[0] != None and node.spring_RY[2] is True:
                 sign = node.spring_RY[1]
                 k = node.spring_RY[0]
                 if sign != None: k = float(sign + str(k))
                 RY = node.RY[combo.name]
                 node.RxnMY[combo.name] += k*RY
-            if node.spring_RZ[0] != None and node.spring_RZ[2] == True:
+            if node.spring_RZ[0] != None and node.spring_RZ[2] is True:
                 sign = node.spring_RZ[1]
                 k = node.spring_RZ[0]
                 if sign != None: k = float(sign + str(k))
@@ -975,7 +975,7 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
     for node in model.nodes.values():
 
         # Unknown displacement DX
-        if node.support_DX == False and node.EnforcedDX == None:
+        if node.support_DX is False and node.EnforcedDX == None:
             D1_indices.append(node.ID*6 + 0)
         # Known displacement DX
         elif node.EnforcedDX != None:
@@ -987,7 +987,7 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
             D2.append(0.0)
 
         # Unknown displacement DY
-        if node.support_DY == False and node.EnforcedDY == None:
+        if node.support_DY is False and node.EnforcedDY == None:
             D1_indices.append(node.ID*6 + 1)
         # Known displacement DY
         elif node.EnforcedDY != None:
@@ -999,7 +999,7 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
             D2.append(0.0)
 
         # Unknown displacement DZ
-        if node.support_DZ == False and node.EnforcedDZ == None:
+        if node.support_DZ is False and node.EnforcedDZ == None:
             D1_indices.append(node.ID*6 + 2)
         # Known displacement DZ
         elif node.EnforcedDZ != None:
@@ -1011,7 +1011,7 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
             D2.append(0.0)
 
         # Unknown displacement RX
-        if node.support_RX == False and node.EnforcedRX == None:
+        if node.support_RX is False and node.EnforcedRX == None:
             D1_indices.append(node.ID*6 + 3)
         # Known displacement RX
         elif node.EnforcedRX != None:
@@ -1023,7 +1023,7 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
             D2.append(0.0)
 
         # Unknown displacement RY
-        if node.support_RY == False and node.EnforcedRY == None:
+        if node.support_RY is False and node.EnforcedRY == None:
             D1_indices.append(node.ID*6 + 4)
         # Known displacement RY
         elif node.EnforcedRY != None:
@@ -1035,7 +1035,7 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
             D2.append(0.0)
 
         # Unknown displacement RZ
-        if node.support_RZ == False and node.EnforcedRZ == None:
+        if node.support_RZ is False and node.EnforcedRZ == None:
             D1_indices.append(node.ID*6 + 5)
         # Known displacement RZ
         elif node.EnforcedRZ != None:

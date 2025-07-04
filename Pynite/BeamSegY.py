@@ -26,7 +26,7 @@ class BeamSegY(BeamSegZ):
         # M = M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L)
         M = -M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
         
-        if P_delta == True:
+        if P_delta is True:
             delta1 = self.delta1
             delta = self.deflection(x)
             M += P1*(delta - delta1)
@@ -54,7 +54,7 @@ class BeamSegY(BeamSegZ):
         L = self.Length()
         EI = self.EI
         
-        if P_delta == True:
+        if P_delta is True:
             delta_x = self.deflection(x, P_delta)
             delta_1 = self.delta1
             return theta_1 + (-V1*x**2/2 - w1*x**3/6 + x*(-M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
@@ -77,7 +77,7 @@ class BeamSegY(BeamSegZ):
         EI = self.EI
     
         # Iteration is required to calculate P-little-delta effects
-        if P_delta == True:
+        if P_delta is True:
 
             # Initialize the deflection at `x` to match the deflection at the start of the segment
             delta_x = delta_1

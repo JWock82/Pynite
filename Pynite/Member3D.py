@@ -355,12 +355,12 @@ class Member3D():
         if self.section is None:
             raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
         else:
-            if self.i_reversal == False:
+            if self.i_reversal is False:
                 Gi = self.section.G(f[0], f[4], f[5])
             else:
                 Gi = [[0], [0], [0]]
             
-            if self.j_reversal == False:
+            if self.j_reversal is False:
                 Gj = self.section.G(f[6], f[10], f[11])
             else:
                 Gj = [[0], [0], [0]]
@@ -398,7 +398,7 @@ class Member3D():
         i=0
         for DOF in self.Releases:
             
-            if DOF == True:
+            if DOF is True:
                 ferCondensed = insert(ferCondensed, i, 0, axis = 0)
                 
             i += 1
@@ -714,7 +714,7 @@ class Member3D():
         # TODO: I'm not sure this next block is the best way to handle inactive members - need to review
         # Read in the global displacements from the nodes
         # Apply axial displacements only if the member is active
-        if self.active[combo_name] == True:
+        if self.active[combo_name] is True:
             D[0, 0] = self.i_node.DX[combo_name]
             D[6, 0] = self.j_node.DX[combo_name]
 

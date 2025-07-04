@@ -834,7 +834,7 @@ class FEModel3D():
                 # Merge any boundary conditions
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:
-                    if getattr(self.nodes[node_2_name], dof) == True:
+                    if getattr(self.nodes[node_2_name], dof) is True:
                         setattr(self.nodes[node_1_name], dof, True)
                 
                 # Merge any spring supports
@@ -1360,7 +1360,7 @@ class FEModel3D():
         """           
         
         # Determine if a sparse matrix has been requested
-        if sparse == True:
+        if sparse is True:
             # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
             # documentation states that this type of matrix is ideal for efficient
             # construction of finite element matrices. When converted to another
@@ -1381,9 +1381,9 @@ class FEModel3D():
             if node.spring_DX[0] != None:
 
                 # Check for an active spring support
-                if node.spring_DX[2] == True:
+                if node.spring_DX[2] is True:
                     m, n = node.ID*6, node.ID*6
-                    if sparse == True:
+                    if sparse is True:
                         data.append(float(node.spring_DX[0]))
                         row.append(m)
                         col.append(n)
@@ -1393,9 +1393,9 @@ class FEModel3D():
             if node.spring_DY[0] != None:
 
                 # Check for an active spring support
-                if node.spring_DY[2] == True:
+                if node.spring_DY[2] is True:
                     m, n = node.ID*6 + 1, node.ID*6 + 1
-                    if sparse == True:
+                    if sparse is True:
                         data.append(float(node.spring_DY[0]))
                         row.append(m)
                         col.append(n)
@@ -1405,9 +1405,9 @@ class FEModel3D():
             if node.spring_DZ[0] != None:
 
                 # Check for an active spring support
-                if node.spring_DZ[2] == True:
+                if node.spring_DZ[2] is True:
                     m, n = node.ID*6 + 2, node.ID*6 + 2
-                    if sparse == True:
+                    if sparse is True:
                         data.append(float(node.spring_DZ[0]))
                         row.append(m)
                         col.append(n)
@@ -1417,9 +1417,9 @@ class FEModel3D():
             if node.spring_RX[0] != None:
 
                 # Check for an active spring support
-                if node.spring_RX[2] == True:
+                if node.spring_RX[2] is True:
                     m, n = node.ID*6 + 3, node.ID*6 + 3
-                    if sparse == True:
+                    if sparse is True:
                         data.append(float(node.spring_RX[0]))
                         row.append(m)
                         col.append(n)
@@ -1429,9 +1429,9 @@ class FEModel3D():
             if node.spring_RY[0] != None:
 
                 # Check for an active spring support
-                if node.spring_RY[2] == True:
+                if node.spring_RY[2] is True:
                     m, n = node.ID*6 + 4, node.ID*6 + 4
-                    if sparse == True:
+                    if sparse is True:
                         data.append(float(node.spring_RY[0]))
                         row.append(m)
                         col.append(n)
@@ -1441,9 +1441,9 @@ class FEModel3D():
             if node.spring_RZ[0] != None:
 
                 # Check for an active spring support
-                if node.spring_RZ[2] == True:
+                if node.spring_RZ[2] is True:
                     m, n = node.ID*6 + 5, node.ID*6 + 5
-                    if sparse == True:
+                    if sparse is True:
                         data.append(float(node.spring_RZ[0]))
                         row.append(m)
                         col.append(n)
@@ -1454,7 +1454,7 @@ class FEModel3D():
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
         for spring in self.springs.values():
             
-            if spring.active[combo_name] == True:
+            if spring.active[combo_name] is True:
 
                 # Get the spring's global stiffness matrix
                 # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1484,7 +1484,7 @@ class FEModel3D():
                             n = spring.j_node.ID*6 + (b-6)
                     
                         # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        if sparse == True:
+                        if sparse is True:
                             row.append(m)
                             col.append(n)
                             data.append(spring_K[a, b])
@@ -1496,7 +1496,7 @@ class FEModel3D():
         for phys_member in self.members.values():
             
             # Check to see if the physical member is active for the given load combination
-            if phys_member.active[combo_name] == True:
+            if phys_member.active[combo_name] is True:
 
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
@@ -1529,7 +1529,7 @@ class FEModel3D():
                                 n = member.j_node.ID*6 + (b-6)
                         
                             # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                            if sparse == True:
+                            if sparse is True:
                                 row.append(m)
                                 col.append(n)
                                 data.append(member_K[a, b])
@@ -1580,7 +1580,7 @@ class FEModel3D():
                         n = quad.n_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    if sparse == True:
+                    if sparse is True:
                         row.append(m)
                         col.append(n)
                         data.append(quad_K[a, b])
@@ -1631,7 +1631,7 @@ class FEModel3D():
                         n = plate.n_node.ID*6 + (b - 18)
                     
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    if sparse == True:
+                    if sparse is True:
                         row.append(m)
                         col.append(n)
                         data.append(plate_K[a, b])
@@ -1756,7 +1756,7 @@ class FEModel3D():
         """
        
         # Determine if a sparse matrix has been requested
-        if sparse == True:
+        if sparse is True:
             # The plastic reduction matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index. We'll build the matrix from three lists.
             row = []
             col = []
@@ -1770,7 +1770,7 @@ class FEModel3D():
         for phys_member in self.members.values():
             
             # Check to see if the physical member is active for the given load combination
-            if phys_member.active[combo_name] == True:
+            if phys_member.active[combo_name] is True:
 
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
@@ -1803,7 +1803,7 @@ class FEModel3D():
                                 n = member.j_node.ID*6 + (b-6)
                         
                             # Now that 'm' and 'n' are known, place the term in the global plastic reduction matrix
-                            if sparse == True:
+                            if sparse is True:
                                 row.append(m)
                                 col.append(n)
                                 data.append(member_Km[a, b])
@@ -2009,7 +2009,7 @@ class FEModel3D():
             print('+-----------+')
 
         # Import `scipy` features if the sparse solver is being used
-        if sparse == True:
+        if sparse is True:
             from scipy.sparse.linalg import spsolve
 
         # Prepare the model for analysis
@@ -2034,7 +2034,7 @@ class FEModel3D():
             divergence = False
 
             # Iterate until convergence or divergence occurs
-            while convergence == False and divergence == False:
+            while convergence is False and divergence is False:
                 
                 # Check for tension/compression-only divergence
                 if iter_count > max_iter:
@@ -2042,7 +2042,7 @@ class FEModel3D():
                     raise Exception('Model diverged during tension/compression-only analysis')
                 
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
-                if sparse == True:
+                if sparse is True:
                     K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
                 else:
                     K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
@@ -2061,7 +2061,7 @@ class FEModel3D():
                 else:
                     try:
                         # Calculate the unknown displacements D1
-                        if sparse == True:
+                        if sparse is True:
                             # The partitioned stiffness matrix is in `lil` format, which is great for memory, but slow for mathematical operations. The stiffness matrix will be converted to `csr` format for mathematical operations. The `@` operator performs matrix multiplication on sparse matrices.
                             D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
                             D1 = D1.reshape(len(D1), 1)
@@ -2077,7 +2077,7 @@ class FEModel3D():
                 # Check for tension/compression-only convergence
                 convergence = Analysis._check_TC_convergence(self, combo.name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
 
-                if convergence == False:
+                if convergence is False:
 
                     if log: print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
                 else:
@@ -2095,7 +2095,7 @@ class FEModel3D():
             print('')
 
         # Check statics if requested
-        if check_statics == True:
+        if check_statics is True:
             Analysis._check_statics(self, combo_tags)
 
         # Flag the model as solved
@@ -2121,7 +2121,7 @@ class FEModel3D():
             print('+-------------------+')
         
         # Import `scipy` features if the sparse solver is being used
-        if sparse == True:
+        if sparse is True:
             from scipy.sparse.linalg import spsolve
 
         # Prepare the model for analysis
@@ -2133,7 +2133,7 @@ class FEModel3D():
         # Get the partitioned global stiffness matrix K11, K12, K21, K22
         # Note that for linear analysis the stiffness matrix can be obtained for any load combination, as it's the same for all of them
         combo_name = list(self.load_combos.keys())[0]
-        if sparse == True:
+        if sparse is True:
             K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
         else:
             K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
@@ -2469,7 +2469,7 @@ class FEModel3D():
                 orphaned = True
             
             # Add the orphaned nodes to the list of orphaned nodes
-            if orphaned == True:
+            if orphaned is True:
                 orphans.append(node.name)
         
         return orphans

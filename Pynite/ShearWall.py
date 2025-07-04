@@ -358,7 +358,7 @@ class ShearWall():
         
         # Working horizontally (left to right), rejoin any rectangles that share a vertical edge to form a larger rectangle
         found_duplicate = True
-        while found_duplicate == True:
+        while found_duplicate is True:
 
             found_duplicate = False
             piers_copy = self.piers.copy()
@@ -384,12 +384,12 @@ class ShearWall():
                         break
 
                 # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.piers`
-                if found_duplicate == True:
+                if found_duplicate is True:
                     break
 
         # Working vertically (bottom to top), rejoin any rectangles that share a horizontal edge to form a larger rectangle
         found_duplicate = True
-        while found_duplicate == True:
+        while found_duplicate is True:
             
             found_duplicate = False
             piers_copy = self.piers.copy()
@@ -414,7 +414,7 @@ class ShearWall():
                         break
                 
                 # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.piers`
-                if found_duplicate == True:
+                if found_duplicate is True:
                     break
 
         # Generate a list of new keys in ascending order
@@ -514,7 +514,7 @@ class ShearWall():
         
         # Working vertically (bottom to top), rejoin any rectangles that share a horizontal edge to form a larger rectangle
         found_duplicate = True
-        while found_duplicate == True:
+        while found_duplicate is True:
 
             found_duplicate = False
             beams_copy = self.coupling_beams.copy()
@@ -540,12 +540,12 @@ class ShearWall():
                         break
 
                 # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.coupling_beams`
-                if found_duplicate == True:
+                if found_duplicate is True:
                     break
 
         # Working horizontally (left to right), rejoin any rectangles that share a vertical edge to form a larger rectangle
         found_duplicate = True
-        while found_duplicate == True:
+        while found_duplicate is True:
             
             found_duplicate = False
             beams_copy = self.coupling_beams.copy()
@@ -570,7 +570,7 @@ class ShearWall():
                         break
                 
                 # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.coupling_beams`
-                if found_duplicate == True:
+                if found_duplicate is True:
                     break
         
         # Check for any coupling beams at the bottom of the wall. There should not be any. Delete them as they are found
@@ -617,7 +617,7 @@ class ShearWall():
         plt.tight_layout()
 
         # show plot or return it
-        if show == True: plt.show()
+        if show is True: plt.show()
         else: return plt
     
     def draw_coupling_beams(self, show: bool = False) -> None | matplotlib.figure.Figure:
@@ -643,7 +643,7 @@ class ShearWall():
         plt.tight_layout()
 
         # show plot or return it
-        if show == True: plt.show()
+        if show is True: plt.show()
         else: return plt
 
     def _add_rectangle(self, ax: matplotlib.axes.Axes, x: float, y: float, w: float, h: float, name: str, color: str = 'white') -> None:
