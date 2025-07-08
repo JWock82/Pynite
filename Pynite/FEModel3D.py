@@ -1335,10 +1335,10 @@ class FEModel3D():
             node.RxnMX = {}
             node.RxnMY = {}
             node.RxnMZ = {}
-        
+
         # Flag the model as unsolved
         self.solution = None
-               
+
     def K(self, combo_name='Combo 1', log=False, check_stability=True, sparse=True):
         """Returns the model's global stiffness matrix. The stiffness matrix will be returned in
            scipy's sparse lil format, which reduces memory usage and can be easily converted to
@@ -1356,8 +1356,8 @@ class FEModel3D():
         :type sparse: bool, optional
         :return: The global stiffness matrix for the structure.
         :rtype: ndarray or coo_matrix
-        """           
-        
+        """
+
         # Determine if a sparse matrix has been requested
         if sparse is True:
             # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
@@ -1371,13 +1371,13 @@ class FEModel3D():
         else:
             # Initialize a dense matrix of zeros
             K = zeros((len(self.nodes)*6, len(self.nodes)*6))
-        
+
         # Add stiffness terms for each nodal spring in the model
         if log: print('- Adding nodal spring support stiffness terms to global stiffness matrix')
         for node in self.nodes.values():
-            
+
             # Determine if the node has any spring supports
-            if node.spring_DX[0] != None:
+            if node.spring_DX[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_DX[2] is True:
@@ -1389,7 +1389,7 @@ class FEModel3D():
                     else:
                         K[m, n] += float(node.spring_DX[0])
 
-            if node.spring_DY[0] != None:
+            if node.spring_DY[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_DY[2] is True:
@@ -1401,7 +1401,7 @@ class FEModel3D():
                     else:
                         K[m, n] += float(node.spring_DY[0])
 
-            if node.spring_DZ[0] != None:
+            if node.spring_DZ[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_DZ[2] is True:
@@ -1412,8 +1412,8 @@ class FEModel3D():
                         col.append(n)
                     else:
                         K[m, n] += float(node.spring_DZ[0])
-        
-            if node.spring_RX[0] != None:
+
+            if node.spring_RX[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_RX[2] is True:
@@ -1425,7 +1425,7 @@ class FEModel3D():
                     else:
                         K[m, n] += float(node.spring_RX[0])
 
-            if node.spring_RY[0] != None:
+            if node.spring_RY[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_RY[2] is True:
@@ -1437,7 +1437,7 @@ class FEModel3D():
                     else:
                         K[m, n] += float(node.spring_RY[0])
             
-            if node.spring_RZ[0] != None:
+            if node.spring_RZ[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_RZ[2] is True:
@@ -1452,7 +1452,7 @@ class FEModel3D():
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
         for spring in self.springs.values():
-            
+
             if spring.active[combo_name] is True:
 
                 # Get the spring's global stiffness matrix
@@ -1463,7 +1463,7 @@ class FEModel3D():
                 # 'a' & 'b' below are row/column indices in the spring's stiffness matrix
                 # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
                 for a in range(12):
-                
+
                     # Determine if index 'a' is related to the i-node or j-node
                     if a < 6:
                         # Find the corresponding index 'm' in the global stiffness matrix
@@ -1534,11 +1534,11 @@ class FEModel3D():
                                 data.append(member_K[a, b])
                             else:
                                 K[m, n] += member_K[a, b]
-                
+
         # Add stiffness terms for each quadrilateral in the model
         if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
         for quad in self.quads.values():
-            
+
             # Get the quadrilateral's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
             quad_K = quad.K()
@@ -1577,7 +1577,7 @@ class FEModel3D():
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
                         n = quad.n_node.ID*6 + (b - 18)
-                    
+
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     if sparse is True:
                         row.append(m)
@@ -1628,7 +1628,7 @@ class FEModel3D():
                     else:
                         # Find the corresponding index 'n' in the global stiffness matrix
                         n = plate.n_node.ID*6 + (b - 18)
-                    
+
                     # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
                     if sparse is True:
                         row.append(m)
@@ -1655,8 +1655,8 @@ class FEModel3D():
             else: Analysis._check_stability(self, K)
 
         # Return the global stiffness matrix
-        return K    
-   
+        return K
+
     def Kg(self, combo_name='Combo 1', log=False, sparse=True, first_step=True):
         """Returns the model's global geometric stiffness matrix. Geometric stiffness of plates is not considered.
 
@@ -1968,7 +1968,7 @@ class FEModel3D():
                             P[ID*6 + 4, 0] += factor*load[1]
                         elif load[0] == 'MZ':
                             P[ID*6 + 5, 0] += factor*load[1]
-        
+
         # Return the global nodal force vector
         return P
 
@@ -2198,84 +2198,41 @@ class FEModel3D():
 
     def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0, num_steps=1):
         """
-        Performs a **nonlinear structural analysis** on the `FEModel3D` object, primarily
-        addressing the behavior of **tension-only and compression-only elements** through
-        an iterative, incremental approach.
+        Performs an analysis of the model.
 
-        This method applies loads in a series of steps and, for each step, iteratively
-        solves the system until the active/inactive states of tension-only and
-        compression-only elements (members and nodal springs) have converged.
+        Allows the use of sparse solvers for improved performance on large models. Handles tension/compression-only behavior for nodal springs and elements. Loads can be applied in steps for better convergence of complex tension/compression-only models.
 
-        **Key Functionality:**
+        Parameters
+        ----------
+        log : bool, optional
+            If True, prints progress messages during analysis (default: False).
+        check_stability : bool, optional
+            If True, checks model stability at each analysis step (default: True).
+        check_statics : bool, optional
+            If True, performs a statics check after analysis (default: False).
+        max_iter : int, optional
+            Maximum number of tension/compression-only iterations allowed per load step before assuming divergence (default: 30).
+        sparse : bool, optional
+            If True, uses sparse matrix solvers for improved efficiency on large models (default: True).
+        combo_tags : list[str] or None, optional
+            List of tags used to select which load combinations to analyze. If None, all combinations are analyzed (default: None).
+        spring_tolerance : float, optional
+            Tolerance used to determine convergence for springs in tension/compression-only analysis (default: 0).
+        member_tolerance : float, optional
+            Tolerance used to determine convergence for members in tension/compression-only analysis (default: 0).
+        num_steps : int, optional
+            Number of load increments for applying load combinations. Use more steps for better convergence in highly nonlinear cases (default: 1).
 
-        *   **Incremental Loading**: The total applied loads and enforced displacements are
-            divided into `num_steps` increments, which are applied sequentially.
-        *   **Iterative Convergence Loop**: For each load step, the analysis enters an
-            inner `while` loop that continues until the model reaches a converged
-            state for its tension/compression-only elements, or until divergence
-            is detected.
-        *   **Tension/Compression-Only Convergence Checks**:
-            *   It utilizes the `_check_TC_convergence` method to assess if tension-only
-                members are in compression or if compression-only members are in tension,
-                or if tension/compression-only springs require a change in their active
-                status based on `spring_tolerance` and `member_tolerance`.
-            *   If `_check_TC_convergence` indicates non-convergence (i.e., returns `False`),
-                the **displacements calculated for the current load step are undone**
-                (`-Delta_D1`, `-Delta_D2`), and the `load_step` counter is decremented.
-                This ensures the current load step is re-analyzed in the next iteration
-                with the updated element statuses.
-        *   **Stiffness Matrix Handling**: The function constructs and partitions the global
-            stiffness matrix `K` for each load combination. It efficiently handles
-            sparse matrices using `scipy.sparse.linalg.spsolve` for faster computation and
-            reduced memory usage, converting between `lil` and `csr` formats as needed
-            for mathematical operations.
-        *   **Displacement Management**: Displacements for the initial load step are
-            stored, and for subsequent steps, they are summed. This allows for a
-            cumulative tracking of the structure's response under increasing load.
-        *   **Error Handling**:
-            *   It checks for **divergence** if the number of iterations (`iter_count`) for
-                a single load step exceeds `max_iter`, raising an `Exception`.
-            *   It checks for a **singular stiffness matrix (`K11`)**, which indicates
-                rigid body motion or an unstable structure, raising an `Exception` and
-                aborting the analysis.
-        *   **Post-Analysis**: After all load steps and iterations are complete,
-            reactions are calculated, and optional static checks can be performed.
+        Raises
+        ------
+        Exception
+            If the stiffness matrix is singular (indicating instability), or if the model fails to converge within the maximum allowed iterations.
 
-        **Parameters:**
-        *   `num_steps` (int, optional): The number of load steps to apply the total
-            load incrementally. Defaults to `20`.
-        *   `log` (bool, optional): If `True`, analysis progress (load combinations,
-            load steps) is printed to the console. Defaults to `False`.
-        *   `check_stability` (bool, optional): If `True`, the stability of the
-            structure is checked during stiffness matrix formation. Defaults to `True`.
-        *   `check_statics` (bool, optional): If `True`, a static equilibrium check
-            is performed after the analysis is complete. Defaults to `False`.
-        *   `max_iter` (int, optional): The maximum number of iterations allowed for
-            convergence within a single load step before divergence is declared.
-            Defaults to `30`.
-        *   `sparse` (bool, optional): If `True`, sparse matrix solvers from `scipy`
-            are used for improved performance on large models. Defaults to `True`.
-        *   `combo_tags` (list of str, optional): A list of load combination tags to
-            include in the analysis. If `None`, all load combinations are analyzed.
-            Defaults to `None`.
-        *   `spring_tolerance` (float, optional): The displacement tolerance used by
-            `_check_TC_convergence` for determining if tension-only or compression-only
-            springs should change their active status. Defaults to `0`.
-        *   `member_tolerance` (float, optional): The force tolerance used by
-            `_check_TC_convergence` for determining if tension-only or compression-only
-            members should change their active status. Defaults to `0`.
-
-        **Returns:**
-        *   This method does not return a value directly. It **modifies the `FEModel3D`
-            object in place** by calculating and storing displacements and reactions for
-            the specified load combinations.
-        *   Upon successful completion, it flags `self.solution` as `'Nonlinear TC'`.
-
-        **Raises:**
-        *   `Exception`: If the model diverges during tension/compression-only analysis
-            (exceeds `max_iter`).
-        *   `Exception`: If the stiffness matrix is singular, indicating an unstable
-            structure.
+        Notes
+        -----
+        - Flags the model as solved upon successful completion.
+        - Stores calculated displacements and reactions in the model.
+        - If statics checking is enabled, runs a global equilibrium check on the results.
         """
 
         if log:
@@ -2290,14 +2247,14 @@ class FEModel3D():
         # Prepare the model for analysis
         Analysis._prepare_model(self)
 
+        # Identify which load combinations have the tags the user has given
+        combo_list = Analysis._identify_combos(self, combo_tags)
+        
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
         # Calculate the incremental enforced displacement vector
         Delta_D2 = D2/num_steps
-
-        # Identify which load combinations have the tags the user has given
-        combo_list = Analysis._identify_combos(self, combo_tags)
 
         # Step through each load combination
         for combo in combo_list:
@@ -2305,7 +2262,7 @@ class FEModel3D():
             if log:
                 print('')
                 print('- Analyzing load combination ' + combo.name)
-            
+
             # Get the partitioned total global fixed end reaction vector
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
