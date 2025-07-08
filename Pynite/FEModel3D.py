@@ -243,7 +243,7 @@ class FEModel3D():
         # Return the section name
         return name
 
-    def add_spring(self, name: str, i_node: str, j_node: str, ks: float, tension_only: bool=False, comp_only: bool=False) -> str:
+    def add_spring(self, name: str, i_node: str, j_node: str, ks: float, tension_only: bool = False, comp_only: bool = False) -> str:
         """Adds a new spring to the model.
 
         :param name: A unique user-defined name for the member. If None or "", a name will be
@@ -296,8 +296,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str,
-                    rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False) -> str:
+    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -351,8 +350,7 @@ class FEModel3D():
         # Return the member name
         return name
 
-    def add_plate(self, name: str, i_node: str, j_node: str, m_node: str, n_node: str,
-                   t: float, material_name: str, kx_mod: float = 1.0, ky_mod: float = 1.0) -> str:
+    def add_plate(self, name: str, i_node: str, j_node: str, m_node: str, n_node: str, t: float, material_name: str, kx_mod: float = 1.0, ky_mod: float = 1.0) -> str:
         """Adds a new rectangular plate to the model. The plate formulation for in-plane (membrane)
         stiffness is based on an isoparametric formulation. For bending, it is based on a 12-term
         polynomial formulation. This element must be rectangular, and must not be used where a
@@ -483,12 +481,7 @@ class FEModel3D():
         # Return the quad name
         return name
 
-    def add_rectangle_mesh(self, name:str, mesh_size:float, width:float, height:float,
-                            thickness:float, material_name:str, kx_mod:float = 1.0,
-                            ky_mod:float = 1.0, origin: list | tuple = (0, 0, 0),
-                            plane:str = 'XY', x_control:list | None = None,
-                            y_control: list | None = None, start_node: str | None = None,
-                            start_element:str | None = None, element_type:str = 'Quad') -> str:
+    def add_rectangle_mesh(self, name: str, mesh_size: float, width: float, height: float, thickness: float, material_name: str, kx_mod: float = 1.0, ky_mod: float = 1.0, origin: list | tuple = (0, 0, 0), plane: str = 'XY', x_control: list | None = None, y_control: list | None = None, start_node: str | None = None, start_element: str | None = None, element_type: str = 'Quad') -> str:
         """Adds a rectangular mesh of elements to the model.
 
         :param name: A unique name for the mesh.
@@ -552,14 +545,11 @@ class FEModel3D():
 
         # Flag the model as unsolved
         self.solution = None
-        
-        #Return the mesh's name
+
+        # Return the mesh's name
         return name
-    
-    def add_annulus_mesh(self, name:str, mesh_size:float, outer_radius:float, inner_radius:float,
-                         thickness:float, material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0,
-                         origin:list | tuple = (0, 0, 0), axis:str = 'Y',
-                         start_node:str | None = None, start_element:str | None = None) -> str:
+
+    def add_annulus_mesh(self, name: str, mesh_size: float, outer_radius: float, inner_radius: float, thickness: float, material_name: str, kx_mod: float = 1.0, ky_mod: float = 1.0, origin: list | tuple = (0, 0, 0), axis: str = 'Y', start_node: str | None = None, start_element: str | None = None) -> str:
         """Adds a mesh of quadrilaterals forming an annulus (a donut).
 
         :param name: A unique name for the mesh.
@@ -594,7 +584,7 @@ class FEModel3D():
         :return: The name of the mesh added to the model.
         :rtype: str
         """
-        
+
         # Check if a mesh name has been provided
         if name:
             # Check that the mesh name doesn't already exist
@@ -608,7 +598,7 @@ class FEModel3D():
             start_node = self.unique_name(self.nodes, 'N')
         if start_element is None:
             start_element = self.unique_name(self.quads, 'Q')
-        
+
         # Create a new mesh
         new_mesh = AnnulusMesh(mesh_size, outer_radius, inner_radius, thickness, material_name, self,
                                kx_mod, ky_mod, origin, axis, start_node, start_element)
@@ -618,15 +608,11 @@ class FEModel3D():
 
         # Flag the model as unsolved
         self.solution = None
-        
-        #Return the mesh's name
+
+        # Return the mesh's name
         return name
 
-    def add_frustrum_mesh(self, name:str, mesh_size:float, large_radius:float,
-                          small_radius:float, height:float, thickness:float,
-                          material_name:str, kx_mod:float = 1.0, ky_mod:float = 1.0,
-                          origin: list | tuple = (0, 0, 0), axis:str = 'Y',
-                          start_node:str | None = None, start_element:str | None = None) -> str:
+    def add_frustrum_mesh(self, name: str, mesh_size: float, large_radius: float, small_radius: float, height: float, thickness: float, material_name: str, kx_mod: float = 1.0, ky_mod: float = 1.0, origin: list | tuple = (0, 0, 0), axis: str = 'Y', start_node: str | None = None, start_element: str | None = None) -> str:
         """Adds a mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
 
         :param name: A unique name for the mesh.
@@ -674,7 +660,7 @@ class FEModel3D():
             start_node = self.unique_name(self.nodes, 'N')
         if start_element is None:
             start_element = self.unique_name(self.quads, 'Q')
-        
+
         # Create a new mesh
         new_mesh = FrustrumMesh(mesh_size, large_radius, small_radius, height, thickness, material_name,
                                 self, kx_mod, ky_mod, origin, axis, start_node, start_element)
@@ -684,10 +670,10 @@ class FEModel3D():
 
         # Flag the model as unsolved
         self.solution = None
-        
-        #Return the mesh's name
+
+        # Return the mesh's name
         return name
-    
+
     def add_cylinder_mesh(self, name:str, mesh_size:float, radius:float, height:float,
                           thickness:float, material_name:str, kx_mod:float = 1,
                           ky_mod:float = 1, origin:list | tuple = (0, 0, 0),
@@ -1985,123 +1971,123 @@ class FEModel3D():
         # Return the global displacement vector
         return self._D[combo_name]
 
-    def analyze2(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0):
-        """Performs first-order static analysis. Iterations are performed if tension-only members or compression-only members are present.
+    # def _deprecated_analyze_old(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0):
+    #     """Performs first-order static analysis. Iterations are performed if tension-only members or compression-only members are present.
 
-        :param log: Prints the analysis log to the console if set to True. Default is False.
-        :type log: bool, optional
-        :param check_stability: When set to `True`, checks for nodal instabilities. This slows down analysis a little. Default is `True`.
-        :type check_stability: bool, optional
-        :param check_statics: When set to `True`, causes a statics check to be performed
-        :type check_statics: bool, optional
-        :param max_iter: The maximum number of iterations to try to get convergence for tension/compression-only analysis. Defaults to 30.
-        :type max_iter: int, optional
-        :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times.
-        :type sparse: bool, optional
-        :raises Exception: _description_
-        :raises Exception: _description_
-        """
+    #     :param log: Prints the analysis log to the console if set to True. Default is False.
+    #     :type log: bool, optional
+    #     :param check_stability: When set to `True`, checks for nodal instabilities. This slows down analysis a little. Default is `True`.
+    #     :type check_stability: bool, optional
+    #     :param check_statics: When set to `True`, causes a statics check to be performed
+    #     :type check_statics: bool, optional
+    #     :param max_iter: The maximum number of iterations to try to get convergence for tension/compression-only analysis. Defaults to 30.
+    #     :type max_iter: int, optional
+    #     :param sparse: Indicates whether the sparse matrix solver should be used. A matrix can be considered sparse or dense depening on how many zero terms there are. Structural stiffness matrices often contain many zero terms. The sparse solver can offer faster solutions for such matrices. Using the sparse solver on dense matrices may lead to slower solution times.
+    #     :type sparse: bool, optional
+    #     :raises Exception: _description_
+    #     :raises Exception: _description_
+    #     """
 
-        if log:
-            print('+-----------+')
-            print('| Analyzing |')
-            print('+-----------+')
+    #     if log:
+    #         print('+-----------+')
+    #         print('| Analyzing |')
+    #         print('+-----------+')
 
-        # Import `scipy` features if the sparse solver is being used
-        if sparse is True:
-            from scipy.sparse.linalg import spsolve
+    #     # Import `scipy` features if the sparse solver is being used
+    #     if sparse is True:
+    #         from scipy.sparse.linalg import spsolve
 
-        # Prepare the model for analysis
-        Analysis._prepare_model(self)
+    #     # Prepare the model for analysis
+    #     Analysis._prepare_model(self)
 
-        # Get the auxiliary list used to determine how the matrices will be partitioned
-        D1_indices, D2_indices, D2 = Analysis._partition_D(self)
+    #     # Get the auxiliary list used to determine how the matrices will be partitioned
+    #     D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
-        # Identify which load combinations have the tags the user has given
-        combo_list = Analysis._identify_combos(self, combo_tags)
+    #     # Identify which load combinations have the tags the user has given
+    #     combo_list = Analysis._identify_combos(self, combo_tags)
 
-        # Step through each load combination
-        for combo in combo_list:
+    #     # Step through each load combination
+    #     for combo in combo_list:
 
-            if log:
-                print('')
-                print('- Analyzing load combination ' + combo.name)
+    #         if log:
+    #             print('')
+    #             print('- Analyzing load combination ' + combo.name)
 
-            # Keep track of the number of iterations
-            iter_count = 1
-            convergence = False
-            divergence = False
+    #         # Keep track of the number of iterations
+    #         iter_count = 1
+    #         convergence = False
+    #         divergence = False
 
-            # Iterate until convergence or divergence occurs
-            while convergence is False and divergence is False:
+    #         # Iterate until convergence or divergence occurs
+    #         while convergence is False and divergence is False:
 
-                # Check for tension/compression-only divergence
-                if iter_count > max_iter:
-                    divergence = True
-                    raise Exception('Model diverged during tension/compression-only analysis')
+    #             # Check for tension/compression-only divergence
+    #             if iter_count > max_iter:
+    #                 divergence = True
+    #                 raise Exception('Model diverged during tension/compression-only analysis')
 
-                # Get the partitioned global stiffness matrix K11, K12, K21, K22
-                if sparse is True:
-                    K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
-                else:
-                    K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+    #             # Get the partitioned global stiffness matrix K11, K12, K21, K22
+    #             if sparse is True:
+    #                 K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+    #             else:
+    #                 K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
 
-                # Get the partitioned global fixed end reaction vector
-                FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
+    #             # Get the partitioned global fixed end reaction vector
+    #             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
-                # Get the partitioned global nodal force vector
-                P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
+    #             # Get the partitioned global nodal force vector
+    #             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
-                # Calculate the global displacement vector
-                if log:
-                    print('- Calculating global displacement vector')
-                if K11.shape == (0, 0):
-                    # All displacements are known, so D1 is an empty vector
-                    D1 = []
-                else:
-                    try:
-                        # Calculate the unknown displacements D1
-                        if sparse is True:
-                            # The partitioned stiffness matrix is in `lil` format, which is great for memory, but slow for mathematical operations. The stiffness matrix will be converted to `csr` format for mathematical operations. The `@` operator performs matrix multiplication on sparse matrices.
-                            D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
-                            D1 = D1.reshape(len(D1), 1)
-                        else:
-                            D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
-                    except:
-                        # Return out of the method if 'K' is singular and provide an error message
-                        raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+    #             # Calculate the global displacement vector
+    #             if log:
+    #                 print('- Calculating global displacement vector')
+    #             if K11.shape == (0, 0):
+    #                 # All displacements are known, so D1 is an empty vector
+    #                 D1 = []
+    #             else:
+    #                 try:
+    #                     # Calculate the unknown displacements D1
+    #                     if sparse is True:
+    #                         # The partitioned stiffness matrix is in `lil` format, which is great for memory, but slow for mathematical operations. The stiffness matrix will be converted to `csr` format for mathematical operations. The `@` operator performs matrix multiplication on sparse matrices.
+    #                         D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
+    #                         D1 = D1.reshape(len(D1), 1)
+    #                     else:
+    #                         D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+    #                 except:
+    #                     # Return out of the method if 'K' is singular and provide an error message
+    #                     raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
 
-                # Store the calculated displacements to the model and the nodes in the model
-                Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
+    #             # Store the calculated displacements to the model and the nodes in the model
+    #             Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
 
-                # Check for tension/compression-only convergence
-                convergence = Analysis._check_TC_convergence(self, combo.name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
+    #             # Check for tension/compression-only convergence
+    #             convergence = Analysis._check_TC_convergence(self, combo.name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
 
-                if convergence is False:
+    #             if convergence is False:
 
-                    if log:
-                        print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
-                else:
-                    if log:
-                        print('- Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
+    #                 if log:
+    #                     print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
+    #             else:
+    #                 if log:
+    #                     print('- Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
 
-                # Keep track of the number of tension/compression only iterations
-                iter_count += 1
+    #             # Keep track of the number of tension/compression only iterations
+    #             iter_count += 1
 
-        # Calculate reactions
-        Analysis._calc_reactions(self, log, combo_tags)
+    #     # Calculate reactions
+    #     Analysis._calc_reactions(self, log, combo_tags)
 
-        if log:
-            print('')     
-            print('- Analysis complete')
-            print('')
+    #     if log:
+    #         print('')     
+    #         print('- Analysis complete')
+    #         print('')
 
-        # Check statics if requested
-        if check_statics is True:
-            Analysis._check_statics(self, combo_tags)
+    #     # Check statics if requested
+    #     if check_statics is True:
+    #         Analysis._check_statics(self, combo_tags)
 
-        # Flag the model as solved
-        self.solution = 'Linear TC'
+    #     # Flag the model as solved
+    #     self.solution = 'Linear TC'
 
     def analyze_linear(self, log=False, check_stability=True, check_statics=False, sparse=True, combo_tags=None):
         """Performs first-order static analysis. This analysis procedure is much faster since it only assembles the global stiffness matrix once, rather than once for each load combination. It is not appropriate when non-linear behavior such as tension/compression only analysis or P-Delta analysis are required.
@@ -2198,7 +2184,7 @@ class FEModel3D():
 
     def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0, num_steps=1):
         """
-        Performs an analysis of the model.
+        Performs a first-order elastic analysis of the model.
 
         Allows the use of sparse solvers for improved performance on large models. Handles tension/compression-only behavior for nodal springs and elements. Loads can be applied in steps for better convergence of complex tension/compression-only models.
 
