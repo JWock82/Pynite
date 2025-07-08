@@ -2,7 +2,6 @@
 
 # Import a few libraries from Pynite that we'll need
 from Pynite.FEModel3D import FEModel3D
-from Pynite.Mesh import RectangleMesh
 
 # Create a finite element model
 model = FEModel3D()
@@ -23,7 +22,7 @@ height = 15  # ft
 t = 1        # ft
 
 # Set the liquid height
-HL = 15 # 12.5  # ft
+HL = 15  # 12.5  # ft
 
 # Create a rectangular mesh. A few things worth noting:
 # 1. We will build it from rectangular plate elements. Alternatively we could build it from
