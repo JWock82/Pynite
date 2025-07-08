@@ -1981,11 +1981,11 @@ class FEModel3D():
         :return: The global displacement vector for the model
         :rtype: NDArray[float64]
         """
- 
+
         # Return the global displacement vector
         return self._D[combo_name]
 
-    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0):
+    def analyze2(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0):
         """Performs first-order static analysis. Iterations are performed if tension-only members or compression-only members are present.
 
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -2034,12 +2034,12 @@ class FEModel3D():
 
             # Iterate until convergence or divergence occurs
             while convergence is False and divergence is False:
-                
+
                 # Check for tension/compression-only divergence
                 if iter_count > max_iter:
                     divergence = True
                     raise Exception('Model diverged during tension/compression-only analysis')
-                
+
                 # Get the partitioned global stiffness matrix K11, K12, K21, K22
                 if sparse is True:
                     K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
@@ -2049,11 +2049,12 @@ class FEModel3D():
                 # Get the partitioned global fixed end reaction vector
                 FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
-                # Get the partitioned global nodal force vector       
-                P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)          
+                # Get the partitioned global nodal force vector
+                P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
                 # Calculate the global displacement vector
-                if log: print('- Calculating global displacement vector')
+                if log:
+                    print('- Calculating global displacement vector')
                 if K11.shape == (0, 0):
                     # All displacements are known, so D1 is an empty vector
                     D1 = []
@@ -2072,15 +2073,17 @@ class FEModel3D():
 
                 # Store the calculated displacements to the model and the nodes in the model
                 Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
-                
+
                 # Check for tension/compression-only convergence
                 convergence = Analysis._check_TC_convergence(self, combo.name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
 
                 if convergence is False:
 
-                    if log: print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
+                    if log:
+                        print('- Tension/compression-only analysis did not converge. Adjusting stiffness matrix and reanalyzing.')
                 else:
-                    if log: print('- Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
+                    if log:
+                        print('- Tension/compression-only analysis converged after ' + str(iter_count) + ' iteration(s)')
 
                 # Keep track of the number of tension/compression only iterations
                 iter_count += 1
@@ -2193,6 +2196,210 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'Linear'
 
+    def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0, num_steps=1):
+        """
+        Performs a **nonlinear structural analysis** on the `FEModel3D` object, primarily
+        addressing the behavior of **tension-only and compression-only elements** through
+        an iterative, incremental approach.
+
+        This method applies loads in a series of steps and, for each step, iteratively
+        solves the system until the active/inactive states of tension-only and
+        compression-only elements (members and nodal springs) have converged.
+
+        **Key Functionality:**
+
+        *   **Incremental Loading**: The total applied loads and enforced displacements are
+            divided into `num_steps` increments, which are applied sequentially.
+        *   **Iterative Convergence Loop**: For each load step, the analysis enters an
+            inner `while` loop that continues until the model reaches a converged
+            state for its tension/compression-only elements, or until divergence
+            is detected.
+        *   **Tension/Compression-Only Convergence Checks**:
+            *   It utilizes the `_check_TC_convergence` method to assess if tension-only
+                members are in compression or if compression-only members are in tension,
+                or if tension/compression-only springs require a change in their active
+                status based on `spring_tolerance` and `member_tolerance`.
+            *   If `_check_TC_convergence` indicates non-convergence (i.e., returns `False`),
+                the **displacements calculated for the current load step are undone**
+                (`-Delta_D1`, `-Delta_D2`), and the `load_step` counter is decremented.
+                This ensures the current load step is re-analyzed in the next iteration
+                with the updated element statuses.
+        *   **Stiffness Matrix Handling**: The function constructs and partitions the global
+            stiffness matrix `K` for each load combination. It efficiently handles
+            sparse matrices using `scipy.sparse.linalg.spsolve` for faster computation and
+            reduced memory usage, converting between `lil` and `csr` formats as needed
+            for mathematical operations.
+        *   **Displacement Management**: Displacements for the initial load step are
+            stored, and for subsequent steps, they are summed. This allows for a
+            cumulative tracking of the structure's response under increasing load.
+        *   **Error Handling**:
+            *   It checks for **divergence** if the number of iterations (`iter_count`) for
+                a single load step exceeds `max_iter`, raising an `Exception`.
+            *   It checks for a **singular stiffness matrix (`K11`)**, which indicates
+                rigid body motion or an unstable structure, raising an `Exception` and
+                aborting the analysis.
+        *   **Post-Analysis**: After all load steps and iterations are complete,
+            reactions are calculated, and optional static checks can be performed.
+
+        **Parameters:**
+        *   `num_steps` (int, optional): The number of load steps to apply the total
+            load incrementally. Defaults to `20`.
+        *   `log` (bool, optional): If `True`, analysis progress (load combinations,
+            load steps) is printed to the console. Defaults to `False`.
+        *   `check_stability` (bool, optional): If `True`, the stability of the
+            structure is checked during stiffness matrix formation. Defaults to `True`.
+        *   `check_statics` (bool, optional): If `True`, a static equilibrium check
+            is performed after the analysis is complete. Defaults to `False`.
+        *   `max_iter` (int, optional): The maximum number of iterations allowed for
+            convergence within a single load step before divergence is declared.
+            Defaults to `30`.
+        *   `sparse` (bool, optional): If `True`, sparse matrix solvers from `scipy`
+            are used for improved performance on large models. Defaults to `True`.
+        *   `combo_tags` (list of str, optional): A list of load combination tags to
+            include in the analysis. If `None`, all load combinations are analyzed.
+            Defaults to `None`.
+        *   `spring_tolerance` (float, optional): The displacement tolerance used by
+            `_check_TC_convergence` for determining if tension-only or compression-only
+            springs should change their active status. Defaults to `0`.
+        *   `member_tolerance` (float, optional): The force tolerance used by
+            `_check_TC_convergence` for determining if tension-only or compression-only
+            members should change their active status. Defaults to `0`.
+
+        **Returns:**
+        *   This method does not return a value directly. It **modifies the `FEModel3D`
+            object in place** by calculating and storing displacements and reactions for
+            the specified load combinations.
+        *   Upon successful completion, it flags `self.solution` as `'Nonlinear TC'`.
+
+        **Raises:**
+        *   `Exception`: If the model diverges during tension/compression-only analysis
+            (exceeds `max_iter`).
+        *   `Exception`: If the stiffness matrix is singular, indicating an unstable
+            structure.
+        """
+
+        if log:
+            print('+-----------+')
+            print('| Analyzing |')
+            print('+-----------+')
+
+        # Import `scipy` features if the sparse solver is being used
+        if sparse is True:
+            from scipy.sparse.linalg import spsolve
+
+        # Prepare the model for analysis
+        Analysis._prepare_model(self)
+
+        # Get the auxiliary list used to determine how the matrices will be partitioned
+        D1_indices, D2_indices, D2 = Analysis._partition_D(self)
+
+        # Calculate the incremental enforced displacement vector
+        Delta_D2 = D2/num_steps
+
+        # Identify which load combinations have the tags the user has given
+        combo_list = Analysis._identify_combos(self, combo_tags)
+
+        # Step through each load combination
+        for combo in combo_list:
+
+            if log:
+                print('')
+                print('- Analyzing load combination ' + combo.name)
+            
+            # Get the partitioned total global fixed end reaction vector
+            FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
+
+            # Calculate the incremental global fixed end reaction vector
+            Delta_FER1 = FER1/num_steps
+
+            # Get the partitioned total global nodal force vector
+            P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
+
+            # Calculate the incremental global nodal force vector
+            Delta_P1 = P1/num_steps
+
+            # Apply the load incrementally
+            load_step = 1
+            while load_step <= num_steps:
+
+                # Keep track of the number of iterations in this load step
+                iter_count = 1
+                convergence = False
+                divergence = False
+
+                # Iterate until convergence or divergence occurs
+                while convergence is False and divergence is False:
+
+                    # Check for tension/compression-only divergence
+                    if iter_count > max_iter:
+                        divergence = True
+                        raise Exception('Model diverged during tension/compression-only analysis')
+
+                    # Report which load step we are on
+                    if log:
+                        print(f'- Analyzing load step #{str(load_step)}')
+
+                    # Get the partitioned global stiffness matrix K11, K12, K21, K22
+                    if sparse is True:
+                        K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+                    else:
+                        K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+
+                    if K11.shape == (0, 0):
+                        # All displacements are known, so Delta_D1 is an empty vector
+                        Delta_D1 = []
+                    else:
+                        try:
+                            # Calculate the unknown displacements Delta_D1
+                            if sparse is True:
+                                # The partitioned stiffness matrix is in `lil` format, which is great for memory, but slow for mathematical operations. The stiffness matrix will be converted to `csr` format for mathematical operations. The `@` operator performs matrix multiplication on sparse matrices.
+                                Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(Delta_P1, Delta_FER1), K12.tocsr() @ Delta_D2))
+                                Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
+                            else:
+                                Delta_D1 = solve(K11, subtract(subtract(Delta_P1, Delta_FER1), matmul(K12, Delta_D2)))
+                        except:
+                            # Return out of the method if 'K' is singular and provide an error message
+                            raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+
+                    # Store or sum the calculated displacements to the model and the nodes in the model
+                    if load_step == 1:
+                        Analysis._store_displacements(self, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
+                    else:
+                        Analysis._sum_displacements(self, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
+
+                    # Check for tension/compression-only convergence at this load step
+                    convergence = Analysis._check_TC_convergence(self, combo.name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
+
+                    if convergence is False:
+
+                        if log:
+                            print(f'- Undoing load step #{load_step} due to failed convergence.')
+
+                        # Undo the latest analysis step to prepare for re-analysis of the load step
+                        Analysis._sum_displacements(self, -Delta_D1, -Delta_D2, D1_indices, D2_indices, combo)
+
+                    else:
+                        # Move on to the next load step
+                        load_step += 1
+
+                    # Keep track of the number of tension/compression only iterations
+                    iter_count += 1
+
+        # Calculate reactions
+        Analysis._calc_reactions(self, log, combo_tags)
+
+        if log:
+            print('')
+            print('- Analysis complete')
+            print('')
+
+        # Check statics if requested
+        if check_statics is True:
+            Analysis._check_statics(self, combo_tags)
+
+        # Flag the model as solved
+        self.solution = 'Nonlinear TC'
+
     def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, sparse=True, combo_tags=None):
         """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
 
@@ -2255,10 +2462,6 @@ class FEModel3D():
             print('+---------------------+')
             print('| Analyzing: Pushover |')
             print('+---------------------+')
-
-        # Import `scipy` features if the sparse solver is being used
-        if sparse is True:
-            from scipy.sparse.linalg import spsolve
 
         # Prepare the model for analysis
         Analysis._prepare_model(self)

@@ -1,4 +1,4 @@
-from __future__ import annotations # Allows more recent type hints features
+from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING
 from math import isclose
 
@@ -146,7 +146,7 @@ def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
 
 
 def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30) -> None:
-    """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material-specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
+    """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material-specific codes. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered by Pynite at this time.
 
     :param model: The finite element model to be solved.
     :type: FEModel3D
@@ -261,7 +261,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
                     # Return out of the method if 'K' is singular and provide an error message
                     raise ValueError('The stiffness matrix is singular, which indicates that the structure is unstable.')
 
-            # Sum the calculated displacements
+            # Store the calculated displacements
             _store_displacements(model, D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
 
         # Check whether the tension/compression-only analysis has converged and deactivate any members that are showing forces they can't hold
@@ -304,7 +304,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         if sparse is True:
 
             from scipy.sparse.linalg import spsolve
-            
+
             # Calculate the initial stiffness matrix
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
 
@@ -314,7 +314,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
             # Calculate the stiffness reduction matrix
             Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse).tolil(), D1_indices, D2_indices)
-            
+
             # The stiffness matrices are currently `lil` format which is great for
             # memory, but slow for mathematical operations. They will be converted to
             # `csr` format. The `+` operator performs matrix addition on `csr`
@@ -329,21 +329,22 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
             # Initial stiffness matrix
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
-            
+
             # Geometric stiffness matrix
             # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
             Kg11, Kg12, Kg21, Kg22 = _partition(model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
-            
+
             # Calculate the stiffness reduction matrix
             Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse), D1_indices, D2_indices)
-            
+
             K11 = K11 + Kg11 + Km11
             K12 = K12 + Kg12 + Km12
             K21 = K21 + Kg21 + Km21
             K22 = K22 + Kg22 + Km22
-        
+
         # Calculate the changes to the global displacement vector
-        if log: print('- Calculating changes to the global displacement vector')
+        if log:
+            print('- Calculating changes to the global displacement vector')
         if K11.shape == (0, 0):
             # All displacements are known, so D1 is an empty vector
             Delta_D1 = []
@@ -369,7 +370,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
         # Step through each member in the model
         for member in model.members.values():
-                        
+
             # Check for plastic load reversal at the i-node in this load step
             if member.i_reversal is False and member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 1] < 0:
 
@@ -391,7 +392,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         # Undo the last loadstep if plastic load reversal was discovered. We'll rerun it with the corresponding gradients set to zero vectors.
         if run_step is True:
             _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
-    
+
     # Sum the calculated displacements
     _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
 
@@ -505,6 +506,51 @@ def _sum_displacements(model: FEModel3D, Delta_D1: NDArray[float64], Delta_D2: N
 
 
 def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bool = True, spring_tolerance: float = 0, member_tolerance: float = 0) -> bool:
+    """Checks for convergence in tension-only and compression-only analysis.
+
+    This function evaluates the status of tension-only and compression-only springs and members
+    within the finite element model for a given load combination. Its primary purpose is to
+    determine if the non-linear analysis has converged by checking if any adjustments to the
+    active status of these elements are required.
+
+    The function performs the following checks:
+    *   **Nodal Spring Convergence**: It iterates through each nodal spring and assesses whether
+        its active state (whether it is resisting force) aligns with the current displacement
+        and its tension-only or compression-only designation. If a spring's active
+        status needs to change based on the displacement and a specified tolerance, the analysis
+        is flagged as not converged, and the spring's `active` status is updated.
+    *   **Member Convergence**: It checks each physical member in the model. If a
+        tension-only member is active but has a maximum axial force greater than the
+        `member_tolerance` (indicating compression), or if a compression-only member is active
+        but has a minimum axial force less than `-member_tolerance` (indicating tension),
+        that physical member and all its sub-members are deactivated. This action
+        flags the analysis as not converged. A future enhancement is noted to allow elements to
+        reactivate if deformations indicate they should return to an active state.
+    *   **Sub-member Reset**: After checking, the `_solved_combo` flag for all sub-members is
+        reset to `None`. This ensures that they will be resegmented and re-evaluated in subsequent
+        iterations of the analysis, allowing for further changes as needed for convergence.
+
+    :param model: The finite element model currently being evaluated.
+    :type model: FEModel3D
+    :param combo_name: The name of the load combination for which the convergence check is
+        being performed. Defaults to "Combo 1".
+    :type combo_name: str, optional
+    :param log: A boolean flag. If `True`, the function prints status updates and information
+        about the convergence check to the console. Defaults to `True`.
+    :type log: bool, optional
+    :param spring_tolerance: A float value representing the displacement tolerance for
+        tension/compression-only support springs. Springs will switch active state if their
+        displacement is beyond this tolerance in the disallowed direction. Defaults to 0.
+    :type spring_tolerance: float, optional
+    :param member_tolerance: A float value representing the axial force tolerance for
+        tension/compression-only members. Members will be deactivated if their axial force
+        is beyond this tolerance in the disallowed direction. Defaults to 0.
+    :type member_tolerance: float, optional
+    :return: **True** if all tension-only and compression-only elements have converged (no
+        changes in active status are needed), **False** otherwise (indicating that further
+        iterations of the analysis are required).
+    :rtype: bool
+    """
 
     # Assume the model has converged until we find out otherwise
     convergence = True
@@ -512,6 +558,7 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
     # Provide an update to the console if requested by the user
     if log:
         print("- Checking for tension/compression-only support spring convergence")
+
     # Loop through each node and each directional spring to check and update their active status
     for node in model.nodes.values():
 
@@ -542,11 +589,15 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
 
             # Check if tension-only conditions exist
             if (spring.tension_only is True) and (spring.axial(combo_name) > spring_tolerance):
+                if log:
+                    print(f'- Deactivating spring {spring.name}')
                 spring.active[combo_name] = False
                 convergence = False
 
             # Check if compression-only conditions exist
             elif (spring.comp_only is True) and (spring.axial(combo_name) < -spring_tolerance):
+                if log:
+                    print(f'- Deactivating spring {spring.name}')
                 spring.active[combo_name] = False
                 convergence = False
 
@@ -559,26 +610,26 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
         if phys_member.active[combo_name] is True:
 
             # Check if a tension-only conditions exist
-            if (
-                phys_member.tension_only is True
-                and phys_member.max_axial(combo_name) > member_tolerance
-            ):
+            if phys_member.tension_only is True and phys_member.max_axial(combo_name) > member_tolerance:
+
                 # Deactivate the physical member
+                if log:
+                    print(f'- Deactivating member {phys_member.name}')
                 phys_member.active[combo_name] = False
 
                 # Deactivate all the sub-members
                 for sub_member in phys_member.sub_members.values():
                     sub_member.active[combo_name] = False
-                
+
                 # Flag the analysis as not converged
                 convergence = False
 
             # Check if a compression-only conditions exist
-            elif (
-                phys_member.comp_only is True
-                and phys_member.min_axial(combo_name) < -member_tolerance
-            ):
+            elif phys_member.comp_only is True and phys_member.min_axial(combo_name) < - member_tolerance:
+
                 # Deactivate the physical member
+                if log:
+                    print(f'- Deactivating member {phys_member.name}')
                 phys_member.active[combo_name] = False
 
                 # Deactivate all the sub-members
@@ -611,17 +662,18 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
     """
 
     # Print a status update to the console
-    if log: print('- Calculating reactions')
+    if log:
+        print('- Calculating reactions')
 
     # Identify which load combinations to evaluate
     combo_list = _identify_combos(model, combo_tags)
 
     # Calculate the reactions node by node
     for node in model.nodes.values():
-        
+
         # Step through each load combination
         for combo in combo_list:
-            
+
             # Initialize reactions for this node and load combination
             node.RxnFX[combo.name] = 0.0
             node.RxnFY[combo.name] = 0.0
@@ -638,7 +690,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                 for spring in model.springs.values():
 
                     if spring.i_node == node and spring.active[combo.name] is True:
-                        
+
                         # Get the spring's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         spring_F = spring.F(combo.name)
@@ -651,11 +703,11 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         if node.support_RZ: node.RxnMZ[combo.name] += spring_F[5, 0]
 
                     elif spring.j_node == node and spring.active[combo.name] is True:
-                    
+
                         # Get the spring's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         spring_F = spring.F(combo.name)
-                    
+
                         if node.support_DX: node.RxnFX[combo.name] += spring_F[6, 0]
                         if node.support_DY: node.RxnFY[combo.name] += spring_F[7, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += spring_F[8, 0]
@@ -668,9 +720,9 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
 
                     # Sum the sub-member end forces at the node
                     for member in phys_member.sub_members.values():
-                        
+
                         if member.i_node == node and phys_member.active[combo.name] is True:
-                        
+
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             member_F = member.F(combo.name)
@@ -683,11 +735,11 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                             if node.support_RZ: node.RxnMZ[combo.name] += member_F[5, 0]
 
                         elif member.j_node == node and phys_member.active[combo.name] is True:
-                        
+
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                             member_F = member.F(combo.name)
-                        
+
                             if node.support_DX: node.RxnFX[combo.name] += member_F[6, 0]
                             if node.support_DY: node.RxnFY[combo.name] += member_F[7, 0]
                             if node.support_DZ: node.RxnFZ[combo.name] += member_F[8, 0]
@@ -703,7 +755,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         # Get the plate's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
-                
+
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[0, 0]
                         if node.support_DY: node.RxnFY[combo.name] += plate_F[1, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += plate_F[2, 0]
@@ -716,7 +768,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         # Get the plate's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
-                
+
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[6, 0]
                         if node.support_DY: node.RxnFY[combo.name] += plate_F[7, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += plate_F[8, 0]
@@ -729,7 +781,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         # Get the plate's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
-                
+
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[12, 0]
                         if node.support_DY: node.RxnFY[combo.name] += plate_F[13, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += plate_F[14, 0]
@@ -742,7 +794,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         # Get the plate's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         plate_F = plate.F(combo.name)
-                
+
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[18, 0]
                         if node.support_DY: node.RxnFY[combo.name] += plate_F[19, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += plate_F[20, 0]
@@ -771,7 +823,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         # Get the quad's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         quad_F = quad.F(combo.name)
-                
+
                         if node.support_DX: node.RxnFX[combo.name] += quad_F[6, 0]
                         if node.support_DY: node.RxnFY[combo.name] += quad_F[7, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += quad_F[8, 0]
@@ -784,7 +836,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         # Get the quad's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         quad_F = quad.F(combo.name)
-                
+
                         if node.support_DX: node.RxnFX[combo.name] += quad_F[12, 0]
                         if node.support_DY: node.RxnFY[combo.name] += quad_F[13, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += quad_F[14, 0]
@@ -797,19 +849,19 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         # Get the quad's global force matrix
                         # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
                         quad_F = quad.F(combo.name)
-                
+
                         if node.support_DX: node.RxnFX[combo.name] += quad_F[18, 0]
                         if node.support_DY: node.RxnFY[combo.name] += quad_F[19, 0]
                         if node.support_DZ: node.RxnFZ[combo.name] += quad_F[20, 0]
                         if node.support_RX: node.RxnMX[combo.name] += quad_F[21, 0]
                         if node.support_RY: node.RxnMY[combo.name] += quad_F[22, 0]
                         if node.support_RZ: node.RxnMZ[combo.name] += quad_F[23, 0]
-                
+
                 # Sum the joint loads applied to the node
                 for load in node.NodeLoads:
 
                     for case, factor in combo.factors.items():
-                        
+
                         if load[2] == case:
 
                             if load[0] == 'FX' and node.support_DX:
@@ -824,7 +876,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                                 node.RxnMY[combo.name] -= load[1]*factor
                             elif load[0] == 'MZ' and node.support_RZ:
                                 node.RxnMZ[combo.name] -= load[1]*factor
-            
+
             # Calculate any reactions due to active spring supports at the node
             if node.spring_DX[0] != None and node.spring_DX[2] is True:
                 sign = node.spring_DX[1]

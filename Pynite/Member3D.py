@@ -42,7 +42,7 @@ class Member3D():
                  comp_only: bool = False) -> None:
         """
         Initializes a new member.
-        
+
         :param model: The finite element model this member belongs to
         :type model: FEModel3D
         :param name: A unique name for the member
@@ -71,12 +71,12 @@ class Member3D():
             self.material: Material = model.materials[material_name]  # The element's material
         except KeyError:
             raise NameError(f"No material named '{material_name}'")
-        
+
         try:
             self.section: Section = model.sections[section_name]  # The element's section
         except KeyError:
             raise NameError(f"No section names '{section_name}'")
-        
+
         # Variables used to track nonlinear material member end forces
         self._fxi: float = 0
         self._myi: float = 0
@@ -101,7 +101,7 @@ class Member3D():
 
         # Members need to track whether they are active or not for any given load combination. They may become inactive for a load combination during a tension/compression-only analysis. This dictionary will be used when the model is solved.
         self.active: Dict[str, bool] = {}  # Key = load combo name, Value = True or False
-        
+
         # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations the '_solved_combo' variable will be used to track whether the member needs to be resegmented before running calculations for any given load combination.
         self._solved_combo: LoadCombo | None = None  # The current solved load combination
 
