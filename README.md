@@ -66,6 +66,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.2.1 (in progress)
+* Fixed shear wall thickness issues. The new `ShearWall` feature was not applying the wall thickness correctly. This has been fixed.
+
 v1.2.0
 * Added the ability to apply loads in steps in the `FEModel3D.analyze` method via the new `num_steps` keyword argument. `num_steps` defaults to 1, but if a higher number is used the load will be split into the specified number of steps and be applied incrementally. This can be very helpful when dealing with complex tension/compression-only scenarios that otherwise may have had trouble converging. Consider using 10 to 20 load steps when dealing with complex T/C-only models. The ability to perform step-wise analysis better approximates nonlinear load-displacement curves and sets `Pynite` up for future nonlinear analysis features.
 * Added P-&Delta; effects to vectorized results. Prior to this fix, member end forces and internal forces were being calculated correctly, but the P-&Delta; flag was not triggered in the methods that used vectorized results. Moment plots and moment arrays were the only items that were affected. Spot checking moments, and checking max/min moments were not affected.
@@ -117,12 +120,3 @@ v0.0.96
 
 v0.0.95
 * Bug fix for rendering negative point loads via `Pyvista`. They were being rendered as positive loads. The analysis was not impacted by this bug.
-
-v0.0.94
-* Added rendering via `Pyvista`. This greatly simplified the rendering code and provided a fresh look to the rendereings. Renderings in jupyter are now interactive. Global axes are also now shown in rendereings. To use `Pyvista` instead of `VTK`, use the new `Rendering` library rather than the old `Visualization` library. Rendering via `VTK` directly is still available.
-* Bug fix for member self-weight. The program was throwing exceptions instead of calculating member self-weight. Added a unit test to help prevent this issue from occuring again as code changes.
-* Refactored `material` to be `material_name` in the code. The prior naming convention caused confusion which led to the self-weight bug.
-
-v0.0.93
-* Fixed phantom reactions showing up at unsupported nodes. If there was a support defined at a node, the program was summing reactions for all directions at the node, rather than just the supported directions. This caused the program to report "extra" reaction directions at any supported node (if the user queried them). Element forces/stresses were not affected as this was a post-processing reaction summing issue. Reactions for supported directions were summed correctly, except in the case of nodes with both spring supports and other supports. Only unsupported directions, and nodes with both spring supports and other supports, were showing phantom reactions. This bug also caused statics checks to fail from time to time.
-* Reorganized physical member code to match member code more consistently.
