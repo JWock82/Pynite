@@ -30,10 +30,7 @@ class Mesh():
         self.nodes: Dict[str, Node3D] = {}  # A dictionary containing the nodes in the mesh
         self.elements: Dict[str, Union[Quad3D, Plate3D]] = {}  # A dictionary containing the elements in the mesh
         self.element_type = 'Quad'          # The type of element used in the mesh
-        self._is_generated = False          # A flag indicating whether the mesh has been generated
-    
-    def is_generated(self) -> bool:
-        return self._is_generated
+        self.is_generated = False          # A flag indicating whether the mesh has been generated
     
     def _rename_duplicates(self) -> None:
         """Renames any nodes or elements in the mesh that are already in the model
@@ -864,7 +861,7 @@ class RectangleMesh(Mesh):
                 self.model.plates[key] = element
 
         # Flag the mesh as generated
-        self._is_generated = True
+        self.is_generated = True
 
     def node_local_coords(self, node: Node3D) -> tuple[float, float]:
         """
@@ -912,7 +909,7 @@ class RectangleMesh(Mesh):
         self.y_control.append(y_bott + height)
 
         # Flag the mesh as not generated yet
-        self._is_generated = False
+        self.is_generated = False
 
 #%%
 class RectOpening():
@@ -1037,7 +1034,7 @@ class AnnulusMesh(Mesh):
                 self.model.plates[element.name] = element
         
         # Flag the mesh as generated
-        self._is_generated = True
+        self.is_generated = True
 
 #%%
 class AnnulusRingMesh(Mesh):
@@ -1162,7 +1159,7 @@ class AnnulusRingMesh(Mesh):
                 self.model.plates[element.name] = element
         
         # Flag the mesh as generated
-        self._is_generated = True
+        self.is_generated = True
 
 #%%
 class AnnulusTransRingMesh(Mesh):
@@ -1340,7 +1337,7 @@ class AnnulusTransRingMesh(Mesh):
                 self.model.plates[element.name] = element
         
         # Flag the mesh as generated
-        self._is_generated = True
+        self.is_generated = True
 
 #%%
 class FrustrumMesh(AnnulusMesh):
@@ -1533,7 +1530,7 @@ class CylinderMesh(Mesh):
                 self.model.plates[element.name] = element
         
         # Flag the mesh as generated
-        self._is_generated = True
+        self.is_generated = True
 
 #%%
 class CylinderRingMesh(Mesh):
@@ -1717,7 +1714,7 @@ class CylinderRingMesh(Mesh):
                 self.model.plates[element.name] = element
             
         # Flag the mesh as generated
-        self._is_generated = True
+        self.is_generated = True
         
 def check_mesh_integrity(mesh: Mesh, console_log: bool = True) -> Union[str, List[str], None]:
     """Runs basic integrity checks to ensure the mesh is in sync with its model. Usually you don't
