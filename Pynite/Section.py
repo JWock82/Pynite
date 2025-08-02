@@ -121,7 +121,7 @@ class SteelSection(Section):
         self.Zz: float = Zz
 
         self.material = model.materials[material_name]
-    
+
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0) -> float:
         """
         A method used to determine whether the cross section is elastic or plastic. 
@@ -136,7 +136,7 @@ class SteelSection(Section):
         :return: The total stress ratio for the cross section.
         :rtype: float
         """
-                
+
         # Plastic strengths for material nonlinearity
         Py = self.material.fy*self.A
         Mpy = self.material.fy*self.Zy
@@ -149,7 +149,7 @@ class SteelSection(Section):
 
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
-    
+
     def G(self, fx: float, my: float, mz: float) -> NDArray[float64]:
         """Returns the gradient to the material's yield surface for the given load. Used to construct the plastic reduction matrix for nonlinear behavior.
 
@@ -162,27 +162,38 @@ class SteelSection(Section):
         :return: The gradient to the material's yield surface at the cross-section.
         :rtype: NDArray
         """
-        
-        # Plastic strengths for material nonlinearity
-        Py = self.material.fy*self.A
-        Mpy = self.material.fy*self.Zy
-        Mpz = self.material.fy*self.Zz
 
-        # Partial derivatives of Phi
-        dPhi_dfx = 18*fx**5*my**2/(Mpy**2*Py**6) + 2*fx/Py**2 + 7.0*fx*mz**2/(Mpz**2*Py**2)
-        dPhi_dmy = 6*fx**6*my/(Mpy**2*Py**6) + 2*my/Mpy**2 + 9.0*my*mz**4/(Mpy**2*Mpz**4)
-        dPhi_dmz = 7.0*fx**2*mz/(Mpz**2*Py**2) + 2*mz/Mpz**2 + 18.0*my**2*mz**3/(Mpy**2*Mpz**4)
-        
-        # Return the gradient
-        return np.array([[dPhi_dfx],
-                         [0],
-                         [0],
-                         [0],
-                         [dPhi_dmy],
-                         [dPhi_dmz]])
+        # If Phi is less than 1.0 the member is still elastic and there is no gradient to the yield surface
+        if self.Phi(fx, my, mz) < 1.0:
+
+            # G = zero vector
+            return np.array([[0],
+                             [0],
+                             [0],
+                             [0],
+                             [0],
+                             [0]])
+
+        # Plastic action is occuring
+        else:
+
+            # Plastic strengths for material nonlinearity
+            Py = self.material.fy*self.A
+            Mpy = self.material.fy*self.Zy
+            Mpz = self.material.fy*self.Zz
+
+            # Partial derivatives of Phi
+            dPhi_dfx = 18*fx**5*my**2/(Mpy**2*Py**6) + 2*fx/Py**2 + 7.0*fx*mz**2/(Mpz**2*Py**2)
+            dPhi_dmy = 6*fx**6*my/(Mpy**2*Py**6) + 2*my/Mpy**2 + 9.0*my*mz**4/(Mpy**2*Mpz**4)
+            dPhi_dmz = 7.0*fx**2*mz/(Mpz**2*Py**2) + 2*mz/Mpz**2 + 18.0*my**2*mz**3/(Mpy**2*Mpz**4)
+
+            # Return the gradient
+            return np.array([[dPhi_dfx],
+                            [0],
+                            [0],
+                            [0],
+                            [dPhi_dmy],
+                            [dPhi_dmz]])
 
 # test_section = SteelSection('W8x31', 9.13, 37.1, 110, 0.536, 14.1, 30.4, 50)
 # print(test_section.G(15, 30, 50))
-
-
-

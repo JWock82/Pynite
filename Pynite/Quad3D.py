@@ -514,7 +514,7 @@ class Quad3D():
         Cm = 1/(1 - nu_xy*nu_yx)*np.array([[   Ex,    nu_yx*Ex,           0         ],
                                            [nu_xy*Ey,    Ey,              0         ],
                                            [    0,        0,     (1 - nu_xy*nu_yx)*G]])
-        
+
         return Cm
 
     def k_b(self) -> NDArray[float64]:

@@ -4,26 +4,27 @@ Created on Thu Nov  2 18:04:56 2017
 
 @author: D. Craig Brinck, SE
 """
-from __future__ import annotations # Allows more recent type hints features
-# %%      
+from __future__ import annotations  # Allows more recent type hints features
+# %%
 from typing import List, Tuple, Dict, Optional
+
 
 class Node3D():
     """
     A class representing a node in a 3D finite element model.
     """
-    
+
     def __init__(self, name: str, X: float, Y: float, Z: float):
-        
+
         self.name = name                 # A unique name for the node assigned by the user
         self.ID: Optional[int] = None    # A unique index number for the node assigned by the program
-        
+
         self.X = X          # Global X coordinate
         self.Y = Y          # Global Y coordinate
         self.Z = Z          # Global Z coordinate
-        
-        self.NodeLoads: List[Tuple[str, float, str]] = [] # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
-        
+
+        self.NodeLoads: List[Tuple[str, float, str]] = []  # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
+
         # Initialize the dictionaries of calculated node displacements
         self.DX: Dict[str, float] = {}
         self.DY: Dict[str, float] = {}
@@ -31,7 +32,7 @@ class Node3D():
         self.RX: Dict[str, float] = {}
         self.RY: Dict[str, float] = {}
         self.RZ: Dict[str, float] = {}
-        
+
         # Initialize the dictionaries of calculated node reactions
         self.RxnFX: Dict[str, float] = {}
         self.RxnFY: Dict[str, float] = {}

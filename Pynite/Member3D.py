@@ -278,7 +278,7 @@ class Member3D():
         :return: The plastic reduction matrix for the element
         :rtype: NDArray[float64]
         """
-        
+
         # Get the elastic local stiffness matrix
         ke = self.k()
 
@@ -311,11 +311,13 @@ class Member3D():
             return zeros((12, 12))
         else:
             return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
-    
+
     def lamb(self, model_Delta_D: NDArray[float64], combo_name: str = 'Combo 1', push_combo: str = 'Push', step_num: int = 1) -> NDArray[float64]:
         """
-        Returns the lambda vector used in pushover analysis.
-        
+        Returns the `lambda` vector used in pushover analysis.
+
+        `lambda` is a vector representing the magnitude of the plastic deformations in the member.
+
         :param model_Delta_D: The global displacement vector
         :type model_Delta_D: ndarray
         :param combo_name: The load combination name, defaults to 'Combo 1'
@@ -330,18 +332,18 @@ class Member3D():
 
         # Obtain the change in the member's end displacements from the calculated displacement change vector
         Delta_D = array([model_Delta_D[self.i_node.ID*6 + 0],
-                        model_Delta_D[self.i_node.ID*6 + 1],
-                        model_Delta_D[self.i_node.ID*6 + 2],
-                        model_Delta_D[self.i_node.ID*6 + 3],
-                        model_Delta_D[self.i_node.ID*6 + 4],
-                        model_Delta_D[self.i_node.ID*6 + 5],
-                        model_Delta_D[self.j_node.ID*6 + 0],
-                        model_Delta_D[self.j_node.ID*6 + 1],
-                        model_Delta_D[self.j_node.ID*6 + 2],
-                        model_Delta_D[self.j_node.ID*6 + 3],
-                        model_Delta_D[self.j_node.ID*6 + 4],
-                        model_Delta_D[self.j_node.ID*6 + 5]]).reshape(12, 1)
-        
+                         model_Delta_D[self.i_node.ID*6 + 1],
+                         model_Delta_D[self.i_node.ID*6 + 2],
+                         model_Delta_D[self.i_node.ID*6 + 3],
+                         model_Delta_D[self.i_node.ID*6 + 4],
+                         model_Delta_D[self.i_node.ID*6 + 5],
+                         model_Delta_D[self.j_node.ID*6 + 0],
+                         model_Delta_D[self.j_node.ID*6 + 1],
+                         model_Delta_D[self.j_node.ID*6 + 2],
+                         model_Delta_D[self.j_node.ID*6 + 3],
+                         model_Delta_D[self.j_node.ID*6 + 4],
+                         model_Delta_D[self.j_node.ID*6 + 5]]).reshape(12, 1)
+
         # Convert the gloabl changes in displacement to local coordinates
         Delta_d = self.T() @ Delta_D
 
@@ -355,23 +357,21 @@ class Member3D():
         if self.section is None:
             raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
         else:
-            if self.i_reversal is False:
-                Gi = self.section.G(f[0], f[4], f[5])
-            else:
-                Gi = [[0], [0], [0]]
-            
-            if self.j_reversal is False:
-                Gj = self.section.G(f[6], f[10], f[11])
-            else:
-                Gj = [[0], [0], [0]]
-        
+            Gi = self.section.G(f[0, 0], f[4, 0], f[5, 0])
+            Gj = self.section.G(f[6, 0], f[10, 0], f[11, 0])
+
         # Expand the gradients for a 12 degree of freedom element
         zeros_array = zeros((6, 1))
         Gi = vstack((Gi, zeros_array))
         Gj = vstack((zeros_array, Gj))
         G = hstack((Gi, Gj))
 
-        return inv(G.T @ ke @ G) @ G.T @ ke @ Delta_d
+        # Check if all terms in [G] are zero
+        if allclose(G, 0, atol=1e-14):
+            # No plasticity is occuring, so `lambda` is a 2x1 zero matrix
+            return array([[0], [0]])
+        else:
+            return inv(G.T @ ke @ G) @ G.T @ ke @ Delta_d
 
 #%%
     def fer(self, combo_name: str = 'Combo 1') -> NDArray[float64]:

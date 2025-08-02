@@ -368,11 +368,14 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         # Unpartition the displacement results from the analysis step
         Delta_D = _unpartition_disp(model, Delta_D1, D2, D1_indices, D2_indices)
 
+        # Assume no plastic load reversal and therefore no need to rerun this load step
+        run_step = False
+
         # Step through each member in the model
         for member in model.members.values():
 
             # Check for plastic load reversal at the i-node in this load step
-            if member.i_reversal is False and member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 1] < 0:
+            if member.i_reversal is False and member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 0] < 0:
 
                 # Flag the member as having plastic load reversal at the i-node
                 i_reversal = True
@@ -381,7 +384,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                 run_step = True
 
             # Check for plastic load reversal at the j-node in this load step
-            if member.j_reversal is False and member.lamb(Delta_D, combo_name, push_combo, step_num)[1, 1] < 0:
+            if member.j_reversal is False and member.lamb(Delta_D, combo_name, push_combo, step_num)[1, 0] < 0:
 
                 # Flag the member as having plastic load reversal at the j-node
                 j_reversal = True

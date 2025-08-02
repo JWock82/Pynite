@@ -2463,7 +2463,7 @@ class FEModel3D():
             P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
 
             # Solve the current load combination without the pushover load applied
-            Analysis._PDelta_step(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter, first_step=True)
+            Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter)
 
             # Since a P-Delta analysis was just run, we'll need to correct the solution to flag it
             # as 'pushover' instead of 'PDelta'
