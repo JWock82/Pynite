@@ -1739,7 +1739,7 @@ class FEModel3D():
         :return: The gloabl plastic reduction matrix.
         :rtype: array
         """
-       
+
         # Determine if a sparse matrix has been requested
         if sparse is True:
             # The plastic reduction matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index. We'll build the matrix from three lists.
@@ -1762,7 +1762,7 @@ class FEModel3D():
                     
                     # Get the member's global plastic reduction matrix
                     # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-                    member_Km = member.Km(combo_name, push_combo, step_num)
+                    member_Km = member.Km(combo_name)
 
                     # Step through each term in the member's plastic reduction matrix
                     # 'a' & 'b' below are row/column indices in the member's matrix
@@ -2441,20 +2441,19 @@ class FEModel3D():
                 print('- Analyzing load combination ' + combo.name)
 
             # Reset nonlinear material member end forces to zero
-            for member in self.members.values():
-                member._fxi, member._myi, member._mzi = 0, 0, 0
-                member._fxj, member._myj, member._mzj = 0, 0, 0
+            for phys_member in self.members.values():
+                for sub_member in phys_member.sub_members.values():
+                    sub_member._fxi, sub_member._myi, sub_member._mzi = 0, 0, 0
+                    sub_member._fxj, sub_member._myj, sub_member._mzj = 0, 0, 0
 
-            # Get the pushover load step and initialize the load factor
-            load_step = list(self.load_combos[push_combo].factors.values())[0]
-            load_factor = load_step
-            step_num = 1
-
-            # Get the partitioned global fixed end reaction vector
+            # Get the partitioned global fixed end reaction vector for the load combination
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
-            # Get the partitioned global nodal force vector       
+            # Get the partitioned global nodal force vector for the load combination
             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
+
+            # Run an elastic analysis for the load combination (w/o pushover loads)
+            Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, 30)
 
             # Get the partitioned global fixed end reaction vector for a pushover load increment
             FER1_push, FER2_push = Analysis._partition(self, self.FER(push_combo), D1_indices, D2_indices)
@@ -2462,37 +2461,22 @@ class FEModel3D():
             # Get the partitioned global nodal force vector for a pushover load increment
             P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
 
-            # Solve the current load combination without the pushover load applied
-            Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, log, sparse, check_stability, max_iter)
+            # Get the pushover load step and initialize the load factor
+            load_step = list(self.load_combos[push_combo].factors.values())[0]
+            load_factor = load_step
+            step_num = 1
 
-            # Since a P-Delta analysis was just run, we'll need to correct the solution to flag it
-            # as 'pushover' instead of 'PDelta'
-            self.solution = 'Pushover'
-
-            # Apply the pushover load in steps, summing deformations as we go, until the full
-            # pushover load has been analyzed
+            # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
             while load_factor <= 1:
+
+                print(f'load_factor {load_factor}')
 
                 # Inform the user which pushover load step we're on
                 if log:
                     print('- Beginning pushover load step #' + str(step_num))
 
-                # Reset all member plastic load reversal flags to be `False`
-                for member in self.members.values():
-                    member.pl_reverse = False
-
-                # Run/rerun this load step until no new unloaded member flags exist
-                run_step = True
-                while run_step is True:
-
-                    # Assume this iteration will converge
-                    run_step = False
-
-                    # Store the model's current displacements in case we need to revert
-                    D_temp = self._D
-
-                    # Run or rerun the next pushover load step
-                    d_Delta = Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
+                # Run the next pushover load step
+                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
 
                 # Update nonlinear material member end forces for each member
                 for member in self.members.values():
@@ -2504,8 +2488,8 @@ class FEModel3D():
                     member._mzj = member.f(combo.name, push_combo, step_num)[11, 0]
 
                 # Move on to the next load step
-                load_factor += load_step
                 step_num += 1
+                load_factor += load_step
 
         # Calculate reactions for every primary load combination
         Analysis._calc_reactions(self, log, combo_tags=['primary'])
