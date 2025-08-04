@@ -1,6 +1,7 @@
 from Pynite import FEModel3D
 import math
 
+
 def test_beam_internal_forces():
     """
     Units for this model are kips and feet
