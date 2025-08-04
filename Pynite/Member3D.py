@@ -140,7 +140,7 @@ class Member3D():
                 R1_indices.append(i)
             else:
                 R2_indices.append(i)
-        
+
         return R1_indices, R2_indices
 
 # %%
@@ -266,15 +266,11 @@ class Member3D():
         # Return the local geomtric stiffness matrix, with end releases applied
         return kg_Condensed
 
-    def km(self, combo_name: str = 'Combo 1', push_combo: str = 'Push', step_num: int = 1) -> NDArray[float64]:
+    def km(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """Returns the local plastic reduction matrix for the element.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
-        :param push_combo: The name of the load combination that defines the pushover load. Defaults to 'Push'.
-        :type push_combo: str, optional
-        :param step_num: The pushover load step to consider for calculating the plastic reduciton matrix. Default is 1.
-        :type step_num: int, optional
         :return: The plastic reduction matrix for the element
         :rtype: NDArray[float64]
         """
@@ -293,10 +289,22 @@ class Member3D():
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
-            raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
+            raise Exception(f'Nonlinear material analysis requires member sections to be defined. A section definition is missing for element {self.name}.')
         else:
-            Gi = self.section.G(self._fxi, self._myi, self._mzi)
-            Gj = self.section.G(self._fxj, self._myj, self._mzj)
+
+            # Check for load reversal at the i-node
+            if self.i_reversal is True:
+                # Gi is a null vector if load reversal is occuring
+                Gi = zeros((6, 1))
+            else:
+                Gi = self.section.G(self._fxi, self._myi, self._mzi)
+
+            # Check for load reversal at the j-node
+            if self.j_reversal is True:
+                # Gj is a null vector if load reversal is occuring
+                Gj = zeros((6, 1))
+            else:
+                Gj = self.section.G(self._fxj, self._myj, self._mzj)
 
         # Expand the gradients for a 12 degree of freedom element
         zeros_array = zeros((6, 1))
@@ -310,7 +318,8 @@ class Member3D():
         if allclose(G, 0, atol=1e-14):
             return zeros((12, 12))
         else:
-            return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
+            return -ke @ G @ inv(G.T @ ke @ G) @ G.T @ ke
+            # return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
 
     def lamb(self, model_Delta_D: NDArray[float64], combo_name: str = 'Combo 1', push_combo: str = 'Push', step_num: int = 1) -> NDArray[float64]:
         """
@@ -351,11 +360,11 @@ class Member3D():
         ke = self.k()
 
         # Get the total end forces applied to the element
-        f = self.f(combo_name, push_combo) - self.fer(combo_name) - self.fer(push_combo)*step_num
+        f = self.f(combo_name, push_combo, step_num) - self.fer(combo_name) - self.fer(push_combo)*step_num
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
-            raise Exception('Nonlinear material analysis requires member sections to be defined. A section definition is missing for element ' + self.name + '.')
+            raise Exception(f'Nonlinear material analysis requires member sections to be defined. A section definition is missing for element {self.name}.')
         else:
             Gi = self.section.G(f[0, 0], f[4, 0], f[5, 0])
             Gj = self.section.G(f[6, 0], f[10, 0], f[11, 0])
@@ -373,7 +382,7 @@ class Member3D():
         else:
             return inv(G.T @ ke @ G) @ G.T @ ke @ Delta_d
 
-#%%
+# %%
     def fer(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the condensed (and expanded) local fixed end reaction vector for the member for the given load combination.
@@ -383,7 +392,7 @@ class Member3D():
         :return: The fixed end reaction vector for the member
         :rtype: NDArray[float64]
         """
-        
+
         # Get the lists of unreleased and released degree of freedom indices
         R1_indices, R2_indices = self._partition_D()
 
@@ -395,11 +404,11 @@ class Member3D():
         ferCondensed = subtract(fer1, matmul(matmul(k12, inv(k22)), fer2))
         
         # Expand the condensed fixed end reaction vector
-        i=0
+        i = 0
         for DOF in self.Releases:
             
             if DOF is True:
-                ferCondensed = insert(ferCondensed, i, 0, axis = 0)
+                ferCondensed = insert(ferCondensed, i, 0, axis=0)
                 
             i += 1
         
@@ -473,9 +482,9 @@ class Member3D():
                         fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
                     elif distLoad[0] == 'FX' or distLoad[0] == 'FY' or distLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
-                        if distLoad[0] =='FX': FX = 1
-                        if distLoad[0] =='FY': FY = 1
-                        if distLoad[0] =='FZ': FZ = 1
+                        if distLoad[0] == 'FX': FX = 1
+                        if distLoad[0] == 'FY': FY = 1
+                        if distLoad[0] == 'FZ': FZ = 1
                         w1 = self.T()[:3, :][:, :3] @ array([FX*distLoad[1], FY*distLoad[1], FZ*distLoad[1]])
                         w2 = self.T()[:3, :][:, :3] @ array([FX*distLoad[2], FY*distLoad[2], FZ*distLoad[2]])
                         fer = add(fer, Pynite.FixedEndReactions.FER_AxialLinLoad(factor*w1[0], factor*w2[0], distLoad[3], distLoad[4], self.L()))
@@ -506,9 +515,9 @@ class Member3D():
             m22 = unp_matrix[R2_indices, :][:, R2_indices]
             return  m11, m12, m21, m22
 
-# %%   
-    def f(self, combo_name: str='Combo 1', push_combo: str='Push', step_num=1) -> NDArray[float64]:
-        """Returns the member's elastic local end force vector for the given load combination.
+# %%
+    def f(self, combo_name: str='Combo 1', push_combo: str = None, step_num: int = None) -> NDArray[float64]:
+        """Returns the member's local end force vector for the given load combination.
 
         :param combo_name: The load combination to get the local end for vector for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
@@ -518,14 +527,31 @@ class Member3D():
 
         # Calculate and return the member's local end force vector
         if self.model.solution == 'P-Delta':
+
             # Back-calculate the axial force on the member from the axial strain
             P = (self.d(combo_name)[6, 0] - self.d(combo_name)[0, 0])*self.section.A*self.material.E/self.L()
+
             return add(matmul(add(self.k(), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
-        elif self.model.solution == 'Pushover':
+
+        # Check for a pushover analysis
+        elif push_combo is not None and step_num is not None:
+
+            # Calculate the axial force on the member from the latest elasto-plastic member end forces
             P = self._fxj - self._fxi
-            return add(matmul(add(self.k(), self.kg(P), self.km(combo_name, push_combo, step_num)), self.d(combo_name)), self.fer(combo_name))
+
+            # Calculate the total stiffness matrix
+            kt = self.k() + self.kg(P) + self.km(combo_name)
+
+            # Calculate the fixed end reaction vector for this load step
+            fer = self.fer(combo_name) + self.fer(push_combo)*step_num
+
+            # Retern the new member end forces
+            return kt @ self.d(combo_name) + fer
+
         else:
+
             return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
+
 
 # %%
     def d(self, combo_name='Combo 1') -> NDArray[float64]:
@@ -659,21 +685,17 @@ class Member3D():
         # Calculate and return the geometric stiffness matrix in global coordinates
         return matmul(matmul(inv(self.T()), self.kg(P)), self.T())
 
-    def Km(self, combo_name: str, push_combo: str, step_num: int) -> NDArray[float64]:
+    def Km(self, combo_name: str) -> NDArray[float64]:
         """Returns the global plastic reduction matrix for the member. Used to modify member behavior for plastic hinges at the ends.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for.
         :type combo_name: string
-        :param push_combo: The name of the load combination used to define the pushover load.
-        :type push_combo: string
-        :param step_num: The load step (1, 2, 3, ...etc) to use to determine the current load from the pushover combo.
-        :type step_num: int
         :return: The global plastic reduction matrix for the member.
         :rtype: array
         """
 
         # Calculate and return the plastic reduction matrix in global coordinates
-        return matmul(matmul(inv(self.T()), self.km(combo_name, push_combo, step_num)), self.T())
+        return matmul(matmul(inv(self.T()), self.km(combo_name)), self.T())
 
     def F(self, combo_name: str='Combo 1') -> NDArray[float64]:
         """
@@ -733,7 +755,7 @@ class Member3D():
         # Return the global displacement vector
         return D
 
-#%%
+# %%
     def shear(self, Direction: Literal['Fy', 'Fz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the shear at a point along the member's length.
