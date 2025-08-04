@@ -124,7 +124,7 @@ class SteelSection(Section):
 
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0) -> float:
         """
-        A method used to determine whether the cross section is elastic or plastic. 
+        A method used to determine whether the cross section is elastic or plastic.
         Values less than 1 indicate the section is elastic.
 
         :param fx: Axial force divided by axial strength.
@@ -148,6 +148,8 @@ class SteelSection(Section):
         m_z = mz/Mpz
 
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
+        print(fx, my, mz)
+        print(p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2)
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
 
     def G(self, fx: float, my: float, mz: float) -> NDArray[float64]:
@@ -163,8 +165,12 @@ class SteelSection(Section):
         :rtype: NDArray
         """
 
+        # Calculate `Phi` which is essentially a stress check indicating how close to yield we are
+        Phi = self.Phi(fx, my, mz)
+        print(f'-Yield Stress Ratio: Phi = {round(Phi, 3)}')
+
         # If Phi is less than 1.0 the member is still elastic and there is no gradient to the yield surface
-        if self.Phi(fx, my, mz) < 1.0:
+        if Phi < 1.0:
 
             # G = zero vector
             return np.array([[0],
