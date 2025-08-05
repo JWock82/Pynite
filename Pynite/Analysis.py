@@ -899,42 +899,30 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                                 node.RxnMZ[combo.name] -= load[1]*factor
 
             # Calculate any reactions due to active spring supports at the node
-            if node.spring_DX[0] != None and node.spring_DX[2] is True:
-                sign = node.spring_DX[1]
+            if node.spring_DX[0] is not None and node.spring_DX[2] is True:
                 k = node.spring_DX[0]
-                if sign != None: k = float(sign + str(k))
                 DX = node.DX[combo.name]
-                node.RxnFX[combo.name] += k*DX
-            if node.spring_DY[0] != None and node.spring_DY[2] is True:
-                sign = node.spring_DY[1]
+                node.RxnFX[combo.name] -= k*DX
+            if node.spring_DY[0] is not None and node.spring_DY[2] is True:
                 k = node.spring_DY[0]
-                if sign != None: k = float(sign + str(k))
                 DY = node.DY[combo.name]
-                node.RxnFY[combo.name] += k*DY
-            if node.spring_DZ[0] != None and node.spring_DZ[2] is True:
-                sign = node.spring_DZ[1]
+                node.RxnFY[combo.name] -= k*DY
+            if node.spring_DZ[0] is not None and node.spring_DZ[2] is True:
                 k = node.spring_DZ[0]
-                if sign != None: k = float(sign + str(k))
                 DZ = node.DZ[combo.name]
-                node.RxnFZ[combo.name] += k*DZ
-            if node.spring_RX[0] != None and node.spring_RX[2] is True:
-                sign = node.spring_RX[1]
+                node.RxnFZ[combo.name] -= k*DZ
+            if node.spring_RX[0] is not None and node.spring_RX[2] is True:
                 k = node.spring_RX[0]
-                if sign != None: k = float(sign + str(k))
                 RX = node.RX[combo.name]
-                node.RxnMX[combo.name] += k*RX
-            if node.spring_RY[0] != None and node.spring_RY[2] is True:
-                sign = node.spring_RY[1]
+                node.RxnMX[combo.name] -= k*RX
+            if node.spring_RY[0] is not None and node.spring_RY[2] is True:
                 k = node.spring_RY[0]
-                if sign != None: k = float(sign + str(k))
                 RY = node.RY[combo.name]
-                node.RxnMY[combo.name] += k*RY
-            if node.spring_RZ[0] != None and node.spring_RZ[2] is True:
-                sign = node.spring_RZ[1]
+                node.RxnMY[combo.name] -= k*RY
+            if node.spring_RZ[0] is not None and node.spring_RZ[2] is True:
                 k = node.spring_RZ[0]
-                if sign != None: k = float(sign + str(k))
                 RZ = node.RZ[combo.name]
-                node.RxnMZ[combo.name] += k*RZ
+                node.RxnMZ[combo.name] -= k*RZ
 
 
 def _check_statics(model: FEModel3D, combo_tags: List[str] | None = None) -> None:
