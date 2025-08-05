@@ -40,11 +40,11 @@ def test_beam_internal_forces():
 
     # Add a member distributed load along the strong axis
     beam.add_member_dist_load('M1', 'FY', -0.5, -0.5, case='D')
-    beam.add_load_combo('D', {'D':1.0})
+    beam.add_load_combo('D', {'D': 1.0})
 
     # Add a member distributed laod along the weak axis
     beam.add_member_dist_load('M1', 'FZ', -0.5, -0.5, case='D')
-    beam.add_load_combo('D', {'D':1.0})
+    beam.add_load_combo('D', {'D': 1.0})
 
     # Analyze the model
     beam.analyze_linear()
@@ -79,5 +79,6 @@ def test_beam_internal_forces():
     assert math.isclose(beam.members['M1'].deflection('dy', 10, 'D')*12, 0, abs_tol=0.00001), 'dy internal deflection test failed at end of member.'
     assert math.isclose(beam.members['M1'].deflection('dz', 10, 'D')*12, 0, abs_tol=0.00001), 'dz internal deflection test failed at end of member.'
 
-if __name__ == '__main__':
-    test_beam_internal_forces()
+
+# if __name__ == '__main__':
+#     test_beam_internal_forces()
