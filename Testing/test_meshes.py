@@ -73,7 +73,7 @@ def test_shear_wall():
 
     print(f'Stiffness, k = {k} kip/in')
 
-    shear_wall.render(combo_name='Stiffness: Roof')
+    # shear_wall.render(combo_name='Stiffness: Roof')
 
     # Check that the stiffness is as expected
     assert round(k) == 1369, 'Failed shear wall stiffness test.'
