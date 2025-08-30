@@ -29,7 +29,7 @@ class Test_End_Release(unittest.TestCase):
         TorqueBeam.add_node('N2', 168, 0, 0)
         # Add a material
         TorqueBeam.add_material('Steel', 29000, 11400, 0.5, 490/1000/12**3)
-        #Add section
+        # Add section
         TorqueBeam.add_section('Section', 20, 100, 150, 250)
         # Add a beam with the following properties:
         TorqueBeam.add_member('M1', 'N1', 'N2', 'Steel', 'Section')
@@ -45,16 +45,16 @@ class Test_End_Release(unittest.TestCase):
         # subTest context manager prints which portion fails, if any
         with self.subTest(left_Rxn=left_Rxn):
             self.assertAlmostEqual(left_Rxn, -6.07, 2)
-        
+
         right_Rxn = TorqueBeam.nodes['N2'].RxnMX['Combo 1']
         with self.subTest(right_Rxn=right_Rxn):
             self.assertAlmostEqual(right_Rxn, -8.93, 2)
-        
+
         # Max/min torques on the beam
         max_torque = TorqueBeam.members['M1'].max_torque()
         with self.subTest(max_torque=max_torque):
             self.assertAlmostEqual(max_torque, 8.93, 2)
-        
+
         min_torque = TorqueBeam.members['M1'].min_torque()
         with self.subTest(min_torque=min_torque):
             self.assertAlmostEqual(min_torque, -6.07, 2)
