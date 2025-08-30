@@ -39,3 +39,6 @@ def test_beam_rotation():
     assert Mz_min == pt.approx(-17.677, rel=1e-2)
     assert My_max == pt.approx(17.677, rel=1e-2)
     assert My_min == pt.approx(0.0, rel=1e-2)
+
+if __name__ == '__main__':
+    test_beam_rotation()

@@ -23,7 +23,7 @@ class Test_2D_Frame(unittest.TestCase):
         sys.stdout = sys.__stdout__
 
     def test_XY_gravity_load(self):
-        
+
         # A First Course in the Finite Element Method, 4th Edition
         # Daryl L. Logan
         # Problem 5.30
@@ -119,7 +119,7 @@ class Test_2D_Frame(unittest.TestCase):
         # Update the expected value to an appropriate precision
         expected_RZ = 0.00022794540510395617
         self.assertAlmostEqual(calculated_RZ/expected_RZ, 1.0, 2)
-    
+
     def test_YZ_gravity_load(self):
         # A First Course in the Finite Element Method, 4th Edition
         # Daryl L. Logan
@@ -177,7 +177,7 @@ class Test_2D_Frame(unittest.TestCase):
                 self.assertAlmostEqual(node.RxnFZ['Combo 1']/values['RxnFZ'], 1.0, 2)
                 self.assertAlmostEqual(node.RxnFY['Combo 1']/values['RxnFY'], 1.0, 2)
                 self.assertAlmostEqual(node.RxnMX['Combo 1']/values['RxnMX'], 1.0, 2)
-        
+
         # Check displacements at N3 and N4
         correct_displacements = [('N3', {'DY': -6.666757,
                                          'RX':  0.032}),
@@ -226,7 +226,7 @@ class Test_2D_Frame(unittest.TestCase):
                 # Two decimal place accuracy requires +/-0.5% accuracy
                 # one decimal place requires +/-5%
                 self.assertAlmostEqual(calculated_reaction/rxn, 1.0, 2)
-    
+
     def test_Kassimali_3_35(self):
         """
         Tests against Kassimali example 3.35.
@@ -239,7 +239,7 @@ class Test_2D_Frame(unittest.TestCase):
         """
 
         frame = FEModel3D()
-        
+
         frame.add_node('A', 0, 0, 0)
         frame.add_node('B', 0, 0, 24)
         frame.add_node('C', 12, 0, 0)
