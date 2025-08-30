@@ -228,7 +228,7 @@ class BeamSegZ():
             # Return the calcuated deflection
             return delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
-    def AxialDeflection(self, x: float) -> float:
+    def axial_deflection(self, x: float) -> float:
 
         delta_x1 = self.delta_x1
         P1 = self.P1

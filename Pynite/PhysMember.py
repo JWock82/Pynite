@@ -155,11 +155,11 @@ class PhysMember(Member3D):
 
             # Add the new sub-member to the sub-member dictionary for this physical member
             self.sub_members[name] = new_sub_member
-    
+
     def shear(self, Direction: Literal['Fy', 'Fz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the shear at a point along the member's length.
-        
+
         Parameters
         ----------
         Direction : string
@@ -171,10 +171,10 @@ class PhysMember(Member3D):
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
         """
-        
+
         member, x_mod = self.find_member(x)
         return member.shear(Direction, x_mod, combo_name)
-    
+
     def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the maximum shear in the member for the given direction
@@ -631,7 +631,7 @@ class PhysMember(Member3D):
             x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
-            t_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'torque')
+            t_array = self._extract_vector_results(submember.SegmentsX, x_subm_array, 'torque')
 
             # Adjust from the submember's coordinate system to the physical member's coordinate system
             t_array[0] = [x_o + x for x in t_array[0]]
@@ -949,7 +949,7 @@ class PhysMember(Member3D):
 
             # Check which axis is of interest
             if Direction == 'dx':
-                d_array = self._extract_vector_results(submember.SegmentsX, x_subm_array, 'axial_deflection')
+                d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'axial_deflection')
             elif Direction == 'dy':
                 d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'deflection')
             elif Direction == 'dz':

@@ -68,6 +68,9 @@ Here's a list of projects that use Pynite:
 # What's New?
 v1.2.1 (in progress)
 * Fixed shear wall thickness issues. The new `ShearWall` feature was not applying the wall thickness correctly. This has been fixed.
+* Fixed a bug in reaction calculations for positive nodal springs. Only reactions for positive springs (e.g. tension-only) were affected.
+* Refactored `AxialDeflection` to `axial_deflection` to be consistent with the rest of the code.
+* Fixed a bug in reporting axial deflection arrays. The program was throwing exceptions when axial deflection array results were requested.
 
 v1.2.0
 * Added the ability to apply loads in steps in the `FEModel3D.analyze` method via the new `num_steps` keyword argument. `num_steps` defaults to 1, but if a higher number is used the load will be split into the specified number of steps and be applied incrementally. This can be very helpful when dealing with complex tension/compression-only scenarios that otherwise may have had trouble converging. Consider using 10 to 20 load steps when dealing with complex T/C-only models. The ability to perform step-wise analysis better approximates nonlinear load-displacement curves and sets `Pynite` up for future nonlinear analysis features.
