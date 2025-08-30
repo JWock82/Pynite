@@ -8,6 +8,7 @@ Resources/Full Logo With Buffer.png
 PyNiteFEA.egg-info/*
 build/*
 dist/*
+GUI/*
 Derivations/*.ipynb_checkpoints
 Pynite Report.pdf
 *.fbp
