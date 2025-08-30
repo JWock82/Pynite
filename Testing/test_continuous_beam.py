@@ -52,5 +52,6 @@ def test_continuous_beam_moments():
 #     plt.close()
 
 if __name__ == '__main__':
+    pass
     # test_continuous_beam_moments()
     # test_plots()
