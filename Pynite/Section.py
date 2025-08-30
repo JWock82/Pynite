@@ -54,10 +54,8 @@ class Section():
 
     def G(self, fx: float, my: float, mz: float) -> NDArray:
         """
-        Returns the gradient to the yield surface at a given point using numerical differentiation. 
-        This is a default solution. For a better solution, overwrite this method with a more precise 
-        one in the material/shape specific child class that inherits from this class.
-        
+        Returns the gradient to the yield surface at a given point using numerical differentiation. This is a default solution. For a better solution, overwrite this method with a more precise one in the material/shape specific child class that inherits from this class.
+
         :param fx: Axial force at the cross-section
         :type fx: float
         :param my: y-axis (weak) moment at the cross-section
@@ -67,7 +65,7 @@ class Section():
         :return: The gradient to the yield surface at the cross-section
         :rtype: NDArray
         """
-        
+
         # Small increment for numerical differentiation
         epsilon = 1e-6
 
@@ -78,9 +76,6 @@ class Section():
 
         # Return the gradient
         return np.array([[dPhi_dfx],
-                         [0],
-                         [0],
-                         [0],
                          [dPhi_dmy],
                          [dPhi_dmz]])
 
@@ -148,8 +143,8 @@ class SteelSection(Section):
         m_z = mz/Mpz
 
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
-        print(fx, my, mz)
-        print(p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2)
+        # print(f'fx = {round(fx)}, my = {round(my)}, mz = {round(mz)}')
+        # print(f'Phi = {round(p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2, 3)}')
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
 
     def G(self, fx: float, my: float, mz: float) -> NDArray[float64]:
@@ -167,7 +162,6 @@ class SteelSection(Section):
 
         # Calculate `Phi` which is essentially a stress check indicating how close to yield we are
         Phi = self.Phi(fx, my, mz)
-        print(f'-Yield Stress Ratio: Phi = {round(Phi, 3)}')
 
         # If Phi is less than 1.0 the member is still elastic and there is no gradient to the yield surface
         if Phi < 1.0:
@@ -195,11 +189,11 @@ class SteelSection(Section):
 
             # Return the gradient
             return np.array([[dPhi_dfx],
-                            [0],
-                            [0],
-                            [0],
-                            [dPhi_dmy],
-                            [dPhi_dmz]])
+                             [0],
+                             [0],
+                             [0],
+                             [dPhi_dmy],
+                             [dPhi_dmz]])
 
 # test_section = SteelSection('W8x31', 9.13, 37.1, 110, 0.536, 14.1, 30.4, 50)
 # print(test_section.G(15, 30, 50))

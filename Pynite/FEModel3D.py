@@ -1751,15 +1751,14 @@ class FEModel3D():
             Km = zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         # Add stiffness terms for each physical member in the model
-        if log: print('- Calculating the plastic reduction matrix')
         for phys_member in self.members.values():
-            
+
             # Check to see if the physical member is active for the given load combination
             if phys_member.active[combo_name] is True:
 
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
-                    
+
                     # Get the member's global plastic reduction matrix
                     # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                     member_Km = member.Km(combo_name)
@@ -1768,7 +1767,7 @@ class FEModel3D():
                     # 'a' & 'b' below are row/column indices in the member's matrix
                     # 'm' & 'n' are corresponding row/column indices in the structure's global matrix
                     for a in range(12):
-                    
+
                         # Determine if index 'a' is related to the i-node or j-node
                         if a < 6:
                             # Find the corresponding index 'm' in the global plastic reduction matrix
@@ -1776,9 +1775,9 @@ class FEModel3D():
                         else:
                             # Find the corresponding index 'm' in the global plastic reduction matrix
                             m = member.j_node.ID*6 + (a-6)
-                        
+
                         for b in range(12):
-                        
+
                             # Determine if index 'b' is related to the i-node or j-node
                             if b < 6:
                                 # Find the corresponding index 'n' in the global plastic reduction matrix
@@ -1786,7 +1785,7 @@ class FEModel3D():
                             else:
                                 # Find the corresponding index 'n' in the global plastic reduction matrix
                                 n = member.j_node.ID*6 + (b-6)
-                        
+
                             # Now that 'm' and 'n' are known, place the term in the global plastic reduction matrix
                             if sparse is True:
                                 row.append(m)
@@ -1810,7 +1809,7 @@ class FEModel3D():
         #     else: Analysis._check_stability(self, Km)
 
         # Return the global plastic reduction matrix
-        return Km 
+        return Km
 
     def FER(self, combo_name='Combo 1') -> NDArray[float64]:
         """Assembles and returns the global fixed end reaction vector for any given load combo.
@@ -2235,7 +2234,7 @@ class FEModel3D():
 
         # Identify which load combinations have the tags the user has given
         combo_list = Analysis._identify_combos(self, combo_tags)
-        
+
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
@@ -2469,23 +2468,25 @@ class FEModel3D():
             # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
             while load_factor <= 1:
 
-                print(f'load_factor {load_factor}')
-
                 # Inform the user which pushover load step we're on
                 if log:
                     print('- Beginning pushover load step #' + str(step_num))
+                    print(f'- Load_factor = {load_factor}')
 
                 # Run the next pushover load step
                 Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
 
                 # Update nonlinear material member end forces for each member
-                for member in self.members.values():
-                    member._fxi = member.f(combo.name, push_combo, step_num)[0, 0]
-                    member._myi = member.f(combo.name, push_combo, step_num)[4, 0]
-                    member._mzi = member.f(combo.name, push_combo, step_num)[5, 0]
-                    member._fxj = member.f(combo.name, push_combo, step_num)[6, 0]
-                    member._myj = member.f(combo.name, push_combo, step_num)[10, 0]
-                    member._mzj = member.f(combo.name, push_combo, step_num)[11, 0]
+                for phys_member in self.members.values():
+
+                    for member in phys_member.sub_members.values():
+
+                        member._fxi = member.f(combo.name, push_combo, step_num)[0, 0]
+                        member._myi = member.f(combo.name, push_combo, step_num)[4, 0]
+                        member._mzi = member.f(combo.name, push_combo, step_num)[5, 0]
+                        member._fxj = member.f(combo.name, push_combo, step_num)[6, 0]
+                        member._myj = member.f(combo.name, push_combo, step_num)[10, 0]
+                        member._mzj = member.f(combo.name, push_combo, step_num)[11, 0]
 
                 # Move on to the next load step
                 step_num += 1

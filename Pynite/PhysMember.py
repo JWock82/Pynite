@@ -21,13 +21,13 @@ class PhysMember(Member3D):
     Physical members can detect internal nodes and subdivide themselves into sub-members at those
     nodes.
     """
-    
+
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
-    __plt = None  
-    
+    __plt = None
+
     def __init__(self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D, material_name: str, section_name: str, rotation: float = 0.0,
                  tension_only: bool = False, comp_only: bool = False) -> None:
-        
+
         super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
         self.sub_members: Dict[str, Member3D] = {}
 
@@ -72,7 +72,7 @@ class PhysMember(Member3D):
 
                         # Add the node to the list of intermediate nodes
                         int_nodes.append((node, norm(vector_in)))
-        
+
         # Create a list of sorted intermediate nodes by distance from the i-node
         int_nodes = sorted(int_nodes, key=lambda x: x[1])
 
@@ -91,7 +91,7 @@ class PhysMember(Member3D):
 
             # Create a new sub-member
             new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, self.section.name, self.rotation, self.tension_only, self.comp_only)
-            
+
             # Flag the sub-member as active
             for combo_name in self.model.load_combos.keys():
                 new_sub_member.active[combo_name] = True
@@ -104,7 +104,7 @@ class PhysMember(Member3D):
 
             # Add distributed to the sub-member
             for dist_load in self.DistLoads:
-                
+
                 # Find the start and end points of the distributed load in the physical member's
                 # local coordinate system
                 x1_load = dist_load[3]
@@ -112,7 +112,7 @@ class PhysMember(Member3D):
 
                 # Determine if the distributed load should be applied to this segment
                 if x1_load <= xj and x2_load > xi: 
-                    
+
                     direction = dist_load[0]
                     w1 = dist_load[1]
                     w2 = dist_load[2]
@@ -127,7 +127,7 @@ class PhysMember(Member3D):
                     else:
                         x1 = 0
                         w1 = w(xi)
-                    
+
                     if x2_load < xj:
                         x2 = x2_load - xi
                     else:
@@ -139,7 +139,7 @@ class PhysMember(Member3D):
 
             # Add point loads to the sub-member
             for pt_load in self.PtLoads:
-                
+
                 direction = pt_load[0]
                 P = pt_load[1]
                 x = pt_load[2]
@@ -149,7 +149,7 @@ class PhysMember(Member3D):
                 if x >= xi and x < xj or (isclose(x, xj) and isclose(xj, self.L())):
 
                     x = x - xi
-                    
+
                     # Add the load to the sub-member
                     new_sub_member.PtLoads.append([direction, P, x, case])
 
@@ -178,7 +178,7 @@ class PhysMember(Member3D):
     def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
         """
         Returns the maximum shear in the member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -220,7 +220,7 @@ class PhysMember(Member3D):
     def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the shear diagram for the member
-        
+
         Parameters
         ----------
         Direction : string
@@ -237,7 +237,7 @@ class PhysMember(Member3D):
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
-        
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()

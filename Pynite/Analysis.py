@@ -305,16 +305,16 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
             from scipy.sparse.linalg import spsolve
 
             # Calculate the initial stiffness matrix
-            if log: print('-Calculating elastic stiffness matrix [Ke]')
+            if log: print('- Calculating elastic stiffness matrix [Ke]')
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
 
             # Calculate the geometric stiffness matrix
             # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
-            if log: print('-Calculating geometric stiffness matrix [Kg]')
+            if log: print('- Calculating geometric stiffness matrix [Kg]')
             Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False).tolil(), D1_indices, D2_indices)
 
             # Calculate the stiffness reduction matrix
-            if log: print('-Calculating plastic reduction matrix [Km]')
+            if log: print('- Calculating plastic reduction matrix [Km]')
             Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse).tolil(), D1_indices, D2_indices)
 
             # The stiffness matrices are currently `lil` format which is great for
@@ -330,7 +330,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         else:
 
             # Initial stiffness matrix
-            if log: print('-Calculating elastic stiffness matrix [Ke]')
+            if log: print('- Calculating elastic stiffness matrix [Ke]')
             K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
             # Geometric stiffness matrix
@@ -386,7 +386,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
             for sub_member in phys_member.sub_members.values():
 
-                print(f'Member {sub_member.name} lambda = {sub_member.lamb(Delta_D, combo_name, push_combo, step_num)}')
+                # print(f'Member {sub_member.name} lambda = {sub_member.lamb(Delta_D, combo_name, push_combo, step_num)}')
 
                 # Check for plastic load reversal at the i-node in this load step
                 if sub_member.lamb(Delta_D, combo_name, push_combo, step_num)[0, 0] < 0:
@@ -415,7 +415,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         # Undo the last loadstep if plastic load reversal was discovered. We'll rerun it with the corresponding gradients set to zero vectors.
         if run_step is True:
             _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
-            print('Restarting load step')
+            if log: print('- Restarting load step')
 
     # Sum the calculated displacements
     _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
