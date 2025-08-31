@@ -13,7 +13,6 @@ Key points:
 import os
 import platform
 import shutil
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -27,26 +26,8 @@ from Pynite import FEModel3D
 if TYPE_CHECKING:
     from Pynite import FEModel3D
 
-
-# =============================================================================
-# Logging Setup
-# =============================================================================
-
-# Create a module-level logger
-logger = logging.getLogger(__name__)
-
-# Only configure logging if this file is run directly.
-# When imported as a library, the caller controls logging configuration.
-if __name__ == "__main__" and not logger.handlers:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s [%(name)s]: %(message)s"
-    )
-
-
-# =============================================================================
+# %%
 # Jinja2 Template Setup
-# =============================================================================
 
 # Determine the directory where this file lives
 path = Path(__file__).parent
@@ -60,6 +41,7 @@ env = Environment(
 # Load the main HTML report template
 template = env.get_template('Report_Template.html')
 
+# %%
 def create_report(model: FEModel3D,
                   output_filepath: Path | str = path / 'Pynite Report.pdf',
                   format: str = 'pdf',
@@ -201,10 +183,7 @@ def get_wkhtmltopdf_path(log: bool = True) -> str | None:
     return None
 
 
-# =============================================================================
-# Script Entry Point
-# =============================================================================
-
+# %%
 if __name__ == "__main__":
     # Example: Run a demo if this file is executed directly
     logger.info("This module is intended to be imported, not run directly.")
