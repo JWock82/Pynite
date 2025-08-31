@@ -181,9 +181,3 @@ def get_wkhtmltopdf_path(log: bool = True) -> str | None:
 
     # None found
     return None
-
-
-# %%
-if __name__ == "__main__":
-    # Example: Run a demo if this file is executed directly
-    logger.info("This module is intended to be imported, not run directly.")
