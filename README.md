@@ -71,6 +71,7 @@ v1.3.0 (in progress)
 * Fixed a bug in reaction calculations for positive nodal springs. Only reactions for positive springs (e.g. tension-only) were affected.
 * Refactored `AxialDeflection` to `axial_deflection` to be consistent with the rest of the code.
 * Fixed a bug in reporting axial deflection arrays. The program was throwing exceptions when axial deflection array results were requested.
+* Fixed a bug preventing reports from generating.
 * Added support for html reporting, and better error messages for getting `pdfkit` and `wkhtmltopdf` setup for reporting.
 
 v1.2.0
