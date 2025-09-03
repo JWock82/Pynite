@@ -2454,6 +2454,9 @@ class FEModel3D():
             # Run an elastic analysis for the load combination (w/o pushover loads)
             Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, 30)
 
+            # The previous step flagged the solution as a P-Delta solution, but we need to indicate that this is actually a Pushover solution so that the calls to Member3D.f() are excecuted considering nonlinear behavior
+            self.solution = 'Pushover'
+
             # Get the partitioned global fixed end reaction vector for a pushover load increment
             FER1_push, FER2_push = Analysis._partition(self, self.FER(push_combo), D1_indices, D2_indices)
 

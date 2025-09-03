@@ -143,8 +143,6 @@ class SteelSection(Section):
         m_z = mz/Mpz
 
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
-        # print(f'fx = {round(fx)}, my = {round(my)}, mz = {round(mz)}')
-        # print(f'Phi = {round(p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2, 3)}')
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
 
     def G(self, fx: float, my: float, mz: float) -> NDArray[float64]:
