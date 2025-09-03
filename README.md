@@ -66,7 +66,7 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.3.0 (in progress)
+v1.3.0
 * Fixed shear wall thickness issues. The new `ShearWall` feature was not applying the wall thickness correctly. This has been fixed.
 * Fixed a bug in reaction calculations for positive nodal springs. Only reactions for positive springs (e.g. tension-only) were affected.
 * Refactored `AxialDeflection` to `axial_deflection` to be consistent with the rest of the code.
