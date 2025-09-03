@@ -77,4 +77,4 @@ print('Minimum Deflection:', simple_beam.members['M1'].min_deflection('dy', '1.2
 # folder unless the 'output_path' variable below is modified.
 
 from Pynite import Reporting
-Reporting.create_report(simple_beam, output_filepath='./Pynite Report.pdf', node_table=False, plate_table=False, plate_corner_forces=False, plate_center_forces=False, plate_corner_membrane=False, plate_center_membrane=False)
+Reporting.create_report(simple_beam, output_filepath='./Pynite Report.html', format='pdf', node_table=False, plate_table=False, plate_corner_forces=False, plate_center_forces=False, plate_corner_membrane=False, plate_center_membrane=False)
