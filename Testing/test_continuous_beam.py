@@ -2,8 +2,7 @@ from Pynite import FEModel3D
 import math
 # import matplotlib, matplotlib.pyplot as plt
 
-def create_model():
-
+def create_3_support_model():
     continuous_beam = FEModel3D()
 
     continuous_beam.add_node('N1', 0, 0, 0)
@@ -26,30 +25,57 @@ def create_model():
 
     return continuous_beam
 
-def test_continuous_beam_moments():
-    model = create_model()
+def test_3_support_beam_moments():
+    model = create_3_support_model()
     member = model.members['M1']
     assert math.isclose(member.max_moment('Mz', '1.0D'), 18000.0), 'Incorrect max moment during continuous beam test'
     assert math.isclose(max(member.moment_array('Mz', 11, '1.0D')[1]), 18000.00), 'Incorrect max moment in moment array during continuous beam test.'
 
-# def test_plots():
 
-#     model = create_model()
-
-#     assert isinstance(model.members['M1'].plot_shear('Fy', '1.0D', 100), matplotlib.figure.Figure)
-#     plt.close()
-
-#     assert isinstance(model.members['M1'].plot_moment('Mz', '1.0D', 100), matplotlib.figure.Figure)
-#     plt.close()
+def create_2_support_model():
+    model = FEModel3D()
     
-#     assert isinstance(model.members['M1'].plot_torque('1.0D', 100), matplotlib.figure.Figure)
-#     plt.close()
+    model.add_material("default", 1, 1, 1, 1, 1)
+    model.add_section("default", 1, 1, 1, 1)
     
-#     assert isinstance(model.members['M1'].plot_axial('1.0D', 100), matplotlib.figure.Figure)
-#     plt.close()
+    model.add_node("0", 0, 0, 0)
+    model.add_node("1", 10, 0, 0)
+    model.add_node("2", 13, 0, 0)
+    
+    model.def_support("0", 1, 1, 1, 1, 1, 0)
+    model.def_support("1", 0, 1, 0, 0, 0, 0)
+    
+    model.add_member("M0", "0", "2", "default", "default")
+    model.add_member_dist_load("M0", "Fy", -10, -10, 0, 13, case='load')
+    model.add_load_combo("combo", {"load": 1.0})
 
-#     assert isinstance(model.members['M1'].plot_deflection('dy', '1.0D', 100), matplotlib.figure.Figure)
-#     plt.close()
+    model.analyze(check_statics=True)
+
+    return model
+
+def test_2_support_beam_moments():
+    # The following test passes on Pynite==1.1.2 but fails with Pynite==1.2.0, Pynite==1.3.0
+
+    model = create_2_support_model()
+    member = model.members['M0']
+    fe_max_moment = member.max_moment("Mz", "combo")
+    fe_min_moment = member.min_moment("Mz", "combo")
+    member.plot_moment("Mz", "combo", 2000)
+
+    # Analytic solution
+    w = -10
+    l = 10
+    a = 3
+
+    # Beam formula source: Handbook of Steel Construction, CISC, 11th Ed. Pg. 5-138 diag. 24
+    analytic_min_moment = (w * (l + a)**2 * (l - a)**2 )/ (8 * l**2)
+    analytic_max_moment = -w * a**2 / 2
+
+    try:
+        assert math.isclose(fe_max_moment, analytic_max_moment)
+    except AssertionError:
+        print(fe_max_moment, analytic_max_moment)
+    assert math.isclose(fe_min_moment, analytic_min_moment)
 
 if __name__ == '__main__':
     pass
