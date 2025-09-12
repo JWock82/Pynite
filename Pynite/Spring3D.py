@@ -218,7 +218,7 @@ class Spring3D():
         
         # Read in the global displacements from the nodes
         # Apply axial displacements only if the spring is active
-        if self.active[combo_name] is True:
+        if self.active[combo_name] == True:
             D[0, 0] = self.i_node.DX[combo_name]
             D[6, 0] = self.j_node.DX[combo_name]
 

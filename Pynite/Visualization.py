@@ -211,12 +211,12 @@ class Renderer():
         if self.deformed_shape and self.case != None:
             raise Exception('Deformed shape is only available for load combinations,'
                             ' not load cases.')
-        if self.model.load_combos == {} and self.render_loads is True and self.case == None:
+        if self.model.load_combos == {} and self.render_loads == True and self.case == None:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
         
         # Check if nodes are to be rendered
-        if self.render_nodes is True:
+        if self.render_nodes == True:
 
             if self.theme == 'print':
                 color = 'black'
@@ -251,7 +251,7 @@ class Renderer():
             # Add the actor for the spring
             renderer.AddActor(vis_spring.actor)
 
-            if self.labels is True:
+            if self.labels == True:
                 # Add the actor for the spring label
                 renderer.AddActor(vis_spring.lblActor)
             
@@ -265,7 +265,7 @@ class Renderer():
             # Add the actor for the member
             renderer.AddActor(vis_member.actor)
 
-            if self.labels is True:
+            if self.labels == True:
                 
                 # Add the actor for the member label
                 renderer.AddActor(vis_member.lblActor)
@@ -275,7 +275,7 @@ class Renderer():
                 vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
         
         # Check if nodes are to be rendered
-        if self.render_nodes is True:
+        if self.render_nodes == True:
             
             # Combine the polydata from each node
 
@@ -287,7 +287,7 @@ class Renderer():
                 # Add the node's polydata
                 node_polydata.AddInputData(vis_node.polydata.GetOutput())
 
-                if self.labels is True:
+                if self.labels == True:
 
                     if self.theme == 'print':
                         vis_node.lblActor.GetProperty().SetColor(0, 0, 0)  # black
@@ -316,7 +316,7 @@ class Renderer():
             renderer.AddActor(node_actor)
 
         # Render the deformed shape if requested
-        if self.deformed_shape is True:
+        if self.deformed_shape == True:
             _DeformedShape(self.model, renderer, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
 
         # Render the loads if requested
@@ -376,8 +376,8 @@ class VisNode():
       
         # Generate any supports that occur at the node
         # Check for a fixed suppport
-        if node.support_DX is True and node.support_DY is True and node.support_DZ is True \
-        and node.support_RX is True and node.support_RY is True and node.support_RZ is True:
+        if node.support_DX == True and node.support_DY == True and node.support_DZ == True \
+        and node.support_RX == True and node.support_RY == True and node.support_RZ == True:
       
             # Create the fixed support
             support = vtk.vtkCubeSource()
@@ -391,8 +391,8 @@ class VisNode():
             self.polydata.AddInputData(support.GetOutput())
         
         # Check for a pinned support
-        elif node.support_DX is True and node.support_DY is True and node.support_DZ is True \
-        and node.support_RX is False and node.support_RY is False and node.support_RZ is False:
+        elif node.support_DX == True and node.support_DY == True and node.support_DZ == True \
+        and node.support_RX == False and node.support_RY == False and node.support_RZ == False:
           
             # Create the pinned support
             support = vtk.vtkConeSource()
@@ -409,7 +409,7 @@ class VisNode():
         else:
       
             # Restrained against X translation
-            if node.support_DX is True:
+            if node.support_DX == True:
                   
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -441,7 +441,7 @@ class VisNode():
                 self.polydata.AddInputData(support3.GetOutput())
           
             # Restrained against Y translation
-            if node.support_DY is True:
+            if node.support_DY == True:
               
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -473,7 +473,7 @@ class VisNode():
                 self.polydata.AddInputData(support3.GetOutput())
           
             # Restrained against Z translation
-            if node.support_DZ is True:
+            if node.support_DZ == True:
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -505,7 +505,7 @@ class VisNode():
                 self.polydata.AddInputData(support3.GetOutput())
       
             # Restrained against rotation about the X-axis
-            if node.support_RX is True:
+            if node.support_RX == True:
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -537,7 +537,7 @@ class VisNode():
                 self.polydata.AddInputData(support3.GetOutput())
           
             # Restrained against rotation about the Y-axis
-            if node.support_RY is True:
+            if node.support_RY == True:
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -569,7 +569,7 @@ class VisNode():
                 self.polydata.AddInputData(support3.GetOutput())
           
             # Restrained against rotation about the Z-axis
-            if node.support_RZ is True:
+            if node.support_RZ == True:
             
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
@@ -1277,7 +1277,7 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
     append_filter = vtk.vtkAppendPolyData()
     
     # Check if nodes are to be rendered
-    if render_nodes is True:
+    if render_nodes == True:
         
         # Add the deformed nodes to the append filter
         for node in model.nodes.values():
@@ -1289,7 +1289,7 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
     for spring in model.springs.values():
         
         # Only add the spring if it is active for the given load combination
-        if spring.active[combo_name] is True:
+        if spring.active[combo_name] == True:
             
             vis_spring = VisDeformedSpring(spring, model.nodes, scale_factor, combo_name)
             append_filter.AddInputData(vis_spring.source.GetOutput())
@@ -1298,7 +1298,7 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
     for member in model.members.values():
         
         # Only add the member if it is active for the given load combination.
-        if member.active[combo_name] is True:
+        if member.active[combo_name] == True:
             
             vis_member = VisDeformedMember(member, model.nodes, scale_factor, combo_name)
             append_filter.AddInputData(vis_member.source)
@@ -1590,7 +1590,7 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
     for item in list(model.plates.values()) + list(model.quads.values()):
         
         # Create a point for each corner (must be in counter clockwise order)
-        if deformed_shape is True:
+        if deformed_shape == True:
             p0 = [item.i_node.X + item.i_node.DX[combo_name]*deformed_scale,
                   item.i_node.Y + item.i_node.DY[combo_name]*deformed_scale,
                   item.i_node.Z + item.i_node.DZ[combo_name]*deformed_scale]

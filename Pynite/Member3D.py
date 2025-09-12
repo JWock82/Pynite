@@ -136,7 +136,7 @@ class Member3D():
         R1_indices = []
         R2_indices = []
         for i in range(12):
-            if self.Releases[i] is False:
+            if self.Releases[i] == False:
                 R1_indices.append(i)
             else:
                 R2_indices.append(i)
@@ -163,7 +163,7 @@ class Member3D():
         i = 0
         for DOF in self.Releases:
 
-            if DOF is True:
+            if DOF == True:
                 k_Condensed = insert(k_Condensed, i, 0, axis=0)
                 k_Condensed = insert(k_Condensed, i, 0, axis=1)
 
@@ -256,7 +256,7 @@ class Member3D():
         i = 0
         for DOF in self.Releases:
 
-            if DOF is True:
+            if DOF == True:
                 kg_Condensed = insert(kg_Condensed, i, 0, axis=0)
                 kg_Condensed = insert(kg_Condensed, i, 0, axis=1)
 
@@ -279,13 +279,13 @@ class Member3D():
 
         # Get the elastic local stiffness matrix (for only axial and bending)
         # Note that using the entire stiffness matrix with all terms would lead to an uninvertible term later on
-        ke = self.k() # [dofs][:, dofs]
+        ke = self.k()  # [dofs][:, dofs]
 
         # Get the member's axial force
         P = self._fxj - self._fxi
 
         # Get the geometric local stiffness matrix (for only axial and bending)
-        kg = self.kg(P) # [dofs][:, dofs]
+        kg = self.kg(P)  # [dofs][:, dofs]
 
         # Get the total elastic local stiffness matrix
         ke = add(ke, kg)
@@ -296,14 +296,14 @@ class Member3D():
         else:
 
             # Check for load reversal at the i-node
-            if self.i_reversal is True:
+            if self.i_reversal == True:
                 # Gi is a null vector if load reversal is occuring
                 Gi = zeros((6, 1))
             else:
                 Gi = self.section.G(self._fxi, self._myi, self._mzi)
 
             # Check for load reversal at the j-node
-            if self.j_reversal is True:
+            if self.j_reversal == True:
                 # Gj is a null vector if load reversal is occuring
                 Gj = zeros((6, 1))
             else:
@@ -316,8 +316,9 @@ class Member3D():
         G = hstack((Gi, Gj))
 
         if self.name == 'M1a':
-            print(f'M1a Phi_i: {self.section.Phi(self._fxi, self._myi, self._mzi)}')
-            print(f'M1a Gi: {Gi}')
+            M1a_Phi_i = self.section.Phi(self._fxi, self._myi, self._mzi)
+            print(f'M1a Phi_i: {M1a_Phi_i}')
+            # print(f'M1a Gi: {Gi}')
 
         # Calculate the plastic reduction matrix for each end of the element
         # TODO: Note that `ke` below already accounts for P-Delta effects and any member end releases which should spill into `km`. I believe end releases will resolve themselves because of this. We'll see how this tests when we get to testing. If it causes problems when end releases are applied we may need to adjust our calculation of G when end releases are present.
@@ -325,20 +326,8 @@ class Member3D():
         if allclose(G, 0, atol=1e-14):
             return zeros((12, 12))
         else:
-            # Solve for km
+            # Solve for `km` using a psuedo-inverse (pinv). The psuedo-inverse takes into account that we may have rows of zeros that make the matrix otherwise uninvertable.
             return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
-            # km = -ke @ G @ inv(G.T @ ke @ G) @ G.T @ ke
-
-            # # Expand km to a 12x12 matrix
-            # # Create a zero-filled 12x12 matrix
-            # km_exp = zeros((12, 12))
-
-            # # Fill the selected positions with the values from ke
-            # for i_out, i_in in enumerate(dofs):
-            #     for j_out, j_in in enumerate(dofs):
-            #         km_exp[i_in, j_in] = km[i_out, j_out]
-
-            # return km_exp
 
     def lamb(self, model_Delta_D: NDArray[float64], combo_name: str = 'Combo 1', push_combo: str = 'Push', step_num: int = 1) -> NDArray[float64]:
         """
@@ -373,29 +362,24 @@ class Member3D():
                          model_Delta_D[self.j_node.ID*6 + 5]]).reshape(12, 1)
 
         # List the degrees of freedom associated with axial and bending stiffnesses
-        dofs = [0, 3, 4, 6, 9, 10]
+        # dofs = [0, 3, 4, 6, 9, 10]
 
         # Convert the gloabl changes in displacement to local coordinates
         Delta_d = self.T() @ Delta_D
-        Delta_d = Delta_d[dofs]
+        # Delta_d = Delta_d[dofs]
 
         # Get the elastic local stiffness matrix
-        ke = self.k()[dofs][:, dofs]
-
-        # Get the total end forces applied to the element
-        f = self.f(combo_name, push_combo, step_num) - self.fer(combo_name) - self.fer(push_combo)*step_num
-
-        f = f[dofs]
+        ke = self.k()  # [dofs][:, dofs]
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
             raise Exception(f'Nonlinear material analysis requires member sections to be defined. A section definition is missing for element {self.name}.')
         else:
-            Gi = self.section.G(f[0, 0], f[1, 0], f[2, 0])
-            Gj = self.section.G(f[3, 0], f[4, 0], f[5, 0])
+            Gi = self.section.G(self._fxi, self._myi, self._mzi)
+            Gj = self.section.G(self._fxj, self._myj, self._mzj)
 
         # Combine the gradients for the i and j-nodes
-        zeros_array = zeros((3, 1))
+        zeros_array = zeros((6, 1))
         Gi = vstack((Gi, zeros_array))
         Gj = vstack((zeros_array, Gj))
         G = hstack((Gi, Gj))
@@ -403,13 +387,13 @@ class Member3D():
         # Check if all terms in [G] are zero
         if allclose(G, 0, atol=1e-14):
             if self.name == 'M1a':
-                print(f'M1a lambda: {array([[0], [0]])[0, 0]}')
+                print(f'No Plasticity - M1a lambda: {array([[0], [0]])[0, 0]}')
             # No plasticity is occuring, so `lambda` is a 2x1 zero matrix
             return array([[0], [0]])
         else:
             if self.name == 'M1a':
-                print(f'M1a lambda: {(inv(G.T @ ke @ G) @ G.T @ ke @ Delta_d)[0, 0]}')
-            return inv(G.T @ ke @ G) @ G.T @ ke @ Delta_d
+                print(f'M1a lambda: {(pinv(G.T @ ke @ G) @ G.T @ ke @ Delta_d)[0, 0]}')
+            return pinv(G.T @ ke @ G) @ G.T @ ke @ Delta_d
 
     def fer(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
@@ -435,7 +419,7 @@ class Member3D():
         i = 0
         for DOF in self.Releases:
 
-            if DOF is True:
+            if DOF == True:
                 ferCondensed = insert(ferCondensed, i, 0, axis=0)
 
             i += 1
@@ -443,14 +427,14 @@ class Member3D():
         # Return the fixed end reaction vector        
         return ferCondensed
 
-    def _fer_unc(self, combo_name:str ='Combo 1') -> NDArray[float64]:
+    def _fer_unc(self, combo_name:str = 'Combo 1') -> NDArray[float64]:
         """
         Returns the member's local fixed end reaction vector, ignoring the effects of end releases.
         Needed to apply the slope-deflection equation properly.
         """
 
         # Initialize the fixed end reaction vector
-        fer = zeros((12,1))
+        fer = zeros((12, 1))
 
         # Get the requested load combination
         combo = self.model.load_combos[combo_name]
@@ -575,7 +559,7 @@ class Member3D():
 
         else:
 
-            return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
+            return self.k() @ self.d(combo_name) + self.fer(combo_name)
 
     def d(self, combo_name='Combo 1') -> NDArray[float64]:
         """
@@ -756,7 +740,7 @@ class Member3D():
         # TODO: I'm not sure this next block is the best way to handle inactive members - need to review
         # Read in the global displacements from the nodes
         # Apply axial displacements only if the member is active
-        if self.active[combo_name] is True:
+        if self.active[combo_name] == True:
             D[0, 0] = self.i_node.DX[combo_name]
             D[6, 0] = self.j_node.DX[combo_name]
 
@@ -1143,7 +1127,7 @@ class Member3D():
 
             # Segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)   
+                self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
 
             # Determine if a P-Delta analysis has been run

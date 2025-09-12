@@ -990,7 +990,7 @@ class AnnulusMesh(Mesh):
                 transition = False
         
             # Create a mesh of nodes for the ring
-            if transition is True:
+            if transition == True:
                 ring = AnnulusTransRingMesh(r_inner + h_rad, r_inner, n_circ, self.thickness, self.material_name, self.model, self.kx_mod, self.ky_mod,
                                             self.origin, self.axis, 'N' + str(n), 'Q' + str(q))
                 n += 3*n_circ
@@ -1840,7 +1840,7 @@ def check_mesh_integrity(mesh: Mesh, console_log: bool = True) -> Union[str, Lis
         errors = ['No errors detected.']
 
     # Return the error messages
-    if console_log is True:
+    if console_log == True:
         for error in errors:
             print(error)
             return ''

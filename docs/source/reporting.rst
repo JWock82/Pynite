@@ -5,12 +5,10 @@ Creating PDF Reports
 Requirements
 ============
 
-In order to use Pynite's reporting features you'll need to install ``Jinja2``. If you want reports in ``pdf`` format you'll also need to install ``PDFKit``:
+In order to use Pynite's reporting features you'll need to install ``Jinja2``. If you want reports in ``pdf`` format you'll also need to install the following:
 
-* Jinja2 - ``Jinja2`` is a templating engine used for creating HTML files using Python.
 * PDFKit - ``PDFKit`` converts HTML files to PDF files via ``wkhtmltopdf`` (see discussion on ``wkhtmltopdf`` below).
-
-For ``pdf`` output, you'll also need to install ``wkhtmltopdf``, which is a program, rather than a Python library. Installers for various operating systems can be freely downloaded here: `download wkhtmltopdf <https://wkhtmltopdf.org/downloads.html>`_.
+* wkhtmltopdf - ``wkhtmltopdf`` is a program, rather than a Python library. Installers for various operating systems can be freely downloaded here: `download wkhtmltopdf <https://wkhtmltopdf.org/downloads.html>`_.
 
 Configuring ``wkhtmltopdf`` on Windows
 ======================================

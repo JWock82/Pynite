@@ -31,32 +31,27 @@ def test_3_support_beam_moments():
     assert math.isclose(member.max_moment('Mz', '1.0D'), 18000.0), 'Incorrect max moment during continuous beam test'
     assert math.isclose(max(member.moment_array('Mz', 11, '1.0D')[1]), 18000.00), 'Incorrect max moment in moment array during continuous beam test.'
 
+def test_2_support_beam_moments():
 
-def create_2_support_model():
+    # The following test passes on Pynite==1.1.2 but fails with Pynite==1.2.0, Pynite==1.3.0
     model = FEModel3D()
-    
+
     model.add_material("default", 1, 1, 1, 1, 1)
     model.add_section("default", 1, 1, 1, 1)
-    
+
     model.add_node("0", 0, 0, 0)
     model.add_node("1", 10, 0, 0)
     model.add_node("2", 13, 0, 0)
-    
-    model.def_support("0", 1, 1, 1, 1, 1, 0)
-    model.def_support("1", 0, 1, 0, 0, 0, 0)
-    
+
+    model.def_support("0", True, True, True, True, True, False)
+    model.def_support("1", False, True, False, False, False, False)
+
     model.add_member("M0", "0", "2", "default", "default")
     model.add_member_dist_load("M0", "Fy", -10, -10, 0, 13, case='load')
     model.add_load_combo("combo", {"load": 1.0})
 
-    model.analyze(check_statics=True)
+    model.analyze(log=True, check_statics=True)
 
-    return model
-
-def test_2_support_beam_moments():
-    # The following test passes on Pynite==1.1.2 but fails with Pynite==1.2.0, Pynite==1.3.0
-
-    model = create_2_support_model()
     member = model.members['M0']
     fe_max_moment = member.max_moment("Mz", "combo")
     fe_min_moment = member.min_moment("Mz", "combo")
@@ -79,5 +74,6 @@ def test_2_support_beam_moments():
 
 if __name__ == '__main__':
     pass
+    # test_2_support_beam_moments()
     # test_continuous_beam_moments()
     # test_plots()

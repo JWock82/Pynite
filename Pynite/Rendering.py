@@ -208,7 +208,7 @@ class Renderer:
         self.update(reset_camera)
 
         # Determine if the user should interact with the window before capturing the screenshot
-        if interact is False:
+        if interact == False:
 
             # Don't bother showing the image before capturing the screenshot
             self.plotter.off_screen = True
@@ -230,7 +230,7 @@ class Renderer:
         if self.deformed_shape and self.case != None:
             raise Exception('Deformed shape is only available for load combinations,'
                             ' not load cases.')
-        if self.model.load_combos == {} and self.render_loads is True and self.case == None:
+        if self.model.load_combos == {} and self.render_loads == True and self.case == None:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
 
@@ -245,7 +245,7 @@ class Renderer:
         self._spring_labels = []
         
         # Check if nodes are to be rendered
-        if self.render_nodes is True:
+        if self.render_nodes == True:
 
             if self.theme == 'print':
                 color = 'black'
@@ -282,7 +282,7 @@ class Renderer:
         self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
 
         # Render the deformed shape if requested
-        if self.deformed_shape is True:
+        if self.deformed_shape == True:
 
             # Render deformed nodes
             # for node in self.model.nodes.values():
@@ -312,7 +312,7 @@ class Renderer:
             self.plot_plates(self.deformed_shape, self.deformed_scale, self.color_map, self.combo_name)
         
         # Determine whether to show or hide the scalar bar
-        # if self._scalar_bar is False:
+        # if self._scalar_bar == False:
         #     self.plotter.scalar_bar.VisibilityOff()
 
         # Execute user-defined post-update callbacks.
@@ -690,7 +690,7 @@ class Renderer:
             plate_polydata['Contours'] = np.array(plate_results)
             
             # Add the scalar bar for the contours
-            if self._scalar_bar is True:
+            if self._scalar_bar == True:
                 self.plotter.add_mesh(plate_polydata, scalars='Contours', show_edges=True)
             else:
                 self.plotter.add_mesh(plate_polydata)
