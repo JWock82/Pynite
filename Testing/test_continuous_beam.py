@@ -26,6 +26,7 @@ def create_3_support_model():
     return continuous_beam
 
 def test_3_support_beam_moments():
+    
     model = create_3_support_model()
     member = model.members['M1']
     assert math.isclose(member.max_moment('Mz', '1.0D'), 18000.0), 'Incorrect max moment during continuous beam test'
@@ -33,7 +34,6 @@ def test_3_support_beam_moments():
 
 def test_2_support_beam_moments():
 
-    # The following test passes on Pynite==1.1.2 but fails with Pynite==1.2.0, Pynite==1.3.0
     model = FEModel3D()
 
     model.add_material("default", 1, 1, 1, 1, 1)
@@ -55,7 +55,7 @@ def test_2_support_beam_moments():
     member = model.members['M0']
     fe_max_moment = member.max_moment("Mz", "combo")
     fe_min_moment = member.min_moment("Mz", "combo")
-    member.plot_moment("Mz", "combo", 2000)
+    # member.plot_moment("Mz", "combo", 2000)
 
     # Analytic solution
     w = -10
@@ -63,7 +63,7 @@ def test_2_support_beam_moments():
     a = 3
 
     # Beam formula source: Handbook of Steel Construction, CISC, 11th Ed. Pg. 5-138 diag. 24
-    analytic_min_moment = (w * (l + a)**2 * (l - a)**2 )/ (8 * l**2)
+    analytic_min_moment = (w * (l + a)**2 * (l - a)**2 ) / (8 * l**2)
     analytic_max_moment = -w * a**2 / 2
 
     try:
