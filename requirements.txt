@@ -1,13 +1,7 @@
-# Minimum requirements
-numpy
-scipy
-prettytable
-pyvista[all,trame]
-matplotlib
-
-# Required for jupyter interaction
-trame_jupyter_extension
-ipywidgets
-
-# Development
-pytest
+Flask==3.0.0
+Flask-CORS==4.0.0
+numpy==1.24.3
+scipy==1.11.1
+matplotlib==3.7.2
+prettytable==3.8.0
+Werkzeug==3.0.1
