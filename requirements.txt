@@ -4,4 +4,4 @@ numpy==1.24.3
 scipy==1.11.1
 matplotlib==3.7.2
 prettytable==3.8.0
-Werkzeug==3.0.1
+Werkzeug==3.0.6
