@@ -335,7 +335,7 @@ class Member3D():
 
         `lambda` is a vector representing the magnitude of the plastic deformations in the member.
 
-        :param model_Delta_D: The global displacement vector
+        :param model_Delta_D: The change in the global displacement vector calculated from the latest load step
         :type model_Delta_D: ndarray
         :param combo_name: The load combination name, defaults to 'Combo 1'
         :type combo_name: str, optional
@@ -361,15 +361,14 @@ class Member3D():
                          model_Delta_D[self.j_node.ID*6 + 4],
                          model_Delta_D[self.j_node.ID*6 + 5]]).reshape(12, 1)
 
-        # List the degrees of freedom associated with axial and bending stiffnesses
-        # dofs = [0, 3, 4, 6, 9, 10]
-
-        # Convert the gloabl changes in displacement to local coordinates
+        # Convert the global changes in displacement to local coordinates
         Delta_d = self.T() @ Delta_D
-        # Delta_d = Delta_d[dofs]
 
-        # Get the elastic local stiffness matrix
-        ke = self.k()  # [dofs][:, dofs]
+        # Get the elastic local stiffness matrix (includeing goemetric stiffness)
+        d_total = self.d(combo_name)  # Total displacements acting on the member at the current load stp
+        delta_dx_total = d_total[6, 0] - d_total[0, 0]  # Change in displacement across the lenght of the member
+        P = self.section.A*self.material.E/self.L()*delta_dx_total  # Axial load acting on the member at the current load step
+        ke = self.k() + self.kg(P)  # Elastic stiffness (including geometric stiffness)
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
@@ -386,13 +385,10 @@ class Member3D():
 
         # Check if all terms in [G] are zero
         if allclose(G, 0, atol=1e-14):
-            if self.name == 'M1a':
-                print(f'No Plasticity - M1a lambda: {array([[0], [0]])[0, 0]}')
             # No plasticity is occuring, so `lambda` is a 2x1 zero matrix
             return array([[0], [0]])
         else:
-            if self.name == 'M1a':
-                print(f'M1a lambda: {(pinv(G.T @ ke @ G) @ G.T @ ke @ Delta_d)[0, 0]}')
+            # Note: `pinv` accounts for rows of zeros that would normally make the matrix singular
             return pinv(G.T @ ke @ G) @ G.T @ ke @ Delta_d
 
     def fer(self, combo_name: str = 'Combo 1') -> NDArray[float64]:

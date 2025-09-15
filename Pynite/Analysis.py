@@ -372,12 +372,6 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         # Unpartition the displacement results from the analysis step
         Delta_D = _unpartition_disp(model, Delta_D1, D2, D1_indices, D2_indices)
 
-        # Reset plastic load reversal for each member end to `False` until we prove it otherwise
-        for phys_member in model.members.values():
-            for sub_member in phys_member.sub_members.values():
-                sub_member.i_reversal = False
-                sub_member.j_reversal = False
-
         # Assume no need to rerun this load step due to plastic load reversal until we prove it otherwise
         run_step = False
 
@@ -394,7 +388,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                     # Flag the load step for reanalysis
                     sub_member.i_reversal = True
                     run_step = True
-                    print(f'-Load reversal encountered at member {sub_member.name} i-node')
+                    print(f'-Plastic load reversal encountered at member {sub_member.name} i-node')
 
                 else:
 
@@ -406,7 +400,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                     # Flag the load step for reanalysis
                     sub_member.j_reversal = True
                     run_step = True
-                    print(f'-Load reversal encountered at member {sub_member.name} j-node')
+                    print(f'-Plastic load reversal encountered at member {sub_member.name} j-node')
 
                 else:
 
@@ -415,7 +409,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         # Undo the last loadstep if plastic load reversal was discovered. We'll rerun it with the corresponding gradients set to zero vectors.
         if run_step == True:
             _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])
-            if log: print('- Restarting load step')
+            if log: print('- Restarting load step due to plastic load reversal')
 
     # Sum the calculated displacements
     _sum_displacements(model, Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])

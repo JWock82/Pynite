@@ -2451,7 +2451,8 @@ class FEModel3D():
             # Get the partitioned global nodal force vector for the load combination
             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
-            # Run an elastic analysis for the load combination (w/o pushover loads)
+            # Run an elastic P-Delta analysis for the load combination (w/o pushover loads)
+            # This will be used to preload the member with non-pushover loads prior to pushover anlaysis
             Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, 30)
 
             # The previous step flagged the solution as a P-Delta solution, but we need to indicate that this is actually a Pushover solution so that the calls to Member3D.f() are excecuted considering nonlinear behavior
@@ -2464,12 +2465,12 @@ class FEModel3D():
             P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
 
             # Get the pushover load step and initialize the load factor
-            load_step = list(self.load_combos[push_combo].factors.values())[0]
+            load_step = list(self.load_combos[push_combo].factors.values())[0]  # TODO: This line can probably live outside the loop
             load_factor = load_step
             step_num = 1
 
             # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
-            while load_factor <= 1:
+            while round(load_factor, 8) <= 1.0:
 
                 # Inform the user which pushover load step we're on
                 if log:
