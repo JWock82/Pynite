@@ -15,7 +15,8 @@ extend-ignore =
     D212,
     D213,
     D400,
-    D401
+    D401,
+    E712   # comparison to True should be 'if cond is True:' or 'if cond:'
 
 # Optionally exclude some directories from linting
 exclude =

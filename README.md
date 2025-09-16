@@ -66,7 +66,7 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.4.0 (in progress)
+v1.4.0
 * Added the ability to check across multiple combinations for max/min member force and deflection results using combo tags. Simply substitute a list of combo tags to the functions instead of a load combination name and the functions will envelope results across any combinations having the given tags. No more searching all combinations manually!
 * Improved the efficiency of member max/min result functions by removing redundant segmentation routine calls.
 * Set the Y-axis to vertical for 3D rendering in Pyvista. This allows the "isometric" button to display the model in the correct orientation in Jupyter.
