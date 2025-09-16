@@ -1,5 +1,5 @@
 from __future__ import annotations  # Allows more recent type hints features
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Union, List
 from math import isclose
 
 from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, count_nonzero, concatenate
@@ -1048,9 +1048,10 @@ class Member3D():
 
             return 0
 
-    def max_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
+    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the maximum bending moment in the member for the specified direction and load combination.
+        Returns the maximum bending moment in the member for the specified direction
+        and load combination(s).
 
         Parameters
         ----------
@@ -1058,48 +1059,71 @@ class Member3D():
             The direction in which to find the maximum moment:
             - 'My' : Moment about the local y-axis.
             - 'Mz' : Moment about the local z-axis.
-        combo_name : str, optional
-            The name of the load combination to evaluate (default is 'Combo 1').
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the maximum moment
+            across those combos will be returned.
 
         Returns
         -------
         float
-            The maximum moment value in the specified direction for the given load combination.
-            Returns 0 if the member is inactive for the combination or if there are no segments.
+            The maximum moment value in the specified direction for the given
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
 
         Notes
         -----
         - Includes P-Delta effects if the model's solution is 'P-Delta' or 'Pushover'.
-        - Automatically segments the member if it has not yet been segmented for this load combination.
+        - Automatically segments the member if it has not yet been segmented
+        for a load combination.
         """
-        # Check if the member is active for the given load combination; if not, return 0
-        if not self.active.get(combo_name, False):
-            return 0
+        # Normalize input: single name vs list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]  # treat as a single combo name
+        else:
+            # Filter combos that contain *any* of the given tags
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
 
-        # Determine if P-Delta (or Pushover) effects should be included in moment calculations
-        P_delta = self.model.solution in ('P-Delta', 'Pushover')
+        Mmax_global = None  # will store the global maximum across combos
 
-        # If the member hasn't been segmented yet for this combo, or the combo changed, segment it
-        if self._solved_combo is None or combo_name != self._solved_combo.name:
-            self._segment_member(combo_name)               # Segment the member
-            self._solved_combo = self.model.load_combos[combo_name]  # Store solved combo
+        for combo_name in combo_names:
+            # Skip inactive combos
+            if not self.active.get(combo_name, False):
+                continue
 
-        # Select the correct segment list based on the requested moment direction
-        segments = self.SegmentsY if Direction == 'My' else self.SegmentsZ
+            # Determine if P-Delta (or Pushover) effects should be included
+            P_delta = self.model.solution in ('P-Delta', 'Pushover')
 
-        # If there are no segments, return 0 to avoid errors
-        if not segments:
-            return 0
+            # If member not yet segmented for this combo, do it
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
 
-        # Find the maximum moment among all segments using a generator expression
-        Mmax = max(segment.max_moment() for segment in segments)
+            # Select the correct segment list
+            segments = self.SegmentsY if Direction == 'My' else self.SegmentsZ
 
-        # Return the maximum moment found
-        return Mmax
+            if not segments:
+                continue
 
-    def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
+            # Get the maximum moment for this combo
+            Mmax = max(segment.max_moment() for segment in segments)
+
+            # Update global maximum
+            if Mmax_global is None or Mmax > Mmax_global:
+                Mmax_global = Mmax
+
+        # Return 0 if no valid combos were found
+        return Mmax_global if Mmax_global is not None else 0
+
+    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the minimum bending moment in the member for the specified direction and load combination.
+        Returns the minimum bending moment in the member for the specified direction
+        and load combination(s).
 
         Parameters
         ----------
@@ -1107,45 +1131,67 @@ class Member3D():
             The direction in which to find the minimum moment:
             - 'My' : Moment about the local y-axis.
             - 'Mz' : Moment about the local z-axis.
-        combo_name : str, optional
-            The name of the load combination to evaluate (default is 'Combo 1').
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the minimum moment
+            across those combos will be returned.
 
         Returns
         -------
         float
-            The minimum moment value in the specified direction for the given load combination.
-            Returns 0 if the member is inactive for the combination or if there are no segments.
+            The minimum moment value in the specified direction for the given
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
 
         Notes
         -----
         - Includes P-Delta effects if the model's solution is 'P-Delta' or 'Pushover'.
-        - Automatically segments the member if it has not yet been segmented for this load combination.
+        - Automatically segments the member if it has not yet been segmented
+        for a load combination.
         """
-        # Check if the member is active for the given load combination; if not, return 0
-        if not self.active.get(combo_name, False):
-            return 0
+        # Normalize input: single name vs list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]  # treat as a single combo name
+        else:
+            # Filter combos that contain *any* of the given tags
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
 
-        # Determine if P-Delta (or Pushover) effects should be included in moment calculations
-        P_delta = self.model.solution in ('P-Delta', 'Pushover')
+        Mmin_global = None  # will store the global minimum across combos
 
-        # If the member hasn't been segmented yet for this combo, or the combo changed, segment it
-        if self._solved_combo is None or combo_name != self._solved_combo.name:
-            self._segment_member(combo_name)               # Segment the member
-            self._solved_combo = self.model.load_combos[combo_name]  # Store solved combo
+        for combo_name in combo_names:
+            # Skip inactive combos
+            if not self.active.get(combo_name, False):
+                continue
 
-        # Select the correct segment list based on the requested moment direction
-        segments = self.SegmentsY if Direction == 'My' else self.SegmentsZ
+            # Determine if P-Delta (or Pushover) effects should be included
+            P_delta = self.model.solution in ('P-Delta', 'Pushover')
 
-        # If there are no segments, return 0 to avoid errors
-        if not segments:
-            return 0
+            # If member not yet segmented for this combo, do it
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
 
-        # Find the minimum moment among all segments using a generator expression
-        # Pass P_delta to each call so small-displacement effects are included if applicable
-        Mmin = min(segment.min_moment(P_delta) for segment in segments)
+            # Select the correct segment list
+            segments = self.SegmentsY if Direction == 'My' else self.SegmentsZ
 
-        # Return the minimum moment found
-        return Mmin
+            if not segments:
+                continue
+
+            # Get the minimum moment for this combo
+            Mmin = min(segment.min_moment(P_delta) for segment in segments)
+
+            # Update global minimum
+            if Mmin_global is None or Mmin < Mmin_global:
+                Mmin_global = Mmin
+
+        # Return 0 if no valid combos were found
+        return Mmin_global if Mmin_global is not None else 0
+
 
     def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
