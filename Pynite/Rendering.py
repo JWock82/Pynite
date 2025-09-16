@@ -60,7 +60,7 @@ class Renderer:
         # self.plotter.view_isometric()
         self.plotter.view_xy()
         self.plotter.show_axes()
-        self.plotter.camera.viewup = (0, 1, 0)  # Set the Y axis to vertical for 3D plots
+        self.plotter.set_viewup((0, 1, 0))  # Set the Y axis to vertical for 3D plots
 
         # Initialize load labels
         self._load_label_points: List[List[float]] = []

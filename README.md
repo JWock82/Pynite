@@ -66,6 +66,12 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.4.0 (in progress)
+* Added the ability to check across multiple combinations for max/min member force and deflection results using combo tags. Simply substitute a list of combo tags to the functions instead of a load combination name and the functions will envelope results across any combinations having the given tags. No more searching all combinations manually!
+* Improved the efficiency of member max/min result functions by removing redundant segmentation routine calls.
+* Set the Y-axis to vertical for 3D rendering in Pyvista. This allows the "isometric" button to display the model in the correct orientation in Jupyter.
+* Continued working toward pushover analysis. Development of this feature has been slower than anticipated. Some major hurdles have been overcome, but the code for this feature is still largely experimental, and may be so for sometime.
+
 v1.3.1
 * Reverted to an older Pynite convention for comparing boolean operators. Users who used `1` and `0` for boolean inputs in methods instead of `True` and `False` were experiencing issues. This change allows for multiple ways for users to input booleans.
 
@@ -119,12 +125,3 @@ v0.0.98-100
 v0.0.97
 * Fixed physical member load and deflection diagrams. Physical members are a newer feature. Member internal results were being reported correctly, but the diagrams for these members had not been revised to plot correctly. The old method for plain members was still being used. Physical members were not considering that a physical member was made from multiple submembers, and results for each span needed to be combined to get the whole plot.
 * Switched some commonly used python libraries to be installed by default with `Pynite`. Most `Pynite` users will want these libraries installed for full-featured use of `Pynite`. These libraries help with `Pynite` visualizations, plotting, the sparse solver, and `Jupyter Lab` functionality. This is just easier for new python users. I was getting a lot of questions about how to set up libraries, and this takes the guesswork away. This is part of `Pynite's` objective to stay easy to use.
-
-v0.0.96
-* Changed quad elements from MITC4 formulation to DKMQ formulation. This greatly improves plate results at corners and increases the speed with which the plate's stiffness matrix is assembled. MITC4 element code has been retained as legacy code, but is no longer used by the program.
-* ***Breaking Changes***: Implemented snake-case for dictionary names (e.g. `FEModel3D.Nodes` is now `FEModel3D.nodes`). These changes were made to prepare `Pynite` for a v1.0 release that is consistent with the `PEP8` style guide for `python`.
-* Bug fix for tension/conpression-only member internal results. While global results were correct, member internal results were showing results from the first tension/compression only iteration.
-* Member results arrays can now be customized to pick up user defined points. Member results arrays generate results much faster now too.
-
-v0.0.95
-* Bug fix for rendering negative point loads via `Pyvista`. They were being rendered as positive loads. The analysis was not impacted by this bug.
