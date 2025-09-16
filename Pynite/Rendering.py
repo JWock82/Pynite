@@ -60,6 +60,7 @@ class Renderer:
         # self.plotter.view_isometric()
         self.plotter.view_xy()
         self.plotter.show_axes()
+        self.plotter.camera.viewup = (0, 1, 0)  # Set the Y axis to vertical for 3D plots
 
         # Initialize load labels
         self._load_label_points: List[List[float]] = []
@@ -193,28 +194,37 @@ class Renderer:
         # Render the model (code execution will pause here until the user closes the window)
         self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', auto_close=False)
 
-    def screenshot(self, filepath: str = './Pynite_Image.png', interact: bool = True, reset_camera: bool = True) -> None:
-        """Saves a screenshot of the rendered model. Important: Press `q` to capture the screenshot after positioning the view. Pressing the `X` button in the corner of the window will ignore the positioning and shut down the entire renderer against further use once the screenshot is taken.
+    def screenshot(self, filepath: str = './Pynite_Image.png', interact: bool = True, reset_camera: bool = False) -> None:
+        """
+        Saves a screenshot of the rendered model.
+        
+        In non-Jupyter notebook environments, if `interact` is set to `True`, the plotter will show a window that allows you to set the scene prior to the screenshot. Press `q` when you are ready to capture the screenshot and close the window. Pressing the `X` button in the corner of the window will ignore your scene changes and will shut down the entire plotter. This is a default setting in pyvista that is a little annoying. Don't press the `X` button.
 
-        :param filepath: The filepath to write the image to. When set to 'jupyter', the resulting plot is placed inline in a jupyter notebook. Defaults to 'jupyter'.
+        For Jupyter notebooks, the scene must be set using `render_model` prior to using `screenshot`.
+
+        :param filepath: The filepath to write the image to.
         :type filepath: str, optional
-        :param interact: When set to `True` the user can set the scene before the screenshot is taken. Once the scene is set, press 'q' to take the screenshot. Defaults to `True`
+        :param interact: When set to `True` the user can set the scene before the screenshot is taken. Once the scene is set, press 'q' to take the screenshot. Defaults to `True`.
         :type interact: bool, optional
-        :param reset_camera: Resets the plotter's camera. Defaults to `True`
+        :param reset_camera: Resets the plotter's camera, forcing it to return to the original rendered view for the screenshot. Note that resetting the camera will ignore any changes you've made to the scene via interaction. Defaults to `False`.
         :type reset_camera: bool, optional
         """
 
         # Update the plotter with the latest geometry
         self.update(reset_camera)
 
-        # Determine if the user should interact with the window before capturing the screenshot
-        if interact == False:
+        # In a Jupyter notebook pyvista will always take the screenshot prior to allowing user interaction. In order to get interaction before taking the screenshot, `render_model` must be called in a cell before `screenshot`. Since `render_model` will show the plotter, there is no need to show it again when using `screenshot`. This next line prevents showing the plotter twice.
+        self.plotter.notebook = False
 
-            # Don't bother showing the image before capturing the screenshot
-            self.plotter.off_screen = True
+        # For non-Jupyter environments, determine if the user should interact with the window before capturing the screenshot
+        if interact == False: self.plotter.off_screen = True
         
         # Save the screenshot to the specified filepath. Note that `auto_close` shuts down the entire plotter after the screenshot is taken, rather than just closing the window. We'll set `auto_close=False` to allow the plotter to remain active. Note that the window must be closed by pressing `q`. Closing it with the 'X' button in the window's corner will close the whole plotter down.
-        self.plotter.show(title='Pynite - Simple Finite Element Anlaysis for Python', screenshot=filepath, auto_close=False)
+        self.plotter.show(
+            title='Pynite - Simple Finite Element Anlaysis for Python',
+            screenshot=filepath,
+            auto_close=False
+            )
 
     def update(self, reset_camera: bool = True) -> None:
         """
