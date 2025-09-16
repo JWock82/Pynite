@@ -1522,70 +1522,124 @@ class Member3D():
 
             return 0
 
-    def max_axial(self, combo_name: str = 'Combo 1') -> float:
+    def max_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the maximum axial force in the member
+        Returns the maximum axial force in the member across the specified
+        load combination(s).
 
         Parameters
         ----------
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
-        """
-        
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the maximum axial
+            force across those combos will be returned.
 
-            # Segment the member if necessary
+        Returns
+        -------
+        float
+            The maximum axial force in the member for the specified
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
+        """
+        # Normalize input: if a string is passed, treat it as a single combo name
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            # If tags are provided, gather all combos that match ANY of the tags
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
+
+        # Track the global maximum axial force across all combos
+        Pmax_global = None
+
+        # Loop through each candidate combo
+        for combo_name in combo_names:
+            # Skip if the member is inactive for this combo
+            if not self.active.get(combo_name, False):
+                continue
+
+            # Re-segment the member if this combo hasn’t been solved yet
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
-            Pmax = self.SegmentsZ[0].axial(0)   
-            
-            for segment in self.SegmentsZ:
 
-                if segment.max_axial() > Pmax:
-                        
-                    Pmax = segment.max_axial()
-            
-            return Pmax
-        
+            # Skip if no segments are available
+            if not self.SegmentsZ:
+                continue
+
+            # Get the maximum axial force across all segments for this combo
+            Pmax = max(segment.max_axial() for segment in self.SegmentsZ)
+
+            # Update the global maximum
+            if Pmax_global is None or Pmax > Pmax_global:
+                Pmax_global = Pmax
+
+        # Return the global maximum, or 0 if nothing was found
+        return Pmax_global if Pmax_global is not None else 0
+
+    def min_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+        """
+        Returns the minimum axial force in the member across the specified
+        load combination(s).
+
+        Parameters
+        ----------
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the minimum axial
+            force across those combos will be returned.
+
+        Returns
+        -------
+        float
+            The minimum axial force in the member for the specified
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
+        """
+        # Normalize input: if a string is passed, treat it as a single combo name
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
         else:
+            # If tags are provided, gather all combos that match ANY of the tags
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
 
-            return 0
-    
-    def min_axial(self, combo_name: str = 'Combo 1') -> float:
-        """
-        Returns the minimum axial force in the member.
-        
-        Paramters
-        ---------
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
-        """
-        
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        # Track the global minimum axial force across all combos
+        Pmin_global = None
 
-            # Segment the member if necessary
+        # Loop through each candidate combo
+        for combo_name in combo_names:
+            # Skip if the member is inactive for this combo
+            if not self.active.get(combo_name, False):
+                continue
+
+            # Re-segment the member if this combo hasn’t been solved yet
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
-            Pmin = self.SegmentsZ[0].axial(0)
-                
-            for segment in self.SegmentsZ:
-                    
-                if segment.min_axial() < Pmin:
-                        
-                    Pmin = segment.min_axial()
-            
-            return Pmin
-        
-        else:
 
-            return 0
-    
+            # Skip if no segments are available
+            if not self.SegmentsZ:
+                continue
+
+            # Get the minimum axial force across all segments for this combo
+            Pmin = min(segment.min_axial() for segment in self.SegmentsZ)
+
+            # Update the global minimum
+            if Pmin_global is None or Pmin < Pmin_global:
+                Pmin_global = Pmin
+
+        # Return the global minimum, or 0 if nothing was found
+        return Pmin_global if Pmin_global is not None else 0
+
     def plot_axial(self, combo_name: str = 'Combo 1', n_points=20) -> None:
         """
         Plots the axial force diagram for the member.
@@ -1725,83 +1779,136 @@ class Member3D():
 
             return 0
 
-    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
+    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the maximum deflection in the member.
-        
+        Returns the maximum deflection in the member across the specified
+        load combination(s).
+
         Parameters
         ----------
-        Direction : string
-            The direction in which to find the deflection. Must be one of the following:
-                'dx' = Deflection in the local x-axis.
-                'dy' = Deflection in the local y-axis.
-                'dz' = Deflection in the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
-        """
-        
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        Direction : {'dx', 'dy', 'dz'}
+            The direction in which to find the deflection:
+                - 'dx' = Deflection along the local x-axis
+                - 'dy' = Deflection along the local y-axis
+                - 'dz' = Deflection along the local z-axis
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the maximum
+            deflection across those combos will be returned.
 
-            # Segment the member if necessary
+        Returns
+        -------
+        float
+            The maximum deflection in the member for the specified
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations.
+        """
+        # Normalize input: single name or list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
+
+        # Track global maximum deflection across all combos
+        dmax_global = None
+
+        # Loop through each candidate combo
+        for combo_name in combo_names:
+            # Skip if member inactive for this combo
+            if not self.active.get(combo_name, False):
+                continue
+
+            # Re-segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
-            # Initialize the maximum deflection
+
+            # Initialize the maximum deflection for this combo (at start)
             dmax = self.deflection(Direction, 0, combo_name)
-            
-            # Check the deflection at 100 locations along the member and find the largest value
+
+            # Sample deflections at 100 points along the member length
             for i in range(100):
-                d = self.deflection(Direction, self.L()*i/99, combo_name)
+                d = self.deflection(Direction, self.L() * i / 99, combo_name)
                 if d > dmax:
                     dmax = d
-            
-            # Return the largest value
-            return dmax
-        
-        else:
 
-            return 0
-    
-    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
+            # Update global maximum
+            if dmax_global is None or dmax > dmax_global:
+                dmax_global = dmax
+
+        # Return global maximum or 0 if nothing found
+        return dmax_global if dmax_global is not None else 0
+
+
+    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the minimum deflection in the member.
-        
+        Returns the minimum deflection in the member across the specified
+        load combination(s).
+
         Parameters
         ----------
-        Direction : string
-            The direction in which to find the deflection. Must be one of the following:
-                'dx' = Deflection in the local x-axis.
-                'dy' = Deflection in the local y-axis.
-                'dz' = Deflection in the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
-        """
-        
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        Direction : {'dx', 'dy', 'dz'}
+            The direction in which to find the deflection:
+                - 'dx' = Deflection along the local x-axis
+                - 'dy' = Deflection along the local y-axis
+                - 'dz' = Deflection along the local z-axis
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the minimum
+            deflection across those combos will be returned.
 
-            # Segment the member if necessary
+        Returns
+        -------
+        float
+            The minimum deflection in the member for the specified
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations.
+        """
+        # Normalize input: single name or list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
+
+        # Track global minimum deflection across all combos
+        dmin_global = None
+
+        # Loop through each candidate combo
+        for combo_name in combo_names:
+            # Skip if member inactive for this combo
+            if not self.active.get(combo_name, False):
+                continue
+
+            # Re-segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
-            # Initialize the minimum deflection
+
+            # Initialize the minimum deflection for this combo (at start)
             dmin = self.deflection(Direction, 0, combo_name)
-            
-            # Check the deflection at 100 locations along the member and find the smallest value
+
+            # Sample deflections at 100 points along the member length
             for i in range(100):
-                d = self.deflection(Direction, self.L()*i/99, combo_name)
+                d = self.deflection(Direction, self.L() * i / 99, combo_name)
                 if d < dmin:
                     dmin = d
-            
-            # Return the smallest value
-            return dmin
-        
-        else:
 
-            return 0
+            # Update global minimum
+            if dmin_global is None or dmin < dmin_global:
+                dmin_global = dmin
+
+        # Return global minimum or 0 if nothing found
+        return dmin_global if dmin_global is not None else 0
               
     def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
