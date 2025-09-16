@@ -808,101 +808,143 @@ class Member3D():
 
             return 0
 
-    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
+    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the maximum shear in the member for the given direction
+        Returns the maximum shear force in the member for the specified direction
+        and load combination(s).
 
         Parameters
         ----------
-        Direction : string
-            The direction in which to find the maximum shear. Must be one of the following:
-                'Fy' = Shear acting on the local y-axis
-                'Fz' = Shear acting on the local z-axis
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        Direction : Literal['Fy', 'Fz']
+            The direction in which to find the maximum shear:
+            - 'Fy' : Shear acting along the local y-axis.
+            - 'Fz' : Shear acting along the local z-axis.
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the maximum shear
+            across those combos will be returned.
+
+        Returns
+        -------
+        float
+            The maximum shear value in the specified direction for the given
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
+
+        Notes
+        -----
+        - Unlike moments, shear does not depend on P-Delta effects.
+        - Automatically segments the member if it has not yet been segmented
+        for a load combination.
         """
+        # Normalize input: single name vs list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]  # treat as a single combo name
+        else:
+            # Filter combos that contain *any* of the given tags
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
 
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        Vmax_global = None  # will store the global maximum across combos
 
-            # Segment the member if necessary
+        for combo_name in combo_names:
+            # Skip inactive combos
+            if not self.active.get(combo_name, False):
+                continue
+
+            # If member not yet segmented for this combo, do it
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
 
-            if Direction == 'Fy':
+            # Select the correct segment list
+            segments = self.SegmentsZ if Direction == 'Fy' else self.SegmentsY
 
-                Vmax = self.SegmentsZ[0].Shear(0)
+            if not segments:
+                continue
 
-                for segment in self.SegmentsZ:
+            # Get the maximum shear for this combo
+            Vmax = max(segment.max_shear() for segment in segments)
 
-                    if segment.max_shear() > Vmax:
+            # Update global maximum
+            if Vmax_global is None or Vmax > Vmax_global:
+                Vmax_global = Vmax
 
-                        Vmax = segment.max_shear()
+        # Return 0 if no valid combos were found
+        return Vmax_global if Vmax_global is not None else 0
 
-            if Direction == 'Fz':
-
-                Vmax = self.SegmentsY[0].Shear(0)
-
-                for segment in self.SegmentsY:
-
-                    if segment.max_shear() > Vmax:
-
-                        Vmax = segment.max_shear()
-
-            return Vmax
-
-        else:
-
-            return 0
-
-    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
+    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the minimum shear in the member for the given direction
+        Returns the minimum shear force in the member for the specified direction
+        and load combination(s).
 
         Parameters
         ----------
-        Direction : string
-            The direction in which to find the minimum shear. Must be one of the following:
-                'Fy' = Shear acting on the local y-axis
-                'Fz' = Shear acting on the local z-axis
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        Direction : Literal['Fy', 'Fz']
+            The direction in which to find the minimum shear:
+            - 'Fy' : Shear acting along the local y-axis.
+            - 'Fz' : Shear acting along the local z-axis.
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the minimum shear
+            across those combos will be returned.
+
+        Returns
+        -------
+        float
+            The minimum shear value in the specified direction for the given
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
+
+        Notes
+        -----
+        - Unlike moments, shear does not depend on P-Delta effects.
+        - Automatically segments the member if it has not yet been segmented
+        for a load combination.
         """
+        # Normalize input: single name vs list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]  # treat as a single combo name
+        else:
+            # Filter combos that contain *any* of the given tags
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
 
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        Vmin_global = None  # will store the global minimum across combos
 
-            # Segment the member if necessary
+        for combo_name in combo_names:
+            # Skip inactive combos
+            if not self.active.get(combo_name, False):
+                continue
+
+            # If member not yet segmented for this combo, do it
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]   
+                self._solved_combo = self.model.load_combos[combo_name]
 
-            if Direction == 'Fy':
+            # Select the correct segment list
+            segments = self.SegmentsZ if Direction == 'Fy' else self.SegmentsY
 
-                Vmin = self.SegmentsZ[0].Shear(0)
+            if not segments:
+                continue
 
-                for segment in self.SegmentsZ:
+            # Get the minimum shear for this combo
+            Vmin = min(segment.min_shear() for segment in segments)
 
-                    if segment.min_shear() < Vmin:
+            # Update global minimum
+            if Vmin_global is None or Vmin < Vmin_global:
+                Vmin_global = Vmin
 
-                        Vmin = segment.min_shear()
-
-            if Direction == 'Fz':
-
-                Vmin = self.SegmentsY[0].Shear(0)
-
-                for segment in self.SegmentsY:
-
-                    if segment.min_shear() < Vmin:
-
-                        Vmin = segment.min_shear()
-
-            return Vmin
-
-        else:
-
-            return 0
+        # Return 0 if no valid combos were found
+        return Vmin_global if Vmin_global is not None else 0
 
     def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
