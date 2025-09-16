@@ -1099,55 +1099,53 @@ class Member3D():
 
     def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
-        Returns the minimum moment in the member for the given direction
+        Returns the minimum bending moment in the member for the specified direction and load combination.
 
         Parameters
         ----------
-        Direction : string
-            The direction in which to find the minimum moment. Must be one of the following:
-                'My' = Moment about the local y-axis.
-                'Mz' = Moment about the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        Direction : Literal['My', 'Mz']
+            The direction in which to find the minimum moment:
+            - 'My' : Moment about the local y-axis.
+            - 'Mz' : Moment about the local z-axis.
+        combo_name : str, optional
+            The name of the load combination to evaluate (default is 'Combo 1').
+
+        Returns
+        -------
+        float
+            The minimum moment value in the specified direction for the given load combination.
+            Returns 0 if the member is inactive for the combination or if there are no segments.
+
+        Notes
+        -----
+        - Includes P-Delta effects if the model's solution is 'P-Delta' or 'Pushover'.
+        - Automatically segments the member if it has not yet been segmented for this load combination.
         """
-
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
-
-            # Segment the member if necessary
-            if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]
-
-            # Determine if a P-Delta analysis has been run
-            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
-                # Include P-little-delta effects in the moment results
-                P_delta = True
-            else:
-                # Do not include P-little delta effects in the moment results
-                P_delta = False
-
-            if Direction == 'Mz':
-
-                Mmin = self.SegmentsZ[0].moment(0, P_delta)
-
-                for segment in self.SegmentsZ:
-
-                    if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
-
-            if Direction == 'My':
-
-                Mmin = self.SegmentsY[0].moment(0, P_delta)
-
-                for segment in self.SegmentsY:
-
-                    if segment.min_moment(P_delta) < Mmin: Mmin = segment.min_moment(P_delta)
-
-            return Mmin
-
-        else:
-
+        # Check if the member is active for the given load combination; if not, return 0
+        if not self.active.get(combo_name, False):
             return 0
+
+        # Determine if P-Delta (or Pushover) effects should be included in moment calculations
+        P_delta = self.model.solution in ('P-Delta', 'Pushover')
+
+        # If the member hasn't been segmented yet for this combo, or the combo changed, segment it
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
+            self._segment_member(combo_name)               # Segment the member
+            self._solved_combo = self.model.load_combos[combo_name]  # Store solved combo
+
+        # Select the correct segment list based on the requested moment direction
+        segments = self.SegmentsY if Direction == 'My' else self.SegmentsZ
+
+        # If there are no segments, return 0 to avoid errors
+        if not segments:
+            return 0
+
+        # Find the minimum moment among all segments using a generator expression
+        # Pass P_delta to each call so small-displacement effects are included if applicable
+        Mmin = min(segment.min_moment(P_delta) for segment in segments)
+
+        # Return the minimum moment found
+        return Mmin
 
     def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
