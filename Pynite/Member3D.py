@@ -1050,59 +1050,52 @@ class Member3D():
 
     def max_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
-        Returns the maximum moment in the member for the given direction.
+        Returns the maximum bending moment in the member for the specified direction and load combination.
 
         Parameters
         ----------
-        Direction : string
-            The direction in which to find the maximum moment. Must be one of the following:
-                'My' = Moment about the local y-axis.
-                'Mz' = Moment about the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        Direction : Literal['My', 'Mz']
+            The direction in which to find the maximum moment:
+            - 'My' : Moment about the local y-axis.
+            - 'Mz' : Moment about the local z-axis.
+        combo_name : str, optional
+            The name of the load combination to evaluate (default is 'Combo 1').
+
+        Returns
+        -------
+        float
+            The maximum moment value in the specified direction for the given load combination.
+            Returns 0 if the member is inactive for the combination or if there are no segments.
+
+        Notes
+        -----
+        - Includes P-Delta effects if the model's solution is 'P-Delta' or 'Pushover'.
+        - Automatically segments the member if it has not yet been segmented for this load combination.
         """
-
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
-
-            # Determine if a P-Delta analysis has been run
-            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
-                # Include P-little-delta effects in the moment results
-                P_delta = True
-            else:
-                # Do not include P-little delta effects in the moment results
-                P_delta = False
-
-            # Segment the member if necessary
-            if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]
-
-            if Direction == 'Mz':
-
-                Mmax = self.SegmentsZ[0].moment(0, P_delta)
-
-                for segment in self.SegmentsZ:
-
-                    if segment.max_moment() > Mmax:
-
-                        Mmax = segment.max_moment()
-
-            if Direction == 'My':
-
-                Mmax = self.SegmentsY[0].moment(0, P_delta)
-
-                for segment in self.SegmentsY:
-
-                    if segment.max_moment() > Mmax:
-
-                        Mmax = segment.max_moment()
-
-            return Mmax
-
-        else:
-
+        # Check if the member is active for the given load combination; if not, return 0
+        if not self.active.get(combo_name, False):
             return 0
+
+        # Determine if P-Delta (or Pushover) effects should be included in moment calculations
+        P_delta = self.model.solution in ('P-Delta', 'Pushover')
+
+        # If the member hasn't been segmented yet for this combo, or the combo changed, segment it
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
+            self._segment_member(combo_name)               # Segment the member
+            self._solved_combo = self.model.load_combos[combo_name]  # Store solved combo
+
+        # Select the correct segment list based on the requested moment direction
+        segments = self.SegmentsY if Direction == 'My' else self.SegmentsZ
+
+        # If there are no segments, return 0 to avoid errors
+        if not segments:
+            return 0
+
+        # Find the maximum moment among all segments using a generator expression
+        Mmax = max(segment.max_moment() for segment in segments)
+
+        # Return the maximum moment found
+        return Mmax
 
     def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
         """
