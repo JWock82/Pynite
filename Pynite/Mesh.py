@@ -94,316 +94,416 @@ class Mesh():
         """
         pass
 
-    def max_shear(self, direction: str = 'Qx', combo: str | None = None) -> float:
+    def max_shear(self, direction: str = 'Qx', combo_tags: str | list[str] = 'Combo 1') -> float:
         """
         Returns the maximum shear in the mesh.
-        
+
         Checks corner and center shears in all the elements in the mesh. The mesh must be part of
         a solved model prior to using this function.
 
         Parameters
         ----------
+        direction : str, optional
+            The direction to get the maximum shear for.
+            Options are 'Qx', 'Qy', 'QX', or 'QY'. Default is 'Qx'.
+        combo_tags : str or list[str], optional
+            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
+            - If list[str]: a list of tags. Any load combination with at least one of these tags
+            will be considered.
 
-        direction : string, optional
-            The direction to ge the maximum shear for. Options are 'Qx' or 'Qy'. Default
-            is 'Qx'.
-        combo : string, optional
-            The name of the load combination to get the maximum shear for. If omitted, all load
-            combinations will be evaluated.
+        Returns
+        -------
+        float
+            The maximum shear found in the mesh for the given direction and load combination(s).
+            Returns 0.0 if no matching combinations are found.
         """
 
+        # Determine if the shear is requested in local or global axes
         if direction in ['QX', 'QY']:
             local = False
         else:
             local = True
 
+        # Map direction string to index in element.shear() results
         if direction.upper() == 'QX':
             i = 0
         elif direction.upper() == 'QY':
             i = 1
         else:
-            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', or \'QY\'')
-        
-        # Initialize the maximum value to None
+            raise Exception(
+                "Invalid direction specified for mesh shear results. "
+                "Valid values are 'Qx', 'Qy', 'QX', or 'QY'."
+            )
+
+        # Initialize the maximum value
         Q_max = None
 
         # Step through each element in the mesh
         for element in self.elements.values():
 
-            # Determine whether the element is a rectangle or a quadrilateral
+            # Determine evaluation points depending on element type
             if element.type == 'Rect':
-                # Use the rectangle's local (x, y) coordinate system
                 xi, yi = 0, 0
                 xj, yj = element.width(), 0
                 xm, ym = element.width(), element.height()
-                xn, yn, = 0, element.height()
+                xn, yn = 0, element.height()
             elif element.type == 'Quad':
-                # Use the quad's natural (r, s) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
                 xn, yn = -1, 1
+            else:
+                continue  # Skip unsupported element types
 
-            # Step through each load combination in the model
+            # Step through each load combination
             for load_combo in self.model.load_combos.values():
 
-                # Determine if this load combination should be evaluated
-                if combo is None or load_combo.name == combo:
-                    
-                    # Find the maximum shear in the element, checking each corner and the center
-                    # of the element
-                    Q_element = max([element.shear(xi, yi, local, load_combo.name)[i, 0],
-                                     element.shear(xj, yj, local, load_combo.name)[i, 0],
-                                     element.shear(xm, ym, local, load_combo.name)[i, 0],
-                                     element.shear(xn, yn, local, load_combo.name)[i, 0],
-                                     element.shear((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
+                # Decide whether this combo should be checked
+                if isinstance(combo_tags, str):
+                    include = (load_combo.name == combo_tags)
+                elif isinstance(combo_tags, list):
+                    include = any(tag in load_combo.tags for tag in combo_tags)
+                else:
+                    include = False
 
-                    # Determine if the maximum shear calculated is the largest encountered so far
-                    if Q_max is None or Q_max < Q_element:
-                        # Save this value if it's the largest
-                        Q_max = Q_element
-            
-        # Return the largest value encountered from all the elements
+                if not include:
+                    continue
+
+                # Evaluate corner and center shears
+                Q_element = max([
+                    element.shear(xi, yi, local, load_combo.name)[i, 0],
+                    element.shear(xj, yj, local, load_combo.name)[i, 0],
+                    element.shear(xm, ym, local, load_combo.name)[i, 0],
+                    element.shear(xn, yn, local, load_combo.name)[i, 0],
+                    # Center point (average of corners)
+                    element.shear(
+                        (xi + xj + xm + xn) / 4,
+                        (yi + yj + ym + yn) / 4,
+                        local,
+                        load_combo.name
+                    )[i, 0]
+                ])
+
+                # Track global maximum
+                if Q_max is None or Q_max < Q_element:
+                    Q_max = Q_element
+
+        # Return the largest shear found, or 0.0 if nothing was found
         return 0.0 if Q_max is None else Q_max
-    
-    def min_shear(self, direction: str = 'Qx', combo: str | None = None) -> float:
+
+    def min_shear(self, direction: str = 'Qx', combo_tags: str | list[str] = 'Combo 1') -> float:
         """
         Returns the minimum shear in the mesh.
-        
+
         Checks corner and center shears in all the elements in the mesh. The mesh must be part of
         a solved model prior to using this function.
 
         Parameters
         ----------
+        direction : str, optional
+            The direction to get the minimum shear for.
+            Options are 'Qx', 'Qy', 'QX', or 'QY'. Default is 'Qx'.
+        combo_tags : str or list[str], optional
+            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
+            - If list[str]: a list of tags. Any load combination with at least one of these tags
+            will be considered.
 
-        direction : string, optional
-            The direction to ge the minimum shear for. Options are 'Qx' or 'Qy'. Default
-            is 'Qx'.
-        combo : string, optional
-            The name of the load combination to get the minimum shear for. If omitted, all load
-            combinations will be evaluated.
+        Returns
+        -------
+        float
+            The minimum shear found in the mesh for the given direction and load combination(s).
+            Returns 0.0 if no matching combinations are found.
         """
 
+        # Determine if the shear is requested in local or global axes
         if direction in ['QX', 'QY']:
             local = False
         else:
             local = True
 
+        # Map direction string to index in element.shear() results
         if direction.upper() == 'QX':
             i = 0
         elif direction.upper() == 'QY':
             i = 1
-        elif direction.upper() == 'QZ':
-            i = 2
         else:
-            raise Exception('Invalid direction specified for mesh shear results. Valid values are \'Qx\', \'Qy\', \'QX\', \'QY\' or \'QZ\'')
+            raise Exception(
+                "Invalid direction specified for mesh shear results. "
+                "Valid values are 'Qx', 'Qy', 'QX', or 'QY'."
+            )
 
-        # Initialize the minimum value to None
+        # Initialize the minimum value
         Q_min = None
 
         # Step through each element in the mesh
         for element in self.elements.values():
 
-            # Determine whether the element is a rectangle or a quadrilateral
+            # Determine evaluation points depending on element type
             if element.type == 'Rect':
-                # Use the rectangle's local (x, y) coordinate system
                 xi, yi = 0, 0
                 xj, yj = element.width(), 0
                 xm, ym = element.width(), element.height()
-                xn, yn, = 0, element.height()
+                xn, yn = 0, element.height()
             elif element.type == 'Quad':
-                # Use the quad's natural (r, s) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
                 xn, yn = -1, 1
+            else:
+                continue  # Skip unsupported element types
 
-            # Step through each load combination the element utilizes
+            # Step through each load combination
             for load_combo in self.model.load_combos.values():
 
-                # Determine if this load combination should be evaluated
-                if combo is None or load_combo.name == combo:
-                    
-                    # Find the minimum shear in the element, checking each corner and the center
-                    # of the element
-                    Q_element = min([element.shear(xi, yi, local, load_combo.name)[i, 0],
-                                     element.shear(xj, yj, local, load_combo.name)[i, 0],
-                                     element.shear(xm, ym, local, load_combo.name)[i, 0],
-                                     element.shear(xn, yn, local, load_combo.name)[i, 0],
-                                     element.shear((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
+                # Decide whether this combo should be checked
+                if isinstance(combo_tags, str):
+                    include = (load_combo.name == combo_tags)
+                elif isinstance(combo_tags, list):
+                    include = any(tag in load_combo.tags for tag in combo_tags)
+                else:
+                    include = False
 
-                    # Determine if the minimum shear calculated is the smallest encountered so far
-                    if Q_min is None or Q_min > Q_element:
-                        # Save this value if it's the smallest
-                        Q_min = Q_element
-            
-        # Return the smallest value encountered from all the elements
+                if not include:
+                    continue
+
+                # Evaluate corner and center shears
+                Q_element = min([
+                    element.shear(xi, yi, local, load_combo.name)[i, 0],
+                    element.shear(xj, yj, local, load_combo.name)[i, 0],
+                    element.shear(xm, ym, local, load_combo.name)[i, 0],
+                    element.shear(xn, yn, local, load_combo.name)[i, 0],
+                    # Center point (average of corners)
+                    element.shear(
+                        (xi + xj + xm + xn) / 4,
+                        (yi + yj + ym + yn) / 4,
+                        local,
+                        load_combo.name
+                    )[i, 0]
+                ])
+
+                # Track global minimum
+                if Q_min is None or Q_min > Q_element:
+                    Q_min = Q_element
+
+        # Return the smallest shear found, or 0.0 if nothing was found
         return 0.0 if Q_min is None else Q_min
 
-    def max_moment(self, direction: str = 'Mx', combo: str | None = None) -> float:
+    def max_moment(self, direction: str = 'Mx', combo_tags: str | list[str] = 'Combo 1') -> float:
         """
         Returns the maximum moment in the mesh.
-        
+
         Checks corner and center moments in all the elements in the mesh. The mesh must be part of
         a solved model prior to using this function.
 
         Parameters
         ----------
+        direction : str, optional
+            The direction to get the maximum moment for. 
+            Options are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'. Default is 'Mx'.
+        combo_tags : str or list[str], optional
+            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
+            - If list[str]: a list of tags. Any load combination with at least one of these tags
+            will be considered.
 
-        direction : string, optional
-            The direction to ge the maximum moment for. Options are 'Mx', 'My', or 'Mxy'. Default
-            is 'Mx'.
-        combo : string, optional
-            The name of the load combination to get the maximum moment for. If omitted, all load
-            combinations will be evaluated.
+        Returns
+        -------
+        float
+            The maximum moment found in the mesh for the given direction and load combination(s).
         """
 
+        # Determine if the moment is requested in local or global axes
         if direction in ['MX', 'MY', 'MZ']:
             local = False
         else:
             local = True
 
+        # Map direction string to index in element.moment() results
         if direction.upper() == 'MX':
             i = 0
         elif direction.upper() == 'MY':
             i = 1
-        elif direction == 'Mxy' or direction == 'MZ':
+        elif direction == 'Mxy' or direction.upper() == 'MZ':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', \'Mxy\', \'MX\', \'MY\', or \'MZ\'')
+            raise Exception(
+                "Invalid direction specified for mesh moment results. "
+                "Valid values are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'."
+            )
 
-        # Initialize the maximum value to None
+        # Initialize the maximum value
         M_max = None
 
         # Step through each element in the mesh
         for element in self.elements.values():
 
-            # Determine whether the element is a rectangle or a quadrilateral
+            # Determine evaluation points depending on element type
             if element.type == 'Rect':
                 # Use the rectangle's local (x, y) coordinate system
                 xi, yi = 0, 0
                 xj, yj = element.width(), 0
                 xm, ym = element.width(), element.height()
-                xn, yn, = 0, element.height()
+                xn, yn = 0, element.height()
             elif element.type == 'Quad':
                 # Use the quad's natural (xi, eta) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
                 xn, yn = -1, 1
+            else:
+                continue  # Skip unsupported element types
 
-            # Step through each load combination the element utilizes
+            # Step through each load combination
             for load_combo in self.model.load_combos.values():
 
-                # Determine if this load combination should be evaluated
-                if combo is None or load_combo.name == combo:
-                    
-                    # Find the maximum moment in the element, checking each corner and the center
-                    # of the element
-                    M_element = max([element.moment(xi, yi, local, load_combo.name)[i, 0],
-                                     element.moment(xj, yj, local, load_combo.name)[i, 0],
-                                     element.moment(xm, ym, local, load_combo.name)[i, 0],
-                                     element.moment(xn, yn, local, load_combo.name)[i, 0],
-                                     element.moment((xi + xj+ xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
+                # Decide whether this combo should be checked
+                if isinstance(combo_tags, str):
+                    include = (load_combo.name == combo_tags)
+                elif isinstance(combo_tags, list):
+                    include = any(tag in load_combo.tags for tag in combo_tags)
+                else:
+                    include = False
 
-                    # Determine if the maximum moment calculated is the largest encountered so far
-                    if M_max is None or M_max < M_element:
-                        # Save this value if it's the largest
-                        M_max = M_element
-            
-        # Return the largest value encountered from all the elements
+                if not include:
+                    continue
+
+                # Evaluate corner and center moments
+                M_element = max([
+                    element.moment(xi, yi, local, load_combo.name)[i, 0],
+                    element.moment(xj, yj, local, load_combo.name)[i, 0],
+                    element.moment(xm, ym, local, load_combo.name)[i, 0],
+                    element.moment(xn, yn, local, load_combo.name)[i, 0],
+                    # Center point (average of corners)
+                    element.moment((xi + xj + xm + xn) / 4, (yi + yj + ym + yn) / 4,
+                                local, load_combo.name)[i, 0]
+                ])
+
+                # Track global maximum
+                if M_max is None or M_max < M_element:
+                    M_max = M_element
+
+        # Return the largest moment found, or 0.0 if nothing was found
         return 0.0 if M_max is None else M_max
-    
-    def min_moment(self, direction: str = 'Mx', combo: str | None = None) -> float:
+
+    def min_moment(self, direction: str = 'Mx', combo_tags: str | list[str] = 'Combo 1') -> float:
         """
         Returns the minimum moment in the mesh.
-        
+
         Checks corner and center moments in all the elements in the mesh. The mesh must be part of
         a solved model prior to using this function.
 
         Parameters
         ----------
+        direction : str, optional
+            The direction to get the minimum moment for. 
+            Options are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'. Default is 'Mx'.
+        combo_tags : str or list[str], optional
+            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
+            - If list[str]: a list of tags. Any load combination with at least one of these tags
+            will be considered.
 
-        direction : string, optional
-            The direction to ge the minimum moment for. Options are 'Mx', 'My', or 'Mxy'. Default
-            is 'Mx'.
-        combo : string, optional
-            The name of the load combination to get the minimum moment for. If omitted, all load
-            combinations will be evaluated.
+        Returns
+        -------
+        float
+            The minimum moment found in the mesh for the given direction and load combination(s).
         """
-        
+
+        # Determine if the moment is requested in local or global axes
         if direction in ['MX', 'MY', 'MZ']:
             local = False
         else:
             local = True
 
+        # Map direction string to index in element.moment() results
         if direction.upper() == 'MX':
             i = 0
         elif direction.upper() == 'MY':
             i = 1
-        elif direction == 'Mxy' or direction == 'MZ':
+        elif direction == 'Mxy' or direction.upper() == 'MZ':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh moment results. Valid values are \'Mx\', \'My\', \'Mxy\', \'MX\', \'MY\', or \'MZ\'')
+            raise Exception(
+                "Invalid direction specified for mesh moment results. "
+                "Valid values are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'."
+            )
 
-        # Initialize the minimum value to None
+        # Initialize the minimum value
         M_min = None
 
         # Step through each element in the mesh
         for element in self.elements.values():
 
-            # Determine whether the element is a rectangle or a quadrilateral
+            # Determine evaluation points depending on element type
             if element.type == 'Rect':
                 # Use the rectangle's local (x, y) coordinate system
                 xi, yi = 0, 0
                 xj, yj = element.width(), 0
                 xm, ym = element.width(), element.height()
-                xn, yn, = 0, element.height()
+                xn, yn = 0, element.height()
             elif element.type == 'Quad':
-                # Use the quad's natural (r, s) coordinate system
+                # Use the quad's natural (xi, eta) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
                 xn, yn = -1, 1
+            else:
+                continue  # Skip unsupported element types
 
-            # Step through each load combination the element utilizes
+            # Step through each load combination
             for load_combo in self.model.load_combos.values():
 
-                # Determine if this load combination should be evaluated
-                if combo is None or load_combo.name == combo:
-                    
-                    # Find the minimum moment in the element, checking each corner and the center
-                    # of the element
-                    M_element = min([element.moment(xi, yi, local, load_combo.name)[i, 0],
-                                     element.moment(xj, yj, local, load_combo.name)[i, 0],
-                                     element.moment(xm, ym, local, load_combo.name)[i, 0],
-                                     element.moment(xn, yn, local, load_combo.name)[i, 0],
-                                     element.moment((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
+                # Decide whether this combo should be checked
+                if isinstance(combo_tags, str):
+                    include = (load_combo.name == combo_tags)
+                elif isinstance(combo_tags, list):
+                    include = any(tag in load_combo.tags for tag in combo_tags)
+                else:
+                    include = False
 
-                    # Determine if the minimum moment calculated is the smallest encountered so far
-                    if M_min is None or M_min > M_element:
-                        # Save this value if it's the smallest
-                        M_min = M_element
-            
-        # Return the smallest value encountered from all the elements
+                if not include:
+                    continue
+
+                # Evaluate corner and center moments
+                M_element = min([
+                    element.moment(xi, yi, local, load_combo.name)[i, 0],
+                    element.moment(xj, yj, local, load_combo.name)[i, 0],
+                    element.moment(xm, ym, local, load_combo.name)[i, 0],
+                    element.moment(xn, yn, local, load_combo.name)[i, 0],
+                    # Center point (average of corners)
+                    element.moment((xi + xj + xm + xn) / 4, (yi + yj + ym + yn) / 4,
+                                local, load_combo.name)[i, 0]
+                ])
+
+                # Track global minimum
+                if M_min is None or M_min > M_element:
+                    M_min = M_element
+
+        # Return the smallest moment found, or 0.0 if nothing was found
         return 0.0 if M_min is None else M_min
-    
-    def max_membrane(self, direction: str = 'Sx', combo: str | None = None) -> float:
+
+    def max_membrane(self, direction: str = 'Sx', combo_tags: str | list[str] = 'Combo 1') -> float:
         """
         Returns the maximum membrane stress in the mesh.
-        
+
         Checks corner and center stresses in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this method.
+        a solved model prior to using this function.
 
         Parameters
         ----------
+        direction : str, optional
+            The direction to get the maximum membrane stress for.
+            Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
+        combo_tags : str or list[str], optional
+            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
+            - If list[str]: a list of tags. Any load combination with at least one of these tags
+            will be considered.
 
-        direction : string, optional
-            The direction to ge the maximum membrane force for. Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
-        combo : string, optional
-            The name of the load combination to get the maximum membrane force for. If omitted, all load combinations will be evaluated.
+        Returns
+        -------
+        float
+            The maximum membrane stress found in the mesh for the given direction and load
+            combination(s). Returns 0.0 if no matching combinations are found.
         """
-        
+
         # Determine if local or global coordinate results have been requested
         if direction in ['SX', 'SY']:
             local = False
@@ -418,65 +518,91 @@ class Mesh():
         elif direction == 'Sxy':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh membrane stress results. Valid values are \'Sx\', \'Sy\', or \'Sxy\'')
+            raise Exception(
+                "Invalid direction specified for mesh membrane stress results. "
+                "Valid values are 'Sx', 'Sy', or 'Sxy'."
+            )
 
-        # Initialize the maximum value to None
+        # Initialize the maximum value
         S_max = None
 
         # Step through each element in the mesh
         for element in self.elements.values():
 
-            # Determine whether the element is a rectangle or a quadrilateral
+            # Determine evaluation points depending on element type
             if element.type == 'Rect':
-                # Use the rectangle's local (x, y) coordinate system
                 xi, yi = 0, 0
                 xj, yj = element.width(), 0
                 xm, ym = element.width(), element.height()
-                xn, yn, = 0, element.height()
+                xn, yn = 0, element.height()
             elif element.type == 'Quad':
-                # Use the quad's natural (r, s) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
                 xn, yn = -1, 1
+            else:
+                continue  # Skip unsupported element types
 
-            # Step through each load combination the element utilizes
+            # Step through each load combination
             for load_combo in self.model.load_combos.values():
 
-                # Determine if this load combination should be evaluated
-                if combo is None or load_combo.name == combo:
-                    
-                    # Find the maximum membrane stress in the element, checking each corner and the center of the element
-                    M_element = max([element.membrane(xi, yi, local, load_combo.name)[i, 0],
-                                        element.membrane(xj, yj, local, load_combo.name)[i, 0],
-                                        element.membrane(xm, ym, local, load_combo.name)[i, 0],
-                                        element.membrane(xn, yn, local, load_combo.name)[i, 0],
-                                        element.membrane((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
+                # Decide whether this combo should be checked
+                if isinstance(combo_tags, str):
+                    include = (load_combo.name == combo_tags)
+                elif isinstance(combo_tags, list):
+                    include = any(tag in load_combo.tags for tag in combo_tags)
+                else:
+                    include = False
 
-                    # Determine if the maximum membrane stress calculated is the largest encountered so far
-                    if S_max is None or S_max < M_element:
-                        # Save this value if it's the smallest
-                        S_max = M_element
-            
-        # Return the smallest value encountered from all the elements
+                if not include:
+                    continue
+
+                # Evaluate corner and center membrane stresses
+                S_element = max([
+                    element.membrane(xi, yi, local, load_combo.name)[i, 0],
+                    element.membrane(xj, yj, local, load_combo.name)[i, 0],
+                    element.membrane(xm, ym, local, load_combo.name)[i, 0],
+                    element.membrane(xn, yn, local, load_combo.name)[i, 0],
+                    # Center point (average of corners)
+                    element.membrane(
+                        (xi + xj + xm + xn) / 4,
+                        (yi + yj + ym + yn) / 4,
+                        local,
+                        load_combo.name
+                    )[i, 0]
+                ])
+
+                # Track global maximum
+                if S_max is None or S_max < S_element:
+                    S_max = S_element
+
+        # Return the largest membrane stress found, or 0.0 if nothing was found
         return 0.0 if S_max is None else S_max
     
-    def min_membrane(self, direction: str = 'Sx', combo: str | None = None) -> float:
+    def min_membrane(self, direction: str = 'Sx', combo_tags: str | list[str] = 'Combo 1') -> float:
         """
         Returns the minimum membrane stress in the mesh.
-        
+
         Checks corner and center stresses in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this method.
+        a solved model prior to using this function.
 
         Parameters
         ----------
+        direction : str, optional
+            The direction to get the maximum membrane stress for.
+            Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
+        combo_tags : str or list[str], optional
+            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
+            - If list[str]: a list of tags. Any load combination with at least one of these tags
+            will be considered.
 
-        direction : string, optional
-            The direction to ge the minimum membrane force for. Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
-        combo : string, optional
-            The name of the load combination to get the minimum membrane force for. If omitted, all load combinations will be evaluated.
+        Returns
+        -------
+        float
+            The minimum membrane stress found in the mesh for the given direction and load
+            combination(s). Returns 0.0 if no matching combinations are found.
         """
-        
+
         # Determine if local or global coordinate results have been requested
         if direction in ['SX', 'SY']:
             local = False
@@ -491,47 +617,65 @@ class Mesh():
         elif direction == 'Sxy':
             i = 2
         else:
-            raise Exception('Invalid direction specified for mesh membrane stress results. Valid values are \'Sx\', \'Sy\', or \'Sxy\'')
+            raise Exception(
+                "Invalid direction specified for mesh membrane stress results. "
+                "Valid values are 'Sx', 'Sy', or 'Sxy'."
+            )
 
-        # Initialize the maximum value to None
+        # Initialize the maximum value
         S_min = None
 
         # Step through each element in the mesh
         for element in self.elements.values():
 
-            # Determine whether the element is a rectangle or a quadrilateral
+            # Determine evaluation points depending on element type
             if element.type == 'Rect':
-                # Use the rectangle's local (x, y) coordinate system
                 xi, yi = 0, 0
                 xj, yj = element.width(), 0
                 xm, ym = element.width(), element.height()
-                xn, yn, = 0, element.height()
+                xn, yn = 0, element.height()
             elif element.type == 'Quad':
-                # Use the quad's natural (r, s) coordinate system
                 xi, yi = -1, -1
                 xj, yj = 1, -1
                 xm, ym = 1, 1
                 xn, yn = -1, 1
+            else:
+                continue  # Skip unsupported element types
 
-            # Step through each load combination the element utilizes
+            # Step through each load combination
             for load_combo in self.model.load_combos.values():
 
-                # Determine if this load combination should be evaluated
-                if combo is None or load_combo.name == combo:
+                # Decide whether this combo should be checked
+                if isinstance(combo_tags, str):
+                    include = (load_combo.name == combo_tags)
+                elif isinstance(combo_tags, list):
+                    include = any(tag in load_combo.tags for tag in combo_tags)
+                else:
+                    include = False
 
-                    # Find the minimum membrane stress in the element, checking each corner and the center of the element
-                    M_element = min([element.membrane(xi, yi, local, load_combo.name)[i, 0],
-                                     element.membrane(xj, yj, local, load_combo.name)[i, 0],
-                                     element.membrane(xm, ym, local, load_combo.name)[i, 0],
-                                     element.membrane(xn, yn, local, load_combo.name)[i, 0],
-                                     element.membrane((xi + xj + xm + xn)/4, (yi + yj + ym + yn)/4, local, load_combo.name)[i, 0]])
+                if not include:
+                    continue
 
-                    # Determine if the minimum membrane stress calculated is the smallest encountered so far
-                    if S_min is None or S_min > M_element:
-                        # Save this value if it's the smallest
-                        S_min = M_element
-            
-        # Return the smallest value encountered from all the elements
+                # Evaluate corner and center membrane stresses
+                S_element = min([
+                    element.membrane(xi, yi, local, load_combo.name)[i, 0],
+                    element.membrane(xj, yj, local, load_combo.name)[i, 0],
+                    element.membrane(xm, ym, local, load_combo.name)[i, 0],
+                    element.membrane(xn, yn, local, load_combo.name)[i, 0],
+                    # Center point (average of corners)
+                    element.membrane(
+                        (xi + xj + xm + xn) / 4,
+                        (yi + yj + ym + yn) / 4,
+                        local,
+                        load_combo.name
+                    )[i, 0]
+                ])
+
+                # Track global maximum
+                if S_min is None or S_min > S_element:
+                    S_min = S_element
+
+        # Return the largest membrane stress found, or 0.0 if nothing was found
         return 0.0 if S_min is None else S_min
     
 #%%
