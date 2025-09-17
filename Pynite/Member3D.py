@@ -1362,69 +1362,122 @@ class Member3D():
 
             return 0
 
-    def max_torque(self, combo_name='Combo 1'):
+    def max_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
         """
-        Returns the maximum torsional moment in the member.
+        Returns the maximum torsional moment in the member across the
+        specified load combination(s).
 
         Parameters
         ----------
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the maximum
+            torsional moment across those combos will be returned.
+
+        Returns
+        -------
+        float
+            The maximum torsional moment in the member for the specified
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
         """
-
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
-
-            # Segment the member if necessary
-            if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]       
-
-            Tmax = self.SegmentsX[0].Torsion()   
-
-            for segment in self.SegmentsX:
-
-                if segment.MaxTorsion() > Tmax:
-
-                    Tmax = segment.MaxTorsion()
-
-            return Tmax
-
+        # Normalize input: single combo name or list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
         else:
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
 
-            return 0
+        # Track global maximum torsion across all combos
+        Tmax_global = None
 
-    def min_torque(self, combo_name='Combo 1'):
-        """
-        Returns the minimum torsional moment in the member.
+        # Loop through each candidate combo
+        for combo_name in combo_names:
+            # Skip if inactive for this combo
+            if not self.active.get(combo_name, False):
+                continue
 
-        Parameters
-        ----------
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
-        """
-
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
-
-            # Segment the member if necessary
+            # Re-segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
-            Tmin = self.SegmentsX[0].Torsion()
-                
-            for segment in self.SegmentsX:
-                    
-                if segment.MinTorsion() < Tmin:
-                        
-                    Tmin = segment.MinTorsion()
-            
-            return Tmin
-        
-        else:
 
-            return 0
+            # Skip if no segments exist
+            if not self.SegmentsX:
+                continue
+
+            # Get maximum torsion across all segments for this combo
+            Tmax = max(segment.MaxTorsion() for segment in self.SegmentsX)
+
+            # Update global maximum
+            if Tmax_global is None or Tmax > Tmax_global:
+                Tmax_global = Tmax
+
+        # Return global maximum or 0 if nothing found
+        return Tmax_global if Tmax_global is not None else 0
+
+
+    def min_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+        """
+        Returns the minimum torsional moment in the member across the
+        specified load combination(s).
+
+        Parameters
+        ----------
+        combo_tags : str or list of str, optional
+            Either:
+            - A single load combination name (default: 'Combo 1').
+            - A list of tags. In this case, all load combinations that contain
+            **any** of the given tags will be evaluated, and the minimum
+            torsional moment across those combos will be returned.
+
+        Returns
+        -------
+        float
+            The minimum torsional moment in the member for the specified
+            combination(s). Returns 0 if the member is inactive for all
+            specified combinations or if no segments are available.
+        """
+        # Normalize input: single combo name or list of tags
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [
+                name for name, combo in self.model.load_combos.items()
+                if any(tag in combo.combo_tags for tag in combo_tags)
+            ]
+
+        # Track global minimum torsion across all combos
+        Tmin_global = None
+
+        # Loop through each candidate combo
+        for combo_name in combo_names:
+            # Skip if inactive for this combo
+            if not self.active.get(combo_name, False):
+                continue
+
+            # Re-segment the member if necessary
+            if self._solved_combo is None or combo_name != self._solved_combo.name:
+                self._segment_member(combo_name)
+                self._solved_combo = self.model.load_combos[combo_name]
+
+            # Skip if no segments exist
+            if not self.SegmentsX:
+                continue
+
+            # Get minimum torsion across all segments for this combo
+            Tmin = min(segment.MinTorsion() for segment in self.SegmentsX)
+
+            # Update global minimum
+            if Tmin_global is None or Tmin < Tmin_global:
+                Tmin_global = Tmin
+
+        # Return global minimum or 0 if nothing found
+        return Tmin_global if Tmin_global is not None else 0
 
     def plot_torque(self, combo_name='Combo 1', n_points=20):
         """
