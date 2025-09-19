@@ -2,9 +2,8 @@ from __future__ import annotations # Allows more recent type hints features
 from math import isclose
 from numpy import average
 import io
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
-from Pynite.FEModel3D import FEModel3D
 from prettytable import PrettyTable
 
 import matplotlib.pyplot as plt
@@ -20,14 +19,16 @@ class ShearWall():
     """Creates a new shear wall model that allows for modeling of complex shear walls. Shear wall models are 2D (aside from flanges) standalone models. You can add openings and flanges (wall returns). Diaphragm levels can be defined in order to apply shear forces along the length of the wall. Diaphgrams can be full or partial length. Supports can be applied at any level in the shear wall. Supports can also be full or partial length. A `ky_mod` factor is built in to account for cracking. Shear walls can automatically detect shear wall piers and coupling beams, and sum internal forces in those components.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, model, name, mesh_size, length, height, thickness, material_name, ky_mod=0.35, origin=[0, 0, 0], plane='XY') -> None:
 
-        self.model: FEModel3D = FEModel3D()
-        self._L: float | None = None
-        self._H: float | None = None
-        self._t: float | None = None
-        self._ky_mod: float = 0.35
-        self._mesh_size: float = 1
+        self.model = model
+        self.name = name
+        self.mesh_size = mesh_size
+        self.L = length
+        self.H = height
+        self.ky_mod = ky_mod
+        self.origin = origin
+        self.plane = 'XY'
         self._openings: List[List[str | float | None]] = []
         self._flanges: List[List[str | float]] = []
         self._supports: List[List[float]] = []
@@ -37,48 +38,18 @@ class ShearWall():
         self._materials: List[List[str | float]] = []
         self.piers: Dict[str, Pier] = {}
         self.coupling_beams: Dict[str, CouplingBeam] = {}
-    
-    @property
-    def L(self) -> float | None:
-        return self._L
+        self.asign_material(material_name, thickness)
 
-    @L.setter
-    def L(self, value: float) -> None:
-        self._L = value
+    def asign_material(self, name: str, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
 
-    @property
-    def H(self) -> float | None:
-        return self._H
-
-    @H.setter
-    def H(self, value: float) -> None:
-        self._H = value
-
-    @property
-    def mesh_size(self) -> float:
-        return self._mesh_size
-
-    @mesh_size.setter
-    def mesh_size(self, value: float) -> None:
-        self._mesh_size = value
-
-    @property
-    def ky_mod(self) -> float:
-        return self._ky_mod
-
-    @ky_mod.setter
-    def ky_mod(self, value: float) -> None:
-        self._ky_mod = value
-
-    def add_load_combo(self, name: str, factors: Dict[str, float], combo_type: str = 'strength') -> None:
-        self.model.add_load_combo(name, factors, combo_type)
-
-    def add_material(self, name: str, E: float, G: float, nu: float, rho: float, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
+        # Data validation: ensure the extents of the material fall within the wall's envelope
         if x_start is None: x_start = 0
-        if x_end is None: x_end = self._L
+        if x_end is None: x_end = self.L
         if y_start is None: y_start = 0
-        if y_end is None: y_end = self._H
-        self._materials.append([name, E, G, nu, rho, t, x_start, x_end, y_start, y_end])
+        if y_end is None: y_end = self.H
+
+        # Store the material parameters
+        self._materials.append([name, t, x_start, x_end, y_start, y_end])
 
     def add_opening(self, name: str, x_start: float, y_start: float, width: float, height: float, tie: float | None = None) -> None:
         self._openings.append([name, x_start, y_start, width, height, None])
@@ -89,15 +60,15 @@ class ShearWall():
     def add_support(self, elevation: float | None = None, x_start: float | None = None, x_end: float | None = None) -> None:
         if elevation is None: elevation = 0
         if x_start is None: x_start = 0
-        if x_end is None: x_end = self._L
+        if x_end is None: x_end = self.L
         self._supports.append([elevation, x_start, x_end])
-        
+
     def add_story(self, story_name: str, elevation: float, x_start: float | None = None, x_end: float | None = None) -> None:
 
         # Validate input
-        if elevation is None: elevation = self._H
+        if elevation is None: elevation = self.H
         if x_start is None: x_start = 0
-        if x_end is None: x_end = self._L
+        if x_end is None: x_end = self.L
 
         # Add the story to the model
         self._stories.append([story_name, elevation, x_start, x_end])
@@ -116,20 +87,15 @@ class ShearWall():
 
     def generate(self) -> None:
 
-        # Add materials to the model
-        for material in self._materials:
-            name, E, G, nu, rho = material[0:5]
-            self.model.add_material(name, E, G, nu, rho)
-
         # Identify mesh control points
-        x_control: List[float] = [0, self._L]
-        y_control: List[float] = [0, self._H]
+        x_control: List[float] = [0, self.L]
+        y_control: List[float] = [0, self.H]
 
         for material in self._materials:
-            x_control.append(material[6])
-            x_control.append(material[7])
-            y_control.append(material[8])
-            y_control.append(material[9])
+            x_control.append(material[2])
+            x_control.append(material[3])
+            y_control.append(material[4])
+            y_control.append(material[5])
 
         z_control: List[float] = [0]
         for flg in self._flanges:
@@ -155,24 +121,25 @@ class ShearWall():
             y_control.append(opng[2] + opng[4])
 
         # Add the wall mesh to the model
-        # Note the thickness 1 is a dummy placeholder for now that will be changed later
-        self.model.add_rectangle_mesh('Wall', self._mesh_size, self._L, self._H, 1, self._materials[0][0], 1, self.ky_mod, x_control=x_control, y_control=y_control)
+        # Note that the thickness can still be changed later
+        material_name, thickness, _, _, _, _ = self._materials[0]
+        self.model.add_rectangle_mesh(self.name, self.mesh_size, self.L, self.H, 1, material_name, thickness, self.ky_mod, self.origin, self.plane, x_control=x_control, y_control=y_control)
 
         # Add the openings to the mesh
         self.model.add_material('Tie', 1, 1, 0, 0)
         for opng in self._openings:
 
             name, x_start, y_start, width, height, AE = opng
-            self.model.meshes['Wall'].add_rect_opening(name, x_start, y_start, width, height)
+            self.model.meshes[self.name].add_rect_opening(name, x_start, y_start, width, height)
 
             # Add any ties over the opening
             if AE is not None:
 
                 i_node_name = self.model.unique_name(self.model.nodes, 'N')
-                self.model.add_node(i_node_name, x_start, y_start + height, 0)
+                self.model.add_node(i_node_name, *self._local2global(x_start, y_start + height, 0, self.plane))
 
                 j_node_name = self.model.unique_name(self.model.nodes, 'N')
-                self.model.add_node(j_node_name, x_start + width, y_start + height, 0)
+                self.model.add_node(j_node_name, *self._local2global(x_start + width, y_start + height, 0, self.plane))
 
                 tie_name = self.model.unique_name(self.model.Members, 'Tie ')
                 self.model.add_member(tie_name, i_node_name, j_node_name, 'Tie', 1, 1, 1, AE)
@@ -195,10 +162,14 @@ class ShearWall():
             flg_y_control = [y - y_start for y in y_control if round(y, 10) >= round(y_start, 10) and round(y, 10) <= round(y_end, 10)]
 
             # Add the flange to the model
-            self.model.add_rectangle_mesh('Flg'+str(i+1), self._mesh_size, b, y_end-y_start, t, material, 1, self.ky_mod, [x, y_start, z], 'YZ', flg_x_control, flg_y_control)
+            if self.plane == 'XY': flange_plane = 'YZ'
+            elif self.plane == 'XZ': flange_plane = 'YZ'
+            elif self.plane == 'YZ': flange_plane = 'XY'
+
+            self.model.add_rectangle_mesh('Flg'+str(i+1), self.mesh_size, b, y_end-y_start, t, material, 1, self.ky_mod, self.local2global(x, y_start, z, flange_plane), flange_plane, flg_x_control, flg_y_control)
 
         # Generate the meshes
-        self.model.meshes['Wall'].generate()
+        self.model.meshes[self.name].generate()
 
         for i, flg in enumerate(self._flanges):
             self.model.meshes['Flg' + str(i + 1)].generate()
@@ -213,7 +184,7 @@ class ShearWall():
             for material in self._materials:
 
                 # Get the material properties
-                name, E, G, nu, rho, t, x_start, x_end, y_start, y_end = material
+                material_name, t, x_start, x_end, y_start, y_end = material
 
                 # Determine if the current plate is part of a flange
                 if isclose(plate.i_node.X, plate.j_node.X):
@@ -227,8 +198,8 @@ class ShearWall():
                     and round(plate.m_node.Y, 10) <= round(y_end, 10)):
 
                         # Assign material properties to the plate
-                        plate.E = E
-                        plate.nu = nu
+                        plate.E = self.model.materials[material_name].E
+                        plate.nu = self.model.materials[material_name].nu
                         plate.t = t
 
         # Add supports
@@ -293,8 +264,8 @@ class ShearWall():
         self.piers = {}
 
         # Create a list of x and y coordinates that represent the edges of the wall
-        x_vals: List[float] = [0, self._L]
-        y_vals: List[float] = [0, self._H]
+        x_vals: List[float] = [0, self.L]
+        y_vals: List[float] = [0, self.H]
 
         # Add the edges of the openings to the lists
         for opng in self._openings:
@@ -328,7 +299,7 @@ class ShearWall():
         self.piers = {}
         for i in range(len(x_vals) - 1):
             width = x_vals[i+1] - x_vals[i]
-            height = self._H
+            height = self.H
             x = x_vals[i]
             y = 0
             self.piers['P' + str(i+1)] = Pier('P' + str(i+1), x, y, width, height)
@@ -448,8 +419,8 @@ class ShearWall():
         self.coupling_beams = {}
 
         # Create a list of x and y coordinates that represent the edges of the wall
-        x_vals: List[float] = [0, self._L]
-        y_vals: List[float] = [0, self._H]
+        x_vals: List[float] = [0, self.L]
+        y_vals: List[float] = [0, self.H]
 
         # Add the edges of the openings to the lists
         for opng in self._openings:
@@ -483,7 +454,7 @@ class ShearWall():
         self.coupling_beams = {}
         for i in range(len(y_vals) - 1):
             height = y_vals[i + 1] - y_vals[i]
-            length = self._L
+            length = self.L
             y = y_vals[i]
             x = 0
             self.coupling_beams['B' + str(i+1)] = CouplingBeam('B' + str(i+1), x, y, length, height)
@@ -801,6 +772,25 @@ class ShearWall():
         print('| Wall Coupling Beam Results |')
         print('+----------------------------+')
         print(table)
+
+    def _local2global(self, x: float, y: float, z: float, plane: Literal['XY', 'XZ', 'YZ']) -> tuple:
+
+        Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
+
+        if plane == 'XY':
+            X = Xo + x
+            Y = Yo + y
+            Z = Zo
+        elif plane == 'XZ':
+            X = Xo + x
+            Y = Yo
+            Z = Zo + y
+        elif plane == 'YZ':
+            X = Xo
+            Y = Yo + y
+            Z = Zo + x
+
+        return (X, Y, Z)
 
 #%%
 class Pier():

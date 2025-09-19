@@ -1,7 +1,7 @@
 # %%
 # `__future__` import required to use bar operators for optional type annotations
 from __future__ import annotations  # Allows more recent type hints features
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from numpy import array, zeros, matmul, subtract
 from numpy.linalg import solve
@@ -15,6 +15,7 @@ from Pynite.Quad3D import Quad3D
 from Pynite.Plate3D import Plate3D
 from Pynite.LoadCombo import LoadCombo
 from Pynite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
+from Pynite.ShearWall import ShearWall
 from Pynite import Analysis
 
 if TYPE_CHECKING:
@@ -45,6 +46,7 @@ class FEModel3D():
         self.quads: Dict[str, Quad3D] = {}             # A dictionary of the model's quadiralterals
         self.plates: Dict[str, Plate3D] = {}           # A dictionary of the model's rectangular plates
         self.meshes: Dict[str, Mesh] = {}              # A dictionary of the model's meshes
+        self.shear_walls: Dict[str, ShearWall] = {}    # A dictionary of the model's shear walls
         self.load_combos: Dict[str, LoadCombo] = {}    # A dictionary of the model's load combinations
         self._D: Dict[str, NDArray[float64]] = {}      # A dictionary of the model's nodal displacements by load combination
 
@@ -751,8 +753,16 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
         
-        #Return the mesh's name
+        # Return the mesh's name
         return name
+
+    def add_shear_wall(self, name:str, mesh_size:float, length:float, height:float, thickness:float, material_name:str, ky_mod:float=0.35, plane:Literal['XY', 'YZ']='XY', origin:List[float] = [0, 0, 0]):
+
+        # Create a new shear wall
+        new_shear_wall = ShearWall(self, name, mesh_size, length, height, thickness, material_name, ky_mod, origin, plane)
+
+        # Add the wall to the model
+        self.shear_walls[name] = new_shear_wall
 
     def merge_duplicate_nodes(self, tolerance:float = 0.001) -> list:
         """Removes duplicate nodes from the model and returns a list of the removed node names.

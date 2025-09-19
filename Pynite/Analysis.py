@@ -37,10 +37,14 @@ def _prepare_model(model: FEModel3D) -> None:
         # Create and add a default load combination to the dictionary of load combinations
         model.load_combos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
 
-    # Generate all meshes
+    # Generate all basic meshes
     for mesh in model.meshes.values():
         if mesh.is_generated == False:
             mesh.generate()
+
+    # Generate all shear wall meshes
+    for shear_wall in model.shear_walls.values():
+        shear_wall.generate()
 
     # Activate all springs and members for all load combinations
     for spring in model.springs.values():
