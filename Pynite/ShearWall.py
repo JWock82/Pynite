@@ -125,8 +125,11 @@ class ShearWall():
         material_name, thickness, _, _, _, _ = self._materials[0]
         self.model.add_rectangle_mesh(self.name, self.mesh_size, self.L, self.H, 1, material_name, thickness, self.ky_mod, self.origin, self.plane, x_control=x_control, y_control=y_control)
 
+        # Add a tie material if it's not already in the model
+        if 'Tie' not in self.model.materials.keys():   
+            self.model.add_material('Tie', 1, 1, 0, 0)
+
         # Add the openings to the mesh
-        self.model.add_material('Tie', 1, 1, 0, 0)
         for opng in self._openings:
 
             name, x_start, y_start, width, height, AE = opng
@@ -178,13 +181,13 @@ class ShearWall():
                 Zof = self.origin[2] + x
                 flg_plane = 'XY'
 
-            self.model.add_rectangle_mesh('Flg' + str(i+1), self.mesh_size, b, y_end-y_start, t, material, 1, self.ky_mod, [Xof, Yof, Zof], flg_plane, flg_x_control, flg_y_control)
+            self.model.add_rectangle_mesh(self.name + ' Flg ' + str(i+1), self.mesh_size, b, y_end-y_start, t, material, 1, self.ky_mod, [Xof, Yof, Zof], flg_plane, flg_x_control, flg_y_control)
 
         # Generate the meshes
         self.model.meshes[self.name].generate()
 
         for i, flg in enumerate(self._flanges):
-            self.model.meshes['Flg' + str(i + 1)].generate()
+            self.model.meshes[self.name + ' Flg ' + str(i + 1)].generate()
 
         # Merge the flange nodes with the rest of the wall
         self.model.merge_duplicate_nodes()
@@ -823,7 +826,7 @@ class ShearWall():
 
         return [X, Y, Z]
 
-    def _global2local(self, X:float, Y:float, Z:float) -> List[float]:
+    def _global2local(self, X: float, Y: float, Z: float) -> List[float]:
 
         Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
 

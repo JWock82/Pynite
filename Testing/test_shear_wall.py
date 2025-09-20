@@ -5,70 +5,72 @@ from math import isclose
 
 def test_shear_wall():
 
-    # Run this test twice: Once in each plane
-    for plane in ['XY', 'YZ']:
+    # Create a new finite element model
+    model = FEModel3D()
 
-        if plane == 'XY':
+    # Define a material for our shear wall
+    fm = 2000/1000*144  # ksf
+    Em = 900*fm  # ksf
+    Gm = 0.4*Em  # ksf
+    nu = 0.17
+    rho_m = 0.140  # kcf
+    model.add_material('CMU', Em, Gm, nu, rho_m)
+
+    # Create a wall in the 'XY' plane and the 'YZ' plane
+    for wall_name in ['W1', 'W2']:
+
+        if wall_name == 'W1':
+            plane = 'XY'
             origin = [0, 0, 0]
         else:
-            origin = [30, 30, 30]
-
-        # Create a new finite element model
-        model = FEModel3D()
-
-        # Define a material for our shear wall
-        fm = 2000/1000*144  # ksf
-        Em = 900*fm  # ksf
-        Gm = 0.4*Em  # ksf
-        nu = 0.17
-        rho_m = 0.140  # kcf
-        model.add_material('CMU', Em, Gm, nu, rho_m)
+            plane = 'YZ'
+            origin = [40, 0, 0]
 
         # Add a new shear wall to the model
-        model.add_shear_wall('W1', mesh_size=1, length=26, height=16, thickness=0.667, material_name='CMU', ky_mod=1, plane=plane, origin=origin)
+        model.add_shear_wall(wall_name, mesh_size=1, length=26, height=16, thickness=0.667, material_name='CMU', ky_mod=1, plane=plane, origin=origin)
 
         # Add openings to the wall
         # Pynite gives the option to add a tie's stiffness over the opening to simulate collectors/drag-struts tying the wall segments together. Since none of the openings defined below rise to the top of the wall, ties are not needed.
-        model.shear_walls['W1'].add_opening('Door 1', x_start=2, y_start=0, width=4, height=12, tie=None)
-        model.shear_walls['W1'].add_opening('Window 1', x_start=8, y_start=8, width=4, height=4, tie=None)
-        model.shear_walls['W1'].add_opening('Window 2', x_start=14, y_start=8, width=4, height=4, tie=None)
-        model.shear_walls['W1'].add_opening('Door 2', x_start=20, y_start=0, width=4, height=12, tie=None)
+        model.shear_walls[wall_name].add_opening('Door 1', x_start=2, y_start=0, width=4, height=12, tie=None)
+        model.shear_walls[wall_name].add_opening('Window 1', x_start=8, y_start=8, width=4, height=4, tie=None)
+        model.shear_walls[wall_name].add_opening('Window 2', x_start=14, y_start=8, width=4, height=4, tie=None)
+        model.shear_walls[wall_name].add_opening('Door 2', x_start=20, y_start=0, width=4, height=12, tie=None)
 
         # Add support across the entire base of the wall
-        model.shear_walls['W1'].add_support(elevation=0, x_start=0, x_end=26)
+        model.shear_walls[wall_name].add_support(elevation=0, x_start=0, x_end=26)
 
         # Add a story to the shear wall where loads will be applied
         # Note that `x_start` and `x_end` are optional arguments. If they are omitted, the story's length will default to the full length of the wall. `x_start` and `x_end` can be used to simulate loading from a partial depth diaphragm.
-        model.shear_walls['W1'].add_story('Roof', elevation=16, x_start=0, x_end=26)
+        model.shear_walls[wall_name].add_story('Roof', elevation=16, x_start=0, x_end=26)
 
         # Add a seismic shear force of 100 kips to the roof
-        model.shear_walls['W1'].add_shear(story_name='Roof', force=100, case='E')
+        model.shear_walls[wall_name].add_shear(story_name='Roof', force=100, case='E')
 
-        model.shear_walls['W1'].add_flange(thickness=0.667, width=0.75*16, x=0, y_start=0, y_end=16, material='CMU', side='-z')
-        model.shear_walls['W1'].add_flange(thickness=0.667, width=0.75*16, x=7, y_start=0, y_end=16, material='CMU', side='+z')
-        model.shear_walls['W1'].add_flange(thickness=0.667, width=0.75*16, x=26, y_start=0, y_end=16, material='CMU', side='-z')
+        model.shear_walls[wall_name].add_flange(thickness=0.667, width=0.75*16, x=0, y_start=0, y_end=16, material='CMU', side='-z')
+        model.shear_walls[wall_name].add_flange(thickness=0.667, width=0.75*16, x=7, y_start=0, y_end=16, material='CMU', side='+z')
+        model.shear_walls[wall_name].add_flange(thickness=0.667, width=0.75*16, x=26, y_start=0, y_end=16, material='CMU', side='-z')
 
-        # Add a load combination to the model
-        model.add_load_combo('1.0E', {'E': 1.0}, combo_tags='strength')
+    # Add a load combination to the model
+    model.add_load_combo('1.0E', {'E': 1.0}, combo_tags='strength')
 
-        # Analyze the model. Use the linear solver for greater speed
-        model.analyze_linear(log=True, check_statics=True)
+    # Analyze the model. Use the linear solver for greater speed
+    model.analyze_linear(log=True, check_statics=True)
 
-        # Find the stiffness of the shear wall when a shear is applied to the roof (usefull for rigid diaphragm analysis)
-        k = model.shear_walls['W1'].stiffness('Roof')
+    # Find the stiffness of the shear wall when a shear is applied to the roof (usefull for rigid diaphragm analysis)
+    k = model.shear_walls[wall_name].stiffness('Roof')
 
-        # Check that the calculated stiffness is within 5% of the expected value
-        # assert abs(1 - k/k_expected) <= 0.05
+    # Check that the calculated stiffness is within 5% of the expected value
+    # assert abs(1 - k/k_expected) <= 0.05
 
-        rndr = Renderer(model)
-        rndr.annotation_size = 0.25
-        rndr.combo_name = '1.0E'
-        rndr.color_map = 'Txy'
-        rndr.scalar_bar = True
-        rndr.render_loads = True
-        rndr.deformed_shape = True
-        rndr.deformed_scale = 300
-        rndr.render_model()
+    # rndr = Renderer(model)
+    # rndr.annotation_size = 0.25
+    # rndr.combo_name = '1.0E'
+    # rndr.color_map = 'Txy'
+    # rndr.scalar_bar = True
+    # rndr.render_loads = True
+    # rndr.deformed_shape = True
+    # rndr.deformed_scale = 300
+    # rndr.render_model()
 
 def test_quad_shear_wall():
 
