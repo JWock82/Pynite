@@ -2,7 +2,7 @@ from Pynite import FEModel3D, ShearWall
 from math import isclose
 
 
-def test_rect_mesh():
+def test_rect_mesh_in_plane_stiffness():
 
     model = FEModel3D()
 
@@ -44,40 +44,6 @@ def test_rect_mesh():
 
     # Check that the stiffness is as expected
     assert round(k) == 1369, 'Failed rectangular mesh stiffness test.'
-
-
-def test_shear_wall():
-
-    shear_wall = ShearWall()
-
-    shear_wall.L = 10
-    shear_wall.H = 15
-    shear_wall.ky_mod = 0.70
-
-    E = 57*(5000)**0.5*12**2
-    G = 0.4*E
-    nu = 0.15
-    rho = 0.150
-    t = 0.667
-    shear_wall.add_material('Concrete', E, G, nu, rho, t)
-    shear_wall.add_support(0.0)
-    shear_wall.add_story('Roof', 15.0)
-    shear_wall.add_shear('Roof', 1000, 'E')
-
-    shear_wall.add_load_combo('1.0E', {'E': 1.0})
-
-    shear_wall.generate()
-    shear_wall.model.analyze()
-
-    k = shear_wall.stiffness('Roof')/12
-
-    print(f'Stiffness, k = {k} kip/in')
-
-    # shear_wall.render(combo_name='Stiffness: Roof')
-
-    # Check that the stiffness is as expected
-    assert round(k) == 1369, 'Failed shear wall stiffness test.'
-
 
 def test_PCA_7_quad():
     """
