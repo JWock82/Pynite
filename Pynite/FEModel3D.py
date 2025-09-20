@@ -756,7 +756,7 @@ class FEModel3D():
         # Return the mesh's name
         return name
 
-    def add_shear_wall(self, name:str, mesh_size:float, length:float, height:float, thickness:float, material_name:str, ky_mod:float=0.35, plane:Literal['XY', 'YZ']='XY', origin:List[float] = [0, 0, 0]):
+    def add_shear_wall(self, name: str, mesh_size: float, length: float, height: float, thickness: float, material_name: str, ky_mod: float = 0.35, plane: Literal['XY', 'YZ'] = 'XY', origin: List[float] = [0, 0, 0]):
 
         # Create a new shear wall
         new_shear_wall = ShearWall(self, name, mesh_size, length, height, thickness, material_name, ky_mod, origin, plane)

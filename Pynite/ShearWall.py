@@ -28,7 +28,7 @@ class ShearWall():
         self.H = height
         self.ky_mod = ky_mod
         self.origin = origin
-        self.plane = 'XY'
+        self.plane = plane
         self._openings: List[List[str | float | None]] = []
         self._flanges: List[List[str | float]] = []
         self._supports: List[List[float]] = []
@@ -54,7 +54,7 @@ class ShearWall():
     def add_opening(self, name: str, x_start: float, y_start: float, width: float, height: float, tie: float | None = None) -> None:
         self._openings.append([name, x_start, y_start, width, height, None])
 
-    def add_flange(self, thickness: float, width: float, x: float, y_start: float, y_end: float, material: str, side: str) -> None:
+    def add_flange(self, thickness: float, width: float, x: float, y_start: float, y_end: float, material: str, side: Literal['+z', '-z']) -> None:
         self._flanges.append([thickness, width, x, y_start, y_end, material, side])
 
     def add_support(self, elevation: float | None = None, x_start: float | None = None, x_end: float | None = None) -> None:
@@ -99,7 +99,7 @@ class ShearWall():
 
         z_control: List[float] = [0]
         for flg in self._flanges:
-            if flg[6] == 'NS': z_control.append(flg[1])
+            if flg[6] == '+z': z_control.append(flg[1])
             else: z_control.append(-flg[1])
             x_control.append(flg[2])
             y_control.append(flg[3])
@@ -152,7 +152,7 @@ class ShearWall():
             t, b, x, y_start, y_end, material, side = flg
 
             # Determine which side of the wall to place the flange on and define control points for the flange mesh so nodes line up properly with other meshes
-            if side == 'NS':
+            if side == '+z':
                 z = 0
                 flg_x_control = [val for val in z_control if round(val, 10) >= 0 and round(val, 10) <= b]
             else:
@@ -161,12 +161,24 @@ class ShearWall():
 
             flg_y_control = [y - y_start for y in y_control if round(y, 10) >= round(y_start, 10) and round(y, 10) <= round(y_end, 10)]
 
-            # Add the flange to the model
-            if self.plane == 'XY': flange_plane = 'YZ'
-            elif self.plane == 'XZ': flange_plane = 'YZ'
-            elif self.plane == 'YZ': flange_plane = 'XY'
+            # Identify the global origin for the flange mesh
+            if self.plane == 'XY':
+                Xof = self.origin[0] + x
+                Yof = self.origin[0] + y_start
+                Zof = self.origin[2] + z
+                flg_plane = 'YZ'
+            elif self.plane == 'XZ':
+                Xof = self.origin[0] + x
+                Yof = self.origin[1] + z
+                Zof = self.origin[2] + y_start
+                flg_plane = 'YZ'
+            elif self.plane == 'YZ':
+                Xof = self.origin[0] + z
+                Yof = self.origin[1] + y_start
+                Zof = self.origin[2] + x
+                flg_plane = 'XY'
 
-            self.model.add_rectangle_mesh('Flg'+str(i+1), self.mesh_size, b, y_end-y_start, t, material, 1, self.ky_mod, self.local2global(x, y_start, z, flange_plane), flange_plane, flg_x_control, flg_y_control)
+            self.model.add_rectangle_mesh('Flg' + str(i+1), self.mesh_size, b, y_end-y_start, t, material, 1, self.ky_mod, [Xof, Yof, Zof], flg_plane, flg_x_control, flg_y_control)
 
         # Generate the meshes
         self.model.meshes[self.name].generate()
@@ -186,9 +198,9 @@ class ShearWall():
                 # Get the material properties
                 material_name, t, x_start, x_end, y_start, y_end = material
 
-                xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-                xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
-                xm, ym, zm = self.global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+                xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+                xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+                xm, ym, zm = self._global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
 
                 # Determine if the current plate is part of a flange
                 if isclose(xi, xj):
@@ -211,7 +223,7 @@ class ShearWall():
             elevation, x_start, x_end = support
             for node in self.model.nodes.values():
 
-                x, y, z = self.global2local(node.X, node.Y, node.Z)
+                x, y, z = self._global2local(node.X, node.Y, node.Z)
 
                 if isclose(y, elevation) and round(x, 10) >= round(x_start, 10) and round(x, 10) <= round(x_end, 10):
                     self.model.def_support(node.name, True, True, True, True, True, True)
@@ -228,7 +240,7 @@ class ShearWall():
             # Step through each node in the model
             for node in self.model.nodes.values():
 
-                x, y, z = self.global2local(node.X, node.Y, node.Z)
+                x, y, z = self._global2local(node.X, node.Y, node.Z)
 
                 # Check if this node belongs to this story
                 if isclose(y, elevation) and x >= x_start and x <= x_end and isclose(z, 0):
@@ -248,9 +260,13 @@ class ShearWall():
                     # Read in parameters for this shear
                     story, force, case = shear
 
+                    # Determine the global direction to apply the shear in
+                    if self.plane == 'XY': direction = 'FX'
+                    elif self.plane == 'YZ': direction = 'FZ'
+
                     # Determine if this shear acts on this story
                     if story == story_name:
-                        self.model.add_node_load(node.name, 'FX', force/num_nodes, case)
+                        self.model.add_node_load(node.name, direction, force/num_nodes, case)
 
                 # Step through each axial force in the model
                 for axial in self._axials:
@@ -414,9 +430,9 @@ class ShearWall():
         # Assign plates to each pier
         for plate in self.model.quads.values():
 
-            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
-            xm, ym, zm = self.global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+            xm, ym, zm = self._global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
 
             y_avg = (yi + ym)/2
             x_avg = (xi + xm)/2
@@ -587,8 +603,8 @@ class ShearWall():
         # Assign plates to each beam
         for plate in self.model.quads.values():
 
-            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xm, ym, zm = self.global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xm, ym, zm = self._global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
 
             y_avg = (yi + ym)/2
             x_avg = (xi + xm)/2
@@ -702,7 +718,7 @@ class ShearWall():
         # Step through each node in the model
         for node in self.model.nodes.values():
 
-            local_coords = self.global2local(node.X, node.Y, node.Z)
+            local_coords = self._global2local(node.X, node.Y, node.Z)
             x, y, z = local_coords[0], local_coords[1], local_coords[2]
 
             # Determine if this node is in this story
@@ -788,26 +804,26 @@ class ShearWall():
         print('+----------------------------+')
         print(table)
 
-    def _local2global(self, x: float, y: float, z: float) -> List[float]:
+    def _local2global(self, x: float, y: float, z: float, plane: Literal['XY', 'XZ', 'YZ'] = 'XY') -> List[float]:
 
         Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
 
-        if self.plane == 'XY':
+        if plane == 'XY':
             X = Xo + x
             Y = Yo + y
             Z = Zo
-        elif self.plane == 'XZ':
+        elif plane == 'XZ':
             X = Xo + x
             Y = Yo
             Z = Zo + y
-        elif self.plane == 'YZ':
+        elif plane == 'YZ':
             X = Xo
             Y = Yo + y
             Z = Zo + x
 
         return [X, Y, Z]
 
-    def global2local(self, X:float, Y:float, Z:float) -> List[float]:
+    def _global2local(self, X:float, Y:float, Z:float) -> List[float]:
 
         Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
 
@@ -845,8 +861,8 @@ class Pier():
         # Step through each plate in the pier
         for plate in self.plates:
 
-            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
 
             # Determine if this plate is at the bottom of the pier
             if isclose(yi, self.y):
@@ -898,9 +914,9 @@ class CouplingBeam():
         # Step through each plate in the coupling beam
         for plate in self.plates:
 
-            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
-            xn, yn, zn = self.global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z)
+            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+            xn, yn, zn = self._global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z)
 
             # Determine if this plate is at the left edge of the coupling beam
             if isclose(xi, self.x):
