@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class ShearWall():
-    """Creates a new shear wall model that allows for modeling of complex shear walls. Shear wall models are 2D (aside from flanges) standalone models. You can add openings and flanges (wall returns). Diaphragm levels can be defined in order to apply shear forces along the length of the wall. Diaphgrams can be full or partial length. Supports can be applied at any level in the shear wall. Supports can also be full or partial length. A `ky_mod` factor is built in to account for cracking. Shear walls can automatically detect shear wall piers and coupling beams, and sum internal forces in those components.
+    """Creates a new shear wall model that allows for modeling of complex shear walls. You can add openings and flanges (wall returns or intersections). Diaphragm levels can be defined in order to apply shear forces along the length of the wall. Diaphragms can be full or partial length. Supports can be applied at any level in the shear wall. Supports can also be full or partial length. A `ky_mod` factor is built in to account for cracking. Shear walls can automatically detect shear wall piers and coupling beams, and sum internal forces in those components.
     """
 
     def __init__(self, model, name, mesh_size, length, height, thickness, material_name, ky_mod=0.35, origin=[0, 0, 0], plane='XY') -> None:
@@ -186,16 +186,20 @@ class ShearWall():
                 # Get the material properties
                 material_name, t, x_start, x_end, y_start, y_end = material
 
+                xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+                xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+                xm, ym, zm = self.global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+
                 # Determine if the current plate is part of a flange
-                if isclose(plate.i_node.X, plate.j_node.X):
+                if isclose(xi, xj):
                     # Flanges already have material properties and thicknesses assigned properly
                     pass
                 else:
                     # Determine if the current plate is this material
-                    if (round(plate.i_node.X, 10) >= round(x_start, 10)
-                    and round(plate.m_node.X, 10) <= round(x_end, 10)
-                    and round(plate.i_node.Y, 10) >= round(y_start, 10)
-                    and round(plate.m_node.Y, 10) <= round(y_end, 10)):
+                    if (round(xi, 10) >= round(x_start, 10)
+                    and round(xm, 10) <= round(x_end, 10)
+                    and round(yi, 10) >= round(y_start, 10)
+                    and round(ym, 10) <= round(y_end, 10)):
 
                         # Assign material properties to the plate
                         plate.E = self.model.materials[material_name].E
@@ -206,7 +210,10 @@ class ShearWall():
         for support in self._supports:
             elevation, x_start, x_end = support
             for node in self.model.nodes.values():
-                if isclose(node.Y, elevation) and round(node.X, 10) >= round(x_start, 10) and round(node.X, 10) <= round(x_end, 10):
+
+                x, y, z = self.global2local(node.X, node.Y, node.Z)
+
+                if isclose(y, elevation) and round(x, 10) >= round(x_start, 10) and round(x, 10) <= round(x_end, 10):
                     self.model.def_support(node.name, True, True, True, True, True, True)
 
         # Add shear forces to the wall
@@ -221,8 +228,10 @@ class ShearWall():
             # Step through each node in the model
             for node in self.model.nodes.values():
 
+                x, y, z = self.global2local(node.X, node.Y, node.Z)
+
                 # Check if this node belongs to this story
-                if isclose(node.Y, elevation) and node.X >= x_start and node.X <= x_end and isclose(node.Z, 0):
+                if isclose(y, elevation) and x >= x_start and x <= x_end and isclose(z, 0):
 
                     # Add the node to the list of nodes in the current story
                     node_list.append(node)
@@ -404,13 +413,21 @@ class ShearWall():
 
         # Assign plates to each pier
         for plate in self.model.quads.values():
-            Y_avg = (plate.i_node.Y + plate.m_node.Y)/2
-            X_avg = (plate.i_node.X + plate.m_node.X)/2
+
+            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+            xm, ym, zm = self.global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+
+            y_avg = (yi + ym)/2
+            x_avg = (xi + xm)/2
+
             for pier in self.piers.values():
-                if (round(X_avg, 10) >= round(pier.x, 10)
-                    and round(X_avg, 10) <= round(pier.x + pier.width, 10)
-                    and round(Y_avg, 10) >= round(pier.y, 10)
-                    and round(Y_avg, 10) <= round (pier.y + pier.height, 10)):
+
+                if (round(x_avg, 10) >= round(pier.x, 10)
+                    and round(x_avg, 10) <= round(pier.x + pier.width, 10)
+                    and round(y_avg, 10) >= round(pier.y, 10)
+                    and round(y_avg, 10) <= round (pier.y + pier.height, 10)):
+
                     pier.plates.append(plate)
 
     def _identify_coupling_beams(self) -> None:
@@ -428,7 +445,7 @@ class ShearWall():
             x_vals.append(opng[1] + opng[3])
             y_vals.append(opng[2])
             y_vals.append(opng[2] + opng[4])
-        
+
         # Sort the lists (ascending)
         x_vals = sorted(x_vals)
         y_vals = sorted(y_vals)
@@ -545,11 +562,11 @@ class ShearWall():
                         # Since the `self.couping_beams` dictionary has changed we need `beams_copy` to get updated. Flag that we found a duplicate and break the loops.
                         found_duplicate = True
                         break
-                
+
                 # Break the `for` loop if a duplicate was found so we can get an updated copy of `self.coupling_beams`
                 if found_duplicate == True:
                     break
-        
+
         # Check for any coupling beams at the bottom of the wall. There should not be any. Delete them as they are found
         delete_list = []
         for beam in self.coupling_beams.values():
@@ -566,16 +583,23 @@ class ShearWall():
         self.coupling_beams = dict(zip(new_keys, self.coupling_beams.values()))
         for key, beam in self.coupling_beams.items():
             beam.name = key
-        
+
         # Assign plates to each beam
         for plate in self.model.quads.values():
-            Y_avg = (plate.i_node.Y + plate.m_node.Y)/2
-            X_avg = (plate.i_node.X + plate.m_node.X)/2
+
+            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xm, ym, zm = self.global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+
+            y_avg = (yi + ym)/2
+            x_avg = (xi + xm)/2
+
             for beam in self.coupling_beams.values():
-                if (round(X_avg, 10) >= round(beam.x, 10)
-                    and round(X_avg, 10) <= round(beam.x + beam.length, 10)
-                    and round(Y_avg, 10) >= round(beam.y, 10)
-                    and round(Y_avg, 10) <= round (beam.y + beam.height, 10)):
+
+                if (round(x_avg, 10) >= round(beam.x, 10)
+                    and round(x_avg, 10) <= round(beam.x + beam.length, 10)
+                    and round(y_avg, 10) >= round(beam.y, 10)
+                    and round(y_avg, 10) <= round(beam.y + beam.height, 10)):
+
                     beam.plates.append(plate)
 
     def draw_piers(self, show: bool = False) -> None | matplotlib.figure.Figure:
@@ -656,7 +680,9 @@ class ShearWall():
 
     def stiffness(self, story_name: str) -> float:
 
-        # TODO: Validate that the specified story exists in the shear wall
+        # Validate that the specified story exists in the shear wall
+        if not any(story[0] == story_name for story in self._stories):
+            raise Exception(f'Unable to obtain stiffness. Story {story_name} does not exist.')
 
         # Step through each story in the model to find the one we're looking for
         for story in self._stories:
@@ -676,11 +702,14 @@ class ShearWall():
         # Step through each node in the model
         for node in self.model.nodes.values():
 
+            local_coords = self.global2local(node.X, node.Y, node.Z)
+            x, y, z = local_coords[0], local_coords[1], local_coords[2]
+
             # Determine if this node is in this story
-            if (round(node.X, 10) >= round(story[2], 10)
-            and round(node.X, 10) <= round(story[3], 10)
-            and isclose(story[1], node.Y)
-            and isclose(node.Z, 0)):
+            if (round(x, 10) >= round(story[2], 10)
+            and round(x, 10) <= round(story[3], 10)
+            and isclose(story[1], y)
+            and isclose(z, 0)):
 
                 # Check if this deflection is the largest in the story
                 if node.DX['Stiffness: ' + story_name] > d_max:
@@ -690,24 +719,10 @@ class ShearWall():
         # Return the story's stiffness:
         return V/(d_max)
 
-    def render(self, color_map: str = 'Txy', combo_name: str = 'Combo 1') -> None:
-        
-        from Pynite.Visualization import Renderer
-        renderer = Renderer(self.model)
-        renderer.annotation_size = 0.25
-        renderer.render_loads = True
-        renderer.combo_name = combo_name
-        renderer.color_map = color_map
-        renderer.scalar_bar = True
-        renderer.deformed_shape = True
-        renderer.deformed_scale = 300
-        renderer.labels = False
-        renderer.render_model()
-
     def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './') -> None:
 
         from Pynite.Rendering import Renderer
-        
+
         renderer = Renderer(self.model)
         renderer.window_width = 750
         renderer.window_height = 750
@@ -773,28 +788,47 @@ class ShearWall():
         print('+----------------------------+')
         print(table)
 
-    def _local2global(self, x: float, y: float, z: float, plane: Literal['XY', 'XZ', 'YZ']) -> tuple:
+    def _local2global(self, x: float, y: float, z: float) -> List[float]:
 
         Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
 
-        if plane == 'XY':
+        if self.plane == 'XY':
             X = Xo + x
             Y = Yo + y
             Z = Zo
-        elif plane == 'XZ':
+        elif self.plane == 'XZ':
             X = Xo + x
             Y = Yo
             Z = Zo + y
-        elif plane == 'YZ':
+        elif self.plane == 'YZ':
             X = Xo
             Y = Yo + y
             Z = Zo + x
 
-        return (X, Y, Z)
+        return [X, Y, Z]
 
-#%%
+    def global2local(self, X:float, Y:float, Z:float) -> List[float]:
+
+        Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
+
+        if self.plane == 'XY':
+            x = X - Xo
+            y = Y - Yo
+            z = Z - Zo
+        elif self.plane == 'YZ':
+            x = Z - Zo
+            y = Y - Yo
+            z = X - Xo
+        elif self.plane == 'XZ':
+            x = X - Xo
+            y = Z - Zo
+            z = Y - Yo
+
+        return [x, y, z]
+
+# %%
 class Pier():
-    
+
     def __init__(self, name: str, x: float, y: float, width: float, height: float) -> None:
         self.name: str = name
         self.x: float = x  # The location of the left side of the pier
@@ -802,7 +836,7 @@ class Pier():
         self.width: float = width
         self.height: float = height
         self.plates: List[Quad3D] = []
-    
+
     def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
 
         # Initialize the forces in the plate
@@ -811,8 +845,11 @@ class Pier():
         # Step through each plate in the pier
         for plate in self.plates:
 
+            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+
             # Determine if this plate is at the bottom of the pier
-            if isclose(plate.i_node.Y, self.y):
+            if isclose(yi, self.y):
 
                 # Find and sum the axial forces in this plate
                 Pi = plate.F(combo_name)[1][0]
@@ -820,31 +857,31 @@ class Pier():
                 P += -Pi - Pj
 
                 # Find and sum the moments about the pier's center in this plate
-                xi = plate.i_node.X - (self.x + self.width/2)
-                xj = plate.j_node.X - (self.x + self.width/2)
-                Mi = plate.F(combo_name)[1][0]*xi
-                Mj = plate.F(combo_name)[7][0]*xj
+                xi_p = xi - (self.x + self.width/2)
+                xj_p = xj - (self.x + self.width/2)
+                Mi = plate.F(combo_name)[1][0]*xi_p
+                Mj = plate.F(combo_name)[7][0]*xj_p
                 M += -Mi - Mj
 
                 # Find and sum the shear forces in this plate
                 # Check if this is a flange plate or a web plate
-                if isclose(plate.i_node.X, plate.j_node.X):
+                if isclose(xi, xj):
                     Vi = -plate.F(combo_name)[2][0]
                     Vj = -plate.F(combo_name)[8][0]
                 else:
                     Vi = -plate.F(combo_name)[0][0]
                     Vj = -plate.F(combo_name)[6][0]
                 V += -Vi - Vj
-        
+
         # Calculate the shear span ratio
         M_VL = M/(V*self.width)
 
         # Return the summed forces and shear span ratio
         return P, M, V, M_VL
 
-#%%
+# %%
 class CouplingBeam():
-    
+
     def __init__(self, name: str, x: float, y: float, length: float, height: float) -> None:
         self.name: str = name
         self.x: float = x  # The location of the left side of the coupling beam
@@ -852,7 +889,7 @@ class CouplingBeam():
         self.length: float = length
         self.height: float = height
         self.plates: List[Quad3D] = []
-    
+
     def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
 
         # Initialize plate forces to zero
@@ -861,15 +898,19 @@ class CouplingBeam():
         # Step through each plate in the coupling beam
         for plate in self.plates:
 
+            xi, yi, zi = self.global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
+            xj, yj, zj = self.global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+            xn, yn, zn = self.global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z)
+
             # Determine if this plate is at the left edge of the coupling beam
-            if isclose(plate.i_node.X, self.x):
-                
+            if isclose(xi, self.x):
+
                 # Check if this is a wall flange plate or a wall web plate
-                if isclose(plate.i_node.X, plate.j_node.X):
+                if isclose(xi, xj):
 
                     # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
                     pass
-                
+
                 else:
 
                     # Find and sum the axial forces in this plate
@@ -878,10 +919,10 @@ class CouplingBeam():
                     P += -Pi - Pn
 
                     # Find and sum the moments about the coupling beam's center in this plate
-                    xi = plate.i_node.Y - (self.y + self.height/2)
-                    xn = plate.n_node.Y - (self.y + self.height/2)
-                    Mi = plate.F(combo_name)[0][0]*xi
-                    Mn = plate.F(combo_name)[18][0]*xn
+                    xi_cb = yi - (self.y + self.height/2)
+                    xn_cb = yn - (self.y + self.height/2)
+                    Mi = plate.F(combo_name)[0][0]*xi_cb
+                    Mn = plate.F(combo_name)[18][0]*xn_cb
                     M += -Mi - Mn
 
                     # Find and sum the shear forces in this plate
@@ -889,7 +930,7 @@ class CouplingBeam():
                     Vn = -plate.F(combo_name)[19][0]
 
                     V += -Vi - Vn
-        
+
         # Calculate the shear span ratio
         M_VH = M/(V*self.height)
 
