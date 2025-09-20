@@ -1,4 +1,5 @@
-from Pynite import FEModel3D, ShearWall
+from Pynite import FEModel3D
+from Pynite.Rendering import Renderer
 from math import isclose
 
 
@@ -44,6 +45,12 @@ def test_rect_mesh_in_plane_stiffness():
 
     # Check that the stiffness is as expected
     assert round(k) == 1369, 'Failed rectangular mesh stiffness test.'
+
+    rndr = Renderer(model)
+    rndr.combo_name = '1.0E'
+    rndr.render_loads = True
+    rndr.color_map = 'Txy'
+    rndr.render_model()
 
 def test_PCA_7_quad():
     """
@@ -204,6 +211,6 @@ def test_PCA_7_rect():
 
 if __name__ == '__main__':
 
+    pass
     # test_rect_mesh()
-    test_shear_wall()
     # test_PCA_7_quad()
