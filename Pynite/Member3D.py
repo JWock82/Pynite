@@ -2,9 +2,9 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING, Literal, Union, List
 from math import isclose
 
-from numpy import array, zeros, add, subtract, matmul, insert, cross, divide, count_nonzero, concatenate
+from numpy import array, zeros, add, subtract, matmul, insert, dot, cross, divide, count_nonzero, concatenate
 from numpy import linspace, vstack, hstack, allclose, radians, sin, cos
-from numpy.linalg import inv, pinv, matrix_rank
+from numpy.linalg import inv, pinv, norm
 
 import Pynite.FixedEndReactions
 from Pynite.BeamSegZ import BeamSegZ
@@ -576,24 +576,29 @@ class Member3D():
         Returns the transformation matrix for the member.
         """
 
-        x1 = self.i_node.X
-        x2 = self.j_node.X
-        y1 = self.i_node.Y
-        y2 = self.j_node.Y
-        z1 = self.i_node.Z
-        z2 = self.j_node.Z
+        # Get the global coordinates for the two ends
+        Xi = self.i_node.X
+        Xj = self.j_node.X
+
+        Yi = self.i_node.Y
+        Yj = self.j_node.Y
+
+        Zi = self.i_node.Z
+        Zj = self.j_node.Z
+
+        # Calculate the length of the member
         L = self.L()
 
         # Calculate the direction cosines for the local x-axis
-        x = [(x2-x1)/L, (y2-y1)/L, (z2-z1)/L]
+        x = [(Xj - Xi)/L, (Yj - Yi)/L, (Zj - Zi)/L]
 
         # Calculate the remaining direction cosines.
         # For now, the local z-axis will be kept parallel to the global XZ plane in all cases. It will be adjusted later if a rotation has been applied to the member.
         # Vertical members
-        if isclose(x1, x2) and isclose(z1, z2):
+        if isclose(Xi, Xj) and isclose(Zi, Zj):
 
             # For vertical members, keep the local y-axis in the XY plane to make 2D problems easier to solve in the XY plane
-            if y2 > y1:
+            if Yj > Yi:
                 y = [-1, 0, 0]
                 z = [0, 0, 1]
             else:
@@ -601,7 +606,7 @@ class Member3D():
                 z = [0, 0, 1]
 
         # Horizontal members
-        elif isclose(y1, y2):
+        elif isclose(Yi, Yj):
 
             # Find a vector in the direction of the local z-axis by taking the cross-product
             # of the local x-axis and the local y-axis. This vector will be perpendicular to
@@ -616,7 +621,7 @@ class Member3D():
         else:
 
             # Find the projection of x on the global XZ plane
-            proj = [x2-x1, 0, z2-z1]
+            proj = [Xj - Xi, 0, Zj - Zi]
 
             # Find a vector in the direction of the local z-axis by taking the cross-product
             # of the local x-axis and its projection on a plane parallel to the XZ plane. This
@@ -624,7 +629,7 @@ class Member3D():
             # vector will always be horizontal since it's parallel to the XZ plane. The order
             # in which the vectors are 'crossed' has been selected to ensure the y-axis always
             # has an upward component (i.e. the top of the beam is always on top).
-            if y2 > y1:
+            if Yj > Yi:
                 z = cross(proj, x)
             else:
                 z = cross(x, proj)
@@ -639,17 +644,25 @@ class Member3D():
         # Check if the member is rotated
         if self.rotation != 0.0:
 
-            # Get the member rotation angle
+            # Convert the rotation angle to radians
             theta = radians(self.rotation)
 
-            # Define the rotation matrix for rotation about the x-axis
-            R = array([[1, 0, 0],
-                    [0, cos(theta), -sin(theta)],
-                    [0, sin(theta), cos(theta)]])
+            # Shorthand cosine and sine functions
+            c = cos(theta)
+            s = sin(theta)
 
-            # Rotate the y and z axes about the x axis
-            y = R @ y
-            z = R @ z
+            # Convert `x` to a numpy array
+            u = array(x)
+
+            # Rotate y using the Rodrigues formula
+            v = array(y)
+            y = v * c + cross(u, v) * s + u * (dot(u, v)) * (1 - c)
+            y /= norm(y)
+
+            # Rotate z using the Rodrigues formula
+            v = array(z)
+            z = v * c + cross(u, v) * s + u * (dot(u, v)) * (1 - c)
+            z /= norm(z)
 
         # Create the direction cosines matrix
         dirCos = array([x, y, z])
@@ -2266,7 +2279,7 @@ class Member3D():
             # x-direction segments (for torsional moment)
             newSeg = BeamSegZ()            # Create the new segment
             newSeg.x1 = disconts[index]    # Segment start location
-            newSeg.x2 = disconts[index+1]  # Segment end location
+            newSeg.x2 = disconts[index + 1]  # Segment end location
             newSeg.EA = E*A                # Segment axial stiffness
             SegmentsX.append(newSeg)       # Add the segment to the list
 
