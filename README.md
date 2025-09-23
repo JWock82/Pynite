@@ -66,6 +66,11 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.5.0 (in progress)
+* Extended max/min enveloping to plate/quad meshes. Now you can quickly check the max/min mesh forces accross multiple load combinations in one simple command by passing a list of `combo_tags` to the functions.
+* Added max/min enveloping to torsion.
+* Fixed an error in member rotations. Rotations about the member's local x-axis were not being applied correctly. They are now applied using the Rodrigues formula.
+
 v1.4.0
 * Added the ability to check across multiple combinations for max/min member force and deflection results using combo tags. Simply substitute a list of combo tags to the functions instead of a load combination name and the functions will envelope results across any combinations having the given tags. No more searching all combinations manually!
 * Improved the efficiency of member max/min result functions by removing redundant segmentation routine calls.
