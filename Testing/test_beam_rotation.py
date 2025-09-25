@@ -1,5 +1,6 @@
 from Pynite import FEModel3D
 import pytest as pt
+from math import isclose
 
 # Tests
 def test_beam_rotation():
@@ -40,5 +41,67 @@ def test_beam_rotation():
     assert My_max == pt.approx(17.677, rel=1e-2)
     assert My_min == pt.approx(0.0, rel=1e-2)
 
+
+def test_column_rotation():
+
+    # Initialize a new model
+    model = FEModel3D()
+
+    # Define materials and sections
+    model.add_material(name="Steel", E=29000, G=11200, nu=0.3, rho=0.0002836)
+    model.add_section(name="W14x90", A=26.5, Iy=362, Iz=999, J=6.14)
+
+    # Add nodes
+    model.add_node(name="N1", X=0, Y=0, Z=0)
+    model.add_node(name="N2", X=0, Y=10, Z=0)
+
+    # Add a vertical member with a 90-degree rotation
+    model.add_member(
+        name="M2",
+        i_node="N1",
+        j_node="N2",
+        material_name="Steel",
+        section_name="W14x90",
+        rotation=90  # Applying the 90-degree rotation
+    )
+
+    # Define supports
+    # Support at N1: Fixed in translation, released in rotation (except about Y)
+    model.def_support("N1", support_DX=True, support_DY=True, support_DZ=True, support_RY=True)
+    # Support at N2: Fixed in translation, fully released in rotation
+    model.def_support("N2", support_DX=True, support_DY=True, support_DZ=True)
+
+    # Add loads
+    # Define a load combination
+    model.add_load_combo("Combo 1", {"Default": 1.0})
+    # Add a 1 kip point load in the global Z direction at the member's midpoint
+    member_length = model.members["M2"].L()
+    model.add_member_pt_load(
+        member_name="M2",
+        direction="FZ",       # FZ corresponds to the Global Z-axis
+        P=-1.0,               # Magnitude of the load
+        x=member_length / 2,  # Location at the midpoint
+        case="Default"
+    )
+
+    # Analyze the model
+    model.analyze()
+
+    # Display the results
+    # Get the moment about the local z-axis (Mz) at the midpoint
+    Mz_mid = model.members["M2"].moment("Mz", member_length / 2, "Combo 1")
+
+    # Check the value
+    assert round(Mz_mid, 10) == -2.5, 'Column rotation test failed (in Mz direction).'
+
+    # Check moment about My as well:
+    My_mid = model.members["M2"].moment("My", member_length / 2, "Combo 1")
+
+    # Check the value
+    assert round(My_mid, 10) == 0.0, 'Column rotation test failed (in My direction).'
+
+
 if __name__ == '__main__':
+
     test_beam_rotation()
+    test_column_rotation()
