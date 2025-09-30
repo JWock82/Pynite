@@ -201,9 +201,9 @@ class ShearWall():
                 # Get the material properties
                 material_name, t, x_start, x_end, y_start, y_end = material
 
-                xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-                xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
-                xm, ym, zm = self._global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+                xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
+                xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
+                xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
 
                 # Determine if the current plate is part of a flange
                 if isclose(xi, xj):
@@ -226,7 +226,7 @@ class ShearWall():
             elevation, x_start, x_end = support
             for node in self.model.nodes.values():
 
-                x, y, z = self._global2local(node.X, node.Y, node.Z)
+                x, y, z = _global2local(node.X, node.Y, node.Z, self.origin, self.plane)
 
                 if isclose(y, elevation) and round(x, 10) >= round(x_start, 10) and round(x, 10) <= round(x_end, 10):
                     self.model.def_support(node.name, True, True, True, True, True, True)
@@ -243,7 +243,7 @@ class ShearWall():
             # Step through each node in the model
             for node in self.model.nodes.values():
 
-                x, y, z = self._global2local(node.X, node.Y, node.Z)
+                x, y, z = _global2local(node.X, node.Y, node.Z, self.origin, self.plane)
 
                 # Check if this node belongs to this story
                 if isclose(y, elevation) and x >= x_start and x <= x_end and isclose(z, 0):
@@ -330,7 +330,7 @@ class ShearWall():
             height = self.H
             x = x_vals[i]
             y = 0
-            self.piers['P' + str(i+1)] = Pier('P' + str(i+1), x, y, width, height)
+            self.piers['P' + str(i+1)] = Pier('P' + str(i+1), x, y, width, height, self)
 
         # Divide the strip piers further into rectanglular piers using the top and bottom of each opening as pier boundaries
         new_piers: Dict[str, Pier] = {}
@@ -338,10 +338,10 @@ class ShearWall():
         for pier in self.piers.values():
             for i in range(len(y_vals) - 1):
                 width = pier.width
-                height = y_vals[i+1] - y_vals[i]
+                height = y_vals[i + 1] - y_vals[i]
                 x = pier.x
                 y = y_vals[i]
-                new_piers['P' + str(pier_count)] = Pier('P' + str(pier_count), x, y, width, height)
+                new_piers['P' + str(pier_count)] = Pier('P' + str(pier_count), x, y, width, height, self)
                 pier_count += 1
         self.piers = new_piers
 
@@ -433,9 +433,9 @@ class ShearWall():
         # Assign plates to each pier
         for plate in self.model.quads.values():
 
-            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
-            xm, ym, zm = self._global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+            xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
+            xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
+            xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
 
             y_avg = (yi + ym)/2
             x_avg = (xi + xm)/2
@@ -606,8 +606,8 @@ class ShearWall():
         # Assign plates to each beam
         for plate in self.model.quads.values():
 
-            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xm, ym, zm = self._global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z)
+            xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
+            xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
 
             y_avg = (yi + ym)/2
             x_avg = (xi + xm)/2
@@ -721,7 +721,7 @@ class ShearWall():
         # Step through each node in the model
         for node in self.model.nodes.values():
 
-            local_coords = self._global2local(node.X, node.Y, node.Z)
+            local_coords = _global2local(node.X, node.Y, node.Z, self.origin, self.plane)
             x, y, z = local_coords[0], local_coords[1], local_coords[2]
 
             # Determine if this node is in this story
@@ -826,34 +826,44 @@ class ShearWall():
 
         return [X, Y, Z]
 
-    def _global2local(self, X: float, Y: float, Z: float) -> List[float]:
+def _global2local(X: float, Y: float, Z: float, origin: List[float] = [0, 0, 0], plane: Literal['XY', 'YZ', 'XZ'] = 'XY') -> List[float]:
 
-        Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
+    Xo, Yo, Zo = origin[0], origin[1], origin[2]
 
-        if self.plane == 'XY':
-            x = X - Xo
-            y = Y - Yo
-            z = Z - Zo
-        elif self.plane == 'YZ':
-            x = Z - Zo
-            y = Y - Yo
-            z = X - Xo
-        elif self.plane == 'XZ':
-            x = X - Xo
-            y = Z - Zo
-            z = Y - Yo
+    if plane == 'XY':
+        x = X - Xo
+        y = Y - Yo
+        z = Z - Zo
+    elif plane == 'YZ':
+        x = Z - Zo
+        y = Y - Yo
+        z = -(X - Xo)
+    elif plane == 'XZ':
+        x = X - Xo
+        y = Z - Zo
+        z = -(Y - Yo)
+    else:
+        raise Exception('Invalid plane specified for coordinate transformation')
 
-        return [x, y, z]
+    return [x, y, z]
+
 
 # %%
 class Pier():
 
-    def __init__(self, name: str, x: float, y: float, width: float, height: float) -> None:
+    def __init__(self, name: str, x: float, y: float, width: float, height: float, shear_wall: ShearWall) -> None:
         self.name: str = name
         self.x: float = x  # The location of the left side of the pier
         self.y: float = y  # The height of the bottom of the pier
         self.width: float = width
         self.height: float = height
+
+        # Read in relevant data from the parent shear wall
+        self.shear_wall = shear_wall
+        self.plane = shear_wall.plane
+        self.origin = shear_wall.origin
+        
+        # This list will be used by the parent shear wall to store a list of only the plates in this pier
         self.plates: List[Quad3D] = []
 
     def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
@@ -864,8 +874,8 @@ class Pier():
         # Step through each plate in the pier
         for plate in self.plates:
 
-            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
+            xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
+            xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
 
             # Determine if this plate is at the bottom of the pier
             if isclose(yi, self.y):
@@ -898,6 +908,7 @@ class Pier():
         # Return the summed forces and shear span ratio
         return P, M, V, M_VL
 
+
 # %%
 class CouplingBeam():
 
@@ -917,9 +928,9 @@ class CouplingBeam():
         # Step through each plate in the coupling beam
         for plate in self.plates:
 
-            xi, yi, zi = self._global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z)
-            xj, yj, zj = self._global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z)
-            xn, yn, zn = self._global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z)
+            xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
+            xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
+            xn, yn, zn = _global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z, self.origin, self.plane)
 
             # Determine if this plate is at the left edge of the coupling beam
             if isclose(xi, self.x):
