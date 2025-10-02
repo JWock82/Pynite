@@ -493,7 +493,7 @@ class ShearWall():
             length = self.L
             y = y_vals[i]
             x = 0
-            self.coupling_beams['B' + str(i+1)] = CouplingBeam('B' + str(i+1), x, y, length, height)
+            self.coupling_beams['B' + str(i+1)] = CouplingBeam('B' + str(i+1), x, y, length, height, self)
 
         # Divide the strips further into rectanglular beams using the left and right of each opening as beam boundaries
         new_beams: Dict[str, CouplingBeam] = {}
@@ -504,7 +504,7 @@ class ShearWall():
                 length = x_vals[i+1] - x_vals[i]
                 y = beam.y
                 x = x_vals[i]
-                new_beams['B' + str(beam_count)] = CouplingBeam('B' + str(beam_count), x, y, length, height)
+                new_beams['B' + str(beam_count)] = CouplingBeam('B' + str(beam_count), x, y, length, height, self)
                 beam_count += 1
         self.coupling_beams = new_beams
 
@@ -826,6 +826,7 @@ class ShearWall():
 
         return [X, Y, Z]
 
+
 def _global2local(X: float, Y: float, Z: float, origin: List[float] = [0, 0, 0], plane: Literal['XY', 'YZ', 'XZ'] = 'XY') -> List[float]:
 
     Xo, Yo, Zo = origin[0], origin[1], origin[2]
@@ -862,7 +863,7 @@ class Pier():
         self.shear_wall = shear_wall
         self.plane = shear_wall.plane
         self.origin = shear_wall.origin
-        
+
         # This list will be used by the parent shear wall to store a list of only the plates in this pier
         self.plates: List[Quad3D] = []
 
@@ -912,12 +913,18 @@ class Pier():
 # %%
 class CouplingBeam():
 
-    def __init__(self, name: str, x: float, y: float, length: float, height: float) -> None:
+    def __init__(self, name: str, x: float, y: float, length: float, height: float, shear_wall: ShearWall) -> None:
         self.name: str = name
         self.x: float = x  # The location of the left side of the coupling beam
         self.y: float = y  # The height to the bottom of the coupling beam
         self.length: float = length
         self.height: float = height
+
+        # Read in relevant data from the parent shear wall
+        self.shear_wall = shear_wall
+        self.plane = shear_wall.plane
+        self.origin = shear_wall.origin
+
         self.plates: List[Quad3D] = []
 
     def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
