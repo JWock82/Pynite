@@ -6,7 +6,7 @@
 
 ![Build Status](https://github.com/JWock82/Pynite/actions/workflows/build-and-test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JWock82/Pynite/branch/main/graph/badge.svg?token=ZH18US3A7P)](https://codecov.io/gh/JWock82/Pynite)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA?cacheSeconds=86400)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/Pynite">
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/Pynite)
 ![GitHub](https://img.shields.io/github/license/JWock82/Pynite)
@@ -66,9 +66,10 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.5.0 (in progress)
+v1.5.0
 * Extended max/min enveloping to plate/quad meshes. Now you can quickly check the max/min mesh forces accross multiple load combinations in one simple command by passing a list of `combo_tags` to the functions.
 * Added max/min enveloping to torsion.
+* Refactored shear walls to be more `Pynite`-esque. They work similar to other items in `Pynite` now within the `FEModel3D` class, rather than being a stand-alone type of model. Multiple shear walls can be in one model now, and they can be defined parallel to any major global plane and originating at any position. They are much more user-friendly than they were before.
 * Fixed an error in member rotations that has persisted since v1.0.0. Rotations about the member's local x-axis were not being applied correctly. They are now applied using the Rodrigues formula.
 
 v1.4.0
