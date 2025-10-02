@@ -58,9 +58,17 @@ class ShearWall():
         self._flanges.append([thickness, width, x, y_start, y_end, material, side])
 
     def add_support(self, elevation: float | None = None, x_start: float | None = None, x_end: float | None = None) -> None:
+
+        # Default support settings
         if elevation is None: elevation = 0
         if x_start is None: x_start = 0
         if x_end is None: x_end = self.L
+
+        # Handle invalid supports
+        if elevation < 0 or elevation > self.H or x_start < 0 or x_start > self.L or x_end < 0 or x_end > self.L:
+            raise Exception(f'Support for shear wall `{self.name}` falls outside the extents of the wall and is invalid.')
+
+        # Add the supports to the wall
         self._supports.append([elevation, x_start, x_end])
 
     def add_story(self, story_name: str, elevation: float, x_start: float | None = None, x_end: float | None = None) -> None:
@@ -882,25 +890,25 @@ class Pier():
             if isclose(yi, self.y):
 
                 # Find and sum the axial forces in this plate
-                Pi = plate.F(combo_name)[1][0]
-                Pj = plate.F(combo_name)[7][0]
+                Pi = plate.f(combo_name)[1][0]
+                Pj = plate.f(combo_name)[7][0]
                 P += -Pi - Pj
 
                 # Find and sum the moments about the pier's center in this plate
                 xi_p = xi - (self.x + self.width/2)
                 xj_p = xj - (self.x + self.width/2)
-                Mi = plate.F(combo_name)[1][0]*xi_p
-                Mj = plate.F(combo_name)[7][0]*xj_p
+                Mi = plate.f(combo_name)[1][0]*xi_p
+                Mj = plate.f(combo_name)[7][0]*xj_p
                 M += -Mi - Mj
 
                 # Find and sum the shear forces in this plate
                 # Check if this is a flange plate or a web plate
                 if isclose(xi, xj):
-                    Vi = -plate.F(combo_name)[2][0]
-                    Vj = -plate.F(combo_name)[8][0]
+                    Vi = -plate.f(combo_name)[2][0]
+                    Vj = -plate.f(combo_name)[8][0]
                 else:
-                    Vi = -plate.F(combo_name)[0][0]
-                    Vj = -plate.F(combo_name)[6][0]
+                    Vi = -plate.f(combo_name)[0][0]
+                    Vj = -plate.f(combo_name)[6][0]
                 V += -Vi - Vj
 
         # Calculate the shear span ratio
@@ -951,20 +959,20 @@ class CouplingBeam():
                 else:
 
                     # Find and sum the axial forces in this plate
-                    Pi = plate.F(combo_name)[0][0]
-                    Pn = plate.F(combo_name)[18][0]
+                    Pi = plate.f(combo_name)[0][0]
+                    Pn = plate.f(combo_name)[18][0]
                     P += -Pi - Pn
 
                     # Find and sum the moments about the coupling beam's center in this plate
                     xi_cb = yi - (self.y + self.height/2)
                     xn_cb = yn - (self.y + self.height/2)
-                    Mi = plate.F(combo_name)[0][0]*xi_cb
-                    Mn = plate.F(combo_name)[18][0]*xn_cb
+                    Mi = plate.f(combo_name)[0][0]*xi_cb
+                    Mn = plate.f(combo_name)[18][0]*xn_cb
                     M += -Mi - Mn
 
                     # Find and sum the shear forces in this plate
-                    Vi = -plate.F(combo_name)[1][0]
-                    Vn = -plate.F(combo_name)[19][0]
+                    Vi = -plate.f(combo_name)[1][0]
+                    Vn = -plate.f(combo_name)[19][0]
 
                     V += -Vi - Vn
 
