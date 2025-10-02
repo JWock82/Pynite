@@ -5,6 +5,8 @@
 # isn't nearly as accurate as the finite element method, so some differences
 # in the final results are expected.
 
+# Note: This example builds the wall from scratch. Pynite has a newer shear wall feature to assist in building shear walls. See the `Shear Wall - Advanced.py` file for an example of that feature.
+
 # Import a few libraries from Pynite that we'll need
 from Pynite.FEModel3D import FEModel3D
 from math import isclose
