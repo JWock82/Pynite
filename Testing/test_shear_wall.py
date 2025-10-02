@@ -3,7 +3,7 @@ from Pynite.Rendering import Renderer
 from math import isclose
 
 
-def test_shear_wall():
+def test_shear_walls():
 
     # Create a new finite element model
     model = FEModel3D()
@@ -59,6 +59,19 @@ def test_shear_wall():
     # Find the stiffness of the shear wall when a shear is applied to the roof (usefull for rigid diaphragm analysis)
     k = model.shear_walls[wall_name].stiffness('Roof')
 
+    # model.shear_walls[wall_name].draw_coupling_beams(True)
+    # model.shear_walls[wall_name].draw_piers(True)
+
+    for pier in model.shear_walls[wall_name].piers.values():
+        pier_name = pier.name
+        sum_forces = pier.sum_forces('1.0E')
+        print(f'Pier {pier_name} force sums: {sum_forces}')
+
+    for beam in model.shear_walls[wall_name].coupling_beams.values():
+        beam_name = beam.name
+        sum_forces = beam.sum_forces('1.0E')
+        print(f'Coupling beam {beam_name} force sums: {sum_forces}')
+
     # Check that the calculated stiffness is within 5% of the expected value
     # assert abs(1 - k/k_expected) <= 0.05
 
@@ -71,6 +84,56 @@ def test_shear_wall():
     # rndr.deformed_shape = True
     # rndr.deformed_scale = 300
     # rndr.render_model()
+
+def test_piers_and_coupling_beams():
+
+    # Create a new finite element model
+    model = FEModel3D()
+
+    # Define a material for our shear wall
+    fm = 2000/1000*144  # ksf
+    Em = 900*fm  # ksf
+    Gm = 0.4*Em  # ksf
+    nu = 0.17
+    rho_m = 0.140  # kcf
+    model.add_material('CMU', Em, Gm, nu, rho_m)
+
+    # Create a wall parallel to the 'XY' plane starting at [5, 5, 5]
+    plane = 'YZ'
+    origin = [5, 5, 5]
+
+    # Add a new shear wall to the model
+    model.add_shear_wall('Wall1', mesh_size=1, length=20, height=15, thickness=1, material_name='CMU', ky_mod=1, plane=plane, origin=origin)
+
+    # Add an opening to the wall
+    model.shear_walls['Wall1'].add_opening('Door', x_start=5, y_start=0, width=10, height=10, tie=None)
+
+    # Add support across the entire base of the wall
+    model.shear_walls['Wall1'].add_support(elevation=0, x_start=0, x_end=20)
+
+    # Add a story to the shear wall where loads will be applied
+    # Note that `x_start` and `x_end` are optional arguments. If they are omitted, the story's length will default to the full length of the wall. `x_start` and `x_end` can be used to simulate loading from a partial depth diaphragm.
+    model.shear_walls['Wall1'].add_story('Roof', elevation=15, x_start=0, x_end=20)
+
+    # Add a seismic shear force of 100 kips to the roof
+    model.shear_walls['Wall1'].add_shear(story_name='Roof', force=100, case='E')
+
+    # Add a load combination to the model
+    model.add_load_combo('1.0E', {'E': 1.0}, combo_tags='strength')
+
+    # Analyze the model. Use the linear solver for greater speed
+    model.analyze_linear(log=True, check_statics=True)
+
+    # model.shear_walls['Wall1'].draw_piers()
+
+    P1, M1, V1, M_VL1 = model.shear_walls['Wall1'].piers['P1'].sum_forces('1.0E')
+    P3, M3, V3, M_VL3 = model.shear_walls['Wall1'].piers['P3'].sum_forces('1.0E')
+
+    # Run a few simple statics checks on the piers
+    assert round(V1, 3) == -50 and round(V3, 3) == -50, 'Failed shear wall pier statics check (sum of shears != 0).'
+    assert round(P1, 3) == -round(P3, 3), 'Failed shear wall pier statics check (sum of axial forces != 0.)'
+    assert round(M1, 3) == round(M3, 3), 'Failed shear wall pier statics check (sum of moments != 0).'
+
 
 def test_quad_shear_wall():
 
@@ -299,4 +362,5 @@ def test_shear_wall_openings():
 
 
 if __name__ == '__main__':
-    test_shear_wall()
+    # test_shear_walls()
+    test_piers_and_coupling_beams()
