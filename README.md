@@ -71,6 +71,7 @@ v1.5.0
 * Added max/min enveloping to torsion.
 * Refactored shear walls to be more `Pynite`-esque. They work similar to other items in `Pynite` now within the `FEModel3D` class, rather than being a stand-alone type of model. Multiple shear walls can be in one model now, and they can be defined parallel to any major global plane and originating at any position. They are much more user-friendly than they were before.
 * Fixed an error in member rotations that has persisted since v1.0.0. Rotations about the member's local x-axis were not being applied correctly. They are now applied using the Rodrigues formula.
+* Changed the way $P-\delta$ member internal deflections are calculated. Before the program would iterate, sometimes without a solution. Now a closed-form solution for $P-\delta$ member internal deflections is used. This should speed up deflection calculations for members, and be more robust.
 
 v1.4.0
 * Added the ability to check across multiple combinations for max/min member force and deflection results using combo tags. Simply substitute a list of combo tags to the functions instead of a load combination name and the functions will envelope results across any combinations having the given tags. No more searching all combinations manually!
