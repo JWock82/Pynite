@@ -87,8 +87,8 @@ def test_beam_internal_forces():
     assert math.isclose(beam.members['M1'].min_moment('My', 'D'), -6.25, abs_tol=2), 'My internal min moment test failed.'
     assert math.isclose(beam.members['M1'].max_moment('Mz', 'D'), 0, abs_tol=2), 'Mz internal max moment test failed.'
     assert math.isclose(beam.members['M1'].max_moment('My', 'D'), 0, abs_tol=2), 'My internal max moment test failed.'
-    assert math.isclose(beam.members['M1'].min_moment('Mz', ['strength']), -22.5, abs_tol=2), 'Mz internal max moment test failed.'
-    assert math.isclose(beam.members['M1'].max_moment('My', ['strength']), 0, abs_tol=2), 'My internal max moment test failed.'
+    assert math.isclose(beam.members['M1'].min_moment('Mz', ['strength']), -22.5, abs_tol=2), 'Failed member Mz envelope results test.'
+    assert math.isclose(beam.members['M1'].max_moment('My', ['strength']), 0, abs_tol=2), 'Failed member My envelope results test.'
 
     # Check the deflected shape
     assert math.isclose(beam.members['M1'].deflection('dy', 0, 'D')*12, 0, abs_tol=0.00001), 'dy internal deflection test failed at start of member.'
@@ -102,8 +102,8 @@ def test_beam_internal_forces():
     assert math.isclose(beam.members['M1'].max_deflection('dz', 'D')*12, 0, abs_tol=0.00001), 'dz internal max deflection test failed.'
     assert math.isclose(beam.members['M1'].min_deflection('dz', 'D')*12, 5*(-0.5)*10**4/(384*E*Iz)*12, abs_tol=0.00001), 'dz internal min deflection test failed.'
     assert math.isclose(beam.members['M1'].min_deflection('dy', 'D')*12, 5*(-0.5)*10**4/(384*E*Iy)*12, abs_tol=0.00001), 'dy internal min deflection test failed.'
-    assert math.isclose(beam.members['M1'].min_deflection('dz', ['strength'])*12, 5*(-1.8)*10**4/(384*E*Iz)*12, abs_tol=0.00001), 'dz internal min deflection test failed.'
-    assert math.isclose(beam.members['M1'].min_deflection('dy', ['strength'])*12, 5*(-1.8)*10**4/(384*E*Iy)*12, abs_tol=0.00001), 'dy internal min deflection test failed.'
+    assert math.isclose(beam.members['M1'].min_deflection('dz', ['strength'])*12, 5*(-1.8)*10**4/(384*E*Iz)*12, abs_tol=0.00001), 'Failed member dz envelope test.'
+    assert math.isclose(beam.members['M1'].min_deflection('dy', ['strength'])*12, 5*(-1.8)*10**4/(384*E*Iy)*12, abs_tol=0.00001), 'Failed member dy envelope test.'
 
 
 if __name__ == '__main__':
