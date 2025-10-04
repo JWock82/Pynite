@@ -1,6 +1,6 @@
 from Pynite import FEModel3D
 import pytest as pt
-from math import isclose
+
 
 # Tests
 def test_beam_rotation():

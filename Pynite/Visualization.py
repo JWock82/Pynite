@@ -40,16 +40,16 @@ class Renderer():
     @property
     def window_width(self):
         return self.window.GetSize()[0]
-    
+
     @window_width.setter
     def window_width(self, width):
         height = self.window.GetSize()[1]
         self.window.SetSize(width, height)
-    
+
     @property
     def window_height(self):
         return self.window.GetSize()[1]
-    
+
     @window_height.setter
     def window_height(self, height):
         width = self.window.GetSize()[0]
@@ -57,13 +57,13 @@ class Renderer():
 
     def set_annotation_size(self, size=5):
         self.annotation_size = size
-    
+
     def set_deformed_shape(self, deformed_shape=False):
         self.deformed_shape = deformed_shape
-    
+
     def set_deformed_scale(self, scale=30):
         self.deformed_scale = scale
-    
+
     def set_render_nodes(self, render_nodes=True):
         self.render_nodes = render_nodes
 
@@ -77,21 +77,21 @@ class Renderer():
         :type color_map: str, optional
         """
         self.color_map = color_map
-    
+
     def set_combo_name(self, combo_name='Combo 1'):
         self.case = None
         self.combo_name = combo_name
-    
+
     def set_case(self, case=None):
         self.combo_name = None
         self.case = case
-    
+
     def set_show_labels(self, show_labels=True):
         self.labels = show_labels
-    
+
     def set_scalar_bar(self, scalar_bar=False):
         self.scalar_bar = scalar_bar
-    
+
     def set_scalar_bar_text_size(self, text_size=24):
         self.scalar_bar_text_size = text_size
 
@@ -107,10 +107,10 @@ class Renderer():
         reset_camera : bool
             Resets the camera if set to `True`. Default is `True`.
         """
-        
+
         # Get the render window
         window = self.window
-        
+
         # Update the renderer
         self.update(reset_camera)
 
@@ -119,17 +119,17 @@ class Renderer():
 
         # Handle user interaction if requested by the user
         if interact:
-        
+
             # Set up an interactor. The interactor style determines how user interactions affect the
             # view. The trackball camera style behaves much like popular commercial CAD programs.
             interactor = vtk.vtkRenderWindowInteractor()
             style = vtk.vtkInteractorStyleTrackballCamera()
             interactor.SetInteractorStyle(style)
             interactor.SetRenderWindow(self.window)
-            
+
             # Start the interactor. Code execution will pause here until the user closes the window.
             interactor.Start()
-            
+
             # Finalize the render window once the user closes out of it. I don't understand everything
             # this does, but I've found screenshots will cause the program to crash if this line is
             # omitted. I have noticed it will shut down the interactor.
@@ -198,46 +198,38 @@ class Renderer():
             return
 
     def update(self, reset_camera=True):
-        """
-        Builds or rebuilds the VTK renderer
+        """Builds (or rebuilds) the VTK renderer
 
-        Parameters
-        ----------
-        reset_camera : bool
-            Resets the camera if set to `True`. Default is `True`.
+        :param reset_camera: Resets the render window's camera position if set to True. Defaults to True.
+        :type reset_camera: bool, optional
+        :raises Exception: _description_
         """
 
         # Input validation
         if self.deformed_shape and self.case != None:
-            raise Exception('Deformed shape is only available for load combinations,'
-                            ' not load cases.')
+            raise Exception('Deformed shape is only available for load combinations. Deformed shape is not available for load cases.')
         if self.model.load_combos == {} and self.render_loads == True and self.case == None:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
-        
+
         # Check if nodes are to be rendered
         if self.render_nodes == True:
-
-            if self.theme == 'print':
-                color = 'black'
-            else:
-                color = None
 
             # Create a visual node for each node in the model
             vis_nodes = []
             for node in self.model.nodes.values():
-                vis_nodes.append(VisNode(node, self.annotation_size, color))
-        
+                vis_nodes.append(VisNode(node, self.annotation_size))
+
         # Create a visual spring for each spring in the model
         vis_springs = []
         for spring in self.model.springs.values():
-            vis_springs.append(VisSpring(spring, self.model.nodes, self.annotation_size))    
-    
+            vis_springs.append(VisSpring(spring, self.model.nodes, self.annotation_size))
+
         # Create a visual member for each member in the model
         vis_members = []
         for member in self.model.members.values():
             vis_members.append(VisMember(member, self.model.nodes, self.annotation_size, self.theme))
-        
+
         # Get the renderer
         renderer = self.renderer
 
@@ -247,71 +239,72 @@ class Renderer():
 
         # Add actors for each spring
         for vis_spring in vis_springs:
-        
+
             # Add the actor for the spring
             renderer.AddActor(vis_spring.actor)
 
             if self.labels == True:
                 # Add the actor for the spring label
                 renderer.AddActor(vis_spring.lblActor)
-            
+
                 # Set the text to follow the camera as the user interacts. This will
                 # require a reset of the camera (see below)
                 vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())    
 
         # Add actors for each member
         for vis_member in vis_members:
-            
+
             # Add the actor for the member
             renderer.AddActor(vis_member.actor)
 
             if self.labels == True:
-                
+
                 # Add the actor for the member label
                 renderer.AddActor(vis_member.lblActor)
-            
+
                 # Set the text to follow the camera as the user interacts. This will
                 # require a reset of the camera (see below)
                 vis_member.lblActor.SetCamera(renderer.GetActiveCamera())
-        
+
         # Check if nodes are to be rendered
         if self.render_nodes == True:
-            
+
             # Combine the polydata from each node
 
             # Create an append filter for combining node polydata
             node_polydata = vtk.vtkAppendPolyData()
 
             for vis_node in vis_nodes:
-                
+
                 # Add the node's polydata
                 node_polydata.AddInputData(vis_node.polydata.GetOutput())
 
                 if self.labels == True:
 
                     if self.theme == 'print':
-                        vis_node.lblActor.GetProperty().SetColor(0, 0, 0)  # black
-                    
+
+                        vis_node.lblActor.GetProperty().SetColor(0, 0, 255)  # blue
+
                     # Add the actor for the node label
                     renderer.AddActor(vis_node.lblActor)
-                
+
                     # Set the text to follow the camera as the user interacts. This will
                     # require a reset of the camera (see below)
                     vis_node.lblActor.SetCamera(renderer.GetActiveCamera())
-            
+
             # Update the node polydata in the append filter
             node_polydata.Update()
-            
+
             # Create a mapper and actor for the nodes
             node_mapper = vtk.vtkPolyDataMapper()
             node_mapper.SetInputConnection(node_polydata.GetOutputPort())
             node_actor = vtk.vtkActor()
             node_actor.SetMapper(node_mapper)
 
-            # Adjust the color of the nodes here.
+            # Adjust the color of the nodes.
             if self.theme == 'print':
-                node_actor.GetProperty().SetColor(0, 0, 0)  # Black
-            
+                node_actor.GetProperty().SetColor(0, 0, 255)  # Blue
+
             # Add the node actor to the renderer
             renderer.AddActor(node_actor)
 
@@ -322,7 +315,7 @@ class Renderer():
         # Render the loads if requested
         if (self.combo_name != None or self.case != None) and self.render_loads != False:
             _RenderLoads(self.model, renderer, self.annotation_size, self.combo_name, self.case, self.theme)
-        
+
         # Render the plates and quads, if present
         if self.model.quads or self.model.plates:
             _RenderContours(self.model, renderer, self.deformed_shape, self.deformed_scale,
@@ -334,7 +327,7 @@ class Renderer():
             renderer.SetBackground(0, 0, 128)  # Blue
         elif self.theme == 'print':
             renderer.SetBackground(255, 255, 255)  # White
-        
+
         # Reset the camera
         if reset_camera: renderer.ResetCamera()
 
@@ -343,288 +336,272 @@ class Renderer():
 class VisNode():
 
     # Constructor
-    def __init__(self, node, annotation_size=5, color=None):
-      
+    def __init__(self, node, annotation_size=5):
+
         # Create an append filter to append all the sources related to the node into a single 'PolyData' object
         self.polydata = vtk.vtkAppendPolyData()
-      
+
         # Get the node's position
-        X = node.X # Global X coordinate
-        Y = node.Y # Global Y coordinate
-        Z = node.Z # Global Z coordinate
-      
+        X = node.X  # Global X coordinate
+        Y = node.Y  # Global Y coordinate
+        Z = node.Z  # Global Z coordinate
+
         # Generate a sphere source for the node
         sphere = vtk.vtkSphereSource()
         sphere.SetCenter(X, Y, Z)
         sphere.SetRadius(0.6*annotation_size)
         sphere.Update()
         self.polydata.AddInputData(sphere.GetOutput())
-      
+
         # Create the text for the node label
         label = vtk.vtkVectorText()
         label.SetText(node.name)
-        
+
         # Set up a mapper for the node label
         lblMapper = vtk.vtkPolyDataMapper()
         lblMapper.SetInputConnection(label.GetOutputPort())
-      
+
         # Set up an actor for the node label
         self.lblActor = vtk.vtkFollower()
         self.lblActor.SetMapper(lblMapper)
         self.lblActor.SetScale(annotation_size, annotation_size, annotation_size)
         self.lblActor.SetPosition(X + 0.6*annotation_size, Y + 0.6*annotation_size, Z)
-      
+
         # Generate any supports that occur at the node
         # Check for a fixed suppport
-        if node.support_DX == True and node.support_DY == True and node.support_DZ == True \
-        and node.support_RX == True and node.support_RY == True and node.support_RZ == True:
-      
+        if (node.support_DX == True and node.support_DY == True and node.support_DZ == True and node.support_RX == True and node.support_RY == True and node.support_RZ == True):
+
             # Create the fixed support
             support = vtk.vtkCubeSource()
             support.SetCenter(node.X, node.Y, node.Z)
             support.SetXLength(annotation_size*1.2)
             support.SetYLength(annotation_size*1.2)
             support.SetZLength(annotation_size*1.2)
-        
+
             # Copy and append the support data to the append filter
             support.Update()
             self.polydata.AddInputData(support.GetOutput())
-        
+
         # Check for a pinned support
         elif node.support_DX == True and node.support_DY == True and node.support_DZ == True \
         and node.support_RX == False and node.support_RY == False and node.support_RZ == False:
-          
+
             # Create the pinned support
             support = vtk.vtkConeSource()
             support.SetCenter(node.X, node.Y-0.6*annotation_size, node.Z)
             support.SetDirection((0, 1, 0))
             support.SetHeight(annotation_size*1.2)
             support.SetRadius(annotation_size*1.2)
-        
+
             # Copy and append the support data to the append filter
             support.Update()
             self.polydata.AddInputData(support.GetOutput())
-        
+
         # Other support conditions
         else:
-      
+
             # Restrained against X translation
             if node.support_DX == True:
-                  
+
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
                 support1.SetPoint1(node.X-annotation_size, node.Y, node.Z)
                 support1.SetPoint2(node.X+annotation_size, node.Y, node.Z)
-          
+
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
-          
+
                 support2 = vtk.vtkConeSource()
                 support2.SetCenter(node.X-annotation_size, node.Y, node.Z)
                 support2.SetDirection((1, 0, 0))
                 support2.SetHeight(annotation_size*0.6)
                 support2.SetRadius(annotation_size*0.3)
-          
+
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
-          
+
                 support3 = vtk.vtkConeSource()
                 support3.SetCenter(node.X+annotation_size, node.Y, node.Z)
                 support3.SetDirection((-1, 0, 0))
                 support3.SetHeight(annotation_size*0.6)
                 support3.SetRadius(annotation_size*0.3)
-          
+
                 # Copy and append the support data to the append filter
                 support3.Update()
                 self.polydata.AddInputData(support3.GetOutput())
-          
+
             # Restrained against Y translation
             if node.support_DY == True:
-              
+
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
                 support1.SetPoint1(node.X, node.Y-annotation_size, node.Z)
                 support1.SetPoint2(node.X, node.Y+annotation_size, node.Z)
-          
+
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
-          
+
                 support2 = vtk.vtkConeSource()
                 support2.SetCenter(node.X, node.Y-annotation_size, node.Z)
                 support2.SetDirection((0, 1, 0))
                 support2.SetHeight(annotation_size*0.6)
                 support2.SetRadius(annotation_size*0.3)
-          
+
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
-          
+
                 support3 = vtk.vtkConeSource()
                 support3.SetCenter(node.X, node.Y+annotation_size, node.Z)
                 support3.SetDirection((0, -1, 0))
                 support3.SetHeight(annotation_size*0.6)
                 support3.SetRadius(annotation_size*0.3)
-          
+
                 # Copy and append the support data to the append filter
                 support3.Update()
                 self.polydata.AddInputData(support3.GetOutput())
-          
+
             # Restrained against Z translation
             if node.support_DZ == True:
-            
+
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
                 support1.SetPoint1(node.X, node.Y, node.Z-annotation_size)
                 support1.SetPoint2(node.X, node.Y, node.Z+annotation_size)
-          
+
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
-          
+
                 support2 = vtk.vtkConeSource()
                 support2.SetCenter(node.X, node.Y, node.Z-annotation_size)
                 support2.SetDirection((0, 0, 1))
                 support2.SetHeight(annotation_size*0.6)
                 support2.SetRadius(annotation_size*0.3)
-          
+
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
-          
+
                 support3 = vtk.vtkConeSource()
                 support3.SetCenter(node.X, node.Y, node.Z+annotation_size)
                 support3.SetDirection((0, 0, -1))
                 support3.SetHeight(annotation_size*0.6)
                 support3.SetRadius(annotation_size*0.3)
-          
+
                 # Copy and append the support data to the append filter
                 support3.Update()
                 self.polydata.AddInputData(support3.GetOutput())
-      
+
             # Restrained against rotation about the X-axis
             if node.support_RX == True:
-            
+
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
                 support1.SetPoint1(node.X-1.6*annotation_size, node.Y, node.Z)
                 support1.SetPoint2(node.X+1.6*annotation_size, node.Y, node.Z)
-          
+
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
-          
+
                 support2 = vtk.vtkCubeSource()
                 support2.SetCenter(node.X-1.9*annotation_size, node.Y, node.Z)
                 support2.SetXLength(annotation_size*0.6)
                 support2.SetYLength(annotation_size*0.6)
                 support2.SetZLength(annotation_size*0.6)
-          
+
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
-          
+
                 support3 = vtk.vtkCubeSource()
                 support3.SetCenter(node.X+1.9*annotation_size, node.Y, node.Z)
                 support3.SetXLength(annotation_size*0.6)
                 support3.SetYLength(annotation_size*0.6)
                 support3.SetZLength(annotation_size*0.6)
-          
+
                 # Copy and append the support data to the append filter
                 support3.Update()
                 self.polydata.AddInputData(support3.GetOutput())
-          
+
             # Restrained against rotation about the Y-axis
             if node.support_RY == True:
-            
+
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
                 support1.SetPoint1(node.X, node.Y-1.6*annotation_size, node.Z)
                 support1.SetPoint2(node.X, node.Y+1.6*annotation_size, node.Z)
-          
+
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
-          
+
                 support2 = vtk.vtkCubeSource()
                 support2.SetCenter(node.X, node.Y-1.9*annotation_size, node.Z)
                 support2.SetXLength(annotation_size*0.6)
                 support2.SetYLength(annotation_size*0.6)
                 support2.SetZLength(annotation_size*0.6)
-          
+
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
-          
+
                 support3 = vtk.vtkCubeSource()
                 support3.SetCenter(node.X, node.Y+1.9*annotation_size, node.Z)
                 support3.SetXLength(annotation_size*0.6)
                 support3.SetYLength(annotation_size*0.6)
                 support3.SetZLength(annotation_size*0.6)
-          
+
                 # Copy and append the support data to the append filter
                 support3.Update()
                 self.polydata.AddInputData(support3.GetOutput())
-          
+
             # Restrained against rotation about the Z-axis
             if node.support_RZ == True:
-            
+
                 # Create the support
                 support1 = vtk.vtkLineSource()  # The line showing the support direction
                 support1.SetPoint1(node.X, node.Y, node.Z-1.6*annotation_size)
                 support1.SetPoint2(node.X, node.Y, node.Z+1.6*annotation_size)
-          
+
                 # Copy and append the support data to the append filter
                 support1.Update()
                 self.polydata.AddInputData(support1.GetOutput())
-          
+
                 support2 = vtk.vtkCubeSource()
                 support2.SetCenter(node.X, node.Y, node.Z-1.9*annotation_size)
                 support2.SetXLength(annotation_size*0.6)
                 support2.SetYLength(annotation_size*0.6)
                 support2.SetZLength(annotation_size*0.6)
-          
+
                 # Copy and append the support data to the append filter
                 support2.Update()
                 self.polydata.AddInputData(support2.GetOutput())
-          
+
                 support3 = vtk.vtkCubeSource()
                 support3.SetCenter(node.X, node.Y, node.Z+1.9*annotation_size)
                 support3.SetXLength(annotation_size*0.6)
                 support3.SetYLength(annotation_size*0.6)
                 support3.SetZLength(annotation_size*0.6)
-          
+
                 # Copy and append the support data to the append filter
                 support3.Update()
                 self.polydata.AddInputData(support3.GetOutput())
-        
+
         # Update the append filter
         self.polydata.Update()
-      
+
         # Create a mapper and actor
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(self.polydata.GetOutputPort())
         self.actor = vtk.vtkActor()
-        
+
         # Set the mapper for the node's actor
         self.actor.SetMapper(mapper)
-
-        # Color will be added to the node actors outside of this class once they are all combined into one `vtkAppendFilter` object.
-
-        # TODO: Delete legacy code below once it's been proven to be unnecessary over time.
-
-        # Add color to the node and label actors if specified
-        # if color == 'red':
-        #     self.actor.GetProperty().SetColor(255, 0, 0)  # Red
-        #     self.lblActor.GetProperty().SetColor(255, 0, 0)  # Red
-        # elif color == 'yellow':
-        #     self.actor.GetProperty().SetColor(255, 255, 0)  # Yellow
-        #     self.lblActor.GetProperty().SetColor(255, 255, 0)  # Yellow
-        # elif color == 'black':
-        #     self.actor.GetProperty().SetColor(0, 0, 0)  # Black
-        #     self.lblActor.GetProperty().SetColor(0, 0, 0)  # Black
 
 class VisSpring():
     
