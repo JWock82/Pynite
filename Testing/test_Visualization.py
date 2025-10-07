@@ -29,21 +29,17 @@ def visual_model():
 
     # Add a beam to the model
     m.add_node('N1', 0, 0, 0)
-    m.add_node('N2', 3.333, 0, 0)
-    m.add_node('N3', 6.667, 0, 0)
-    m.add_node('N4', 10, 0, 0)
+    m.add_node('N2', 10, 0, 0)
 
-    # Add every type of support to the model
-    m.def_support('N1', True, True, True, True, True, True)
-    m.def_support('N2', True, True, True, True, True, False)
-    m.def_support('N3', False, False, False, False, False, True)
-    m.def_support('N4', True, True, True, False, False, False)
+    # Stabilize the beam
+    m.def_support('N1', True, True, True, True, True, True)   # Test rendering of a fixed support
+    m.def_support('N2', True, True, True, True, True, False)  # Test rendering of FX, FY, FZ, MX, and MY supports
 
     m.add_material("Steel", 29000/144, 11200/144, 0.3, 0.49, 36/144)
 
     m.add_section("Rect", 20, 100, 200, 150)
 
-    m.add_member("M1", "N1", "N3", "Steel", "Rect")
+    m.add_member("M1", "N1", "N2", "Steel", "Rect")
 
     # Add every type of member load to the model
     m.add_member_dist_load("M1", "Fy", -1, -1, case="D")
@@ -59,11 +55,20 @@ def visual_model():
     m.add_member_pt_load("M1", "MZ", -1, 5, case="D")
     m.add_member_pt_load("M1", "MY", -1, 5, case="D")
 
+    # Add a spring to the model
+    m.add_node('N3', 0, 0, 10)
+    m.add_node('N4', 10, 0, 10)
+    m.add_spring('S1', 'N3', 'N4', 0.5)
+
+    # Stabilize the spring
+    m.def_support('N3', True, True, True, True, False, True)    # Test rendering of MZ supports
+    m.def_support('N4', True, True, True, False, False, False)  # Test rendering of a pinned support
+
     # Add a plate to the model
-    m.add_node("N5", 0, 0, 10)
-    m.add_node("N6", 10, 0, 10)
-    m.add_node("N7", 10, 10, 10)
-    m.add_node("N8", 0, 10, 10)
+    m.add_node("N5", 0, 0, 20)
+    m.add_node("N6", 10, 0, 20)
+    m.add_node("N7", 10, 10, 20)
+    m.add_node("N8", 0, 10, 20)
 
     # Supports (edges fixed)
     for n in ["N1", "N2", "N3", "N4"]:
