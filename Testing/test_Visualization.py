@@ -11,101 +11,108 @@ import pyvista as pv
 pv.OFF_SCREEN = True
 
 
-# ============================================================================
 # Utility helper
-# ============================================================================
-
 def set_offscreen(rndr):
     """Enable off-screen rendering regardless of backend."""
-    if hasattr(rndr, "window"):           # legacy VTKRenderer
+
+    if hasattr(rndr, "window"):           # VTK Renderer
         rndr.window.SetOffScreenRendering(1)
     elif hasattr(rndr, "plotter"):        # PyVista-based renderer
         rndr.plotter.off_screen = True
 
+# Model setup
+def visual_model():
+    """A simple model for rendering tests."""
 
-# ============================================================================
-# Beam model fixture
-# ============================================================================
-
-@pytest.fixture(scope="module")
-def beam_model():
-    """Simple beam model for rendering tests."""
+    # Create a new model
     m = FEModel3D()
-    m.add_node("N1", 0, 0, 0)
-    m.add_node("N2", 10, 0, 0)
+
+    # Add a beam to the model
+    m.add_node('N1', 0, 0, 0)
+    m.add_node('N2', 3.333, 0, 0)
+    m.add_node('N3', 6.667, 0, 0)
+    m.add_node('N4', 10, 0, 0)
+
+    # Add every type of support to the model
+    m.def_support('N1', True, True, True, True, True, True)
+    m.def_support('N2', True, True, True, True, True, False)
+    m.def_support('N3', False, False, False, False, False, True)
+    m.def_support('N4', True, True, True, False, False, False)
+
     m.add_material("Steel", 29000/144, 11200/144, 0.3, 0.49, 36/144)
+
     m.add_section("Rect", 20, 100, 200, 150)
-    m.add_member("M1", "N1", "N2", "Steel", "Rect")
+
+    m.add_member("M1", "N1", "N3", "Steel", "Rect")
+
+    # Add every type of member load to the model
     m.add_member_dist_load("M1", "Fy", -1, -1, case="D")
-    m.add_load_combo("1.4D", {"D": 1.4})
-    m.analyze_linear()
-    return m
+    m.add_member_dist_load("M1", "Fz", -1, -1, case="D")
+    m.add_member_dist_load("M1", "FY", -1, -1, case="D")
+    m.add_member_dist_load("M1", "Fy", -1, -1, case="D")
+    m.add_member_pt_load("M1", "Fy", -1, 5, case="D")
+    m.add_member_pt_load("M1", "Fz", -1, 5, case="D")
+    m.add_member_pt_load("M1", "FY", -1, 5, case="D")
+    m.add_member_pt_load("M1", "FZ", -1, 5, case="D")
+    m.add_member_pt_load("M1", "Mz", -1, 5, case="D")
+    m.add_member_pt_load("M1", "My", -1, 5, case="D")
+    m.add_member_pt_load("M1", "MZ", -1, 5, case="D")
+    m.add_member_pt_load("M1", "MY", -1, 5, case="D")
 
-
-# ============================================================================
-# Plate model fixture
-# ============================================================================
-
-@pytest.fixture(scope="module")
-def plate_model():
-    """Creates a small quad mesh plate for rendering tests."""
-    m = FEModel3D()
-
-    # Define corner nodes (square plate)
-    m.add_node("N1", 0, 0, 0)
-    m.add_node("N2", 10, 0, 0)
-    m.add_node("N3", 10, 10, 0)
-    m.add_node("N4", 0, 10, 0)
+    # Add a plate to the model
+    m.add_node("N5", 0, 0, 10)
+    m.add_node("N6", 10, 0, 10)
+    m.add_node("N7", 10, 10, 10)
+    m.add_node("N8", 0, 10, 10)
 
     # Supports (edges fixed)
     for n in ["N1", "N2", "N3", "N4"]:
         m.def_support(n, True, True, True, True, True, True)
 
-    # Material and plate
-    m.add_material("Concrete", 3600/144, 1800/144, 0.2, 0.15, 150/144)
-    m.add_plate("P1", "N1", "N2", "N3", "N4", 1, "Concrete", 1, 1)
+    m.add_plate("P1", "N5", "N6", "N7", "N8", 1, 'Steel', 1, 1)
 
     # Uniform pressure load
-    m.add_plate_surface_pressure("P1", -100, case="DL")
+    m.add_plate_surface_pressure("P1", -100, case="D")
 
-    # Load combo
-    m.add_load_combo("1.2DL", {"DL": 1.2})
+    m.add_load_combo("1.4D", {"D": 1.4})
     m.analyze_linear()
     return m
 
-
-# ============================================================================
-# Combined parameterized renderer fixture
-# ============================================================================
-
 @pytest.fixture(params=["VTK", "PV"], scope="function")
-def renderer(request, beam_model, plate_model):
-    """Yields renderers for both beam and plate models."""
-    model = beam_model if request.node.name.endswith("_beam") else plate_model
+def renderer(request):
+    """Yields renderers VTK and Pyvista."""
+
+    model = visual_model()
     rndr = VTKRenderer(model) if request.param == "VTK" else PVRenderer(model)
     set_offscreen(rndr)
 
     rndr.render_loads = True
     rndr.render_nodes = True
     rndr.combo_name = list(model.load_combos.keys())[0]
+
     return rndr
 
 
-# ============================================================================
-# General attribute tests
-# ============================================================================
+def test_toggle_visual_properties(renderer):
 
-def test_set_visual_properties(renderer):
-    renderer.annotation_size = 8
-    renderer.labels = True
-    renderer.color_map = "Mz"
-    renderer.scalar_bar = True
-    renderer.scalar_bar_text_size = 18
-    assert renderer.annotation_size == 8
-    assert renderer.labels
-    assert renderer.color_map == "Mz"
-    assert renderer.scalar_bar
-    assert renderer.scalar_bar_text_size == 18
+    # Test each plate stress
+    for stress in ['Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy']:
+
+        renderer.annotation_size = 8
+        renderer.labels = True
+        renderer.color_map = stress
+        renderer.scalar_bar = True
+        renderer.scalar_bar_text_size = 18
+        assert renderer.annotation_size == 8
+        assert renderer.labels
+        assert renderer.color_map == stress
+        assert renderer.scalar_bar
+        assert renderer.scalar_bar_text_size == 18
+
+        if isinstance(renderer, VTKRenderer):
+            renderer.render_model(interact=False)
+        else:
+            renderer.render_model()
 
 
 def test_toggle_deformed_shape(renderer):
@@ -116,15 +123,10 @@ def test_toggle_deformed_shape(renderer):
     assert renderer.deformed_scale == 25
 
 
-# ============================================================================
-# Beam and plate coverage (run separately)
-# ============================================================================
-
 @pytest.mark.parametrize("renderer_cls", [VTKRenderer, PVRenderer])
-@pytest.mark.parametrize("model_type", ["beam", "plate"])
-def test_update_pipeline(renderer_cls, model_type, beam_model, plate_model):
+def test_update_pipeline(renderer_cls):
     """Checks the update pipeline for both model types and renderers."""
-    model = beam_model if model_type == "beam" else plate_model
+    model = visual_model()
     rndr = renderer_cls(model)
     set_offscreen(rndr)
 
@@ -139,10 +141,9 @@ def test_update_pipeline(renderer_cls, model_type, beam_model, plate_model):
     assert hasattr(rndr, "plotter") or hasattr(rndr, "window")
 
 
-@pytest.mark.parametrize("model_type", ["beam", "plate"])
-def test_render_model_pipeline(model_type, beam_model, plate_model):
+def test_render_model_pipeline():
     """Ensures render_model executes without error for both model types."""
-    model = beam_model if model_type == "beam" else plate_model
+    model = visual_model()
     rndr = VTKRenderer(model)
     set_offscreen(rndr)
     rndr.combo_name = list(model.load_combos.keys())[0]
