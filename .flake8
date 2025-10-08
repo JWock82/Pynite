@@ -16,6 +16,7 @@ extend-ignore =
     D213,
     D400,
     D401,
+    E201,
 
 # Optionally exclude some directories from linting
 exclude =
