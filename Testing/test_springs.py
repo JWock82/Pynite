@@ -53,6 +53,34 @@ def test_spring_elements():
     n2_rxn = system.nodes['2'].RxnFX['Combo 1']
     assert round(n2_rxn, 0) == round(-45000/11, 0), 'Failed node reaction test'
 
+def test_nodal_springs():
+
+    model = FEModel3D()
+
+    model.add_node('N1', 0, 0, 0)
+
+    model.def_support_spring('N1', 'DX', 1000)
+    model.def_support_spring('N1', 'DY', 2000)
+    model.def_support_spring('N1', 'DZ', 3000)
+    model.def_support_spring('N1', 'RX', 4000)
+    model.def_support_spring('N1', 'RY', 5000)
+    model.def_support_spring('N1', 'RZ', 6000)
+
+    model.add_node_load('N1', 'FX', -1000)
+    model.add_node_load('N1', 'FY', -2000)
+    model.add_node_load('N1', 'FZ', -3000)
+    model.add_node_load('N1', 'RX', -4000)
+    model.add_node_load('N1', 'RY', -5000)
+    model.add_node_load('N1', 'RZ', -6000)
+
+    model.analyze(check_statics=True)
+
+    assert model.nodes['N1'].DX == -1, 'Faied nodal spring displacement test in X direction.'
+    assert model.nodes['N1'].DY == -1, 'Faied nodal spring displacement test in Y direction.'
+    assert model.nodes['N1'].DZ == -1, 'Faied nodal spring displacement test in Z direction.'
+    assert model.nodes['N1'].RX == -1, 'Faied nodal spring displacement test in RX direction.'
+    assert model.nodes['N1'].RY == -1, 'Faied nodal spring displacement test in RY direction.'
+    assert model.nodes['N1'].RZ == -1, 'Faied nodal spring displacement test in RZ direction.'
 
 if __name__ == '__main__':
     test_spring_elements()
