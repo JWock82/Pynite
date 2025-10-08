@@ -1,4 +1,5 @@
 
+======
 Meshes
 ======
 
@@ -16,7 +17,7 @@ and convenience result helpers (:meth:`max_moment`, :meth:`min_moment`,
 :meth:`max_shear`, :meth:`min_shear`, :meth:`max_membrane`, :meth:`min_membrane`).
 
 Quick Start
------------
+===========
 
 Create a rectangular quad mesh on the global XY plane and add it to a model::
 
@@ -26,25 +27,47 @@ Create a rectangular quad mesh on the global XY plane and add it to a model::
     model = FEModel3D()
     model.add_material('Conc', E=3600*144, nu=0.2, rho=0.0)  # example units
 
-    slab = RectangleMesh(
-        mesh_size=2.0,
-        width=20.0, height=10.0,
-        thickness=0.5,
-        material_name='Conc',
-        model=model,
-        kx_mod=1.0, ky_mod=1.0,
-        origin=[0, 0, 0],
-        plane='XY',
-        element_type='Quad'  # or 'Rect' for Plate3D elements
+    # Add a rectangular mesh to the model
+    model.add_rectangle_mesh(
+      name='Slab',
+      mesh_size = 2.0,
+      width = 20.0,
+      height = 25.0,
+      thickness = 0.5,
+      material_name = 'Conc',
+      kx_mod = 1.0, ky_mod = 1.0,
+      origin = [0, 0, 0],
+      plane = 'XZ'
     )
-    slab.generate()  # builds nodes/elements and adds them to the model
+
+    # Rectangular meshes are unique, in that you can add openings to them
+    model.meshes['Slab'].add_rect_opening(
+      name = 'Opening 1',
+      x_left = 5.0,  # The mesh's local x-y coordinate system
+      y_bott = 6.0,
+      width = 5.0,
+      height = 7.0
+    )
+
+    # Once all openings are defined the mesh can be generated
+    model.meshes['Slab'].generate()  # builds nodes/elements and adds them to the model
+
+    # Now that the nodes and elements in the mesh have been generated, we can add supports.
+    # Let's add fixed supports to the perimeter
+    for node in model.meshes['Slab'].nodes.values():
+      # Check if the node lies on the perimeter
+      if node.X == 0.0 or node.X == 20.0 or node.Z == 0.0 or node.Z = 25.0:  # The mesh was generated in the XZ plane
+        model.def_support(node.name, True, True, True, True, True, True)  # Fix all degrees of freedom at the node
+
+    # Solve the model
+    model.analyze()
 
     # Solve the model, then query peak values by combo/tag
-    mx_max = slab.max_moment('Mx', combo_tags=['service', 'strength'])
-    qy_min = slab.min_shear('Qy', combo_tags='Combo 1')
+    mx_max = slab.max_moment('Mx', combo_tags=['service', 'strength'])  # Check tagged combinations
+    qy_min = slab.min_shear('Qy', combo_tags='Combo 1')  # Check just one combination
 
 Why Use Mesh Classes?
----------------------
+=====================
 
 * They **parametrically** create nodes and elements with consistent numbering.
 * They **add** created nodes/elements directly to ``model.nodes``, ``model.quads``
@@ -56,7 +79,7 @@ Why Use Mesh Classes?
   membrane stresses, bending moments, and shears per combination/tag filters.
 
 Common Concepts
----------------
+===============
 
 Coordinate Planes / Axes
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +134,7 @@ of each element for the requested component and compared across all eligible
 combos.
 
 API Overview
-------------
+============
 
 Base Class: :class:`Pynite.Mesh.Mesh`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,7 +235,7 @@ courses and vertical divisions. Choose ``element_type='Quad'`` or ``'Rect'``.
    :show-inheritance:
 
 Result Helpers (per Mesh)
--------------------------
+=========================
 
 All helpers scan **corner** and **center** points per element for eligible
 combinations.
@@ -234,7 +257,7 @@ combinations.
 * If no eligible combo is found, helpers return ``0.0``.
 
 Examples
---------
+========
 
 Rectangular slab with openings and control lines::
 
@@ -268,7 +291,7 @@ Cylindrical wall (global Z axis)::
     cyl.generate()
 
 Implementation Details & Behavior
----------------------------------
+=================================
 
 * **Duplicate Names:** During ``generate()``, if any node/element name is found
   to already exist in the model, it is **renamed** (e.g., by calling
@@ -287,7 +310,7 @@ Implementation Details & Behavior
   stress) stiffness matrix ``Cm``; shear modulus is unaffected.
 
 Troubleshooting & Tips
-----------------------
+======================
 
 * For **very skewed** quads, monitor Jacobian signs; extremely distorted shapes
   can trigger warnings in element routines.
@@ -299,7 +322,7 @@ Troubleshooting & Tips
   sliver elements.
 
 Reference
----------
+=========
 
 This page documents the mesh API and typical usage patterns. See also:
 
