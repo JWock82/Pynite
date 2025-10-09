@@ -94,7 +94,7 @@ Element Type
 
 ``element_type='Quad'`` produces :class:`~Pynite.Quad3D.Quad3D` (DKMQ + membrane)
 elements (recommended). ``'Rect'`` produces :class:`~Pynite.Plate3D.Plate3D`
-(rectangular plate bending + membrane) where applicable.
+(rectangular plate bending + membrane).
 
 Orthotropy Modifiers
 ~~~~~~~~~~~~~~~~~~~~
@@ -261,18 +261,27 @@ Examples
 
 Rectangular slab with openings and control lines::
 
-    slab = RectangleMesh(
-        mesh_size=3.0, width=36.0, height=24.0,
-        thickness=0.5, material_name='Conc', model=model,
-        origin=[0, 0, 0], plane='XY', element_type='Quad',
-        x_control=[12.0, 24.0], y_control=[12.0]
+    model = FEModel3D()
+
+    model.add_rectangle_mesh(
+      name = 'Slab',
+      mesh_size = 1.0,
+      width = 36.0, height = 24.0,
+      thickness = 0.667,
+      material_name = 'Conc',
+      kx_mod = 1.0, ky_mod = 1.0,
+      origin = [0, 12, 0],
+      plane = 'XZ',
+      x_control=[12.0, 24.0], y_control=[12.0],
+      element_type = 'Quad'
     )
-    slab.add_rect_opening('Elevator', x_left=8.0, y_bott=6.0, width=4.0, height=5.0)
-    slab.add_rect_opening('Stair',    x_left=22.0, y_bott=6.0, width=5.0, height=9.0)
-    slab.generate()
+
+    model.meshes['Slab'].add_rect_opening('Elevator', x_left=8.0, y_bott=6.0, width=4.0, height=5.0)
+    model.meshes['Slab'].add_rect_opening('Stair',    x_left=22.0, y_bott=6.0, width=5.0, height=9.0)
+    model.meshes['Slab'].generate()
 
     # After solving combinations with tags 'service' and 'strength'
-    mxy_max = slab.max_moment('Mxy', combo_tags=['service', 'strength'])
+    mxy_max = model.meshes['Slab'].max_moment('Mxy', combo_tags=['service', 'strength'])
 
 Annular tank roof shell (Y‑axis)::
 
