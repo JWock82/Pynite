@@ -14,7 +14,7 @@ Nodes can be added to an existing model using the ``FEModel3D.add_node`` method:
     # Add a node named 'N1' at location (0, 0, 0)
     my_model.add_node('N1', 0, 0, 0)
 
-Once added to the model, the node will be stored in the ``Nodes`` dictionary of the model for easy access later on.
+Once added to the model, the node will be stored in the ``nodes`` dictionary of the model for easy access later on.
 
 .. code-block:: python
 
@@ -74,37 +74,67 @@ Use the ``FEModel3D.add_node_load`` method to add nodal loads to a model.
     # Add a force in the global X direction to node 'N1' for load case 'E'
     my_model.add_node_load('N1', 'FX', 30, 'E')
 
-## Adding Node Displacements (e.g. Support Settlements)
-Use the `AddNodeDisplacement` method to model a known nodal displacement, such as a support settlement.
+Enforced Nodal Displacements (e.g., Support Settlements)
+=======================================================
+Use the ``FEModel3D.def_node_disp`` method to model a known nodal displacement or rotation such as a support settlement.
 
-Syntax:
+.. code-block:: python
 
-    AddNodeDisplacement (self, Node, Direction, Magnitude): 
-    
-    Node : string
-        The name of the node where the nodal displacement is being applied.
-    Direction : string
-        'DX' = Displacement in the global X-direction
-        'DY' = Displacement in the global Y-direction
-        'DZ' = Displacement in the global Z-direction
-        'RX' = Rotation about the global X-axis
-        'RY' = Rotation about the global Y-axis
-        'RZ' = Rotation about the global Z-axis
-    Magnitude : number
-        The magnitude of the displacement.
+    # Add an enforced displacement of -1.5 at node 'N4' in global Y
+    my_model.def_node_disp('N4', direction='DY', magnitude=-1.5)
 
-Example:
-    
-    # Add a nodal displacement of -1.5 at node N4 in the global Y-direction
-    myModel.AddNodeDisplacement('N4', 'DY', -1.5)
+Getting Node Results
+====================
 
-## Getting Node Results
-The `FEModel3D` class stores nodes in a Python dictionary. Nodes can be accessed using the sytax `FEModel3D.nodes['node_name']`.
+The ``FEModel3D`` class stores nodes in a Python dictionary. Nodes can be accessed using the syntax ``FEModel3D.nodes['node_name']``.
 
 Once you've retrieved a node you can access its reactions and displacements as node class attributes. Reactions and displacements are also stored in dictionary format, with the keys being the load combination names.
 
-Examples:
+.. code-block:: python
 
-    # Printing the Y-reaction and the reaction moment about the Z-axis at nodes "N2" and "N3" respectively
-    print(myModel.nodes['N2'].RxnFY['1.2D+1.0W'])
-    print(myModel.nodes['N3'].RxnMZ['1.2D+1.0W'])
+    # Print the Y-reaction and the reaction moment about the Z-axis at nodes 'N2' and 'N3'
+    print(my_model.nodes['N2'].RxnFY['1.2D+1.0W'])
+    print(my_model.nodes['N3'].RxnMZ['1.2D+1.0W'])
+
+Node API Quick Reference
+========================
+
+- Create: ``FEModel3D.add_node(name, X, Y, Z) -> str``
+- Supports: ``FEModel3D.def_support(node_name, support_DX=False, support_DY=False, support_DZ=False, support_RX=False, support_RY=False, support_RZ=False)``
+- Spring supports: ``FEModel3D.def_support_spring(node_name, dof, stiffness, direction=None)``
+- Enforced disp/rot: ``FEModel3D.def_node_disp(node_name, direction, magnitude)``
+- Loads: ``FEModel3D.add_node_load(node_name, direction, P, case='Case 1')``
+- Results on a node object: ``DX/DY/DZ/RX/RY/RZ['Combo']``, ``RxnFX/RxnFY/RxnFZ/RxnMX/RxnMY/RxnMZ['Combo']``
+
+Worked Example
+==============
+
+.. code-block:: python
+
+    from Pynite import FEModel3D
+
+    model = FEModel3D()
+    n1 = model.add_node('N1', 0, 0, 0)
+    n2 = model.add_node('N2', 0, 10, 0)
+
+    # Pinned base and vertical settlement at the top
+    model.def_support('N1', support_DX=True, support_DY=True, support_DZ=True)
+    model.def_node_disp('N2', 'DY', -0.25)
+
+    # Add a small horizontal force
+    model.add_node_load('N2', 'FX', 2.0, case='S')
+    model.add_load_combo('S', {'S': 1.0})
+    model.analyze_linear()
+
+    print(model.nodes['N2'].DX['S'])     # horizontal drift
+    print(model.nodes['N1'].RxnFY['S'])  # base vertical reaction
+
+API Cross-Links and Reference
+=============================
+
+- Class: :class:`~Pynite.Node3D.Node3D`
+
+.. autoclass:: Pynite.Node3D.Node3D
+   :members:
+   :undoc-members:
+   :show-inheritance:
