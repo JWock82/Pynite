@@ -283,7 +283,7 @@ Rectangular slab with openings and control lines::
     # After solving combinations with tags 'service' and 'strength'
     mxy_max = model.meshes['Slab'].max_moment('Mxy', combo_tags=['service', 'strength'])
 
-Annular tank roof shell (Y‑axis)::
+Annular tank roof shell (about global Y‑axis)::
 
     model.add_annulus_mesh(name='AM1',
                            mesh_size = 1.5,
@@ -298,7 +298,7 @@ Annular tank roof shell (Y‑axis)::
     
     model.meshes['AM1'].generate()
 
-Cylindrical wall (global Z axis)::
+Cylindrical wall (about global Z-axis)::
 
     model.add_cylinder_mesh(name = 'CM1',
                             mesh_size = 2.0,
@@ -308,11 +308,11 @@ Cylindrical wall (global Z axis)::
                             material_name = 'Conc',
                             kx_mod = 1.0, ky_mod = 1.0,
                             origin = [0, 0, 0],
-                            axis = 'Y',
+                            axis = 'Z',
                             num_elements = 30
                             element_type = 'Quad'
                             )
-                            
+
     model.meshes['CM1'].generate()
 
 Implementation Details & Behavior
