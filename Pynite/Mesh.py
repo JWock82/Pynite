@@ -108,8 +108,7 @@ class Mesh():
             Options are 'Qx', 'Qy', 'QX', or 'QY'. Default is 'Qx'.
         combo_tags : str or list[str], optional
             - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags. Any load combination with at least one of these tags
-            will be considered.
+            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
         Returns
         -------
@@ -205,8 +204,7 @@ class Mesh():
             Options are 'Qx', 'Qy', 'QX', or 'QY'. Default is 'Qx'.
         combo_tags : str or list[str], optional
             - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags. Any load combination with at least one of these tags
-            will be considered.
+            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
         Returns
         -------
@@ -302,8 +300,7 @@ class Mesh():
             Options are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'. Default is 'Mx'.
         combo_tags : str or list[str], optional
             - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags. Any load combination with at least one of these tags
-            will be considered.
+            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
         Returns
         -------
@@ -398,8 +395,7 @@ class Mesh():
             Options are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'. Default is 'Mx'.
         combo_tags : str or list[str], optional
             - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags. Any load combination with at least one of these tags
-            will be considered.
+            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
         Returns
         -------
@@ -494,9 +490,9 @@ class Mesh():
             Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
         combo_tags : str or list[str], optional
             - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags. Any load combination with at least one of these tags
-            will be considered.
+            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
+        
         Returns
         -------
         float
@@ -593,9 +589,9 @@ class Mesh():
             Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
         combo_tags : str or list[str], optional
             - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags. Any load combination with at least one of these tags
-            will be considered.
+            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
+        
         Returns
         -------
         float

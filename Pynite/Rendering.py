@@ -144,36 +144,36 @@ class Renderer:
     def combo_name(self, combo_name: Optional[str]) -> None:
         self._combo_name = combo_name
         self._case = None
-    
+
     @property
     def case(self) -> Optional[str]:
         return self._case
-    
+
     @case.setter
     def case(self, case: Optional[str]) -> None:
         self._case = case
         self._combo_name = None
-    
+
     @property
     def show_labels(self) -> bool:
         return self._labels
-    
+
     @show_labels.setter
     def show_labels(self, show_labels: bool) -> None:
         self._labels = show_labels
-    
+
     @property
     def scalar_bar(self) -> bool:
         return self._scalar_bar
-    
+
     @scalar_bar.setter
     def scalar_bar(self, scalar_bar: bool) -> None:
         self._scalar_bar = scalar_bar
-    
+
     @property
     def scalar_bar_text_size(self) -> int:
         return self._scalar_bar_text_size
-    
+
     @scalar_bar_text_size.setter
     def scalar_bar_text_size(self, text_size: int) -> None:
         self._scalar_bar_text_size = text_size
@@ -197,7 +197,7 @@ class Renderer:
     def screenshot(self, filepath: str = './Pynite_Image.png', interact: bool = True, reset_camera: bool = False) -> None:
         """
         Saves a screenshot of the rendered model.
-        
+
         In non-Jupyter notebook environments, if `interact` is set to `True`, the plotter will show a window that allows you to set the scene prior to the screenshot. Press `q` when you are ready to capture the screenshot and close the window. Pressing the `X` button in the corner of the window will ignore your scene changes and will shut down the entire plotter. This is a default setting in pyvista that is a little annoying. Don't press the `X` button.
 
         For Jupyter notebooks, the scene must be set using `render_model` prior to using `screenshot`.

@@ -369,15 +369,15 @@ class FEModel3D():
         :param n_node: The name of the n-node.
         :type n_node: str
         :param t: The thickness of the element.
-        :type t: number
+        :type t: float
         :param material_name: The name of the material for the element.
         :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
                        x-direction, defaults to 1 (no modification).
-        :type kx_mod: number, optional
+        :type kx_mod: float, optional
         :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local
                        y-direction, defaults to 1 (no modification).
-        :type ky_mod: number, optional
+        :type ky_mod: float, optional
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the element added to the model.
         :rtype: str
@@ -436,15 +436,15 @@ class FEModel3D():
         :param n_node: The name of the n-node.
         :type n_node: str
         :param t: The thickness of the element.
-        :type t: number
+        :type t: float
         :param material_name: The name of the material for the element.
         :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
             x-direction, defaults to 1 (no modification).
-        :type kx_mod: number, optional
+        :type kx_mod: float, optional
         :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local
             y-direction, defaults to 1 (no modification).
-        :type ky_mod: number, optional
+        :type ky_mod: float, optional
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the element added to the model.
         :rtype: str
@@ -487,13 +487,13 @@ class FEModel3D():
         :param name: A unique name for the mesh.
         :type name: str
         :param mesh_size: The desired mesh size.
-        :type mesh_size: number
+        :type mesh_size: float
         :param width: The overall width of the rectangular mesh measured along its local x-axis.
-        :type width: number
+        :type width: float
         :param height: The overall height of the rectangular mesh measured along its local y-axis.
-        :type height: number
+        :type height: float
         :param thickness: The thickness of each element in the mesh.
-        :type thickness: number
+        :type thickness: float
         :param material_name: The name of the material for elements in the mesh.
         :type material_name: str
         :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local x-direction. Defaults to 1.0 (no modification).
@@ -618,21 +618,21 @@ class FEModel3D():
         :param name: A unique name for the mesh.
         :type name: str
         :param mesh_size: The target mesh size
-        :type mesh_size: number
+        :type mesh_size: float
         :param large_radius: The larger of the two end radii.
-        :type large_radius: number
+        :type large_radius: float
         :param small_radius: The smaller of the two end radii.
-        :type small_radius: number
+        :type small_radius: float
         :param height: The height of the frustrum.
-        :type height: number
+        :type height: float
         :param thickness: The thickness of the elements.
-        :type thickness: number
+        :type thickness: float
         :param material_name: The name of the element material.
         :type material_name: str
         :param kx_mod: Stiffness modification factor for radial stiffness in each element's local x-direction, defaults to 1 (no modification).
-        :type kx_mod: number, optional
+        :type kx_mod: float, optional
         :param ky_mod: Stiffness modification factor for meridional stiffness in each element's local y-direction, defaults to 1 (no modification).
-        :type ky_mod: number, optional
+        :type ky_mod: float, optional
         :param origin: The origin of the mesh, defaults to [0, 0, 0].
         :type origin: list, optional
         :param axis: The global axis about which the mesh will be generated, defaults to 'Y'.

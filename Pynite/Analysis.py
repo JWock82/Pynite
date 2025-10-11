@@ -155,7 +155,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
     :param model: The finite element model to be solved.
     :type: FEModel3D
     :param combo_name: The name of the load combination to evaluate.
-    :type combo_name: string
+    :type combo_name: str
     :param P1: An array of the loads to apply.
     :type P1: numpy array
     :param FER1: An array of the fixed end reactions.

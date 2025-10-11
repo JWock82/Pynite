@@ -202,7 +202,7 @@ class Renderer():
 
         :param reset_camera: Resets the render window's camera position if set to True. Defaults to True.
         :type reset_camera: bool, optional
-        :raises Exception: _description_
+        :raises Exception: Visualization failed due to an unexpected error.
         """
 
         # Input validation

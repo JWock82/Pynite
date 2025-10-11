@@ -703,7 +703,7 @@ class Member3D():
         """Returns the global plastic reduction matrix for the member. Used to modify member behavior for plastic hinges at the ends.
 
         :param combo_name: The name of the load combination to get the plastic reduction matrix for.
-        :type combo_name: string
+        :type combo_name: str
         :return: The global plastic reduction matrix for the member.
         :rtype: array
         """

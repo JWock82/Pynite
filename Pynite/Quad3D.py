@@ -7,7 +7,6 @@
 from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING, Literal
 
-from math import sin, cos
 import numpy as np
 from numpy import add
 from numpy.linalg import inv, det, norm
@@ -19,6 +18,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     from Pynite.FEModel3D import FEModel3D
     from Pynite.Node3D import Node3D
+
 
 class Quad3D():
     """
@@ -138,7 +138,7 @@ class Quad3D():
         self.y4: float = np.dot(vector_14, y_axis)
 
     def L_k(self, k: Literal[5, 6, 7, 8]) -> float:
-        
+
         # Figures 3 and 5
         if k == 5:
             return ((self.x2 - self.x1)**2 + (self.y2 - self.y1)**2)**0.5
@@ -150,7 +150,7 @@ class Quad3D():
             return ((self.x1 - self.x4)**2 + (self.y1 - self.y4)**2)**0.5
         else:
             raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
-    
+
     def dir_cos(self, k: Literal[5, 6, 7, 8]) -> Tuple[float, float]:
 
         L_k = self.L_k(k)
@@ -195,7 +195,7 @@ class Quad3D():
             return 1/4*(1 - xi)*(1 + eta)
         else:
             raise Exception('Unable to calculate interpolation function. Invalid value specifed for i.')
-    
+
     def P_k(self, k: Literal[5, 6, 7, 8], xi: float, eta: float) -> float:
 
         if k == 5:
@@ -208,7 +208,7 @@ class Quad3D():
             return 1/2*(1 - xi)*(1 - eta**2)
         else:
             raise Exception('Unable to calculate shape function. Invalid value specified for k.')
-    
+
     def Co(self, xi: float, eta: float) -> NDArray[float64]:
         """
         This alternate calculation of the Jacobian matrix follows "The development of DKMQ plate bending element for thick to thin shell analysis based on the Naghdi/Reissner/Mindlin shell theory" by Katili, Batoz, Maknun and Hamdouni (2015). In the reference "C^o" is used instead of "J" to refer to the Jacobian. This method does not seem to produce incorrect results, but will be kept for future reference. It is helpful for understanding this plate element and may prove a useful simplification to the code base if implemented correctly someday.
@@ -258,7 +258,7 @@ class Quad3D():
         # Matrix tensor of the middle surface
         a = np.array([[a_11, a_12],
                       [a_21, a_22]])
-        
+
         a_det = np.linalg.det(a)
 
         # Contravariant vectors
@@ -267,7 +267,7 @@ class Quad3D():
 
         Co = np.array([[np.dot(a1, t_1.T)[0, 0], np.dot(a1, t_2.T)[0, 0]],
                        [np.dot(a2, t_1.T)[0, 0], np.dot(a2, t_2.T)[0, 0]]])
-        
+
         return Co
 
     def J(self, xi: float, eta: float) -> NDArray[float64]:
@@ -437,9 +437,9 @@ class Quad3D():
     def B_s_gamma(self, xi:float , eta: float) -> None:
         """Returns the [B_s_gamma] matrix for shear (Equation 39 in Reference 1)
 
-        :param xi: _description_
+        :param xi: Isoparametric coordinate xi (-1 to 1)
         :type xi: _type_
-        :param eta: _description_
+        :param eta: Isoparametric coordinate eta (-1 to 1)
         :type eta: _type_
         """
         raise NotImplementedError('This function is not implemented yet. It is not needed for the current implementation of the Quad3D element.')
