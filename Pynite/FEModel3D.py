@@ -95,11 +95,11 @@ class FEModel3D():
                      automatically assigned.
         :type name: str
         :param X: The node's global X-coordinate.
-        :type X: number
+        :type X: float
         :param Y: The node's global Y-coordinate.
-        :type Y: number
+        :type Y: float
         :param Z: The node's global Z-coordinate.
-        :type Z: number
+        :type Z: float
         :raises NameError: Occurs when the specified name already exists in the model.
         :return: The name of the node added to the model.
         :rtype: str
@@ -135,13 +135,15 @@ class FEModel3D():
         :param name: A unique user-defined name for the material.
         :type name: str
         :param E: The modulus of elasticity of the material.
-        :type E: number
+        :type E: float
         :param G: The shear modulus of elasticity of the material.
-        :type G: number
+        :type G: float
         :param nu: Poisson's ratio of the material.
-        :type nu: number
+        :type nu: float
         :param rho: The density of the material
-        :type rho: number
+        :type rho: float
+        :return: The name of the material added to the model.
+        :rtype: str
         :raises NameError: Occurs when the specified name already exists in the model.
         """
 
@@ -173,8 +175,6 @@ class FEModel3D():
         """Adds a cross-section to the model.
 
         :param name: A unique name for the cross-section.
-        :type name: string
-        :param name: Name of the section
         :type name: str
         :param A: Cross-sectional area of the section
         :type A: float
@@ -208,8 +208,6 @@ class FEModel3D():
         """Adds a cross-section to the model.
 
         :param name: A unique name for the cross-section.
-        :type name: string
-        :param name: Name of the section
         :type name: str
         :param A: Cross-sectional area of the section
         :type A: float
@@ -248,15 +246,15 @@ class FEModel3D():
     def add_spring(self, name: str, i_node: str, j_node: str, ks: float, tension_only: bool = False, comp_only: bool = False) -> str:
         """Adds a new spring to the model.
 
-        :param name: A unique user-defined name for the member. If None or "", a name will be
-                    automatically assigned
+        :param name: A unique user-defined name for the spring. If ``None`` or ``""``, a name will be
+                      automatically assigned.
         :type name: str
         :param i_node: The name of the i-node (start node).
         :type i_node: str
         :param j_node: The name of the j-node (end node).
         :type j_node: str
         :param ks: The spring constant (force/displacement).
-        :type ks: number
+        :type ks: float
         :param tension_only: Indicates if the member is tension-only, defaults to False
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
@@ -310,7 +308,7 @@ class FEModel3D():
         :param material_name: The name of the material of the member.
         :type material_name: str
         :param section_name: The name of the cross section to use for section properties.
-        :type section_name: string
+        :type section_name: str
         :param rotation: The angle of rotation (degrees) of the member cross-section about its longitudinal (local x) axis. Default is 0.
         :type rotation: float, optional
         :param tension_only: Indicates if the member is tension-only, defaults to False
@@ -757,6 +755,32 @@ class FEModel3D():
         return name
 
     def add_shear_wall(self, name: str, mesh_size: float, length: float, height: float, thickness: float, material_name: str, ky_mod: float = 0.35, plane: Literal['XY', 'YZ'] = 'XY', origin: List[float] = [0, 0, 0]):
+        """Adds a meshed shear wall helper to the model.
+
+        The shear wall utility generates a regular mesh for a rectangular wall panel and
+        keeps references to the created nodes and elements for convenience.
+
+        :param name: Unique name for the shear wall.
+        :type name: str
+        :param mesh_size: Target element size for the mesh generator.
+        :type mesh_size: float
+        :param length: Wall length along the local x-direction.
+        :type length: float
+        :param height: Wall height along the local y-direction.
+        :type height: float
+        :param thickness: Element thickness for the wall mesh.
+        :type thickness: float
+        :param material_name: Name of the material to assign to elements.
+        :type material_name: str
+        :param ky_mod: In-plane stiffness modifier in local y; default 0.35.
+        :type ky_mod: float, optional
+        :param plane: Global plane for the wall: ``'XY'`` or ``'YZ'``; default ``'XY'``.
+        :type plane: Literal['XY','YZ'], optional
+        :param origin: Global origin [X, Y, Z] of the wall; default ``[0,0,0]``.
+        :type origin: list[float], optional
+        :return: None
+        :rtype: NoneType
+        """
 
         # Create a new shear wall
         new_shear_wall = ShearWall(self, name, mesh_size, length, height, thickness, material_name, ky_mod, origin, plane)
@@ -1012,7 +1036,8 @@ class FEModel3D():
         :type direction: str
         :param magnitude: The magnitude of the displacement.
         :type magnitude: float
-        :raises ValueError: _description_
+        :raises ValueError: If an invalid displacement/rotation direction is provided.
+        :raises NameError: If the specified node does not exist in the model.
         """
             
         # Validate the value of direction
@@ -1045,7 +1070,7 @@ class FEModel3D():
                      Rxi:bool=False, Ryi:bool=False, Rzi:bool=False,
                      Dxj:bool=False, Dyj:bool=False, Dzj:bool=False,
                      Rxj:bool=False, Ryj:bool=False, Rzj:bool=False):
-        """Defines member end realeses for a member. All member end releases will default to unreleased unless specified otherwise.
+        """Defines member end releases for a member. All member end releases will default to unreleased unless specified otherwise.
 
         :param member_name: The name of the member to have its releases modified.
         :type member_name: str
@@ -1139,7 +1164,7 @@ class FEModel3D():
         :param direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
                           `'Fy'`, `'Fz'`, `'Mx'`, `'My'`, `'Mz'`, `'FX'`, `'FY'`, `'FZ'`, `'MX'`, `'MY'`, or `'MZ'`.
                           Note that lower-case notation indicates use of the beam's local
-                          coordinate system, while upper-case indicates use of the model's globl
+                          coordinate system, while upper-case indicates use of the model's global
                           coordinate system.
         :type direction: str
         :param P: The numeric value (magnitude) of the load.
@@ -1174,7 +1199,7 @@ class FEModel3D():
         :param direction: The direction in which the load is to be applied. Valid values are `'Fx'`,
                           `'Fy'`, `'Fz'`, `'FX'`, `'FY'`, or `'FZ'`.
                           Note that lower-case notation indicates use of the beam's local
-                          coordinate system, while upper-case indicates use of the model's globl
+                          coordinate system, while upper-case indicates use of the model's global
                           coordinate system.
         :type direction: str
         :param w1: The starting value (magnitude) of the load.
@@ -1187,7 +1212,7 @@ class FEModel3D():
         :param x2: The load's end location along the member's local x-axis. If this argument is not
                    specified, the end of the member will be used. Defaults to `None`.
         :type x2: float, optional
-        :param case: _description_, defaults to 'Case 1'
+        :param case: The load case to categorize the load under. Defaults to 'Case 1'.
         :type case: str, optional
         :raises ValueError: Occurs when an invalid load direction has been specified.
         """
@@ -1220,7 +1245,7 @@ class FEModel3D():
         """Adds self weight to all members in the model. Note that this only works for members. Plate and Quad elements will be ignored by this command.
 
         :param global_direction: The global direction to apply the member load in: 'FX', 'FY', or 'FZ'.
-        :type global_direction: string
+        :type global_direction: str
         :param factor: A factor to apply to the member self-weight. Can be used to account for items like connections, or to switch the direction of the self-weight load.
         :type factor: float
         :param case: The load case to apply the self-weight to. Defaults to 'Case 1'
@@ -1663,7 +1688,7 @@ class FEModel3D():
         :param sparse: Returns a sparse matrix if set to `True`, and a dense matrix otherwise. Defaults to `True`.
         :type sparse: bool, optional
         :param first_step: Used to indicate if the analysis is occuring at the first load step. Used in nonlinear analysis where the load is broken into multiple steps. Default is `True`.
-        :type first_step: book, optional
+        :type first_step: bool, optional
         :return: The global geometric stiffness matrix for the structure.
         :rtype: ndarray or coo_matrix
         """
@@ -1746,7 +1771,7 @@ class FEModel3D():
         :type log: bool, optional
         :param sparse: Indicates whether the sparse solver should be used. Defaults to True.
         :type sparse: bool, optional
-        :return: The gloabl plastic reduction matrix.
+        :return: The global plastic reduction matrix.
         :rtype: array
         """
 
