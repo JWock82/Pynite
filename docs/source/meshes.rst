@@ -137,7 +137,7 @@ API Overview
 ============
 
 Base Class: :class:`Pynite.Mesh.Mesh`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: Pynite.Mesh.Mesh
    :members: generate, max_shear, min_shear, max_moment, min_moment,

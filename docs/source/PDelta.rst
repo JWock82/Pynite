@@ -1,6 +1,6 @@
-====================
+==============================================
 P-:math:`\Delta` and P-:math:`\delta` Analysis
-====================
+==============================================
 
 When a structure is loaded, it displaces. Once a structure has displaced, the forces act on a geometry that is different than the geometry that was initially analyzed. Secondary forces develop due to eccentricities created by these displacements. These secondary forces are known collectively as P-:math:`\Delta` and P-:math:`\delta` effects.
 
@@ -40,6 +40,6 @@ AISC has provided benchmark tests found in AISC 360-16 commentary C2.1 that can 
 
 Limitations
 ===========
-*Note that P-:math:`\Delta` and P-:math:`\delta` analysis is just one part of an overall second-order analysis. See the building code for additional requirements that may be applicable, such as stiffness reductions and notional loads.
+Note that P-:math:`\Delta` and P-:math:`\delta` analysis is just one part of an overall second-order analysis. See the building code for additional requirements that may be applicable, such as stiffness reductions and notional loads.
 
-*P-:math:`\Delta` effects are not considered for plate elements.
+P-:math:`\Delta` effects are not considered for plate elements.

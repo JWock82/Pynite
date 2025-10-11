@@ -41,7 +41,7 @@ Dependencies
 Below is a detailed description of how `Pynite` uses each of its dependencies to help you decide which (if any) installation customizations you may want to make.
 
 Required Dependencies Installed No Matter What
----------------------
+----------------------------------------------
 
 * `numpy`: Used for matrix algebra and dense matrix solver
 * `PrettyTable`: Used to format tabular output

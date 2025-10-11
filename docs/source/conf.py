@@ -29,10 +29,10 @@ extensions = ['sphinx.ext.autodoc']
 autoclass_content = 'class'
 
 # autodoc settings
-autodoc_mock_imports = ['numpy', 'IPython', 'vtk', 'pdfkit']  # Mock import dependencies
+autodoc_mock_imports = ['numpy', 'IPython', 'vtk', 'pdfkit', 'prettytable', 'matplotlib', 'matplotlib.pyplot', 'pyvista']  # Mock import dependencies
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = ['pushover.rst']
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

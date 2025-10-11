@@ -86,6 +86,7 @@ Member Rotations
 The member can be rotated about its own longitudinal (x) axis by passing a rotation angle (in degrees) to the ``rotation`` argument in the ``FEModel3D.add_member()`` method. Here's an example:
 
 .. code-block:: python
+
     my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26', rotation=35)
 
 The member created by the code above will be rotated 35 degrees about its local x-axis.
@@ -97,6 +98,7 @@ Members can be changed to tension or compression only by passing ``tension_only=
 ``comp_only=True`` to the ``FEModel3D.add_member()`` method. Here's an example:
 
 .. code-block:: python
+
     my_model.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26', tension-only=True)
     my_model.add_member('M2', 'N2', 'N3', 'Steel', 'W12x26', comp-only=True)
 
