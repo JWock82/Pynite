@@ -117,8 +117,8 @@ Rectangular openings can be declared **before** ``generate()`` and are respected
 during meshing. Nodes and elements fully inside an opening are removed, and
 orphans are cleaned up::
 
-    slab.add_rect_opening('Stair 1', x_left=6.0, y_bott=3.0, width=3.0, height=4.0)
-    slab.generate()
+    model.meshes['Slab'].add_rect_opening('Stair 1', x_left=6.0, y_bott=3.0, width=3.0, height=4.0)
+    model.meshes['Slab'].generate()
 
 Load Combinations / Tag Filtering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -285,19 +285,35 @@ Rectangular slab with openings and control lines::
 
 Annular tank roof shell (Y‑axis)::
 
-    ring = AnnulusMesh(mesh_size=1.5,
-                       outer_radius=25.0, inner_radius=5.0,
-                       thickness=0.375, material_name='Steel',
-                       model=model, axis='Y', origin=[0,0,30])
-    ring.generate()
+    model.add_annulus_mesh(name='AM1',
+                           mesh_size = 1.5,
+                           outer_radius = 25.0,
+                           inner_radius = 5.0,
+                           thickness = 0.375,
+                           material_name = 'Steel',
+                           kx_mod = 1.0, ky_mod = 1.0,
+                           origin = [0, 0, 0],
+                           axis = 'Y'
+                           )
+    
+    model.meshes['AM1'].generate()
 
 Cylindrical wall (global Z axis)::
 
-    cyl = CylinderMesh(mesh_size=2.0, radius=20.0, height=18.0,
-                       thickness=0.4, material_name='Conc',
-                       model=model, axis='Z', origin=[0,0,0],
-                       num_elements=64, element_type='Quad')
-    cyl.generate()
+    model.add_cylinder_mesh(name = 'CM1',
+                            mesh_size = 2.0,
+                            radius = 20.0,
+                            height = 18.0,
+                            thickness = 0.4,
+                            material_name = 'Conc',
+                            kx_mod = 1.0, ky_mod = 1.0,
+                            origin = [0, 0, 0],
+                            axis = 'Y',
+                            num_elements = 30
+                            element_type = 'Quad'
+                            )
+                            
+    model.meshes['CM1'].generate()
 
 Implementation Details & Behavior
 =================================
