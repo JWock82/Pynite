@@ -2217,42 +2217,31 @@ class FEModel3D():
         self.solution = 'Linear'
 
     def analyze(self, log=False, check_stability=True, check_statics=False, max_iter=30, sparse=True, combo_tags=None, spring_tolerance=0, member_tolerance=0, num_steps=1):
-        """
-        Performs a first-order elastic analysis of the model.
+        """Performs a first-order elastic analysis of the model.
 
-        Allows the use of sparse solvers for improved performance on large models. Handles tension/compression-only behavior for nodal springs and elements. Loads can be applied in steps for better convergence of complex tension/compression-only models.
+        Allows sparse solvers for larger models, handles tension/compression-only
+        behavior for nodal springs and members via iteration, and supports load
+        stepping for improved convergence.
 
-        Parameters
-        ----------
-        log : bool, optional
-            If True, prints progress messages during analysis (default: False).
-        check_stability : bool, optional
-            If True, checks model stability at each analysis step (default: True).
-        check_statics : bool, optional
-            If True, performs a statics check after analysis (default: False).
-        max_iter : int, optional
-            Maximum number of tension/compression-only iterations allowed per load step before assuming divergence (default: 30).
-        sparse : bool, optional
-            If True, uses sparse matrix solvers for improved efficiency on large models (default: True).
-        combo_tags : list[str] or None, optional
-            List of tags used to select which load combinations to analyze. If None, all combinations are analyzed (default: None).
-        spring_tolerance : float, optional
-            Tolerance used to determine convergence for springs in tension/compression-only analysis (default: 0).
-        member_tolerance : float, optional
-            Tolerance used to determine convergence for members in tension/compression-only analysis (default: 0).
-        num_steps : int, optional
-            Number of load increments for applying load combinations. Use more steps for better convergence in highly nonlinear cases (default: 1).
-
-        Raises
-        ------
-        Exception
-            If the stiffness matrix is singular (indicating instability), or if the model fails to converge within the maximum allowed iterations.
-
-        Notes
-        -----
-        - Flags the model as solved upon successful completion.
-        - Stores calculated displacements and reactions in the model.
-        - If statics checking is enabled, runs a global equilibrium check on the results.
+        :param log: If ``True``, prints progress messages during analysis. Defaults to ``False``.
+        :type log: bool, optional
+        :param check_stability: If ``True``, checks model stability at each analysis step. Defaults to ``True``.
+        :type check_stability: bool, optional
+        :param check_statics: If ``True``, performs a statics check after analysis. Defaults to ``False``.
+        :type check_statics: bool, optional
+        :param max_iter: Maximum number of tension/compression-only iterations allowed per load step before assuming divergence. Defaults to ``30``.
+        :type max_iter: int, optional
+        :param sparse: If ``True``, uses sparse matrix solvers for improved efficiency on large models. Defaults to ``True``.
+        :type sparse: bool, optional
+        :param combo_tags: Tags used to select which load combinations to analyze. If ``None``, all combinations are analyzed. Defaults to ``None``.
+        :type combo_tags: list[str] | None, optional
+        :param spring_tolerance: Convergence tolerance for springs in tension/compression-only analysis. Defaults to ``0``.
+        :type spring_tolerance: float, optional
+        :param member_tolerance: Convergence tolerance for members in tension/compression-only analysis. Defaults to ``0``.
+        :type member_tolerance: float, optional
+        :param num_steps: Number of load increments for applying load combinations. Use more steps for better convergence in highly nonlinear cases. Defaults to ``1``.
+        :type num_steps: int, optional
+        :raises Exception: If the stiffness matrix is singular (indicating instability) or if the model fails to converge within the maximum allowed iterations.
         """
 
         if log:
