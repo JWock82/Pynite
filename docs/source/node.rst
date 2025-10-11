@@ -75,7 +75,7 @@ Use the ``FEModel3D.add_node_load`` method to add nodal loads to a model.
     my_model.add_node_load('N1', 'FX', 30, 'E')
 
 Enforced Nodal Displacements (e.g., Support Settlements)
-=======================================================
+=======================================================================
 Use the ``FEModel3D.def_node_disp`` method to model a known nodal displacement or rotation such as a support settlement.
 
 .. code-block:: python
@@ -86,6 +86,54 @@ Use the ``FEModel3D.def_node_disp`` method to model a known nodal displacement o
 Getting Node Results
 ====================
 
+After running an analysis, each node stores its results in dictionaries keyed by load
+combination name. Access a node via ``model.nodes['Name']`` and then query the result
+you need by combination.
+
+Available nodal results
+-----------------------
+
+- Displacements (global)
+  - ``DX['Combo']``, ``DY['Combo']``, ``DZ['Combo']``
+- Rotations (global)
+  - ``RX['Combo']``, ``RY['Combo']``, ``RZ['Combo']``
+- Reactions (global forces)
+  - ``RxnFX['Combo']``, ``RxnFY['Combo']``, ``RxnFZ['Combo']``
+- Reactions (global moments)
+  - ``RxnMX['Combo']``, ``RxnMY['Combo']``, ``RxnMZ['Combo']``
+
+Notes
+-----
+
+- Results are populated only after a successful call to `analyze_linear()`, `analyze()`,
+  or `analyze_PDelta()`. Each combination analyzed will appear as a key in the
+  per-result dictionaries.
+- Reaction values are reported in the global axes and represent the support reactions
+  required to enforce supports and enforced displacements/rotations at the node.
+- Enforced displacements/rotations are inputs (`EnforcedDX/DY/DZ/RX/RY/RZ` on the node); the
+  corresponding reaction response will appear in `RxnF*`/`RxnM*` after analysis.
+- Spring supports are defined per-DOF and stored as `spring_D* = [stiffness, direction, active]`
+  where `direction` is `'+'` (compression-only), `'-'` (tension-only), or `None` (two-way).
+
+Examples
+--------
+
+.. code-block:: python
+
+    n = my_model.nodes['N2']
+
+    # Global displacements/rotations for combo 'D+L'
+    ux = n.DX['D+L']
+    uy = n.DY['D+L']
+    rz = n.RZ['D+L']
+
+    # Support reactions for combo '1.2D+1.0W'
+    vy = n.RxnFY['1.2D+1.0W']
+    mz = n.RxnMZ['1.2D+1.0W']
+
+    # Inspect loads assigned to the node (list of tuples: (Direction, value, case))
+    for (dirn, val, case) in n.NodeLoads:
+        print(dirn, val, case)
 The ``FEModel3D`` class stores nodes in a Python dictionary. Nodes can be accessed using the syntax ``FEModel3D.nodes['node_name']``.
 
 Once you've retrieved a node you can access its reactions and displacements as node class attributes. Reactions and displacements are also stored in dictionary format, with the keys being the load combination names.
@@ -138,3 +186,5 @@ API Cross-Links and Reference
    :members:
    :undoc-members:
    :show-inheritance:
+
+
