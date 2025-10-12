@@ -17,6 +17,23 @@ class Mesh():
     """
 
     def __init__(self, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1, start_node: str = 'N1', start_element: str = 'Q1') -> None:
+        """Base mesh container storing common settings and membership.
+
+        :param thickness: Element thickness used by generated elements.
+        :type thickness: float
+        :param material_name: Name of the element material.
+        :type material_name: str
+        :param model: Owning FEModel3D; nodes/elements are inserted here on generate().
+        :type model: FEModel3D
+        :param kx_mod: In-plane stiffness modifier along local x for generated elements. Defaults to 1.
+        :type kx_mod: float, optional
+        :param ky_mod: In-plane stiffness modifier along local y for generated elements. Defaults to 1.
+        :type ky_mod: float, optional
+        :param start_node: First node name to use when numbering; e.g., ``'N1'``. Defaults to ``'N1'``.
+        :type start_node: str, optional
+        :param start_element: First element name to use when numbering; e.g., ``'Q1'`` or ``'R1'``. Defaults to ``'Q1'``.
+        :type start_element: str, optional
+        """
 
         self.thickness = thickness          # Thickness
         self.material_name = material_name            # The name of the element material
@@ -95,26 +112,20 @@ class Mesh():
         pass
 
     def max_shear(self, direction: str = 'Qx', combo_tags: str | list[str] = 'Combo 1') -> float:
-        """
-        Returns the maximum shear in the mesh.
+        """Returns the maximum shear in the mesh.
 
-        Checks corner and center shears in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this function.
+        Checks corner and center shears in all elements contained in the mesh. The mesh
+        must belong to a solved model prior to calling this method.
 
-        Parameters
-        ----------
-        direction : str, optional
-            The direction to get the maximum shear for.
-            Options are 'Qx', 'Qy', 'QX', or 'QY'. Default is 'Qx'.
-        combo_tags : str or list[str], optional
-            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
-
-        Returns
-        -------
-        float
-            The maximum shear found in the mesh for the given direction and load combination(s).
-            Returns 0.0 if no matching combinations are found.
+        :param direction: Shear component to evaluate. Use local components ``'Qx'`` or
+            ``'Qy'``, or global components ``'QX'`` or ``'QY'``. Defaults to ``'Qx'``.
+        :type direction: str
+        :param combo_tags: Either a single load combination name (``str``) or a list of
+            tags (``list[str]``). If a list is provided, any load combination with at
+            least one of these tags will be considered. Defaults to ``'Combo 1'``.
+        :type combo_tags: str | list[str]
+        :return: The maximum shear found for the requested component (0.0 if none).
+        :rtype: float
         """
 
         # Determine if the shear is requested in local or global axes
@@ -191,26 +202,20 @@ class Mesh():
         return 0.0 if Q_max is None else Q_max
 
     def min_shear(self, direction: str = 'Qx', combo_tags: str | list[str] = 'Combo 1') -> float:
-        """
-        Returns the minimum shear in the mesh.
+        """Returns the minimum shear in the mesh.
 
-        Checks corner and center shears in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this function.
+        Checks corner and center shears in all elements contained in the mesh. The mesh
+        must belong to a solved model prior to calling this method.
 
-        Parameters
-        ----------
-        direction : str, optional
-            The direction to get the minimum shear for.
-            Options are 'Qx', 'Qy', 'QX', or 'QY'. Default is 'Qx'.
-        combo_tags : str or list[str], optional
-            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
-
-        Returns
-        -------
-        float
-            The minimum shear found in the mesh for the given direction and load combination(s).
-            Returns 0.0 if no matching combinations are found.
+        :param direction: Shear component to evaluate. Use local components ``'Qx'`` or
+            ``'Qy'``, or global components ``'QX'`` or ``'QY'``. Defaults to ``'Qx'``.
+        :type direction: str
+        :param combo_tags: Either a single load combination name (``str``) or a list of
+            tags (``list[str]``). If a list is provided, any load combination with at
+            least one of these tags will be considered. Defaults to ``'Combo 1'``.
+        :type combo_tags: str | list[str]
+        :return: The minimum shear found for the requested component (0.0 if none).
+        :rtype: float
         """
 
         # Determine if the shear is requested in local or global axes
@@ -287,25 +292,21 @@ class Mesh():
         return 0.0 if Q_min is None else Q_min
 
     def max_moment(self, direction: str = 'Mx', combo_tags: str | list[str] = 'Combo 1') -> float:
-        """
-        Returns the maximum moment in the mesh.
+        """Returns the maximum moment in the mesh.
 
-        Checks corner and center moments in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this function.
+        Checks corner and center moments in all elements contained in the mesh. The mesh
+        must belong to a solved model prior to calling this method.
 
-        Parameters
-        ----------
-        direction : str, optional
-            The direction to get the maximum moment for. 
-            Options are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'. Default is 'Mx'.
-        combo_tags : str or list[str], optional
-            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
-
-        Returns
-        -------
-        float
-            The maximum moment found in the mesh for the given direction and load combination(s).
+        :param direction: Moment component to evaluate. Use local components ``'Mx'``,
+            ``'My'``, ``'Mxy'`` or global components ``'MX'``, ``'MY'``, ``'MZ'``.
+            Defaults to ``'Mx'``.
+        :type direction: str
+        :param combo_tags: Either a single load combination name (``str``) or a list of
+            tags (``list[str]``). If a list is provided, any load combination with at
+            least one of these tags will be considered. Defaults to ``'Combo 1'``.
+        :type combo_tags: str | list[str]
+        :return: The maximum moment found for the requested component (0.0 if none).
+        :rtype: float
         """
 
         # Determine if the moment is requested in local or global axes
@@ -382,25 +383,21 @@ class Mesh():
         return 0.0 if M_max is None else M_max
 
     def min_moment(self, direction: str = 'Mx', combo_tags: str | list[str] = 'Combo 1') -> float:
-        """
-        Returns the minimum moment in the mesh.
+        """Returns the minimum moment in the mesh.
 
-        Checks corner and center moments in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this function.
+        Checks corner and center moments in all elements contained in the mesh. The mesh
+        must belong to a solved model prior to calling this method.
 
-        Parameters
-        ----------
-        direction : str, optional
-            The direction to get the minimum moment for. 
-            Options are 'Mx', 'My', 'Mxy', 'MX', 'MY', or 'MZ'. Default is 'Mx'.
-        combo_tags : str or list[str], optional
-            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
-
-        Returns
-        -------
-        float
-            The minimum moment found in the mesh for the given direction and load combination(s).
+        :param direction: Moment component to evaluate. Use local components ``'Mx'``,
+            ``'My'``, ``'Mxy'`` or global components ``'MX'``, ``'MY'``, ``'MZ'``.
+            Defaults to ``'Mx'``.
+        :type direction: str
+        :param combo_tags: Either a single load combination name (``str``) or a list of
+            tags (``list[str]``). If a list is provided, any load combination with at
+            least one of these tags will be considered. Defaults to ``'Combo 1'``.
+        :type combo_tags: str | list[str]
+        :return: The minimum moment found for the requested component (0.0 if none).
+        :rtype: float
         """
 
         # Determine if the moment is requested in local or global axes
@@ -492,12 +489,8 @@ class Mesh():
             - If str: a single load combination name to evaluate. Default is 'Combo 1'.
             - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
-        
-        Returns
-        -------
-        float
-            The maximum membrane stress found in the mesh for the given direction and load
-            combination(s). Returns 0.0 if no matching combinations are found.
+        :return: The maximum membrane stress found for the requested component (0.0 if none).
+        :rtype: float
         """
 
         # Determine if local or global coordinate results have been requested
@@ -592,11 +585,8 @@ class Mesh():
             - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
 
         
-        Returns
-        -------
-        float
-            The minimum membrane stress found in the mesh for the given direction and load
-            combination(s). Returns 0.0 if no matching combinations are found.
+        :return: The minimum membrane stress found for the requested component (0.0 if none).
+        :rtype: float
         """
 
         # Determine if local or global coordinate results have been requested
@@ -1004,8 +994,12 @@ class RectangleMesh(Mesh):
         self.is_generated = True
 
     def node_local_coords(self, node: Node3D) -> tuple[float, float]:
-        """
-        Calculates a node's position in the mesh's local coordinate system
+        """Calculates a node's position in the mesh's local x/y coordinate system.
+
+        :param node: The node to evaluate.
+        :type node: Node3D
+        :return: Local coordinates ``(x, y)`` measured from the mesh origin.
+        :rtype: tuple[float, float]
         """
 
         if self.plane == 'XY':
@@ -1021,25 +1015,20 @@ class RectangleMesh(Mesh):
         return x, y
 
     def add_rect_opening(self, name: str, x_left: float, y_bott: float, width: float, height: float) -> None:
-        """
-        Adds a rectangular opening to the mesh.
+        """Adds a rectangular opening to the mesh.
 
-        Parameters
-        ----------
-
-        name : string
-            A unique name for the opening that can be used to access it later
-            on.
-        x_left : number
-            The x-coordinate for the left side of the opening in the mesh's
-            local coordinate system.
-        y_bott : number
-            The y-coordinate for the bottom of the opening in the mesh's local
-            coordinate system
-        width : number
-            The width of the opening.
-        height : number
-            The height of the opening.
+        :param name: Unique name for the opening (used as its key in ``mesh.openings``).
+        :type name: str
+        :param x_left: Local x-coordinate for the left edge of the opening.
+        :type x_left: float
+        :param y_bott: Local y-coordinate for the bottom edge of the opening.
+        :type y_bott: float
+        :param width: Opening width (local x-direction).
+        :type width: float
+        :param height: Opening height (local y-direction).
+        :type height: float
+        :return: None
+        :rtype: NoneType
         """
 
         self.openings[name] = RectOpening(x_left, y_bott, width, height)
@@ -1058,20 +1047,16 @@ class RectOpening():
     """
 
     def __init__(self, x_left: float, y_bott: float, width: float, height: float) -> None:
-        """
-        Parameters
-        ----------
+        """Create a rectangular opening descriptor.
 
-        x_left : number
-            The x-coordinate for the left side of the opening in the mesh's
-            local coordinate system.
-        y_bott : number
-            The y-coordinate for the bottom of the opening in the mesh's local
-            coordinate system
-        width : number
-            The width of the opening.
-        height : number
-            The height of the opening.
+        :param x_left: Local x-coordinate for the left edge of the opening.
+        :type x_left: float
+        :param y_bott: Local y-coordinate for the bottom edge of the opening.
+        :type y_bott: float
+        :param width: Opening width (local x-direction).
+        :type width: float
+        :param height: Opening height (local y-direction).
+        :type height: float
         """
 
         self.x_left = x_left
@@ -1087,6 +1072,34 @@ class AnnulusMesh(Mesh):
 
     def __init__(self, mesh_size: float, outer_radius: float, inner_radius: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1,
         ky_mod: float = 1, origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
+
+        """Annular (donut) mesh between inner and outer radii.
+
+        :param mesh_size: Target element size used to seed circumferential and radial divisions.
+        :type mesh_size: float
+        :param outer_radius: Outer radius of the annulus.
+        :type outer_radius: float
+        :param inner_radius: Inner radius of the annulus.
+        :type inner_radius: float
+        :param thickness: Element thickness.
+        :type thickness: float
+        :param material_name: Name of the element material.
+        :type material_name: str
+        :param model: The FEModel3D this mesh will add nodes/elements to.
+        :type model: FEModel3D
+        :param kx_mod: In-plane stiffness modifier along the element's local x-direction. Defaults to 1.
+        :type kx_mod: float, optional
+        :param ky_mod: In-plane stiffness modifier along the element's local y-direction. Defaults to 1.
+        :type ky_mod: float, optional
+        :param origin: Local origin of the annulus in global coordinates ``[X, Y, Z]``. Defaults to ``[0, 0, 0]``.
+        :type origin: list[float], optional
+        :param axis: Global axis about which the mesh is generated: ``'X'``, ``'Y'``, or ``'Z'``. Defaults to ``'Y'``.
+        :type axis: str, optional
+        :param start_node: Name of the first node to use. Defaults to ``'N1'``.
+        :type start_node: str, optional
+        :param start_element: Name of the first element to use. Defaults to ``'Q1'``.
+        :type start_element: str, optional
+        """
 
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node, start_element)
 
@@ -1184,6 +1197,34 @@ class AnnulusRingMesh(Mesh):
 
     def __init__(self, outer_radius: float, inner_radius: float, num_quads: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
                  origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
+
+        """Single annular ring of quads between two radii.
+
+        :param outer_radius: Outer radius of the ring.
+        :type outer_radius: float
+        :param inner_radius: Inner radius of the ring.
+        :type inner_radius: float
+        :param num_quads: Number of quads around the ring.
+        :type num_quads: int
+        :param thickness: Element thickness.
+        :type thickness: float
+        :param material_name: Name of the element material.
+        :type material_name: str
+        :param model: Owning FEModel3D.
+        :type model: FEModel3D
+        :param kx_mod: In-plane stiffness modifier (local x). Defaults to 1.
+        :type kx_mod: float, optional
+        :param ky_mod: In-plane stiffness modifier (local y). Defaults to 1.
+        :type ky_mod: float, optional
+        :param origin: Local origin in global coordinates ``[X, Y, Z]``. Defaults to ``[0, 0, 0]``.
+        :type origin: list[float], optional
+        :param axis: Global axis: ``'X'``, ``'Y'``, or ``'Z'``. Defaults to ``'Y'``.
+        :type axis: str, optional
+        :param start_node: First node name. Defaults to ``'N1'``.
+        :type start_node: str, optional
+        :param start_element: First element name. Defaults to ``'Q1'``.
+        :type start_element: str, optional
+        """
 
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node=start_node,
                          start_element=start_element)
@@ -1487,7 +1528,36 @@ class FrustrumMesh(AnnulusMesh):
 
     def __init__(self, mesh_size: float, large_radius: float, small_radius: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
                  origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
-        
+        """Conical frustum mesh generated from an annulus and then tapered to height.
+
+        :param mesh_size: Target element size for the base annulus.
+        :type mesh_size: float
+        :param large_radius: Large radius (base) of the frustum.
+        :type large_radius: float
+        :param small_radius: Small radius (top) of the frustum.
+        :type small_radius: float
+        :param height: Frustum height along ``axis``.
+        :type height: float
+        :param thickness: Element thickness.
+        :type thickness: float
+        :param material_name: Name of the element material.
+        :type material_name: str
+        :param model: Owning FEModel3D.
+        :type model: FEModel3D
+        :param kx_mod: In-plane stiffness modifier (local x). Defaults to 1.
+        :type kx_mod: float, optional
+        :param ky_mod: In-plane stiffness modifier (local y). Defaults to 1.
+        :type ky_mod: float, optional
+        :param origin: Local origin in global coordinates ``[X, Y, Z]``. Defaults to ``[0, 0, 0]``.
+        :type origin: list[float], optional
+        :param axis: Global axis: ``'X'``, ``'Y'``, or ``'Z'``. Defaults to ``'Y'``.
+        :type axis: str, optional
+        :param start_node: First node name. Defaults to ``'N1'``.
+        :type start_node: str, optional
+        :param start_element: First element name. Defaults to ``'Q1'``.
+        :type start_element: str, optional
+        """
+
         # Create an annulus mesh
         super().__init__(mesh_size, large_radius, small_radius, thickness, material_name, model, kx_mod,
                          ky_mod, origin, axis, start_node, start_element)
@@ -1529,49 +1599,40 @@ class FrustrumMesh(AnnulusMesh):
 
 #%%
 class CylinderMesh(Mesh):
-    """
-    A mesh of quadrilaterals forming a cylinder.
-
-    The mesh is formed with the local y-axis of the elements pointed toward
-    the base of the cylinder 
-
-    Parameters
-    ----------
-
-    mesh_size : number
-        The desired mesh element edge size. This value will only be used to mesh vertically if `num_elements` is
-        specified. Otherwise it will be used to mesh the circumference too.
-    radius : number
-        The radius of the cylinder to the element centers
-    height : number
-        Total height of the cylinder.
-    thickness : number
-        Element thickness.
-    material_name : string
-        The name of the element material.
-    kx_mod : number
-        Stiffness modification factor for in-plane stiffness in the element's local
-        x-direction. Default value is 1.0 (no modification).
-    ky_mod : number
-        Stiffness modification factor for in-plane stiffness in the element's local
-        y-direction. Default value is 1.0 (no modification).
-    start_node : string, optional
-        The name of the first node in the mesh. The name must be formatted starting with a single
-        letter followed by a number (e.g. 'N12'). The mesh will begin numbering nodes from this
-        number. The default is 'N1'. 
-    start_element : string, optional
-        The name of the first element in the mesh. The name must be formatted starting with a
-        single letter followed by a number (e.g. 'Q32'). The mesh will begin numbering elements
-        from this number. The default is 'Q1'.
-    num_elements : number, optional
-        The number of quadrilaterals to divide the circumference into. If this value is omitted
-        `mesh_size` will be used instead to calculate the number of quadrilaterals in the
-        circumference. The default is `None`.
-    element_type : string
-        The type of element to use for the mesh: 'Quad' or 'Rect'
-    """
 
     def __init__(self, mesh_size: float, radius: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1', num_elements: int | None = None, element_type: str = 'Quad') -> None:
+
+        """Cylindrical shell mesh.
+
+        :param mesh_size: Target element edge size. If ``num_elements`` is provided, used only for vertical division; otherwise used to compute circumferential division too.
+        :type mesh_size: float
+        :param radius: Cylinder radius to element centers.
+        :type radius: float
+        :param height: Total height of the cylinder.
+        :type height: float
+        :param thickness: Element thickness.
+        :type thickness: float
+        :param material_name: Name of the element material.
+        :type material_name: str
+        :param model: Owning FEModel3D.
+        :type model: FEModel3D
+        :param kx_mod: In-plane stiffness modifier (local x). Defaults to 1.
+        :type kx_mod: float, optional
+        :param ky_mod: In-plane stiffness modifier (local y). Defaults to 1.
+        :type ky_mod: float, optional
+        :param origin: Local origin in global coordinates ``[X, Y, Z]``. Defaults to ``[0, 0, 0]``.
+        :type origin: list[float], optional
+        :param axis: Global axis about which the mesh is generated: ``'X'``, ``'Y'``, or ``'Z'``. Defaults to ``'Y'``.
+        :type axis: str, optional
+        :param start_node: First node name (e.g., ``'N1'``). Defaults to ``'N1'``.
+        :type start_node: str, optional
+        :param start_element: First element name (e.g., ``'Q1'``). Defaults to ``'Q1'``.
+        :type start_element: str, optional
+        :param num_elements: Optional number of quads around the circumference (overrides automatic calculation from ``mesh_size``).
+        :type num_elements: int | None, optional
+        :param element_type: Element family for the mesh: ``'Quad'`` or ``'Rect'``. Defaults to ``'Quad'``.
+        :type element_type: str, optional
+        """
 
         # Inherit properties and methods from the parent `Mesh` class
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node, start_element)
@@ -1986,3 +2047,5 @@ def check_mesh_integrity(mesh: Mesh, console_log: bool = True) -> Union[str, Lis
             return ''
     else:
         return errors
+
+
