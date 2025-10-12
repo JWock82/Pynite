@@ -16,13 +16,13 @@ Quick start
     model = FEModel3D()
 
     # Geometry
-    n1 = model.add_node('N1', 0.0, 0.0, 0.0)
-    n2 = model.add_node('N2', 3.0, 0.0, 0.0)
+    model.add_node('N1', 0.0, 0.0, 0.0)
+    model.add_node('N2', 3.0, 0.0, 0.0)
 
     model.add_material('A36', E=29_000_000.0, G=11_200_000.0, nu=0.3, rho=0.283)
     model.add_section('Wsect', A=10.0, Iy=100.0, Iz=200.0, J=5.0)
 
-    m1 = model.add_member('M1', i_node=n1, j_node=n2, material_name='A36', section_name='Wsect')
+    m1 = model.add_member('M1', i_node='N1', j_node='N2', material_name='A36', section_name='Wsect')
 
     # Supports and loads
     model.def_support('N1', support_DX=True, support_DY=True, support_DZ=True, support_RY=True, support_RZ=True)
