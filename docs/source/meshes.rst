@@ -56,14 +56,14 @@ Create a rectangular quad mesh on the global XY plane and add it to a model::
     # Let's add fixed supports to the perimeter
     for node in model.meshes['Slab'].nodes.values():
       # Check if the node lies on the perimeter
-      if node.X == 0.0 or node.X == 20.0 or node.Z == 0.0 or node.Z = 25.0:  # The mesh was generated in the XZ plane
+      if node.X == 0.0 or node.X == 20.0 or node.Z == 0.0 or node.Z == 25.0:  # The mesh was generated in the XZ plane
         model.def_support(node.name, True, True, True, True, True, True)  # Fix all degrees of freedom at the node
 
     # Solve the model
     model.analyze()
 
     # Solve the model, then query peak values by combo/tag
-    mx_max = slab.max_moment('Mx', combo_tags=['service', 'strength'])  # Check tagged combinations
+    slab = model.meshes['Slab']; mx_max = slab.max_moment('Mx', combo_tags=['service', 'strength'])  # Check tagged combinations
     qy_min = slab.min_shear('Qy', combo_tags='Combo 1')  # Check just one combination
 
 Why Use Mesh Classes?
@@ -140,8 +140,7 @@ Base Class: :class:`Pynite.Mesh.Mesh`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: Pynite.Mesh.Mesh
-   :members: generate, max_shear, min_shear, max_moment, min_moment,
-             max_membrane, min_membrane
+   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -155,7 +154,7 @@ A structured grid on a rectangular region, optionally with internal control
 lines and rectangular openings.
 
 .. autoclass:: Pynite.Mesh.RectangleMesh
-   :members: __init__, generate, node_local_coords, add_rect_opening
+   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -175,7 +174,8 @@ RectOpening
 ^^^^^^^^^^^
 
 .. autoclass:: Pynite.Mesh.RectOpening
-   :members: __init__
+   :members:
+   :undoc-members:
    :show-inheritance:
 
 AnnulusMesh
@@ -186,7 +186,7 @@ The algorithm increases mesh density as needed; transitions are handled with
 :class:`AnnulusTransRingMesh` rings.
 
 .. autoclass:: Pynite.Mesh.AnnulusMesh
-   :members: __init__, generate
+   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -196,7 +196,7 @@ AnnulusRingMesh
 Single annular ring of quads between two radii and about an axis.
 
 .. autoclass:: Pynite.Mesh.AnnulusRingMesh
-   :members: __init__, generate
+   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -207,7 +207,7 @@ Annular ring that **triples** element count between inner and mid/outer radii
 to smoothly transition to a finer mesh.
 
 .. autoclass:: Pynite.Mesh.AnnulusTransRingMesh
-   :members: __init__, generate
+   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -219,7 +219,7 @@ adjusting node heights linearly with radius to achieve the specified frustum
 height along the chosen ``axis``.
 
 .. autoclass:: Pynite.Mesh.FrustrumMesh
-   :members: __init__, generate
+   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -230,7 +230,7 @@ A vertical (or X/Z‐axis) cylindrical surface meshed into circumferential
 courses and vertical divisions. Choose ``element_type='Quad'`` or ``'Rect'``.
 
 .. autoclass:: Pynite.Mesh.CylinderMesh
-   :members: __init__, generate
+   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -354,3 +354,5 @@ This page documents the mesh API and typical usage patterns. See also:
 * :mod:`Pynite.Quad3D` — DKMQ + membrane quadrilateral formulation
 * :mod:`Pynite.Plate3D` — rectangular plate + membrane element
 * :mod:`Pynite.Node3D` — nodal DOFs and result storage
+
+
