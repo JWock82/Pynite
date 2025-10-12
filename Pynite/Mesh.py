@@ -474,22 +474,19 @@ class Mesh():
         return 0.0 if M_min is None else M_min
 
     def max_membrane(self, direction: str = 'Sx', combo_tags: str | list[str] = 'Combo 1') -> float:
-        """
-        Returns the maximum membrane stress in the mesh.
+        """Returns the maximum membrane stress in the mesh.
 
-        Checks corner and center stresses in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this function.
+        Checks corner and center moments in all elements contained in the mesh. The mesh
+        must belong to a solved model prior to calling this method.
 
-        Parameters
-        ----------
-        direction : str, optional
-            The direction to get the maximum membrane stress for.
-            Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
-        combo_tags : str or list[str], optional
-            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
-
-        :return: The maximum membrane stress found for the requested component (0.0 if none).
+        :param direction: Membrane stress component to evaluate. Use local components ``'Sx'``,
+            ``'Sy'``, ``'Txy'``.
+        :type direction: str
+        :param combo_tags: Either a single load combination name (``str``) or a list of
+            tags (``list[str]``). If a list is provided, any load combination with at
+            least one of these tags will be considered. Defaults to ``'Combo 1'``.
+        :type combo_tags: str | list[str]
+        :return: The maximum stress found for the requested component (0.0 if none).
         :rtype: float
         """
 
@@ -569,23 +566,19 @@ class Mesh():
         return 0.0 if S_max is None else S_max
     
     def min_membrane(self, direction: str = 'Sx', combo_tags: str | list[str] = 'Combo 1') -> float:
-        """
-        Returns the minimum membrane stress in the mesh.
+        """Returns the minimum membrane stress in the mesh.
 
-        Checks corner and center stresses in all the elements in the mesh. The mesh must be part of
-        a solved model prior to using this function.
+        Checks corner and center moments in all elements contained in the mesh. The mesh
+        must belong to a solved model prior to calling this method.
 
-        Parameters
-        ----------
-        direction : str, optional
-            The direction to get the maximum membrane stress for.
-            Options are 'Sx', 'Sy', or 'Sxy'. Default is 'Sx'.
-        combo_tags : str or list[str], optional
-            - If str: a single load combination name to evaluate. Default is 'Combo 1'.
-            - If list[str]: a list of tags; any load combination with at least one of these tags will be considered.
-
-        
-        :return: The minimum membrane stress found for the requested component (0.0 if none).
+        :param direction: Membrane stress component to evaluate. Use local components ``'Sx'``,
+            ``'Sy'``, ``'Txy'``.
+        :type direction: str
+        :param combo_tags: Either a single load combination name (``str``) or a list of
+            tags (``list[str]``). If a list is provided, any load combination with at
+            least one of these tags will be considered. Defaults to ``'Combo 1'``.
+        :type combo_tags: str | list[str]
+        :return: The minimum stress found for the requested component (0.0 if none).
         :rtype: float
         """
 
@@ -671,52 +664,42 @@ class RectangleMesh(Mesh):
         """
         A rectangular mesh of elements.
 
-        Parameters
-        ----------
-
-        mesh_size : number
-            Desired mesh size.
-        width : number
-            The overall width of the mesh measured along its local x-axis.
-        height : number
-            The overall height of the mesh measured along its local y-axis.
-        thickness : number
-            Element thickness.
-        material_name : string
-            The name of the element material.
-        model : FEModel3D
-            The model the mesh belongs to.
-        kx_mod : number
-            Stiffness modification factor for in-plane stiffness in the element's local
+        :param mesh_size: Desired mesh size.
+        :type mesh_size: float
+        :param width: The overall width of the mesh measured along its local x-axis.
+        :type width: float
+        :param height: The overall height of the mesh measured along its local y-axis.
+        :type height: float
+        :param thickness: Element thickness.
+        :type thickness: float
+        :material_name: The name of the element material.
+        :type material_name: str
+        :param model: The model the mesh belongs to.
+        :type model: FEModel3D
+        :param kx_mod: Stiffness modification factor for in-plane stiffness in the element's local
             x-direction. Default value is 1.0 (no modification).
-        ky_mod : number
-            Stiffness modification factor for in-plane stiffness in the element's local
+        :type kx_mod: float, optional
+        :param ky_mod: Stiffness modification factor for in-plane stiffness in the element's local
             y-direction. Default value is 1.0 (no modification).
-        origin : list, optional
-            The origin of the rectangular mesh's local coordinate system. The default is [0, 0, 0].
-        plane : string, optional
-            The plane the mesh will be parallel to. Options are 'XY', 'YZ', and 'XZ'. The default
-            is 'XY'.
-        x_control : list, optional
-            A list of control points along the mesh's local x-axis work into the mesh.
-        y_control : list, optional
-            A list of control points along the mesh's local y-axis work into the mesh.
-        start_node : string, optional
-            A unique name for the first node in the mesh. The default is 'N1'.
-        start_element : string, optional
-            A unique name for the first element in the mesh. The default is 'Q1' or 'R1' depending
-            on the type of element selected.
-        element_type : string, optional
-            The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is
-            'Quad'.
-
-        Returns
-        -------
-
-        A new rectangular mesh object.
-
+        :type ky_mod: float, optional
+        :param origin: The origin of the rectangular mesh's local coordinate system. The default is [0.0, 0.0, 0.0].
+        :type origin: list[float], optional
+        :param plane: The plane the mesh will be parallel to. Options are 'XY', 'YZ', and 'XZ'. The default is 'XY'.
+        :type plane: str, optional
+        :param x_control: A list of control points along the mesh's local x-axis work into the mesh.
+        :type x_control: list[float], optional
+        :param y_control: A list of control points along the mesh's local y-axis work into the mesh.
+        :type y_control: list[float], optional
+        :param start_node: A unique name for the first node in the mesh. The default is 'N1'.
+        :type start_node: str, optional
+        :param start_element: A unique name for the first element in the mesh. The default is 'Q1' or 'R1' depending on the type of element selected.
+        :type start_element: str, optional
+        :param element_type: The type of element to make the mesh out of. Either 'Quad' or 'Rect'. The default is 'Quad'.
+        :type element_type: str, optional
+        :return: A new rectangular mesh object.
+        :rtype: RectangleMesh
         """
-        
+
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node, start_element)
         self.mesh_size = mesh_size
         self.width = width
