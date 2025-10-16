@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from typing import List, Union, Dict
     from Pynite.FEModel3D import FEModel3D
 
-#%%
+
 class Mesh():
     """
     A parent class for meshes to inherit from.
@@ -48,7 +48,7 @@ class Mesh():
         self.elements: Dict[str, Union[Quad3D, Plate3D]] = {}  # A dictionary containing the elements in the mesh
         self.element_type = 'Quad'          # The type of element used in the mesh
         self.is_generated = False          # A flag indicating whether the mesh has been generated
-    
+
     def _rename_duplicates(self) -> None:
         """Renames any nodes or elements in the mesh that are already in the model
         """
@@ -65,13 +65,13 @@ class Mesh():
 
                 # Come up with a new node name
                 node.name = self.model.unique_name(self.model.nodes, 'N')
-            
+
             # Save the node to the model
             self.model.nodes[node.name] = node
 
             # Add this node to the mesh's new/replacement `nodes` dictionary
             revised_nodes[node.name] = node
-            
+
         # Step through each element in the mesh
         for element in self.elements.values():
 
@@ -97,14 +97,14 @@ class Mesh():
 
                 # Save the element to the model
                 self.model.quads[element.name] = element
-            
+
             # Add this element to the mesh's new/replacement `elements` dictionary
             revised_elements[element.name] = element
-        
+
         # Replace the old dictionaries of nodes and elements with the revised dictionaries
         self.nodes = revised_nodes
         self.elements = revised_elements
-            
+
     def generate(self) -> None:
         """
         A placeholder to be overwritten by subclasses inheriting from this class
@@ -656,8 +656,8 @@ class Mesh():
 
         # Return the largest membrane stress found, or 0.0 if nothing was found
         return 0.0 if S_min is None else S_min
-    
-#%%
+
+
 class RectangleMesh(Mesh):
 
     def __init__(self, mesh_size: float, width: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0, ky_mod: float = 1.0, origin: List[float] = [0, 0, 0], plane: str = 'XY', x_control: List[float] | None = None, y_control: List[float] | None = None, start_node: str = 'N1', start_element: str = 'Q1', element_type: str = 'Quad') -> None:
@@ -1023,7 +1023,7 @@ class RectangleMesh(Mesh):
         # Flag the mesh as not generated yet
         self.is_generated = False
 
-#%%
+
 class RectOpening():
     """
     Represents a rectangular opening in a rectangular mesh.
@@ -1325,22 +1325,39 @@ class AnnulusRingMesh(Mesh):
         # Flag the mesh as generated
         self.is_generated = True
 
-#%%
+
 class AnnulusTransRingMesh(Mesh):
     """
-    A mesh of quadrilaterals forming an annular ring (a donut) with the mesh getting finer on the outer
-    edge.
+    A mesh of quadrilaterals forming an annular ring (a donut) with the mesh transitioning to a finer on the outer edge.
     """
 
-    def __init__(self, outer_radius: float, inner_radius: float, num_inner_quads: int, thickness: float, material_name: str, model: FEModel3D,
-                 kx_mod: float = 1, ky_mod: float = 1, origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1',
-                 start_element: str = 'Q1') -> None:
-        """
-        Parameters
-        ----------
+    def __init__(self, outer_radius: float, inner_radius: float, num_inner_quads: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1, origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
+        """Creates an annular ring (a donut) with the mesh transitioning to a finer mesh on the outer edge
 
-        direction : array
-            A vector indicating the direction normal to the ring.
+        :param outer_radius: The outer radius of the annular ring.
+        :type outer_radius: float
+        :param inner_radius: The inner radius of the annular ring.
+        :type inner_radius: float
+        :param num_inner_quads: The number of quadrilaterals to make the inner ring out of.
+        :type num_inner_quads: int
+        :param thickness: The thickness of each element in the ring.
+        :type thickness: float
+        :param material_name: The name of the material for the elements in the ring.
+        :type material_name: str
+        :param model: The model the ring belongs to.
+        :type model: FEModel3D
+        :param kx_mod: In-plane stiffness modifier for the elements in the circumferential direction. Defaults to 1.
+        :type kx_mod: float, optional
+        :param ky_mod: In-plane stiffness modifier for the elements in the radial direction. Defaults to 1.
+        :type ky_mod: float, optional
+        :param origin: The center of the annulus. Defaults to [0, 0, 0].
+        :type origin: List[float], optional
+        :param axis: The global axis to generate the annulus about. Defaults to 'Y'.
+        :type axis: str, optional
+        :param start_node: The name of the first node in the mesh. Defaults to 'N1'.
+        :type start_node: str, optional
+        :param start_element: The name of the first element in the mesh. Defaults to 'Q1'.
+        :type start_element: str, optional
         """
 
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node=start_node,
@@ -1503,7 +1520,7 @@ class AnnulusTransRingMesh(Mesh):
         # Flag the mesh as generated
         self.is_generated = True
 
-#%%
+
 class FrustrumMesh(AnnulusMesh):
     """
     A mesh of quadrilaterals forming a frustrum (a cone intersected by a horizontal plane).
