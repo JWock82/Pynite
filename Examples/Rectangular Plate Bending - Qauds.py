@@ -1,17 +1,13 @@
 # This is an example of quadrilateral elements used to model a rectangular wall under uniform load.
 # This example demonstrates some of the nuances of using quadrilaterals in Pynite. Pynite's
-# quadrilaterals are based on an MITC4 formulation, which produces very accurate results for thick
-# and thin plates for the most part. One problem however is that stress results at quadrilateral
-# corners can be difficult to determine. This example highlights the issue and shows how to work
-# around it.
+# quadrilaterals are based on an DKMQ formulation, which produces very accurate results for thick
+# and thin plates for the most part.
 
-# Pynite has another element which is a rectangular plate bending element. Usually for this type of
-# problem that element is better suited, as long as the wall does not have significant transverse
-# shear deformations, and the elements are not skewed. See the "Rectangular Tank Wall - 
-# Hydrostatic Loads" example using that element.
-t = 1  # ft 
+# Pynite has another element which is a rectangular plate bending element. See the "Rectangular
+# Tank Wall - Hydrostatic Loads" example using that element.
+t = 1  # ft
 width = 10  # ft
-height = 20  # ft 
+height = 20  # ft
 nu = 0.17
 mesh_size = 1  # ft
 load = 250  # psf
@@ -69,6 +65,13 @@ renderer.render_model()
 # stresses from every quad framing into each node. This leads to a much more accurate contour.
 # An unsmoothed plot would essentially show quad center stresses at the quad element corners.
 
+# The mesh object in Pynite has built-in methods for finding the extreme values. Find the max
+# moments for the mesh.
+Mx_max = model.meshes['MSH1'].max_moment('Mx', '1.0W')
+Mx_min = model.meshes['MSH1'].min_moment('Mx', '1.0W')
+My_max = model.meshes['MSH1'].max_moment('My', '1.0W')
+My_min = model.meshes['MSH1'].min_moment('My', '1.0W')
+
 # Here are the expected results from Timoshenko's "Theory of Plates and Shells" Table 35, p. 202.
 # Note that the deflection values for the Pynite solution are slightly larger, due to transverse
 # shear deformations being accounted for.
@@ -80,53 +83,11 @@ print('Expected Mx at Edges:', 0.0829*load*width**2)
 print('Expected My at Center:', 0.0158*load*width**2)
 print('Expected My at Top & Bottom:', -0.0571*load*width**2)
 
-# It should be noted that even the smoothed Mx contours are off by nearly 30% from the theoretical
-# solution at the wall boundaries. Because there are no adjacent quads at the boundaries, Pynite
-# cannot smooth the results there, and center stresses are being reported at the boundaries
-# instead of corner stresses. So what's really going on here?
+# Print Pynite's calculated maximum/minimum bending moments
+print(f'Calculated Maximum Mx (at Center): {Mx_max}')
+print(f'Calculated Minimum Mx (at Edges): {Mx_min}')
+print(f'Calculated Maximum My (at Center): {My_max}')
+print(f'Calculated Minimum My (at Top & Bottom): {My_min}')
 
-# MITC4 elements are very accurate, but the internal bending stress results at the corners are not.
-# They are secondary values extrapolated from the derivatives of primary values. The corner bending
-# stresses appear to more accurately represent the bending stresses at the center of the element.
-# While corner STRESSES have this problem, the corner FORCES do not. To find the bending stresses
-# at the quad nodes we'll get the moment at the corner and divide it by 1/2 of the plate width to
-# convert it to a stress result. Note that when we talk about quad "stresses" we're really talking
-# about forces per unit length of the element.
-
-# With 200 quads in the model, quad 101 is on the left edge of the wall at mid-height, and carries
-# the maximum moment.
-
-# Get the force vector for quad 101 for load combination '1.0W'
-f_vector = model.quads['Q101'].f('1.0W')
-
-# The DKMQ element's force vector is arranged as follows:
-# ************************************************************************************************************************************************************
-# f vector: [[fx_i, fy_i, fz_i, mx_i, my_i, mz_i, fx_j, fy_j, fz_j, mx_j, my_j, mz_j, fx_m, fy_m, fz_m, mx_m, my_m, mz_m, fx_n, fy_n, fz_n, mx_n, my_n, mz_n]]
-# index:    [[  0 ,   1 ,   2 ,   3 ,   4 ,   5 ,   6 ,   7 ,   8 ,   9 ,  10 ,  11 ,  12 ,  13 ,  14 ,  15 ,  16 ,  17 ,  18 ,  19 ,  20 ,  21 ,  22 ,  23 ]]
-# ************************************************************************************************************************************************************
-# nomenclature: fx_n = force in the local x-direction at the n-node
-#               my_j = moment about the local y-axis at the j-node
-
-# We are interested in the moment applied to the i-node about the quad's local y-axis (my_i). This
-# is at index 4 in the f vector. Note that here Mx is the moment about the local y-axis, rather
-# than about it's local x-axis. This can be confusing, but is a commonly used plate nomenclature.
-Mx = f_vector[4, 0]
-
-# We can find the max My moment similarly from quad 6
-f_vector_11 = model.quads['Q6'].f('1.0W')
-My= f_vector_11[3, 0]
-
-# Now we'll convert these values to a force per unit length. The height and width of the plate is
-# `meshsize`.
-Mx = Mx/(mesh_size/2)
-My = My/(mesh_size/2)
-
-# Print the correct maximum bending moment:
-print('Calculated maximum Mx (back-calculated from qaud nodal forces): ', Mx)
-print('Calculated maximum My (back-calculated from qaud nodal forces): ', My)
-
-# These values are much closer to the Timoshenko solution than the direct stress results. The Mx
-# solution is within 1%, and the My solution is within about 6%. That is very good convergence for
-# the 1'x1' mesh size. If the mesh size is reduced to 0.5' the My solution is within about 4% of
-# the Timoshenko solution. It should also be remembered that even the Timoshenko solution is an
-# estimate.
+# Note that Pynite and Timoshenko have opposite sign conventions, but the magnitudes are very close
+# to Timoshenko's published solutions.
