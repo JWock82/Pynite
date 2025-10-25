@@ -62,11 +62,29 @@ class PhysMember(Member3D):
         # Using a small multiple of length maintains scale-invariance like the prior approach.
         tol = 1e-12 * (1.0 + L)
 
+        # Fast axis-aligned bounding box (AABB) prefilter to cull distant nodes quickly
+        # Use a slightly larger tolerance than `tol` to avoid false negatives near corners
+        bb_tol = 1e-9 * (1.0 + L)
+        xmin = min(Xi, Xj) - bb_tol
+        xmax = max(Xi, Xj) + bb_tol
+        ymin = min(Yi, Yj) - bb_tol
+        ymax = max(Yi, Yj) + bb_tol
+        zmin = min(Zi, Zj) - bb_tol
+        zmax = max(Zi, Zj) + bb_tol
+
         # Step through each node in the model
         for node in self.model.nodes.values():
 
             # Skip the end nodes
             if node is self.i_node or node is self.j_node:
+                continue
+
+            # Bounding-box reject (very fast)
+            if (
+                node.X < xmin or node.X > xmax or
+                node.Y < ymin or node.Y > ymax or
+                node.Z < zmin or node.Z > zmax
+            ):
                 continue
 
             # Vector from i-node to this node
