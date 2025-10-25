@@ -45,33 +45,51 @@ class PhysMember(Member3D):
         # Create a vector from the i-node to the j-node
         Xi, Yi, Zi = self.i_node.X, self.i_node.Y, self.i_node.Z
         Xj, Yj, Zj = self.j_node.X, self.j_node.Y, self.j_node.Z
-        vector_ij = array([Xj-Xi, Yj-Yi, Zj-Zi])
+        v_ij = array([Xj - Xi, Yj - Yi, Zj - Zi])
+        L = norm(v_ij)
+
+        # Guard against zero-length members
+        if L == 0:
+            return
+
+        u = v_ij / L  # Unit vector along member axis
 
         # Add the i-node and j-node to the list
-        int_nodes.append((self.i_node, 0))
-        int_nodes.append((self.j_node, norm(vector_ij)))
+        int_nodes.append((self.i_node, 0.0))
+        int_nodes.append((self.j_node, L))
+
+        # Absolute/per-length tolerance for colinearity (consistent with previous strictness)
+        # Using a small multiple of length maintains scale-invariance like the prior approach.
+        tol = 1e-12 * (1.0 + L)
 
         # Step through each node in the model
         for node in self.model.nodes.values():
 
-            # Check each node in the model (except the i and j-nodes)
-            if node is not self.i_node and node is not self.j_node:
+            # Skip the end nodes
+            if node is self.i_node or node is self.j_node:
+                continue
 
-                # Create a vector from the i-node to the current node
-                X, Y, Z = node.X, node.Y, node.Z
-                vector_in = array([X-Xi, Y-Yi, Z-Zi])
+            # Vector from i-node to this node
+            dx = node.X - Xi
+            dy = node.Y - Yi
+            dz = node.Z - Zi
 
-                # Calculate the angle between the two vectors
-                angle = acos(round(dot(vector_in, vector_ij)/(norm(vector_in)*norm(vector_ij)), 10))
+            # Parametric location along the member (projection onto axis)
+            t = dx * u[0] + dy * u[1] + dz * u[2]
 
-                # Determine if the node is colinear with the member
-                if isclose(angle, 0):
+            # Quickly reject nodes outside the i-j segment
+            if t <= 0.0 or t >= L:
+                continue
 
-                    # Determine if the node is on the member
-                    if norm(vector_in) < norm(vector_ij):
+            # Perpendicular distance from the member line
+            px = dx - t * u[0]
+            py = dy - t * u[1]
+            pz = dz - t * u[2]
+            d_perp = (px**2 + py**2 + pz**2) ** 0.5
 
-                        # Add the node to the list of intermediate nodes
-                        int_nodes.append((node, norm(vector_in)))
+            # Consider node on member if perpendicular distance is negligible
+            if d_perp <= tol:
+                int_nodes.append((node, t))
 
         # Create a list of sorted intermediate nodes by distance from the i-node
         int_nodes = sorted(int_nodes, key=lambda x: x[1])
@@ -119,6 +137,7 @@ class PhysMember(Member3D):
                     case = dist_load[5]
 
                     # Equation describing the load as a function of x
+                    # Linear interpolation of distributed load
                     w = lambda x: (w2 - w1)/(x2_load - x1_load)*(x - x1_load) + w1
 
                     # Chop up the distributed load for the sub-member
