@@ -282,7 +282,7 @@ class Member3D():
         ke = self.k()  # [dofs][:, dofs]
 
         # Get the member's axial force
-        P = self._fxj - self._fxi
+        P = self._fxi
 
         # Get the geometric local stiffness matrix (for only axial and bending)
         kg = self.kg(P)  # [dofs][:, dofs]
@@ -542,7 +542,7 @@ class Member3D():
         elif push_combo is not None and step_num is not None:
 
             # Calculate the axial force on the member from the latest elasto-plastic member end forces
-            P = self._fxj - self._fxi
+            P = self._fxi
 
             # Calculate the total stiffness matrix
             kt = self.k() + self.kg(P) + self.km(combo_name)
