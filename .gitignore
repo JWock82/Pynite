@@ -9,6 +9,8 @@ PyNiteFEA.egg-info/*
 build/*
 dist/*
 GUI/*
+docs/.venv/*
+docs/_build/*
 Derivations/*.ipynb_checkpoints
 Pynite Report.pdf
 *.fbp
