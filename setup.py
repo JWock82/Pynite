@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="PyNiteFEA",
-    version="1.5.0",
+    version="1.6.0",
     author="D. Craig Brinck, PE, SE",
     author_email="Building.Code@outlook.com",
     description="A simple elastic 3D structural finite element library for Python.",
@@ -26,9 +26,9 @@ setuptools.setup(
         'matplotlib',
     ],
     extras_require = {
-        'all': ['Ipython', 'vtk', 'pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets', 'pdfkit', 'Jinja2'],
-        'vtk':  ['IPython', 'vtk'],
-        'pyvista': ['pyvista[all,trame]', 'trame_jupyter_extension', 'ipywidgets'],
+        'all': ['Ipython', 'vtk>=9.3.0', 'pyvista[all,trame]>=0.43.4', 'trame_jupyter_extension', 'ipywidgets', 'pdfkit', 'Jinja2'],
+        'vtk':  ['IPython', 'vtk>=9.3.0'],
+        'pyvista': ['pyvista[all,trame]>=0.43.4', 'trame_jupyter_extension', 'ipywidgets'],
         'reporting': ['pdfkit', 'Jinja2'],
         'derivations': ['jupyterlab', 'sympy']
     },

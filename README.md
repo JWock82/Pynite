@@ -66,6 +66,13 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.6.0
+* Added mat foundations to `Pynite`. This is still a "beta" feature. Mat foundations are functional, but they are still fairly basic and are largely untested. They don't yet report soil pressures, or allow for you to set effective strip widths. They do support point loads applied to the mat, and they automatically assign soil springs when you supply a subgrade modulus of reaction. Use at your own risk.
+* Improved speed for descritizing models with many physical members.
+* Adjusted a few display colors for the VTK Renderer's 'print' theme in an effort to make more printer friendly visualizations.
+* Added more tests to expand code coverage of visualization.
+* Major improvements to documentation program wide.
+
 v1.5.0
 * Extended max/min enveloping to plate/quad meshes. Now you can quickly check the max/min mesh forces accross multiple load combinations in one simple command by passing a list of `combo_tags` to the functions.
 * Added max/min enveloping to torsion.
@@ -128,7 +135,3 @@ v1.0.0
 v0.0.98-100
 * Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
 * Improvements to spring rendering in `pyvista`. Up until this point spring elements were being rendered as lines. They now render as zigzag lines in `pyvista`. There is still more work for improvement on spring rendering, but this is a good start.
-
-v0.0.97
-* Fixed physical member load and deflection diagrams. Physical members are a newer feature. Member internal results were being reported correctly, but the diagrams for these members had not been revised to plot correctly. The old method for plain members was still being used. Physical members were not considering that a physical member was made from multiple submembers, and results for each span needed to be combined to get the whole plot.
-* Switched some commonly used python libraries to be installed by default with `Pynite`. Most `Pynite` users will want these libraries installed for full-featured use of `Pynite`. These libraries help with `Pynite` visualizations, plotting, the sparse solver, and `Jupyter Lab` functionality. This is just easier for new python users. I was getting a lot of questions about how to set up libraries, and this takes the guesswork away. This is part of `Pynite's` objective to stay easy to use.
