@@ -66,6 +66,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.6.2
+* Added helper method to `FEModel3D` for mat foundations.
+
 v1.6.1
 * Added mesh control for mat foundations.
 * Added soil pressure calculatiosn for mat foundations.
