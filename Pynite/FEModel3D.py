@@ -798,7 +798,7 @@ class FEModel3D():
         # Add the wall to the model
         self.shear_walls[name] = new_shear_wall
 
-    def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0]):
+    def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0], x_control=[], y_control=[]):
 
         # Check if a name has been provided
         if name:
@@ -808,7 +808,7 @@ class FEModel3D():
         else:
             name = self.unique_name(self.mats, 'MAT')
 
-        new_mat = MatFoundation(name, mesh_size, length_X, length_Z, thickness, material_name, self, ks, origin)
+        new_mat = MatFoundation(name, mesh_size, length_X, length_Z, thickness, material_name, self, ks, origin, x_control, y_control)
 
         # Add the mat foundation to the model
         self.mats[name] = new_mat
