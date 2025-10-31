@@ -16,6 +16,7 @@ from Pynite.Plate3D import Plate3D
 from Pynite.LoadCombo import LoadCombo
 from Pynite.Mesh import Mesh, RectangleMesh, AnnulusMesh, FrustrumMesh, CylinderMesh
 from Pynite.ShearWall import ShearWall
+from Pynite.MatFoundation import MatFoundation
 from Pynite import Analysis
 
 if TYPE_CHECKING:
@@ -47,6 +48,7 @@ class FEModel3D():
         self.plates: Dict[str, Plate3D] = {}           # A dictionary of the model's rectangular plates
         self.meshes: Dict[str, Mesh] = {}              # A dictionary of the model's meshes
         self.shear_walls: Dict[str, ShearWall] = {}    # A dictionary of the model's shear walls
+        self.mats: Dict[str, MatFoundation] = {}       # A dictionary of the model's mat foundations
         self.load_combos: Dict[str, LoadCombo] = {}    # A dictionary of the model's load combinations
         self._D: Dict[str, NDArray[float64]] = {}      # A dictionary of the model's nodal displacements by load combination
 
@@ -782,11 +784,35 @@ class FEModel3D():
         :rtype: NoneType
         """
 
+        # Check if a name has been provided
+        if name:
+            # Check that the shear wall name doesn't already exist
+            if name in self.shear_walls: raise NameError(f"Shear wall name '{name}' already exists")
+        # Give the shear wall a new name if necessary
+        else:
+            name = self.unique_name(self.shear_walls, 'SW')
+
         # Create a new shear wall
         new_shear_wall = ShearWall(self, name, mesh_size, length, height, thickness, material_name, ky_mod, origin, plane)
 
         # Add the wall to the model
         self.shear_walls[name] = new_shear_wall
+
+    def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0]):
+
+        # Check if a name has been provided
+        if name:
+            # Check that the mat foundation name doesn't already exist
+            if name in self.mats: raise NameError(f"Mat foundation name '{name}' already exists")
+        # Give the mat a new name if necessary
+        else:
+            name = self.unique_name(self.mats, 'MAT')
+
+        new_mat = MatFoundation(name, mesh_size, length_X, length_Z, thickness, material_name, self, ks, origin)
+
+        # Add the mat foundation to the model
+        self.mats[name] = new_mat
+
 
     def merge_duplicate_nodes(self, tolerance:float = 0.001) -> list:
         """Removes duplicate nodes from the model and returns a list of the removed node names.
