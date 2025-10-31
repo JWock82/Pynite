@@ -34,7 +34,7 @@ For a more detailed discussion on installation options and dependencies see http
 * Basic meshing algorithms for some common shapes and for openings in rectangular meshes.
 * Reports support reactions.
 * Rendering of model geometry, supports, load cases, load combinations, and deformed shapes.
-* Advanced tools for modeling and analyzing complex shear walls.
+* Advanced tools for modeling and analyzing complex shear walls and mat foundations.
 * Generates PDF reports for models and model results.
 
 # Project Objectives
@@ -66,6 +66,12 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.6.1
+* Added mesh control for mat foundations.
+* Added soil pressure calculatiosn for mat foundations.
+* Added docstrings for mat foundations.
+* Mat foundations should still be considered a "beta" feature until further testing and development is complete.
+
 v1.6.0
 * Added mat foundations to `Pynite`. This is still a "beta" feature. Mat foundations are functional, but they are still fairly basic and are largely untested. They don't yet report soil pressures, or allow for you to set effective strip widths. They do support point loads applied to the mat, and they automatically assign soil springs when you supply a subgrade modulus of reaction. Use at your own risk.
 * Improved speed for descritizing models with many physical members.
