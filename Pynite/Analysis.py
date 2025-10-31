@@ -46,6 +46,10 @@ def _prepare_model(model: FEModel3D) -> None:
     for shear_wall in model.shear_walls.values():
         shear_wall.generate()
 
+    # Generate all mat foundation meshes
+    for mat in model.mats.values():
+        mat.generate()
+
     # Activate all springs and members for all load combinations
     for spring in model.springs.values():
         for combo_name in model.load_combos.keys():
