@@ -885,14 +885,16 @@ class FEModel3D():
                         if k in cells:
                             candidates.extend(cells[k])
 
-            # Test candidates for proximity and merge when within tolerance
+            merged_into_earlier = False
+
+            # Test candidates for proximity; if within tolerance, merge the CURRENT node into the EARLIER one.
             for other_name in candidates:
                 if other_name == node_name:
                     continue
                 if node_lookup.get(other_name) is None:
-                    continue  # already merged away
+                    continue  # earlier node already merged away by another operation
 
-                n2 = self.nodes[other_name]
+                n2 = self.nodes[other_name]  # earlier candidate (canonical if close)
                 # Squared distance check
                 dx = n1.X - n2.X
                 dy = n1.Y - n2.Y
@@ -900,50 +902,54 @@ class FEModel3D():
                 if dx*dx + dy*dy + dz*dz > tol2:
                     continue
 
-                # Merge: rewire all element references from n2 -> n1
-                for element, node_type in node_lookup[other_name]:
-                    setattr(element, node_type, n1)
+                # Merge current node n1 into earlier node n2
+                # Rewire all element references from n1 -> n2
+                for element, node_type in node_lookup[node_name]:
+                    setattr(element, node_type, n2)
 
-                # Mark n2 as merged (sentinel: None) so we skip it in future iterations
-                node_lookup[other_name] = None
+                # Mark n1 as merged away
+                node_lookup[node_name] = None
 
-                # Merge boundary conditions: if either node is fixed in a DOF, keep it fixed
+                # Merge boundary conditions from n1 into n2
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:
-                    if getattr(n2, dof) is True:
-                        setattr(n1, dof, True)
+                    if getattr(n1, dof) is True:
+                        setattr(n2, dof, True)
 
-                # Merge spring supports: if n2 has a spring defined for a DOF, carry it to n1
+                # Merge spring supports from n1 into n2
                 spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
                 for dof in spring_cond:
-                    value = getattr(n2, dof)
+                    value = getattr(n1, dof)
                     if value != [None, None, None]:
-                        setattr(n1, dof, value)
+                        setattr(n2, dof, value)
 
-                # Update meshes: re-point node maps and element node references
+                # Update meshes: re-point node maps and element node references (node_name -> other_name)
                 for mesh in self.meshes.values():
                     # Update mesh node dictionary keying
-                    if other_name in mesh.nodes.keys():
-                        mesh.nodes[other_name] = n1
-                        # Preserve the canonical node name as the key; remove the old key
-                        mesh.nodes[node_name] = mesh.nodes.pop(other_name)
+                    if node_name in mesh.nodes.keys():
+                        mesh.nodes[node_name] = n2
+                        # Preserve the earlier node name as the key; remove the current node's key
+                        mesh.nodes[other_name] = mesh.nodes.pop(node_name)
 
                     # Update mesh element node references
                     for element in mesh.elements.values():
-                        if other_name == element.i_node.name: element.i_node = n1
-                        if other_name == element.j_node.name: element.j_node = n1
-                        if other_name == element.m_node.name: element.m_node = n1
-                        if other_name == element.n_node.name: element.n_node = n1
+                        if node_name == element.i_node.name: element.i_node = n2
+                        if node_name == element.j_node.name: element.j_node = n2
+                        if node_name == element.m_node.name: element.m_node = n2
+                        if node_name == element.n_node.name: element.n_node = n2
 
-                # Queue n2 for removal from the model
-                remove_list.append(other_name)
+                # Queue current node for removal from the model
+                remove_list.append(node_name)
+                merged_into_earlier = True
+                break  # current node is merged; no further checks needed
 
-            # Register n1 into its cell for subsequent nodes to find as a candidate.
-            # By registering AFTER checking candidates, we ensure comparisons are one-way
-            # (current node only checks earlier nodes). This preserves correctness while
-            # keeping the number of comparisons low and deterministic with respect to
-            # the iteration order of `node_names`.
-            cells.setdefault(key, []).append(node_name)
+            if not merged_into_earlier:
+                # Register n1 into its cell for subsequent nodes to find as a candidate.
+                # By registering AFTER checking candidates, we ensure comparisons are one-way
+                # (current node only checks earlier nodes). This preserves correctness while
+                # keeping the number of comparisons low and deterministic with respect to
+                # the iteration order of `node_names`.
+                cells.setdefault(key, []).append(node_name)
 
         # 4) Physically remove merged nodes from the model's node dictionary
         for dead_name in remove_list:
