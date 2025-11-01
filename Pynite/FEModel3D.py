@@ -4,6 +4,7 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING, Literal
 
 from numpy import array, zeros, matmul, subtract
+from math import floor
 from numpy.linalg import solve
 
 from Pynite.Node3D import Node3D
@@ -822,103 +823,136 @@ class FEModel3D():
         :return: A list of the names of the nodes that were removed from the model.
         """
 
-        # Initialize a dictionary marking where each node is used
+        # High-level strategy (performance-focused):
+        # - Build a reverse index of which elements reference each node (for fast rewiring during merges).
+        # - Place nodes into a 3D spatial grid (hash) using cells sized by `tolerance`.
+        # - Only compare a node to other nodes in its own cell and the 26 neighboring cells.
+        #   This avoids O(n^2) all-pairs checks and dramatically reduces comparisons when nodes are spread out.
+        # - When two nodes are within `tolerance`, treat the first one encountered as the canonical node and
+        #   merge the other into it (rewire elements, merge supports/springs, update meshes), then delete it.
+        # - One-way comparisons: Each node only checks against previously seen nodes (we register the current
+        #   node into its cell AFTER comparisons). This ensures each pair is checked at most once and keeps
+        #   the algorithm near-linear for well-distributed nodes.
+
+        # 1) Build the reverse index: node name -> list of (element, node_attr_name) that reference it
         node_lookup = {node_name: [] for node_name in self.nodes.keys()}
         element_dicts = ('springs', 'members', 'plates', 'quads')
         node_types = ('i_node', 'j_node', 'm_node', 'n_node')
 
-        # Step through each dictionary of elements in the model (springs, members, plates, quads)
         for element_dict in element_dicts:
-
-            # Step through each element in the dictionary
+            # Iterate each collection of elements on the model
             for element in getattr(self, element_dict).values():
-
-                # Step through each possible node type in the element (i-node, j-node, m-node, n-node)
+                # Try each potential node attribute on the element
                 for node_type in node_types:
-
-                    # Get the current element's node having the current type
-                    # Return `None` if the element doesn't have this node type
-                    node = getattr(element, node_type, None)
-
-                    # Determine if the node exists on the element
+                    node = getattr(element, node_type, None)  # Some element types don't have all node attributes
                     if node is not None:
-                        # Add the element to the list of elements attached to the node
                         node_lookup[node.name].append((element, node_type))
 
-        # Make a list of the names of each node in the model
+        # 2) Define a spatial hash (3D grid) keyed by integer cell coordinates of size ~ tolerance
+        #    Using floor(x / h) bins nodes into cubic cells; neighbors must lie in same or adjacent cells.
+        def cell_key(x: float, y: float, z: float, h: float) -> tuple[int, int, int]:
+            return (int(floor(x / h)), int(floor(y / h)), int(floor(z / h)))
+
+        cells = {}  # dict[(ix, iy, iz)] -> list of node names already assigned to that cell
+
+        # Snapshot the names once to keep iteration stable even as we modify structures
         node_names = list(self.nodes.keys())
+        remove_list = []  # names of nodes that will be removed after merging
 
-        # Make a list of nodes to be removed from the model
-        remove_list = []
+        # Compare using squared distance to avoid costly sqrt operations in tight loops
+        tol2 = tolerance * tolerance
 
-        # Step through each node in the copy of the `Nodes` dictionary
-        for i, node_1_name in enumerate(node_names):
-
-            # Skip iteration if `node_1` has already been removed
-            if node_lookup[node_1_name] is None:
+        # 3) Sweep through the nodes; for each, only compare to candidates from neighboring cells
+        for node_name in node_names:
+            # Node may have been merged into another already; node_lookup is set to None for merged nodes
+            if node_lookup.get(node_name) is None:
                 continue
 
-            # There is no need to check `node_1` against itself
-            for node_2_name in node_names[i + 1:]:
+            n1 = self.nodes[node_name]
+            key = cell_key(n1.X, n1.Y, n1.Z, tolerance)
 
-                # Skip iteration if node_2 has already been removed
-                if node_lookup[node_2_name] is None:
+            # Gather candidates from 27 cells (this cell + 26 neighbors).
+            # Note: On the very first iteration (and generally the first node in any empty region),
+            # `cells` is still empty, so `candidates` will be empty by design. We only compare
+            # a node against nodes that have already been assigned to nearby cells (i.e., nodes
+            # we've seen earlier in the loop). This makes each pair considered at most once
+            # and avoids O(n^2) all-pairs checks.
+            candidates = []
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    for dz in (-1, 0, 1):
+                        k = (key[0] + dx, key[1] + dy, key[2] + dz)
+                        if k in cells:
+                            candidates.extend(cells[k])
+
+            # Test candidates for proximity and merge when within tolerance
+            for other_name in candidates:
+                if other_name == node_name:
+                    continue
+                if node_lookup.get(other_name) is None:
+                    continue  # already merged away
+
+                n2 = self.nodes[other_name]
+                # Squared distance check
+                dx = n1.X - n2.X
+                dy = n1.Y - n2.Y
+                dz = n1.Z - n2.Z
+                if dx*dx + dy*dy + dz*dz > tol2:
                     continue
 
-                # Calculate the distance between nodes
-                if self.nodes[node_1_name].distance(self.nodes[node_2_name]) > tolerance:
-                    continue
+                # Merge: rewire all element references from n2 -> n1
+                for element, node_type in node_lookup[other_name]:
+                    setattr(element, node_type, n1)
 
-                # Replace references to `node_2` in each element with references to `node_1`
-                for element, node_type in node_lookup[node_2_name]:
-                    setattr(element, node_type, self.nodes[node_1_name])
+                # Mark n2 as merged (sentinel: None) so we skip it in future iterations
+                node_lookup[other_name] = None
 
-                # Flag `node_2` as no longer used
-                node_lookup[node_2_name] = None
-
-                # Merge any boundary conditions
+                # Merge boundary conditions: if either node is fixed in a DOF, keep it fixed
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:
-                    if getattr(self.nodes[node_2_name], dof) == True:
-                        setattr(self.nodes[node_1_name], dof, True)
-                
-                # Merge any spring supports
+                    if getattr(n2, dof) is True:
+                        setattr(n1, dof, True)
+
+                # Merge spring supports: if n2 has a spring defined for a DOF, carry it to n1
                 spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
                 for dof in spring_cond:
-                    value = getattr(self.nodes[node_2_name], dof)
+                    value = getattr(n2, dof)
                     if value != [None, None, None]:
-                        setattr(self.nodes[node_1_name], dof, value)
-                
-                # Fix the mesh labels
+                        setattr(n1, dof, value)
+
+                # Update meshes: re-point node maps and element node references
                 for mesh in self.meshes.values():
+                    # Update mesh node dictionary keying
+                    if other_name in mesh.nodes.keys():
+                        mesh.nodes[other_name] = n1
+                        # Preserve the canonical node name as the key; remove the old key
+                        mesh.nodes[node_name] = mesh.nodes.pop(other_name)
 
-                    # Fix the nodes in the mesh
-                    if node_2_name in mesh.nodes.keys():
-
-                        # Attach the correct node to the mesh
-                        mesh.nodes[node_2_name] = self.nodes[node_1_name]
-
-                        # Fix the dictionary key
-                        mesh.nodes[node_1_name] = mesh.nodes.pop(node_2_name)
-
-                    # Fix the elements in the mesh
+                    # Update mesh element node references
                     for element in mesh.elements.values():
-                        if node_2_name == element.i_node.name: element.i_node = self.nodes[node_1_name]
-                        if node_2_name == element.j_node.name: element.j_node = self.nodes[node_1_name]
-                        if node_2_name == element.m_node.name: element.m_node = self.nodes[node_1_name]
-                        if node_2_name == element.n_node.name: element.n_node = self.nodes[node_1_name]
-                    
-                # Add the node to the `remove` list
-                remove_list.append(node_2_name)
+                        if other_name == element.i_node.name: element.i_node = n1
+                        if other_name == element.j_node.name: element.j_node = n1
+                        if other_name == element.m_node.name: element.m_node = n1
+                        if other_name == element.n_node.name: element.n_node = n1
 
-        # Remove `node_2` from the model's `Nodes` dictionary
-        for node_name in remove_list:
-            self.nodes.pop(node_name)
-        
-        # Flag the model as unsolved
+                # Queue n2 for removal from the model
+                remove_list.append(other_name)
+
+            # Register n1 into its cell for subsequent nodes to find as a candidate.
+            # By registering AFTER checking candidates, we ensure comparisons are one-way
+            # (current node only checks earlier nodes). This preserves correctness while
+            # keeping the number of comparisons low and deterministic with respect to
+            # the iteration order of `node_names`.
+            cells.setdefault(key, []).append(node_name)
+
+        # 4) Physically remove merged nodes from the model's node dictionary
+        for dead_name in remove_list:
+            self.nodes.pop(dead_name)
+
+        # Any structural changes invalidate the last solution
         self.solution = None
 
-        # Return the list of removed nodes
+        # Report which nodes were removed
         return remove_list
 
     def delete_node(self, node_name:str):
