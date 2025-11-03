@@ -66,9 +66,11 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v1.6.3
+* Major performance boost for merging duplicate nodes. This should greatly improve the solve time for large models with multiple meshes being merged together.
+
 v1.6.2
 * Added helper method to `FEModel3D` for mat foundations.
-* Major performance boost for merging duplicate nodes. This should greatly improve the solve time for large models with multiple meshes being merged together.
 
 v1.6.1
 * Added mesh control for mat foundations.
