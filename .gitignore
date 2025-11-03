@@ -17,3 +17,4 @@ Pynite Report.pdf
 gui.py
 wxTableBases.py
 .env
+apps/*
