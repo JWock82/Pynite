@@ -828,10 +828,8 @@ class FEModel3D():
         # - Place nodes into a 3D spatial grid (hash) using cells sized by `tolerance`.
         # - Only compare a node to other nodes in its own cell and the 26 neighboring cells.
         #   This avoids O(n^2) all-pairs checks and dramatically reduces comparisons when nodes are spread out.
-        # - When two nodes are within `tolerance`, treat the first one encountered as the canonical node and
-        #   merge the other into it (rewire elements, merge supports/springs, update meshes), then delete it.
-        # - One-way comparisons: Each node only checks against previously seen nodes (we register the current
-        #   node into its cell AFTER comparisons). This ensures each pair is checked at most once and keeps
+        # - When two nodes are within `tolerance`, treat the first one encountered as the canonical node and merge the other into it (rewire elements, merge supports/springs, update meshes), then delete it.
+        # - One-way comparisons: Each node only checks against previously seen nodes (we register the current node into its cell AFTER comparisons). This ensures each pair is checked at most once and keeps
         #   the algorithm near-linear for well-distributed nodes.
 
         # 1) Build the reverse index: node name -> list of (element, node_attr_name) that reference it
@@ -850,8 +848,8 @@ class FEModel3D():
 
         # 2) Define a spatial hash (3D grid) keyed by integer cell coordinates of size ~ tolerance
         #    Using floor(x / h) bins nodes into cubic cells; neighbors must lie in same or adjacent cells.
-        def cell_key(x: float, y: float, z: float, h: float) -> tuple[int, int, int]:
-            return (int(floor(x / h)), int(floor(y / h)), int(floor(z / h)))
+        def cell_key(X: float, Y: float, Z: float, h: float) -> tuple[int, int, int]:
+            return (int(floor(X / h)), int(floor(Y / h)), int(floor(Z / h)))
 
         cells = {}  # dict[(ix, iy, iz)] -> list of node names already assigned to that cell
 
@@ -860,7 +858,7 @@ class FEModel3D():
         remove_list = []  # names of nodes that will be removed after merging
 
         # Compare using squared distance to avoid costly sqrt operations in tight loops
-        tol2 = tolerance * tolerance
+        tol2 = tolerance*tolerance
 
         # 3) Sweep through the nodes; for each, only compare to candidates from neighboring cells
         for node_name in node_names:
