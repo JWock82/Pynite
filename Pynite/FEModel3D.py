@@ -4,6 +4,8 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING, Literal
 
 from numpy import array, zeros, matmul, subtract
+from numpy import all as np_all, any as np_any, sqrt as np_sqrt, pi as np_pi
+from numpy import trace as np_trace
 from math import floor
 from numpy.linalg import solve
 
@@ -121,7 +123,7 @@ class FEModel3D():
                 count += 1
 
         # Create a new node
-        new_node = Node3D(name, X, Y, Z)
+        new_node = Node3D(self, name, X, Y, Z)
 
         # Add the new node to the model
         self.nodes[name] = new_node
@@ -299,7 +301,8 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False) -> str:
+    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, 
+                   rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False, lumped_mass=True) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -318,6 +321,8 @@ class FEModel3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
+        :param lumped_mass: Whether to use lumped mass formulation for this member, defaults to True
++       :type lumped_mass: bool, optional
         :raises NameError: Occurs if the specified name already exists.
         :return: The name of the member added to the model.
         :rtype: str
@@ -342,7 +347,7 @@ class FEModel3D():
             raise NameError(f"Node '{e.args[0]}' does not exist in the model")
 
         # Create a new member
-        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only)
+        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only, lumped_mass=lumped_mass)
 
         # Add the new member to the model
         self.members[name] = new_member
@@ -1910,6 +1915,153 @@ class FEModel3D():
         # Return the global plastic reduction matrix
         return Km
 
+    def _calculate_characteristic_length(self) -> float:
+        """
+        Calculates a characteristic length for the model.
+        Uses average member length, or bounding box dimensions as fallback.
+        """
+        if self.members:
+            # Use average member length
+            total_length = sum(member.L() for member in self.members.values())
+            return total_length / len(self.members)
+        else:
+            # Fallback: use bounding box diagonal
+            if self.nodes:
+                coords = [(node.X, node.Y, node.Z) for node in self.nodes.values()]
+                min_coords = [min(coord[i] for coord in coords) for i in range(3)]
+                max_coords = [max(coord[i] for coord in coords) for i in range(3)]
+                bbox_diag = sum((max_coords[i] - min_coords[i])**2 for i in range(3))**0.5
+                return bbox_diag
+            else:
+                return 1.0  # Default fallback
+            
+    def M(self, include_material_mass: bool = True, 
+          mass_combo_name: str = 'Combo 1', mass_combo_direction: int = 2,  
+          log: bool = False, sparse: bool = True, combo_name='Combo 1'):
+        """Returns the model's global mass matrix for modal analysis. This implementation follows a
+           separation of responsibilities approach where members handle both translational and rotational
+           mass/inertia, while nodes provide translational mass only to prevent double-counting.
+           Rotational stability terms are only added to free DOFs considering member releases and
+           node supports.
+
+        :param include_material_mass: Whether to include mass from material density, defaults to True
+        :type include_material_mass: bool, optional
+        :param mass_combo_name: Load combination name defining mass via force loads. Forces are converted
+                                to mass using m = F/g where g=1.0, so users must pre-scale loads
+                                appropriately, defaults to 'Combo 1'
+        :type mass_combo_name: str, optional
+        :param mass_combo_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=2 for
+                                     gravity/Z-direction), defaults to 2
+        :type mass_combo_direction: int, optional
+        :param log: Whether to print progress messages, defaults to False
+        :type log: bool, optional
+        :param sparse: Whether to return a sparse matrix, defaults to True
+        :type sparse: bool, optional
+        :param combo_name: Load combination name provided for consistency and for defining active members, defaults to 'Combo 1'
+        :type combo_name: str, optional
+        :return: Global mass matrix of shape (n_dof, n_dof)
+        :rtype: scipy.sparse.coo_matrix or numpy.ndarray
+        """
+
+
+        if sparse:
+            row, col, data = [], [], []
+        else:
+            M = zeros((len(self.nodes)*6, len(self.nodes)*6))
+
+        if log: 
+            print('- Adding member mass terms to global mass matrix')
+            if include_material_mass:
+                print('  - Including material density-based mass')
+            if mass_combo_name:
+                print(f'  - Including load-based mass from combo: {mass_combo_name}')
+
+        for phys_member in self.members.values():
+            if phys_member.active[combo_name] == True:
+                for member in phys_member.sub_members.values():
+                    # Get combined mass matrix from member
+                    member_M = member.M(include_material_mass=include_material_mass, 
+                                        mass_combo_name=mass_combo_name, 
+                                        mass_combo_direction=mass_combo_direction,
+                                    )
+                    
+                    # Assembly logic remains the same...
+                    for a in range(12):
+                        if a < 6:
+                            m = member.i_node.ID*6 + a
+                        else:
+                            m = member.j_node.ID*6 + (a-6)
+                        
+
+                        for b in range(12):
+                            if b < 6:
+                                n = member.i_node.ID*6 + b
+                            else:
+                                n = member.j_node.ID*6 + (b-6)
+                            
+                            if sparse:
+                                row.append(m)
+                                col.append(n)
+                                data.append(member_M[a, b])
+                            else:
+                                M[m, n] += member_M[a, b]
+
+        if log and not sparse:
+            print(f'  M trace (members only) = {np_trace(M)}')
+
+        # Add nodal masses
+        if log: 
+            print('- Adding nodal mass terms to global mass matrix (translation only)')
+        
+        # If a combination is specified that may contain nodal masses, add them:
+        if mass_combo_name in self.load_combos:
+            if log:
+                print(f'  - Adding nodal mass from combo: {mass_combo_name}')
+            for node in self.nodes.values():
+                # Get node's mass matrix (translation only, so set characteristic length to None)
+                node_m = node.M(mass_combo_name=mass_combo_name,
+                                mass_combo_direction=mass_combo_direction,
+                                characteristic_length=None)
+                
+                # Add to global mass matrix
+                for i in range(6):
+                    for j in range(6):
+                        if node_m[i, j] != 0:
+                            global_i = node.ID * 6 + i
+                            global_j = node.ID * 6 + j
+                            
+                            if sparse:
+                                row.append(global_i)
+                                col.append(global_j)
+                                data.append(node_m[i, j])
+                            else:
+                                M[global_i, global_j] += node_m[i, j]
+        elif log:
+            if mass_combo_name == '':
+                print('  - No mass combo provided')
+            else:
+                print(f'  - No mass combo {mass_combo_name} in load combinations ({self.load_combos.keys()})')  
+            print('  - Skipping nodal mass addition')
+
+        # Add sparse option
+        if not sparse:
+            print(f'  M trace (members & nodes only) = {np_trace(M)}')
+
+        # Similar for plates, quads, etc...
+        
+        if sparse:
+            from scipy.sparse import coo_matrix
+            M = coo_matrix((array(data), (array(row), array(col))), 
+                        shape=(len(self.nodes)*6, len(self.nodes)*6))
+        elif log:
+            print(f'  Matrix trace: {np_trace(M)}')
+
+        if log:
+            print('- Global mass matrix complete')
+
+        return M
+    
+
     def FER(self, combo_name='Combo 1') -> NDArray[float64]:
         """Assembles and returns the global fixed end reaction vector for any given load combo.
 
@@ -2485,6 +2637,166 @@ class FEModel3D():
 
         # Flag the model as solved
         self.solution = 'P-Delta'
+
+
+    def analyze_modal(self, num_modes:int=12, include_material_mass=True, combo_name:str='Combo 1', mass_combo_name:str='', mass_combo_direction:int=2, 
+                    log=False, sparse=True, check_stability=True):
+        """
+        Performs modal analysis to determine natural frequencies and mode shapes.
+        
+        :param num_modes: Number of modes to calculate. Defaults to 12.
+        :type num_modes: int, optional
+        :param combo_name: Load combination name (not needed, but provided for consistency).
+        :type combo_name: str, optional
+        :param mass_combo_name: Load combination name for load-based mass contribution. Defaults to ''.
+        :type mass_combo_name: str, optional
+        :param mass_combo_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z).
+        :type mass_combo_direction: int, optional
+        :param include_material_mass: If True, includes mass from material density. Defaults to True.
+        :type include_material_mass: bool, optional
+        :param log: Prints the analysis log to the console if set to True. Default is False.
+        :type log: bool, optional
+        :param sparse: Indicates whether sparse matrix solvers should be used. Default is True.
+        :type sparse: bool, optional
+        :param check_stability: When set to True, checks the stiffness matrix for unstable DOFs. Defaults to True.
+        :type check_stability: bool, optional
+        :return: Dictionary containing frequencies (Hz) and mode shapes
+        :rtype: dict
+        :raises Exception: Occurs when a singular stiffness matrix is found or SciPy is not available.
+        """
+        
+        if log:
+            print('+----------------+')
+            print('| Analyzing: Modal |')
+            print('+----------------+')
+        
+        # Check for SciPy availability for eigenvalue solving
+        try:
+            from scipy.linalg import LinAlgError
+            if sparse:
+                from scipy.sparse.linalg import eigsh
+            else:
+                from scipy.linalg import eigh
+        except ImportError:
+            raise Exception('SciPy is required for modal analysis. Please install scipy.')
+        
+        # Prepare the model for analysis (same as other analysis methods)
+        # This will generate the default load case ('Case 1') and load combo ('Combo 1') if none are present.
+        Analysis._prepare_model(self)
+        
+        # Get the auxiliary list used for matrix partitioning
+        D1_indices, D2_indices, D2 = Analysis._partition_D(self)
+        
+        if log:
+            print('- Assembling global stiffness matrix')
+        
+        # Assemble and partition the global stiffness matrix
+        # Any load combination will do since stiffness is typically linear (in the default case, it should pick up 'Combo 1')
+        if combo_name not in self.load_combos:
+            combo_name = list(self.load_combos.keys())[0]  # Not needed for modal analysis, but some value is required
+
+        if sparse:
+            K_global = self.K(combo_name, log, check_stability, sparse).tolil()
+        else:
+            K_global = self.K(combo_name, log, check_stability, sparse)
+        
+        # Partition to remove supported DOFs
+        K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
+        
+        if log:
+            print('- Assembling global mass matrix')
+        
+        # Assemble and partition the global mass matrix
+        if sparse:
+            M_global = self.M(include_material_mass,mass_combo_name, mass_combo_direction, log, sparse, combo_name).tolil()
+        else:
+            M_global = self.M(include_material_mass,mass_combo_name, mass_combo_direction, log, sparse, combo_name)
+        
+        # Partition to remove supported DOFs
+        M11, M12, M21, M22 = Analysis._partition(self, M_global, D1_indices, D2_indices)
+        
+        # Check that we have mass terms
+        if M11.nnz == 0 if sparse else np_all(M11 == 0):
+            raise Exception('No mass terms found. Ensure materials have density or provide mass_combo_name.')
+        
+        if log:
+            print('- Solving eigenvalue problem')
+        
+
+        # Add this before the eigenvalue solution
+        if log:
+            print(f"  - K11 shape: {K11.shape}")
+            print(f"  - M11 shape: {M11.shape}")
+            # Add this before the line that fails - look for np.diag calls
+            print(f"Matrix type: {type(M11)}")
+            print(f"Matrix shape: {M11.shape}")
+            if hasattr(M11, 'ndim'):
+                print(f"Matrix dimensions: {M11.ndim}")
+            # print(f"  - Minimum diagonal of M11: {np.min(np.diag(M11))}")
+            # print(f"  - Number of zero diagonals in M11: {np.sum(np.diag(M11) == 0)}")
+            # print(f"  - Number of negative diagonals in M11: {np.sum(np.diag(M11) < 0)}")
+
+
+        try:
+            # Solve the generalized eigenvalue problem: K11 * φ = λ * M11 * φ
+            if sparse:
+                # For sparse matrices, use eigsh which is more efficient for large systems
+                eigenvalues, eigenvectors = eigsh(K11, k=num_modes, M=M11, sigma=0, which='LM')
+            else:
+                # For dense matrices, use eigh (assumes matrices are symmetric)
+                eigenvalues, eigenvectors = eigh(K11, M11)
+        except LinAlgError as e:
+            raise Exception(f'Eigenvalue solution failed: {str(e)}. Check matrix conditioning.')
+        
+        # Calculate frequencies in Hz from eigenvalues (λ = ω²)
+        frequencies = np_sqrt(eigenvalues) / (2 * np_pi)
+        
+        if log:
+            print('- Processing mode shapes')
+        
+        # Process mode shapes to expand back to full DOF set
+        mode_shapes = []
+        for i in range(len(frequencies)):
+            # Create full displacement vector for this mode
+            D1_mode = eigenvectors[:, i].reshape(-1, 1)
+            D_mode = Analysis._expand_displacements(self, D1_mode, D2, D1_indices, D2_indices)
+            mode_shapes.append(D_mode)
+        
+        # Store results in the model
+        self.modal_results = {
+            'frequencies': frequencies,
+            'mode_shapes': mode_shapes,
+            'num_modes': len(frequencies)
+        }
+
+        self.modal_results['include_material_mass'] = include_material_mass
+        if mass_combo_name:
+            self.modal_results['mass_combo_name'] = mass_combo_name
+        
+
+        if log:
+            print('- Modal analysis complete')
+        
+        # Flag the model as having modal results
+        if hasattr(self, 'solution'):
+            if self.solution is not None:
+                self.solution += ' + Modal'
+            else:
+                self.solution = 'Modal'
+        else:
+            self.solution = 'Modal'
+        
+        if log:
+            print(f'- Found {len(frequencies)} modes')
+            for i, freq in enumerate(frequencies):
+                print(f'  Mode {i+1}: {freq:.3f} Hz')
+            print('- Modal analysis complete')
+        
+        return self.modal_results
+
+      
+
+
 
     def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
 

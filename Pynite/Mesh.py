@@ -841,7 +841,7 @@ class RectangleMesh(Mesh):
                             raise Exception('Invalid plane selected for RectangleMesh.')
 
                         # Add the node to the mesh
-                        self.nodes[node_name] = Node3D(node_name, X, Y, Z)
+                        self.nodes[node_name] = Node3D(self.model, node_name, X, Y, Z)
 
                         # Move to the next x coordinate
                         x += b
@@ -1288,7 +1288,7 @@ class AnnulusRingMesh(Mesh):
                 else:
                     raise Exception('Invalid axis specified for AnnulusRingMesh.')
             
-            self.nodes[node_name] = Node3D(node_name, x, y, z)
+            self.nodes[node_name] = Node3D(self.model, node_name, x, y, z)
 
         # Generate the elements that make up the ring
         for i in range(1, n + 1, 1):
@@ -1465,7 +1465,7 @@ class AnnulusTransRingMesh(Mesh):
                 else:
                     raise Exception('Invalid axis specified for AnnulusTransRingMesh.')
             
-            self.nodes[node_name] = Node3D(node_name, x, y, z)
+            self.nodes[node_name] = Node3D(self.model, node_name, x, y, z)
 
         # Generate the elements that make up the ring
         for i in range(1, 4*n + 1, 1):
@@ -1867,7 +1867,7 @@ class CylinderRingMesh(Mesh):
                 else:
                     raise Exception('Invalid axis specified for CylinderRingMesh.')
             
-            self.nodes[node_name] = Node3D(node_name, x, y, z)
+            self.nodes[node_name] = Node3D(self.model, node_name, x, y, z)
 
         # Generate the elements that make up the ring
         for i in range(1, n + 1, 1):
