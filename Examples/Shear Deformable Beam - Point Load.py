@@ -1,5 +1,6 @@
 # Example of a simply supported beam with a point load.
 # Units used for the model in this example are inches and kips
+# Copied from "Simple Beam - Point Load.py" but using shear deformable members
 
 # Import `FEModel3D` from `Pynite`
 from Pynite import FEModel3D
@@ -21,9 +22,12 @@ nu = 0.3        # Poisson's ratio
 rho = 2.836e-4  # Density (kci)
 simple_beam.add_material('Steel', E, G, nu, rho)
 
+# Shear deformation constant of the beam section
+ksy = ksz = 5/6
+
 # Add a section with the following properties:
 # Iy = 100 in^4, Iz = 150 in^4, J = 250 in^4, A = 20 in^2
-simple_beam.add_section('MySection', 20, 100, 150, 250, ksy=5/6, ksz=5/6)
+simple_beam.add_section('MySection', 20, 100, 150, 250, ksy=ksy, ksz=ksz)
 
 #Add member
 simple_beam.add_member('M1', 'N1', 'N2', 'Steel', 'MySection', shear_deformable=True)
