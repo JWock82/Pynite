@@ -39,7 +39,7 @@ class Member3D():
     def __init__(self, model: FEModel3D, name: str, i_node: Node3D,
                  j_node: Node3D, material_name: str, section_name: str,
                  rotation: float = 0.0, tension_only: bool = False,
-                 comp_only: bool = False) -> None:
+                 comp_only: bool = False, shear_deformable: bool = False) -> None:
         """
         Initializes a new member.
 
@@ -61,6 +61,8 @@ class Member3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
+        :param shear_deformable: Indicates if the member is shear-deformable (Timoshenko-Ehrenfest Beam Theory), defaults to False
+        :type shear_deformable: bool, optional
         """
         self.name: str = name      # A unique name for the member given by the user
         self.ID: int | None = None        # Unique index number for the member assigned by the program
@@ -98,6 +100,7 @@ class Member3D():
         self.Releases: List[bool] = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.tension_only: bool = tension_only  # Indicates whether the member is tension-only
         self.comp_only: bool = comp_only  # Indicates whether the member is compression-only
+        self.shear_deformable = shear_deformable # Indicates whether the member is shear-deformable
 
         # Members need to track whether they are active or not for any given load combination. They may become inactive for a load combination during a tension/compression-only analysis. This dictionary will be used when the model is solved.
         self.active: Dict[str, bool] = {}  # Key = load combo name, Value = True or False
@@ -119,6 +122,36 @@ class Member3D():
 
         # Return the distance between the two nodes
         return self.i_node.distance(self.j_node)
+
+    def _shear_constants(self) -> tuple[float, float]: 
+        """
+        Returns the shear deformation constants of the beam
+
+        : return: The shear constants of the beam (Z-axis bending, Y-axis bending)
+        : rtype: tuple[float, float]
+        """
+
+        # If not shear-deformable, return zero shear deformation constants to make it Euler-Bernoulli Beam
+        if not self.shear_deformable:
+            return 0, 0
+        
+        # Check if shear correction factors are defined in section
+        ksy = self.section.ksy
+        ksz = self.section.ksz
+        if ksy is None or ksz is None:
+            raise Exception('Shear correction factors should be defined for sections assigned to shear-deformable members.')
+
+        # Get the properties needed
+        E = self.material.E
+        G = self.material.G
+        Iy = self.section.Iy
+        Iz = self.section.Iz
+        A = self.section.A
+        A = self.section.A
+        L = self.L()
+
+        # Calculate and return shear deformation constants
+        return 12*E*Iz/G/A/ksy/L**2, 12*E*Iy/G/A/ksz/L**2
 
 # %%
     def _partition_D(self) -> Tuple[List[int], List[int]]:
@@ -189,20 +222,27 @@ class Member3D():
         J = self.section.J
         A = self.section.A
         L = self.L()
+        
+        # Get the shear deformation constants
+        sdcz, sdcy = self._shear_constants()
+
+        # Calculate coefficients for bending
+        cz = E*Iz/(sdcz + 1) # For bending about (z axis)
+        cy = E*Iy/(sdcy + 1) # For bending about (y axis)
 
         # Create the uncondensed local stiffness matrix
-        k = array([[A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0           ],
-                   [0,      12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2,  0,      -12*E*Iz/L**3, 0,             0,      0,            6*E*Iz/L**2 ],
-                   [0,      0,             12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0,            0,      0,             -12*E*Iy/L**3, 0,      -6*E*Iy/L**2, 0           ],
-                   [0,      0,             0,             G*J/L,  0,            0,            0,      0,             0,             -G*J/L, 0,            0           ],
-                   [0,      0,             -6*E*Iy/L**2,  0,      4*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      2*E*Iy/L,     0           ],
-                   [0,      6*E*Iz/L**2,   0,             0,      0,            4*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            2*E*Iz/L    ],
-                   [-A*E/L, 0,             0,             0,      0,            0,            A*E/L,  0,             0,             0,      0,            0           ],
-                   [0,      -12*E*Iz/L**3, 0,             0,      0,            -6*E*Iz/L**2, 0,      12*E*Iz/L**3,  0,             0,      0,            -6*E*Iz/L**2],
-                   [0,      0,             -12*E*Iy/L**3, 0,      6*E*Iy/L**2,  0,            0,      0,             12*E*Iy/L**3,  0,      6*E*Iy/L**2,  0           ],
-                   [0,      0,             0,             -G*J/L, 0,            0,            0,      0,             0,             G*J/L,  0,            0           ],
-                   [0,      0,             -6*E*Iy/L**2,  0,      2*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      4*E*Iy/L,     0           ],
-                   [0,      6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            4*E*Iz/L    ]])
+        k = array([[A*E/L,  0,              0,              0,      0,              0,              -A*E/L, 0,              0,              0,      0,              0               ],
+                   [0,      12*cz/L**3,     0,              0,      0,              6*cz/L**2,      0,      -12*cz/L**3,    0,              0,      0,              6*cz/L**2       ],
+                   [0,      0,              12*cy/L**3,     0,      -6*cy/L**2,     0,              0,      0,              -12*cy/L**3,    0,      -6*cy/L**2,     0               ],
+                   [0,      0,              0,              G*J/L,  0,              0,              0,      0,              0,              -G*J/L, 0,              0               ],
+                   [0,      0,              -6*cy/L**2,     0,      cy*(4+sdcy)/L,  0,              0,      0,              6*cy/L**2,      0,      cy*(2-sdcy)/L,  0               ],
+                   [0,      6*cz/L**2,      0,              0,      0,              cz*(4+sdcz)/L,  0,      -6*cz/L**2,     0,              0,      0,              cz*(2-sdcz)/L   ],
+                   [-A*E/L, 0,              0,              0,      0,              0,              A*E/L,  0,              0,              0,      0,              0               ],
+                   [0,      -12*cz/L**3,    0,              0,      0,              -6*cz/L**2,     0,      12*cz/L**3,     0,              0,      0,              -6*cz/L**2      ],
+                   [0,      0,              -12*cy/L**3,    0,      6*cy/L**2,      0,              0,      0,              12*cy/L**3,     0,      6*cy/L**2,      0               ],
+                   [0,      0,              0,              -G*J/L, 0,              0,              0,      0,              0,              G*J/L,  0,              0               ],
+                   [0,      0,              -6*cy/L**2,     0,      cy*(2-sdcy)/L,  0,              0,      0,              6*cy/L**2,      0,      cy*(4+sdcy)/L,  0               ],
+                   [0,      6*cz/L**2,      0,              0,      0,              cz*(2-sdcz)/L,  0,      -6*cz/L**2,     0,              0,      0,              cz*(4+sdcz)/L   ]])
 
         # Return the uncondensed local stiffness matrix
         return k
@@ -435,6 +475,9 @@ class Member3D():
         # Get the requested load combination
         combo = self.model.load_combos[combo_name]
 
+        # Get shear deformation constants. sdcz is for Fy or Mz. sdcy is for Fz or My
+        sdcz, sdcy = self._shear_constants()
+
         # Loop through each load case and factor in the load combination
         for case, factor in combo.factors.items():
 
@@ -447,15 +490,15 @@ class Member3D():
                     if ptLoad[0] == 'Fx':
                         fer = add(fer, Pynite.FixedEndReactions.FER_AxialPtLoad(factor*ptLoad[1], ptLoad[2], self.L()))
                     elif ptLoad[0] == 'Fy':
-                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fy'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fy', sdcz))
                     elif ptLoad[0] == 'Fz':
-                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*ptLoad[1], ptLoad[2], self.L(), 'Fz', sdcy))
                     elif ptLoad[0] == 'Mx':
                         fer = add(fer, Pynite.FixedEndReactions.FER_Torque(factor*ptLoad[1], ptLoad[2], self.L()))
                     elif ptLoad[0] == 'My':
-                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My', sdcy))
                     elif ptLoad[0] == 'Mz':     
-                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz', sdcz))
                     elif ptLoad[0] == 'FX' or ptLoad[0] == 'FY' or ptLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
                         if ptLoad[0] == 'FX': FX = 1
@@ -463,8 +506,8 @@ class Member3D():
                         if ptLoad[0] == 'FZ': FZ = 1
                         f = self.T()[:3, :][:, :3] @ array([FX*ptLoad[1], FY*ptLoad[1], FZ*ptLoad[1]])
                         fer = add(fer, Pynite.FixedEndReactions.FER_AxialPtLoad(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy'))
-                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[1], ptLoad[2], self.L(), 'Fy', sdcz))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_PtLoad(factor*f[2], ptLoad[2], self.L(), 'Fz', sdcy))
                     elif ptLoad[0] == 'MX' or ptLoad[0] == 'MY' or ptLoad[0] == 'MZ':
                         MX, MY, MZ = 0, 0, 0
                         if ptLoad[0] == 'MX': MX = 1
@@ -472,8 +515,8 @@ class Member3D():
                         if ptLoad[0] == 'MZ': MZ = 1
                         f = self.T()[:3, :][:, :3] @ array([MX*ptLoad[1], MY*ptLoad[1], MZ*ptLoad[1]])
                         fer = add(fer, Pynite.FixedEndReactions.FER_Torque(factor*f[0], ptLoad[2], self.L()))
-                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My'))
-                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[1], ptLoad[2], self.L(), 'My', sdcy))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*f[2], ptLoad[2], self.L(), 'Mz', sdcz))
                     else:
                         raise Exception('Invalid member point load direction specified.')
 
@@ -485,8 +528,10 @@ class Member3D():
 
                     if distLoad[0] == 'Fx':
                         fer = add(fer, Pynite.FixedEndReactions.FER_AxialLinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L()))
-                    elif distLoad[0] == 'Fy' or distLoad[0] == 'Fz':
-                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), distLoad[0]))
+                    elif distLoad[0] == 'Fy':
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), 'Fy', sdcz))
+                    elif distLoad[0] == 'Fz':
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*distLoad[1], factor*distLoad[2], distLoad[3], distLoad[4], self.L(), 'Fz', sdcy))
                     elif distLoad[0] == 'FX' or distLoad[0] == 'FY' or distLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
                         if distLoad[0] == 'FX': FX = 1
@@ -495,8 +540,8 @@ class Member3D():
                         w1 = self.T()[:3, :][:, :3] @ array([FX*distLoad[1], FY*distLoad[1], FZ*distLoad[1]])
                         w2 = self.T()[:3, :][:, :3] @ array([FX*distLoad[2], FY*distLoad[2], FZ*distLoad[2]])
                         fer = add(fer, Pynite.FixedEndReactions.FER_AxialLinLoad(factor*w1[0], factor*w2[0], distLoad[3], distLoad[4], self.L()))
-                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[1], factor*w2[1], distLoad[3], distLoad[4], self.L(), 'Fy'))
-                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[2], factor*w2[2], distLoad[3], distLoad[4], self.L(), 'Fz'))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[1], factor*w2[1], distLoad[3], distLoad[4], self.L(), 'Fy', sdcz))
+                        fer = add(fer, Pynite.FixedEndReactions.FER_LinLoad(factor*w1[2], factor*w2[2], distLoad[3], distLoad[4], self.L(), 'Fz', sdcy))
 
         # Return the fixed end reaction vector, uncondensed
         return fer
