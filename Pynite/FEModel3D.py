@@ -173,7 +173,7 @@ class FEModel3D():
         # Return the materal name
         return name
 
-    def add_section(self, name: str, A: float, Iy: float, Iz: float, J: float) -> str:
+    def add_section(self, name: str, A: float, Iy: float, Iz: float, J: float, ksy: float | None = None, ksz: float | None = None) -> str:
         """Adds a cross-section to the model.
 
         :param name: A unique name for the cross-section.
@@ -186,6 +186,10 @@ class FEModel3D():
         :type Iz: float
         :param J: The torsion constant of the section
         :type J: float
+        :param ksy: Shear correction factor of the section for shear parallel to Y axis (major bending axis). Default is None
+        :type ksy: float | None, optional, default None
+        :param ksz: Shear correction factor of the section for shear parallel to Z axis (minor bending axis). Default is None
+        :type ksz: float | None, optional, default None
         """
 
         # Name the section or check it doesn't already exist
@@ -201,12 +205,13 @@ class FEModel3D():
                 count += 1
 
         # Add the new section to the model
-        self.sections[name] = Section(self, name, A, Iy, Iz, J)
+        self.sections[name] = Section(self, name, A, Iy, Iz, J, ksy=ksy, ksz=ksz)
 
         # Return the section name
         return name
 
-    def add_steel_section(self, name: str, A: float, Iy: float, Iz: float, J: float, Zy: float, Zz: float, material_name: str) -> str:
+    def add_steel_section(self, name: str, A: float, Iy: float, Iz: float, J: float, Zy: float, Zz: float, 
+                          material_name: str, ksy: float | None = None, ksz: float | None = None) -> str:
         """Adds a cross-section to the model.
 
         :param name: A unique name for the cross-section.
@@ -225,6 +230,10 @@ class FEModel3D():
         :type Zz: float
         :param material_name: The name of the steel material
         :type material_name: str
+        :param ksy: Shear correction factor of the section for shear parallel to Y axis (major bending axis). Default is None
+        :type ksy: float | None, optional, default None
+        :param ksz: Shear correction factor of the section for shear parallel to Z axis (minor bending axis). Default is None
+        :type ksz: float | None, optional, default None
         """
 
         # Name the section or check it doesn't already exist
@@ -240,7 +249,7 @@ class FEModel3D():
                 count += 1
 
         # Add the new section to the model
-        self.sections[name] = SteelSection(self, name, A, Iy, Iz, J, Zy, Zz, material_name)
+        self.sections[name] = SteelSection(self, name, A, Iy, Iz, J, Zy, Zz, material_name, ksy=ksy, ksz=ksz)
 
         # Return the section name
         return name
@@ -298,7 +307,9 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False) -> str:
+    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, 
+        section_name: str, rotation: float = 0.0, tension_only: bool = False, 
+        comp_only: bool = False, shear_deformable: bool = False) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -317,6 +328,8 @@ class FEModel3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
+        :param shear_deformable: Indicates if the member is shear-deformable (Timoshenko-Ehrenfest Beam Theory), defaults to False
+        :type shear_deformable: bool, optional
         :raises NameError: Occurs if the specified name already exists.
         :return: The name of the member added to the model.
         :rtype: str
@@ -341,7 +354,9 @@ class FEModel3D():
             raise NameError(f"Node '{e.args[0]}' does not exist in the model")
 
         # Create a new member
-        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only)
+        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, 
+                                rotation=rotation, tension_only=tension_only, comp_only=comp_only,
+                                shear_deformable=shear_deformable)
 
         # Add the new member to the model
         self.members[name] = new_member
