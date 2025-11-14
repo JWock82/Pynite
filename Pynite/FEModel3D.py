@@ -4,6 +4,9 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING, Literal
 
 from numpy import array, zeros, matmul, subtract
+from numpy import all as np_all, any as np_any, sqrt as np_sqrt, pi as np_pi
+from numpy import trace as np_trace
+from math import floor
 from numpy.linalg import solve
 
 from Pynite.Node3D import Node3D
@@ -120,7 +123,7 @@ class FEModel3D():
                 count += 1
 
         # Create a new node
-        new_node = Node3D(name, X, Y, Z)
+        new_node = Node3D(self, name, X, Y, Z)
 
         # Add the new node to the model
         self.nodes[name] = new_node
@@ -298,7 +301,8 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False) -> str:
+    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, 
+                   rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False, lumped_mass=True) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -317,6 +321,8 @@ class FEModel3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
+        :param lumped_mass: Whether to use lumped mass formulation for this member, defaults to True
++       :type lumped_mass: bool, optional
         :raises NameError: Occurs if the specified name already exists.
         :return: The name of the member added to the model.
         :rtype: str
@@ -341,7 +347,7 @@ class FEModel3D():
             raise NameError(f"Node '{e.args[0]}' does not exist in the model")
 
         # Create a new member
-        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only)
+        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only, lumped_mass=lumped_mass)
 
         # Add the new member to the model
         self.members[name] = new_member
@@ -798,7 +804,7 @@ class FEModel3D():
         # Add the wall to the model
         self.shear_walls[name] = new_shear_wall
 
-    def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0]):
+    def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0], x_control=[], y_control=[]):
 
         # Check if a name has been provided
         if name:
@@ -808,7 +814,7 @@ class FEModel3D():
         else:
             name = self.unique_name(self.mats, 'MAT')
 
-        new_mat = MatFoundation(name, mesh_size, length_X, length_Z, thickness, material_name, self, ks, origin)
+        new_mat = MatFoundation(name, mesh_size, length_X, length_Z, thickness, material_name, self, ks, origin, x_control, y_control)
 
         # Add the mat foundation to the model
         self.mats[name] = new_mat
@@ -822,103 +828,140 @@ class FEModel3D():
         :return: A list of the names of the nodes that were removed from the model.
         """
 
-        # Initialize a dictionary marking where each node is used
+        # High-level strategy (performance-focused):
+        # - Build a reverse index of which elements reference each node (for fast rewiring during merges).
+        # - Place nodes into a 3D spatial grid (hash) using cells sized by `tolerance`.
+        # - Only compare a node to other nodes in its own cell and the 26 neighboring cells.
+        #   This avoids O(n^2) all-pairs checks and dramatically reduces comparisons when nodes are spread out.
+        # - When two nodes are within `tolerance`, treat the first one encountered as the canonical node and merge the other into it (rewire elements, merge supports/springs, update meshes), then delete it.
+        # - One-way comparisons: Each node only checks against previously seen nodes (we register the current node into its cell AFTER comparisons). This ensures each pair is checked at most once and keeps
+        #   the algorithm near-linear for well-distributed nodes.
+
+        # 1) Build the reverse index: node name -> list of (element, node_attr_name) that reference it
         node_lookup = {node_name: [] for node_name in self.nodes.keys()}
         element_dicts = ('springs', 'members', 'plates', 'quads')
         node_types = ('i_node', 'j_node', 'm_node', 'n_node')
 
-        # Step through each dictionary of elements in the model (springs, members, plates, quads)
         for element_dict in element_dicts:
-
-            # Step through each element in the dictionary
+            # Iterate each collection of elements on the model
             for element in getattr(self, element_dict).values():
-
-                # Step through each possible node type in the element (i-node, j-node, m-node, n-node)
+                # Try each potential node attribute on the element
                 for node_type in node_types:
-
-                    # Get the current element's node having the current type
-                    # Return `None` if the element doesn't have this node type
-                    node = getattr(element, node_type, None)
-
-                    # Determine if the node exists on the element
+                    node = getattr(element, node_type, None)  # Some element types don't have all node attributes
                     if node is not None:
-                        # Add the element to the list of elements attached to the node
                         node_lookup[node.name].append((element, node_type))
 
-        # Make a list of the names of each node in the model
+        # 2) Define a spatial hash (3D grid) keyed by integer cell coordinates of size ~ tolerance
+        #    Using floor(x / h) bins nodes into cubic cells; neighbors must lie in same or adjacent cells.
+        def cell_key(X: float, Y: float, Z: float, h: float) -> tuple[int, int, int]:
+            return (int(floor(X / h)), int(floor(Y / h)), int(floor(Z / h)))
+
+        cells = {}  # dict[(ix, iy, iz)] -> list of node names already assigned to that cell
+
+        # Snapshot the names once to keep iteration stable even as we modify structures
         node_names = list(self.nodes.keys())
+        remove_list = []  # names of nodes that will be removed after merging
 
-        # Make a list of nodes to be removed from the model
-        remove_list = []
+        # Compare using squared distance to avoid costly sqrt operations in tight loops
+        tol2 = tolerance*tolerance
 
-        # Step through each node in the copy of the `Nodes` dictionary
-        for i, node_1_name in enumerate(node_names):
-
-            # Skip iteration if `node_1` has already been removed
-            if node_lookup[node_1_name] is None:
+        # 3) Sweep through the nodes; for each, only compare to candidates from neighboring cells
+        for node_name in node_names:
+            # Node may have been merged into another already; node_lookup is set to None for merged nodes
+            if node_lookup.get(node_name) is None:
                 continue
 
-            # There is no need to check `node_1` against itself
-            for node_2_name in node_names[i + 1:]:
+            n1 = self.nodes[node_name]
+            key = cell_key(n1.X, n1.Y, n1.Z, tolerance)
 
-                # Skip iteration if node_2 has already been removed
-                if node_lookup[node_2_name] is None:
+            # Gather candidates from 27 cells (this cell + 26 neighbors).
+            # Note: On the very first iteration (and generally the first node in any empty region),
+            # `cells` is still empty, so `candidates` will be empty by design. We only compare
+            # a node against nodes that have already been assigned to nearby cells (i.e., nodes
+            # we've seen earlier in the loop). This makes each pair considered at most once
+            # and avoids O(n^2) all-pairs checks.
+            candidates = []
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    for dz in (-1, 0, 1):
+                        k = (key[0] + dx, key[1] + dy, key[2] + dz)
+                        if k in cells:
+                            candidates.extend(cells[k])
+
+            merged_into_earlier = False
+
+            # Test candidates for proximity; if within tolerance, merge the CURRENT node into the EARLIER one.
+            for other_name in candidates:
+                if other_name == node_name:
+                    continue
+                if node_lookup.get(other_name) is None:
+                    continue  # earlier node already merged away by another operation
+
+                n2 = self.nodes[other_name]  # earlier candidate (canonical if close)
+                # Squared distance check
+                dx = n1.X - n2.X
+                dy = n1.Y - n2.Y
+                dz = n1.Z - n2.Z
+                if dx*dx + dy*dy + dz*dz > tol2:
                     continue
 
-                # Calculate the distance between nodes
-                if self.nodes[node_1_name].distance(self.nodes[node_2_name]) > tolerance:
-                    continue
+                # Merge current node n1 into earlier node n2
+                # Rewire all element references from n1 -> n2
+                for element, node_type in node_lookup[node_name]:
+                    setattr(element, node_type, n2)
 
-                # Replace references to `node_2` in each element with references to `node_1`
-                for element, node_type in node_lookup[node_2_name]:
-                    setattr(element, node_type, self.nodes[node_1_name])
+                # Mark n1 as merged away
+                node_lookup[node_name] = None
 
-                # Flag `node_2` as no longer used
-                node_lookup[node_2_name] = None
-
-                # Merge any boundary conditions
+                # Merge boundary conditions from n1 into n2
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:
-                    if getattr(self.nodes[node_2_name], dof) == True:
-                        setattr(self.nodes[node_1_name], dof, True)
-                
-                # Merge any spring supports
+                    if getattr(n1, dof) is True:
+                        setattr(n2, dof, True)
+
+                # Merge spring supports from n1 into n2
                 spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
                 for dof in spring_cond:
-                    value = getattr(self.nodes[node_2_name], dof)
+                    value = getattr(n1, dof)
                     if value != [None, None, None]:
-                        setattr(self.nodes[node_1_name], dof, value)
-                
-                # Fix the mesh labels
+                        setattr(n2, dof, value)
+
+                # Update meshes: re-point node maps and element node references (node_name -> other_name)
                 for mesh in self.meshes.values():
+                    # Update mesh node dictionary keying
+                    if node_name in mesh.nodes.keys():
+                        mesh.nodes[node_name] = n2
+                        # Preserve the earlier node name as the key; remove the current node's key
+                        mesh.nodes[other_name] = mesh.nodes.pop(node_name)
 
-                    # Fix the nodes in the mesh
-                    if node_2_name in mesh.nodes.keys():
-
-                        # Attach the correct node to the mesh
-                        mesh.nodes[node_2_name] = self.nodes[node_1_name]
-
-                        # Fix the dictionary key
-                        mesh.nodes[node_1_name] = mesh.nodes.pop(node_2_name)
-
-                    # Fix the elements in the mesh
+                    # Update mesh element node references
                     for element in mesh.elements.values():
-                        if node_2_name == element.i_node.name: element.i_node = self.nodes[node_1_name]
-                        if node_2_name == element.j_node.name: element.j_node = self.nodes[node_1_name]
-                        if node_2_name == element.m_node.name: element.m_node = self.nodes[node_1_name]
-                        if node_2_name == element.n_node.name: element.n_node = self.nodes[node_1_name]
-                    
-                # Add the node to the `remove` list
-                remove_list.append(node_2_name)
+                        if node_name == element.i_node.name: element.i_node = n2
+                        if node_name == element.j_node.name: element.j_node = n2
+                        if node_name == element.m_node.name: element.m_node = n2
+                        if node_name == element.n_node.name: element.n_node = n2
 
-        # Remove `node_2` from the model's `Nodes` dictionary
-        for node_name in remove_list:
-            self.nodes.pop(node_name)
-        
-        # Flag the model as unsolved
+                # Queue current node for removal from the model
+                remove_list.append(node_name)
+                merged_into_earlier = True
+                break  # current node is merged; no further checks needed
+
+            if not merged_into_earlier:
+                # Register n1 into its cell for subsequent nodes to find as a candidate.
+                # By registering AFTER checking candidates, we ensure comparisons are one-way
+                # (current node only checks earlier nodes). This preserves correctness while
+                # keeping the number of comparisons low and deterministic with respect to
+                # the iteration order of `node_names`.
+                cells.setdefault(key, []).append(node_name)
+
+        # 4) Physically remove merged nodes from the model's node dictionary
+        for dead_name in remove_list:
+            self.nodes.pop(dead_name)
+
+        # Any structural changes invalidate the last solution
         self.solution = None
 
-        # Return the list of removed nodes
+        # Report which nodes were removed
         return remove_list
 
     def delete_node(self, node_name:str):
@@ -1872,6 +1915,153 @@ class FEModel3D():
         # Return the global plastic reduction matrix
         return Km
 
+    def _calculate_characteristic_length(self) -> float:
+        """
+        Calculates a characteristic length for the model.
+        Uses average member length, or bounding box dimensions as fallback.
+        """
+        if self.members:
+            # Use average member length
+            total_length = sum(member.L() for member in self.members.values())
+            return total_length / len(self.members)
+        else:
+            # Fallback: use bounding box diagonal
+            if self.nodes:
+                coords = [(node.X, node.Y, node.Z) for node in self.nodes.values()]
+                min_coords = [min(coord[i] for coord in coords) for i in range(3)]
+                max_coords = [max(coord[i] for coord in coords) for i in range(3)]
+                bbox_diag = sum((max_coords[i] - min_coords[i])**2 for i in range(3))**0.5
+                return bbox_diag
+            else:
+                return 1.0  # Default fallback
+            
+    def M(self, include_material_mass: bool = True, 
+          mass_combo_name: str = 'Combo 1', mass_combo_direction: int = 2,  
+          log: bool = False, sparse: bool = True, combo_name='Combo 1'):
+        """Returns the model's global mass matrix for modal analysis. This implementation follows a
+           separation of responsibilities approach where members handle both translational and rotational
+           mass/inertia, while nodes provide translational mass only to prevent double-counting.
+           Rotational stability terms are only added to free DOFs considering member releases and
+           node supports.
+
+        :param include_material_mass: Whether to include mass from material density, defaults to True
+        :type include_material_mass: bool, optional
+        :param mass_combo_name: Load combination name defining mass via force loads. Forces are converted
+                                to mass using m = F/g where g=1.0, so users must pre-scale loads
+                                appropriately, defaults to 'Combo 1'
+        :type mass_combo_name: str, optional
+        :param mass_combo_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=2 for
+                                     gravity/Z-direction), defaults to 2
+        :type mass_combo_direction: int, optional
+        :param log: Whether to print progress messages, defaults to False
+        :type log: bool, optional
+        :param sparse: Whether to return a sparse matrix, defaults to True
+        :type sparse: bool, optional
+        :param combo_name: Load combination name provided for consistency and for defining active members, defaults to 'Combo 1'
+        :type combo_name: str, optional
+        :return: Global mass matrix of shape (n_dof, n_dof)
+        :rtype: scipy.sparse.coo_matrix or numpy.ndarray
+        """
+
+
+        if sparse:
+            row, col, data = [], [], []
+        else:
+            M = zeros((len(self.nodes)*6, len(self.nodes)*6))
+
+        if log: 
+            print('- Adding member mass terms to global mass matrix')
+            if include_material_mass:
+                print('  - Including material density-based mass')
+            if mass_combo_name:
+                print(f'  - Including load-based mass from combo: {mass_combo_name}')
+
+        for phys_member in self.members.values():
+            if phys_member.active[combo_name] == True:
+                for member in phys_member.sub_members.values():
+                    # Get combined mass matrix from member
+                    member_M = member.M(include_material_mass=include_material_mass, 
+                                        mass_combo_name=mass_combo_name, 
+                                        mass_combo_direction=mass_combo_direction,
+                                    )
+                    
+                    # Assembly logic remains the same...
+                    for a in range(12):
+                        if a < 6:
+                            m = member.i_node.ID*6 + a
+                        else:
+                            m = member.j_node.ID*6 + (a-6)
+                        
+
+                        for b in range(12):
+                            if b < 6:
+                                n = member.i_node.ID*6 + b
+                            else:
+                                n = member.j_node.ID*6 + (b-6)
+                            
+                            if sparse:
+                                row.append(m)
+                                col.append(n)
+                                data.append(member_M[a, b])
+                            else:
+                                M[m, n] += member_M[a, b]
+
+        if log and not sparse:
+            print(f'  M trace (members only) = {np_trace(M)}')
+
+        # Add nodal masses
+        if log: 
+            print('- Adding nodal mass terms to global mass matrix (translation only)')
+        
+        # If a combination is specified that may contain nodal masses, add them:
+        if mass_combo_name in self.load_combos:
+            if log:
+                print(f'  - Adding nodal mass from combo: {mass_combo_name}')
+            for node in self.nodes.values():
+                # Get node's mass matrix (translation only, so set characteristic length to None)
+                node_m = node.M(mass_combo_name=mass_combo_name,
+                                mass_combo_direction=mass_combo_direction,
+                                characteristic_length=None)
+                
+                # Add to global mass matrix
+                for i in range(6):
+                    for j in range(6):
+                        if node_m[i, j] != 0:
+                            global_i = node.ID * 6 + i
+                            global_j = node.ID * 6 + j
+                            
+                            if sparse:
+                                row.append(global_i)
+                                col.append(global_j)
+                                data.append(node_m[i, j])
+                            else:
+                                M[global_i, global_j] += node_m[i, j]
+        elif log:
+            if mass_combo_name == '':
+                print('  - No mass combo provided')
+            else:
+                print(f'  - No mass combo {mass_combo_name} in load combinations ({self.load_combos.keys()})')  
+            print('  - Skipping nodal mass addition')
+
+        # Add sparse option
+        if not sparse:
+            print(f'  M trace (members & nodes only) = {np_trace(M)}')
+
+        # Similar for plates, quads, etc...
+        
+        if sparse:
+            from scipy.sparse import coo_matrix
+            M = coo_matrix((array(data), (array(row), array(col))), 
+                        shape=(len(self.nodes)*6, len(self.nodes)*6))
+        elif log:
+            print(f'  Matrix trace: {np_trace(M)}')
+
+        if log:
+            print('- Global mass matrix complete')
+
+        return M
+    
+
     def FER(self, combo_name='Combo 1') -> NDArray[float64]:
         """Assembles and returns the global fixed end reaction vector for any given load combo.
 
@@ -2447,6 +2637,166 @@ class FEModel3D():
 
         # Flag the model as solved
         self.solution = 'P-Delta'
+
+
+    def analyze_modal(self, num_modes:int=12, include_material_mass=True, combo_name:str='Combo 1', mass_combo_name:str='', mass_combo_direction:int=2, 
+                    log=False, sparse=True, check_stability=True):
+        """
+        Performs modal analysis to determine natural frequencies and mode shapes.
+        
+        :param num_modes: Number of modes to calculate. Defaults to 12.
+        :type num_modes: int, optional
+        :param combo_name: Load combination name (not needed, but provided for consistency).
+        :type combo_name: str, optional
+        :param mass_combo_name: Load combination name for load-based mass contribution. Defaults to ''.
+        :type mass_combo_name: str, optional
+        :param mass_combo_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z).
+        :type mass_combo_direction: int, optional
+        :param include_material_mass: If True, includes mass from material density. Defaults to True.
+        :type include_material_mass: bool, optional
+        :param log: Prints the analysis log to the console if set to True. Default is False.
+        :type log: bool, optional
+        :param sparse: Indicates whether sparse matrix solvers should be used. Default is True.
+        :type sparse: bool, optional
+        :param check_stability: When set to True, checks the stiffness matrix for unstable DOFs. Defaults to True.
+        :type check_stability: bool, optional
+        :return: Dictionary containing frequencies (Hz) and mode shapes
+        :rtype: dict
+        :raises Exception: Occurs when a singular stiffness matrix is found or SciPy is not available.
+        """
+        
+        if log:
+            print('+----------------+')
+            print('| Analyzing: Modal |')
+            print('+----------------+')
+        
+        # Check for SciPy availability for eigenvalue solving
+        try:
+            from scipy.linalg import LinAlgError
+            if sparse:
+                from scipy.sparse.linalg import eigsh
+            else:
+                from scipy.linalg import eigh
+        except ImportError:
+            raise Exception('SciPy is required for modal analysis. Please install scipy.')
+        
+        # Prepare the model for analysis (same as other analysis methods)
+        # This will generate the default load case ('Case 1') and load combo ('Combo 1') if none are present.
+        Analysis._prepare_model(self)
+        
+        # Get the auxiliary list used for matrix partitioning
+        D1_indices, D2_indices, D2 = Analysis._partition_D(self)
+        
+        if log:
+            print('- Assembling global stiffness matrix')
+        
+        # Assemble and partition the global stiffness matrix
+        # Any load combination will do since stiffness is typically linear (in the default case, it should pick up 'Combo 1')
+        if combo_name not in self.load_combos:
+            combo_name = list(self.load_combos.keys())[0]  # Not needed for modal analysis, but some value is required
+
+        if sparse:
+            K_global = self.K(combo_name, log, check_stability, sparse).tolil()
+        else:
+            K_global = self.K(combo_name, log, check_stability, sparse)
+        
+        # Partition to remove supported DOFs
+        K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
+        
+        if log:
+            print('- Assembling global mass matrix')
+        
+        # Assemble and partition the global mass matrix
+        if sparse:
+            M_global = self.M(include_material_mass,mass_combo_name, mass_combo_direction, log, sparse, combo_name).tolil()
+        else:
+            M_global = self.M(include_material_mass,mass_combo_name, mass_combo_direction, log, sparse, combo_name)
+        
+        # Partition to remove supported DOFs
+        M11, M12, M21, M22 = Analysis._partition(self, M_global, D1_indices, D2_indices)
+        
+        # Check that we have mass terms
+        if M11.nnz == 0 if sparse else np_all(M11 == 0):
+            raise Exception('No mass terms found. Ensure materials have density or provide mass_combo_name.')
+        
+        if log:
+            print('- Solving eigenvalue problem')
+        
+
+        # Add this before the eigenvalue solution
+        if log:
+            print(f"  - K11 shape: {K11.shape}")
+            print(f"  - M11 shape: {M11.shape}")
+            # Add this before the line that fails - look for np.diag calls
+            print(f"Matrix type: {type(M11)}")
+            print(f"Matrix shape: {M11.shape}")
+            if hasattr(M11, 'ndim'):
+                print(f"Matrix dimensions: {M11.ndim}")
+            # print(f"  - Minimum diagonal of M11: {np.min(np.diag(M11))}")
+            # print(f"  - Number of zero diagonals in M11: {np.sum(np.diag(M11) == 0)}")
+            # print(f"  - Number of negative diagonals in M11: {np.sum(np.diag(M11) < 0)}")
+
+
+        try:
+            # Solve the generalized eigenvalue problem: K11 * φ = λ * M11 * φ
+            if sparse:
+                # For sparse matrices, use eigsh which is more efficient for large systems
+                eigenvalues, eigenvectors = eigsh(K11, k=num_modes, M=M11, sigma=0, which='LM')
+            else:
+                # For dense matrices, use eigh (assumes matrices are symmetric)
+                eigenvalues, eigenvectors = eigh(K11, M11)
+        except LinAlgError as e:
+            raise Exception(f'Eigenvalue solution failed: {str(e)}. Check matrix conditioning.')
+        
+        # Calculate frequencies in Hz from eigenvalues (λ = ω²)
+        frequencies = np_sqrt(eigenvalues) / (2 * np_pi)
+        
+        if log:
+            print('- Processing mode shapes')
+        
+        # Process mode shapes to expand back to full DOF set
+        mode_shapes = []
+        for i in range(len(frequencies)):
+            # Create full displacement vector for this mode
+            D1_mode = eigenvectors[:, i].reshape(-1, 1)
+            D_mode = Analysis._expand_displacements(self, D1_mode, D2, D1_indices, D2_indices)
+            mode_shapes.append(D_mode)
+        
+        # Store results in the model
+        self.modal_results = {
+            'frequencies': frequencies,
+            'mode_shapes': mode_shapes,
+            'num_modes': len(frequencies)
+        }
+
+        self.modal_results['include_material_mass'] = include_material_mass
+        if mass_combo_name:
+            self.modal_results['mass_combo_name'] = mass_combo_name
+        
+
+        if log:
+            print('- Modal analysis complete')
+        
+        # Flag the model as having modal results
+        if hasattr(self, 'solution'):
+            if self.solution is not None:
+                self.solution += ' + Modal'
+            else:
+                self.solution = 'Modal'
+        else:
+            self.solution = 'Modal'
+        
+        if log:
+            print(f'- Found {len(frequencies)} modes')
+            for i, freq in enumerate(frequencies):
+                print(f'  Mode {i+1}: {freq:.3f} Hz')
+            print('- Modal analysis complete')
+        
+        return self.modal_results
+
+      
+
+
 
     def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
 

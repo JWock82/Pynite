@@ -46,6 +46,10 @@ def _prepare_model(model: FEModel3D) -> None:
     for shear_wall in model.shear_walls.values():
         shear_wall.generate()
 
+    # Generate all mat foundation meshes
+    for mat in model.mats.values():
+        mat.generate()
+
     # Activate all springs and members for all load combinations
     for spring in model.springs.values():
         for combo_name in model.load_combos.keys():
@@ -522,6 +526,25 @@ def _sum_displacements(model: FEModel3D, Delta_D1: NDArray[float64], Delta_D2: N
         node.RX[combo.name] += Delta_D[node.ID*6 + 3, 0]
         node.RY[combo.name] += Delta_D[node.ID*6 + 4, 0]
         node.RZ[combo.name] += Delta_D[node.ID*6 + 5, 0]
+
+
+def _expand_displacements(model, D1, D2, D1_indices, D2_indices):
+    """
+    Expands partitioned displacement vectors back to full DOF set.
+    Used for mode shape expansion.
+    """
+    total_dof = len(model.nodes) * 6
+    D_full = zeros((total_dof, 1))
+    
+    # Place D1 values (unknown DOFs)
+    for i, index in enumerate(D1_indices):
+        D_full[index] = D1[i]
+    
+    # Place D2 values (known DOFs - typically zeros for modal analysis)
+    for i, index in enumerate(D2_indices):
+        D_full[index] = D2[i]
+    
+    return D_full
 
 
 def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bool = True, spring_tolerance: float = 0, member_tolerance: float = 0) -> bool:
