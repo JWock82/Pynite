@@ -1897,36 +1897,33 @@ class FEModel3D():
                 return bbox_diag
             else:
                 return 1.0  # Default fallback
-            
-    def M(self, include_material_mass: bool = True, 
-          mass_combo_name: str = 'Combo 1', mass_combo_direction: int = 2,  
-          log: bool = False, sparse: bool = True, combo_name='Combo 1'):
-        """Returns the model's global mass matrix for modal analysis. This implementation follows a
-           separation of responsibilities approach where members handle both translational and rotational
-           mass/inertia, while nodes provide translational mass only to prevent double-counting.
-           Rotational stability terms are only added to free DOFs considering member releases and
-           node supports.
 
-        :param include_material_mass: Whether to include mass from material density, defaults to True
+    def M(self, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_combo_direction: int = 1, log: bool = False, sparse: bool = True, combo_name='Combo 1'):
+        """
+        Returns the model's global mass matrix for dynamic analysis. This implementation follows a separation of responsibilities approach, where members handle both translational and rotational mass/inertia, while nodes provide translational mass only (to prevent double-counting). Rotational stability terms are only added to free DOFs considering member releases and node supports.
+
+        :param include_material_mass: Whether to include mass from material density, defaults to `True`.
         :type include_material_mass: bool, optional
-        :param mass_combo_name: Load combination name defining mass via force loads. Forces are converted
-                                to mass using m = F/g where g=1.0, so users must pre-scale loads
-                                appropriately, defaults to 'Combo 1'
+        :param mass_combo_name: Load combination name defining mass (via force loads). Forces are converted to mass using m = F/g where g = 1.0, so users must pre-scale loads appropriately, defaults to 'Combo 1'.
         :type mass_combo_name: str, optional
-        :param mass_combo_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=2 for
-                                     gravity/Z-direction), defaults to 2
+        :param mass_combo_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=1 for gravity/Y-direction).
         :type mass_combo_direction: int, optional
-        :param log: Whether to print progress messages, defaults to False
+        :param log: Whether to print progress messages, defaults to `False`.
         :type log: bool, optional
-        :param sparse: Whether to return a sparse matrix, defaults to True
+        :param sparse: Whether to return a sparse matrix, defaults to `True`.
         :type sparse: bool, optional
-        :param combo_name: Load combination name provided for consistency and for defining active members, defaults to 'Combo 1'
+        :param combo_name: Load combination name provided for consistency and for defining active members, defaults to 'Combo 1'.
         :type combo_name: str, optional
         :return: Global mass matrix of shape (n_dof, n_dof)
         :rtype: scipy.sparse.coo_matrix or numpy.ndarray
         """
 
+        # TODO:
+        # 1. Allow gravity, g, to be input directly, rather than assuming it to be 1.0.
+        # 2. Change gravity direction inputs to accept X, Y and Z instead of 0, 1, and 2.
+        # 3. `combo_name` and `mass_combo_name` should be one and the same.
 
+        # Check if a sparse matrix has been requested
         if sparse:
             row, col, data = [], [], []
         else:
