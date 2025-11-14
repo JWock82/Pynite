@@ -67,7 +67,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 v1.6.3
-* Major performance boost for merging duplicate nodes. This should greatly improve the solve time for large models with multiple meshes being merged together.
+* Added modal analysis. This is experimental for now. Please try out this feature and report any issues. A special thanks to @boustrephon for implementing this feature.
 
 v1.6.2
 * Added helper method to `FEModel3D` for mat foundations.
