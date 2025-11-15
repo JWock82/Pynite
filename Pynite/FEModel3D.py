@@ -1413,14 +1413,8 @@ class FEModel3D():
 
         # Determine if a sparse matrix has been requested
         if sparse == True:
-            # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
-            # documentation states that this type of matrix is ideal for efficient
-            # construction of finite element matrices. When converted to another
-            # format, the `coo_matrix` sums values at the same (i, j) index. We'll
-            # build the matrix from three lists.
-            row = []
-            col = []
-            data = []
+            # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index. We'll build the matrix from three lists.
+            row, col, data = [], [], []
         else:
             # Initialize a dense matrix of zeros
             K = zeros((len(self.nodes)*6, len(self.nodes)*6))
@@ -1924,41 +1918,48 @@ class FEModel3D():
         # 3. `combo_name` and `mass_combo_name` should be one and the same.
 
         # Check if a sparse matrix has been requested
-        if sparse:
+        if sparse == True:
+            # The mass matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index. We'll build the matrix from three lists.
             row, col, data = [], [], []
         else:
+            # Initialize a dense matrix of zeros
             M = zeros((len(self.nodes)*6, len(self.nodes)*6))
 
-        if log: 
+        if log:
             print('- Adding member mass terms to global mass matrix')
             if include_material_mass:
                 print('  - Including material density-based mass')
             if mass_combo_name:
                 print(f'  - Including load-based mass from combo: {mass_combo_name}')
 
+        # Step through each physical member in the model
         for phys_member in self.members.values():
+
+            # Determine if this physical member is active
             if phys_member.active[combo_name] == True:
+
+                # Step through each submember in this physical member
                 for member in phys_member.sub_members.values():
-                    # Get combined mass matrix from member
-                    member_M = member.M(include_material_mass=include_material_mass, 
-                                        mass_combo_name=mass_combo_name, 
-                                        mass_combo_direction=mass_combo_direction,
-                                    )
-                    
-                    # Assembly logic remains the same...
+
+                    # Get the combined mass matrix from member
+                    member_M = member.M(include_material_mass=include_material_mass,
+                                        mass_combo_name=mass_combo_name,
+                                        mass_combo_direction=mass_combo_direction
+                                        )
+
+                    # Assembly logic remains the same as stiffness matrix assembly logic
                     for a in range(12):
                         if a < 6:
                             m = member.i_node.ID*6 + a
                         else:
-                            m = member.j_node.ID*6 + (a-6)
-                        
+                            m = member.j_node.ID*6 + (a - 6)
 
                         for b in range(12):
                             if b < 6:
                                 n = member.i_node.ID*6 + b
                             else:
-                                n = member.j_node.ID*6 + (b-6)
-                            
+                                n = member.j_node.ID*6 + (b - 6)
+
                             if sparse:
                                 row.append(m)
                                 col.append(n)
@@ -1966,61 +1967,56 @@ class FEModel3D():
                             else:
                                 M[m, n] += member_M[a, b]
 
-        if log and not sparse:
-            print(f'  M trace (members only) = {np_trace(M)}')
-
         # Add nodal masses
-        if log: 
+        if log:
             print('- Adding nodal mass terms to global mass matrix (translation only)')
-        
+
         # If a combination is specified that may contain nodal masses, add them:
         if mass_combo_name in self.load_combos:
+
             if log:
                 print(f'  - Adding nodal mass from combo: {mass_combo_name}')
+
+            # Step through each node in the model
             for node in self.nodes.values():
-                # Get node's mass matrix (translation only, so set characteristic length to None)
+
+                # Get node's mass matrix (translation only, so set characteristic length to `None`)
                 node_m = node.M(mass_combo_name=mass_combo_name,
                                 mass_combo_direction=mass_combo_direction,
                                 characteristic_length=None)
-                
+
                 # Add to global mass matrix
-                for i in range(6):
-                    for j in range(6):
-                        if node_m[i, j] != 0:
-                            global_i = node.ID * 6 + i
-                            global_j = node.ID * 6 + j
-                            
+                for a in range(6):
+                    for b in range(6):
+                        if node_m[a, b] != 0:
+                            m = node.ID * 6 + a
+                            n = node.ID * 6 + b
+
                             if sparse:
-                                row.append(global_i)
-                                col.append(global_j)
-                                data.append(node_m[i, j])
+                                row.append(m)
+                                col.append(n)
+                                data.append(node_m[a, b])
                             else:
-                                M[global_i, global_j] += node_m[i, j]
+                                M[m, n] += node_m[a, b]
+
         elif log:
+
             if mass_combo_name == '':
                 print('  - No mass combo provided')
             else:
-                print(f'  - No mass combo {mass_combo_name} in load combinations ({self.load_combos.keys()})')  
+                print(f'  - No mass combo {mass_combo_name} found in load combinations')
+
             print('  - Skipping nodal mass addition')
 
         # Add sparse option
-        if not sparse:
-            print(f'  M trace (members & nodes only) = {np_trace(M)}')
-
-        # Similar for plates, quads, etc...
-        
         if sparse:
             from scipy.sparse import coo_matrix
-            M = coo_matrix((array(data), (array(row), array(col))), 
-                        shape=(len(self.nodes)*6, len(self.nodes)*6))
-        elif log:
-            print(f'  Matrix trace: {np_trace(M)}')
+            M = coo_matrix((array(data), (array(row), array(col))), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         if log:
             print('- Global mass matrix complete')
 
         return M
-    
 
     def FER(self, combo_name='Combo 1') -> NDArray[float64]:
         """Assembles and returns the global fixed end reaction vector for any given load combo.
