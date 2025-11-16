@@ -330,10 +330,10 @@ class FEModel3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
-        :param shear_deformable: Indicates if the member is shear-deformable (Timoshenko-Ehrenfest Beam Theory), defaults to False
-        :type shear_deformable: bool, optional
         :param lumped_mass: Whether to use lumped mass formulation for this member, defaults to True
 +       :type lumped_mass: bool, optional
+        :param shear_deformable: Indicates if the member is shear-deformable (Timoshenko-Ehrenfest Beam Theory), defaults to False
+        :type shear_deformable: bool, optional
         :raises NameError: Occurs if the specified name already exists.
         :return: The name of the member added to the model.
         :rtype: str

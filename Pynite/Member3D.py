@@ -61,10 +61,10 @@ class Member3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
-        :param shear_deformable: Indicates if the member is shear-deformable (Timoshenko-Ehrenfest Beam Theory), defaults to False
-        :type shear_deformable: bool, optional
         :param lumped_mass: Indicates if the member masses are lumped to the nodes, defaults to True
         :type lumped_mass: bool, optional
+        :param shear_deformable: Indicates if the member is shear-deformable (Timoshenko-Ehrenfest Beam Theory), defaults to False
+        :type shear_deformable: bool, optional
         """
         self.name: str = name      # A unique name for the member given by the user
         self.ID: int | None = None        # Unique index number for the member assigned by the program
