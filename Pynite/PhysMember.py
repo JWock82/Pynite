@@ -26,9 +26,10 @@ class PhysMember(Member3D):
     __plt = None
 
     def __init__(self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D, material_name: str, section_name: str, rotation: float = 0.0,
-                 tension_only: bool = False, comp_only: bool = False, shear_deformable: bool = False) -> None:
+                 tension_only: bool = False, comp_only: bool = False, lumped_mass: bool = True, shear_deformable: bool = False) -> None:
 
-        super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only, shear_deformable)
+        super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, 
+                         tension_only, comp_only, lumped_mass=lumped_mass, shear_deformable=shear_deformable)
         self.sub_members: Dict[str, Member3D] = {}
 
     def descritize(self) -> None:
@@ -126,7 +127,9 @@ class PhysMember(Member3D):
             xj = int_nodes[i+1][1]
 
             # Create a new sub-member
-            new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, self.section.name, self.rotation, self.tension_only, self.comp_only, self.shear_deformable)
+            new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, 
+                                      self.section.name, self.rotation, self.tension_only, 
+                                      self.comp_only, lumped_mass=self.lumped_mass, shear_deformable=self.shear_deformable)
 
             # Flag the sub-member as active
             for combo_name in self.model.load_combos.keys():
