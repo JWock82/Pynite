@@ -2594,12 +2594,10 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-
-    def analyze_modal(self, num_modes:int=12, include_material_mass=True, combo_name:str='Combo 1', mass_combo_name:str='', mass_combo_direction:int=2, 
-                    log=False, sparse=True, check_stability=True):
+    def analyze_modal(self, num_modes: int = 12, include_material_mass = True, combo_name: str = 'Combo 1', mass_combo_name: str = '', mass_combo_direction: int = 2, log=False, sparse=True, check_stability=True):
         """
         Performs modal analysis to determine natural frequencies and mode shapes.
-        
+
         :param num_modes: Number of modes to calculate. Defaults to 12.
         :type num_modes: int, optional
         :param combo_name: Load combination name (not needed, but provided for consistency).
@@ -2620,12 +2618,12 @@ class FEModel3D():
         :rtype: dict
         :raises Exception: Occurs when a singular stiffness matrix is found or SciPy is not available.
         """
-        
+
         if log:
-            print('+----------------+')
+            print('+------------------+')
             print('| Analyzing: Modal |')
-            print('+----------------+')
-        
+            print('+------------------+')
+
         # Check for SciPy availability for eigenvalue solving
         try:
             from scipy.linalg import LinAlgError
@@ -2635,19 +2633,19 @@ class FEModel3D():
                 from scipy.linalg import eigh
         except ImportError:
             raise Exception('SciPy is required for modal analysis. Please install scipy.')
-        
+
         # Prepare the model for analysis (same as other analysis methods)
         # This will generate the default load case ('Case 1') and load combo ('Combo 1') if none are present.
         Analysis._prepare_model(self)
-        
+
         # Get the auxiliary list used for matrix partitioning
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
-        
+
         if log:
             print('- Assembling global stiffness matrix')
-        
+
         # Assemble and partition the global stiffness matrix
-        # Any load combination will do since stiffness is typically linear (in the default case, it should pick up 'Combo 1')
+        # Any load combination will do since stiffness is must be linear for modal analysis (in the default case, it should pick up 'Combo 1')
         if combo_name not in self.load_combos:
             combo_name = list(self.load_combos.keys())[0]  # Not needed for modal analysis, but some value is required
 
@@ -2655,29 +2653,28 @@ class FEModel3D():
             K_global = self.K(combo_name, log, check_stability, sparse).tolil()
         else:
             K_global = self.K(combo_name, log, check_stability, sparse)
-        
+
         # Partition to remove supported DOFs
         K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
-        
+
         if log:
             print('- Assembling global mass matrix')
-        
+
         # Assemble and partition the global mass matrix
         if sparse:
-            M_global = self.M(include_material_mass,mass_combo_name, mass_combo_direction, log, sparse, combo_name).tolil()
+            M_global = self.M(include_material_mass, mass_combo_name, mass_combo_direction, log, sparse, combo_name).tolil()
         else:
-            M_global = self.M(include_material_mass,mass_combo_name, mass_combo_direction, log, sparse, combo_name)
-        
+            M_global = self.M(include_material_mass, mass_combo_name, mass_combo_direction, log, sparse, combo_name)
+
         # Partition to remove supported DOFs
         M11, M12, M21, M22 = Analysis._partition(self, M_global, D1_indices, D2_indices)
-        
+
         # Check that we have mass terms
         if M11.nnz == 0 if sparse else np_all(M11 == 0):
             raise Exception('No mass terms found. Ensure materials have density or provide mass_combo_name.')
-        
+
         if log:
             print('- Solving eigenvalue problem')
-        
 
         # Add this before the eigenvalue solution
         if log:
@@ -2703,13 +2700,13 @@ class FEModel3D():
                 eigenvalues, eigenvectors = eigh(K11, M11)
         except LinAlgError as e:
             raise Exception(f'Eigenvalue solution failed: {str(e)}. Check matrix conditioning.')
-        
+
         # Calculate frequencies in Hz from eigenvalues (λ = ω²)
         frequencies = np_sqrt(eigenvalues) / (2 * np_pi)
-        
+
         if log:
             print('- Processing mode shapes')
-        
+
         # Process mode shapes to expand back to full DOF set
         mode_shapes = []
         for i in range(len(frequencies)):
@@ -2717,7 +2714,8 @@ class FEModel3D():
             D1_mode = eigenvectors[:, i].reshape(-1, 1)
             D_mode = Analysis._expand_displacements(self, D1_mode, D2, D1_indices, D2_indices)
             mode_shapes.append(D_mode)
-        
+
+        # TODO: The next block of code stores the mode shapes as a vector in a modal results dictionary. It would be more convenient to store the displacements associated with each mode shape directly in each node for easier rendering.
         # Store results in the model
         self.modal_results = {
             'frequencies': frequencies,
@@ -2728,11 +2726,10 @@ class FEModel3D():
         self.modal_results['include_material_mass'] = include_material_mass
         if mass_combo_name:
             self.modal_results['mass_combo_name'] = mass_combo_name
-        
 
         if log:
             print('- Modal analysis complete')
-        
+
         # Flag the model as having modal results
         if hasattr(self, 'solution'):
             if self.solution is not None:
@@ -2741,18 +2738,14 @@ class FEModel3D():
                 self.solution = 'Modal'
         else:
             self.solution = 'Modal'
-        
+
         if log:
             print(f'- Found {len(frequencies)} modes')
             for i, freq in enumerate(frequencies):
                 print(f'  Mode {i+1}: {freq:.3f} Hz')
             print('- Modal analysis complete')
-        
+
         return self.modal_results
-
-      
-
-
 
     def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
 
