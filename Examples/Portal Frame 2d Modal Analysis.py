@@ -154,7 +154,7 @@ model.add_load_combo('MassCombo', {'Mass': 1.0})
 
 # Run modal analysis
 print("Running modal analysis...")
-model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_combo_direction=0, sparse=sparse, log=False)  # X-direction
+model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=0, sparse=sparse, log=False)  # X-direction
 
 # Access results
 frequencies = model.modal_results['frequencies']

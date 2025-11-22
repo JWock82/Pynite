@@ -573,7 +573,7 @@ class Member3D():
         
         return abs(total_force)  # Mass is always positive
 
-    def m(self, include_material_mass=True, mass_combo_name: str = '', mass_combo_direction: int=2) -> NDArray[Any]:
+    def m(self, include_material_mass=True, mass_combo_name: str = '', mass_direction: int=2) -> NDArray[Any]:
         """
         Returns the condensed (and expanded) local mass matrix for the member.
 
@@ -585,14 +585,14 @@ class Member3D():
         # Check if there are any member end releases
         if True not in self.Releases:
             # If no releases, return the full uncondensed mass matrix
-            return self._m_unc(include_material_mass=include_material_mass, mass_combo_name=mass_combo_name, direction=mass_combo_direction)
+            return self._m_unc(include_material_mass=include_material_mass, mass_combo_name=mass_combo_name, direction=mass_direction)
         
         # Partition the local mass matrix as 4 submatrices in
         # preparation for static condensation (same as stiffness matrix)
         R1_indices, R2_indices = self._partition_D()
         
         # Get the uncondensed mass matrix
-        m_unc = self._m_unc(include_material_mass=include_material_mass, mass_combo_name=mass_combo_name, direction=mass_combo_direction)
+        m_unc = self._m_unc(include_material_mass=include_material_mass, mass_combo_name=mass_combo_name, direction=mass_direction)
         
         # Partition the mass matrix
         m11 = m_unc[R1_indices, :][:, R1_indices]
@@ -612,7 +612,7 @@ class Member3D():
         return m_expanded
 
 
-    def M(self, include_material_mass:bool=True, mass_combo_name: str = '', mass_combo_direction: int = 2) -> NDArray[Any]:
+    def M(self, include_material_mass:bool=True, mass_combo_name: str = '', mass_direction: int = 2) -> NDArray[Any]:
         """Returns the member's global mass matrix. The mass matrix combines material density-based mass
            and/or load combination-based mass. For lumped mass formulation, rotational inertia is
            intelligently added only to free DOFs considering both member releases and node support
@@ -622,14 +622,14 @@ class Member3D():
         :type include_material_mass: bool, optional
         :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ""
         :type mass_combo_name: str, optional
-        :param mass_combo_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z, defaults to 2
-        :type mass_combo_direction: int, optional
+        :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z, defaults to 2
+        :type mass_direction: int, optional
         :return: Global mass matrix of shape (12, 12)
         :rtype: numpy.ndarray
         """
         
         # Get the member's local mass matrix
-        m = self.m(include_material_mass=include_material_mass, mass_combo_name=mass_combo_name, mass_combo_direction=mass_combo_direction)
+        m = self.m(include_material_mass=include_material_mass, mass_combo_name=mass_combo_name, mass_direction=mass_direction)
         
         # Get the member's transformation matrix
         T = self.T()
