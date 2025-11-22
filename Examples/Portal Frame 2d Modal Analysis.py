@@ -82,7 +82,7 @@ for j in range(numFloor + 1):
 
     for i in range(numBay + 1):
 
-        # Add node at z=0 (2D frame in XY plane)
+        # Add node at Z = 0 (2D frame in XY plane)
         model.add_node(f'N{node_tag}', x_loc, y_loc, 0.0)
 
         # Store node tag for element creation
@@ -96,28 +96,14 @@ for j in range(numFloor + 1):
 
         y_loc += storyHeights[j]
 
-# Fix base nodes (first floor) - restrain all DOFs including Z-direction
+# Support all nodes in the Z-direction (out-of-plane translation)
+for node in model.nodes.values():
+    model.def_support(node.name, False, False, True, False, False, False)
+
+# Adjust first floor nodes to be fixed
 model.def_support('N1', True, True, True, True, True, True)  # Fixed support
 model.def_support('N2', True, True, True, True, True, True)  # Fixed support  
 model.def_support('N3', True, True, True, True, True, True)  # Fixed support
-
-# For all other nodes, restrain Z-translation and X,Y-rotation to make it 2D behavior
-for j in range(numFloor + 1):
-
-    for i in range(numBay + 1):
-
-        node_name = node_dict[(i, j)]
-
-        # Only fix base nodes completely, for other nodes restrain out-of-plane DOFs
-        if j > 0:  # Not base nodes
-            # Restrain Z-translation and X,Y rotations to enforce 2D behavior in XY plane
-            model.def_support(node_name, 
-                             False,  # DX free
-                             False,  # DY free  
-                             True,   # DZ fixed
-                             True,   # RX fixed
-                             True,   # RY fixed
-                             False)  # RZ free
 
 # Add masses to master nodes (equivalent to equalDOF constraint in OpenSees)
 # In OpenSees, nodes 4, 7, 10, 13, 16, 19, 22 are the master nodes for each floor
