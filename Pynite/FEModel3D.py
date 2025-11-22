@@ -301,8 +301,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, 
-                   rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False, lumped_mass=True) -> str:
+    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False, lumped_mass=True) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -1892,7 +1891,7 @@ class FEModel3D():
             else:
                 return 1.0  # Default fallback
 
-    def M(self, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, log: bool = False, sparse: bool = True, combo_name='Combo 1'):
+    def M(self, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True, combo_name='Combo 1'):
         """
         Returns the model's global mass matrix for dynamic analysis. This implementation follows a separation of responsibilities approach, where members handle both translational and rotational mass/inertia, while nodes provide translational mass only (to prevent double-counting). Rotational stability terms are only added to free DOFs considering member releases and node supports.
 
@@ -1902,6 +1901,8 @@ class FEModel3D():
         :type mass_combo_name: str, optional
         :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=1 for gravity/Y-direction).
         :type mass_direction: int, optional
+        :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
+        :type gravity: float
         :param log: Whether to print progress messages, defaults to `False`.
         :type log: bool, optional
         :param sparse: Whether to return a sparse matrix, defaults to `True`.
@@ -1913,9 +1914,8 @@ class FEModel3D():
         """
 
         # TODO:
-        # 1. Allow gravity, g, to be input directly, rather than assuming it to be 1.0.
-        # 2. Change gravity direction inputs to accept X, Y and Z instead of 0, 1, and 2.
-        # 3. `combo_name` and `mass_combo_name` should be one and the same.
+        # 1. Change gravity direction inputs to accept X, Y and Z instead of 0, 1, and 2.
+        # 2. `combo_name` and `mass_combo_name` should be one and the same.
 
         # Check if a sparse matrix has been requested
         if sparse == True:
@@ -1942,10 +1942,7 @@ class FEModel3D():
                 for member in phys_member.sub_members.values():
 
                     # Get the combined mass matrix from member
-                    member_M = member.M(include_material_mass=include_material_mass,
-                                        mass_combo_name=mass_combo_name,
-                                        mass_direction=mass_direction
-                                        )
+                    member_M = member.M(include_material_mass, mass_combo_name, mass_direction, gravity)
 
                     # Assembly logic remains the same as stiffness matrix assembly logic
                     for a in range(12):
@@ -1981,9 +1978,7 @@ class FEModel3D():
             for node in self.nodes.values():
 
                 # Get node's mass matrix (translation only, so set characteristic length to `None`)
-                node_m = node.M(mass_combo_name=mass_combo_name,
-                                mass_direction=mass_direction,
-                                characteristic_length=None)
+                node_m = node.M(mass_combo_name, mass_direction, gravity, characteristic_length=None)
 
                 # Add to global mass matrix
                 for a in range(6):
@@ -2594,7 +2589,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-    def analyze_modal(self, num_modes: int = 12, include_material_mass = True, combo_name: str = 'Combo 1', mass_combo_name: str = '', mass_direction: int = 2, log=False, sparse=True, check_stability=True):
+    def analyze_modal(self, num_modes: int = 12, include_material_mass: bool = True, combo_name: str = 'Combo 1', mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
         """
         Performs modal analysis to determine natural frequencies and mode shapes.
 
@@ -2604,10 +2599,12 @@ class FEModel3D():
         :type combo_name: str, optional
         :param mass_combo_name: Load combination name for load-based mass contribution. Defaults to ''.
         :type mass_combo_name: str, optional
-        :param mass_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z).
+        :param mass_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z). Defaults to 1.
         :type mass_direction: int, optional
         :param include_material_mass: If True, includes mass from material density. Defaults to True.
         :type include_material_mass: bool, optional
+        :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
+        :type gravity: float
         :param log: Prints the analysis log to the console if set to True. Default is False.
         :type log: bool, optional
         :param sparse: Indicates whether sparse matrix solvers should be used. Default is True.
@@ -2662,9 +2659,9 @@ class FEModel3D():
 
         # Assemble and partition the global mass matrix
         if sparse:
-            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, log, sparse, combo_name).tolil()
+            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse, combo_name).tolil()
         else:
-            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, log, sparse, combo_name)
+            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse, combo_name)
 
         # Partition to remove supported DOFs
         M11, M12, M21, M22 = Analysis._partition(self, M_global, D1_indices, D2_indices)

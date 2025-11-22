@@ -95,14 +95,15 @@ class Node3D():
         """
         return ((self.X - other.X)**2 + (self.Y - other.Y)**2 + (self.Z - other.Z)**2)**0.5
 
-
-    def M(self, mass_combo_name: str = '', mass_direction: int = 1, characteristic_length: float|None = None) -> NDArray:
+    def M(self, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0, characteristic_length: float | None = None) -> NDArray:
         """Returns the node's mass matrix (6x6 diagonal). In member-based models, nodes provide translational mass only to prevent double-counting of rotational inertia. For member-less models, rotational inertia can be added by providing a characteristic_length.
 
         :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ''.
         :type mass_combo_name: str, optional
         :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z, defaults to 1
         :type mass_direction: int, optional
+        :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
+        :type gravity: float
         :param characteristic_length: If provided, adds rotational inertia scaled by I = m * (0.01L²).
                                       Use None for translational-only mass, defaults to None
         :type characteristic_length: float, optional
@@ -112,12 +113,12 @@ class Node3D():
         m = zeros((6, 6))
 
         # Get mass from nodal loads in the specified load combination
-        if mass_combo_name == '':
+        if mass_combo_name == None:
             total_mass = 0.0
         elif mass_combo_name not in self.model.load_combos:
             raise ValueError(f'Load combination {mass_combo_name} not found in the model.')
         else:
-            total_mass = self._calc_mass(mass_combo_name, mass_direction)
+            total_mass = self._calc_mass(mass_combo_name, mass_direction, gravity)
         # print(f'{self.name}: total_mass: {total_mass}')
 
         if total_mass > 0:
@@ -142,15 +143,17 @@ class Node3D():
 
         return m
 
-    def _calc_mass(self, mass_combo_name: str, mass_direction: int = 1) -> float:
+    def _calc_mass(self, mass_combo_name: str, mass_direction: int = 1, gravity: float = 1.0) -> float:
         """Calculates the total mass from nodal loads in a load combination.
 
         For modal analysis, nodal "masses" are typically specified as force loads that get converted to mass using F = m*a (where a is typically gravity).
 
         :param mass_combo_name: The name of the load combination to use for mass calculation.
         :type mass_combo_name: str
-        :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=2 for gravity/Z-direction). Defaults to 1.
+        :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z. Defaults to 1.
         :type mass_direction: int, optional
+        :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
+        :type gravity: float
         :raises NameError: _description_
         :return: The total mass calculated from forces in the specified direction
         :rtype: float
@@ -185,9 +188,8 @@ class Node3D():
                 elif mass_direction == 2 and load_direction == 'FZ':
                     total_force += load_magnitude
 
-        # Convert force to mass (assuming g = 1.0 for pre-scaled loads)
-        gravity = 1.0
-        total_mass = total_force / gravity if gravity != 0 else 0.0
+        # Convert force to mass
+        total_mass = total_force / gravity if gravity != 0.0 else 0.0
 
         # Debug output (you can remove this later)
         # if abs(total_mass) > 1e-10:
