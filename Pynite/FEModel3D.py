@@ -2691,7 +2691,9 @@ class FEModel3D():
 
 
         try:
-            # Solve the generalized eigenvalue problem: K11 * φ = λ * M11 * φ
+            # Solve the generalized eigenvalue problem: [K11]{φ} = λ[M11]{φ}, where λ = ω²
+            # Or rewritten: (-[M11]ω² + [K11]){φ} = 0
+            # (See "Structural Dynamics for Structural Engineers" by Hart & Wong Equation 4.96)
             if sparse:
                 # For sparse matrices, use eigsh which is more efficient for large systems
                 eigenvalues, eigenvectors = eigsh(K11, k=num_modes, M=M11, sigma=0, which='LM')

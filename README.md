@@ -67,7 +67,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 v1.6.3
-* Added modal analysis. This is experimental for now. Please try out this feature and report any issues. A special thanks to @boustrephon for implementing this feature.
+* Added modal analysis. No damping is assumed at this point. This is experimental for now. Please try out this feature and report any issues. A special thanks to @boustrephon for implementing this feature.
 
 v1.6.2
 * Added helper method to `FEModel3D` for mat foundations.
