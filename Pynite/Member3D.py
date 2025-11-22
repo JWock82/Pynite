@@ -332,7 +332,7 @@ class Member3D():
             # Solve for `km` using a psuedo-inverse (pinv). The psuedo-inverse takes into account that we may have rows of zeros that make the matrix otherwise uninvertable.
             return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
 
-    def _m_unc(self, include_material_mass=True, mass_combo_name: str = '', gravity: float = 1.0, direction: int = 1) -> NDArray[float64]:
+    def _m_unc(self, include_material_mass=True, mass_combo_name: str | None = None, direction: int = 1, gravity: float = 1.0) -> NDArray[float64]:
         """
         Returns the uncondensed consistent mass matrix for the member in local coordinates.
 
@@ -345,7 +345,7 @@ class Member3D():
 
         if mass_combo_name:  # i.e. not empty string
             # Calculate mass based on load combination forces (typically Z-direction)
-            m_load_combo = self._m_from_load_combo(mass_combo_name, direction=direction)
+            m_load_combo = self._m_from_load_combo(mass_combo_name, mass_direction=direction)
             if include_material_mass:
                 # Calculate mass based on material density and geometry
                 m_density = self._m_from_material(gravity)

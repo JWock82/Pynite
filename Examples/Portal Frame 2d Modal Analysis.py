@@ -35,9 +35,9 @@ storyHeights = [162.0, 162.0, 156.0, 156.0, 156.0, 156.0, 156.0]  # in
 E = 29500.0  # ksi
 G = 11346.15  # ksi (calculated from E and nu=0.3)
 nu = 0.3
-rho = 0.000000001  # Small density for numerical stability
+rho = 0.000000000001 # 0.490/12**3 # Density of steel
 
-massX = 0.49  # kip-s²/in
+weight_X = 190  # kip
 
 # Section properties from AISC database with actual I_minor and J values
 WSection = {
@@ -64,10 +64,10 @@ added_sections = set()
 for section_name in set(WSection.keys()):
     if section_name not in added_sections:
         A = WSection[section_name][0]  # Area (in²)
-        Iy = WSection[section_name][2]  # Strong axis moment of inertia (in⁴)
-        Iz = WSection[section_name][1]  # Weak axis moment of inertia (estimated, not critical for 2D)
+        Iy = WSection[section_name][2]  # Weak axis moment of inertia (estimated, not critical for 2D)
+        Iz = WSection[section_name][1]  # Strong axis moment of inertia (in⁴)
         J = WSection[section_name][3]  # Torsional constant (estimated)
-        
+
         model.add_section(section_name, A, Iy, Iz, J)
         added_sections.add(section_name)
         print(f"Added section: {section_name}")
@@ -82,13 +82,13 @@ for j in range(numFloor + 1):
     for i in range(numBay + 1):
         # Add node at z=0 (2D frame in XY plane)
         model.add_node(f'N{node_tag}', x_loc, y_loc, 0.0)
-        
+
         # Store node tag for element creation
         node_dict[(i, j)] = f'N{node_tag}'
-        
+
         x_loc += bayWidth
         node_tag += 1
-    
+
     # Move to next floor level
     if j < numFloor:
         y_loc += storyHeights[j]
@@ -117,7 +117,7 @@ for j in range(numFloor + 1):
 # In OpenSees, nodes 4, 7, 10, 13, 16, 19, 22 are the master nodes for each floor
 master_nodes = ['N4', 'N7', 'N10', 'N13', 'N16', 'N19', 'N22']
 for node_name in master_nodes:
-    model.add_node_load(node_name, 'FX', massX, case='Mass')
+    model.add_node_load(node_name, 'FX', weight_X, case='Mass')
     # Add small rotational mass for numerical stability
     model.add_node_load(node_name, 'MZ', 1.0e-10, case='Mass')
 
@@ -154,7 +154,7 @@ model.add_load_combo('MassCombo', {'Mass': 1.0})
 
 # Run modal analysis
 print("Running modal analysis...")
-model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=0, sparse=sparse, log=False)  # X-direction
+model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=0, gravity=386, sparse=sparse, log=False)  # X-direction
 
 # Access results
 frequencies = model.modal_results['frequencies']
