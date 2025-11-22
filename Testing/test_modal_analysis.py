@@ -1,5 +1,5 @@
 """
-Tests for modal analysis functionality in PyNite
+Tests for modal analysis functionality in Pynite
 """
 
 import pytest
@@ -136,53 +136,52 @@ class TestModalAnalysis:
         # Add a load combination for mass
         model.add_node_load('N2', 'FZ', -1000, case = 'MassLoad')  # 1000 N downward
         model.add_load_combo('MassCombo', {'MassLoad': 1.0})
-        
+
         # Test with material mass only
         results1 = model.analyze_modal(num_modes=1, include_material_mass=True, 
-                                      mass_combo_name="", log=False)
-        
+                                      mass_combo_name=None, log=False)
+
         # Test with both material and load-based mass
         results2 = model.analyze_modal(num_modes=1, include_material_mass=True,
                                       mass_combo_name="MassCombo", log=False)
-        
+
         # Frequency should be lower when additional mass is included
         assert results2['frequencies'][0] < results1['frequencies'][0]
-    
+
     def test_lumped_vs_consistent_mass(self):
         """Compare lumped and consistent mass formulations"""
-        
+
         model = FEModel3D()
-        
+
         num = 10
         for n in range(11):
             model.add_node(f'N{n}', (n)*10/num, 0, 0)
-        
+
         model.def_support('N1', True, True, True, True, True, True)
-        
+
         model.add_material('Steel', 200e9, 80e9, 0.3, 7800)
         model.add_section('Beam', 0.1, 8.33e-5, 8.33e-5, 1.67e-5)
-        
-        
+
         # Test with lumped mass
         for n in range(10):
             model.add_member(f'M{n+1}', f'N{n}', f'N{n + 1}', 'Steel', 'Beam', lumped_mass=True)
         results_lumped = model.analyze_modal(num_modes=2, log=False)
-        
+
         # Test with consistent mass  
         for n in range(10):
             model.delete_member(f'M{n+1}')
             model.add_member(f'M{n+1}', f'N{n}', f'N{n + 1}', 'Steel', 'Beam', lumped_mass=False)
         results_consistent = model.analyze_modal(num_modes=2, log=False)
-        
+
         # Both should give reasonable results
         assert results_lumped['frequencies'][0] > 0
         assert results_consistent['frequencies'][0] > 0
-        
+
         # They won't be identical but should be close
         lumped_freq = results_lumped['frequencies'][0]
         consistent_freq = results_consistent['frequencies'][0]
         ratio = lumped_freq / consistent_freq
-        
+
         # Typically within 10-20% for fundamental frequency
         assert 0.8 < ratio < 1.2
 
