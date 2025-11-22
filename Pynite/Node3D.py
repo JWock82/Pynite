@@ -97,9 +97,7 @@ class Node3D():
 
 
     def M(self, mass_combo_name: str = '', mass_direction: int = 1, characteristic_length: float|None = None) -> NDArray:
-        """Returns the node's mass matrix (6x6 diagonal). In member-based models, nodes provide
-           translational mass only to prevent double-counting of rotational inertia. For member-less
-           models, rotational inertia can be added by providing a characteristic_length.
+        """Returns the node's mass matrix (6x6 diagonal). In member-based models, nodes provide translational mass only to prevent double-counting of rotational inertia. For member-less models, rotational inertia can be added by providing a characteristic_length.
 
         :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ''.
         :type mass_combo_name: str, optional
@@ -145,29 +143,25 @@ class Node3D():
         return m
 
     def _calc_mass(self, mass_combo_name: str, mass_direction: int = 1) -> float:
+        """Calculates the total mass from nodal loads in a load combination.
+
+        For modal analysis, nodal "masses" are typically specified as force loads that get converted to mass using F = m*a (where a is typically gravity).
+
+        :param mass_combo_name: The name of the load combination to use for mass calculation.
+        :type mass_combo_name: str
+        :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=2 for gravity/Z-direction). Defaults to 1.
+        :type mass_direction: int, optional
+        :raises NameError: _description_
+        :return: The total mass calculated from forces in the specified direction
+        :rtype: float
         """
-        Calculates the total mass from nodal loads in a load combination.
 
-        For modal analysis, nodal "masses" are typically specified as force loads 
-        that get converted to mass using F = m*a (where a is typically gravity).
-
-        Parameters:
-        -----------
-        mass_combo_name : str
-            Name of the load combination to use for mass calculation
-        mass_direction : int
-            Direction for mass conversion: 0=X, 1=Y, 2=Z (default=2 for gravity/Z-direction)
-
-        Returns:
-        --------
-        float
-            Total mass calculated from forces in the specified direction
-        """
+        # Initialize the force summation to zero
         total_force = 0.0
 
         # Get the mass combo from the model
         try:
-            combo = self.model.load_combos[mass_combo_name]
+            mass_combo = self.model.load_combos[mass_combo_name]
         except KeyError:
             raise NameError(f"No load combination named '{mass_combo_name}'")
 
@@ -178,9 +172,9 @@ class Node3D():
             load_direction, load_value, load_case = load
 
             # Apply load factors to load cases in the mass combo
-            if load_case in combo.factors:
+            if load_case in mass_combo.factors:
 
-                factor = combo.factors[load_case]
+                factor = mass_combo.factors[load_case]
                 load_magnitude = factor * load_value
 
                 # Sum forces in the specified direction
