@@ -21,7 +21,6 @@ import math
 model = FEModel3D()
 
 sparse = True
-lumped_mass = False
 
 # Set some properties
 # Units: kip, in (consistent with the OpenSees model)
@@ -37,7 +36,7 @@ G = 11346.15  # ksi (calculated from E and nu=0.3)
 nu = 0.3
 rho = 0.000000000001 # 0.490/12**3 # Density of steel
 
-weight_X = 190  # kip
+weight_Y = 190  # kip
 
 # Section properties from AISC database with actual I_minor and J values
 WSection = {
@@ -78,8 +77,11 @@ node_tag = 1
 
 y_loc = 0.0
 for j in range(numFloor + 1):
+
     x_loc = 0.0
+
     for i in range(numBay + 1):
+
         # Add node at z=0 (2D frame in XY plane)
         model.add_node(f'N{node_tag}', x_loc, y_loc, 0.0)
 
@@ -91,6 +93,7 @@ for j in range(numFloor + 1):
 
     # Move to next floor level
     if j < numFloor:
+
         y_loc += storyHeights[j]
 
 # Fix base nodes (first floor) - restrain all DOFs including Z-direction
@@ -100,8 +103,11 @@ model.def_support('N3', True, True, True, True, True, True)  # Fixed support
 
 # For all other nodes, restrain Z-translation and X,Y-rotation to make it 2D behavior
 for j in range(numFloor + 1):
+
     for i in range(numBay + 1):
+
         node_name = node_dict[(i, j)]
+
         # Only fix base nodes completely, for other nodes restrain out-of-plane DOFs
         if j > 0:  # Not base nodes
             # Restrain Z-translation and X,Y rotations to enforce 2D behavior in XY plane
@@ -117,9 +123,9 @@ for j in range(numFloor + 1):
 # In OpenSees, nodes 4, 7, 10, 13, 16, 19, 22 are the master nodes for each floor
 master_nodes = ['N4', 'N7', 'N10', 'N13', 'N16', 'N19', 'N22']
 for node_name in master_nodes:
-    model.add_node_load(node_name, 'FX', weight_X, case='Mass')
+    model.add_node_load(node_name, 'FY', weight_Y, case='Mass')
     # Add small rotational mass for numerical stability
-    model.add_node_load(node_name, 'MZ', 1.0e-10, case='Mass')
+    model.add_node_load(node_name, 'MY', 1.0e-10, case='Mass')
 
 # Add column elements
 ele_tag = 1
@@ -127,12 +133,13 @@ for j in range(numBay + 1):  # For each column line
     thisColumn = columns[j]
     
     for i in range(numFloor):  # For each story
+
         node_tag1 = node_dict[(j, i)]      # Bottom node
         node_tag2 = node_dict[(j, i + 1)]  # Top node
         secType = thisColumn[i]
         
         # Add column member - USE PRE-DEFINED SECTION NAME
-        model.add_member(f'M{ele_tag}', node_tag1, node_tag2, 'Steel', secType, lumped_mass=lumped_mass)
+        model.add_member(f'M{ele_tag}', node_tag1, node_tag2, 'Steel', secType, lumped_mass=False)
         
         ele_tag += 1
 
@@ -141,11 +148,12 @@ for j in range(1, numFloor + 1):  # Start from first floor up
     secType = beams[j - 1]
     
     for i in range(numBay):  # For each bay
+
         node_tag1 = node_dict[(i, j)]      # Left node
         node_tag2 = node_dict[(i + 1, j)]  # Right node
         
         # Add beam member - USE PRE-DEFINED SECTION NAME
-        model.add_member(f'M{ele_tag}', node_tag1, node_tag2, 'Steel', secType)
+        model.add_member(f'M{ele_tag}', node_tag1, node_tag2, 'Steel', secType, lumped_mass=False)
         
         ele_tag += 1
 
@@ -154,7 +162,7 @@ model.add_load_combo('MassCombo', {'Mass': 1.0})
 
 # Run modal analysis
 print("Running modal analysis...")
-model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=0, gravity=386, sparse=sparse, log=False)  # X-direction
+model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=1, gravity=386, sparse=sparse, log=False)  # X-direction
 
 # Access results
 frequencies = model.modal_results['frequencies']
