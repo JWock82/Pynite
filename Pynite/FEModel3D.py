@@ -1891,13 +1891,13 @@ class FEModel3D():
             else:
                 return 1.0  # Default fallback
 
-    def M(self, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True):
+    def M(self, include_material_mass: bool = True, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True):
         """
         Returns the model's global mass matrix for dynamic analysis. This implementation follows a separation of responsibilities approach, where members handle both translational and rotational mass/inertia, while nodes provide translational mass only (to prevent double-counting). Rotational stability terms are only added to free DOFs considering member releases and node supports.
 
         :param include_material_mass: Whether to include mass from material density, defaults to `True`.
         :type include_material_mass: bool, optional
-        :param mass_combo_name: Load combination name defining mass (via force loads). Forces are converted to mass using m = F/g where g = 1.0, so users must pre-scale loads appropriately, defaults to 'Combo 1'.
+        :param mass_combo_name: Load combination name defining mass (via force loads). Forces are converted to mass using m = F/g. Defaults to `None`.
         :type mass_combo_name: str, optional
         :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=1 for gravity/Y-direction).
         :type mass_direction: int, optional
@@ -2587,13 +2587,13 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-    def analyze_modal(self, num_modes: int = 12, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
+    def analyze_modal(self, num_modes: int = 12, include_material_mass: bool = True, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
         """
         Performs modal analysis to determine natural frequencies and mode shapes.
 
         :param num_modes: Number of modes to calculate. Defaults to 12.
         :type num_modes: int, optional
-        :param mass_combo_name: Load combination name for load-based mass contribution. Defaults to ''.
+        :param mass_combo_name: Load combination name for load-based mass contribution. Defaults to `None`.
         :type mass_combo_name: str, optional
         :param mass_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z). Defaults to 1.
         :type mass_direction: int, optional
@@ -2637,11 +2637,15 @@ class FEModel3D():
         if log:
             print('- Assembling global stiffness matrix')
 
+        # The stiffness matrix method `K` needs a load combo name. Ensure a valid name has been provided.
+        if mass_combo_name == None:
+            stiff_combo_name = self.load_combos.values()[0].name
+
         # Assemble and partition the global stiffness matrix
         if sparse:
-            K_global = self.K(mass_combo_name, log, check_stability, sparse).tolil()
+            K_global = self.K(stiff_combo_name, log, check_stability, sparse).tolil()
         else:
-            K_global = self.K(mass_combo_name, log, check_stability, sparse)
+            K_global = self.K(stiff_combo_name, log, check_stability, sparse)
 
         # Partition to remove supported DOFs
         K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
