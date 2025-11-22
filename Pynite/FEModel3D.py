@@ -1891,7 +1891,7 @@ class FEModel3D():
             else:
                 return 1.0  # Default fallback
 
-    def M(self, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True, combo_name='Combo 1'):
+    def M(self, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True):
         """
         Returns the model's global mass matrix for dynamic analysis. This implementation follows a separation of responsibilities approach, where members handle both translational and rotational mass/inertia, while nodes provide translational mass only (to prevent double-counting). Rotational stability terms are only added to free DOFs considering member releases and node supports.
 
@@ -1907,8 +1907,6 @@ class FEModel3D():
         :type log: bool, optional
         :param sparse: Whether to return a sparse matrix, defaults to `True`.
         :type sparse: bool, optional
-        :param combo_name: Load combination name provided for consistency and for defining active members, defaults to 'Combo 1'.
-        :type combo_name: str, optional
         :return: Global mass matrix of shape (n_dof, n_dof)
         :rtype: scipy.sparse.coo_matrix or numpy.ndarray
         """
@@ -1936,7 +1934,7 @@ class FEModel3D():
         for phys_member in self.members.values():
 
             # Determine if this physical member is active
-            if phys_member.active[combo_name] == True:
+            if phys_member.active[mass_combo_name] == True:
 
                 # Step through each submember in this physical member
                 for member in phys_member.sub_members.values():
@@ -2589,14 +2587,12 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-    def analyze_modal(self, num_modes: int = 12, include_material_mass: bool = True, combo_name: str = 'Combo 1', mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
+    def analyze_modal(self, num_modes: int = 12, include_material_mass: bool = True, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
         """
         Performs modal analysis to determine natural frequencies and mode shapes.
 
         :param num_modes: Number of modes to calculate. Defaults to 12.
         :type num_modes: int, optional
-        :param combo_name: Load combination name (not needed, but provided for consistency).
-        :type combo_name: str, optional
         :param mass_combo_name: Load combination name for load-based mass contribution. Defaults to ''.
         :type mass_combo_name: str, optional
         :param mass_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z). Defaults to 1.
@@ -2642,14 +2638,10 @@ class FEModel3D():
             print('- Assembling global stiffness matrix')
 
         # Assemble and partition the global stiffness matrix
-        # Any load combination will do since stiffness is must be linear for modal analysis (in the default case, it should pick up 'Combo 1')
-        if combo_name not in self.load_combos:
-            combo_name = list(self.load_combos.keys())[0]  # Not needed for modal analysis, but some value is required
-
         if sparse:
-            K_global = self.K(combo_name, log, check_stability, sparse).tolil()
+            K_global = self.K(mass_combo_name, log, check_stability, sparse).tolil()
         else:
-            K_global = self.K(combo_name, log, check_stability, sparse)
+            K_global = self.K(mass_combo_name, log, check_stability, sparse)
 
         # Partition to remove supported DOFs
         K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
@@ -2659,9 +2651,9 @@ class FEModel3D():
 
         # Assemble and partition the global mass matrix
         if sparse:
-            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse, combo_name).tolil()
+            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse).tolil()
         else:
-            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse, combo_name)
+            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse)
 
         # Partition to remove supported DOFs
         M11, M12, M21, M22 = Analysis._partition(self, M_global, D1_indices, D2_indices)
