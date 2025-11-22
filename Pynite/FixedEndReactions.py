@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 # %%
-def FER_PtLoad(P: float, x: float, L: float, Direction: Literal["Fy", "Fz"]) -> NDArray[float64]:
+def FER_PtLoad(P: float, x: float, L: float, Direction: Literal["Fy", "Fz"], sdc: float) -> NDArray[float64]:
     """
     Returns the fixed end reaction vector for a point load
 
@@ -33,29 +33,31 @@ def FER_PtLoad(P: float, x: float, L: float, Direction: Literal["Fy", "Fz"]) -> 
         The direction of the point load. Must be one of the following:
             "Fy" = Force on the member's local y-axis
             "Fz" = Force on the member's local z-axis
+    sdc : float
+          Shear deformation constant of the beam about the bending axis of concern
     """
-    # Define variables
-    b = L - x
 
     # Create the fixed end reaction vector
     FER = zeros((12, 1))
+    Ra = -P*(-L + x)*(-L**2*sdc - L**2 - L*x + 2*x**2)/(L**3*(sdc + 1))
+    Ma = -P*x*(-L + x)*(-L*sdc - 2*L + 2*x)/(2*L**2*(sdc + 1))
 
     # Populate the fixed end reaction vector
     if Direction == "Fy":
-        FER[1, 0] = -P*b**2*(L+2*x)/L**3
-        FER[5, 0] = -P*x*b**2/L**2
-        FER[7, 0] = -P*x**2*(L+2*b)/L**3
-        FER[11, 0] = P*x**2*b/L**2
+        FER[1, 0] = Ra
+        FER[5, 0] = Ma
+        FER[7, 0] = -P - Ra
+        FER[11, 0] = L*Ra - Ma + P*(L - x)
     elif Direction == "Fz":
-        FER[2, 0] = -P*b**2*(L+2*x)/L**3
-        FER[4, 0] = P*x*b**2/L**2
-        FER[8, 0] = -P*x**2*(L+2*b)/L**3
-        FER[10, 0] = -P*x**2*b/L**2
+        FER[2, 0] = Ra
+        FER[4, 0] = -Ma
+        FER[8, 0] = -P - Ra
+        FER[10, 0] = -(L*Ra - Ma + P*(L - x))
 
     return FER
 
 
-def FER_Moment(M: float, x: float, L: float, Direction: Literal["My", "Mz"]) -> NDArray[float64]:
+def FER_Moment(M: float, x: float, L: float, Direction: Literal["My", "Mz"], sdc: float) -> NDArray[float64]:
     """
     Returns the fixed end reaction vector for a concentrated moment
 
@@ -71,30 +73,29 @@ def FER_Moment(M: float, x: float, L: float, Direction: Literal["My", "Mz"]) -> 
         The direction of the moment. Must be one of the following:
             "My" = Moment applied about the local y-axis
             "Mz" = Moment applied about the local z-axis
+    sdc : float
+          Shear deformation constant of the beam about the bending axis of concern
     """
-
-    # Define variables
-    b = L - x
 
     # Create the fixed end reaction vector
     FER = zeros((12, 1))
 
     # Populate the fixed end reaction vector
     if Direction == "Mz":
-        FER[1, 0] = 6*M*x*b/L**3
-        FER[5, 0] = M*b*(2*x-b)/L**2
-        FER[7, 0] = -6*M*x*b/L**3
-        FER[11, 0] = M*x*(2*b-x)/L**2
+        FER[1, 0] = 6*M*x*(L - x)/L**3/(sdc + 1)
+        FER[5, 0] = M*(L - x)*(-L*sdc - L + 3*x)/L**2/(sdc + 1)
+        FER[7, 0] = -6*M*x*(L - x)/L**3/(sdc + 1)
+        FER[11, 0] = M*x*(-L*sdc + 2*L - 3*x)/L**2/(sdc + 1)
     elif Direction == "My":
-        FER[2, 0] = -6*M*x*b/L**3
-        FER[4, 0] = M*b*(2*x-b)/L**2
-        FER[8, 0] = 6*M*x*b/L**3
-        FER[10, 0] = M*x*(2*b-x)/L**2
+        FER[2, 0] = -6*M*x*(L - x)/L**3/(sdc + 1)
+        FER[4, 0] = M*(L - x)*(-L*sdc - L + 3*x)/L**2/(sdc + 1)
+        FER[8, 0] = 6*M*x*(L - x)/L**3/(sdc + 1)
+        FER[10, 0] = M*x*(-L*sdc + 2*L - 3*x)/L**2/(sdc + 1)
     return FER
 
 
 # Returns the fixed end reaction vector for a linear distributed load
-def FER_LinLoad(w1: float, w2: float, x1: float, x2: float, L: float, Direction: Literal["Fy", "Fz"]) -> NDArray[float64]:
+def FER_LinLoad(w1: float, w2: float, x1: float, x2: float, L: float, Direction: Literal["Fy", "Fz"], sdc: float) -> NDArray[float64]:
     """
     Returns the fixed end reaction vector for a linear distributed load
 
@@ -114,22 +115,42 @@ def FER_LinLoad(w1: float, w2: float, x1: float, x2: float, L: float, Direction:
         The direction of the distributed load. Must be one of the following:
             "Fy" = Force on the member's local y-axis
             "Fz" = Force on the member's local z-axis
+    sdc : float
+          Shear deformation constant of the beam about the bending axis of concern
     """
 
     # Create the fixed end reaction vector
     FER = zeros((12, 1))
 
+    Ra = (30.0*L**3*sdc*w1*x1 - 30.0*L**3*sdc*w1*x2 + 30.0*L**3*sdc*w2*x1 - 30.0*L**3*sdc*w2*x2 + 30.0*L**3*w1*x1 -
+          30.0*L**3*w1*x2 + 30.0*L**3*w2*x1 - 30.0*L**3*w2*x2 - 20.0*L**2*sdc*w1*x1**2 + 10.0*L**2*sdc*w1*x1*x2 + 
+          10.0*L**2*sdc*w1*x2**2 - 10.0*L**2*sdc*w2*x1**2 - 10.0*L**2*sdc*w2*x1*x2 + 20.0*L**2*sdc*w2*x2**2 - 
+          45.0*L*w1*x1**3 + 15.0*L*w1*x1**2*x2 + 15.0*L*w1*x1*x2**2 + 15.0*L*w1*x2**3 - 15.0*L*w2*x1**3 - 
+          15.0*L*w2*x1**2*x2 - 15.0*L*w2*x1*x2**2 + 45.0*L*w2*x2**3 + 24.0*w1*x1**4 - 6.0*w1*x1**3*x2 - 
+          6.0*w1*x1**2*x2**2 - 6.0*w1*x1*x2**3 - 6.0*w1*x2**4 + 6.0*w2*x1**4 + 6.0*w2*x1**3*x2 + 
+          6.0*w2*x1**2*x2**2 + 6.0*w2*x1*x2**3 - 24.0*w2*x2**4)/(L**3*(sdc + 1))/60
+    
+    Ma = (20.0*L**2*sdc*w1*x1**2 - 10.0*L**2*sdc*w1*x1*x2 - 10.0*L**2*sdc*w1*x2**2 + 10.0*L**2*sdc*w2*x1**2 + 
+          10.0*L**2*sdc*w2*x1*x2 - 20.0*L**2*sdc*w2*x2**2 + 40.0*L**2*w1*x1**2 - 20.0*L**2*w1*x1*x2 - 
+          20.0*L**2*w1*x2**2 + 20.0*L**2*w2*x1**2 + 20.0*L**2*w2*x1*x2 - 40.0*L**2*w2*x2**2 - 
+          15.0*L*sdc*w1*x1**3 + 5.0*L*sdc*w1*x1**2*x2 + 5.0*L*sdc*w1*x1*x2**2 + 5.0*L*sdc*w1*x2**3 - 5.0*L*sdc*w2*x1**3 - 
+          5.0*L*sdc*w2*x1**2*x2 - 5.0*L*sdc*w2*x1*x2**2 + 15.0*L*sdc*w2*x2**3 - 60.0*L*w1*x1**3 + 20.0*L*w1*x1**2*x2 + 
+          20.0*L*w1*x1*x2**2 + 20.0*L*w1*x2**3 - 20.0*L*w2*x1**3 - 20.0*L*w2*x1**2*x2 - 20.0*L*w2*x1*x2**2 + 
+          60.0*L*w2*x2**3 + 24.0*w1*x1**4 - 6.0*w1*x1**3*x2 - 6.0*w1*x1**2*x2**2 - 6.0*w1*x1*x2**3 - 
+          6.0*w1*x2**4 + 6.0*w2*x1**4 + 6.0*w2*x1**3*x2 + 6.0*w2*x1**2*x2**2 + 6.0*w2*x1*x2**3 - 24.0*w2*x2**4
+          )/(L**2*(sdc + 1))/120
+
     # Populate the fixed end reaction vector
     if Direction == 'Fy':
-        FER[1, 0] = (x1 - x2)*(10*L**3*w1 + 10*L**3*w2 - 15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
-        FER[5, 0] = (x1 - x2)*(20*L**2*w1*x1 + 10*L**2*w1*x2 + 10*L**2*w2*x1 + 20*L**2*w2*x2 - 30*L*w1*x1**2 - 20*L*w1*x1*x2 - 10*L*w1*x2**2 - 10*L*w2*x1**2 - 20*L*w2*x1*x2 - 30*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
-        FER[7, 0] = -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
-        FER[11, 0] = (x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
+        FER[1, 0] = Ra
+        FER[5, 0] = Ma
+        FER[7, 0] = -Ra + 0.5*w1*(x1 - x2) + 0.5*w2*(x1 - x2)
+        FER[11, 0] = L*Ra - Ma + w1*(x1 - x2)*(-3*L + 2*x1 + x2)/6 + w2*(x1 - x2)*(-3*L + x1 + 2*x2)/6
     elif Direction == 'Fz':
-        FER[2, 0] = (x1 - x2)*(10*L**3*w1 + 10*L**3*w2 - 15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
-        FER[4, 0] = -(x1 - x2)*(20*L**2*w1*x1 + 10*L**2*w1*x2 + 10*L**2*w2*x1 + 20*L**2*w2*x2 - 30*L*w1*x1**2 - 20*L*w1*x1*x2 - 10*L*w1*x2**2 - 10*L*w2*x1**2 - 20*L*w2*x1*x2 - 30*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
-        FER[8, 0] = -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 8*w1*x1**3 + 6*w1*x1**2*x2 + 4*w1*x1*x2**2 + 2*w1*x2**3 + 2*w2*x1**3 + 4*w2*x1**2*x2 + 6*w2*x1*x2**2 + 8*w2*x2**3)/(20*L**3)
-        FER[10, 0] = -(x1 - x2)*(-15*L*w1*x1**2 - 10*L*w1*x1*x2 - 5*L*w1*x2**2 - 5*L*w2*x1**2 - 10*L*w2*x1*x2 - 15*L*w2*x2**2 + 12*w1*x1**3 + 9*w1*x1**2*x2 + 6*w1*x1*x2**2 + 3*w1*x2**3 + 3*w2*x1**3 + 6*w2*x1**2*x2 + 9*w2*x1*x2**2 + 12*w2*x2**3)/(60*L**2)
+        FER[2, 0] = Ra
+        FER[4, 0] = -Ma
+        FER[8, 0] = -Ra + 0.5*w1*(x1 - x2) + 0.5*w2*(x1 - x2)
+        FER[10, 0] = -(L*Ra - Ma + w1*(x1 - x2)*(-3*L + 2*x1 + x2)/6 + w2*(x1 - x2)*(-3*L + x1 + 2*x2)/6)
 
     return FER
 
