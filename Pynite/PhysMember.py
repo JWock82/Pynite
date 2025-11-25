@@ -155,6 +155,7 @@ class PhysMember(Member3D):
                     w1 = dist_load[1]
                     w2 = dist_load[2]
                     case = dist_load[5]
+                    self_weight = dist_load[6]
 
                     # Equation describing the load as a function of x
                     # Linear interpolation of distributed load
@@ -174,7 +175,7 @@ class PhysMember(Member3D):
                         w2 = w(xj)
 
                     # Add the load to the sub-member
-                    new_sub_member.DistLoads.append([direction, w1, w2, x1, x2, case])
+                    new_sub_member.DistLoads.append([direction, w1, w2, x1, x2, case, self_weight])
 
             # Add point loads to the sub-member
             for pt_load in self.PtLoads:

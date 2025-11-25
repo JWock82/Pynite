@@ -1225,9 +1225,9 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_dist_load(self, member_name:str, direction:str, w1:float, w2:float,
-                             x1:float | None = None, x2:float | None = None,
-                             case:str = 'Case 1'):
+    def add_member_dist_load(self, member_name: str, direction: str, w1: float, w2: float,
+                             x1: float | None = None, x2: float | None = None,
+                             case: str = 'Case 1', self_weight: bool = False):
         """Adds a member distributed load to the model.
 
         :param member_name: The name of the member the load is being appied to.
@@ -1250,9 +1250,11 @@ class FEModel3D():
         :type x2: float, optional
         :param case: The load case to categorize the load under. Defaults to 'Case 1'.
         :type case: str, optional
+        :param self_weight: Indicates whether this load is a self-weight load. Only set this to True if you are entering member self weight manually instead of using the `add_member_self_weight` method. This parameter is used by the modal analysis engine to determine whether to create a lumped mass for the load. Self-weight loads are already accounted for in modal analysis using a consistent mass matrix, so creating an additional lumped mass incorrect. Typically you will leave this value at the default value of `False`.
+        :type self_weight: bool, optional
         :raises ValueError: Occurs when an invalid load direction has been specified.
         """
-       
+
         # Validate the value of direction
         if direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ'):
             raise ValueError(f"direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', or 'FZ'. {direction} was given.")
@@ -1262,7 +1264,7 @@ class FEModel3D():
             start = 0
         else:
             start = x1
-        
+
         if x2 == None:
             end = self.members[member_name].L()
         else:
@@ -1270,10 +1272,10 @@ class FEModel3D():
 
         # Add the distributed load to the member
         try:
-            self.members[member_name].DistLoads.append((direction, w1, w2, start, end, case))
+            self.members[member_name].DistLoads.append((direction, w1, w2, start, end, case, self_weight))
         except KeyError:
             raise NameError(f"Member '{member_name}' does not exist in the model")
-                
+
         # Flag the model as unsolved
         self.solution = None
 
@@ -1307,7 +1309,7 @@ class FEModel3D():
             self_weight = factor*member.material.rho*member.section.A
 
             # Add the self-weight load to the member
-            self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case)
+            self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case, self_weight=True)
 
         # No need to flag the model as unsolved. That has already been taken care of by our call to `add_member_dist_load`
 

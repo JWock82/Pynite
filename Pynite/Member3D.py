@@ -92,7 +92,7 @@ class Member3D():
 
         self.rotation: float = rotation  # Member rotation (degrees) about its local x-axis
         self.PtLoads: List[Tuple] = []  # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
-        self.DistLoads: List[Tuple] = []       # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1')
+        self.DistLoads: List[Tuple] = []       # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1', self_weight=False)
         self.SegmentsZ: List[BeamSegZ] = []       # A list of mathematically continuous beam segments for z-bending
         self.SegmentsY: List[BeamSegY] = []       # A list of mathematically continuous beam segments for y-bending
         self.SegmentsX: List[BeamSegZ] = []       # A list of mathematically continuous beam segments for torsion
@@ -345,21 +345,26 @@ class Member3D():
         :rtype: NDArray[float64]
         """
 
-        # Calculate the total force from the load combination
-        total_mass = self._calc_mass(mass_combo_name, mass_direction)
+        # Calculate the non-material load-based mass from the load combination
+        load_mass = self._calc_load_mass(mass_combo_name, mass_direction, gravity)
+
+        # Calculate the mass from the material
 
         # Determine if a lumped mass or consitent mass matrix should be used
-        if self.lumped_mass:
-            return self.lumped_m(total_mass, characteristic_length=self.L())
-        else:
-            return self.consistent_m(total_mass)
+        lumped_mass = self.lumped_m(load_mass, characteristic_length=self.L())
+        material_mass = self.consistent_m(gravity)
 
-    def consistent_m(self, total_mass) -> NDArray[float64]:
+        return lumped_mass + material_mass
+
+    def consistent_m(self, gravity: float = 1.0) -> NDArray[float64]:
 
         # Get the properties needed to form the local mass matrix
         L = self.L()
         A = self.section.A
         J = self.section.J
+        rho = self.material.rho
+
+        material_mass = rho*A*L/gravity
 
         # Consistent mass matrix for 3D beam element
         m_coeff = array([
@@ -388,11 +393,11 @@ class Member3D():
         # print(f"DEBUG: Expected sum for 2 nodes = 420")
         # print(f"DEBUG: Ratio = {trans_coeff_sum/420:.3f}")
 
-        m = m_coeff * (total_mass / 420)
+        m = m_coeff*(material_mass/420)
 
         return m
 
-    def lumped_m(self, total_mass, characteristic_length=None) -> NDArray[float64]:
+    def lumped_m(self, load_mass, characteristic_length=None) -> NDArray[float64]:
         """Lumps 1/2 the member's mass to each end node.
 
         :param total_mass: The member's total mass.
@@ -409,7 +414,7 @@ class Member3D():
 
         # Distribute half mass to each node's translational DOFs
         # TODO: Distribute the mass based on distance from each load instead
-        nodal_mass = total_mass / 2
+        nodal_mass = load_mass / 2
         m[0, 0] = nodal_mass   # FX i-node
         m[1, 1] = nodal_mass   # FY i-node  
         m[2, 2] = nodal_mass   # FZ i-node
@@ -450,7 +455,7 @@ class Member3D():
 
         return m
 
-    def _calc_mass(self, mass_combo_name: str, mass_direction: int = 1, gravity: float = 1.0) -> float:
+    def _calc_load_mass(self, mass_combo_name: str, mass_direction: int = 1, gravity: float = 1.0) -> float:
         """
         Calculates the total mass from a load combination in a specific local direction.
 
@@ -533,48 +538,51 @@ class Member3D():
         for dist_load in self.DistLoads:
 
             # Retrive the load's components for clearer reference below
-            load_dir, w1, w2, x1, x2, load_case = dist_load
+            load_dir, w1, w2, x1, x2, load_case, self_weight = dist_load
 
-            # Step through each load case and factor in the mass combo
-            for case, factor in mass_combo.factors.items():
+            # Don't add masses for self-weight loads. They will be added elsewhere using a consistent mass matrix, rather than a lumped mass matrix
+            if not self_weight:
 
-                # Check if this load's case is in the mass combo
-                if load_case == case:
+                # Step through each load case and factor in the mass combo
+                for case, factor in mass_combo.factors.items():
 
-                    # Calculate the length of the distributed load
-                    length_loaded = x2 - x1
+                    # Check if this load's case is in the mass combo
+                    if load_case == case:
 
-                    # Convert the distributed load to a global vector
-                    if load_dir == 'Fx':
-                        w1_global = T_local.T() @ array([w1, 0, 0]) @ T_local
-                        w2_global = T_local.T() @ array([w2, 0, 0]) @ T_local
-                    elif load_dir == 'Fy':
-                        w1_global = T_local.T() @ array([0, w1, 0]) @ T_local
-                        w2_global = T_local.T() @ array([0, w2, 0]) @ T_local
-                    elif load_dir == 'Fz':
-                        w1_global = T_local.T() @ array([0, 0, w1]) @ T_local
-                        w2_global = T_local.T() @ array([0, 0, w2]) @ T_local
-                    elif load_dir == 'FX':
-                        w1_global = array([w1, 0, 0])
-                        w2_global = array([w2, 0, 0])
-                    elif load_dir == 'FY':
-                        w1_global = array([0, w1, 0])
-                        w2_global = array([0, w2, 0])
-                    elif load_dir == 'FZ':
-                        w1_global = array([0, 0, w1])
-                        w2_global = array([0, 0, w2])
-                    else:
-                        # Assume zero for any other load directions
-                        w1_global = array([0, 0, 0])
-                        w2_global = array([0, 0, 0])
+                        # Calculate the length of the distributed load
+                        length_loaded = x2 - x1
 
-                    # Calculate the load component acting in the mass direction
-                    w1_m_comp = dot(w1_global, m_vector)
-                    w2_m_comp = dot(w2_global, m_vector)
+                        # Convert the distributed load to a global vector
+                        if load_dir == 'Fx':
+                            w1_global = T_local.T() @ array([w1, 0, 0]) @ T_local
+                            w2_global = T_local.T() @ array([w2, 0, 0]) @ T_local
+                        elif load_dir == 'Fy':
+                            w1_global = T_local.T() @ array([0, w1, 0]) @ T_local
+                            w2_global = T_local.T() @ array([0, w2, 0]) @ T_local
+                        elif load_dir == 'Fz':
+                            w1_global = T_local.T() @ array([0, 0, w1]) @ T_local
+                            w2_global = T_local.T() @ array([0, 0, w2]) @ T_local
+                        elif load_dir == 'FX':
+                            w1_global = array([w1, 0, 0])
+                            w2_global = array([w2, 0, 0])
+                        elif load_dir == 'FY':
+                            w1_global = array([0, w1, 0])
+                            w2_global = array([0, w2, 0])
+                        elif load_dir == 'FZ':
+                            w1_global = array([0, 0, w1])
+                            w2_global = array([0, 0, w2])
+                        else:
+                            # Assume zero for any other load directions
+                            w1_global = array([0, 0, 0])
+                            w2_global = array([0, 0, 0])
 
-                    # Sum the average for the load component
-                    avg_load = (w1_m_comp + w2_m_comp)/2
-                    total_force += factor*avg_load*length_loaded
+                        # Calculate the load component acting in the mass direction
+                        w1_m_comp = dot(w1_global, m_vector)
+                        w2_m_comp = dot(w2_global, m_vector)
+
+                        # Sum the average for the load component
+                        avg_load = (w1_m_comp + w2_m_comp)/2
+                        total_force += factor*avg_load*length_loaded
 
         return abs(total_force/gravity)  # Mass is always positive
 
