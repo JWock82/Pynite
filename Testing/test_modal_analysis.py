@@ -118,35 +118,35 @@ class TestModalAnalysis:
         for mode_shape in mode_shapes:
             assert mode_shape.shape[0] == len(model.nodes) * 6
     
-    def test_mass_combination(self):
-        """Test that mass from both material density and load combinations works"""
-        
+    def test_mass_increase(self):
+        """Test that frequencies drop as mass increases"""
+
         model = FEModel3D()
-        
+
         model.add_node('N1', 0, 0, 0)
         model.add_node('N2', 5, 0, 0)
-        
+
         model.def_support('N1', True, True, True, True, True, True)
-        
+
         # Add material with density
         model.add_material('Steel', 200e9, 80e9, 0.3, 7800)
         model.add_section('Beam', 0.1, 8.33e-5, 8.33e-5, 1.67e-5)
         model.add_member('M1', 'N1', 'N2', 'Steel', 'Beam')
-        
-        # Add a load combination for mass
-        model.add_node_load('N2', 'FZ', -1000, case = 'MassLoad')  # 1000 N downward
-        model.add_load_combo('MassCombo', {'MassLoad': 1.0})
 
-        # Test with material mass only
-        results1 = model.analyze_modal(num_modes=1, include_material_mass=True, 
-                                      mass_combo_name=None, log=False)
+        # Add loads to the model that will be converted to mass
+        model.add_member_self_weight(global_direction='FY', factor=1.0, case='Mass 1')
+        model.add_node_load('N2', 'FY', -1000, case='Mass 2')  # 1000 N downward
 
-        # Test with both material and load-based mass
-        results2 = model.analyze_modal(num_modes=1, include_material_mass=True,
-                                      mass_combo_name="MassCombo", log=False)
+        # Add a load combinations for mass
+        model.add_load_combo('MassCombo1', {'Mass 1': 1.0})
+        model.add_load_combo('MassCombo2', {'Mass 1': 1.0, 'Mass 2': 1.0})
+
+        # Run the analysis
+        results1 = model.analyze_modal(num_modes=1, mass_combo_name="MassCombo1", mass_direction=1, log=False)
+        results2 = model.analyze_modal(num_modes=1, mass_combo_name="MassCombo2", mass_direction=1, log=False)
 
         # Frequency should be lower when additional mass is included
-        assert results2['frequencies'][0] < results1['frequencies'][0]
+        assert results2['frequencies'][0] < results1['frequencies'][0], 'Frequencies did not drop as mass increased.'
 
     def test_lumped_vs_consistent_mass(self):
         """Compare lumped and consistent mass formulations"""
@@ -202,3 +202,7 @@ class TestModalAnalysis:
         
         assert len(results['frequencies']) == num_modes
         assert len(results['mode_shapes']) == num_modes
+
+if __name__ == '__main__':
+    test = TestModalAnalysis()
+    test.test_mass_increase()

@@ -1,5 +1,5 @@
 [flake8]
-# Remove limits on line lengths and whitespace around arithmetic operators and extra whitespace after commas, and before brackets. This is useful for matrices and readthedocs docstrings.
+# Remove limits on line lengths and whitespace around arithmetic operators and extra whitespace after commas, and before brackets. This is useful for matrices and readthedocs docstrings. Also, E711 (allowing '== None' comparisons instead of 'is None') is useful since many users like to input bools as 0 or 1, especially when defining supports.
 ignore = E501, E226, E241, E202, E701, E711
 
 # Ignore specific docstring formatting/style warnings from flake8-docstrings (pydocstyle)

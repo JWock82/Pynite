@@ -746,18 +746,18 @@ class FEModel3D():
             start_element = self.unique_name(self.plates, 'R')
         elif element_type == 'Quad' and start_element is None:
             start_element = self.unique_name(self.quads, 'Q')
-        
+
         # Create a new mesh
         new_mesh = CylinderMesh(mesh_size, radius, height, thickness, material_name, self,
-                               kx_mod, ky_mod, origin, axis, start_node, start_element,
-                               num_elements, element_type)
+                                kx_mod, ky_mod, origin, axis, start_node, start_element,
+                                num_elements, element_type)
 
         # Add the new mesh to the `Meshes` dictionary
         self.meshes[name] = new_mesh
 
         # Flag the model as unsolved
         self.solution = None
-        
+
         # Return the mesh's name
         return name
 
@@ -803,6 +803,9 @@ class FEModel3D():
         # Add the wall to the model
         self.shear_walls[name] = new_shear_wall
 
+        # Flag the model as unsolved
+        self.solution = None
+
     def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0], x_control=[], y_control=[]):
 
         # Check if a name has been provided
@@ -818,8 +821,10 @@ class FEModel3D():
         # Add the mat foundation to the model
         self.mats[name] = new_mat
 
+        # Flag the model as unsolved
+        self.solution = None
 
-    def merge_duplicate_nodes(self, tolerance:float = 0.001) -> list:
+    def merge_duplicate_nodes(self, tolerance: float = 0.001) -> list:
         """Removes duplicate nodes from the model and returns a list of the removed node names.
 
         :param tolerance: The maximum distance between two nodes in order to consider them duplicates. Defaults to 0.001.
@@ -886,14 +891,14 @@ class FEModel3D():
                 for dof in support_cond:
                     if getattr(self.nodes[node_2_name], dof) == True:
                         setattr(self.nodes[node_1_name], dof, True)
-                
+
                 # Merge any spring supports
                 spring_cond = ('spring_DX', 'spring_DY', 'spring_DZ', 'spring_RX', 'spring_RY', 'spring_RZ')
                 for dof in spring_cond:
                     value = getattr(self.nodes[node_2_name], dof)
                     if value != [None, None, None]:
                         setattr(self.nodes[node_1_name], dof, value)
-                
+
                 # Fix the mesh labels
                 for mesh in self.meshes.values():
 
@@ -912,31 +917,31 @@ class FEModel3D():
                         if node_2_name == element.j_node.name: element.j_node = self.nodes[node_1_name]
                         if node_2_name == element.m_node.name: element.m_node = self.nodes[node_1_name]
                         if node_2_name == element.n_node.name: element.n_node = self.nodes[node_1_name]
-                    
+
                 # Add the node to the `remove` list
                 remove_list.append(node_2_name)
 
         # Remove `node_2` from the model's `Nodes` dictionary
         for node_name in remove_list:
             self.nodes.pop(node_name)
-        
+
         # Flag the model as unsolved
         self.solution = None
 
         # Return the list of removed nodes
         return remove_list
 
-    def delete_node(self, node_name:str):
+    def delete_node(self, node_name: str):
         """Removes a node from the model. All nodal loads associated with the node and elements attached to the node will also be removed.
 
         :param node_name: The name of the node to be removed.
         :type node_name: str
         """
-            
+
         # Remove the node. Nodal loads are stored within the node, so they
         # will be deleted automatically when the node is deleted.
         self.nodes.pop(node_name)
-        
+
         # Find any elements attached to the node and remove them
         self.members = {name: member for name, member in self.members.items() if member.i_node.name != node_name and member.j_node.name != node_name}
         self.plates = {name: plate for name, plate in self.plates.items() if plate.i_node.name != node_name and plate.j_node.name != node_name and plate.m_node.name != node_name and plate.n_node.name != node_name}
@@ -945,13 +950,13 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def delete_spring(self, spring_name:str):
+    def delete_spring(self, spring_name: str):
         """Removes a spring from the model.
 
         :param spring_name: The name of the spring to be removed.
         :type spring_name: str
         """
-        
+
         # Remove the spring
         self.springs.pop(spring_name)
 
@@ -965,17 +970,17 @@ class FEModel3D():
         :param member_name: The name of the member to be removed.
         :type member_name: str
         """
-        
+
         # Remove the member. Member loads are stored within the member, so they
         # will be deleted automatically when the member is deleted.
         self.members.pop(member_name)
 
         # Flag the model as unsolved
         self.solution = None
-        
-    def def_support(self, node_name:str, support_DX:bool=False, support_DY:bool=False,
-                    support_DZ:bool=False, support_RX:bool=False, support_RY:bool=False,
-                    support_RZ:bool=False):
+
+    def def_support(self, node_name: str, support_DX: bool = False, support_DY: bool = False,
+                    support_DZ: bool = False, support_RX: bool = False, support_RY: bool = False,
+                    support_RZ: bool = False):
         """Defines the support conditions at a node. Nodes will default to fully unsupported
            unless specified otherwise.
 
@@ -999,14 +1004,14 @@ class FEModel3D():
         :param support_RZ: Indicates whether the node is supported against rotation about the
                            global Z-axis. Defaults to False.
         :type support_RZ: bool, optional
-        """            
-        
+        """
+
         # Get the node to be supported
         try:
             node = self.nodes[node_name]
         except KeyError:
             raise NameError(f"Node '{node_name}' does not exist in the model")
-                   
+
         # Set the node's support conditions
         node.support_DX = support_DX
         node.support_DY = support_DY
@@ -1018,7 +1023,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def def_support_spring(self, node_name:str, dof:str, stiffness:float, direction:str | None = None):
+    def def_support_spring(self, node_name: str, dof: str, stiffness: float, direction: str | None = None):
         """Defines a spring support at a node.
 
         :param node_name: The name of the node to apply the spring support to.
@@ -1031,8 +1036,8 @@ class FEModel3D():
         :type direction: str or None ('+', '-', None), optional
         :raises ValueError: Occurs when an invalid support spring direction has been specified.
         :raises ValueError: Occurs when an invalid support spring degree of freedom has been specified.
-        """        
-        
+        """
+
         if dof in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             if direction in ('+', '-', None):
                 try:
@@ -1054,7 +1059,7 @@ class FEModel3D():
                 raise ValueError('Invalid support spring direction. Specify \'+\', \'-\', or None.')
         else:
             raise ValueError('Invalid support spring degree of freedom. Specify \'DX\', \'DY\', \'DZ\', \'RX\', \'RY\', or \'RZ\'')
-        
+
         # Flag the model as unsolved
         self.solution = None
 
@@ -1272,8 +1277,8 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def add_member_self_weight(self, global_direction:str, factor:float, case:str = 'Case 1'):
-        """Adds self weight to all members in the model. Note that this only works for members. Plate and Quad elements will be ignored by this command.
+    def add_member_self_weight(self, global_direction: str, factor: float, case: str = 'Case 1'):
+        """Adds self weight to all members in the model. Note that this only works for members. Plate, quad, and spring elements will be ignored by this command.
 
         :param global_direction: The global direction to apply the member load in: 'FX', 'FY', or 'FZ'.
         :type global_direction: str
@@ -1303,12 +1308,11 @@ class FEModel3D():
 
             # Add the self-weight load to the member
             self.add_member_dist_load(member.name, global_direction, self_weight, self_weight, case=case)
-        
+
         # No need to flag the model as unsolved. That has already been taken care of by our call to `add_member_dist_load`
 
     def add_plate_surface_pressure(self, plate_name:str, pressure:float, case:str = 'Case 1'):
         """Adds a surface pressure to the rectangular plate element.
-        
 
         :param plate_name: The name for the rectangular plate to add the surface pressure to.
         :type plate_name: str
@@ -1324,7 +1328,7 @@ class FEModel3D():
             self.plates[plate_name].pressures.append([pressure, case])
         except KeyError:
             raise NameError(f"Plate '{plate_name}' does not exist in the model")
-        
+
         # Flag the model as unsolved
         self.solution = None
 
@@ -1345,7 +1349,7 @@ class FEModel3D():
             self.quads[quad_name].pressures.append([pressure, case])
         except KeyError:
             raise NameError(f"Quad '{quad_name}' does not exist in the model")
-        
+
         # Flag the model as unsolved
         self.solution = None
 
@@ -1891,13 +1895,11 @@ class FEModel3D():
             else:
                 return 1.0  # Default fallback
 
-    def M(self, include_material_mass: bool = True, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True):
+    def M(self, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True):
         """
         Returns the model's global mass matrix for dynamic analysis. This implementation follows a separation of responsibilities approach, where members handle both translational and rotational mass/inertia, while nodes provide translational mass only (to prevent double-counting). Rotational stability terms are only added to free DOFs considering member releases and node supports.
 
-        :param include_material_mass: Whether to include mass from material density, defaults to `True`.
-        :type include_material_mass: bool, optional
-        :param mass_combo_name: Load combination name defining mass (via force loads). Forces are converted to mass using m = F/g. Defaults to `None`.
+        :param mass_combo_name: Load combination name defining mass (via force loads). Forces are converted to mass using m = F/g. If `None` is specified, masses from loads will be ignored during modal analysis. Defaults to `None`.
         :type mass_combo_name: str, optional
         :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=1 for gravity/Y-direction).
         :type mass_direction: int, optional
@@ -1911,9 +1913,7 @@ class FEModel3D():
         :rtype: scipy.sparse.coo_matrix or numpy.ndarray
         """
 
-        # TODO:
-        # 1. Change gravity direction inputs to accept X, Y and Z instead of 0, 1, and 2.
-        # 2. `combo_name` and `mass_combo_name` should be one and the same.
+        # TODO: Change gravity direction inputs to accept X, Y and Z instead of 0, 1, and 2.
 
         # Check if a sparse matrix has been requested
         if sparse == True:
@@ -1924,11 +1924,7 @@ class FEModel3D():
             M = zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         if log:
-            print('- Adding member mass terms to global mass matrix')
-            if include_material_mass:
-                print('  - Including material density-based mass')
-            if mass_combo_name:
-                print(f'  - Including load-based mass from combo: {mass_combo_name}')
+            print(f' - Converting member loads from combo: {mass_combo_name} into masses.')
 
         # Step through each physical member in the model
         for phys_member in self.members.values():
@@ -1940,7 +1936,7 @@ class FEModel3D():
                 for member in phys_member.sub_members.values():
 
                     # Get the combined mass matrix from member
-                    member_M = member.M(include_material_mass, mass_combo_name, mass_direction, gravity)
+                    member_M = member.M(mass_combo_name, mass_direction, gravity)
 
                     # Assembly logic remains the same as stiffness matrix assembly logic
                     for a in range(12):
@@ -1962,44 +1958,28 @@ class FEModel3D():
                             else:
                                 M[m, n] += member_M[a, b]
 
-        # Add nodal masses
         if log:
-            print('- Adding nodal mass terms to global mass matrix (translation only)')
+            print(f' - Converting nodal loads from combo: {mass_combo_name} to mass (translation only)')
 
-        # If a combination is specified that may contain nodal masses, add them:
-        if mass_combo_name in self.load_combos:
+        # Step through each node in the model
+        for node in self.nodes.values():
 
-            if log:
-                print(f'  - Adding nodal mass from combo: {mass_combo_name}')
+            # Get node's mass matrix (translation only, so set characteristic length to `None`)
+            node_m = node.M(mass_combo_name, mass_direction, gravity, characteristic_length=None)
 
-            # Step through each node in the model
-            for node in self.nodes.values():
+            # Add to global mass matrix
+            for a in range(6):
+                for b in range(6):
+                    if node_m[a, b] != 0:
+                        m = node.ID * 6 + a
+                        n = node.ID * 6 + b
 
-                # Get node's mass matrix (translation only, so set characteristic length to `None`)
-                node_m = node.M(mass_combo_name, mass_direction, gravity, characteristic_length=None)
-
-                # Add to global mass matrix
-                for a in range(6):
-                    for b in range(6):
-                        if node_m[a, b] != 0:
-                            m = node.ID * 6 + a
-                            n = node.ID * 6 + b
-
-                            if sparse:
-                                row.append(m)
-                                col.append(n)
-                                data.append(node_m[a, b])
-                            else:
-                                M[m, n] += node_m[a, b]
-
-        elif log:
-
-            if mass_combo_name == '':
-                print('  - No mass combo provided')
-            else:
-                print(f'  - No mass combo {mass_combo_name} found in load combinations')
-
-            print('  - Skipping nodal mass addition')
+                        if sparse:
+                            row.append(m)
+                            col.append(n)
+                            data.append(node_m[a, b])
+                        else:
+                            M[m, n] += node_m[a, b]
 
         # Add sparse option
         if sparse:
@@ -2587,18 +2567,16 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-    def analyze_modal(self, num_modes: int = 12, include_material_mass: bool = True, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
+    def analyze_modal(self, num_modes: int = 12, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
         """
         Performs modal analysis to determine natural frequencies and mode shapes.
 
         :param num_modes: Number of modes to calculate. Defaults to 12.
         :type num_modes: int, optional
-        :param mass_combo_name: Load combination name for load-based mass contribution. Defaults to `None`.
+        :param mass_combo_name: Load combination name to use to convert loads to masses. Defaults to `Combo 1`.
         :type mass_combo_name: str, optional
         :param mass_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z). Defaults to 1.
         :type mass_direction: int, optional
-        :param include_material_mass: If True, includes mass from material density. Defaults to True.
-        :type include_material_mass: bool, optional
         :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
         :type gravity: float
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -2637,15 +2615,11 @@ class FEModel3D():
         if log:
             print('- Assembling global stiffness matrix')
 
-        # The stiffness matrix method `K` needs a load combo name. Ensure a valid name has been provided.
-        if mass_combo_name == None:
-            stiff_combo_name = self.load_combos.values()[0].name
-
         # Assemble and partition the global stiffness matrix
         if sparse:
-            K_global = self.K(stiff_combo_name, log, check_stability, sparse).tolil()
+            K_global = self.K(mass_combo_name, log, check_stability, sparse).tolil()
         else:
-            K_global = self.K(stiff_combo_name, log, check_stability, sparse)
+            K_global = self.K(mass_combo_name, log, check_stability, sparse)
 
         # Partition to remove supported DOFs
         K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
@@ -2655,9 +2629,9 @@ class FEModel3D():
 
         # Assemble and partition the global mass matrix
         if sparse:
-            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse).tolil()
+            M_global = self.M(mass_combo_name, mass_direction, gravity, log, sparse).tolil()
         else:
-            M_global = self.M(include_material_mass, mass_combo_name, mass_direction, gravity, log, sparse)
+            M_global = self.M(mass_combo_name, mass_direction, gravity, log, sparse)
 
         # Partition to remove supported DOFs
         M11, M12, M21, M22 = Analysis._partition(self, M_global, D1_indices, D2_indices)
@@ -2718,7 +2692,6 @@ class FEModel3D():
             'num_modes': len(frequencies)
         }
 
-        self.modal_results['include_material_mass'] = include_material_mass
         if mass_combo_name:
             self.modal_results['mass_combo_name'] = mass_combo_name
 

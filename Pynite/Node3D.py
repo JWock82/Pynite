@@ -110,18 +110,19 @@ class Node3D():
         :return: Node mass matrix of shape (6, 6)
         :rtype: numpy.ndarray
         """
+
+        # Initialize the nodal mass matrix
         m = zeros((6, 6))
 
         # Get mass from nodal loads in the specified load combination
-        if mass_combo_name == None:
-            total_mass = 0.0
-        elif mass_combo_name not in self.model.load_combos:
+        if mass_combo_name not in self.model.load_combos:
             raise ValueError(f'Load combination {mass_combo_name} not found in the model.')
         else:
             total_mass = self._calc_mass(mass_combo_name, mass_direction, gravity)
-        # print(f'{self.name}: total_mass: {total_mass}')
 
+        # Check if there is any mass at this node
         if total_mass > 0:
+
             # Create lumped mass matrix for the node
             # Mass is distributed to translational DOFs only (standard practice)
             m[0, 0] = total_mass  # FX
@@ -184,7 +185,7 @@ class Node3D():
                 if mass_direction == 0 and load_direction == 'FX':
                     total_force += load_magnitude
                 elif mass_direction == 1 and load_direction == 'FY':
-                    total_force += load_magnitude  
+                    total_force += load_magnitude
                 elif mass_direction == 2 and load_direction == 'FZ':
                     total_force += load_magnitude
 
