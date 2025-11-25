@@ -143,12 +143,15 @@ for j in range(1, numFloor + 1):  # Start from first floor up
         
         ele_tag += 1
 
+# Add member self weight to the model
+model.add_member_self_weight('FY', -1, 'Mass')
+
 # Create a load combination that includes only mass for modal analysis
 model.add_load_combo('MassCombo', {'Mass': 1.0})
 
 # Run modal analysis
 print("Running modal analysis...")
-model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=1, gravity=386, sparse=sparse, log=False)  # X-direction
+model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=1, gravity=386, sparse=sparse, log=False)
 
 # Access results
 frequencies = model.modal_results['frequencies']
