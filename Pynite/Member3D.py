@@ -352,19 +352,38 @@ class Member3D():
 
         # Determine if a lumped mass or consitent mass matrix should be used
         lumped_mass = self.lumped_m(load_mass, characteristic_length=self.L())
-        material_mass = self.consistent_m(gravity)
+        material_mass = self.consistent_m(mass_combo_name, gravity)
 
         return lumped_mass + material_mass
 
-    def consistent_m(self, gravity: float = 1.0) -> NDArray[float64]:
+    def consistent_m(self, mass_combo_name, gravity: float = 1.0) -> NDArray[float64]:
 
-        # Get the properties needed to form the local mass matrix
-        L = self.L()
-        A = self.section.A
+        # Initialize the material mass to zero
+        material_mass = 0.0
+
+        # Get the mass load combination
+        mass_combo = self.model.load_combos[mass_combo_name]
+
+        # Step through each member distributed load (looking for self-weight loads)
+        for dist_load in self.DistLoads:
+
+            # Extract values from this distributed load
+            load_dir, w1, w2, x1, x2, case, self_weight = dist_load
+
+            # Check if this is a self-weight load and if it's part of the mass combo
+            if self_weight and case in mass_combo.factors.keys():
+
+                # Find the load factor the user has specified for this load
+                factor = mass_combo.factors[case]
+
+                # Calculate the factored mass
+                L = self.L()
+                A = self.section.A
+                rho = self.material.rho
+                material_mass += factor*rho*L*A/gravity
+
+        # Get the torsional constant needed to form the local mass matrix
         J = self.section.J
-        rho = self.material.rho
-
-        material_mass = rho*A*L/gravity
 
         # Consistent mass matrix for 3D beam element
         m_coeff = array([
@@ -586,11 +605,11 @@ class Member3D():
 
         return abs(total_force/gravity)  # Mass is always positive
 
-    def m(self, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0) -> NDArray[Any]:
+    def m(self, mass_combo_name: str, mass_direction: int = 1, gravity: float = 1.0) -> NDArray[Any]:
         """
         Returns the condensed (and expanded) local mass matrix for the member. Condensing the matrix is used to account for member end releases.
 
-        :param mass_combo_name: Optional load combination name to define mass via a load combination
+        :param mass_combo_name: Name of the load combination used to define mass
         :return: The condensed local mass matrix
         :rtype: ndarray
         """

@@ -1178,11 +1178,11 @@ class FEModel3D():
         :type case: str, optional
         :raises ValueError: Occurs when an invalid load direction was specified.
         """
-        
+
         # Validate the value of direction
         if direction not in ('FX', 'FY', 'FZ', 'MX', 'MY', 'MZ'):
             raise ValueError(f"direction must be 'FX', 'FY', 'FZ', 'MX', 'MY', or 'MZ'. {direction} was given.")
-        
+
         # Add the node load to the model
         try:
             self.nodes[node_name].NodeLoads.append((direction, P, case))
@@ -1215,13 +1215,13 @@ class FEModel3D():
         # Validate the value of direction
         if direction not in ('Fx', 'Fy', 'Fz', 'FX', 'FY', 'FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', 'MZ'):
             raise ValueError(f"direction must be 'Fx', 'Fy', 'Fz', 'FX', 'FY', FZ', 'Mx', 'My', 'Mz', 'MX', 'MY', or 'MZ'. {direction} was given.")
-        
+
         # Add the point load to the member
         try:
             self.members[member_name].PtLoads.append((direction, P, x, case))
         except KeyError:
             raise NameError(f"Member '{member_name}' does not exist in the model")
-                
+
         # Flag the model as unsolved
         self.solution = None
 
@@ -1313,7 +1313,7 @@ class FEModel3D():
 
         # No need to flag the model as unsolved. That has already been taken care of by our call to `add_member_dist_load`
 
-    def add_plate_surface_pressure(self, plate_name:str, pressure:float, case:str = 'Case 1'):
+    def add_plate_surface_pressure(self, plate_name: str, pressure: float, case: str = 'Case 1'):
         """Adds a surface pressure to the rectangular plate element.
 
         :param plate_name: The name for the rectangular plate to add the surface pressure to.
@@ -1334,7 +1334,7 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def add_quad_surface_pressure(self, quad_name:str, pressure:float, case:str = 'Case 1'):
+    def add_quad_surface_pressure(self, quad_name: str, pressure: float, case: str = 'Case 1'):
         """Adds a surface pressure to the quadrilateral element.
 
         :param quad_name: The name for the quad to add the surface pressure to.
@@ -1366,15 +1366,15 @@ class FEModel3D():
             member.SegmentsZ = []
             member.SegmentsY = []
             member.SegmentsX = []
-        
+
         # Delete the plate loads
         for plate in self.plates.values():
             plate.pressures = []
-        
+
         # Delete the quadrilateral loads
         for quad in self.quads.values():
             quad.pressures = []
-        
+
         # Delete the nodal loads, calculated displacements, and calculated reactions
         for node in self.nodes.values():
 
