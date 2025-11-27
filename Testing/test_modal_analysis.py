@@ -57,11 +57,11 @@ class TestModalAnalysis:
         model.add_section('BeamSection', A, I, I, J)
         
         # Add members
-        model.add_member('M1', 'N1', 'N2', 'Steel', 'BeamSection', lumped_mass=False)
-        model.add_member('M2', 'N2', 'N3', 'Steel', 'BeamSection', lumped_mass=False)
+        model.add_member('M1', 'N1', 'N2', 'Steel', 'BeamSection')
+        model.add_member('M2', 'N2', 'N3', 'Steel', 'BeamSection')
         
         # Perform modal analysis
-        results = model.analyze_modal(num_modes=3, include_material_mass=True, log=False)
+        results = model.analyze_modal(num_modes=3, log=False)
         
         frequencies = results['frequencies']
         
@@ -101,7 +101,7 @@ class TestModalAnalysis:
         model.add_member('Beam1', 'N3', 'N4', 'Steel', 'Beam')
         
         # Run modal analysis
-        results = model.analyze_modal(num_modes=4, include_material_mass=True, log=False)
+        results = model.analyze_modal(num_modes=4, log=False)
         
         # Validate results
         assert 'frequencies' in results
@@ -164,13 +164,13 @@ class TestModalAnalysis:
 
         # Test with lumped mass
         for n in range(10):
-            model.add_member(f'M{n+1}', f'N{n}', f'N{n + 1}', 'Steel', 'Beam', lumped_mass=True)
+            model.add_member(f'M{n+1}', f'N{n}', f'N{n + 1}', 'Steel', 'Beam')
         results_lumped = model.analyze_modal(num_modes=2, log=False)
 
         # Test with consistent mass  
         for n in range(10):
             model.delete_member(f'M{n+1}')
-            model.add_member(f'M{n+1}', f'N{n}', f'N{n + 1}', 'Steel', 'Beam', lumped_mass=False)
+            model.add_member(f'M{n+1}', f'N{n}', f'N{n + 1}', 'Steel', 'Beam')
         results_consistent = model.analyze_modal(num_modes=2, log=False)
 
         # Both should give reasonable results
