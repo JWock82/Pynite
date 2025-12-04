@@ -15,11 +15,13 @@ if TYPE_CHECKING:
     from scipy.sparse import lil_matrix
 
 
-def _prepare_model(model: FEModel3D) -> None:
+def _prepare_model(model: FEModel3D, n_modes: int = 0) -> None:
     """Prepares a model for analysis by ensuring at least one load combination is defined, generating all meshes that have not already been generated, activating all non-linear members, and internally numbering all nodes and elements.
 
     :param model: The model being prepared for analysis.
     :type model: FEModel3D
+    :param n_modes: The number of modes to be used for modal analysis. Default is 0.
+    :type n_modes: int
     """
 
     # Reset any nodal displacements
@@ -36,6 +38,15 @@ def _prepare_model(model: FEModel3D) -> None:
     if model.load_combos == {}:
         # Create and add a default load combination to the dictionary of load combinations
         model.load_combos['Combo 1'] = LoadCombo('Combo 1', factors={'Case 1':1.0})
+
+    # Remove any modal load combinations from prior modal analyses
+    to_remove = [name for name, combo in model.load_combos.items() if combo.combo_tags != None and 'modal' in combo.combo_tags]
+    for name in to_remove:
+        model.load_combos.pop(name)
+
+    # Set up new load combinations for modal analysis if necessary
+    for i in range(n_modes):
+        model.add_load_combo(f'Mode {i + 1}', {}, ['modal'])
 
     # Generate all basic meshes
     for mesh in model.meshes.values():
@@ -473,25 +484,27 @@ def _store_displacements(model: FEModel3D, D1: NDArray[float64], D2: NDArray[flo
     :type D1_indices: list
     :param D2_indices: A list of the degree of freedom indices for each displacement in D2
     :type D2_indices: list
-    :param combo: The load combination to store the displacements for
+    :param combo: The load combination to store the displacements for.
     :type combo: LoadCombo
     """
 
     # The raw results from the solver are partitioned. Unpartition them.
     D = _unpartition_disp(model, D1, D2, D1_indices, D2_indices)
 
-    # Store the displacements in the model's global displacement vector
-    model._D[combo.name] = D
+    if combo != None:
 
-    # Store the calculated global nodal displacements into each node object
-    for node in model.nodes.values():
+        # Store the displacements in the model's global displacement vector
+        model._D[combo.name] = D
 
-        node.DX[combo.name] = D[node.ID*6 + 0, 0]
-        node.DY[combo.name] = D[node.ID*6 + 1, 0]
-        node.DZ[combo.name] = D[node.ID*6 + 2, 0]
-        node.RX[combo.name] = D[node.ID*6 + 3, 0]
-        node.RY[combo.name] = D[node.ID*6 + 4, 0]
-        node.RZ[combo.name] = D[node.ID*6 + 5, 0]
+        # Store the calculated global nodal displacements into each node object
+        for node in model.nodes.values():
+
+            node.DX[combo.name] = D[node.ID*6 + 0, 0]
+            node.DY[combo.name] = D[node.ID*6 + 1, 0]
+            node.DZ[combo.name] = D[node.ID*6 + 2, 0]
+            node.RX[combo.name] = D[node.ID*6 + 3, 0]
+            node.RY[combo.name] = D[node.ID*6 + 4, 0]
+            node.RZ[combo.name] = D[node.ID*6 + 5, 0]
 
 
 def _sum_displacements(model: FEModel3D, Delta_D1: NDArray[float64], Delta_D2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], combo: LoadCombo) -> None:

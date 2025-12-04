@@ -301,7 +301,7 @@ class FEModel3D():
         # Return the spring name
         return name
 
-    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False, lumped_mass=True) -> str:
+    def add_member(self, name: str, i_node: str, j_node: str, material_name: str, section_name: str, rotation: float = 0.0, tension_only: bool = False, comp_only: bool = False) -> str:
         """Adds a new physical member to the model.
 
         :param name: A unique user-defined name for the member. If ``None`` or ``""``, a name will be automatically assigned
@@ -320,8 +320,6 @@ class FEModel3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
-        :param lumped_mass: Whether to use lumped mass formulation for this member, defaults to True
-+       :type lumped_mass: bool, optional
         :raises NameError: Occurs if the specified name already exists.
         :return: The name of the member added to the model.
         :rtype: str
@@ -346,7 +344,7 @@ class FEModel3D():
             raise NameError(f"Node '{e.args[0]}' does not exist in the model")
 
         # Create a new member
-        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only, lumped_mass=lumped_mass)
+        new_member = PhysMember(self, name, pn_nodes[0], pn_nodes[1], material_name, section_name, rotation=rotation, tension_only=tension_only, comp_only=comp_only)
 
         # Add the new member to the model
         self.members[name] = new_member
@@ -2609,7 +2607,7 @@ class FEModel3D():
 
         # Prepare the model for analysis (same as other analysis methods)
         # This will generate the default load case ('Case 1') and load combo ('Combo 1') if none are present.
-        Analysis._prepare_model(self)
+        Analysis._prepare_model(self, num_modes)
 
         # Get the auxiliary list used for matrix partitioning
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
@@ -2645,20 +2643,6 @@ class FEModel3D():
         if log:
             print('- Solving eigenvalue problem')
 
-        # Add this before the eigenvalue solution
-        if log:
-            print(f"  - K11 shape: {K11.shape}")
-            print(f"  - M11 shape: {M11.shape}")
-            # Add this before the line that fails - look for np.diag calls
-            print(f"Matrix type: {type(M11)}")
-            print(f"Matrix shape: {M11.shape}")
-            if hasattr(M11, 'ndim'):
-                print(f"Matrix dimensions: {M11.ndim}")
-            # print(f"  - Minimum diagonal of M11: {np.min(np.diag(M11))}")
-            # print(f"  - Number of zero diagonals in M11: {np.sum(np.diag(M11) == 0)}")
-            # print(f"  - Number of negative diagonals in M11: {np.sum(np.diag(M11) < 0)}")
-
-
         try:
             # Solve the generalized eigenvalue problem: [K11]{φ} = λ[M11]{φ}, where λ = ω²
             # Or rewritten: (-[M11]ω² + [K11]){φ} = 0
@@ -2678,44 +2662,31 @@ class FEModel3D():
         if log:
             print('- Processing mode shapes')
 
-        # Process mode shapes to expand back to full DOF set
-        mode_shapes = []
+        # Process eigenvectors (mode shapes) to expand back to full DOF set
         for i in range(len(frequencies)):
-            # Create full displacement vector for this mode
+
+            # Get the load combo for this mode
+            mode_combo = self.load_combos[f'Mode {i + 1}']
+
+            # Reshape the SciPy eigenvector (mode shape) into a column array that is compatible with Pynite
             D1_mode = eigenvectors[:, i].reshape(-1, 1)
-            D_mode = Analysis._expand_displacements(self, D1_mode, D2, D1_indices, D2_indices)
-            mode_shapes.append(D_mode)
 
-        # TODO: The next block of code stores the mode shapes as a vector in a modal results dictionary. It would be more convenient to store the displacements associated with each mode shape directly in each node for easier rendering.
+            Analysis._store_displacements(self, D1_mode, D2, D1_indices, D2_indices, mode_combo)
+
         # Store results in the model
-        self.modal_results = {
-            'frequencies': frequencies,
-            'mode_shapes': mode_shapes,
-            'num_modes': len(frequencies)
-        }
-
-        if mass_combo_name:
-            self.modal_results['mass_combo_name'] = mass_combo_name
+        self.frequencies = frequencies
 
         if log:
             print('- Modal analysis complete')
 
         # Flag the model as having modal results
-        if hasattr(self, 'solution'):
-            if self.solution is not None:
-                self.solution += ' + Modal'
-            else:
-                self.solution = 'Modal'
-        else:
-            self.solution = 'Modal'
+        self.solution = 'Modal'
 
         if log:
             print(f'- Found {len(frequencies)} modes')
             for i, freq in enumerate(frequencies):
-                print(f'  Mode {i+1}: {freq:.3f} Hz')
+                print(f'  Mode {i + 1}: {freq:.3f} Hz')
             print('- Modal analysis complete')
-
-        return self.modal_results
 
     def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
 

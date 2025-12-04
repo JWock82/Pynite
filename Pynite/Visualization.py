@@ -1240,7 +1240,7 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_name, render_nodes=True, theme='default'):
     '''
     Renders the deformed shape of a model.
-    
+
     Parameters
     ----------
     model : FEModel3D
@@ -1255,24 +1255,24 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
         related to this value.
     combo_name : string
         The load case used for rendering the deflected shape.
-    
+
     Returns
     -------
     None.
     '''
-    
+
     # Create an append filter to add all the shape polydata to
     append_filter = vtk.vtkAppendPolyData()
-    
+
     # Check if nodes are to be rendered
     if render_nodes == True:
-        
+
         # Add the deformed nodes to the append filter
         for node in model.nodes.values():
-            
+
             vis_node = VisDeformedNode(node, scale_factor, annotation_size, combo_name)
             append_filter.AddInputData(vis_node.source.GetOutput())
-        
+
     # Add the springs to the append filter
     for spring in model.springs.values():
         

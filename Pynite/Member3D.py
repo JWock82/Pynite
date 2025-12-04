@@ -37,7 +37,7 @@ class Member3D():
     def __init__(self, model: FEModel3D, name: str, i_node: Node3D,
                  j_node: Node3D, material_name: str, section_name: str,
                  rotation: float = 0.0, tension_only: bool = False,
-                 comp_only: bool = False, lumped_mass: bool = True) -> None:
+                 comp_only: bool = False) -> None:
         """
         Initializes a new member.
 
@@ -59,8 +59,6 @@ class Member3D():
         :type tension_only: bool, optional
         :param comp_only: Indicates if the member is compression-only, defaults to False
         :type comp_only: bool, optional
-        :param lumped_mass: Indicates if the member masses are lumped to the nodes, defaults to True
-        :type lumped_mass: bool, optional
         """
 
         self.name: str = name      # A unique name for the member given by the user
@@ -99,7 +97,6 @@ class Member3D():
         self.Releases: List[bool] = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.tension_only: bool = tension_only  # Indicates whether the member is tension-only
         self.comp_only: bool = comp_only  # Indicates whether the member is compression-only
-        self.lumped_mass: bool = lumped_mass  # Indicates if the member masses are lumped to the nodes
 
         # Members need to track whether they are active or not for any given load combination. They may become inactive for a load combination during a tension/compression-only analysis. This dictionary will be used when the model is solved.
         self.active: Dict[str, bool] = {}  # Key = load combo name, Value = True or False
@@ -350,8 +347,8 @@ class Member3D():
 
         # Calculate the mass from the material
 
-        # Determine if a lumped mass or consitent mass matrix should be used
-        lumped_mass = self.lumped_m(load_mass, characteristic_length=self.L())
+        # Calculate the lumped mass from the loads, and the consitent mass from the self-weight loads
+        lumped_mass = self.lumped_m(load_mass)
         material_mass = self.consistent_m(mass_combo_name, gravity)
 
         return lumped_mass + material_mass
@@ -386,6 +383,7 @@ class Member3D():
         J = self.section.J
 
         # Consistent mass matrix for 3D beam element
+        #   [dxi     dyi     dzi      rxi      ryi      rzi      dxj  dyj     dzj    rxj      ryj      rzj   ]
         m_coeff = array([
             [140,    0,      0,       0,       0,       0,       70,  0,      0,     0,       0,       0     ],
             [0,      156,    0,       0,       0,       22*L,    0,   54,     0,     0,       0,       -13*L ],
@@ -412,12 +410,12 @@ class Member3D():
         # print(f"DEBUG: Expected sum for 2 nodes = 420")
         # print(f"DEBUG: Ratio = {trans_coeff_sum/420:.3f}")
 
-        m = m_coeff*(material_mass/420)
+        m = m_coeff*(abs(material_mass)/420)
 
         return m
 
-    def lumped_m(self, load_mass, characteristic_length=None) -> NDArray[float64]:
-        """Lumps 1/2 the member's mass to each end node.
+    def lumped_m(self, load_mass) -> NDArray[float64]:
+        """Lumps 1/2 the load's mass to each end node.
 
         :param total_mass: The member's total mass.
         :type total_mass: float
@@ -443,12 +441,11 @@ class Member3D():
 
         # Critical: Add small rotational inertia for numerical stability
         # Use characteristic length if provided, otherwise use member length
-        if characteristic_length is None:
-            characteristic_length = L
+        characteristic_length = L
 
         # Calculate physically meaningful rotational inertia: I = m*r²
         # Using 1% of the characteristic length squared for small but meaningful inertia
-        rotational_inertia = nodal_mass*(characteristic_length*0.1)**2
+        rotational_inertia = 0 + nodal_mass*(characteristic_length/2)**2
 
         # Check rotational DOF freedom at member ends
         # `Releases` is a list of 12 items [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]
@@ -647,7 +644,7 @@ class Member3D():
     def M(self, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0) -> NDArray[Any]:
         """Returns the member's global mass matrix.
 
-        The mass is created from loads in the mass combination. For lumped mass formulation, rotational inertia is intelligently added only to free DOFs considering both member releases and node support conditions.
+        The mass is created from loads in the mass combination.
 
         :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ""
         :type mass_combo_name: str, optional
