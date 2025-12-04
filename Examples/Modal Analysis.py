@@ -149,11 +149,11 @@ model.add_load_combo('MassCombo', {'Mass': 1.0})
 
 # Run modal analysis
 print("Running modal analysis...")
-model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=1, gravity=386, sparse=True, log=False)
+model.analyze_modal(num_modes=7, mass_combo_name="MassCombo", mass_direction=1, gravity=386, log=False)
 
 from Pynite.Visualization import Renderer
 rndr = Renderer(model)
-rndr.combo_name = 'Mode 2'
+rndr.combo_name = 'Mode 1'
 rndr.render_loads = False
 rndr.deformed_scale = 100
 rndr.deformed_shape = True
