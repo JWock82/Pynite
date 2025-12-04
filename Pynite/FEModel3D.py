@@ -2567,9 +2567,11 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-    def analyze_modal(self, num_modes: int = 12, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, sparse=True, check_stability=True):
+    def analyze_modal(self, num_modes: int = 12, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, check_stability=True):
         """
         Performs modal analysis to determine natural frequencies and mode shapes.
+
+        A sparse solution based on `num_modes` is always used to help filter out irrelevant frequencies from unimportant modes.
 
         :param num_modes: Number of modes to calculate. Defaults to 12.
         :type num_modes: int, optional
@@ -2581,12 +2583,10 @@ class FEModel3D():
         :type gravity: float
         :param log: Prints the analysis log to the console if set to True. Default is False.
         :type log: bool, optional
-        :param sparse: Indicates whether sparse matrix solvers should be used. Default is True.
-        :type sparse: bool, optional
         :param check_stability: When set to True, checks the stiffness matrix for unstable DOFs. Defaults to True.
         :type check_stability: bool, optional
-        :return: Dictionary containing frequencies (Hz) and mode shapes
-        :rtype: dict
+        :return: A list containing frequencies (Hz)
+        :rtype: List
         :raises Exception: Occurs when a singular stiffness matrix is found or SciPy is not available.
         """
 
@@ -2598,10 +2598,7 @@ class FEModel3D():
         # Check for SciPy availability for eigenvalue solving
         try:
             from scipy.linalg import LinAlgError
-            if sparse:
-                from scipy.sparse.linalg import eigsh
-            else:
-                from scipy.linalg import eigh
+            from scipy.sparse.linalg import eigsh
         except ImportError:
             raise Exception('SciPy is required for modal analysis. Please install scipy.')
 
@@ -2616,10 +2613,7 @@ class FEModel3D():
             print('- Assembling global stiffness matrix')
 
         # Assemble and partition the global stiffness matrix
-        if sparse:
-            K_global = self.K(mass_combo_name, log, check_stability, sparse).tolil()
-        else:
-            K_global = self.K(mass_combo_name, log, check_stability, sparse)
+        K_global = self.K(mass_combo_name, log, check_stability, sparse=True).tolil()
 
         # Partition to remove supported DOFs
         K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
@@ -2628,16 +2622,13 @@ class FEModel3D():
             print('- Assembling global mass matrix')
 
         # Assemble and partition the global mass matrix
-        if sparse:
-            M_global = self.M(mass_combo_name, mass_direction, gravity, log, sparse).tolil()
-        else:
-            M_global = self.M(mass_combo_name, mass_direction, gravity, log, sparse)
+        M_global = self.M(mass_combo_name, mass_direction, gravity, log, sparse=True).tolil()
 
         # Partition to remove supported DOFs
         M11, M12, M21, M22 = Analysis._partition(self, M_global, D1_indices, D2_indices)
 
         # Check that we have mass terms
-        if M11.nnz == 0 if sparse else np_all(M11 == 0):
+        if M11.nnz == 0:
             raise Exception('No mass terms found. Ensure materials have density or provide mass_combo_name.')
 
         if log:
@@ -2647,12 +2638,8 @@ class FEModel3D():
             # Solve the generalized eigenvalue problem: [K11]{φ} = λ[M11]{φ}, where λ = ω²
             # Or rewritten: (-[M11]ω² + [K11]){φ} = 0
             # (See "Structural Dynamics for Structural Engineers" by Hart & Wong Equation 4.96)
-            if sparse:
-                # For sparse matrices, use eigsh which is more efficient for large systems
-                eigenvalues, eigenvectors = eigsh(K11, k=num_modes, M=M11, sigma=0, which='LM')
-            else:
-                # For dense matrices, use eigh (assumes matrices are symmetric)
-                eigenvalues, eigenvectors = eigh(K11, M11)
+            eigenvalues, eigenvectors = eigsh(A=K11, k=num_modes, M=M11, sigma=0.0, which='LM')
+
         except LinAlgError as e:
             raise Exception(f'Eigenvalue solution failed: {str(e)}. Check matrix conditioning.')
 
