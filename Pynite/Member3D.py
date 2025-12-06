@@ -328,14 +328,14 @@ class Member3D():
             # Solve for `km` using a psuedo-inverse (pinv). The psuedo-inverse takes into account that we may have rows of zeros that make the matrix otherwise uninvertable.
             return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
 
-    def _m_unc(self, mass_combo_name: str, mass_direction: int = 1, gravity: float = 1.0) -> NDArray[float64]:
+    def _m_unc(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> NDArray[float64]:
         """
         Returns the uncondensed mass matrix for the member in local coordinates.
 
         :param mass_combo_name: Load combination name to define mass via forces.
         :type mass_combo_name: str
-        :param mass_direction: The direction used to convert loads to mass. Defaults to 1 (Y-direction).
-        :type mass_direction: int
+        :param mass_direction: Direction for load-to-mass conversion ('X', 'Y', or 'Z'). Any loads applied in this direction (positive or negative) will be converted to mass. Default is 'Y'.
+        :type mass_direction: str, optional
         :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
         :type gravity: float
         :return: The uncondensed local mass matrix
@@ -354,6 +354,11 @@ class Member3D():
         return lumped_mass + material_mass
 
     def consistent_m(self, mass_combo_name, gravity: float = 1.0) -> NDArray[float64]:
+
+        # Get the section properties needed to form the local mass matrix
+        J = self.section.J
+        L = self.L()
+        A = self.section.A
 
         # Initialize the material mass to zero
         material_mass = 0.0
@@ -374,13 +379,8 @@ class Member3D():
                 factor = mass_combo.factors[case]
 
                 # Calculate the factored mass
-                L = self.L()
-                A = self.section.A
                 rho = self.material.rho
                 material_mass += factor*rho*L*A/gravity
-
-        # Get the torsional constant needed to form the local mass matrix
-        J = self.section.J
 
         # Consistent mass matrix for 3D beam element
         #   [dxi     dyi     dzi      rxi      ryi      rzi      dxj  dyj     dzj    rxj      ryj      rzj   ]
@@ -471,7 +471,7 @@ class Member3D():
 
         return m
 
-    def _calc_load_mass(self, mass_combo_name: str, mass_direction: int = 1, gravity: float = 1.0) -> float:
+    def _calc_load_mass(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> float:
         """
         Calculates the total mass from a load combination in a specific local direction.
 
@@ -501,11 +501,11 @@ class Member3D():
         T_local = self.T()[:3, :3]  # 3x3 rotation matrix
 
         # Define vector for the mass direction
-        if mass_direction == 0:
+        if mass_direction == 'X':
             m_vector = array([1.0, 0.0, 0.0])
-        elif mass_direction == 1:
+        elif mass_direction == 'Y':
             m_vector = array([0.0, 1.0, 0.0])
-        elif mass_direction == 2:
+        elif mass_direction == 'Z':
             m_vector = array([0.0, 0.0, 1.0])
 
         # Sum forces from point loads
@@ -602,11 +602,15 @@ class Member3D():
 
         return abs(total_force/gravity)  # Mass is always positive
 
-    def m(self, mass_combo_name: str, mass_direction: int = 1, gravity: float = 1.0) -> NDArray[Any]:
+    def m(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> NDArray[Any]:
         """
         Returns the condensed (and expanded) local mass matrix for the member. Condensing the matrix is used to account for member end releases.
 
         :param mass_combo_name: Name of the load combination used to define mass
+        :param mass_direction: Direction for load-to-mass conversion ('X', 'Y', or 'Z'). Any loads applied in this direction (positive or negative) will be converted to mass. Default is 'Y'.
+        :type mass_direction: str, optional
+        :param gravity: Acceleration due to gravity. Default is 1.0.
+        :type gravity: float, optional
         :return: The condensed local mass matrix
         :rtype: ndarray
         """
@@ -641,15 +645,15 @@ class Member3D():
 
         return m_expanded
 
-    def M(self, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0) -> NDArray[Any]:
+    def M(self, mass_combo_name: str | None = None, mass_direction: str = 'Y', gravity: float = 1.0) -> NDArray[Any]:
         """Returns the member's global mass matrix.
 
         The mass is created from loads in the mass combination.
 
         :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ""
         :type mass_combo_name: str, optional
-        :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z, defaults to 1
-        :type mass_direction: int, optional
+        :param mass_direction: Direction for load-to-mass conversion ('X', 'Y', or 'Z'). Any loads applied in this direction (positive or negative) will be converted to mass. Default is 'Y'.
+        :type mass_direction: str, optional
         :return: Global mass matrix of shape (12, 12)
         :rtype: numpy.ndarray
         """
