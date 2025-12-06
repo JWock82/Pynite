@@ -114,12 +114,12 @@ def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
 
     # Step through each diagonal term in the stiffness matrix
     for i in range(K.shape[0]):
-        
+
         # Determine which node this term belongs to
         node = [node for node in model.nodes.values() if node.ID == int(i/6)][0]
 
         # Determine which degree of freedom this term belongs to
-        dof = i%6
+        dof = i % 6
 
         # Check to see if this degree of freedom is supported
         if dof == 0:

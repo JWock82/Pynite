@@ -3,9 +3,7 @@
 from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING, Literal
 
-from numpy import array, zeros, matmul, subtract
-from numpy import all as np_all, any as np_any, sqrt as np_sqrt, pi as np_pi
-from numpy import trace as np_trace
+import numpy as np
 from math import floor
 from numpy.linalg import solve
 
@@ -1420,7 +1418,7 @@ class FEModel3D():
             row, col, data = [], [], []
         else:
             # Initialize a dense matrix of zeros
-            K = zeros((len(self.nodes)*6, len(self.nodes)*6))
+            K = np.zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         # Add stiffness terms for each nodal spring in the model
         if log: print('- Adding nodal spring support stiffness terms to global stiffness matrix')
@@ -1693,9 +1691,9 @@ class FEModel3D():
             # construction of finite element matrices. When converted to another
             # format, the `coo_matrix` sums values at the same (i, j) index.
             from scipy.sparse import coo_matrix
-            row = array(row)
-            col = array(col)
-            data = array(data)
+            row = np.array(row)
+            col = np.array(col)
+            data = np.array(data)
             K = coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         # Check that there are no nodal instabilities
@@ -1727,7 +1725,7 @@ class FEModel3D():
             from scipy.sparse import lil_matrix
             Kg = lil_matrix((len(self.nodes)*6, len(self.nodes)*6))
         else:
-            Kg = zeros(len(self.nodes)*6, len(self.nodes)*6)
+            Kg = np.zeros(len(self.nodes)*6, len(self.nodes)*6)
 
         # Add stiffness terms for each physical member in the model
         if log:
@@ -1801,7 +1799,7 @@ class FEModel3D():
         :param sparse: Indicates whether the sparse solver should be used. Defaults to True.
         :type sparse: bool, optional
         :return: The global plastic reduction matrix.
-        :rtype: array
+        :rtype: np.array
         """
 
         # Determine if a sparse matrix has been requested
@@ -1812,7 +1810,7 @@ class FEModel3D():
             data = []
         else:
             # Initialize a dense matrix of zeros
-            Km = zeros((len(self.nodes)*6, len(self.nodes)*6))
+            Km = np.zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         # Add stiffness terms for each physical member in the model
         for phys_member in self.members.values():
@@ -1861,9 +1859,9 @@ class FEModel3D():
         if sparse:
             # The plastic reduction matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index.
             from scipy.sparse import coo_matrix
-            row = array(row)
-            col = array(col)
-            data = array(data)
+            row = np.array(row)
+            col = np.array(col)
+            data = np.array(data)
             Km = coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         # Check that there are no nodal instabilities
@@ -1895,14 +1893,14 @@ class FEModel3D():
             else:
                 return 1.0  # Default fallback
 
-    def M(self, mass_combo_name: str | None = None, mass_direction: int = 1, gravity: float = 1.0, log: bool = False, sparse: bool = True):
+    def M(self, mass_combo_name: str | None = None, mass_direction: str = 'Y', gravity: float = 1.0, log: bool = False, sparse: bool = True):
         """
         Returns the model's global mass matrix for dynamic analysis. This implementation follows a separation of responsibilities approach, where members handle both translational and rotational mass/inertia, while nodes provide translational mass only (to prevent double-counting). Rotational stability terms are only added to free DOFs considering member releases and node supports.
 
         :param mass_combo_name: Load combination name defining mass (via force loads). Forces are converted to mass using m = F/g. If `None` is specified, masses from loads will be ignored during modal analysis. Defaults to `None`.
         :type mass_combo_name: str, optional
-        :param mass_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z (default=1 for gravity/Y-direction).
-        :type mass_direction: int, optional
+        :param mass_direction: Direction for load-to-mass conversion ('X', 'Y', or 'Z'). Any loads applied in this direction (positive or negative) will be converted to mass. Default is 'Y'.
+        :type mass_direction: str, optional
         :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
         :type gravity: float
         :param log: Whether to print progress messages, defaults to `False`.
@@ -1921,7 +1919,7 @@ class FEModel3D():
             row, col, data = [], [], []
         else:
             # Initialize a dense matrix of zeros
-            M = zeros((len(self.nodes)*6, len(self.nodes)*6))
+            M = np.zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         if log:
             print(f' - Converting member loads from combo: {mass_combo_name} into masses.')
@@ -1969,10 +1967,13 @@ class FEModel3D():
 
             # Add to global mass matrix
             for a in range(6):
+                
                 for b in range(6):
+
                     if node_m[a, b] != 0:
-                        m = node.ID * 6 + a
-                        n = node.ID * 6 + b
+
+                        m = node.ID*6 + a
+                        n = node.ID*6 + b
 
                         if sparse:
                             row.append(m)
@@ -1984,7 +1985,36 @@ class FEModel3D():
         # Add sparse option
         if sparse:
             from scipy.sparse import coo_matrix
-            M = coo_matrix((array(data), (array(row), array(col))), shape=(len(self.nodes)*6, len(self.nodes)*6))
+            M = coo_matrix((np.array(data), (np.array(row), np.array(col))), shape=(len(self.nodes)*6, len(self.nodes)*6))
+
+        # At this point, we have M, but there could be zero terms along the diagonal indicating DOFs without mass. We'll add an insignificant mass to those terms to get the matrix to solve.
+
+        # Get all the diagonal terms from the mass matrix
+        if sparse:
+            Mdiag = M.diagonal()
+        else:
+            Mdiag = np.diag(M)
+
+        # Get all the diagonal terms that are greater than zero
+        positive = Mdiag[Mdiag > 0]
+
+        # Calculate a mass that will be insignificant to the overall solution
+        if positive.size > 0:
+            eps = positive.min()*1e-6  # tiny stabilization mass
+        else:
+            raise Exception('Unable to perform modal analysis. Model is massless.')  # Fallback for truly massless models
+
+        # Identify which terms on the diagonal have zero mass
+        zero_diag = (Mdiag == 0)
+
+        # Add our tiny stabilization mass to these terms
+        if sparse:
+            # Add eps to zero-mass DOFs
+            from scipy.sparse import diags
+            M = M + diags(eps*zero_diag.astype(float), 0, shape=M.shape)
+        else:
+            idx = np.where(zero_diag)[0]
+            M[idx, idx] += eps
 
         if log:
             print('- Global mass matrix complete')
@@ -2002,7 +2032,7 @@ class FEModel3D():
         """        
         
         # Initialize a zero vector to hold all the terms
-        FER = zeros((len(self.nodes) * 6, 1))
+        FER = np.zeros((len(self.nodes) * 6, 1))
         
         # Step through each physical member in the model
         for phys_member in self.members.values():
@@ -2102,7 +2132,7 @@ class FEModel3D():
         """
             
         # Initialize a zero vector to hold all the terms
-        P = zeros((len(self.nodes)*6, 1))
+        P = np.zeros((len(self.nodes)*6, 1))
         
         # Get the load combination for the given 'combo_name'
         combo = self.load_combos[combo_name]
@@ -2335,10 +2365,10 @@ class FEModel3D():
                         # for memory, but slow for mathematical operations. The stiffness
                         # matrix will be converted to `csr` format for mathematical operations.
                         # The `@` operator performs matrix multiplication on sparse matrices.
-                        D1 = spsolve(K11.tocsr(), subtract(subtract(P1, FER1), K12.tocsr() @ D2))
+                        D1 = spsolve(K11.tocsr(), np.subtract(np.subtract(P1, FER1), K12.tocsr() @ D2))
                         D1 = D1.reshape(len(D1), 1)
                     else:
-                        D1 = solve(K11, subtract(subtract(P1, FER1), matmul(K12, D2)))
+                        D1 = solve(K11, np.subtract(np.subtract(P1, FER1), np.matmul(K12, D2)))
                 except:
                     # Return out of the method if 'K' is singular and provide an error message
                     raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
@@ -2464,10 +2494,10 @@ class FEModel3D():
                             # Calculate the unknown displacements Delta_D1
                             if sparse == True:
                                 # The partitioned stiffness matrix is in `lil` format, which is great for memory, but slow for mathematical operations. The stiffness matrix will be converted to `csr` format for mathematical operations. The `@` operator performs matrix multiplication on sparse matrices.
-                                Delta_D1 = spsolve(K11.tocsr(), subtract(subtract(Delta_P1, Delta_FER1), K12.tocsr() @ Delta_D2))
+                                Delta_D1 = spsolve(K11.tocsr(), np.subtract(np.subtract(Delta_P1, Delta_FER1), K12.tocsr() @ Delta_D2))
                                 Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
                             else:
-                                Delta_D1 = solve(K11, subtract(subtract(Delta_P1, Delta_FER1), matmul(K12, Delta_D2)))
+                                Delta_D1 = solve(K11, np.subtract(np.subtract(Delta_P1, Delta_FER1), np.matmul(K12, Delta_D2)))
                         except:
                             # Return out of the method if 'K' is singular and provide an error message
                             raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
@@ -2567,7 +2597,7 @@ class FEModel3D():
         # Flag the model as solved
         self.solution = 'P-Delta'
 
-    def analyze_modal(self, num_modes: int = 12, mass_combo_name: str = 'Combo 1', mass_direction: int = 1, gravity: float = 1.0, log=False, check_stability=True):
+    def analyze_modal(self, num_modes: int = 12, mass_combo_name: str = 'Combo 1', mass_direction: str = 'Y', gravity: float = 1.0, log=False, check_stability=True):
         """
         Performs modal analysis to determine natural frequencies and mode shapes.
 
@@ -2577,8 +2607,8 @@ class FEModel3D():
         :type num_modes: int, optional
         :param mass_combo_name: Load combination name to use to convert loads to masses. Defaults to `Combo 1`.
         :type mass_combo_name: str, optional
-        :param mass_direction: Load combination component for load-based mass contribution (0=X, 1=Y, 2=Z). Defaults to 1.
-        :type mass_direction: int, optional
+        :param mass_direction: Direction for load-to-mass conversion ('X', 'Y', or 'Z'). Any loads applied in this direction (postive or negative) will be converted to mass. Defaults to 'Y'.
+        :type mass_direction: str, optional
         :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
         :type gravity: float
         :param log: Prints the analysis log to the console if set to True. Default is False.
@@ -2644,7 +2674,7 @@ class FEModel3D():
             raise Exception(f'Eigenvalue solution failed: {str(e)}. Check matrix conditioning.')
 
         # Calculate frequencies in Hz from eigenvalues (λ = ω²)
-        frequencies = np_sqrt(eigenvalues) / (2 * np_pi)
+        frequencies = np.sqrt(eigenvalues) / (2 * np.pi)
 
         if log:
             print('- Processing mode shapes')
@@ -2888,3 +2918,5 @@ class FEModel3D():
                 orphans.append(node.name)
 
         return orphans
+
+# %%
