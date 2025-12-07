@@ -7,41 +7,43 @@ import numpy as np
 from Pynite import FEModel3D
 from Pynite.LoadCombo import LoadCombo
 
+
 def analytical_cantilever_frequency(mode_num, L, E, I, rho, A):
     """
     Calculates analytical natural frequencies for a cantilever beam.
-    
+
     Formula: f_n = (β_n² / (2π L²)) * sqrt(EI / (ρA))
     where β_n are the roots of cos(β)cosh(β) + 1 = 0
     """
     # First 5 roots of cos(β)cosh(β) + 1 = 0
     beta_values = [1.875104, 4.694091, 7.854757, 10.995541, 14.137168]
-    
+
     if mode_num > len(beta_values):
         return None
-    
+
     beta_n = beta_values[mode_num - 1]
     frequency = (beta_n**2 / (2 * np.pi * L**2)) * np.sqrt(E * I / (rho * A))
-    
+
     return frequency
-    
+
+
 def test_cantilever_frequency():
     """Test natural frequencies of a cantilever beam against theoretical values"""
-    
+
     # Create a simple cantilever beam model
     model = FEModel3D()
-    
+
     # Add nodes for a cantilever beam
     L = 10  # meters
     model.add_node('N1', 0, 0, 0)
     model.add_node('N2', L, 0, 0)
     model.add_node('N3', 2*L, 0, 0)  # For better mode shape resolution
-    
+
     # Fixed support at left end
     model.def_support('N1', True, True, True, True, True, True)
     model.def_support('N2', False, False, True, True, True, False)
     model.def_support('N3', False, False, True, True, True, False)
-    
+
     # Add material and section
     E = 200e9  # Steel in Pa
     G = 80e9
@@ -78,6 +80,7 @@ def test_cantilever_frequency():
     # assert np.allclose(frequencies[:2], f_analytical[:2], atol=0.02), "Calculated frequencies should match theoretical values"
     # print(f"Calculated frequencies: {frequencies} Hz")
 
+
 def test_simple_frame_modes():
     """Test modal analysis on a simple 2D frame"""
 
@@ -112,6 +115,7 @@ def test_simple_frame_modes():
 
     assert all(freq > 0 for freq in frequencies)
 
+
 def test_mass_increase():
     """Test that frequencies drop as mass increases"""
 
@@ -136,11 +140,14 @@ def test_mass_increase():
     model.add_load_combo('MassCombo2', {'Mass 1': 1.0, 'Mass 2': 1.0})
 
     # Run the analysis
-    results1 = model.analyze_modal(num_modes=1, mass_combo_name="MassCombo1", mass_direction=1, log=False)
-    results2 = model.analyze_modal(num_modes=1, mass_combo_name="MassCombo2", mass_direction=1, log=False)
+    model.analyze_modal(num_modes=1, mass_combo_name="MassCombo1", mass_direction='Y', log=False)
+    freq1 = model.frequencies
+    model.analyze_modal(num_modes=1, mass_combo_name="MassCombo2", mass_direction='Y', log=False)
+    freq2 = model.frequencies
 
     # Frequency should be lower when additional mass is included
-    assert results2['frequencies'][0] < results1['frequencies'][0], 'Frequencies did not drop as mass increased.'
+    assert freq2[0] < freq1[0], 'Frequencies did not drop as mass increased.'
+
 
 def test_lumped_vs_consistent_mass():
     """Compare lumped and consistent mass formulations"""
@@ -218,7 +225,10 @@ def test_different_mode_counts(num_modes):
 
     assert len(model.frequencies) == num_modes
 
+
 if __name__ == '__main__':
+
+    test_mass_increase()
     test_cantilever_frequency()
     test_different_mode_counts(3)
     test_lumped_vs_consistent_mass()
