@@ -343,12 +343,10 @@ class Member3D():
         """
 
         # Calculate the non-material load-based mass from the load combination
-        load_mass = self._calc_load_mass(mass_combo_name, mass_direction, gravity)
-
-        # Calculate the mass from the material
+        load_mass, x = self._calc_load_mass(mass_combo_name, mass_direction, gravity)
 
         # Calculate the lumped mass from the loads, and the consitent mass from the self-weight loads
-        lumped_mass = self.lumped_m(load_mass)
+        lumped_mass = self.lumped_m(load_mass, x)
         material_mass = self.consistent_m(mass_combo_name, gravity)
 
         return lumped_mass + material_mass
@@ -414,14 +412,14 @@ class Member3D():
 
         return m
 
-    def lumped_m(self, load_mass) -> NDArray[float64]:
-        """Lumps 1/2 the load's mass to each end node.
+    def lumped_m(self, load_mass, x) -> NDArray[float64]:
+        """Lumps the load's mass to each end node based on its position, `x`.
 
-        :param total_mass: The member's total mass.
-        :type total_mass: float
-        :param characteristic_length: The member's characteristic length. Defaults to None.
-        :type characteristic_length: float, optional
-        :return: The member's mass matrix.
+        :param load_mass: The member's total massp from loads.
+        :type load_mass: float
+        :param x: The location of the load mass along the member.
+        :type x: float
+        :return: The member's lumped mass matrix for the load mass.
         :rtype: NDArray[float64]
         """
 
@@ -431,61 +429,43 @@ class Member3D():
 
         # Distribute half mass to each node's translational DOFs
         # TODO: Distribute the mass based on distance from each load instead
-        nodal_mass = load_mass / 2
-        m[0, 0] = nodal_mass   # FX i-node
-        m[1, 1] = nodal_mass   # FY i-node  
-        m[2, 2] = nodal_mass   # FZ i-node
-        m[6, 6] = nodal_mass   # FX j-node
-        m[7, 7] = nodal_mass   # FY j-node
-        m[8, 8] = nodal_mass   # FZ j-node
+        i_node_mass = load_mass*(1 - x)/L
+        j_node_mass = load_mass*x/L
+        m[0, 0] = i_node_mass   # FX i-node
+        m[1, 1] = i_node_mass   # FY i-node  
+        m[2, 2] = i_node_mass   # FZ i-node
+        m[6, 6] = j_node_mass   # FX j-node
+        m[7, 7] = j_node_mass   # FY j-node
+        m[8, 8] = j_node_mass   # FZ j-node
 
-        # Critical: Add small rotational inertia for numerical stability
-        # Use characteristic length if provided, otherwise use member length
-        characteristic_length = L
+        # Add rotational inertia for the mass
+        # Calculate the rotational inertia: I = m*x²
+        i_node_rot_inertia = i_node_mass*x**2
+        j_node_rot_inertia = j_node_mass*(L - x)**2
 
-        # Calculate physically meaningful rotational inertia: I = m*r²
-        # Using 1% of the characteristic length squared for small but meaningful inertia
-        rotational_inertia = 0 + nodal_mass*(characteristic_length/2)**2
+        # Apply rotational inertia about the major and minor axes
+        # There is no rotational inertia about the torsional axis (zero lever arm)
+        # Any numerical instability from zeros in the torsional direction will be fixed by the global solver
+        m[4, 4] = i_node_rot_inertia    # RZ i-node
+        m[5, 5] = i_node_rot_inertia    # RZ i-node
 
-        # Check rotational DOF freedom at member ends
-        # `Releases` is a list of 12 items [Dxi, Dyi, Dzi, Rxi, Ryi, Rzi, Dxj, Dyj, Dzj, Rxj, Ryj, Rzj]
-        i_releases = [self.Releases[3], self.Releases[4], self.Releases[5]]    # Rxi, Ryi, Rzi
-        j_releases = [self.Releases[9], self.Releases[10], self.Releases[11]]  # Rxj, Ryj, Rzj
-
-        # Only apply rotational inertia to unreleased and unsupported degrees of freedom
-        # i-node rotational DOFs (indices 3, 4, 5)
-        if not i_releases[0] and not self.i_node.support_RX:
-            m[3, 3] = rotational_inertia   # RX i-node
-        if not i_releases[1] and not self.i_node.support_RY:
-            m[4, 4] = rotational_inertia   # RY i-node
-        if not i_releases[2] and not self.i_node.support_RZ:
-            m[5, 5] = rotational_inertia   # RZ i-node
-
-        # j-node rotational DOFs (indices 9, 10, 11)
-        if not j_releases[0] and not self.j_node.support_RX:
-            m[9, 9] = rotational_inertia    # RX j-node
-        if not j_releases[1] and not self.j_node.support_RY:
-            m[10, 10] = rotational_inertia  # RY j-node
-        if not j_releases[2] and not self.j_node.support_RZ:
-            m[11, 11] = rotational_inertia  # RZ j-node
+        m[10, 10] = j_node_rot_inertia    # RZ j-node
+        m[11, 11] = j_node_rot_inertia  # RZ j-node
 
         return m
 
     def _calc_load_mass(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> float:
-        """
-        Calculates the total mass from a load combination in a specific local direction.
+        """ Calculates the total mass from a load combination in a specific local direction.
 
-        Parameters:
-        -----------
-        mass_combo_name : str
-            Name of the load combination to use for mass calculation
-        direction : int
-            Local direction component to extract: 0=X, 1=Y, 2=Z (default=2 for gravity/Z-direction)
-
-        Returns:
-        --------
-        float
-            Total mass in the specified local direction (absolute value)
+        :param mass_combo_name: Name of the load combination to use for mass calculation.
+        :type mass_combo_name: str
+        :param mass_direction: Local direction component to extract: 'X', 'Y', or 'Z'. Defaults to 'Y'.
+        :type mass_direction: str, optional
+        :param gravity: The acceleration due to gravity used for load to mass conversion. Defaults to 1.0.
+        :type gravity: float, optional
+        :raises NameError: Occurs if `mass_combo_name` is invalid.
+        :return: Total mass in the specified local direction (absolute value) and it's location along the member
+        :rtype: List[float, float]
         """
 
         # Get the mass load combination
@@ -495,7 +475,8 @@ class Member3D():
             raise NameError(f"No load combination named '{mass_combo_name}'")
 
         # Initialize the total force to zero
-        total_force = 0.0
+        sum_force = 0.0
+        sum_force_x = 0.0
 
         # Get the transformation matrix once for efficiency
         T_local = self.T()[:3, :3]  # 3x3 rotation matrix
@@ -548,7 +529,8 @@ class Member3D():
                     P_m_comp = dot(P_global, m_vector)
 
                     # Sum the total for the load component
-                    total_force += factor*P_m_comp
+                    sum_force += factor*P_m_comp
+                    sum_force_x += factor*P_m_comp*x
 
         # Sum forces from distributed loads
         for dist_load in self.DistLoads:
@@ -598,9 +580,19 @@ class Member3D():
 
                         # Sum the average for the load component
                         avg_load = (w1_m_comp + w2_m_comp)/2
-                        total_force += factor*avg_load*length_loaded
+                        sum_force += factor*avg_load*length_loaded
 
-        return abs(total_force/gravity)  # Mass is always positive
+                        # Identify the point through which the load acts
+                        sum_force_x += factor*avg_load*(w2 - w1)*(w1_m_comp*(x2 - x1)**2/2
+                                                                  + 0.5*(w2_m_comp - w1_m_comp)*(x2 - x1)**2*(2/3))
+
+        # Identify the load's center of gravity
+        if sum_force_x != 0.0:
+            total_x = sum_force_x/sum_force
+        else:
+            total_x = self.L()/2
+
+        return [abs(sum_force/gravity), total_x]  # Mass is always positive
 
     def m(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> NDArray[Any]:
         """
@@ -2944,3 +2936,5 @@ class Member3D():
         all_y = concatenate(segment_results)
 
         return vstack((all_x, all_y))
+
+# %%

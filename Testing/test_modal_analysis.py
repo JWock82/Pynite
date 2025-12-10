@@ -5,7 +5,6 @@ Tests for modal analysis functionality in Pynite
 import pytest
 import numpy as np
 from Pynite import FEModel3D
-from Pynite.LoadCombo import LoadCombo
 
 
 def analytical_cantilever_frequency(mode_num, L, E, I, rho, A):
