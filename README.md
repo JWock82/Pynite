@@ -22,6 +22,7 @@ For a more detailed discussion on installation options and dependencies see http
 # Current Capabilities
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
+* Modal analysis of frame type structures.
 * Member point loads, linearly varying distributed loads, and nodal loads are supported.
 * Classify loads by load case and create load combinations from load cases.
 * Produces shear, moment, and deflection results and diagrams for each member.
@@ -66,8 +67,8 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.6.3
-* Added modal analysis. No damping is assumed at this point. This is experimental for now. Please try out this feature and report any issues. A special thanks to @boustrephon for implementing this feature.
+v2.0.0
+* Added modal analysis. You can now find the natural frequencies and mode shapes of frame-type structures (plates not yet supported). A special thanks to @boustrephon for heading up this feature.
 
 v1.6.2
 * Added helper method to `FEModel3D` for mat foundations.
