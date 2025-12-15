@@ -69,6 +69,7 @@ Here's a list of projects that use Pynite:
 # What's New?
 v2.0.0
 * Added modal analysis. You can now find the natural frequencies and mode shapes of frame-type structures (plates not yet supported). A special thanks to @boustrephon for heading up this feature.
+* Dropping support for python < 3.10.
 
 v1.6.2
 * Added helper method to `FEModel3D` for mat foundations.
