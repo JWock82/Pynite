@@ -7,7 +7,7 @@ import numpy as np
 from Pynite import FEModel3D
 
 
-def analytical_cantilever_frequency(mode_num, L, E, I, rho, A):
+def analytical_cantilever_frequency(mode_num, L, E, I, rho, A, g):
     """
     Calculates analytical natural frequencies for a cantilever beam.
 
@@ -21,7 +21,7 @@ def analytical_cantilever_frequency(mode_num, L, E, I, rho, A):
         return None
 
     beta_n = beta_values[mode_num - 1]
-    frequency = (beta_n**2 / (2 * np.pi * L**2)) * np.sqrt(E * I / (rho * A))
+    frequency = (beta_n**2 / (2 * np.pi * L**2)) * np.sqrt(E * I / (rho / g * A))
 
     return frequency
 
@@ -33,15 +33,14 @@ def test_cantilever_frequency():
     model = FEModel3D()
 
     # Add nodes for a cantilever beam
-    L = 10  # meters
-    model.add_node('N1', 0, 0, 0)
-    model.add_node('N2', L, 0, 0)
-    model.add_node('N3', 2*L, 0, 0)  # For better mode shape resolution
+    # Some mass is lost to the supports. Intermediate nodes will help mitigate this issue.
+    L = 20  # meters
+    for i in range(11):
+        model.add_node(f'N{i+1}', L*i/10, 0, 0)
+        model.def_support(f'N{i+1}', True, False, True, True, True, False)
 
     # Fixed support at left end
     model.def_support('N1', True, True, True, True, True, True)
-    model.def_support('N2', False, False, True, True, True, False)
-    model.def_support('N3', False, False, True, True, True, False)
 
     # Add material and section
     E = 200e9  # Steel in Pa
@@ -55,30 +54,39 @@ def test_cantilever_frequency():
     model.add_section('BeamSection', A, I, I, J)
 
     # Add members
-    model.add_member('M1', 'N1', 'N2', 'Steel', 'BeamSection')
-    model.add_member('M2', 'N2', 'N3', 'Steel', 'BeamSection')
+    model.add_member('M1', 'N1', 'N11', 'Steel', 'BeamSection')
 
     # Add member self weight
-    model.add_member_self_weight('FY', 1.0, 'D')
+    model.add_member_self_weight('FY', -1.0, 'D1')
+    for node_name in model.nodes.keys():
+        if node_name == 'N1' or node_name == 'N11':
+            model.add_node_load(node_name, 'FY', -A*rho*L/20, 'D2')
+        else:
+            model.add_node_load(node_name, 'FY', -A*rho*L/10, 'D2')
 
     # Add a mass load combination
-    model.add_load_combo('Mass Combo', {'D': 1.0})
+    model.add_load_combo('Consistent Mass Combo', {'D1': 1.0})
+    model.add_load_combo('Lumped Mass Combo', {'D2': 1.0})
 
     # Perform modal analysis
-    model.analyze_modal(num_modes=3, mass_combo_name='Mass Combo', mass_direction='Y', gravity=9.81, log=False)
+    model.analyze_modal(num_modes=3, mass_combo_name='Consistent Mass Combo', mass_direction='Y', gravity=9.81, log=False)
+    f_consistent = model.frequencies
 
-    frequencies = model.frequencies
+    model.analyze_modal(num_modes=3, mass_combo_name='Lumped Mass Combo', mass_direction='Y', gravity=9.81, log=False)
+    f_lumped = model.frequencies
 
-    # Basic validation checks
-    assert len(frequencies) == 3, "Should return requested number of modes"
-    assert all(freq > 0 for freq in frequencies), "All frequencies should be positive"
-    assert frequencies[0] < frequencies[1] < frequencies[2], "Frequencies should be in ascending order"
+    # Theoretical validation
+    f_analytical = [analytical_cantilever_frequency(i, L, E, I, rho, A, 9.81) for i in range(1, 4)]
 
-    # You could add theoretical validation here if you have reference solutions
-    # f_analytical = [analytical_cantilever_frequency(i, 2*L, E, I, rho, A) for i in range(1, 4)]
-    # assert np.allclose(frequencies[:2], f_analytical[:2], atol=0.02), "Calculated frequencies should match theoretical values"
-    # print(f"Calculated frequencies: {frequencies} Hz")
+    assert all(
+               abs(f_num - f_theory) / f_theory < 0.05
+               for f_num, f_theory in zip(f_consistent, f_analytical)
+               ), "Calculated frequencies should match theoretical values within 5%"
 
+    assert all(
+               abs(f_num - f_theory) / f_theory < 0.05
+               for f_num, f_theory in zip(f_lumped, f_analytical)
+               ), "Calculated frequencies should match theoretical values within 5%"
 
 def test_simple_frame_modes():
     """Test modal analysis on a simple 2D frame"""
