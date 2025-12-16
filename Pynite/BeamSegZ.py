@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Nov  6 20:52:31 2017
 
@@ -138,7 +137,7 @@ class BeamSegZ():
 
         return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
 
-    def Torsion(self, x: float | List[float] = 0) -> float | None | NDArray[Any]:
+    def Torsion(self, x: float | list[float] = 0) -> float | None | NDArray[Any]:
         """
         Returns the torsional moment in the segment.
         """

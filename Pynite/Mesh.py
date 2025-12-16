@@ -44,8 +44,8 @@ class Mesh():
         self.last_node = None               # The name of the last node in the mesh
         self.start_element = start_element  # The name of the first element in the mesh
         self.last_element = None            # The name of the last element in the mesh
-        self.nodes: Dict[str, Node3D] = {}  # A dictionary containing the nodes in the mesh
-        self.elements: Dict[str, Union[Quad3D, Plate3D]] = {}  # A dictionary containing the elements in the mesh
+        self.nodes: dict[str, Node3D] = {}  # A dictionary containing the nodes in the mesh
+        self.elements: dict[str, Quad3D | Plate3D] = {}  # A dictionary containing the elements in the mesh
         self.element_type = 'Quad'          # The type of element used in the mesh
         self.is_generated = False          # A flag indicating whether the mesh has been generated
 
@@ -54,8 +54,8 @@ class Mesh():
         """
 
         # Initialize lists to track node and element name changes
-        revised_nodes: Dict[str, Node3D] = {}
-        revised_elements: Dict[str, Union[Quad3D, Plate3D]] = {}
+        revised_nodes: dict[str, Node3D] = {}
+        revised_elements: dict[str, Quad3D | Plate3D] = {}
 
         # Step through each node in the mesh
         for node in self.nodes.values():
@@ -660,7 +660,7 @@ class Mesh():
 
 class RectangleMesh(Mesh):
 
-    def __init__(self, mesh_size: float, width: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0, ky_mod: float = 1.0, origin: List[float] = [0, 0, 0], plane: str = 'XY', x_control: List[float] | None = None, y_control: List[float] | None = None, start_node: str = 'N1', start_element: str = 'Q1', element_type: str = 'Quad') -> None:
+    def __init__(self, mesh_size: float, width: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0, ky_mod: float = 1.0, origin: list[float] = [0, 0, 0], plane: str = 'XY', x_control: list[float] | None = None, y_control: list[float] | None = None, start_node: str = 'N1', start_element: str = 'Q1', element_type: str = 'Quad') -> None:
         """
         A rectangular mesh of elements.
 
@@ -714,7 +714,7 @@ class RectangleMesh(Mesh):
         else: self.y_control = y_control
 
         self.element_type = element_type
-        self.openings: Dict[str, RectOpening] = {}
+        self.openings: dict[str, RectOpening] = {}
     
     def generate(self) -> None:
 
@@ -1054,7 +1054,7 @@ class AnnulusMesh(Mesh):
     """
 
     def __init__(self, mesh_size: float, outer_radius: float, inner_radius: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1,
-        ky_mod: float = 1, origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
+        ky_mod: float = 1, origin: list[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
 
         """Annular (donut) mesh between inner and outer radii.
 
@@ -1179,7 +1179,7 @@ class AnnulusRingMesh(Mesh):
     """
 
     def __init__(self, outer_radius: float, inner_radius: float, num_quads: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
-                 origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
+                 origin: list[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
 
         """Single annular ring of quads between two radii.
 
@@ -1331,7 +1331,7 @@ class AnnulusTransRingMesh(Mesh):
     A mesh of quadrilaterals forming an annular ring (a donut) with the mesh transitioning to a finer on the outer edge.
     """
 
-    def __init__(self, outer_radius: float, inner_radius: float, num_inner_quads: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1, origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
+    def __init__(self, outer_radius: float, inner_radius: float, num_inner_quads: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1, origin: list[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
         """Creates an annular ring (a donut) with the mesh transitioning to a finer mesh on the outer edge
 
         :param outer_radius: The outer radius of the annular ring.
@@ -1527,7 +1527,7 @@ class FrustrumMesh(AnnulusMesh):
     """
 
     def __init__(self, mesh_size: float, large_radius: float, small_radius: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
-                 origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
+                 origin: list[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1') -> None:
         """Conical frustum mesh generated from an annulus and then tapered to height.
 
         :param mesh_size: Target element size for the base annulus.
@@ -1600,7 +1600,7 @@ class FrustrumMesh(AnnulusMesh):
 #%%
 class CylinderMesh(Mesh):
 
-    def __init__(self, mesh_size: float, radius: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1', num_elements: int | None = None, element_type: str = 'Quad') -> None:
+    def __init__(self, mesh_size: float, radius: float, height: float, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,origin: list[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1', num_elements: int | None = None, element_type: str = 'Quad') -> None:
 
         """Cylindrical shell mesh.
 
@@ -1775,7 +1775,7 @@ class CylinderRingMesh(Mesh):
     """
 
     def __init__(self, radius: float, height: float, num_elements: int, thickness: float, material_name: str, model: FEModel3D, kx_mod: float = 1, ky_mod: float = 1,
-                 origin: List[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1',
+                 origin: list[float] = [0, 0, 0], axis: str = 'Y', start_node: str = 'N1', start_element: str = 'Q1',
                  element_type: str = 'Quad') -> None:
 
         super().__init__(thickness, material_name, model, kx_mod, ky_mod, start_node=start_node, start_element=start_element)
@@ -1917,7 +1917,7 @@ class CylinderRingMesh(Mesh):
         # Flag the mesh as generated
         self.is_generated = True
         
-def check_mesh_integrity(mesh: Mesh, console_log: bool = True) -> Union[str, List[str], None]:
+def check_mesh_integrity(mesh: Mesh, console_log: bool = True) -> str | list[str] | None:
     """Runs basic integrity checks to ensure the mesh is in sync with its model. Usually you don't
     want to run this check unless the mesh has been generated since generating the mesh is what
     syncs it to the model.

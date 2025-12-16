@@ -32,7 +32,7 @@ class Quad3D():
                  ky_mod: float = 1.0):
 
         self.name: str = name
-        self.ID: Optional[int] = None
+        self.ID: int | None = None
         self.type: str = 'Quad'
 
         self.i_node: Node3D = i_node
@@ -44,7 +44,7 @@ class Quad3D():
         self.kx_mod: float = kx_mod
         self.ky_mod: float = ky_mod
 
-        self.pressures: List[Tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
+        self.pressures: list[tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
 
         # Quads need a link to the model they belong to
         self.model: FEModel3D = model
@@ -151,7 +151,7 @@ class Quad3D():
         else:
             raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
 
-    def dir_cos(self, k: Literal[5, 6, 7, 8]) -> Tuple[float, float]:
+    def dir_cos(self, k: Literal[5, 6, 7, 8]) -> tuple[float, float]:
 
         L_k = self.L_k(k)
 

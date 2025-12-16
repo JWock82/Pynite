@@ -77,7 +77,7 @@ class VTKWriter:
         node_names.SetName("Name")
 
         node_cells = vtk.vtkCellArray()
-        node_ids: Dict[str, int] = {}
+        node_ids: dict[str, int] = {}
         for node in self.model.nodes.values():
             point_id = points.InsertNextPoint(node.X, node.Y, node.Z)
             node_ids[node.name] = point_id
@@ -127,8 +127,8 @@ class VTKWriter:
                 moments.InsertTuple3(node_id, node.RxnMX[combo], node.RxnMY[combo], node.RxnMZ[combo])
 
                 # calculate the NodeLoad for each node
-                fl: Dict[str,float] = {"X":0,"Y":0,"Z":0}
-                ml: Dict[str,float] = {"X":0,"Y":0,"Z":0}
+                fl: dict[str,float] = {"X":0,"Y":0,"Z":0}
+                ml: dict[str,float] = {"X":0,"Y":0,"Z":0}
                 for (f_or_m, direction), magnitude, case in node.NodeLoads:
                     if f_or_m == "F":
                         fl[direction] += magnitude
@@ -167,7 +167,7 @@ class VTKWriter:
         #### CREATE LINE CELLS ####
         # each (sub)member is further subdivided into line segments
         lines = vtk.vtkCellArray()
-        submembers: List[Tuple[Tuple[float, float], Member3D, vtk.vtkLine]] = []
+        submembers: list[tuple[tuple[float, float], Member3D, vtk.vtkLine]] = []
         for member in self.model.members.values():
             if len(member.sub_members) == 0:
                 # The model has not been analyzed yet. Only add straight lines between the nodes
@@ -332,7 +332,7 @@ class VTKWriter:
         quads = vtk.vtkCellArray() # this holds all cell data. A cell is in this case the vtkBiQuadraticQuads
 
         # keeps track of all vtk subquads for every Pynite Quad by name
-        quad_references: Dict[str, List[vtk.vtkBiQuadraticQuad]] = {}
+        quad_references: dict[str, list[vtk.vtkBiQuadraticQuad]] = {}
 
         # this loops through every Pynite quad and creates 4 vtkBiQuadraticQuad elements and their point data
         for quad in self.model.quads.values():

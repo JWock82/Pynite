@@ -1,4 +1,3 @@
-
 import unittest
 from Pynite import FEModel3D
 from Pynite.VTKWriter import VTKWriter

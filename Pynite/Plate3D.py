@@ -46,7 +46,7 @@ class Plate3D():
         """
 
         self.name: str = name
-        self.ID: Optional[int] = None
+        self.ID: int | None = None
         self.type: str = 'Rect'
 
         self.i_node: Node3D = i_node
@@ -59,7 +59,7 @@ class Plate3D():
         self.kx_mod: float = kx_mod
         self.ky_mod: float = ky_mod
 
-        self.pressures: List[Tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
+        self.pressures: list[tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
 
         # Plates need a link to the model they belong to
         self.model: FEModel3D = model

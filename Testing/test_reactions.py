@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from Pynite import FEModel3D
 
 
