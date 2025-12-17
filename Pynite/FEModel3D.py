@@ -20,13 +20,12 @@ from Pynite.MatFoundation import MatFoundation
 from Pynite import Analysis
 
 if TYPE_CHECKING:
-    from typing import Dict, List
     from numpy import float64
     from numpy.typing import NDArray
 
 
 # %%
-class FEModel3D():
+class FEModel3D:
     """A 3D finite element model object. This object has methods and dictionaries to create, store,
        and retrieve results from a finite element model.
     """
@@ -39,28 +38,28 @@ class FEModel3D():
         # the data types they store, and then those types will be removed. This will give us the
         # ability to get type-based hints when using the dictionaries.
 
-        self.nodes: Dict[str, Node3D] = {}             # A dictionary of the model's nodes
-        self.materials: Dict[str, Material] = {}       # A dictionary of the model's materials
-        self.sections: Dict[str, Section] = {}         # A dictonary of the model's cross-sections
-        self.springs: Dict[str, Spring3D] = {}         # A dictionary of the model's springs
-        self.members: Dict[str, PhysMember] = {}       # A dictionary of the model's physical members
-        self.quads: Dict[str, Quad3D] = {}             # A dictionary of the model's quadiralterals
-        self.plates: Dict[str, Plate3D] = {}           # A dictionary of the model's rectangular plates
-        self.meshes: Dict[str, Mesh] = {}              # A dictionary of the model's meshes
-        self.shear_walls: Dict[str, ShearWall] = {}    # A dictionary of the model's shear walls
-        self.mats: Dict[str, MatFoundation] = {}       # A dictionary of the model's mat foundations
-        self.load_combos: Dict[str, LoadCombo] = {}    # A dictionary of the model's load combinations
-        self._D: Dict[str, NDArray[float64]] = {}      # A dictionary of the model's nodal displacements by load combination
+        self.nodes: dict[str, Node3D] = {}             # A dictionary of the model's nodes
+        self.materials: dict[str, Material] = {}       # A dictionary of the model's materials
+        self.sections: dict[str, Section] = {}         # A dictonary of the model's cross-sections
+        self.springs: dict[str, Spring3D] = {}         # A dictionary of the model's springs
+        self.members: dict[str, PhysMember] = {}       # A dictionary of the model's physical members
+        self.quads: dict[str, Quad3D] = {}             # A dictionary of the model's quadiralterals
+        self.plates: dict[str, Plate3D] = {}           # A dictionary of the model's rectangular plates
+        self.meshes: dict[str, Mesh] = {}              # A dictionary of the model's meshes
+        self.shear_walls: dict[str, ShearWall] = {}    # A dictionary of the model's shear walls
+        self.mats: dict[str, MatFoundation] = {}       # A dictionary of the model's mat foundations
+        self.load_combos: dict[str, LoadCombo] = {}    # A dictionary of the model's load combinations
+        self._D: dict[str, NDArray[float64]] = {}      # A dictionary of the model's nodal displacements by load combination
 
         self.solution: str | None = None  # Indicates the solution type for the latest run of the model
 
     @property
-    def load_cases(self) -> List[str]:
+    def load_cases(self) -> list[str]:
         """Returns a list of all the load cases in the model (in alphabetical order).
         """
 
         # Create an empty list of load cases
-        cases: List[str] = []
+        cases: list[str] = []
 
         # Step through each node
         for node in self.nodes.values():
@@ -756,7 +755,7 @@ class FEModel3D():
         # Return the mesh's name
         return name
 
-    def add_shear_wall(self, name: str, mesh_size: float, length: float, height: float, thickness: float, material_name: str, ky_mod: float = 0.35, plane: Literal['XY', 'YZ'] = 'XY', origin: List[float] = [0, 0, 0]):
+    def add_shear_wall(self, name: str, mesh_size: float, length: float, height: float, thickness: float, material_name: str, ky_mod: float = 0.35, plane: Literal['XY', 'YZ'] = 'XY', origin: list[float] = [0, 0, 0]):
         """Adds a meshed shear wall helper to the model.
 
         The shear wall utility generates a regular mesh for a rectangular wall panel and

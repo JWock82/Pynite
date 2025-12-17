@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Nov  2 18:04:56 2017
 
@@ -8,17 +7,16 @@ from __future__ import annotations  # Allows more recent type hints features
 # %%
 from numpy import zeros
 
-from typing import List, Tuple, Dict, Optional,TYPE_CHECKING
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
 
-    from typing import Dict, List, Tuple, Optional
 
     from numpy.typing import NDArray
 
     from Pynite.FEModel3D import FEModel3D
 
 
-class Node3D():
+class Node3D:
     """
     A class representing a node in a 3D finite element model.
     """
@@ -26,29 +24,29 @@ class Node3D():
     def __init__(self, model: FEModel3D, name: str, X: float, Y: float, Z: float):
 
         self.name = name                 # A unique name for the node assigned by the user
-        self.ID: Optional[int] = None    # A unique index number for the node assigned by the program
+        self.ID: int | None = None    # A unique index number for the node assigned by the program
 
         self.X = X          # Global X coordinate
         self.Y = Y          # Global Y coordinate
         self.Z = Z          # Global Z coordinate
 
-        self.NodeLoads: List[Tuple[str, float, str]] = []  # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
+        self.NodeLoads: list[tuple[str, float, str]] = []  # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
 
         # Initialize the dictionaries of calculated node displacements
-        self.DX: Dict[str, float] = {}
-        self.DY: Dict[str, float] = {}
-        self.DZ: Dict[str, float] = {}
-        self.RX: Dict[str, float] = {}
-        self.RY: Dict[str, float] = {}
-        self.RZ: Dict[str, float] = {}
+        self.DX: dict[str, float] = {}
+        self.DY: dict[str, float] = {}
+        self.DZ: dict[str, float] = {}
+        self.RX: dict[str, float] = {}
+        self.RY: dict[str, float] = {}
+        self.RZ: dict[str, float] = {}
 
         # Initialize the dictionaries of calculated node reactions
-        self.RxnFX: Dict[str, float] = {}
-        self.RxnFY: Dict[str, float] = {}
-        self.RxnFZ: Dict[str, float] = {}
-        self.RxnMX: Dict[str, float] = {}
-        self.RxnMY: Dict[str, float] = {}
-        self.RxnMZ: Dict[str, float] = {}
+        self.RxnFX: dict[str, float] = {}
+        self.RxnFY: dict[str, float] = {}
+        self.RxnFZ: dict[str, float] = {}
+        self.RxnMX: dict[str, float] = {}
+        self.RxnMY: dict[str, float] = {}
+        self.RxnMZ: dict[str, float] = {}
 
         # Initialize all support conditions to `False`
         self.support_DX: bool = False
@@ -59,12 +57,12 @@ class Node3D():
         self.support_RZ: bool = False
 
         # Inititialize all support springs
-        self.spring_DX: List[float | str | bool | None] = [None, None, None]  # [stiffness, direction, active]
-        self.spring_DY: List[float | str | bool | None] = [None, None, None]
-        self.spring_DZ: List[float | str | bool | None] = [None, None, None]
-        self.spring_RX: List[float | str | bool | None] = [None, None, None]
-        self.spring_RY: List[float | str | bool | None] = [None, None, None]
-        self.spring_RZ: List[float | str | bool | None] = [None, None, None]
+        self.spring_DX: list[float | str | bool | None] = [None, None, None]  # [stiffness, direction, active]
+        self.spring_DY: list[float | str | bool | None] = [None, None, None]
+        self.spring_DZ: list[float | str | bool | None] = [None, None, None]
+        self.spring_RX: list[float | str | bool | None] = [None, None, None]
+        self.spring_RY: list[float | str | bool | None] = [None, None, None]
+        self.spring_RZ: list[float | str | bool | None] = [None, None, None]
 
         # Initialize all enforced displacements to `None`
         self.EnforcedDX: float | None = None
@@ -75,14 +73,14 @@ class Node3D():
         self.EnforcedRZ: float | None = None
 
         # Initialize the color contour value for the node. This will be used for contour smoothing.
-        self.contour: List[float] = []
+        self.contour: list[float] = []
 
         # The 'Node3D' object will store results for one load combination at a time. 
 
         # Adding a link to the model that Nodes belong to 
         self.model: FEModel3D = model
 
-    def distance(self, other: 'Node3D') -> float:
+    def distance(self, other: Node3D) -> float:
         """
         Returns the distance to another node.
 

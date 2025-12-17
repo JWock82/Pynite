@@ -1,6 +1,7 @@
 from __future__ import annotations # Allows more recent type hints features
 import warnings
-from typing import TYPE_CHECKING, Callable, List
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 import numpy as np
 import pyvista as pv
@@ -8,7 +9,6 @@ import math
 
 # For type checking only - these imports are only used during type checking
 if TYPE_CHECKING:
-    from typing import List, Union, Tuple, Optional
     from Pynite.Node3D import Node3D
     from Pynite.Member3D import Member3D
     from Pynite.Spring3D import Spring3D
@@ -26,7 +26,7 @@ class Renderer:
     """Used to render finite element models.
     """
 
-    scalar: Optional[str] = None
+    scalar: str | None = None
 
     def __init__(self, model: FEModel3D) -> None:
 
@@ -38,9 +38,9 @@ class Renderer:
         self._deformed_scale: float = 30.0
         self._render_nodes: bool = True
         self._render_loads: bool = True
-        self._color_map: Optional[str] = None
-        self._combo_name: Optional[str] = 'Combo 1'
-        self._case: Optional[str] = None
+        self._color_map: str | None = None
+        self._combo_name: str | None = 'Combo 1'
+        self._case: str | None = None
         self._labels: bool = True
         self._scalar_bar: bool = False
         self._scalar_bar_text_size: int = 24
@@ -50,7 +50,7 @@ class Renderer:
         # This is added because `self.update()` clears the plotter, removing user self.plotter configurations.
         # Functions in this list run after Pynite adds actors, allowing further PyVista customizations 
         # (e.g., grid, axes) before render. Each func in this list must accept a `pyvista.Plotter` argument.
-        self.post_update_callbacks: List[Callable[[pv.Plotter], None]] = []
+        self.post_update_callbacks: list[Callable[[pv.Plotter], None]] = []
 
         self.plotter: pv.Plotter = pv.Plotter()
         self.plotter.set_background('white')  # Setting background color
@@ -61,12 +61,12 @@ class Renderer:
         self.plotter.set_viewup((0, 1, 0))  # Set the Y axis to vertical for 3D plots
 
         # Initialize load labels
-        self._load_label_points: List[List[float]] = []
-        self._load_labels: List[Union[str, float, int]] = []
+        self._load_label_points: list[list[float]] = []
+        self._load_labels: list[str | float | int] = []
 
         # Initialize spring labels
-        self._spring_label_points: List[List[float]] = []
-        self._spring_labels: List[str] = []
+        self._spring_label_points: list[list[float]] = []
+        self._spring_labels: list[str] = []
 
     @property
     def window_width(self) -> int:
@@ -127,28 +127,28 @@ class Renderer:
         self._render_loads = render_loads
     
     @property
-    def color_map(self) -> Optional[str]:
+    def color_map(self) -> str | None:
         return self._color_map
     
     @color_map.setter
-    def color_map(self, color_map: Optional[str]) -> None:
+    def color_map(self, color_map: str | None) -> None:
         self._color_map = color_map
     
     @property
-    def combo_name(self) -> Optional[str]:
+    def combo_name(self) -> str | None:
         return self._combo_name
     
     @combo_name.setter
-    def combo_name(self, combo_name: Optional[str]) -> None:
+    def combo_name(self, combo_name: str | None) -> None:
         self._combo_name = combo_name
         self._case = None
 
     @property
-    def case(self) -> Optional[str]:
+    def case(self) -> str | None:
         return self._case
 
     @case.setter
-    def case(self, case: Optional[str]) -> None:
+    def case(self, case: str | None) -> None:
         self._case = case
         self._combo_name = None
 
@@ -619,7 +619,7 @@ class Renderer:
         self._spring_label_points.append([(Xi + Xj) / 2, (Yi + Yj) / 2, (Zi + Zj) / 2])
 
             
-    def plot_plates(self, deformed_shape: bool, deformed_scale: float, color_map: Optional[str], combo_name: Optional[str]) -> None:
+    def plot_plates(self, deformed_shape: bool, deformed_scale: float, color_map: str | None, combo_name: str | None) -> None:
         
         # Start a list of vertices
         plate_vertices = []
@@ -774,8 +774,8 @@ class Renderer:
                 line = pv.Line(D_plot[i], D_plot[i+1])
                 self.plotter.add_mesh(line, color='red', line_width=2)
 
-    def plot_pt_load(self, position: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray], 
-                    length: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
+    def plot_pt_load(self, position: tuple[float, float, float], direction: tuple[float, float, float] | np.ndarray, 
+                    length: float, label_text: str | float | int | None = None, color: str = 'green') -> None:
 
         # Create a unit vector in the direction of the 'direction' vector
         unitVector = direction/np.linalg.norm(direction)
@@ -812,9 +812,9 @@ class Renderer:
         # Plot the shaft
         self.plotter.add_mesh(shaft, line_width=2, color=color)                         
 
-    def plot_dist_load(self, position1: Tuple[float, float, float], position2: Tuple[float, float, float], 
-                      direction: Union[np.ndarray, Tuple[float, float, float]], length1: float, length2: float,
-                      label_text1: Optional[Union[str, float, int]], label_text2: Optional[Union[str, float, int]], 
+    def plot_dist_load(self, position1: tuple[float, float, float], position2: tuple[float, float, float], 
+                      direction: np.ndarray | tuple[float, float, float], length1: float, length2: float,
+                      label_text1: str | float | int | None, label_text2: str | float | int | None, 
                       color: str = 'green') -> None:
 
         # Calculate the length of the distributed load
@@ -865,8 +865,8 @@ class Renderer:
         # Combine all geometry into a single PolyData object
         self.plotter.add_mesh(tail_line, color=color)
 
-    def plot_moment(self, center: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray], 
-                    radius: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
+    def plot_moment(self, center: tuple[float, float, float], direction: tuple[float, float, float] | np.ndarray, 
+                    radius: float, label_text: str | float | int | None = None, color: str = 'green') -> None:
 
         # Convert the direction vector into a unit vector
         v1 = direction/np.linalg.norm(direction)

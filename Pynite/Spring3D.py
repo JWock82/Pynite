@@ -7,13 +7,12 @@ from Pynite.LoadCombo import LoadCombo
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Optional
     from numpy import float64
     from numpy.typing import NDArray
     from Pynite.Node3D import Node3D
 
 # %%
-class Spring3D():
+class Spring3D:
     """A class representing a 3D spring element in a finite element model.
     """
 
@@ -22,24 +21,24 @@ class Spring3D():
 
 #%%
     def __init__(self, name: str, i_node: Node3D, j_node: Node3D, ks: float, 
-                 LoadCombos: Dict[str, LoadCombo] = {'Combo 1': LoadCombo('Combo 1', factors={'Case 1': 1.0})},
+                 LoadCombos: dict[str, LoadCombo] = {'Combo 1': LoadCombo('Combo 1', factors={'Case 1': 1.0})},
                  tension_only: bool = False, comp_only: bool = False) -> None:
         '''
         Initializes a new spring.
         '''
         self.name: str = name      # A unique name for the spring given by the user
-        self.ID: Optional[int] = None        # Unique index number for the spring assigned by the program
+        self.ID: int | None = None        # Unique index number for the spring assigned by the program
         self.i_node: Node3D = i_node  # The spring's i-node
         self.j_node: Node3D = j_node  # The spring's j-node
         self.ks: float = ks          # The spring constant (force/displacement)
-        self.load_combos: Dict[str, LoadCombo] = LoadCombos # The dictionary of load combinations in the model this spring belongs to
+        self.load_combos: dict[str, LoadCombo] = LoadCombos # The dictionary of load combinations in the model this spring belongs to
         self.tension_only: bool = tension_only # Indicates whether the spring is tension-only
         self.comp_only: bool = comp_only # Indicates whether the spring is compression-only
 
         # Springs need to track whether they are active or not for any given load combination.
         # They may become inactive for a load combination during a tension/compression-only
         # analysis. This dictionary will be used when the model is solved.
-        self.active: Dict[str, bool] = {} # Key = load combo name, Value = True or False
+        self.active: dict[str, bool] = {} # Key = load combo name, Value = True or False
 
 #%%
     def L(self) -> float:

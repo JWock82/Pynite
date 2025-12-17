@@ -8,13 +8,13 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     from Pynite.FEModel3D import FEModel3D
 
-class Section():
+class Section:
     """
     A class representing a section assigned to a Member3D element in a finite element model.
 
     This class stores all properties related to the geometry of the member
     """
-    def __init__(self, model: 'FEModel3D', name: str, A: float, Iy: float, Iz: float, J: float) -> None:
+    def __init__(self, model: FEModel3D, name: str, A: float, Iy: float, Iz: float, J: float) -> None:
         """
         :param model: The finite element model to which this section belongs
         :type model: FEModel3D
@@ -29,7 +29,7 @@ class Section():
         :param J: The torsion constant of the section
         :type J: float
         """        
-        self.model: 'FEModel3D' = model
+        self.model: FEModel3D = model
         self.name: str = name
         self.A: float = A
         self.Iy: float = Iy
@@ -81,7 +81,7 @@ class Section():
 
 class SteelSection(Section):
 
-    def __init__(self, model: 'FEModel3D', name: str, A: float, Iy: float, Iz: float, J: float, 
+    def __init__(self, model: FEModel3D, name: str, A: float, Iy: float, Iz: float, J: float, 
                  Zy: float, Zz: float, material_name: str) -> None:
         """
         Initialize a steel section

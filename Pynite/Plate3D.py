@@ -1,5 +1,5 @@
 from __future__ import annotations # Allows more recent type hints features
-from typing import List, Tuple, Optional,TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from numpy import zeros, array, matmul, cross, add
 from numpy.linalg import inv, norm, det
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from Pynite.Node3D import Node3D
 
 #%%
-class Plate3D():
+class Plate3D:
 
     def __init__(self, name: str, i_node: Node3D, j_node: Node3D, m_node: Node3D, n_node: Node3D, 
                  t: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0,
@@ -46,7 +46,7 @@ class Plate3D():
         """
 
         self.name: str = name
-        self.ID: Optional[int] = None
+        self.ID: int | None = None
         self.type: str = 'Rect'
 
         self.i_node: Node3D = i_node
@@ -59,7 +59,7 @@ class Plate3D():
         self.kx_mod: float = kx_mod
         self.ky_mod: float = ky_mod
 
-        self.pressures: List[Tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
+        self.pressures: list[tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
 
         # Plates need a link to the model they belong to
         self.model: FEModel3D = model

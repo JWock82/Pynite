@@ -1,11 +1,10 @@
 from __future__ import annotations # Allows more recent type hints features
-from typing import Dict, List
 
-class LoadCombo():
+class LoadCombo:
     """A class that stores all the information necessary to define a load combination.
     """
 
-    def __init__(self, name: str, combo_tags: List[str] | None = None, factors: Dict[str, float] = {}) -> None:
+    def __init__(self, name: str, combo_tags: list[str] | None = None, factors: dict[str, float] = {}) -> None:
         """Initializes a new load combination.
 
         :param name: A unique name for the load combination.
@@ -17,8 +16,8 @@ class LoadCombo():
         """
         
         self.name: str = name             # A unique user-defined name for the load combination
-        self.combo_tags: List[str] | None = combo_tags   # Used to categorize the load combination (e.g. strength or serviceability)
-        self.factors: Dict[str, float] = factors       # A dictionary containing each load case name and associated load factor
+        self.combo_tags: list[str] | None = combo_tags   # Used to categorize the load combination (e.g. strength or serviceability)
+        self.factors: dict[str, float] = factors       # A dictionary containing each load case name and associated load factor
     
     def AddLoadCase(self, case_name: str, factor: float) -> None:
         '''
