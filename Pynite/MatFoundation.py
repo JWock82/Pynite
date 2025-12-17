@@ -29,7 +29,20 @@ class MatFoundation(RectangleMesh):
     This class specializes ``RectangleMesh`` for mats by tracking point loads defined in the mat's local X-Z plane and by assigning vertical soil springs to each generated node based on tributary area and a supplied modulus of subgrade reaction ``ks``.
     """
 
-    def __init__(self, name, mesh_size, length_X, length_Z, thickness, material_name, model, ks, origin=[0, 0, 0], x_control=None, y_control=None):
+    def __init__(
+        self,
+        name,
+        mesh_size,
+        length_X,
+        length_Z,
+        thickness,
+        material_name,
+        model,
+        ks,
+        origin=[0, 0, 0],
+        x_control=None,
+        y_control=None,
+    ):
         """Initialize a new mat foundation mesh.
 
         :param str name: Unique name for the mat mesh within the model.
@@ -46,7 +59,20 @@ class MatFoundation(RectangleMesh):
         :rtype: None
         """
 
-        super().__init__(mesh_size, length_X, length_Z, thickness, material_name, model, 1, 1, origin, 'XZ', x_control, y_control)
+        super().__init__(
+            mesh_size,
+            length_X,
+            length_Z,
+            thickness,
+            material_name,
+            model,
+            1,
+            1,
+            origin,
+            "XZ",
+            x_control,
+            y_control,
+        )
 
         self.name = name
         self.ks = ks
@@ -68,7 +94,7 @@ class MatFoundation(RectangleMesh):
 
         super().add_rect_opening(name, X_min, Z_min, X_max - X_min, Z_max - Z_min)
 
-    def add_mat_pt_load(self, XZ_coord, direction, magnitude, case='Case 1'):
+    def add_mat_pt_load(self, XZ_coord, direction, magnitude, case="Case 1"):
         """Register a concentrated load at an X-Z coordinate on the mat.
 
         Loads are stored until ``generate()`` is called, at which time they are applied to the node that coincides with the specified coordinate. The given X and Z are also inserted as mesh control points to ensure a node exists at the target location.
@@ -106,28 +132,38 @@ class MatFoundation(RectangleMesh):
         # Add point loads to the model
         for node in self.nodes.values():
             for pt_load in self.pt_loads:
-                if np.isclose(node.X, pt_load[0][0]) and np.isclose(node.Z, pt_load[0][1]):
-                    self.model.add_node_load(node.name, pt_load[1], pt_load[2], pt_load[3])
+                if np.isclose(node.X, pt_load[0][0]) and np.isclose(
+                    node.Z, pt_load[0][1]
+                ):
+                    self.model.add_node_load(
+                        node.name, pt_load[1], pt_load[2], pt_load[3]
+                    )
 
         # Step through each node in the mat
         for node in self.nodes.values():
-
             # Initialize the tributary area to the node to zero
             trib = 0
 
             # Step through each plate in the model
             for plate in self.elements.values():
-
                 # Determine if the plate is attached to the node
-                if node.name in [plate.i_node.name, plate.j_node.name, plate.m_node.name, plate.n_node.name]:
-
+                if node.name in [
+                    plate.i_node.name,
+                    plate.j_node.name,
+                    plate.m_node.name,
+                    plate.n_node.name,
+                ]:
                     # Add 1/4 the plate's area to the tributary area to the node
-                    trib += abs(plate.j_node.X - plate.i_node.X)*abs(plate.m_node.Z - plate.j_node.Z)/4
+                    trib += (
+                        abs(plate.j_node.X - plate.i_node.X)
+                        * abs(plate.m_node.Z - plate.j_node.Z)
+                        / 4
+                    )
 
             # Add a soil spring to the node
-            self.model.def_support_spring(node.name, 'DY', self.ks*trib, '-')
+            self.model.def_support_spring(node.name, "DY", self.ks * trib, "-")
 
-    def soil_pressure(self, x, y, combo_name: str = 'Combo 1'):
+    def soil_pressure(self, x, y, combo_name: str = "Combo 1"):
         """Return the soil contact pressure at a point in the mat.
 
         The mat is modeled on Winkler springs, so contact pressure at a point is taken as the surrounding nodal vertical reactions divided by their tributary areas, bilinearly interpolated within the plate element that contains the point.
@@ -146,13 +182,18 @@ class MatFoundation(RectangleMesh):
         def plate_area(plate):
             length_x = abs(plate.j_node.X - plate.i_node.X)
             length_y = abs(plate.n_node.Z - plate.i_node.Z)
-            return length_x*length_y
+            return length_x * length_y
 
         # Helper: tributary area for a node (sum 1/4 of connected plate areas)
         def tributary_area(node):
             area = 0.0
             for plate in self.elements.values():
-                if node.name in (plate.i_node.name, plate.j_node.name, plate.m_node.name, plate.n_node.name):
+                if node.name in (
+                    plate.i_node.name,
+                    plate.j_node.name,
+                    plate.m_node.name,
+                    plate.n_node.name,
+                ):
                     area += plate_area(plate) / 4.0
             return area
 
@@ -164,7 +205,12 @@ class MatFoundation(RectangleMesh):
             Xmin, Xmax = min(X_vals), max(X_vals)
             Zmin, Zmax = min(Z_vals), max(Z_vals)
             # Include boundary points with small tolerance
-            if (x >= Xmin - 1e-9) and (x <= Xmax + 1e-9) and (y >= Zmin - 1e-9) and (y <= Zmax + 1e-9):
+            if (
+                (x >= Xmin - 1e-9)
+                and (x <= Xmax + 1e-9)
+                and (y >= Zmin - 1e-9)
+                and (y <= Zmax + 1e-9)
+            ):
                 containing_plate = plate
                 break
 
@@ -174,7 +220,9 @@ class MatFoundation(RectangleMesh):
 
         # Ensure reactions exist for this combo
         if self.model.solution is None:
-            raise RuntimeError(f'No nodal reactions found for combination {combo_name!r}. Run analysis first.')
+            raise RuntimeError(
+                f"No nodal reactions found for combination {combo_name!r}. Run analysis first."
+            )
 
         # Compute nodal pressures at each node on the containing plate = RxnFY / tributary area
         Rxn_i = containing_plate.i_node.RxnFY[combo_name]
@@ -187,15 +235,15 @@ class MatFoundation(RectangleMesh):
         trib_m = tributary_area(containing_plate.m_node)
         trib_n = tributary_area(containing_plate.n_node)
 
-        p_i = Rxn_i/trib_i
-        p_j = Rxn_j/trib_j
-        p_m = Rxn_m/trib_m
-        p_n = Rxn_n/trib_n
+        p_i = Rxn_i / trib_i
+        p_j = Rxn_j / trib_j
+        p_m = Rxn_m / trib_m
+        p_n = Rxn_n / trib_n
 
         # Use bilinear interpolation for the point lying between the nodes
         # xi and eta measure distance from the i node in the local x and y direction in terms of the element's length in each direction
-        xi_denom = (containing_plate.j_node.X - containing_plate.i_node.X)
-        eta_denom = (containing_plate.n_node.Z - containing_plate.i_node.Z)
+        xi_denom = containing_plate.j_node.X - containing_plate.i_node.X
+        eta_denom = containing_plate.n_node.Z - containing_plate.i_node.Z
 
         xi = (x - containing_plate.i_node.X) / xi_denom
         eta = (y - containing_plate.i_node.Z) / eta_denom
@@ -211,5 +259,5 @@ class MatFoundation(RectangleMesh):
         N_n = (1 - xi) * eta
 
         # Calculate and return the interpolated pressure
-        p = N_i*p_i + N_j*p_j + N_m*p_m + N_n*p_n
+        p = N_i * p_i + N_j * p_j + N_m * p_m + N_n * p_n
         return p

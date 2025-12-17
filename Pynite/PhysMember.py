@@ -1,9 +1,8 @@
-from __future__ import annotations # Allows more recent type hints features
+from __future__ import annotations  # Allows more recent type hints features
 from typing import Dict, List, Literal, Tuple, TYPE_CHECKING
 from Pynite.Member3D import Member3D
 
 if TYPE_CHECKING:
-
     from Pynite.Node3D import Node3D
     from Pynite.FEModel3D import FEModel3D
     import numpy.typing as npt
@@ -13,6 +12,7 @@ if TYPE_CHECKING:
 from numpy import array, dot, linspace, hstack, empty
 from numpy.linalg import norm
 from math import isclose, acos
+
 
 class PhysMember(Member3D):
     """
@@ -25,11 +25,30 @@ class PhysMember(Member3D):
     # '__plt' is used to store the 'pyplot' from matplotlib once it gets imported. Setting it to 'None' for now allows us to defer importing it until it's actually needed.
     __plt = None
 
-    def __init__(self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D, material_name: str, section_name: str, rotation: float = 0.0,
-                 tension_only: bool = False, comp_only: bool = False) -> None:
-
-        super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
-        self.sub_members: Dict[str, Member3D] = {}
+    def __init__(
+        self,
+        model: FEModel3D,
+        name: str,
+        i_node: Node3D,
+        j_node: Node3D,
+        material_name: str,
+        section_name: str,
+        rotation: float = 0.0,
+        tension_only: bool = False,
+        comp_only: bool = False,
+    ) -> None:
+        super().__init__(
+            model,
+            name,
+            i_node,
+            j_node,
+            material_name,
+            section_name,
+            rotation,
+            tension_only,
+            comp_only,
+        )
+        self.sub_members: dict[str, Member3D] = {}
 
     def descritize(self) -> None:
         """
@@ -40,7 +59,7 @@ class PhysMember(Member3D):
         self.sub_members = {}
 
         # Start a new list of nodes along the member
-        int_nodes: List[Tuple[Node3D, float]] = []
+        int_nodes: list[tuple[Node3D, float]] = []
 
         # Create a vector from the i-node to the j-node
         Xi, Yi, Zi = self.i_node.X, self.i_node.Y, self.i_node.Z
@@ -74,16 +93,18 @@ class PhysMember(Member3D):
 
         # Step through each node in the model
         for node in self.model.nodes.values():
-
             # Skip the end nodes
             if node is self.i_node or node is self.j_node:
                 continue
 
             # Bounding-box reject (very fast)
             if (
-                node.X < xmin or node.X > xmax or
-                node.Y < ymin or node.Y > ymax or
-                node.Z < zmin or node.Z > zmax
+                node.X < xmin
+                or node.X > xmax
+                or node.Y < ymin
+                or node.Y > ymax
+                or node.Z < zmin
+                or node.Z > zmax
             ):
                 continue
 
@@ -114,21 +135,28 @@ class PhysMember(Member3D):
 
         # Break up the member into sub-members at each intermediate node
         for i in range(len(int_nodes) - 1):
-
             # Generate the sub-member's name (physical member name + a, b, c, etc.)
-            name = self.name + chr(i+97)
+            name = self.name + chr(i + 97)
 
             # Find the i and j nodes for the sub-member, and their positions along the physical
             # member's local x-axis
             i_node = int_nodes[i][0]
-            j_node = int_nodes[i+1][0]
+            j_node = int_nodes[i + 1][0]
             xi = int_nodes[i][1]
-            xj = int_nodes[i+1][1]
+            xj = int_nodes[i + 1][1]
 
             # Create a new sub-member
-            new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, 
-                                      self.section.name, self.rotation, self.tension_only, 
-                                      self.comp_only)
+            new_sub_member = Member3D(
+                self.model,
+                name,
+                i_node,
+                j_node,
+                self.material.name,
+                self.section.name,
+                self.rotation,
+                self.tension_only,
+                self.comp_only,
+            )
 
             # Flag the sub-member as active
             for combo_name in self.model.load_combos.keys():
@@ -142,15 +170,13 @@ class PhysMember(Member3D):
 
             # Add distributed to the sub-member
             for dist_load in self.DistLoads:
-
                 # Find the start and end points of the distributed load in the physical member's
                 # local coordinate system
                 x1_load = dist_load[3]
                 x2_load = dist_load[4]
 
                 # Determine if the distributed load should be applied to this segment
-                if x1_load <= xj and x2_load > xi: 
-
+                if x1_load <= xj and x2_load > xi:
                     direction = dist_load[0]
                     w1 = dist_load[1]
                     w2 = dist_load[2]
@@ -159,7 +185,7 @@ class PhysMember(Member3D):
 
                     # Equation describing the load as a function of x
                     # Linear interpolation of distributed load
-                    w = lambda x: (w2 - w1)/(x2_load - x1_load)*(x - x1_load) + w1
+                    w = lambda x: (w2 - w1) / (x2_load - x1_load) * (x - x1_load) + w1
 
                     # Chop up the distributed load for the sub-member
                     if x1_load > xi:
@@ -175,11 +201,12 @@ class PhysMember(Member3D):
                         w2 = w(xj)
 
                     # Add the load to the sub-member
-                    new_sub_member.DistLoads.append([direction, w1, w2, x1, x2, case, self_weight])
+                    new_sub_member.DistLoads.append(
+                        [direction, w1, w2, x1, x2, case, self_weight]
+                    )
 
             # Add point loads to the sub-member
             for pt_load in self.PtLoads:
-
                 direction = pt_load[0]
                 P = pt_load[1]
                 x = pt_load[2]
@@ -187,7 +214,6 @@ class PhysMember(Member3D):
 
                 # Determine if the point load should be applied to this segment
                 if x >= xi and x < xj or (isclose(x, xj) and isclose(xj, self.L())):
-
                     x = x - xi
 
                     # Add the load to the sub-member
@@ -196,7 +222,9 @@ class PhysMember(Member3D):
             # Add the new sub-member to the sub-member dictionary for this physical member
             self.sub_members[name] = new_sub_member
 
-    def shear(self, Direction: Literal['Fy', 'Fz'], x: float, combo_name: str = 'Combo 1') -> float:
+    def shear(
+        self, Direction: Literal["Fy", "Fz"], x: float, combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the shear at a point along the member's length.
 
@@ -215,7 +243,9 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.shear(Direction, x_mod, combo_name)
 
-    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
+    def max_shear(
+        self, Direction: Literal["Fy", "Fz"], combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the maximum shear in the member for the given direction
 
@@ -236,7 +266,9 @@ class PhysMember(Member3D):
                 Vmax = V
         return Vmax
 
-    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
+    def min_shear(
+        self, Direction: Literal["Fy", "Fz"], combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the minimum shear in the member for the given direction
 
@@ -257,7 +289,12 @@ class PhysMember(Member3D):
                 Vmin = V
         return Vmin
 
-    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_shear(
+        self,
+        Direction: Literal["Fy", "Fz"],
+        combo_name: str = "Combo 1",
+        n_points: int = 20,
+    ) -> None:
         """
         Plots the shear diagram for the member
 
@@ -276,10 +313,11 @@ class PhysMember(Member3D):
         # Import 'pyplot' if not already done
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
+
             PhysMember.__plt = plt
 
         fig, ax = PhysMember.__plt.subplots()
-        ax.axhline(0, color='black', lw=1)
+        ax.axhline(0, color="black", lw=1)
         ax.grid()
 
         # Generate the shear diagram
@@ -288,12 +326,18 @@ class PhysMember(Member3D):
         V = V_array[1]
 
         PhysMember.__plt.plot(x, V)
-        PhysMember.__plt.ylabel('Shear')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.ylabel("Shear")
+        PhysMember.__plt.xlabel("Location")
+        PhysMember.__plt.title("Member " + self.name + "\n" + combo_name)
         PhysMember.__plt.show()
 
-    def shear_array(self, Direction: Literal['Fy', 'Fz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+    def shear_array(
+        self,
+        Direction: Literal["Fy", "Fz"],
+        n_points: int,
+        combo_name="Combo 1",
+        x_array=None,
+    ) -> NDArray[float64]:
         """
         Returns the array of the shear in the physical member for the given direction
 
@@ -325,33 +369,39 @@ class PhysMember(Member3D):
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
-
             # Segment the submember into segments with mathematically continuous loads if not already done
-            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+            if (
+                submember._solved_combo is None
+                or combo_name != submember._solved_combo.name
+            ):
                 submember._segment_member(combo_name)
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
             if i == len(self.sub_members.values()) - 1:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array < x_o + submember.L())
 
             x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
-            if Direction == 'Fz':
-                v_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'shear')
-            elif Direction == 'Fy':
-                v_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'shear')
+            if Direction == "Fz":
+                v_array = self._extract_vector_results(
+                    submember.SegmentsY, x_subm_array, "shear"
+                )
+            elif Direction == "Fy":
+                v_array = self._extract_vector_results(
+                    submember.SegmentsZ, x_subm_array, "shear"
+                )
             else:
-                raise ValueError(f"Direction must be 'Fy' or 'Fz'. {Direction} was given.")
+                raise ValueError(
+                    f"Direction must be 'Fy' or 'Fz'. {Direction} was given."
+                )
 
             # Adjust from the submember's coordinate system to the physical member's coordinate system
             v_array[0] = [x_o + x for x in v_array[0]]
@@ -368,7 +418,9 @@ class PhysMember(Member3D):
         # Return the results
         return v_array2
 
-    def moment(self, Direction: Literal['My', 'Mz'], x: float, combo_name: str = 'Combo 1') -> float:
+    def moment(
+        self, Direction: Literal["My", "Mz"], x: float, combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the moment at a point along the member's length
 
@@ -387,10 +439,12 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.moment(Direction, x_mod, combo_name)
 
-    def max_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
+    def max_moment(
+        self, Direction: Literal["My", "Mz"], combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the maximum moment in the member for the given direction.
-        
+
         Parameters
         ----------
         Direction : string
@@ -408,10 +462,12 @@ class PhysMember(Member3D):
                 Mmax = M
         return Mmax
 
-    def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
+    def min_moment(
+        self, Direction: Literal["My", "Mz"], combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the minimum moment in the member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -421,7 +477,7 @@ class PhysMember(Member3D):
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         """
-        
+
         Mmin = None
         for member in self.sub_members.values():
             M = member.min_moment(Direction, combo_name)
@@ -429,7 +485,12 @@ class PhysMember(Member3D):
                 Mmin = M
         return Mmin
 
-    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_moment(
+        self,
+        Direction: Literal["My", "Mz"],
+        combo_name: str = "Combo 1",
+        n_points: int = 20,
+    ) -> None:
         """
         Plots the moment diagram for the member
 
@@ -449,10 +510,11 @@ class PhysMember(Member3D):
         # Import 'pyplot' if not already done
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
+
             PhysMember.__plt = plt
 
         fig, ax = PhysMember.__plt.subplots()
-        ax.axhline(0, color='black', lw=1)
+        ax.axhline(0, color="black", lw=1)
         ax.grid()
 
         # Generate the moment diagram
@@ -461,12 +523,18 @@ class PhysMember(Member3D):
         M = M_array[1]
 
         PhysMember.__plt.plot(x, M)
-        PhysMember.__plt.ylabel('Moment')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.ylabel("Moment")
+        PhysMember.__plt.xlabel("Location")
+        PhysMember.__plt.title("Member " + self.name + "\n" + combo_name)
         PhysMember.__plt.show()
 
-    def moment_array(self, Direction: Literal['My', 'Mz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+    def moment_array(
+        self,
+        Direction: Literal["My", "Mz"],
+        n_points: int,
+        combo_name="Combo 1",
+        x_array=None,
+    ) -> NDArray[float64]:
         """
         Returns the array of the moment in the physical member for the given direction
 
@@ -499,39 +567,45 @@ class PhysMember(Member3D):
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
-
             # Segment the submember into segments with mathematically continuous loads if not already done
-            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+            if (
+                submember._solved_combo is None
+                or combo_name != submember._solved_combo.name
+            ):
                 submember._segment_member(combo_name)
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
             if i == len(self.sub_members.values()) - 1:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array < x_o + submember.L())
 
             x_subm_array = x_array[filter] - x_o
 
             # Check if P-Delta analysis was run
-            if self.model.solution == 'P-Delta':
+            if self.model.solution == "P-Delta":
                 PDelta = True
             else:
                 PDelta = False
 
             # Check which axis is of interest
-            if Direction == 'My':
-                m_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'moment', PDelta)
-            elif Direction == 'Mz':
-                m_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'moment', PDelta)
+            if Direction == "My":
+                m_array = self._extract_vector_results(
+                    submember.SegmentsY, x_subm_array, "moment", PDelta
+                )
+            elif Direction == "Mz":
+                m_array = self._extract_vector_results(
+                    submember.SegmentsZ, x_subm_array, "moment", PDelta
+                )
             else:
-                raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+                raise ValueError(
+                    f"Direction must be 'My' or 'Mz'. {Direction} was given."
+                )
 
             # Adjust from the submember's coordinate system to the physical member's coordinate system
             m_array[0] = [x_o + x for x in m_array[0]]
@@ -548,10 +622,10 @@ class PhysMember(Member3D):
         # Return the results
         return m_array2
 
-    def torque(self, x: float, combo_name: str = 'Combo 1') -> float:
+    def torque(self, x: float, combo_name: str = "Combo 1") -> float:
         """
         Returns the torsional moment at a point along the member's length
-        
+
         Parameters
         ----------
         x : number
@@ -559,12 +633,11 @@ class PhysMember(Member3D):
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         """
-        
+
         member, x_mod = self.find_member(x)
         return member.torque(x_mod, combo_name)
 
-    def max_torque(self, combo_name: str = 'Combo 1') -> float:
-        
+    def max_torque(self, combo_name: str = "Combo 1") -> float:
         Tmax = None
         for member in self.sub_members.values():
             T = member.max_torque(combo_name)
@@ -572,7 +645,7 @@ class PhysMember(Member3D):
                 Tmax = T
         return Tmax
 
-    def min_torque(self, combo_name: str = 'Combo 1') -> float:
+    def min_torque(self, combo_name: str = "Combo 1") -> float:
         """
         Returns the minimum torsional moment in the member.
 
@@ -589,7 +662,7 @@ class PhysMember(Member3D):
                 Tmin = T
         return Tmin
 
-    def plot_torque(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_torque(self, combo_name: str = "Combo 1", n_points: int = 20) -> None:
         """
         Plots the torque diagram for the member
 
@@ -604,10 +677,11 @@ class PhysMember(Member3D):
         # Import 'pyplot' if not already done
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
+
             PhysMember.__plt = plt
 
         fig, ax = PhysMember.__plt.subplots()
-        ax.axhline(0, color='black', lw=1)
+        ax.axhline(0, color="black", lw=1)
         ax.grid()
 
         # Generate the torque diagram
@@ -616,12 +690,14 @@ class PhysMember(Member3D):
         T = T_array[1]
 
         PhysMember.__plt.plot(x, T)
-        PhysMember.__plt.ylabel('Torque')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.ylabel("Torque")
+        PhysMember.__plt.xlabel("Location")
+        PhysMember.__plt.title("Member " + self.name + "\n" + combo_name)
         PhysMember.__plt.show()
 
-    def torque_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+    def torque_array(
+        self, n_points: int, combo_name="Combo 1", x_array=None
+    ) -> NDArray[float64]:
         """
         Returns the array of the torque in the physical member.
 
@@ -649,21 +725,21 @@ class PhysMember(Member3D):
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
-
             # Segment the submember into segments with mathematically continuous loads if not already done
-            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+            if (
+                submember._solved_combo is None
+                or combo_name != submember._solved_combo.name
+            ):
                 submember._segment_member(combo_name)
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
             if i == len(self.sub_members.values()) - 1:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
-
                 # Find any points from `x_array` that lie along this submember
                 # x_subm_array = [x - x_o for x in x_array if x >= x_o and x < x_o + submember.L()]
                 filter = (x_array >= x_o) & (x_array < x_o + submember.L())
@@ -671,7 +747,9 @@ class PhysMember(Member3D):
             x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
-            t_array = self._extract_vector_results(submember.SegmentsX, x_subm_array, 'torque')
+            t_array = self._extract_vector_results(
+                submember.SegmentsX, x_subm_array, "torque"
+            )
 
             # Adjust from the submember's coordinate system to the physical member's coordinate system
             t_array[0] = [x_o + x for x in t_array[0]]
@@ -688,10 +766,10 @@ class PhysMember(Member3D):
         # Return the results
         return t_array2
 
-    def axial(self, x: float, combo_name: str = 'Combo 1') -> float:
+    def axial(self, x: float, combo_name: str = "Combo 1") -> float:
         """
         Returns the axial force at a point along the member's length.
-        
+
         Parameters
         ----------
         x : number
@@ -703,8 +781,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.axial(x_mod, combo_name)
 
-    def max_axial(self, combo_name: str = 'Combo 1') -> float:
-        
+    def max_axial(self, combo_name: str = "Combo 1") -> float:
         Pmax = None
         for member in self.sub_members.values():
             P = member.max_axial(combo_name)
@@ -712,8 +789,7 @@ class PhysMember(Member3D):
                 Pmax = P
         return Pmax
 
-    def min_axial(self, combo_name: str = 'Combo 1') -> float:
-
+    def min_axial(self, combo_name: str = "Combo 1") -> float:
         Pmin = None
         for member in self.sub_members.values():
             P = member.min_axial(combo_name)
@@ -721,7 +797,7 @@ class PhysMember(Member3D):
                 Pmin = P
         return Pmin
 
-    def plot_axial(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_axial(self, combo_name: str = "Combo 1", n_points: int = 20) -> None:
         """
         Plots the axial force diagram for the member
 
@@ -736,10 +812,11 @@ class PhysMember(Member3D):
         # Import 'pyplot' if not already done
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
+
             PhysMember.__plt = plt
 
         fig, ax = PhysMember.__plt.subplots()
-        ax.axhline(0, color='black', lw=1)
+        ax.axhline(0, color="black", lw=1)
         ax.grid()
 
         # Generate the axial force array
@@ -748,12 +825,14 @@ class PhysMember(Member3D):
         P = P_array[1]
 
         PhysMember.__plt.plot(x, P)
-        PhysMember.__plt.ylabel('Axial Force')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.ylabel("Axial Force")
+        PhysMember.__plt.xlabel("Location")
+        PhysMember.__plt.title("Member " + self.name + "\n" + combo_name)
         PhysMember.__plt.show()
 
-    def axial_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+    def axial_array(
+        self, n_points: int, combo_name="Combo 1", x_array=None
+    ) -> NDArray[float64]:
         """
         Returns the array of the axial force in the physical member.
 
@@ -781,28 +860,30 @@ class PhysMember(Member3D):
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
-
             # Segment the submember into segments with mathematically continuous loads if not already done
-            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+            if (
+                submember._solved_combo is None
+                or combo_name != submember._solved_combo.name
+            ):
                 submember._segment_member(combo_name)
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
             if i == len(self.sub_members.values()) - 1:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array < x_o + submember.L())
 
             x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
-            a_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'axial')
+            a_array = self._extract_vector_results(
+                submember.SegmentsZ, x_subm_array, "axial"
+            )
 
             # Adjust from the submember's coordinate system to the physical member's coordinate system
             a_array[0] = [x_o + x for x in a_array[0]]
@@ -815,14 +896,19 @@ class PhysMember(Member3D):
 
             # Get the starting position of the next submember
             x_o += submember.L()
-        
+
         # Return the results
         return a_array2
 
-    def deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
+    def deflection(
+        self,
+        Direction: Literal["dx", "dy", "dz"],
+        x: float,
+        combo_name: str = "Combo 1",
+    ) -> float:
         """
         Returns the deflection at a point along the member's length.
-        
+
         Parameters
         ----------
         Direction : string
@@ -839,10 +925,12 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.deflection(Direction, x_mod, combo_name)
 
-    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
+    def max_deflection(
+        self, Direction: Literal["dx", "dy", "dz"], combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the maximum deflection in the member.
-        
+
         Parameters
         ----------
         Direction : {'dy', 'dz'}
@@ -858,10 +946,12 @@ class PhysMember(Member3D):
                 dmax = d
         return dmax
 
-    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
+    def min_deflection(
+        self, Direction: Literal["dx", "dy", "dz"], combo_name: str = "Combo 1"
+    ) -> float:
         """
         Returns the minimum deflection in the member.
-        
+
         Parameters
         ----------
         Direction : {'dy', 'dz'}
@@ -877,10 +967,15 @@ class PhysMember(Member3D):
                 dmin = d
         return dmin
 
-    def rel_deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
+    def rel_deflection(
+        self,
+        Direction: Literal["dx", "dy", "dz"],
+        x: float,
+        combo_name: str = "Combo 1",
+    ) -> float:
         """
         Returns the relative deflection at a point along the member's length
-        
+
         Parameters
         ----------
 
@@ -893,11 +988,16 @@ class PhysMember(Member3D):
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
         """
-        
+
         member, x_mod = self.find_member(x)
         return member.rel_deflection(Direction, x_mod, combo_name)
 
-    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_deflection(
+        self,
+        Direction: Literal["dx", "dy", "dz"],
+        combo_name: str = "Combo 1",
+        n_points: int = 20,
+    ) -> None:
         """
         Plots the deflection diagram for the member
 
@@ -916,10 +1016,11 @@ class PhysMember(Member3D):
         # Import 'pyplot' if not already done
         if PhysMember.__plt is None:
             from matplotlib import pyplot as plt
+
             PhysMember.__plt = plt
 
         fig, ax = PhysMember.__plt.subplots()
-        ax.axhline(0, color='black', lw=1)
+        ax.axhline(0, color="black", lw=1)
         ax.grid()
 
         d_array = self.deflection_array(Direction, n_points, combo_name)
@@ -927,12 +1028,18 @@ class PhysMember(Member3D):
         d = d_array[1]
 
         PhysMember.__plt.plot(x, d)
-        PhysMember.__plt.ylabel('Deflection')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        PhysMember.__plt.ylabel("Deflection")
+        PhysMember.__plt.xlabel("Location")
+        PhysMember.__plt.title("Member " + self.name + "\n" + combo_name)
         PhysMember.__plt.show()
 
-    def deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
+    def deflection_array(
+        self,
+        Direction: Literal["dx", "dy", "dz"],
+        n_points: int,
+        combo_name="Combo 1",
+        x_array=None,
+    ) -> NDArray[float64]:
         """
         Returns the array of the deflection in the physical member for the given direction
 
@@ -967,35 +1074,43 @@ class PhysMember(Member3D):
         # Step through each submember in the physical member
         x_o = 0
         for i, submember in enumerate(self.sub_members.values()):
-
             # Segment the submember into segments with mathematically continuous loads if not already done
-            if submember._solved_combo is None or combo_name != submember._solved_combo.name:
+            if (
+                submember._solved_combo is None
+                or combo_name != submember._solved_combo.name
+            ):
                 submember._segment_member(combo_name)
                 submember._solved_combo = self.model.load_combos[combo_name]
 
             # Check if this is the last submember
             if i == len(self.sub_members.values()) - 1:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array <= x_o + submember.L())
 
             # Not the last submember
             else:
-
                 # Find any points from `x_array` that lie along this submember
                 filter = (x_array >= x_o) & (x_array < x_o + submember.L())
 
             x_subm_array = x_array[filter] - x_o
 
             # Check which axis is of interest
-            if Direction == 'dx':
-                d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'axial_deflection')
-            elif Direction == 'dy':
-                d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'deflection')
-            elif Direction == 'dz':
-                d_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'deflection')
+            if Direction == "dx":
+                d_array = self._extract_vector_results(
+                    submember.SegmentsZ, x_subm_array, "axial_deflection"
+                )
+            elif Direction == "dy":
+                d_array = self._extract_vector_results(
+                    submember.SegmentsZ, x_subm_array, "deflection"
+                )
+            elif Direction == "dz":
+                d_array = self._extract_vector_results(
+                    submember.SegmentsY, x_subm_array, "deflection"
+                )
             else:
-                raise ValueError(f"Direction must be 'dy' or 'dz'. {Direction} was given.")
+                raise ValueError(
+                    f"Direction must be 'dy' or 'dz'. {Direction} was given."
+                )
 
             # Adjust from the submember's coordinate system to the physical member's coordinate system
             d_array[0] = [x_o + x for x in d_array[0]]
@@ -1012,7 +1127,7 @@ class PhysMember(Member3D):
         # Return the results
         return d_array2
 
-    def find_member(self, x: float) -> Tuple[Member3D, float]:
+    def find_member(self, x: float) -> tuple[Member3D, float]:
         """
         Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's local coordinate system.
         """
@@ -1022,13 +1137,11 @@ class PhysMember(Member3D):
 
         # Step through each sub-member (in order from start to end)
         for i, member in enumerate(self.sub_members.values()):
-
             # Sum the sub-member's length
             L += member.L()
 
             # Check if 'x' lies on this sub-member
             if x < L or (isclose(x, L) and i == len(self.sub_members.values()) - 1):
-
                 # Return the sub-member, and a modified value for 'x' relative to the sub-member's
                 # i-node
                 return member, x - (L - member.L())

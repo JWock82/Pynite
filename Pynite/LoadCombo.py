@@ -1,11 +1,16 @@
-from __future__ import annotations # Allows more recent type hints features
+from __future__ import annotations  # Allows more recent type hints features
 from typing import Dict, List
 
-class LoadCombo():
-    """A class that stores all the information necessary to define a load combination.
-    """
 
-    def __init__(self, name: str, combo_tags: List[str] | None = None, factors: Dict[str, float] = {}) -> None:
+class LoadCombo:
+    """A class that stores all the information necessary to define a load combination."""
+
+    def __init__(
+        self,
+        name: str,
+        combo_tags: list[str] | None = None,
+        factors: dict[str, float] = {},
+    ) -> None:
         """Initializes a new load combination.
 
         :param name: A unique name for the load combination.
@@ -15,29 +20,33 @@ class LoadCombo():
         :param factors: A dictionary of load case names (`keys`) followed by their load factors (`items`). For example, the load combination 1.2D+1.6L would be represented as follows: `{'D': 1.2, 'L': 1.6}`. Defaults to {}.
         :type factors: dict, optional
         """
-        
-        self.name: str = name             # A unique user-defined name for the load combination
-        self.combo_tags: List[str] | None = combo_tags   # Used to categorize the load combination (e.g. strength or serviceability)
-        self.factors: Dict[str, float] = factors       # A dictionary containing each load case name and associated load factor
-    
+
+        self.name: str = name  # A unique user-defined name for the load combination
+        self.combo_tags: list[str] | None = (
+            combo_tags  # Used to categorize the load combination (e.g. strength or serviceability)
+        )
+        self.factors: dict[str, float] = (
+            factors  # A dictionary containing each load case name and associated load factor
+        )
+
     def AddLoadCase(self, case_name: str, factor: float) -> None:
-        '''
+        """
         Adds a load case with its associated load factor
 
         :param case_name: The name of the load case
         :type case_name: str
         :param factor: The load factor to apply to the load case
         :type factor: float
-        '''
+        """
 
         self.factors[case_name] = factor
-    
+
     def DeleteLoadCase(self, case_name: str) -> None:
-        '''
+        """
         Deletes a load case with its associated load factor
 
         :param case_name: The name of the load case to delete
         :type case_name: str
-        '''
+        """
 
         del self.factors[case_name]

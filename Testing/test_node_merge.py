@@ -103,6 +103,6 @@ def test_support_and_spring_support_merge():
 if __name__ == "__main__":
     import sys
     import pytest
+
     # Allow running this file directly for convenience
     sys.exit(pytest.main([__file__, "-q"]))
-

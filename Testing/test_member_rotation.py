@@ -4,35 +4,34 @@ import pytest as pt
 
 # Tests
 def test_beam_rotation():
-
     # Create a model
     beam = FEModel3D()
 
     # Add nodes to the model
-    beam.add_node('N1', 0, 0, 0)
-    beam.add_node('N2', 10, 0, 0)
+    beam.add_node("N1", 0, 0, 0)
+    beam.add_node("N2", 10, 0, 0)
 
     # Define supports
-    beam.def_support('N1', True, True, True, True, False, False)
-    beam.def_support('N2', False, True, True, False, False, False)
+    beam.def_support("N1", True, True, True, True, False, False)
+    beam.def_support("N2", False, True, True, False, False, False)
 
     # Add a material and section properties
-    beam.add_material('Steel', 29000/12**2, 11200/12**2, 0.3, 0.490, 60)
-    beam.add_section('W12x26', 7.65/12**2, 17.3/12**4, 204/12**4, 0.3/12**4)
+    beam.add_material("Steel", 29000 / 12**2, 11200 / 12**2, 0.3, 0.490, 60)
+    beam.add_section("W12x26", 7.65 / 12**2, 17.3 / 12**4, 204 / 12**4, 0.3 / 12**4)
 
     # Create the member and add a distributed load
     # The beam will be rotated 45 degrees about its x-axis
-    beam.add_member('M1', 'N1', 'N2', 'Steel', 'W12x26', 45)
-    beam.add_member_dist_load('M1', 'FY', -2, -2)
+    beam.add_member("M1", "N1", "N2", "Steel", "W12x26", 45)
+    beam.add_member_dist_load("M1", "FY", -2, -2)
 
     # Analyze the beam
     beam.analyze()
 
     # Obtain the max/min moment about each axis
-    Mz_max = beam.members['M1'].max_moment('Mz')
-    Mz_min = beam.members['M1'].min_moment('Mz')
-    My_max = beam.members['M1'].max_moment('My')
-    My_min = beam.members['M1'].min_moment('My')
+    Mz_max = beam.members["M1"].max_moment("Mz")
+    Mz_min = beam.members["M1"].min_moment("Mz")
+    My_max = beam.members["M1"].max_moment("My")
+    My_min = beam.members["M1"].min_moment("My")
 
     # Check the maximum and minimum moments
     # Note that the strong and weak axis have different positive moment sign conventions due to the right hand rule
@@ -43,7 +42,6 @@ def test_beam_rotation():
 
 
 def test_column_rotation():
-
     # Initialize a new model
     model = FEModel3D()
 
@@ -62,12 +60,14 @@ def test_column_rotation():
         j_node="N2",
         material_name="Steel",
         section_name="W14x90",
-        rotation=90  # Applying the 90-degree rotation
+        rotation=90,  # Applying the 90-degree rotation
     )
 
     # Define supports
     # Support at N1: Fixed in translation, released in rotation (except about Y)
-    model.def_support("N1", support_DX=True, support_DY=True, support_DZ=True, support_RY=True)
+    model.def_support(
+        "N1", support_DX=True, support_DY=True, support_DZ=True, support_RY=True
+    )
     # Support at N2: Fixed in translation, fully released in rotation
     model.def_support("N2", support_DX=True, support_DY=True, support_DZ=True)
 
@@ -78,10 +78,10 @@ def test_column_rotation():
     member_length = model.members["M2"].L()
     model.add_member_pt_load(
         member_name="M2",
-        direction="FZ",       # FZ corresponds to the Global Z-axis
-        P=-1.0,               # Magnitude of the load
+        direction="FZ",  # FZ corresponds to the Global Z-axis
+        P=-1.0,  # Magnitude of the load
         x=member_length / 2,  # Location at the midpoint
-        case="Default"
+        case="Default",
     )
 
     # Analyze the model
@@ -92,16 +92,15 @@ def test_column_rotation():
     Mz_mid = model.members["M2"].moment("Mz", member_length / 2, "Combo 1")
 
     # Check the value
-    assert round(Mz_mid, 10) == -2.5, 'Column rotation test failed (in Mz direction).'
+    assert round(Mz_mid, 10) == -2.5, "Column rotation test failed (in Mz direction)."
 
     # Check moment about My as well:
     My_mid = model.members["M2"].moment("My", member_length / 2, "Combo 1")
 
     # Check the value
-    assert round(My_mid, 10) == 0.0, 'Column rotation test failed (in My direction).'
+    assert round(My_mid, 10) == 0.0, "Column rotation test failed (in My direction)."
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     test_beam_rotation()
     test_column_rotation()

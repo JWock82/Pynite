@@ -1,16 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Nov  2 18:04:56 2017
 
 @author: D. Craig Brinck, SE
 """
+
 from __future__ import annotations  # Allows more recent type hints features
+
 # %%
 from numpy import array, zeros
 
-from typing import List, Tuple, Dict, Optional,TYPE_CHECKING
-if TYPE_CHECKING:
+from typing import List, Tuple, Dict, Optional, TYPE_CHECKING
 
+if TYPE_CHECKING:
     from typing import Dict, List, Tuple, Optional, Any, Literal
 
     from numpy import float64
@@ -20,37 +21,40 @@ if TYPE_CHECKING:
     from Pynite.LoadCombo import LoadCombo
 
 
-class Node3D():
+class Node3D:
     """
     A class representing a node in a 3D finite element model.
     """
 
     def __init__(self, model: FEModel3D, name: str, X: float, Y: float, Z: float):
+        self.name = name  # A unique name for the node assigned by the user
+        self.ID: int | None = (
+            None  # A unique index number for the node assigned by the program
+        )
 
-        self.name = name                 # A unique name for the node assigned by the user
-        self.ID: Optional[int] = None    # A unique index number for the node assigned by the program
+        self.X = X  # Global X coordinate
+        self.Y = Y  # Global Y coordinate
+        self.Z = Z  # Global Z coordinate
 
-        self.X = X          # Global X coordinate
-        self.Y = Y          # Global Y coordinate
-        self.Z = Z          # Global Z coordinate
-
-        self.NodeLoads: List[Tuple[str, float, str]] = []  # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
+        self.NodeLoads: list[
+            tuple[str, float, str]
+        ] = []  # A list of loads applied to the node (Direction, P, case) or (Direction, M, case)
 
         # Initialize the dictionaries of calculated node displacements
-        self.DX: Dict[str, float] = {}
-        self.DY: Dict[str, float] = {}
-        self.DZ: Dict[str, float] = {}
-        self.RX: Dict[str, float] = {}
-        self.RY: Dict[str, float] = {}
-        self.RZ: Dict[str, float] = {}
+        self.DX: dict[str, float] = {}
+        self.DY: dict[str, float] = {}
+        self.DZ: dict[str, float] = {}
+        self.RX: dict[str, float] = {}
+        self.RY: dict[str, float] = {}
+        self.RZ: dict[str, float] = {}
 
         # Initialize the dictionaries of calculated node reactions
-        self.RxnFX: Dict[str, float] = {}
-        self.RxnFY: Dict[str, float] = {}
-        self.RxnFZ: Dict[str, float] = {}
-        self.RxnMX: Dict[str, float] = {}
-        self.RxnMY: Dict[str, float] = {}
-        self.RxnMZ: Dict[str, float] = {}
+        self.RxnFX: dict[str, float] = {}
+        self.RxnFY: dict[str, float] = {}
+        self.RxnFZ: dict[str, float] = {}
+        self.RxnMX: dict[str, float] = {}
+        self.RxnMY: dict[str, float] = {}
+        self.RxnMZ: dict[str, float] = {}
 
         # Initialize all support conditions to `False`
         self.support_DX: bool = False
@@ -61,12 +65,16 @@ class Node3D():
         self.support_RZ: bool = False
 
         # Inititialize all support springs
-        self.spring_DX: List[float | str | bool | None] = [None, None, None]  # [stiffness, direction, active]
-        self.spring_DY: List[float | str | bool | None] = [None, None, None]
-        self.spring_DZ: List[float | str | bool | None] = [None, None, None]
-        self.spring_RX: List[float | str | bool | None] = [None, None, None]
-        self.spring_RY: List[float | str | bool | None] = [None, None, None]
-        self.spring_RZ: List[float | str | bool | None] = [None, None, None]
+        self.spring_DX: list[float | str | bool | None] = [
+            None,
+            None,
+            None,
+        ]  # [stiffness, direction, active]
+        self.spring_DY: list[float | str | bool | None] = [None, None, None]
+        self.spring_DZ: list[float | str | bool | None] = [None, None, None]
+        self.spring_RX: list[float | str | bool | None] = [None, None, None]
+        self.spring_RY: list[float | str | bool | None] = [None, None, None]
+        self.spring_RZ: list[float | str | bool | None] = [None, None, None]
 
         # Initialize all enforced displacements to `None`
         self.EnforcedDX: float | None = None
@@ -77,14 +85,14 @@ class Node3D():
         self.EnforcedRZ: float | None = None
 
         # Initialize the color contour value for the node. This will be used for contour smoothing.
-        self.contour: List[float] = []
+        self.contour: list[float] = []
 
-        # The 'Node3D' object will store results for one load combination at a time. 
+        # The 'Node3D' object will store results for one load combination at a time.
 
-        # Adding a link to the model that Nodes belong to 
+        # Adding a link to the model that Nodes belong to
         self.model: FEModel3D = model
 
-    def distance(self, other: 'Node3D') -> float:
+    def distance(self, other: Node3D) -> float:
         """
         Returns the distance to another node.
 
@@ -93,9 +101,17 @@ class Node3D():
         other : Node3D
             A node object to compare coordinates with.
         """
-        return ((self.X - other.X)**2 + (self.Y - other.Y)**2 + (self.Z - other.Z)**2)**0.5
+        return (
+            (self.X - other.X) ** 2 + (self.Y - other.Y) ** 2 + (self.Z - other.Z) ** 2
+        ) ** 0.5
 
-    def M(self, mass_combo_name: str | None = None, mass_direction: str = 'Y', gravity: float = 1.0, characteristic_length: float | None = None) -> NDArray:
+    def M(
+        self,
+        mass_combo_name: str | None = None,
+        mass_direction: str = "Y",
+        gravity: float = 1.0,
+        characteristic_length: float | None = None,
+    ) -> NDArray:
         """Returns the node's mass matrix (6x6 diagonal). In member-based models, nodes provide translational mass only to prevent double-counting of rotational inertia. For member-less models, rotational inertia can be added by providing a characteristic_length.
 
         :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ''.
@@ -116,13 +132,14 @@ class Node3D():
 
         # Get mass from nodal loads in the specified load combination
         if mass_combo_name not in self.model.load_combos:
-            raise ValueError(f'Load combination {mass_combo_name} not found in the model.')
+            raise ValueError(
+                f"Load combination {mass_combo_name} not found in the model."
+            )
         else:
             total_mass = self._calc_mass(mass_combo_name, mass_direction, gravity)
 
         # Check if there is any mass at this node
         if total_mass > 0:
-
             # Create lumped mass matrix for the node
             # Mass is distributed to translational DOFs only (standard practice)
             m[0, 0] = total_mass  # FX
@@ -133,7 +150,9 @@ class Node3D():
             # Use a small value based on mass and a characteristic length
             # Scale by characteristic length squared (I = m * r²)
             if characteristic_length is not None:
-                rotational_inertia = total_mass * (characteristic_length ** 2) * 0.01  # 1% scaling
+                rotational_inertia = (
+                    total_mass * (characteristic_length**2) * 0.01
+                )  # 1% scaling
 
                 if not self.support_RX:
                     m[3, 3] = rotational_inertia
@@ -144,7 +163,9 @@ class Node3D():
 
         return m
 
-    def _calc_mass(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> float:
+    def _calc_mass(
+        self, mass_combo_name: str, mass_direction: str = "Y", gravity: float = 1.0
+    ) -> float:
         """Calculates the total mass from nodal loads in a load combination.
 
         For modal analysis, nodal "masses" are typically specified as force loads that get converted to mass using F = m*a (where a is typically gravity).
@@ -171,22 +192,20 @@ class Node3D():
 
         # Step through each nodal load acting on this node
         for load in self.NodeLoads:
-
             # Read in the nodal load parameters
             load_direction, load_value, load_case = load
 
             # Apply load factors to load cases in the mass combo
             if load_case in mass_combo.factors:
-
                 factor = mass_combo.factors[load_case]
                 load_magnitude = factor * load_value
 
                 # Sum forces in the specified direction
-                if mass_direction == 'X' and load_direction == 'FX':
+                if mass_direction == "X" and load_direction == "FX":
                     total_force += load_magnitude
-                elif mass_direction == 'Y' and load_direction == 'FY':
+                elif mass_direction == "Y" and load_direction == "FY":
                     total_force += load_magnitude
-                elif mass_direction == 'Z' and load_direction == 'FZ':
+                elif mass_direction == "Z" and load_direction == "FZ":
                     total_force += load_magnitude
 
         # Convert force to mass
@@ -196,4 +215,4 @@ class Node3D():
         # if abs(total_mass) > 1e-10:
         #     print(f'{self.name}: total_force: {total_force:.6f}, total_mass: {total_mass:.6f}, combo_factors: {combo.factors}')
 
-        return abs(total_mass)   # Mass is always positive
+        return abs(total_mass)  # Mass is always positive

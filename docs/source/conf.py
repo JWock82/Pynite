@@ -9,38 +9,45 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+
+sys.path.insert(0, os.path.abspath("../.."))
 # sys.path.insert(0, os.path.abspath('../../Pynite'))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Pynite'
-copyright = '2023, D. Craig Brinck, SE'
-author = 'D. Craig Brinck, SE'
-release = '1.5.0'
+project = "Pynite"
+copyright = "2023, D. Craig Brinck, SE"
+author = "D. Craig Brinck, SE"
+release = "1.5.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.autodoc']
+extensions = ["sphinx.ext.autodoc"]
 
 # Control how class names are displayed
-autoclass_content = 'class'
+autoclass_content = "class"
 
 # autodoc settings
-autodoc_mock_imports = ['numpy', 'IPython', 'vtk', 'pdfkit', 'prettytable', 'matplotlib', 'matplotlib.pyplot', 'pyvista']  # Mock import dependencies
+autodoc_mock_imports = [
+    "numpy",
+    "IPython",
+    "vtk",
+    "pdfkit",
+    "prettytable",
+    "matplotlib",
+    "matplotlib.pyplot",
+    "pyvista",
+]  # Mock import dependencies
 
-templates_path = ['_templates']
-exclude_patterns = ['pushover.rst']
+templates_path = ["_templates"]
+exclude_patterns = ["pushover.rst"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # html_theme = 'alabaster'
-html_theme = 'bizstyle'
-html_theme_options = {
-    "sidebarwidth": "300px",
-    "navigation_depth": 1
-}
-html_static_path = ['_static']
+html_theme = "bizstyle"
+html_theme_options = {"sidebarwidth": "300px", "navigation_depth": 1}
+html_static_path = ["_static"]
