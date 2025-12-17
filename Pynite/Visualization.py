@@ -1,5 +1,4 @@
 from __future__ import annotations # Allows more recent type hints features
-from json import load
 import warnings
 
 from IPython.display import Image

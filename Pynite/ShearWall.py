@@ -1,7 +1,5 @@
 from __future__ import annotations # Allows more recent type hints features
 from math import isclose
-from numpy import average
-import io
 from typing import TYPE_CHECKING, Literal
 
 from prettytable import PrettyTable

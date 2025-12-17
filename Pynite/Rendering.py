@@ -1,9 +1,7 @@
 from __future__ import annotations # Allows more recent type hints features
-from json import load
 import warnings
-from typing import TYPE_CHECKING, Callable, List, Any
+from typing import TYPE_CHECKING, Callable, List
 
-from IPython.display import Image
 import numpy as np
 import pyvista as pv
 import math

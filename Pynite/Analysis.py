@@ -2,7 +2,7 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING
 from math import isclose
 
-from numpy import array, atleast_2d, zeros, subtract, matmul, divide, seterr, nanmax
+from numpy import array, zeros, subtract, matmul
 from numpy.linalg import solve
 
 from Pynite.LoadCombo import LoadCombo

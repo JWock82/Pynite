@@ -1,7 +1,5 @@
 import unittest
 from Pynite import FEModel3D
-from Pynite.Section import SteelSection
-import math
 import sys
 from io import StringIO
 
