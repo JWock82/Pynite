@@ -5,6 +5,13 @@ import Pynite
 
 from pip._vendor import pkg_resources
 
+__all__ = (
+    "FEModel3D",
+    "ShearWall",
+    "Pynite",
+    "__version__",
+)
+
 def get_version(package):
     package = package.lower()
     return next((p.version for p in pkg_resources.working_set if p.project_name.lower() == package), "No match")
