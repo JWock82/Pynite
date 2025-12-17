@@ -7,4 +7,6 @@ extend-exclude = [
 select = [
     # https://docs.astral.sh/ruff/rules/unused-import/
     "F401",
+    # https://docs.astral.sh/ruff/rules/#pyupgrade-up
+    "UP",
 ]
