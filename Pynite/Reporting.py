@@ -35,18 +35,21 @@ path = Path(__file__).parent
 # Set up Jinja2 environment
 # - PackageLoader tells Jinja2 where to find the HTML templates
 env = Environment(
-    loader=PackageLoader('Pynite', '.'),
+    loader=PackageLoader("Pynite", "."),
 )
 
 # Load the main HTML report template
-template = env.get_template('Report_Template.html')
+template = env.get_template("Report_Template.html")
+
 
 # %%
-def create_report(model: FEModel3D,
-                  output_filepath: Path | str = path / 'Pynite Report.pdf',
-                  format: str = 'pdf',
-                  log: bool = True,
-                  **kwargs) -> None:
+def create_report(
+    model: FEModel3D,
+    output_filepath: Path | str = path / "Pynite Report.pdf",
+    format: str = "pdf",
+    log: bool = True,
+    **kwargs,
+) -> None:
     """
     Creates a report for a given finite element model.
 
@@ -72,18 +75,18 @@ def create_report(model: FEModel3D,
 
     # Default Settings
     defaults = {
-        'node_table': True,
-        'member_table': True,
-        'member_releases': True,
-        'plate_table': True,
-        'node_reactions': True,
-        'node_displacements': True,
-        'member_end_forces': True,
-        'member_internal_forces': True,
-        'plate_corner_forces': True,
-        'plate_center_forces': True,
-        'plate_corner_membrane': True,
-        'plate_center_membrane': True,
+        "node_table": True,
+        "member_table": True,
+        "member_releases": True,
+        "plate_table": True,
+        "node_reactions": True,
+        "node_displacements": True,
+        "member_end_forces": True,
+        "member_internal_forces": True,
+        "plate_corner_forces": True,
+        "plate_center_forces": True,
+        "plate_corner_membrane": True,
+        "plate_center_membrane": True,
     }
 
     # Fill missing kwargs with defaults
@@ -91,30 +94,33 @@ def create_report(model: FEModel3D,
         kwargs.setdefault(key, val)
 
     # Add model data to context
-    kwargs['nodes'] = model.nodes.values()
-    kwargs['members'] = model.members.values()
-    kwargs['plates'] = model.plates.values()
-    kwargs['quads'] = model.quads.values()
-    kwargs['load_combos'] = model.load_combos.values()
+    kwargs["nodes"] = model.nodes.values()
+    kwargs["members"] = model.members.values()
+    kwargs["plates"] = model.plates.values()
+    kwargs["quads"] = model.quads.values()
+    kwargs["load_combos"] = model.load_combos.values()
 
     # Render HTML from Template
     HTML = template.render(**kwargs)
 
     # Check if a PDF file has been requested
-    if format.upper() == 'PDF':
-
+    if format.upper() == "PDF":
         # Import PDFKit
         try:
             import pdfkit
         except:
-            raise ImportError('PDFKit is not installed. Install it using `pip install pdfkit`.')
+            raise ImportError(
+                "PDFKit is not installed. Install it using `pip install pdfkit`."
+            )
 
         # Attempt to get the wkhtmltopdf path
         wkhtmltopdf_path = get_wkhtmltopdf_path()
 
         # Notify the user if wkthmltopdf is not found
         if wkhtmltopdf_path is None:
-            raise Exception('Unable to locate wkhtmltopdf. If it is already installed add it to your system\'s PATH environmental variable so Pynite can find it.')
+            raise Exception(
+                "Unable to locate wkhtmltopdf. If it is already installed add it to your system's PATH environmental variable so Pynite can find it."
+            )
 
         # Set up a PDFKit configuration that uses the correct path to wkhtmltopdf
         config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
@@ -123,21 +129,22 @@ def create_report(model: FEModel3D,
         pdfkit.from_string(
             HTML,
             str(output_filepath),
-            css=str(path / 'MainStyleSheet.css'),
-            configuration=config
+            css=str(path / "MainStyleSheet.css"),
+            configuration=config,
         )
 
         # Notify the user where the report was saved
-        if log: print(f"- PDF report generated at: {output_filepath}")
+        if log:
+            print(f"- PDF report generated at: {output_filepath}")
 
-    elif format.upper() == 'HTML':
-
+    elif format.upper() == "HTML":
         # Write directly to an HTML file
         with open(output_filepath, "w", encoding="utf-8") as file:
             file.write(HTML)
 
         # Notify the user of the report's location
-        if log: print(f"- HTML report generated at: {output_filepath}")
+        if log:
+            print(f"- HTML report generated at: {output_filepath}")
 
     else:
         raise ValueError("Invalid format. Use 'pdf' or 'html'.")

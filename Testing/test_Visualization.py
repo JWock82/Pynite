@@ -8,6 +8,7 @@ from Pynite.Rendering import Renderer as PVRenderer
 
 # Optional: force PyVista off-screen to prevent GUI pop-ups in IDE runs
 import pyvista as pv
+
 pv.OFF_SCREEN = True
 
 
@@ -15,10 +16,11 @@ pv.OFF_SCREEN = True
 def set_offscreen(rndr):
     """Enable off-screen rendering regardless of backend."""
 
-    if hasattr(rndr, "window"):           # VTK Renderer
+    if hasattr(rndr, "window"):  # VTK Renderer
         rndr.window.SetOffScreenRendering(1)
-    elif hasattr(rndr, "plotter"):        # PyVista-based renderer
+    elif hasattr(rndr, "plotter"):  # PyVista-based renderer
         rndr.plotter.off_screen = True
+
 
 # Model setup
 def visual_model():
@@ -28,14 +30,18 @@ def visual_model():
     m = FEModel3D()
 
     # Add a beam to the model
-    m.add_node('N1', 0, 0, 0)
-    m.add_node('N2', 10, 0, 0)
+    m.add_node("N1", 0, 0, 0)
+    m.add_node("N2", 10, 0, 0)
 
     # Stabilize the beam
-    m.def_support('N1', True, True, True, True, True, True)   # Test rendering of a fixed support
-    m.def_support('N2', True, True, True, True, True, False)  # Test rendering of FX, FY, FZ, MX, and MY supports
+    m.def_support(
+        "N1", True, True, True, True, True, True
+    )  # Test rendering of a fixed support
+    m.def_support(
+        "N2", True, True, True, True, True, False
+    )  # Test rendering of FX, FY, FZ, MX, and MY supports
 
-    m.add_material("Steel", 29000/144, 11200/144, 0.3, 0.49, 36/144)
+    m.add_material("Steel", 29000 / 144, 11200 / 144, 0.3, 0.49, 36 / 144)
 
     m.add_section("Rect", 20, 100, 200, 150)
 
@@ -56,13 +62,17 @@ def visual_model():
     m.add_member_pt_load("M1", "MY", -1, 5, case="D")
 
     # Add a spring to the model
-    m.add_node('N3', 0, 0, 10)
-    m.add_node('N4', 10, 0, 10)
-    m.add_spring('S1', 'N3', 'N4', 0.5)
+    m.add_node("N3", 0, 0, 10)
+    m.add_node("N4", 10, 0, 10)
+    m.add_spring("S1", "N3", "N4", 0.5)
 
     # Stabilize the spring
-    m.def_support('N3', True, True, True, True, False, True)    # Test rendering of MZ supports
-    m.def_support('N4', True, True, True, False, False, False)  # Test rendering of a pinned support
+    m.def_support(
+        "N3", True, True, True, True, False, True
+    )  # Test rendering of MZ supports
+    m.def_support(
+        "N4", True, True, True, False, False, False
+    )  # Test rendering of a pinned support
 
     # Add a plate to the model
     m.add_node("N5", 0, 0, 20)
@@ -74,7 +84,7 @@ def visual_model():
     for n in ["N1", "N2", "N3", "N4"]:
         m.def_support(n, True, True, True, True, True, True)
 
-    m.add_plate("P1", "N5", "N6", "N7", "N8", 1, 'Steel', 1, 1)
+    m.add_plate("P1", "N5", "N6", "N7", "N8", 1, "Steel", 1, 1)
 
     # Uniform pressure load
     m.add_plate_surface_pressure("P1", -100, case="D")
@@ -82,6 +92,7 @@ def visual_model():
     m.add_load_combo("1.4D", {"D": 1.4})
     m.analyze_linear()
     return m
+
 
 @pytest.fixture(params=["VTK", "PV"], scope="function")
 def renderer(request):
@@ -99,10 +110,8 @@ def renderer(request):
 
 
 def test_toggle_visual_properties(renderer):
-
     # Test each plate stress
-    for stress in ['Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy']:
-
+    for stress in ["Mx", "My", "Mxy", "Sx", "Sy", "Txy"]:
         renderer.annotation_size = 8
         renderer.labels = True
         renderer.color_map = stress
@@ -159,6 +168,7 @@ def test_render_model_pipeline():
 # Screenshot coverage (updated for PVRenderer + VTKRenderer)
 # ============================================================================
 
+
 @pytest.mark.parametrize("path", ["BytesIO", "console"])
 def test_screenshots(renderer, path, tmp_path):
     """
@@ -211,6 +221,7 @@ def test_screenshot_to_file(renderer, tmp_path):
 
 if __name__ == "__main__":
     import sys
+
     args = [
         "-v",
         "--color=yes",

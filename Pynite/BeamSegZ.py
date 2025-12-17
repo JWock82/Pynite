@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Nov  6 20:52:31 2017
 
 @author: D. Craig Brinck, SE
 """
+
 from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 # %%
 # A mathematically continuous beam segment
-class BeamSegZ():
+class BeamSegZ:
     """
     A mathematically continuous beam segment
 
@@ -73,11 +73,21 @@ class BeamSegZ():
         Constructor
         """
 
-        self.x1: float | None = None  # Start location of beam segment (relative to start of beam)
-        self.x2: float | None = None  # End location of beam segment (relative to start of beam)
-        self.w1: float | None = None  # Linear distributed transverse load at start of segment
-        self.w2: float | None = None  # Linear distributed transverse load at end of segment
-        self.p1: float | None = None  # Linear distributed axial load at start of segment
+        self.x1: float | None = (
+            None  # Start location of beam segment (relative to start of beam)
+        )
+        self.x2: float | None = (
+            None  # End location of beam segment (relative to start of beam)
+        )
+        self.w1: float | None = (
+            None  # Linear distributed transverse load at start of segment
+        )
+        self.w2: float | None = (
+            None  # Linear distributed transverse load at end of segment
+        )
+        self.p1: float | None = (
+            None  # Linear distributed axial load at start of segment
+        )
         self.p2: float | None = None  # Linear distributed axial load at end of segment
         self.V1: float | None = None  # Internal shear force at start of segment
         self.M1: float | None = None  # Internal moment at start of segment
@@ -85,7 +95,9 @@ class BeamSegZ():
         self.T1: float | None = None  # Torsional moment at start of segment
         self.theta1: float | None = None  # Slope at start of beam segment
         self.delta1: float | None = None  # Displacement at start of beam segment
-        self.delta_x1: float | None = None  # Axial displacement at start of beam segment
+        self.delta_x1: float | None = (
+            None  # Axial displacement at start of beam segment
+        )
         self.EI: float | None = None  # Flexural stiffness of the beam segment
         self.EA: float | None = None  # Axial stiffness of the beam segment
 
@@ -99,17 +111,15 @@ class BeamSegZ():
 
     # Returns the shear force at a location 'x' on the segment
     def Shear(self, x: float) -> float:
-
         V1 = self.V1
         w1 = self.w1
         w2 = self.w2
         L = self.Length()
 
-        return V1 + w1*x + x**2*(-w1 + w2)/(2*L)
+        return V1 + w1 * x + x**2 * (-w1 + w2) / (2 * L)
 
     # Returns the moment at a location on the segment
     def moment(self, x: float, P_delta: bool = False) -> float:
-
         V1 = self.V1
         M1 = self.M1
         P1 = self.P1
@@ -117,28 +127,27 @@ class BeamSegZ():
         w2 = self.w2
         L = self.Length()
 
-        M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
+        M = M1 - V1 * x - w1 * x**2 / 2 - x**3 * (-w1 + w2) / (6 * L)
 
         # # Include the P-Delta moment if a P-Delta analysis was run
         if P_delta == True:
             delta_1 = self.delta1
             delta_x = self.deflection(x)
-            M += P1*(delta_x - delta_1)
+            M += P1 * (delta_x - delta_1)
 
         # Return the computed moment
         return M
 
     # Returns the axial force at a location on the segment
     def axial(self, x: float) -> float:
-
         P1 = self.P1
         p1 = self.p1
         p2 = self.p2
         L = self.Length()
 
-        return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
+        return P1 + (p2 - p1) / (2 * L) * x**2 + p1 * x
 
-    def Torsion(self, x: float | List[float] = 0) -> float | None | NDArray[Any]:
+    def Torsion(self, x: float | list[float] = 0) -> float | None | NDArray[Any]:
         """
         Returns the torsional moment in the segment.
         """
@@ -175,16 +184,33 @@ class BeamSegZ():
         if P_delta == True:
             delta_1 = self.delta1
             delta_x = self.deflection(x, P_delta)
-            theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
+            theta_x = (
+                theta_1
+                - (
+                    -V1 * x**2 / 2
+                    - w1 * x**3 / 6
+                    + x * (M1 - P1 * delta_1 + P1 * delta_x)
+                    + x**4 * (w1 - w2) / (24 * L)
+                )
+                / EI
+            )
         else:
-            theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
+            theta_x = (
+                theta_1
+                - (
+                    -V1 * x**2 / 2
+                    - w1 * x**3 / 6
+                    + x * M1
+                    + x**4 * (w1 - w2) / (24 * L)
+                )
+                / EI
+            )
 
         # Return the calculated slope
         return theta_x
 
     # Returns the deflection at a location on the segment
     def deflection(self, x: float, P_delta: bool = False) -> float:
-
         V1 = self.V1
         M1 = self.M1
         P1 = self.P1
@@ -197,17 +223,28 @@ class BeamSegZ():
 
         # Check if a P-delta solution is requested
         if P_delta == True:
-
             # Return the calculated deflection, amplified for P-delta effects
-            return (delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L))/(1 + P1*x**2/(2*EI))
+            return (
+                delta_1
+                + theta_1 * x
+                + V1 * x**3 / (6 * EI)
+                + w1 * x**4 / (24 * EI)
+                + x**2 * (-M1 + P1 * delta_1) / (2 * EI)
+                + x**5 * (-w1 + w2) / (120 * EI * L)
+            ) / (1 + P1 * x**2 / (2 * EI))
 
         else:
-
             # Return the calcuated deflection
-            return delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
+            return (
+                delta_1
+                + theta_1 * x
+                + V1 * x**3 / (6 * EI)
+                + w1 * x**4 / (24 * EI)
+                + x**2 * (-M1) / (2 * EI)
+                + x**5 * (-w1 + w2) / (120 * EI * L)
+            )
 
     def axial_deflection(self, x: float) -> float:
-
         delta_x1 = self.delta_x1
         P1 = self.P1
         p1 = self.p1
@@ -215,20 +252,19 @@ class BeamSegZ():
         L = self.Length()
         EA = self.EA
 
-        return delta_x1 - 1/EA*(P1*x + p1*x**2/2 + (p2 - p1)*x**3/(6*L))
+        return delta_x1 - 1 / EA * (P1 * x + p1 * x**2 / 2 + (p2 - p1) * x**3 / (6 * L))
 
     # Returns the maximum shear in the segment
     def max_shear(self) -> float:
-
         w1 = self.w1
         w2 = self.w2
         L = self.Length()
 
         # Determine possible locations of maximum shear
-        if w1-w2 == 0:
+        if w1 - w2 == 0:
             x1 = 0
         else:
-            x1 = w1*L/(w1-w2)
+            x1 = w1 * L / (w1 - w2)
 
         if round(x1, 10) < 0 or round(x1, 10) > round(L, 10):
             x1 = 0
@@ -246,16 +282,15 @@ class BeamSegZ():
 
     # Returns the minimum shear in the segment
     def min_shear(self) -> float:
-
         w1 = self.w1
         w2 = self.w2
         L = self.Length()
 
         # Determine possible locations of minimum shear
-        if w1-w2 == 0:
+        if w1 - w2 == 0:
             x1 = 0
         else:
-            x1 = w1*L/(w1-w2)
+            x1 = w1 * L / (w1 - w2)
 
         if round(x1, 10) < 0 or round(x1, 10) > round(L, 10):
             x1 = 0
@@ -273,30 +308,29 @@ class BeamSegZ():
 
     # Returns the maximum moment in the segment
     def max_moment(self, P_delta: bool = False) -> float:
-
         w1 = self.w1
         w2 = self.w2
         V1 = self.V1
         L = self.Length()
 
         # Find the quadratic equation parameters
-        a = -(w2-w1)/(2*L)
+        a = -(w2 - w1) / (2 * L)
         b = -w1
         c = -V1
 
         # Determine possible locations of maximum moment
         if a == 0:
             if b != 0:
-                x1 = -c/b
+                x1 = -c / b
             else:
                 x1 = 0
             x2 = 0
-        elif b**2-4*a*c < 0:
+        elif b**2 - 4 * a * c < 0:
             x1 = 0
             x2 = 0
         else:
-            x1 = (-b+(b**2-4*a*c)**0.5)/(2*a)
-            x2 = (-b-(b**2-4*a*c)**0.5)/(2*a)
+            x1 = (-b + (b**2 - 4 * a * c) ** 0.5) / (2 * a)
+            x2 = (-b - (b**2 - 4 * a * c) ** 0.5) / (2 * a)
 
         x3 = 0
         x4 = L
@@ -318,30 +352,29 @@ class BeamSegZ():
 
     # Returns the minimum moment in the segment
     def min_moment(self, P_delta: bool = False) -> float:
-
         w1 = self.w1
         w2 = self.w2
         V1 = self.V1
         L = self.Length()
 
         # Find the quadratic equation parameters
-        a = -(w2-w1)/(2*L)
+        a = -(w2 - w1) / (2 * L)
         b = -w1
         c = -V1
 
         # Determine possible locations of minimum moment
         if a == 0:
             if b != 0:
-                x1 = -c/b
+                x1 = -c / b
             else:
                 x1 = 0
             x2 = 0
-        elif b**2-4*a*c < 0:
+        elif b**2 - 4 * a * c < 0:
             x1 = 0
             x2 = 0
         else:
-            x1 = (-b+(b**2-4*a*c)**0.5)/(2*a)
-            x2 = (-b-(b**2-4*a*c)**0.5)/(2*a)
+            x1 = (-b + (b**2 - 4 * a * c) ** 0.5) / (2 * a)
+            x2 = (-b - (b**2 - 4 * a * c) ** 0.5) / (2 * a)
 
         x3 = 0
         x4 = L
@@ -363,14 +396,13 @@ class BeamSegZ():
 
     # Returns the maximum axial force in the segment
     def max_axial(self) -> float:
-
         p1 = self.p1
         p2 = self.p2
         L = self.Length()
 
         # Determine possible locations of maximum axial force
-        if p1-p2 != 0:
-            x1 = L*p1/(p1-p2)
+        if p1 - p2 != 0:
+            x1 = L * p1 / (p1 - p2)
         else:
             x1 = 0
 
@@ -390,14 +422,13 @@ class BeamSegZ():
 
     # Returns the minimum axial force in the segment
     def min_axial(self) -> float:
-
         p1 = self.p1
-        p2 = self. p2
+        p2 = self.p2
         L = self.Length()
 
         # Determine possible locations of minimum axial force
-        if p1-p2 != 0:
-            x1 = L*p1/(p1-p2)
+        if p1 - p2 != 0:
+            x1 = L * p1 / (p1 - p2)
         else:
             x1 = 0
 
