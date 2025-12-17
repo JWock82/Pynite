@@ -1,6 +1,4 @@
-from math import pi
 from Pynite.FEModel3D import FEModel3D
-from Pynite.Mesh import FrustrumMesh, CylinderMesh
 
 t = 0.25/12
 E = 29000*1000*12**2
