@@ -1,4 +1,3 @@
-```restructuredtext
 ======
 Modal
 ======
