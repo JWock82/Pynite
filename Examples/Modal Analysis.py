@@ -60,7 +60,7 @@ for i, freq in enumerate(model.frequencies):
     print(f'Mode {i + 1} Frequency: {freq:3f} Hz')
 
 # Pynite has stored each mode shape in its own load combination. We can render any mode shape as follows
-from Pynite.Visualization import Renderer  # Using the VTK renderer for its speed, but we could also use the PyVista renderer the same way
+from Pynite.Rendering import Renderer  # Using the VTK renderer for its speed, but we could also use the PyVista renderer the same way
 rndr = Renderer(model)      # Create a new renderer based on the model
 rndr.annotation_size = 1    # Text will display 1' high, and objects (e.g. supports) will scale accordingly
 rndr.deformed_scale = 1     # Adjust as needed for your model
