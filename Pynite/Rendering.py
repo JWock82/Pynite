@@ -281,16 +281,20 @@ class Renderer:
         # Clear out the old plot (if any)
         self.plotter.clear()
         
-        # Set up view and axes after clear (ensures renderer exists, even in off-screen mode)
-        if pv.OFF_SCREEN:
-            # In off-screen mode, we need to ensure view is set after clear
-            try:
-                self.plotter.view_xy()
-                self.plotter.show_axes()
-                self.plotter.set_viewup((0, 1, 0))
-            except:
-                # If these fail in off-screen mode, it's okay - not critical for tests
-                pass
+        # In off-screen mode, ensure renderer is initialized after clear
+        # Accessing plotter.renderer forces lazy initialization in PyVista
+        if pv.OFF_SCREEN and self.plotter.renderer is None:
+            # Force renderer creation by enabling it
+            self.plotter.enable_lightkit()
+        
+        # Set up view and axes (works for both interactive and off-screen modes)
+        try:
+            self.plotter.view_xy()
+            self.plotter.show_axes()
+            self.plotter.set_viewup((0, 1, 0))
+        except:
+            # Silently fail if not supported in this context
+            pass
 
         # Clear out internally stored labels (if any)
         self._load_label_points = []
