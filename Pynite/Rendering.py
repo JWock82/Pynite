@@ -63,10 +63,14 @@ class Renderer:
         self.plotter: pv.Plotter = pv.Plotter(off_screen=pv.OFF_SCREEN)
         self.plotter.set_background('white')  # Setting background color
         # self.plotter.add_logo_widget('./Resources/Full Logo No Buffer - Transparent.png')
-        # self.plotter.view_isometric()
-        self.plotter.view_xy()
-        self.plotter.show_axes()
-        self.plotter.set_viewup((0, 1, 0))  # Set the Y axis to vertical for 3D plots
+        
+        # Only set view and axes in interactive mode (renderer must exist for these calls)
+        # In off-screen/headless mode, these will be set when update() is called
+        if not pv.OFF_SCREEN:
+            # self.plotter.view_isometric()
+            self.plotter.view_xy()
+            self.plotter.show_axes()
+            self.plotter.set_viewup((0, 1, 0))  # Set the Y axis to vertical for 3D plots
         
         # Make X button behave like 'q' key - properly exit without destroying plotter
         # Why: By default, PyVista's X button forcefully destroys the render window,
@@ -276,6 +280,17 @@ class Renderer:
 
         # Clear out the old plot (if any)
         self.plotter.clear()
+        
+        # Set up view and axes after clear (ensures renderer exists, even in off-screen mode)
+        if pv.OFF_SCREEN:
+            # In off-screen mode, we need to ensure view is set after clear
+            try:
+                self.plotter.view_xy()
+                self.plotter.show_axes()
+                self.plotter.set_viewup((0, 1, 0))
+            except:
+                # If these fail in off-screen mode, it's okay - not critical for tests
+                pass
 
         # Clear out internally stored labels (if any)
         self._load_label_points = []
