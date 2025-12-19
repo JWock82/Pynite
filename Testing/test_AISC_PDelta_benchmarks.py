@@ -5,12 +5,9 @@ MIT License
 Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
-import enum
 import unittest
 from Pynite import FEModel3D
 import math
-import sys
-from io import StringIO
 
 class Test_AISC_Benchmark(unittest.TestCase):
     """
