@@ -8,6 +8,10 @@ import numpy as np
 import pyvista as pv
 import math
 
+# Suppress PyVista warnings for clean console output
+warnings.filterwarnings('ignore', category=UserWarning, module='pyvista')
+warnings.filterwarnings('ignore', message='.*Points is not a float type.*')
+
 # For type checking only - these imports are only used during type checking
 if TYPE_CHECKING:
     from typing import List, Union, Tuple, Optional
@@ -61,6 +65,14 @@ class Renderer:
         self.plotter.view_xy()
         self.plotter.show_axes()
         self.plotter.set_viewup((0, 1, 0))  # Set the Y axis to vertical for 3D plots
+        
+        # Make X button behave like 'q' key - properly exit without destroying plotter
+        # Why: By default, PyVista's X button forcefully destroys the render window,
+        #      causing warnings and preventing clean shutdown. This observer intercepts
+        #      the window close event.
+        # How: When ExitEvent fires (X button clicked), we call TerminateApp() on the
+        #      interactor, which cleanly exits the event loop just like pressing 'q'.
+        self.plotter.iren.add_observer('ExitEvent', lambda obj, event: obj.TerminateApp())
 
         # Initialize load labels
         self._load_label_points: List[List[float]] = []
@@ -192,13 +204,22 @@ class Renderer:
         self.update(reset_camera)
 
         # Render the model (code execution will pause here until the user closes the window)
-        self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', auto_close=False)
+        try:
+            self.plotter.show(title='Pynite - Simple Finite Element Analysis for Python', auto_close=False)
+        finally:
+            # Explicitly deep clean the plotter to prevent garbage collection issues
+            # Why: PyVista/VTK objects can have circular references that cause AttributeErrors
+            #      during Python's garbage collection phase when the program exits.
+            # How: deep_clean() forces immediate cleanup of all VTK objects, meshes, and actors
+            #      before Python's garbage collector runs, preventing the "'NoneType' object has
+            #      no attribute 'check_attribute'" exception that would otherwise appear.
+            self.plotter.deep_clean()
 
     def screenshot(self, filepath: str = './Pynite_Image.png', interact: bool = True, reset_camera: bool = False) -> None:
         """
         Saves a screenshot of the rendered model.
 
-        In non-Jupyter notebook environments, if `interact` is set to `True`, the plotter will show a window that allows you to set the scene prior to the screenshot. Press `q` when you are ready to capture the screenshot and close the window. Pressing the `X` button in the corner of the window will ignore your scene changes and will shut down the entire plotter. This is a default setting in pyvista that is a little annoying. Don't press the `X` button.
+        In non-Jupyter notebook environments, if `interact` is set to `True`, the plotter will show a window that allows you to set the scene prior to the screenshot. Press `q` or click the `X` button when you are ready to capture the screenshot and close the window.
 
         For Jupyter notebooks, the scene must be set using `render_model` prior to using `screenshot`.
 
@@ -1073,6 +1094,9 @@ class Renderer:
             max_dist_load = 1
         if max_area_load == 0:
             max_area_load = 1
+        
+        # Return the maximum loads for the load combo or load case
+        return max_pt_load, max_moment, max_dist_load, max_area_load
             
     def plot_loads(self):
       
