@@ -19,7 +19,7 @@ model.mats['MAT1'].add_mat_pt_load((10, 10), 'FY', -10, 'D')
 model.mats['MAT1'].add_mat_pt_load((10, 10), 'MZ', 15, 'D')
 
 # Add a rectangular cutout to the mat foundation
-model.mats['MAT1'].add_rect_cutout('OPNG1', 5, 5, 10, 15)
+model.mats['MAT1'].add_rect_opening('OPNG1', 5, 5, 10, 15)
 
 # Add a load combination to the model
 model.add_load_combo('D', {'D': 1.0})
