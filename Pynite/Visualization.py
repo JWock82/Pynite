@@ -604,8 +604,9 @@ class VisNode():
         # Set the mapper for the node's actor
         self.actor.SetMapper(mapper)
 
+
 class VisSpring():
-    
+
     def __init__(self, spring, nodes, annotation_size=5, color=None):
 
         # Generate a line source for the spring
@@ -1846,6 +1847,17 @@ def _MaxLoads(model, combo_name=None, case=None):
 
                     if abs(load[0]) > max_area_load:
                         max_area_load = abs(load[0])
+
+    # Prevent division by zero errors by ensuring max values are never zero
+    # If a load type has no loads, set it to 1 to avoid crashes during normalization
+    if max_pt_load == 0:
+        max_pt_load = 1
+    if max_moment == 0:
+        max_moment = 1
+    if max_dist_load == 0:
+        max_dist_load = 1
+    if max_area_load == 0:
+        max_area_load = 1
 
     # Return the maximum loads in the load combination or load case
     return max_pt_load, max_moment, max_dist_load, max_area_load

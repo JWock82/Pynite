@@ -1063,9 +1063,17 @@ class Renderer:
                         if abs(load[0]) > max_area_load:
                             max_area_load = abs(load[0])
             
-        # Return the maximum loads for the load combo or load case
-        return max_pt_load, max_moment, max_dist_load, max_area_load
-
+        # Prevent division by zero errors by ensuring max values are never zero
+        # If a load type has no loads, set it to 1 to avoid crashes during normalization
+        if max_pt_load == 0:
+            max_pt_load = 1
+        if max_moment == 0:
+            max_moment = 1
+        if max_dist_load == 0:
+            max_dist_load = 1
+        if max_area_load == 0:
+            max_area_load = 1
+            
     def plot_loads(self):
       
         # Get the maximum load magnitudes that will be used to normalize the display scale
