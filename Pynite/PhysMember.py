@@ -1,18 +1,17 @@
 from __future__ import annotations # Allows more recent type hints features
-from typing import Dict, List, Literal, Tuple, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 from Pynite.Member3D import Member3D
 
 if TYPE_CHECKING:
 
     from Pynite.Node3D import Node3D
     from Pynite.FEModel3D import FEModel3D
-    import numpy.typing as npt
     from numpy import float64
     from numpy.typing import NDArray
 
-from numpy import array, dot, linspace, hstack, empty
+from numpy import array, linspace, hstack, empty
 from numpy.linalg import norm
-from math import isclose, acos
+from math import isclose
 
 class PhysMember(Member3D):
     """
@@ -29,7 +28,7 @@ class PhysMember(Member3D):
                  tension_only: bool = False, comp_only: bool = False) -> None:
 
         super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
-        self.sub_members: Dict[str, Member3D] = {}
+        self.sub_members: dict[str, Member3D] = {}
 
     def descritize(self) -> None:
         """
@@ -40,7 +39,7 @@ class PhysMember(Member3D):
         self.sub_members = {}
 
         # Start a new list of nodes along the member
-        int_nodes: List[Tuple[Node3D, float]] = []
+        int_nodes: list[tuple[Node3D, float]] = []
 
         # Create a vector from the i-node to the j-node
         Xi, Yi, Zi = self.i_node.X, self.i_node.Y, self.i_node.Z
@@ -1012,7 +1011,7 @@ class PhysMember(Member3D):
         # Return the results
         return d_array2
 
-    def find_member(self, x: float) -> Tuple[Member3D, float]:
+    def find_member(self, x: float) -> tuple[Member3D, float]:
         """
         Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's local coordinate system.
         """

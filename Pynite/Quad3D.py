@@ -13,14 +13,13 @@ from numpy.linalg import inv, det, norm
 import warnings
 
 if TYPE_CHECKING:
-    from typing import List, Tuple, Optional
     from numpy import float64
     from numpy.typing import NDArray
     from Pynite.FEModel3D import FEModel3D
     from Pynite.Node3D import Node3D
 
 
-class Quad3D():
+class Quad3D:
     """
     An isoparametric general quadrilateral element, formulated by superimposing an isoparametric DKMQ bending element with an isoparametric plane stress element. Drilling stability is provided by adding a weak rotational spring stiffness at each node. Isotropic behavior is the default, but orthotropic in-plane behavior can be modeled by specifying stiffness modification factors for the element's local x and y axes.
 
@@ -32,7 +31,7 @@ class Quad3D():
                  ky_mod: float = 1.0):
 
         self.name: str = name
-        self.ID: Optional[int] = None
+        self.ID: int | None = None
         self.type: str = 'Quad'
 
         self.i_node: Node3D = i_node
@@ -44,7 +43,7 @@ class Quad3D():
         self.kx_mod: float = kx_mod
         self.ky_mod: float = ky_mod
 
-        self.pressures: List[Tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
+        self.pressures: list[tuple[float, str]] = []  # A list of surface pressures [pressure, case='Case 1']
 
         # Quads need a link to the model they belong to
         self.model: FEModel3D = model
@@ -151,7 +150,7 @@ class Quad3D():
         else:
             raise Exception('Invalid value for k. k must be 5, 6, 7, or 8.')
 
-    def dir_cos(self, k: Literal[5, 6, 7, 8]) -> Tuple[float, float]:
+    def dir_cos(self, k: Literal[5, 6, 7, 8]) -> tuple[float, float]:
 
         L_k = self.L_k(k)
 

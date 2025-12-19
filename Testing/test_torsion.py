@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 MIT License
 
@@ -7,7 +6,6 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 
 import unittest
 from Pynite import FEModel3D
-import math
 import sys
 from io import StringIO
 
