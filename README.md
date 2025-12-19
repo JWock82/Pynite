@@ -67,8 +67,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v2.0.1 (in progress)
+v2.0.1
 * Pynite no longer struggles rendering load cases and combinations when no loads are present. This is especially helpful for rendering modal load combinations, which don't have loads (only masses).
+* The pyvista plotter's "X" button now works just like pressing "q". This was an annoying pyvista-ism that led to error messages when closing the window with the "X" button.
 
 v2.0.0
 * Added modal analysis. You can now find the natural frequencies and mode shapes of frame-type structures (plates not yet supported). A special thanks to @boustrephon for heading up this feature.
