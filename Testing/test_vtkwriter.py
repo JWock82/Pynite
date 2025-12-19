@@ -13,14 +13,17 @@ class Test_VTKWriter(unittest.TestCase):
     '''
 
     def setUp(self):
+        
         # Suppress printed output temporarily
         sys.stdout = StringIO()
 
     def tearDown(self):
+
         # Reset the print function to normal
         sys.stdout = sys.__stdout__
     
     def test_nodes(self):
+
         # Create a temporary file
         with tempfile.NamedTemporaryFile(suffix=".vtk") as tmp:
             temp_path = tmp.name
@@ -40,6 +43,7 @@ class Test_VTKWriter(unittest.TestCase):
             VTKWriter(model)._write_node_data(temp_path)
 
     def test_members(self):
+
         with tempfile.NamedTemporaryFile(suffix=".vtk") as tmp:
             temp_path = tmp.name
         
@@ -58,6 +62,7 @@ class Test_VTKWriter(unittest.TestCase):
             VTKWriter(model)._write_member_data(temp_path)
 
     def test_quads(self):
+
         with tempfile.NamedTemporaryFile(suffix=".vtk") as tmp:
             temp_path = tmp.name
         

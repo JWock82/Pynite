@@ -99,9 +99,6 @@ def renderer(request):
 
 
 def test_toggle_visual_properties(renderer):
-    
-    # Enable off-screen rendering for both renderer types
-    set_offscreen(renderer)
 
     # Test each plate stress
     for stress in ['Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy']:
@@ -120,7 +117,7 @@ def test_toggle_visual_properties(renderer):
         if isinstance(renderer, VTKRenderer):
             renderer.render_model(interact=False)
         else:
-            renderer.render_model()
+            renderer.update(reset_camera=False)
 
 
 def test_toggle_deformed_shape(renderer):
