@@ -1321,6 +1321,9 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
     polygon_points = vtk.vtkPoints()
     polygon_polydata = vtk.vtkPolyData()
 
+    # Track whether any loads have been added to avoid VTK errors with empty append filters
+    has_loads = False
+
     # Get the maximum load magnitudes that will be used to normalize the display scale
     max_pt_load, max_moment, max_dist_load, max_area_load = _MaxLoads(model, combo_name, case)
 
@@ -1366,6 +1369,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+                has_loads = True
 
     # Step through each member
     for member in model.members.values():
@@ -1419,6 +1423,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+                has_loads = True
 
         # Step through each member distributed load
         for load in member.DistLoads:
@@ -1455,6 +1460,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 renderer.AddActor(distLoad.lblActors[1])
                 distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
                 distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+                has_loads = True
 
     # Step through each plate
     i = 0
@@ -1490,6 +1496,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
 
                 # Add the area load's arrows to the overall load polydata
                 polydata.AddInputData(area_load.polydata.GetOutput())
+                has_loads = True
 
                 # Add the 4 points at the corners of this area load to the list of points
                 polygon_points.InsertNextPoint(area_load.p0[0], area_load.p0[1], area_load.p0[2])
@@ -1524,35 +1531,39 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 polygon_polydata.SetPoints(polygon_points)
                 polygon_polydata.SetPolys(polygons)
 
-    # Set up an actor and mapper for the loads
-    load_mapper = vtk.vtkPolyDataMapper()
-    load_mapper.SetInputConnection(polydata.GetOutputPort())
-    load_actor = vtk.vtkActor()
-    load_actor.SetMapper(load_mapper)
+    # Only create and add actors if there are loads to render (avoids VTK errors with empty append filters)
+    if has_loads:
+        # Set up an actor and mapper for the loads
+        load_mapper = vtk.vtkPolyDataMapper()
+        load_mapper.SetInputConnection(polydata.GetOutputPort())
+        load_actor = vtk.vtkActor()
+        load_actor.SetMapper(load_mapper)
 
-    # Colorize the loads
-    if theme == 'default':
-        load_actor.GetProperty().SetColor(0, 1, 0)  # Green
-    elif theme == 'print':
-        load_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
+        # Colorize the loads
+        if theme == 'default':
+            load_actor.GetProperty().SetColor(0, 1, 0)  # Green
+        elif theme == 'print':
+            load_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
-    # Add the load actor to the renderer
-    renderer.AddActor(load_actor)
+        # Add the load actor to the renderer
+        renderer.AddActor(load_actor)
 
-    # Set up an actor and a mapper for the area load polygons
-    polygon_mapper = vtk.vtkPolyDataMapper()
-    polygon_mapper.SetInputData(polygon_polydata)
-    polygon_actor = vtk.vtkActor()
+    # Only create polygon actors if there are area loads (i > 0 means we added polygons)
+    if i > 0:
+        # Set up an actor and a mapper for the area load polygons
+        polygon_mapper = vtk.vtkPolyDataMapper()
+        polygon_mapper.SetInputData(polygon_polydata)
+        polygon_actor = vtk.vtkActor()
 
-    # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
-    polygon_actor.SetMapper(polygon_mapper)
-    renderer.AddActor(polygon_actor)
+        # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
+        polygon_actor.SetMapper(polygon_mapper)
+        renderer.AddActor(polygon_actor)
 
-    # Set the color of the area load polygons
-    if theme == 'default':
-        polygon_actor.GetProperty().SetColor(0, 1, 0)  # Green
-    elif theme == 'print':
-        polygon_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
+        # Set the color of the area load polygons
+        if theme == 'default':
+            polygon_actor.GetProperty().SetColor(0, 1, 0)  # Green
+        elif theme == 'print':
+            polygon_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
 def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, scalar_bar_text_size, combo_name, theme='default'):
 

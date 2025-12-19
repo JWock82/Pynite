@@ -64,7 +64,6 @@ from Pynite.Visualization import Renderer  # Using the VTK renderer for its spee
 rndr = Renderer(model)      # Create a new renderer based on the model
 rndr.annotation_size = 1    # Text will display 1' high, and objects (e.g. supports) will scale accordingly
 rndr.deformed_scale = 1     # Adjust as needed for your model
-rndr.render_loads = False   # There are no loads to show for mode shapes
 rndr.deformed_shape = True  # Make sure to turn on the deformed shape for mode shapes
 rndr.combo_name = 'Mode 3'  # Pick any mode (e.g. 'Mode 1', 'Mode 2', 'Mode 3')
 rndr.render_model()
