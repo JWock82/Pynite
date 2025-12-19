@@ -190,7 +190,7 @@ class Renderer:
     def scalar_bar_text_size(self, text_size: int) -> None:
         self._scalar_bar_text_size = text_size
 
-    def render_model(self, reset_camera: bool = True) -> None:
+    def render_model(self, reset_camera: bool = True, off_screen: bool = False) -> None:
         """
         Renders the model in a window
 
@@ -198,10 +198,17 @@ class Renderer:
         ----------
         reset_camera : bool
             Resets the camera if set to `True`. Default is `True`.
+        off_screen : bool
+            Renders off-screen without displaying a window. Useful for testing or
+            generating images in headless environments. Default is `False`.
         """
 
         # Update the plotter with the latest geometry
         self.update(reset_camera)
+
+        # Set off-screen mode if requested (for testing/headless environments)
+        if off_screen:
+            self.plotter.off_screen = True
 
         # Render the model (code execution will pause here until the user closes the window)
         try:

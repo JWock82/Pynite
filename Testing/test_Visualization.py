@@ -99,6 +99,9 @@ def renderer(request):
 
 
 def test_toggle_visual_properties(renderer):
+    
+    # Enable off-screen rendering for both renderer types
+    set_offscreen(renderer)
 
     # Test each plate stress
     for stress in ['Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy']:
