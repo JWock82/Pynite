@@ -58,7 +58,9 @@ class Renderer:
         # (e.g., grid, axes) before render. Each func in this list must accept a `pyvista.Plotter` argument.
         self.post_update_callbacks: List[Callable[[pv.Plotter], None]] = []
 
-        self.plotter: pv.Plotter = pv.Plotter()
+        # Create plotter with off_screen mode if pyvista is set globally to OFF_SCREEN
+        # This is important for headless CI/testing environments
+        self.plotter: pv.Plotter = pv.Plotter(off_screen=pv.OFF_SCREEN)
         self.plotter.set_background('white')  # Setting background color
         # self.plotter.add_logo_widget('./Resources/Full Logo No Buffer - Transparent.png')
         # self.plotter.view_isometric()
