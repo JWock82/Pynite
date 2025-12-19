@@ -67,6 +67,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v2.0.1 (in progress)
+* Pynite no longer struggles rendering load cases and combinations when no loads are present. This is especially helpful for rendering modal load combinations, which don't have loads (only masses).
+
 v2.0.0
 * Added modal analysis. You can now find the natural frequencies and mode shapes of frame-type structures (plates not yet supported). A special thanks to @boustrephon for heading up this feature.
 * Dropping support for python < 3.10.
@@ -145,7 +148,3 @@ v1.0.0
 * Added a new `ShearWall` class that assists you in constructing and analyzing shear walls. This tool automatically detects piers and coupling beams, and finds the forces inside them and calculates their ascpect ratios, which can be handy for seismic design. It reports stiffness of multi-story shear walls at each story to help with rigid diaphragm analysis. It allows for modeling walls with openings, steps, and partial depth diaphragm loading.
 * `vtk` and `pyvista` are now optional dependencies. This change streamlines installation for users who don't rely on `Pynite's` built-in visualization tools. From now on, `Pynite` should be installed using `$ pip install PyNiteFEA[all]` for most users.
 * `Pynite` no longer uses auxiliary nodes to define member cross-section rotation. You can now directly specify the rotation (in degrees) when you define a member using the `rotation` argument.
-
-v0.0.98-100
-* Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
-* Improvements to spring rendering in `pyvista`. Up until this point spring elements were being rendered as lines. They now render as zigzag lines in `pyvista`. There is still more work for improvement on spring rendering, but this is a good start.
