@@ -72,18 +72,18 @@ class Renderer():
         self.model = model
 
         # Default settings for rendering
-        self.annotation_size = 5
-        self.deformed_shape = False
-        self.deformed_scale = 30
-        self.render_nodes = True
-        self.render_loads = True
-        self.color_map = None
+        self._annotation_size = 5
+        self._deformed_shape = False
+        self._deformed_scale = 30
+        self._render_nodes = True
+        self._render_loads = True
+        self._color_map = None
         self._combo_name = 'Combo 1'
         self._case = None
-        self.labels = True
-        self.scalar_bar = False
-        self.scalar_bar_text_size = 24
-        self.theme = 'default'
+        self._labels = True
+        self._scalar_bar = False
+        self._scalar_bar_text_size = 24
+        self._theme = 'default'
 
         # Initialize VTK objects
         self.renderer = vtk.vtkRenderer()
@@ -124,117 +124,102 @@ class Renderer():
         if value is not None:
             self._combo_name = None
 
-    def set_annotation_size(self, size=5):
-        """Set the size of text annotations and visual elements.
-        
-        Parameters
-        ----------
-        size : float, optional
-            Annotation size in model units (default: 5).
-        """
-        self.annotation_size = size
-
-    def set_deformed_shape(self, deformed_shape=False):
-        """Enable or disable rendering of the deformed shape.
-        
-        Parameters
-        ----------
-        deformed_shape : bool, optional
-            If True, renders the deformed shape (default: False).
-        """
-        self.deformed_shape = deformed_shape
-
-    def set_deformed_scale(self, scale=30):
-        """Set the scale factor for deformation visualization.
-        
-        Parameters
-        ----------
-        scale : float, optional
-            Multiplier for displaying deformations (default: 30).
-        """
-        self.deformed_scale = scale
-
-    def set_render_nodes(self, render_nodes=True):
-        """Enable or disable rendering of nodes.
-        
-        Parameters
-        ----------
-        render_nodes : bool, optional
-            If True, renders nodes (default: True).
-        """
-        self.render_nodes = render_nodes
-
-    def set_render_loads(self, render_loads=True):
-        """Enable or disable rendering of loads.
-        
-        Parameters
-        ----------
-        render_loads : bool, optional
-            If True, renders applied loads (default: True).
-        """
-        self.render_loads = render_loads
+    @property
+    def annotation_size(self):
+        """Size of text annotations and visual elements in model units."""
+        return self._annotation_size
     
-    def set_color_map(self, color_map=None):
-        """Sets the color map for plate contours.
+    @annotation_size.setter
+    def annotation_size(self, value):
+        self._annotation_size = value
 
-        :param color_map: The color map to use: Valid options are 'Qx', Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy' 'Txy'. Qx and Qy are out-of-plane shear forces. Mx, My, and Mxy are local out-of-plane bending moments. 'Sx' and 'Sy' are membrane forces, and 'Txy' is an in-plane shear force. Defaults to None.
-        :type color_map: str, optional
-        """
-        self.color_map = color_map
+    @property
+    def deformed_shape(self):
+        """Whether to render the deformed shape of the model."""
+        return self._deformed_shape
+    
+    @deformed_shape.setter
+    def deformed_shape(self, value):
+        self._deformed_shape = value
 
-    def set_combo_name(self, combo_name='Combo 1'):
-        """Set the load combination for visualization.
-        
-        Setting a load combination automatically clears any active load case.
-        
-        Parameters
-        ----------
-        combo_name : str, optional
-            Name of the load combination (default: 'Combo 1').
-        """
-        self.combo_name = combo_name
+    @property
+    def deformed_scale(self):
+        """Scale factor for deformation visualization."""
+        return self._deformed_scale
+    
+    @deformed_scale.setter
+    def deformed_scale(self, value):
+        self._deformed_scale = value
 
-    def set_case(self, case=None):
-        """Set the load case for visualization.
-        
-        Setting a load case automatically clears any active load combination.
-        
-        Parameters
-        ----------
-        case : str or None, optional
-            Name of the load case, or None (default: None).
-        """
-        self.case = case
+    @property
+    def render_nodes(self):
+        """Whether to render nodes in the visualization."""
+        return self._render_nodes
+    
+    @render_nodes.setter
+    def render_nodes(self, value):
+        self._render_nodes = value
 
-    def set_show_labels(self, show_labels=True):
-        """Enable or disable text labels for elements.
-        
-        Parameters
-        ----------
-        show_labels : bool, optional
-            If True, displays element labels (default: True).
-        """
-        self.labels = show_labels
+    @property
+    def render_loads(self):
+        """Whether to render applied loads."""
+        return self._render_loads
+    
+    @render_loads.setter
+    def render_loads(self, value):
+        self._render_loads = value
 
-    def set_scalar_bar(self, scalar_bar=False):
-        """Enable or disable the scalar bar for contour plots.
+    @property
+    def color_map(self):
+        """Type of stress/force contour to display on plates/quads.
         
-        Parameters
-        ----------
-        scalar_bar : bool, optional
-            If True, displays a scalar bar legend (default: False).
+        Valid options: 'Qx', 'Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy'
+        - Qx, Qy: Out-of-plane shear forces
+        - Mx, My, Mxy: Local out-of-plane bending moments
+        - Sx, Sy: Membrane forces
+        - Txy: In-plane shear force
         """
-        self.scalar_bar = scalar_bar
+        return self._color_map
+    
+    @color_map.setter
+    def color_map(self, value):
+        self._color_map = value
 
-    def set_scalar_bar_text_size(self, text_size=24):
-        """Set the text size for the scalar bar.
-        
-        Parameters
-        ----------
-        text_size : int, optional
-            Font size for scalar bar text (default: 24).
-        """
-        self.scalar_bar_text_size = text_size
+    @property
+    def labels(self):
+        """Whether to display text labels for elements."""
+        return self._labels
+    
+    @labels.setter
+    def labels(self, value):
+        self._labels = value
+
+    @property
+    def scalar_bar(self):
+        """Whether to display a scalar bar legend for contour plots."""
+        return self._scalar_bar
+    
+    @scalar_bar.setter
+    def scalar_bar(self, value):
+        self._scalar_bar = value
+
+    @property
+    def scalar_bar_text_size(self):
+        """Font size for scalar bar text."""
+        return self._scalar_bar_text_size
+    
+    @scalar_bar_text_size.setter
+    def scalar_bar_text_size(self, value):
+        self._scalar_bar_text_size = value
+
+    @property
+    def theme(self):
+        """Visual theme: 'default' (dark background) or 'print' (white background)."""
+        return self._theme
+    
+    @theme.setter
+    def theme(self, value):
+        self._theme = value
 
     def render_model(self, interact=True, reset_camera=True):
         """
