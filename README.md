@@ -72,6 +72,7 @@ v2.0.2
 * Added docstrings to the VTK `Renderer` class to help the user.
 * Enforced use of properties instead of attributes in the VTK `Renderer` and added docstrings to properties help the user make decisions.
 * Removed the VTK `Renderer`'s properties that began with "set_". These were redundant and caused confusion. The prefix "set_" is no longer used to access or set any of the `Renderer`'s properties.
+* Made the VTK `Renderer` compatible with the latest version of `numpy`.
 
 v2.0.1
 * Pynite no longer struggles rendering load cases and combinations when no loads are present. This is especially helpful for rendering modal load combinations, which don't have loads (only masses).

@@ -1377,7 +1377,7 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
         for node in model.nodes.values():
             # Prevent divide by zero errors for nodes with no contour values
             if node.contour != []:
-                node.contour = sum(node.contour)/len(node.contour)
+                node.contour = (sum(node.contour)/len(node.contour))[0]  # The [0] converts it from an array to a float
 
 def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_name, render_nodes=True, theme='default'):
     '''
@@ -1766,11 +1766,12 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
         quad.GetPointIds().SetId(3, i*4 + 3)
 
         # Get the contour value for each node
-        # Convert to scalar immediately for NumPy >= 2.4.0 compatibility
-        r0 = asarray(item.i_node.contour).item()
-        r1 = asarray(item.j_node.contour).item()
-        r2 = asarray(item.m_node.contour).item()
-        r3 = asarray(item.n_node.contour).item()
+        # Convert to scalar for NumPy >= 2.4.0 compatibility
+        # Handle cases where contour might be empty list, list with values, or scalar
+        r0 = item.i_node.contour
+        r1 = item.j_node.contour
+        r2 = item.m_node.contour
+        r3 = item.n_node.contour
 
         if color_map != None:
 
