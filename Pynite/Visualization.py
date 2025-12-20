@@ -1780,11 +1780,10 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
             results.append(r3)
 
             # Save the results to the `vtkDoubleArray` list of results for VTK
-            # Convert to float to handle numpy arrays with ndim > 0
-            plate_results.InsertNextTuple([float(r0)])
-            plate_results.InsertNextTuple([float(r1)])
-            plate_results.InsertNextTuple([float(r2)])
-            plate_results.InsertNextTuple([float(r3)])
+            plate_results.InsertNextTuple([r0])
+            plate_results.InsertNextTuple([r1])
+            plate_results.InsertNextTuple([r2])
+            plate_results.InsertNextTuple([r3])
 
         # Insert the quad into the cell array
         plates.InsertNextCell(quad)
