@@ -16,7 +16,6 @@ setuptools.setup(
     package_data = {'Pynite': ['*html', '*.css', '*Full Logo No Buffer - Transparent.png']},
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
@@ -37,5 +36,5 @@ setuptools.setup(
         'derivations': ['jupyterlab', 'sympy']
     },
     include_package_data = True,
-    python_requires = '>=3.10',
+    python_requires = '>=3.11',
 )
