@@ -70,10 +70,12 @@ Here's a list of projects that use Pynite:
 # What's New?
 v2.0.4 (in development)
 * Dropped support for Python version 3.10, which is not compatible with Numpy 2.4.
+* Removed unecessary checks for Scipy. Scipy has been a required dependency for some time now.
+* Cleaned up whitespace to conform to PEP8 style guide.
 
 v2.0.3
 * Numpy >= 2.4 is now a requirement. This ensures the VTK renderer will handle plate results arrays properly.
-* `pip` now installs dependencies during build testing. Pynite's testing suite now runs against the correct version of each dependency. 
+* `pip` now installs dependencies during build testing. Pynite's testing suite now runs against the correct version of each dependency.
 
 v2.0.2
 * Added docstrings to the VTK `Renderer` class to help the user.
