@@ -238,7 +238,7 @@ class Renderer():
         window = self.window
 
         # Update the renderer
-        self.update(reset_camera)
+        self._update(reset_camera)
 
         # Render the window
         window.Render()
@@ -323,7 +323,7 @@ class Renderer():
 
             return
 
-    def update(self, reset_camera=True):
+    def _update(self, reset_camera=True):
         """Build or rebuild the VTK renderer with current settings.
         
         This method updates the visualization based on the current renderer settings,
