@@ -6,6 +6,7 @@
 
 ![Build Status](https://github.com/JWock82/Pynite/actions/workflows/build-and-test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JWock82/Pynite/branch/main/graph/badge.svg?token=ZH18US3A7P)](https://codecov.io/gh/JWock82/Pynite)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/PyniteFEA)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA?cacheSeconds=86400)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/Pynite">
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/Pynite)
