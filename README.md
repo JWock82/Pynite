@@ -70,7 +70,6 @@ Here's a list of projects that use Pynite:
 v2.0.2
 * Added docstrings to the VTK `Renderer` class to help the user.
 * Enforced use of properties instead of attributes in the VTK `Renderer` and added docstrings to properties help the user make decisions.
-* Made the VTK `Renderer`'s `update` method private. This method is used internally by the `render_model` method. There was no reason for users to use this method.
 * Removed the VTK `Renderer`'s properties that began with "set_". These were redundant and caused confusion. The prefix "set_" is no longer used to access or set any of the `Renderer`'s properties.
 
 v2.0.1

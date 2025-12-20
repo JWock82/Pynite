@@ -209,12 +209,14 @@ class Renderer:
             generating images in headless environments. Default is `False`.
         """
 
-        # Update the plotter with the latest geometry
-        self.update(reset_camera)
-
         # Set off-screen mode if requested (for testing/headless environments)
+        # This must be done BEFORE calling update() so the plotter is in off-screen mode
+        # when adding meshes, preventing PyVista camera initialization issues
         if off_screen:
             self.plotter.off_screen = True
+
+        # Update the plotter with the latest geometry
+        self.update(reset_camera)
 
         # Render the model (code execution will pause here until the user closes the window)
         try:
@@ -280,12 +282,6 @@ class Renderer:
 
         # Clear out the old plot (if any)
         self.plotter.clear()
-        
-        # In off-screen mode, ensure renderer is initialized after clear
-        # Accessing plotter.renderer forces lazy initialization in PyVista
-        if pv.OFF_SCREEN and self.plotter.renderer is None:
-            # Force renderer creation by enabling it
-            self.plotter.enable_lightkit()
         
         # Set up view and axes (works for both interactive and off-screen modes)
         try:

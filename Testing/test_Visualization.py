@@ -114,8 +114,16 @@ def test_toggle_visual_properties(renderer):
         assert renderer.scalar_bar
         assert renderer.scalar_bar_text_size == 18
 
+        # VTKRenderer uses render_model() which handles window management properly.
+        # PVRenderer uses update() directly (a public method) due to a PyVista limitation:
+        # - plotter.clear() (called inside update()) destroys the renderer in off-screen mode
+        # - render_model() sets off_screen BEFORE calling update(), but clear() still resets the renderer
+        # - PyVista's lazy initialization doesn't recreate the renderer after clear() in off-screen mode
+        # - This causes "renderer.camera.is_set" to fail with "NoneType has no attribute 'is_set'"
+        # - Calling update() directly works because the fixture already set off_screen and the
+        #   renderer was initialized on first call, so subsequent clear() + re-add cycles work
         if isinstance(renderer, VTKRenderer):
-            renderer.render_model(interact=False)
+            renderer.render_model(interact=False, reset_camera=False)
         else:
             renderer.update(reset_camera=False)
 
@@ -123,7 +131,17 @@ def test_toggle_visual_properties(renderer):
 def test_toggle_deformed_shape(renderer):
     renderer.deformed_shape = True
     renderer.deformed_scale = 25
-    renderer.update(reset_camera=False)
+    
+    # Both renderers can use render_model() here because this is called only once per test.
+    # For PVRenderer, render_model() sets off_screen=True as a parameter, which PyVista
+    # respects during the initial rendering setup. The clear() inside update() still
+    # destroys the renderer, but since this is the first/only call in this test, the
+    # renderer gets created properly with off-screen mode when meshes are first added.
+    if isinstance(renderer, VTKRenderer):
+        renderer.render_model(interact=False, reset_camera=False)
+    else:
+        renderer.render_model(reset_camera=False, off_screen=True)
+    
     assert renderer.deformed_shape
     assert renderer.deformed_scale == 25
 
@@ -138,9 +156,19 @@ def test_update_pipeline(renderer_cls):
     rndr.combo_name = list(model.load_combos.keys())[0]
     rndr.render_loads = True
     rndr.render_nodes = True
-    rndr.update(reset_camera=True)
+    
+    # Both renderers use render_model() here, called only once per test instance.
+    # PVRenderer's off_screen=True parameter ensures the plotter is configured for
+    # off-screen mode before the first update() call, allowing proper renderer initialization.
+    # Unlike test_toggle_visual_properties which calls render/update 6 times in a loop,
+    # this single call avoids the renderer destruction issue from repeated clear() calls.
+    if isinstance(rndr, VTKRenderer):
+        rndr.render_model(interact=False, reset_camera=True)
+    else:
+        rndr.render_model(reset_camera=True, off_screen=True)
 
     # Verify backend context exists
+    # Both renderers now use public update() method
     assert hasattr(rndr, "update")
     assert hasattr(rndr, "screenshot")
     assert hasattr(rndr, "plotter") or hasattr(rndr, "window")
