@@ -68,6 +68,10 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v2.0.3
+* Numpy >= 2.4 is now a requirement. This ensures the VTK renderer will handle plate results arrays properly.
+* `pip` now installs dependencies during build testing. Pynite's testing suite now runs against the correct version of each dependency. 
+
 v2.0.2
 * Added docstrings to the VTK `Renderer` class to help the user.
 * Enforced use of properties instead of attributes in the VTK `Renderer` and added docstrings to properties help the user make decisions.
