@@ -24,7 +24,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'numpy',
+        'numpy>=2.4.0',
         'PrettyTable',
         'scipy',
         'matplotlib',
