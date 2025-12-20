@@ -2,7 +2,7 @@ from __future__ import annotations # Allows more recent type hints features
 import warnings
 
 from IPython.display import Image
-from numpy import array, empty, append, cross
+from numpy import array, empty, append, cross, asarray
 from numpy.linalg import norm
 import vtk
 
@@ -1766,10 +1766,11 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
         quad.GetPointIds().SetId(3, i*4 + 3)
 
         # Get the contour value for each node
-        r0 = item.i_node.contour
-        r1 = item.j_node.contour
-        r2 = item.m_node.contour
-        r3 = item.n_node.contour
+        # Convert to scalar immediately for NumPy >= 2.4.0 compatibility
+        r0 = asarray(item.i_node.contour).item()
+        r1 = asarray(item.j_node.contour).item()
+        r2 = asarray(item.m_node.contour).item()
+        r3 = asarray(item.n_node.contour).item()
 
         if color_map != None:
 
