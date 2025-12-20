@@ -1,5 +1,4 @@
 from __future__ import annotations # Allows more recent type hints features
-from json import load
 import warnings
 
 from IPython.display import Image
@@ -8,13 +7,68 @@ from numpy.linalg import norm
 import vtk
 
 class Renderer():
-    """Used to render finite element models.
+    """Renderer for visualizing finite element models using VTK.
+    
+    This class provides a flexible interface for rendering 3D finite element models,
+    including nodes, members, springs, plates, and quads. It supports rendering of
+    undeformed and deformed shapes, load visualizations, and stress/force contours.
+    
+    Parameters
+    ----------
+    model : FEModel3D
+        The finite element model to be rendered.
+    
+    Attributes
+    ----------
+    annotation_size : float
+        Controls the size of text labels and visual elements (default: 5).
+    deformed_shape : bool
+        Whether to render the deformed shape of the model (default: False).
+    deformed_scale : float
+        Scale factor for deformation visualization (default: 30).
+    render_nodes : bool
+        Whether to render nodes in the visualization (default: True).
+    render_loads : bool
+        Whether to render applied loads (default: True).
+    color_map : str or None
+        Type of stress/force contour to display on plates/quads. Options:
+        'Qx', 'Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy' (default: None).
+    combo_name : str or None
+        Name of load combination to visualize. Mutually exclusive with case.
+    case : str or None
+        Name of load case to visualize. Mutually exclusive with combo_name.
+    labels : bool
+        Whether to display text labels for elements (default: True).
+    scalar_bar : bool
+        Whether to display a scalar bar for contour plots (default: False).
+    scalar_bar_text_size : int
+        Font size for scalar bar text (default: 24).
+    theme : str
+        Visual theme: 'default' or 'print' (default: 'default').
+    window_size : tuple
+        Window dimensions as (width, height).
+    
+    Examples
+    --------
+    >>> from PyNite import FEModel3D
+    >>> model = FEModel3D()
+    >>> # ... build model ...
+    >>> renderer = Renderer(model)
+    >>> renderer.annotation_size = 6
+    >>> renderer.combo_name = 'Load Combo 1'
+    >>> renderer.render_model()
     """
 
     scalar = None
 
     def __init__(self, model):
-
+        """Initialize the renderer with a finite element model.
+        
+        Parameters
+        ----------
+        model : FEModel3D
+            The finite element model to render.
+        """
         self.model = model
 
         # Default settings for rendering
@@ -24,8 +78,8 @@ class Renderer():
         self.render_nodes = True
         self.render_loads = True
         self.color_map = None
-        self.combo_name = 'Combo 1'
-        self.case = None
+        self._combo_name = 'Combo 1'
+        self._case = None
         self.labels = True
         self.scalar_bar = False
         self.scalar_bar_text_size = 24
@@ -38,36 +92,86 @@ class Renderer():
         self.window.AddRenderer(self.renderer)
 
     @property
-    def window_width(self):
-        return self.window.GetSize()[0]
+    def window_size(self):
+        """Window size as (width, height) tuple."""
+        return self.window.GetSize()
 
-    @window_width.setter
-    def window_width(self, width):
-        height = self.window.GetSize()[1]
+    @window_size.setter
+    def window_size(self, size):
+        """Set window size from tuple or list (width, height)."""
+        width, height = size
         self.window.SetSize(width, height)
 
     @property
-    def window_height(self):
-        return self.window.GetSize()[1]
-
-    @window_height.setter
-    def window_height(self, height):
-        width = self.window.GetSize()[0]
-        self.window.SetSize(width, height)
+    def combo_name(self):
+        """Load combination name. When set, case is automatically set to None."""
+        return self._combo_name
+    
+    @combo_name.setter
+    def combo_name(self, value):
+        self._combo_name = value
+        if value is not None:
+            self._case = None
+    
+    @property
+    def case(self):
+        """Load case name. When set, combo_name is automatically set to None."""
+        return self._case
+    
+    @case.setter
+    def case(self, value):
+        self._case = value
+        if value is not None:
+            self._combo_name = None
 
     def set_annotation_size(self, size=5):
+        """Set the size of text annotations and visual elements.
+        
+        Parameters
+        ----------
+        size : float, optional
+            Annotation size in model units (default: 5).
+        """
         self.annotation_size = size
 
     def set_deformed_shape(self, deformed_shape=False):
+        """Enable or disable rendering of the deformed shape.
+        
+        Parameters
+        ----------
+        deformed_shape : bool, optional
+            If True, renders the deformed shape (default: False).
+        """
         self.deformed_shape = deformed_shape
 
     def set_deformed_scale(self, scale=30):
+        """Set the scale factor for deformation visualization.
+        
+        Parameters
+        ----------
+        scale : float, optional
+            Multiplier for displaying deformations (default: 30).
+        """
         self.deformed_scale = scale
 
     def set_render_nodes(self, render_nodes=True):
+        """Enable or disable rendering of nodes.
+        
+        Parameters
+        ----------
+        render_nodes : bool, optional
+            If True, renders nodes (default: True).
+        """
         self.render_nodes = render_nodes
 
     def set_render_loads(self, render_loads=True):
+        """Enable or disable rendering of loads.
+        
+        Parameters
+        ----------
+        render_loads : bool, optional
+            If True, renders applied loads (default: True).
+        """
         self.render_loads = render_loads
     
     def set_color_map(self, color_map=None):
@@ -79,20 +183,57 @@ class Renderer():
         self.color_map = color_map
 
     def set_combo_name(self, combo_name='Combo 1'):
-        self.case = None
+        """Set the load combination for visualization.
+        
+        Setting a load combination automatically clears any active load case.
+        
+        Parameters
+        ----------
+        combo_name : str, optional
+            Name of the load combination (default: 'Combo 1').
+        """
         self.combo_name = combo_name
 
     def set_case(self, case=None):
-        self.combo_name = None
+        """Set the load case for visualization.
+        
+        Setting a load case automatically clears any active load combination.
+        
+        Parameters
+        ----------
+        case : str or None, optional
+            Name of the load case, or None (default: None).
+        """
         self.case = case
 
     def set_show_labels(self, show_labels=True):
+        """Enable or disable text labels for elements.
+        
+        Parameters
+        ----------
+        show_labels : bool, optional
+            If True, displays element labels (default: True).
+        """
         self.labels = show_labels
 
     def set_scalar_bar(self, scalar_bar=False):
+        """Enable or disable the scalar bar for contour plots.
+        
+        Parameters
+        ----------
+        scalar_bar : bool, optional
+            If True, displays a scalar bar legend (default: False).
+        """
         self.scalar_bar = scalar_bar
 
     def set_scalar_bar_text_size(self, text_size=24):
+        """Set the text size for the scalar bar.
+        
+        Parameters
+        ----------
+        text_size : int, optional
+            Font size for scalar bar text (default: 24).
+        """
         self.scalar_bar_text_size = text_size
 
     def render_model(self, interact=True, reset_camera=True):
@@ -198,11 +339,26 @@ class Renderer():
             return
 
     def update(self, reset_camera=True):
-        """Builds (or rebuilds) the VTK renderer
-
-        :param reset_camera: Resets the render window's camera position if set to True. Defaults to True.
-        :type reset_camera: bool, optional
-        :raises Exception: Visualization failed due to an unexpected error.
+        """Build or rebuild the VTK renderer with current settings.
+        
+        This method updates the visualization based on the current renderer settings,
+        including deformed shape, loads, contours, and other visual elements. It is
+        automatically called by render_model() and screenshot().
+        
+        Parameters
+        ----------
+        reset_camera : bool, optional
+            If True, resets the camera to view the entire model (default: True).
+        
+        Raises
+        ------
+        Exception
+            If the model configuration is invalid for the requested visualization.
+        
+        Notes
+        -----
+        This method validates that deformed_shape is not used with a load case,
+        and that render_loads requires either a load combination or load case.
         """
 
         # Input validation
