@@ -69,6 +69,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 v2.0.4 (in development)
+* Added load case/combo identification to VTK rendering.
 * Dropped support for Python version 3.10, which is not compatible with Numpy 2.4.
 * Removed unecessary checks for Scipy. Scipy has been a required dependency for some time now.
 * Cleaned up whitespace to conform to PEP8 style guide.
