@@ -432,7 +432,7 @@ class Member3D():
         i_node_mass = load_mass*(1 - x)/L
         j_node_mass = load_mass*x/L
         m[0, 0] = i_node_mass   # FX i-node
-        m[1, 1] = i_node_mass   # FY i-node  
+        m[1, 1] = i_node_mass   # FY i-node
         m[2, 2] = i_node_mass   # FZ i-node
         m[6, 6] = j_node_mass   # FX j-node
         m[7, 7] = j_node_mass   # FY j-node
@@ -622,7 +622,7 @@ class Member3D():
 
         # Partition the mass matrix
         m11 = m_unc[R1_indices, :][:, R1_indices]
-        m12 = m_unc[R1_indices, :][:, R2_indices] 
+        m12 = m_unc[R1_indices, :][:, R2_indices]
         m21 = m_unc[R2_indices, :][:, R1_indices]
         m22 = m_unc[R2_indices, :][:, R2_indices]
 
@@ -753,7 +753,7 @@ class Member3D():
 
             i += 1
 
-        # Return the fixed end reaction vector        
+        # Return the fixed end reaction vector
         return ferCondensed
 
     def _fer_unc(self, combo_name:str = 'Combo 1') -> NDArray[float64]:
@@ -787,7 +787,7 @@ class Member3D():
                         fer = add(fer, Pynite.FixedEndReactions.FER_Torque(factor*ptLoad[1], ptLoad[2], self.L()))
                     elif ptLoad[0] == 'My':
                         fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'My'))
-                    elif ptLoad[0] == 'Mz':     
+                    elif ptLoad[0] == 'Mz':
                         fer = add(fer, Pynite.FixedEndReactions.FER_Moment(factor*ptLoad[1], ptLoad[2], self.L(), 'Mz'))
                     elif ptLoad[0] == 'FX' or ptLoad[0] == 'FY' or ptLoad[0] == 'FZ':
                         FX, FY, FZ = 0, 0, 0
@@ -1133,7 +1133,7 @@ class Member3D():
                     if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                         return segment.Shear(x - segment.x1)
 
-                if isclose(x, self.L()):  
+                if isclose(x, self.L()):
                     lastIndex = len(self.SegmentsZ) - 1
                     return self.SegmentsZ[lastIndex].Shear(x - self.SegmentsZ[lastIndex].x1)
 
@@ -1328,7 +1328,7 @@ class Member3D():
         Member3D.__plt.ylabel('Shear')
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
-        Member3D.__plt.show()    
+        Member3D.__plt.show()
 
     def shear_array(self, Direction: Literal['Fy', 'Fz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
         """
@@ -1700,7 +1700,7 @@ class Member3D():
                 if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                     return segment.Torsion()
 
-                if isclose(x, self.L()):  
+                if isclose(x, self.L()):
                     lastIndex = len(self.SegmentsX) - 1
                     return self.SegmentsX[lastIndex].Torsion()
 
@@ -1913,7 +1913,7 @@ class Member3D():
                 if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                     return segment.axial(x - segment.x1)
 
-                if isclose(x, self.L()):  
+                if isclose(x, self.L()):
                     lastIndex = len(self.SegmentsZ) - 1
                     return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
 
@@ -2042,7 +2042,7 @@ class Member3D():
     def plot_axial(self, combo_name: str = 'Combo 1', n_points=20) -> None:
         """
         Plots the axial force diagram for the member.
-        
+
         Parameters
         ----------
         combo_name : string
@@ -2055,7 +2055,7 @@ class Member3D():
         if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
             self._solved_combo = self.model.load_combos[combo_name]
-        
+
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
@@ -2064,19 +2064,19 @@ class Member3D():
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
+
         x, P = self.axial_array(n_points, combo_name)
 
         Member3D.__plt.plot(x, P)
         Member3D.__plt.ylabel('Axial Force')
         Member3D.__plt.xlabel('Location')
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
-        Member3D.__plt.show()    
+        Member3D.__plt.show()
 
     def axial_array(self, n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
         """
         Returns the array of the axial force in the member for the given direction
-        
+
         Parameters
         ----------
         n_points: int
@@ -2099,14 +2099,14 @@ class Member3D():
         else:
             if any(x_array<0) or any(x_array>L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
-            
+
         return self._extract_vector_results(self.SegmentsZ, x_array, 'axial')
 
-                        
+
     def deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the deflection at a point along the member's length.
-        
+
         Parameters
         ----------
         Direction : string
@@ -2119,7 +2119,7 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the load combination itself).
         """
-        
+
         # Only calculate results if the member is currently active
         if self.active[combo_name]:
 
@@ -2127,7 +2127,7 @@ class Member3D():
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
+
             if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
                 P_delta = True
             else:
@@ -2135,45 +2135,45 @@ class Member3D():
 
             # Check which axis is of interest
             if Direction == 'dx':
-                
+
                 # Check which segment 'x' falls on
                 for segment in self.SegmentsZ:
-                    
+
                     if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
                         return segment.axial_deflection(x - segment.x1)
-                    
+
                 if isclose(x, self.L()):
-                    
+
                     lastIndex = len(self.SegmentsZ) - 1
                     return self.SegmentsZ[lastIndex].axial_deflection(x - self.SegmentsZ[lastIndex].x1)
 
             elif Direction == 'dy':
-                
+
                 # Check which segment 'x' falls on
                 for segment in self.SegmentsZ:
-                    
+
                     if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                        
+
                         return segment.deflection(x - segment.x1, P_delta)
-                    
+
                 if isclose(x, self.L()):
-                    
+
                     lastIndex = len(self.SegmentsZ) - 1
                     return self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1, P_delta)
-                    
+
             elif Direction == 'dz':
-                
+
                 for segment in self.SegmentsY:
-                    
+
                     if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                        
+
                         return segment.deflection(x - segment.x1)
-                    
+
                 if isclose(x, self.L()):
-                    
+
                     lastIndex = len(self.SegmentsY) - 1
-                    return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1) 
-        
+                    return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)
+
         else:
 
             return 0
@@ -2308,11 +2308,11 @@ class Member3D():
 
         # Return global minimum or 0 if nothing found
         return dmin_global if dmin_global is not None else 0
-              
+
     def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the deflection diagram for the member
-        
+
         Parameters
         ----------
         Direction : string
@@ -2325,21 +2325,21 @@ class Member3D():
         n_points: int
             The number of points used to generate the plot
         """
-        
+
         # Segment the member if necessary
         if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
             self._solved_combo = self.model.load_combos[combo_name]
-                
+
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
-        
+
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
+
         x, d = self.deflection_array(Direction, n_points, combo_name)
 
         Member3D.__plt.plot(x, d)
@@ -2351,7 +2351,7 @@ class Member3D():
     def deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
         """
         Returns the array of the deflection in the member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -2387,7 +2387,7 @@ class Member3D():
         else:
             if any(x_array<0) or any(x_array>L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
-                
+
         if P_delta:
             # P-delta analysis is not vectorised yet, do it element-wise
             y_arr = array([self.deflection(Direction, x, combo_name) for x in x_array])
@@ -2400,17 +2400,17 @@ class Member3D():
 
             elif Direction == 'dy':
                 return self._extract_vector_results(self.SegmentsZ, x_array, 'deflection', P_delta)
-                                
+
             elif Direction == 'dx':
                 return self._extract_vector_results(self.SegmentsZ, x_array, 'axial_deflection', P_delta)
-            
+
             else:
                 raise ValueError(f"Direction must be 'dx', 'dy' or 'dz'. {Direction} was given.")
 
     def rel_deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the relative deflection at a point along the member's length
-        
+
         Parameters
         ----------
         Direction : string
@@ -2431,42 +2431,42 @@ class Member3D():
             if self._solved_combo is None or combo_name != self._solved_combo.name:
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
-            
+
             d = self.d(combo_name)
             dyi = d[1,0]
             dyj = d[7,0]
             dzi = d[2,0]
             dzj = d[8,0]
             L = self.L()
-        
+
             # Check which axis is of interest
             if Direction == 'dy':
-                
+
                 # Check which segment 'x' falls on
                 for segment in self.SegmentsZ:
-                    
+
                     if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
-                        
+
                         return (segment.deflection(x - segment.x1)) - (dyi + (dyj-dyi)/L*x)
-                    
+
                 if isclose(x, self.L()):
-                    
+
                     lastIndex = len(self.SegmentsZ) - 1
                     return (self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
-                    
+
             elif Direction == 'dz':
-                
+
                 for segment in self.SegmentsY:
-                    
+
                     if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
-                        
+
                         return (segment.deflection(x - segment.x1)) - (dzi + (dzj-dzi)/L*x)
-                    
+
                 if isclose(x, self.L()):
-                    
+
                     lastIndex = len(self.SegmentsY) - 1
                     return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
-        
+
         else:
 
             return 0
@@ -2474,7 +2474,7 @@ class Member3D():
     def plot_rel_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the deflection diagram for the member
-        
+
         Parameters
         ----------
         Direction : string
@@ -2485,21 +2485,21 @@ class Member3D():
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
         """
-        
+
         # Segment the member if necessary
         if self._solved_combo is None or combo_name != self._solved_combo.name:
             self._segment_member(combo_name)
             self._solved_combo = self.model.load_combos[combo_name]
-                
+
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
-        
+
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
-        
+
         x, d_relative = self.rel_deflection_array(Direction, n_points, combo_name)
 
         Member3D.__plt.plot(x, d_relative)
@@ -2511,7 +2511,7 @@ class Member3D():
     def rel_deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
         """
         Returns the array of the relative deflection in the member for the given direction
-        
+
         Parameters
         ----------
         Direction : string
@@ -2697,7 +2697,7 @@ class Member3D():
                             SegmentsY[i].V1 += factor*ptLoad[1]
                             SegmentsY[i].M1 += factor*ptLoad[1]*(x - ptLoad[2])
                         elif ptLoad[0] == 'Mx':
-                            SegmentsX[i].T1 += factor*ptLoad[1]    
+                            SegmentsX[i].T1 += factor*ptLoad[1]
                         elif ptLoad[0] == 'My':
                             SegmentsY[i].M1 += factor*ptLoad[1]
                         elif ptLoad[0] == 'Mz':
@@ -2841,7 +2841,7 @@ class Member3D():
 
     def _extract_vector_results(self, segments: List, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
         """
-        Extracts result values at specified locations along a structural member using efficient, 
+        Extracts result values at specified locations along a structural member using efficient,
         vectorized evaluation of piecewise segment functions.
 
         Assumes:
@@ -2863,7 +2863,7 @@ class Member3D():
             'moment', 'shear', 'axial', 'torque', 'deflection', or 'axial_deflection'.
 
         P_delta : bool, optional
-            Whether to include second-order (P-Delta) effects for applicable result types 
+            Whether to include second-order (P-Delta) effects for applicable result types
             ('moment' and 'deflection'). Default is False.
 
         Returns

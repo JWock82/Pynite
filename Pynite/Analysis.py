@@ -718,7 +718,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
             node.RxnMZ[combo.name] = 0.0
 
             # Determine if the node has any supports
-            if (node.support_DX or node.support_DY or node.support_DZ 
+            if (node.support_DX or node.support_DY or node.support_DZ
             or  node.support_RX or node.support_RY or node.support_RZ):
 
                 # Sum the spring end forces at the node
@@ -727,7 +727,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     if spring.i_node == node and spring.active[combo.name] == True:
 
                         # Get the spring's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         spring_F = spring.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += spring_F[0, 0]
@@ -740,7 +740,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     elif spring.j_node == node and spring.active[combo.name] == True:
 
                         # Get the spring's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         spring_F = spring.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += spring_F[6, 0]
@@ -759,7 +759,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         if member.i_node == node and phys_member.active[combo.name] == True:
 
                             # Get the member's global force matrix
-                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                             member_F = member.F(combo.name)
 
                             if node.support_DX: node.RxnFX[combo.name] += member_F[0, 0]
@@ -772,7 +772,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                         elif member.j_node == node and phys_member.active[combo.name] == True:
 
                             # Get the member's global force matrix
-                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                             member_F = member.F(combo.name)
 
                             if node.support_DX: node.RxnFX[combo.name] += member_F[6, 0]
@@ -788,7 +788,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     if plate.i_node == node:
 
                         # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         plate_F = plate.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[0, 0]
@@ -801,7 +801,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     elif plate.j_node == node:
 
                         # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         plate_F = plate.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[6, 0]
@@ -814,7 +814,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     elif plate.m_node == node:
 
                         # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         plate_F = plate.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[12, 0]
@@ -827,7 +827,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     elif plate.n_node == node:
 
                         # Get the plate's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         plate_F = plate.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += plate_F[18, 0]
@@ -843,7 +843,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     if quad.i_node == node:
 
                         # Get the quad's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         quad_F = quad.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += quad_F[0, 0]
@@ -856,7 +856,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     elif quad.j_node == node:
 
                         # Get the quad's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         quad_F = quad.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += quad_F[6, 0]
@@ -869,7 +869,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     elif quad.m_node == node:
 
                         # Get the quad's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         quad_F = quad.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += quad_F[12, 0]
@@ -882,7 +882,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: List[str] |
                     elif quad.n_node == node:
 
                         # Get the quad's global force matrix
-                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed                    
+                        # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
                         quad_F = quad.F(combo.name)
 
                         if node.support_DX: node.RxnFX[combo.name] += quad_F[18, 0]
@@ -1020,7 +1020,7 @@ def _check_statics(model: FEModel3D, combo_tags: List[str] | None = None) -> Non
             SumRFZ += RFZ
             SumRMX += RMX - RFY*Z + RFZ*Y
             SumRMY += RMY + RFX*Z - RFZ*X
-            SumRMZ += RMZ - RFX*Y + RFY*X 
+            SumRMZ += RMZ - RFX*Y + RFY*X
 
         # Add the results to the table
         statics_table.add_row([combo.name, '{:.3g}'.format(SumFX), '{:.3g}'.format(SumRFX),
@@ -1120,10 +1120,10 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
         else:
             D2_indices.append(node.ID*6 + 5)
             D2.append(0.0)
-    
+
     # Legacy code on the next line. I will leave it here until the line that follows has been proven over time.
     # D2 = atleast_2d(D2)
-    
+
     # Convert D2 from a list to a matrix
     D2 = array(D2, ndmin=2).T
 
@@ -1167,11 +1167,11 @@ def _renumber(model: FEModel3D) -> None:
     Assigns node and element ID numbers to be used internally by the program. Numbers are
     assigned according to the order in which they occur in each dictionary.
     """
-    
+
     # Number each node in the model
     for id, node in enumerate(model.nodes.values()):
         node.ID = id
-    
+
     # Number each spring in the model
     for id, spring in enumerate(model.springs.values()):
         spring.ID = id
@@ -1183,11 +1183,11 @@ def _renumber(model: FEModel3D) -> None:
         for member in phys_member.sub_members.values():
             member.ID = id
             id += 1
-    
+
     # Number each plate in the model
     for id, plate in enumerate(model.plates.values()):
         plate.ID = id
-    
+
     # Number each quadrilateral in the model
     for id, quad in enumerate(model.quads.values()):
         quad.ID = id
