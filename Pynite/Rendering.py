@@ -923,7 +923,7 @@ class Renderer:
         v2 = _PerpVector(v1)
         
         # Generate the arc for the moment
-        arc = pv.CircularArcFromNormal(center, resolution=20, normal=v1, angle=215, polar=v2*radius)
+        arc = pv.CircularArcFromNormal(center=center, resolution=20, normal=v1, angle=215, polar=v2*radius)
         
         # Add the arc to the plot
         self.plotter.add_mesh(arc, line_width=2, color=color)
