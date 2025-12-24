@@ -72,7 +72,8 @@ class Renderer():
         self.model = model
 
         # Default settings for rendering
-        self._annotation_size = 5
+        self._annotation_size = None  # None means auto-calculate
+        self._annotation_size_manual = False  # Track if user manually set the size
         self._deformed_shape = False
         self._deformed_scale = 30
         self._render_nodes = True
@@ -127,12 +128,20 @@ class Renderer():
 
     @property
     def annotation_size(self):
-        """Size of text annotations and visual elements in model units."""
+        """Size of text annotations and visual elements in model units.
+        
+        If not manually set, automatically calculates as 5% of the shortest
+        distance between nodes in the model.
+        """
+        if self._annotation_size is None or not self._annotation_size_manual:
+            # Auto-calculate annotation size
+            return self._calculate_auto_annotation_size()
         return self._annotation_size
 
     @annotation_size.setter
     def annotation_size(self, value):
         self._annotation_size = value
+        self._annotation_size_manual = True  # Mark as manually set
 
     @property
     def deformed_shape(self):
@@ -231,6 +240,42 @@ class Renderer():
     def show_load_info(self, value):
         self._show_load_info = value
 
+    def _calculate_auto_annotation_size(self):
+        """Calculate automatic annotation size as 5% of shortest node distance.
+        
+        Returns
+        -------
+        float
+            Annotation size in model units. Returns 5.0 as fallback if model
+            has fewer than 2 nodes.
+        """
+        nodes = list(self.model.nodes.values())
+        
+        # Need at least 2 nodes to calculate distance
+        if len(nodes) < 2:
+            return 5.0  # Default fallback
+        
+        # Calculate minimum distance between any two nodes
+        min_distance = float('inf')
+        
+        for i, node1 in enumerate(nodes):
+            for node2 in nodes[i+1:]:
+                # Calculate Euclidean distance
+                dx = node2.X - node1.X
+                dy = node2.Y - node1.Y
+                dz = node2.Z - node1.Z
+                distance = (dx**2 + dy**2 + dz**2)**0.5
+                
+                if distance > 0 and distance < min_distance:
+                    min_distance = distance
+        
+        # If all nodes are at same location, use default
+        if min_distance == float('inf') or min_distance == 0:
+            return 5.0
+        
+        # Return 5% of shortest distance
+        return min_distance * 0.05
+
     def render_model(self, interact=True, reset_camera=True):
         """
         Renders the model in a window
@@ -262,6 +307,21 @@ class Renderer():
             style = vtk.vtkInteractorStyleTrackballCamera()
             interactor.SetInteractorStyle(style)
             interactor.SetRenderWindow(self.window)
+
+            # Add coordinate axes in the bottom left corner
+            axes = vtk.vtkAxesActor()  # Create a 3D axes actor showing X, Y, and Z axes
+            axes.SetTotalLength(1.5, 1.5, 1.5)  # Set the length of each axis arrow to 1.5 units
+            axes.SetShaftTypeToLine()  # Use simple lines instead of cylinders for the axis shafts (cleaner appearance)
+            axes.SetAxisLabels(1)  # Enable the display of axis labels (X, Y, Z)
+            axes.SetCylinderRadius(0.02)  # Set the radius of the arrow tips to 0.02 units
+
+            # Create the orientation marker widget to display the axes in the corner
+            axes_widget = vtk.vtkOrientationMarkerWidget()  # Create a widget to display the axes actor
+            axes_widget.SetOrientationMarker(axes)  # Attach the axes actor to the widget
+            axes_widget.SetInteractor(interactor)  # Connect the widget to the render window interactor
+            axes_widget.SetViewport(0.0, 0.0, 0.2, 0.2)  # Position in bottom left corner (x_min, y_min, x_max, y_max as fractions of window)
+            axes_widget.SetEnabled(1)  # Enable the widget so it displays in the render window
+            axes_widget.InteractiveOff()  # Disable interaction with the axes widget (it will only rotate with the camera)
 
             # Start the interactor. Code execution will pause here until the user closes the window.
             interactor.Start()
@@ -388,6 +448,10 @@ class Renderer():
         # Clear out all the old actors from any previous renderings
         for actor in renderer.GetActors():
             renderer.RemoveActor(actor)
+
+        # Clear out all the old view props (2D annotations, etc.)
+        for prop in renderer.GetViewProps():
+            renderer.RemoveViewProp(prop)
 
         # Add actors for each spring
         for vis_spring in vis_springs:
