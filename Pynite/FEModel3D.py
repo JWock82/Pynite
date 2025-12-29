@@ -822,11 +822,11 @@ class FEModel3D():
         self.solution = None
 
     def merge_duplicate_nodes(self, tolerance: float = 0.001) -> list:
-        """Removes duplicate nodes from the model and returns a list of the removed node names.
+        """Removes duplicate nodes from the model and returns a list of tuples showing which nodes were merged.
 
         :param tolerance: The maximum distance between two nodes in order to consider them duplicates. Defaults to 0.001.
         :type tolerance: float, optional
-        :return: A list of the names of the nodes that were removed from the model.
+        :return: A list of tuples where each tuple contains (deleted_node_name, merged_into_node_name).
         """
 
         # Initialize a dictionary marking where each node is used
@@ -855,8 +855,8 @@ class FEModel3D():
         # Make a list of the names of each node in the model
         node_names = list(self.nodes.keys())
 
-        # Make a list of nodes to be removed from the model
-        remove_list = []
+        # Make a list of merge mappings (deleted_node, merged_into_node)
+        merge_list = []
 
         # Step through each node in the copy of the `Nodes` dictionary
         for i, node_1_name in enumerate(node_names):
@@ -915,18 +915,18 @@ class FEModel3D():
                         if node_2_name == element.m_node.name: element.m_node = self.nodes[node_1_name]
                         if node_2_name == element.n_node.name: element.n_node = self.nodes[node_1_name]
 
-                # Add the node to the `remove` list
-                remove_list.append(node_2_name)
+                # Add the node mapping to the merge list (deleted_node, merged_into_node)
+                merge_list.append((node_2_name, node_1_name))
 
         # Remove `node_2` from the model's `Nodes` dictionary
-        for node_name in remove_list:
+        for node_name, _ in merge_list:
             self.nodes.pop(node_name)
 
         # Flag the model as unsolved
         self.solution = None
 
-        # Return the list of removed nodes
-        return remove_list
+        # Return the list of merge mappings (deleted_node, merged_into_node)
+        return merge_list
 
     def delete_node(self, node_name: str):
         """Removes a node from the model. All nodal loads associated with the node and elements attached to the node will also be removed.
