@@ -62,15 +62,37 @@ class Mesh():
             elif element.type == 'Quad' and element_name in self.model.quads:
                 del self.model.quads[element_name]
 
-        # Build a set of all nodes that are connected to elements outside this mesh
+        # Build a set of nodes that are shared between this mesh and elements outside the mesh
+        # (i.e., nodes that exist in both the mesh and external elements)
         shared_nodes = set()
+        
+        # Check quads and plates - only add nodes that are actually in BOTH the mesh and the external element
         for element in list(self.model.quads.values()) + list(self.model.plates.values()):
             # Check if this element is not in the current mesh
             if element.name not in self.elements:
-                shared_nodes.add(element.i_node.name)
-                shared_nodes.add(element.j_node.name)
-                shared_nodes.add(element.m_node.name)
-                shared_nodes.add(element.n_node.name)
+                # Add only the nodes of this element that are also in the mesh
+                if element.i_node.name in self.nodes:
+                    shared_nodes.add(element.i_node.name)
+                if element.j_node.name in self.nodes:
+                    shared_nodes.add(element.j_node.name)
+                if element.m_node.name in self.nodes:
+                    shared_nodes.add(element.m_node.name)
+                if element.n_node.name in self.nodes:
+                    shared_nodes.add(element.n_node.name)
+        
+        # Check members - only add nodes that are actually in BOTH the mesh and the member
+        for member in list(self.model.members.values()):
+            if member.i_node.name in self.nodes:
+                shared_nodes.add(member.i_node.name)
+            if member.j_node.name in self.nodes:
+                shared_nodes.add(member.j_node.name)
+        
+        # Check springs - only add nodes that are actually in BOTH the mesh and the spring
+        for spring in list(self.model.springs.values()):
+            if spring.i_node.name in self.nodes:
+                shared_nodes.add(spring.i_node.name)
+            if spring.j_node.name in self.nodes:
+                shared_nodes.add(spring.j_node.name)
 
         # Remove nodes from the model only if they're not shared with other elements
         for node_name in list(self.nodes.keys()):

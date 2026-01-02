@@ -975,6 +975,31 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
+    def delete_mesh(self, mesh_name: str) -> None:
+        """Removes a mesh from the model. The mesh's elements are removed, but nodes that are
+        shared with elements outside the mesh are preserved.
+
+        :param mesh_name: The name of the mesh to be removed.
+        :type mesh_name: str
+        :raises KeyError: Occurs when the specified mesh does not exist in the model.
+        """
+
+        # Check if the mesh exists
+        if mesh_name not in self.meshes:
+            raise KeyError(f"Mesh '{mesh_name}' does not exist in the model.")
+
+        # Get the mesh
+        mesh = self.meshes[mesh_name]
+
+        # Remove the mesh's nodes and elements from the model (preserving shared nodes)
+        mesh._remove_from_model()
+
+        # Remove the mesh from the model's mesh dictionary
+        self.meshes.pop(mesh_name)
+
+        # Flag the model as unsolved
+        self.solution = None
+
     def def_support(self, node_name: str, support_DX: bool = False, support_DY: bool = False,
                     support_DZ: bool = False, support_RX: bool = False, support_RY: bool = False,
                     support_RZ: bool = False):
