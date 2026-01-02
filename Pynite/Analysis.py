@@ -50,8 +50,7 @@ def _prepare_model(model: FEModel3D, n_modes: int = 0) -> None:
 
     # Generate all basic meshes
     for mesh in model.meshes.values():
-        if mesh.is_generated == False:
-            mesh.generate()
+        mesh.generate()
 
     # Generate all shear wall meshes
     for shear_wall in model.shear_walls.values():
