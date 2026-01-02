@@ -38,6 +38,7 @@ class ShearWall():
         self._materials: List[List[str | float]] = []
         self.piers: Dict[str, Pier] = {}
         self.coupling_beams: Dict[str, CouplingBeam] = {}
+        self.is_generated: bool = False
         self.asign_material(material_name, thickness)
 
     def asign_material(self, name: str, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
@@ -292,6 +293,9 @@ class ShearWall():
         # Populate dictionaries of piers and coupling beams for the wall
         self._identify_piers()
         self._identify_coupling_beams()
+        
+        # Mark the wall as generated
+        self.is_generated = True
 
 
     def _identify_piers(self) -> None:
