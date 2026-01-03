@@ -94,106 +94,106 @@ class Node3D():
             A node object to compare coordinates with.
         """
         return ((self.X - other.X)**2 + (self.Y - other.Y)**2 + (self.Z - other.Z)**2)**0.5
-    
 
-    def M(self, mass_combo_name: str = '', 
-        mass_combo_direction: int = 2, characteristic_length: float|None = None) -> NDArray:
-        """Returns the node's mass matrix (6x6 diagonal). In member-based models, nodes provide
-           translational mass only to prevent double-counting of rotational inertia. For member-less
-           models, rotational inertia can be added by providing a characteristic_length.
+    def M(self, mass_combo_name: str | None = None, mass_direction: str = 'Y', gravity: float = 1.0, characteristic_length: float | None = None) -> NDArray:
+        """Returns the node's mass matrix (6x6 diagonal). In member-based models, nodes provide translational mass only to prevent double-counting of rotational inertia. For member-less models, rotational inertia can be added by providing a characteristic_length.
 
-        :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ""
+        :param mass_combo_name: Load combination name for force-based mass calculation, defaults to ''.
         :type mass_combo_name: str, optional
-        :param mass_combo_direction: Direction for mass conversion: 0=X, 1=Y, 2=Z, defaults to 2
-        :type mass_combo_direction: int, optional
+        :param mass_direction: Direction for load-to-mass conversion ('X', 'Y', or 'Z'). Any loads applied in this direction (positive or negative) will be converted to mass. Default is 'Y'.
+        :type mass_direction: str, optional
+        :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
+        :type gravity: float
         :param characteristic_length: If provided, adds rotational inertia scaled by I = m * (0.01L²).
                                       Use None for translational-only mass, defaults to None
         :type characteristic_length: float, optional
         :return: Node mass matrix of shape (6, 6)
         :rtype: numpy.ndarray
         """
+
+        # Initialize the nodal mass matrix
         m = zeros((6, 6))
-        
+
         # Get mass from nodal loads in the specified load combination
-        if mass_combo_name == "":
-            total_mass = 0.0
-        elif mass_combo_name not in self.model.load_combos:
+        if mass_combo_name not in self.model.load_combos:
             raise ValueError(f'Load combination {mass_combo_name} not found in the model.')
         else:
-            total_mass = self._calculate_total_mass_from_combo(mass_combo_name, mass_combo_direction)
-        # print(f'{self.name}: total_mass: {total_mass}')
-        
+            total_mass = self._calc_mass(mass_combo_name, mass_direction, gravity)
+
+        # Check if there is any mass at this node
         if total_mass > 0:
+
             # Create lumped mass matrix for the node
             # Mass is distributed to translational DOFs only (standard practice)
             m[0, 0] = total_mass  # FX
-            m[1, 1] = total_mass  # FY  
+            m[1, 1] = total_mass  # FY
             m[2, 2] = total_mass  # FZ
-            
+
             # Smart rotational inertia - only for free rotational DOFs
             # Use a small value based on mass and a characteristic length
             # Scale by characteristic length squared (I = m * r²)
             if characteristic_length is not None:
                 rotational_inertia = total_mass * (characteristic_length ** 2) * 0.01  # 1% scaling
-                
+
                 if not self.support_RX:
                     m[3, 3] = rotational_inertia
                 if not self.support_RY:
                     m[4, 4] = rotational_inertia
                 if not self.support_RZ:
                     m[5, 5] = rotational_inertia
-        
+
         return m
 
-    def _calculate_total_mass_from_combo(self, mass_combo_name: str, mass_combo_direction: int = 2) -> float:
+    def _calc_mass(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> float:
+        """Calculates the total mass from nodal loads in a load combination.
+
+        For modal analysis, nodal "masses" are typically specified as force loads that get converted to mass using F = m*a (where a is typically gravity).
+
+        :param mass_combo_name: The name of the load combination to use for mass calculation.
+        :type mass_combo_name: str
+        :param mass_direction: Direction for load-to-mass conversion ('X', 'Y', or 'Z'). Any loads applied in this direction (positive or negative) will be converted to mass. Default is 'Y'.
+        :type mass_direction: str, optional
+        :param gravity: The acceleration due to gravity. Defaults to 1.0. In most cases you'll want to change this to be in units consistent with your model.
+        :type gravity: float
+        :raises NameError: _description_
+        :return: The total mass calculated from forces in the specified direction
+        :rtype: float
         """
-        Calculates the total mass from nodal loads in a load combination.
-        
-        For modal analysis, nodal "masses" are typically specified as force loads 
-        that get converted to mass using F = m*a (where a is typically gravity).
-        
-        Parameters:
-        -----------
-        mass_combo_name : str
-            Name of the load combination to use for mass calculation
-        mass_combo_direction : int
-            Direction for mass conversion: 0=X, 1=Y, 2=Z (default=2 for gravity/Z-direction)
-        
-        Returns:
-        --------
-        float
-            Total mass calculated from forces in the specified direction
-        """
+
+        # Initialize the force summation to zero
         total_force = 0.0
-        
+
+        # Get the mass combo from the model
         try:
-            combo = self.model.load_combos[mass_combo_name]
+            mass_combo = self.model.load_combos[mass_combo_name]
         except KeyError:
             raise NameError(f"No load combination named '{mass_combo_name}'")
-        
-        # Sum all force loads in the specified direction for this load combination
+
+        # Step through each nodal load acting on this node
         for load in self.NodeLoads:
+
+            # Read in the nodal load parameters
             load_direction, load_value, load_case = load
-            
-            # Apply combination factors to load cases (same pattern as Member3D)
-            if load_case in combo.factors:
-                factor = combo.factors[load_case]
+
+            # Apply load factors to load cases in the mass combo
+            if load_case in mass_combo.factors:
+
+                factor = mass_combo.factors[load_case]
                 load_magnitude = factor * load_value
-                
+
                 # Sum forces in the specified direction
-                if mass_combo_direction == 0 and load_direction == 'FX':
+                if mass_direction == 'X' and load_direction == 'FX':
                     total_force += load_magnitude
-                elif mass_combo_direction == 1 and load_direction == 'FY':
-                    total_force += load_magnitude  
-                elif mass_combo_direction == 2 and load_direction == 'FZ':
+                elif mass_direction == 'Y' and load_direction == 'FY':
                     total_force += load_magnitude
-        
-        # Convert force to mass (assuming g = 1.0 for pre-scaled loads)
-        gravity = 1.0
-        total_mass = total_force / gravity if gravity != 0 else 0.0
+                elif mass_direction == 'Z' and load_direction == 'FZ':
+                    total_force += load_magnitude
+
+        # Convert force to mass
+        total_mass = total_force / gravity if gravity != 0.0 else 0.0
 
         # Debug output (you can remove this later)
         # if abs(total_mass) > 1e-10:
         #     print(f'{self.name}: total_force: {total_force:.6f}, total_mass: {total_mass:.6f}, combo_factors: {combo.factors}')
-        
+
         return abs(total_mass)   # Mass is always positive

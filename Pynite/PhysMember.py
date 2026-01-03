@@ -26,10 +26,10 @@ class PhysMember(Member3D):
     __plt = None
 
     def __init__(self, model: FEModel3D, name: str, i_node: Node3D, j_node: Node3D, material_name: str, section_name: str, rotation: float = 0.0,
-                 tension_only: bool = False, comp_only: bool = False, lumped_mass: bool = True, shear_deformable: bool = False) -> None:
+                 tension_only: bool = False, comp_only: bool = False, shear_deformable: bool = False) -> None:
 
         super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, 
-                         tension_only, comp_only, lumped_mass=lumped_mass, shear_deformable=shear_deformable)
+                         tension_only, comp_only, shear_deformable=shear_deformable)
         self.sub_members: Dict[str, Member3D] = {}
 
     def descritize(self) -> None:
@@ -129,7 +129,7 @@ class PhysMember(Member3D):
             # Create a new sub-member
             new_sub_member = Member3D(self.model, name, i_node, j_node, self.material.name, 
                                       self.section.name, self.rotation, self.tension_only, 
-                                      self.comp_only, lumped_mass=self.lumped_mass, shear_deformable=self.shear_deformable)
+                                      self.comp_only, shear_deformable=self.shear_deformable)
 
             # Flag the sub-member as active
             for combo_name in self.model.load_combos.keys():
@@ -156,6 +156,7 @@ class PhysMember(Member3D):
                     w1 = dist_load[1]
                     w2 = dist_load[2]
                     case = dist_load[5]
+                    self_weight = dist_load[6]
 
                     # Equation describing the load as a function of x
                     # Linear interpolation of distributed load
@@ -175,7 +176,7 @@ class PhysMember(Member3D):
                         w2 = w(xj)
 
                     # Add the load to the sub-member
-                    new_sub_member.DistLoads.append([direction, w1, w2, x1, x2, case])
+                    new_sub_member.DistLoads.append([direction, w1, w2, x1, x2, case, self_weight])
 
             # Add point loads to the sub-member
             for pt_load in self.PtLoads:

@@ -6,6 +6,7 @@
 
 ![Build Status](https://github.com/JWock82/Pynite/actions/workflows/build-and-test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/JWock82/Pynite/branch/main/graph/badge.svg?token=ZH18US3A7P)](https://codecov.io/gh/JWock82/Pynite)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/PyniteFEA)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/PyNiteFEA?cacheSeconds=86400)
 <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/JWock82/Pynite">
 ![GitHub last commit](https://img.shields.io/github/last-commit/JWock82/Pynite)
@@ -22,6 +23,7 @@ For a more detailed discussion on installation options and dependencies see http
 # Current Capabilities
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
+* Modal analysis of frame type structures.
 * Member point loads, linearly varying distributed loads, and nodal loads are supported.
 * Classify loads by load case and create load combinations from load cases.
 * Produces shear, moment, and deflection results and diagrams for each member.
@@ -66,8 +68,31 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v1.6.3
-* Added modal analysis. This is experimental for now. Please try out this feature and report any issues. A special thanks to @boustrephon for implementing this feature.
+v2.1.0 (in development)
+* Meshes now automatically regenerate with the latest parameters, allowing you to alter them between model runs. Meshes are now truly parametric.
+* Renderers now automatically set the annotation size as 5% of the minimum distance between nodes. You still have the option of overiding this by setting the annotation size manually.
+* Added load case/combo identification to VTK rendering.
+* Dropped support for Python version 3.10, which is not compatible with Numpy 2.4.
+* Removed unecessary checks for Scipy. Scipy has been a required dependency for some time now.
+* Cleaned up whitespace to conform to PEP8 style guide.
+
+v2.0.3
+* Numpy >= 2.4 is now a requirement. This ensures the VTK renderer will handle plate results arrays properly.
+* `pip` now installs dependencies during build testing. Pynite's testing suite now runs against the correct version of each dependency.
+
+v2.0.2
+* Added docstrings to the VTK `Renderer` class to help the user.
+* Enforced use of properties instead of attributes in the VTK `Renderer` and added docstrings to properties help the user make decisions.
+* Removed the VTK `Renderer`'s properties that began with "set_". These were redundant and caused confusion. The prefix "set_" is no longer used to access or set any of the `Renderer`'s properties.
+* Made the VTK `Renderer` compatible with the latest version of `numpy`.
+
+v2.0.1
+* Pynite no longer struggles rendering load cases and combinations when no loads are present. This is especially helpful for rendering modal load combinations, which don't have loads (only masses).
+* The pyvista plotter's "X" button now works just like pressing "q". This was an annoying pyvista-ism that led to error messages when closing the window with the "X" button.
+
+v2.0.0
+* Added modal analysis. You can now find the natural frequencies and mode shapes of frame-type structures (plates not yet supported). A special thanks to @boustrephon for heading up this feature.
+* Dropping support for python < 3.10.
 
 v1.6.2
 * Added helper method to `FEModel3D` for mat foundations.
@@ -143,7 +168,3 @@ v1.0.0
 * Added a new `ShearWall` class that assists you in constructing and analyzing shear walls. This tool automatically detects piers and coupling beams, and finds the forces inside them and calculates their ascpect ratios, which can be handy for seismic design. It reports stiffness of multi-story shear walls at each story to help with rigid diaphragm analysis. It allows for modeling walls with openings, steps, and partial depth diaphragm loading.
 * `vtk` and `pyvista` are now optional dependencies. This change streamlines installation for users who don't rely on `Pynite's` built-in visualization tools. From now on, `Pynite` should be installed using `$ pip install PyNiteFEA[all]` for most users.
 * `Pynite` no longer uses auxiliary nodes to define member cross-section rotation. You can now directly specify the rotation (in degrees) when you define a member using the `rotation` argument.
-
-v0.0.98-100
-* Bug fix for `FEModel3D.add_section`. It was throwing exceptions and had not been updated to match the examples.
-* Improvements to spring rendering in `pyvista`. Up until this point spring elements were being rendered as lines. They now render as zigzag lines in `pyvista`. There is still more work for improvement on spring rendering, but this is a good start.

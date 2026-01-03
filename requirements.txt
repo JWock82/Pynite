@@ -1,5 +1,5 @@
 # Minimum requirements
-numpy
+numpy >= 2.4.0
 scipy
 prettytable
 pyvista[all,trame]

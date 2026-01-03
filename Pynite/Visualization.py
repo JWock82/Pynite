@@ -1,35 +1,91 @@
 from __future__ import annotations # Allows more recent type hints features
-from json import load
 import warnings
 
 from IPython.display import Image
-from numpy import array, empty, append, cross
+from numpy import array, empty, append, cross, asarray
 from numpy.linalg import norm
 import vtk
 
 class Renderer():
-    """Used to render finite element models.
+    """Renderer for visualizing finite element models using VTK.
+
+    This class provides a flexible interface for rendering 3D finite element models,
+    including nodes, members, springs, plates, and quads. It supports rendering of
+    undeformed and deformed shapes, load visualizations, and stress/force contours.
+
+    Parameters
+    ----------
+    model : FEModel3D
+        The finite element model to be rendered.
+
+    Attributes
+    ----------
+    annotation_size : float
+        Controls the size of text labels and visual elements (default: 5).
+    deformed_shape : bool
+        Whether to render the deformed shape of the model (default: False).
+    deformed_scale : float
+        Scale factor for deformation visualization (default: 30).
+    render_nodes : bool
+        Whether to render nodes in the visualization (default: True).
+    render_loads : bool
+        Whether to render applied loads (default: True).
+    color_map : str or None
+        Type of stress/force contour to display on plates/quads. Options:
+        'Qx', 'Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy' (default: None).
+    combo_name : str or None
+        Name of load combination to visualize. Mutually exclusive with case.
+    case : str or None
+        Name of load case to visualize. Mutually exclusive with combo_name.
+    labels : bool
+        Whether to display text labels for elements (default: True).
+    scalar_bar : bool
+        Whether to display a scalar bar for contour plots (default: False).
+    scalar_bar_text_size : int
+        Font size for scalar bar text (default: 24).
+    theme : str
+        Visual theme: 'default' or 'print' (default: 'default').
+    window_size : tuple
+        Window dimensions as (width, height).
+
+    Examples
+    --------
+    >>> from PyNite import FEModel3D
+    >>> model = FEModel3D()
+    >>> # ... build model ...
+    >>> renderer = Renderer(model)
+    >>> renderer.annotation_size = 6
+    >>> renderer.combo_name = 'Load Combo 1'
+    >>> renderer.render_model()
     """
 
     scalar = None
 
     def __init__(self, model):
+        """Initialize the renderer with a finite element model.
 
+        Parameters
+        ----------
+        model : FEModel3D
+            The finite element model to render.
+        """
         self.model = model
 
         # Default settings for rendering
-        self.annotation_size = 5
-        self.deformed_shape = False
-        self.deformed_scale = 30
-        self.render_nodes = True
-        self.render_loads = True
-        self.color_map = None
-        self.combo_name = 'Combo 1'
-        self.case = None
-        self.labels = True
-        self.scalar_bar = False
-        self.scalar_bar_text_size = 24
-        self.theme = 'default'
+        self._annotation_size = None  # None means auto-calculate
+        self._annotation_size_manual = False  # Track if user manually set the size
+        self._deformed_shape = False
+        self._deformed_scale = 30
+        self._render_nodes = True
+        self._render_loads = True
+        self._color_map = None
+        self._combo_name = 'Combo 1'
+        self._case = None
+        self._labels = True
+        self._scalar_bar = False
+        self._scalar_bar_text_size = 24
+        self._theme = 'default'
+        self._show_load_info = True
 
         # Initialize VTK objects
         self.renderer = vtk.vtkRenderer()
@@ -38,62 +94,187 @@ class Renderer():
         self.window.AddRenderer(self.renderer)
 
     @property
-    def window_width(self):
-        return self.window.GetSize()[0]
+    def window_size(self):
+        """Window size as (width, height) tuple."""
+        return self.window.GetSize()
 
-    @window_width.setter
-    def window_width(self, width):
-        height = self.window.GetSize()[1]
+    @window_size.setter
+    def window_size(self, size):
+        """Set window size from tuple or list (width, height)."""
+        width, height = size
         self.window.SetSize(width, height)
 
     @property
-    def window_height(self):
-        return self.window.GetSize()[1]
+    def combo_name(self):
+        """Load combination name. When set, case is automatically set to None."""
+        return self._combo_name
 
-    @window_height.setter
-    def window_height(self, height):
-        width = self.window.GetSize()[0]
-        self.window.SetSize(width, height)
+    @combo_name.setter
+    def combo_name(self, value):
+        self._combo_name = value
+        if value is not None:
+            self._case = None
 
-    def set_annotation_size(self, size=5):
-        self.annotation_size = size
+    @property
+    def case(self):
+        """Load case name. When set, combo_name is automatically set to None."""
+        return self._case
 
-    def set_deformed_shape(self, deformed_shape=False):
-        self.deformed_shape = deformed_shape
+    @case.setter
+    def case(self, value):
+        self._case = value
+        if value is not None:
+            self._combo_name = None
 
-    def set_deformed_scale(self, scale=30):
-        self.deformed_scale = scale
-
-    def set_render_nodes(self, render_nodes=True):
-        self.render_nodes = render_nodes
-
-    def set_render_loads(self, render_loads=True):
-        self.render_loads = render_loads
-    
-    def set_color_map(self, color_map=None):
-        """Sets the color map for plate contours.
-
-        :param color_map: The color map to use: Valid options are 'Qx', Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy' 'Txy'. Qx and Qy are out-of-plane shear forces. Mx, My, and Mxy are local out-of-plane bending moments. 'Sx' and 'Sy' are membrane forces, and 'Txy' is an in-plane shear force. Defaults to None.
-        :type color_map: str, optional
+    @property
+    def annotation_size(self):
+        """Size of text annotations and visual elements in model units.
+        
+        If not manually set, automatically calculates as 5% of the shortest
+        distance between nodes in the model.
         """
-        self.color_map = color_map
+        if self._annotation_size is None or not self._annotation_size_manual:
+            # Auto-calculate annotation size
+            return self._calculate_auto_annotation_size()
+        return self._annotation_size
 
-    def set_combo_name(self, combo_name='Combo 1'):
-        self.case = None
-        self.combo_name = combo_name
+    @annotation_size.setter
+    def annotation_size(self, value):
+        self._annotation_size = value
+        self._annotation_size_manual = True  # Mark as manually set
 
-    def set_case(self, case=None):
-        self.combo_name = None
-        self.case = case
+    @property
+    def deformed_shape(self):
+        """Whether to render the deformed shape of the model."""
+        return self._deformed_shape
 
-    def set_show_labels(self, show_labels=True):
-        self.labels = show_labels
+    @deformed_shape.setter
+    def deformed_shape(self, value):
+        self._deformed_shape = value
 
-    def set_scalar_bar(self, scalar_bar=False):
-        self.scalar_bar = scalar_bar
+    @property
+    def deformed_scale(self):
+        """Scale factor for deformation visualization."""
+        return self._deformed_scale
 
-    def set_scalar_bar_text_size(self, text_size=24):
-        self.scalar_bar_text_size = text_size
+    @deformed_scale.setter
+    def deformed_scale(self, value):
+        self._deformed_scale = value
+
+    @property
+    def render_nodes(self):
+        """Whether to render nodes in the visualization."""
+        return self._render_nodes
+
+    @render_nodes.setter
+    def render_nodes(self, value):
+        self._render_nodes = value
+
+    @property
+    def render_loads(self):
+        """Whether to render applied loads."""
+        return self._render_loads
+
+    @render_loads.setter
+    def render_loads(self, value):
+        self._render_loads = value
+
+    @property
+    def color_map(self):
+        """Type of stress/force contour to display on plates/quads.
+
+        Valid options: 'Qx', 'Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy'
+        - Qx, Qy: Out-of-plane shear forces
+        - Mx, My, Mxy: Local out-of-plane bending moments
+        - Sx, Sy: Membrane forces
+        - Txy: In-plane shear force
+        """
+        return self._color_map
+
+    @color_map.setter
+    def color_map(self, value):
+        self._color_map = value
+
+    @property
+    def labels(self):
+        """Whether to display text labels for elements."""
+        return self._labels
+
+    @labels.setter
+    def labels(self, value):
+        self._labels = value
+
+    @property
+    def scalar_bar(self):
+        """Whether to display a scalar bar legend for contour plots."""
+        return self._scalar_bar
+
+    @scalar_bar.setter
+    def scalar_bar(self, value):
+        self._scalar_bar = value
+
+    @property
+    def scalar_bar_text_size(self):
+        """Font size for scalar bar text."""
+        return self._scalar_bar_text_size
+
+    @scalar_bar_text_size.setter
+    def scalar_bar_text_size(self, value):
+        self._scalar_bar_text_size = value
+
+    @property
+    def theme(self):
+        """Visual theme: 'default' (dark background) or 'print' (white background)."""
+        return self._theme
+
+    @theme.setter
+    def theme(self, value):
+        self._theme = value
+
+    @property
+    def show_load_info(self):
+        """Whether to display load case/combo information in top left corner."""
+        return self._show_load_info
+
+    @show_load_info.setter
+    def show_load_info(self, value):
+        self._show_load_info = value
+
+    def _calculate_auto_annotation_size(self):
+        """Calculate automatic annotation size as 5% of shortest node distance.
+        
+        Returns
+        -------
+        float
+            Annotation size in model units. Returns 5.0 as fallback if model
+            has fewer than 2 nodes.
+        """
+        nodes = list(self.model.nodes.values())
+        
+        # Need at least 2 nodes to calculate distance
+        if len(nodes) < 2:
+            return 5.0  # Default fallback
+        
+        # Calculate minimum distance between any two nodes
+        min_distance = float('inf')
+        
+        for i, node1 in enumerate(nodes):
+            for node2 in nodes[i+1:]:
+                # Calculate Euclidean distance
+                dx = node2.X - node1.X
+                dy = node2.Y - node1.Y
+                dz = node2.Z - node1.Z
+                distance = (dx**2 + dy**2 + dz**2)**0.5
+                
+                if distance > 0 and distance < min_distance:
+                    min_distance = distance
+        
+        # If all nodes are at same location, use default
+        if min_distance == float('inf') or min_distance == 0:
+            return 5.0
+        
+        # Return 5% of shortest distance
+        return min_distance * 0.05
 
     def render_model(self, interact=True, reset_camera=True):
         """
@@ -126,6 +307,21 @@ class Renderer():
             style = vtk.vtkInteractorStyleTrackballCamera()
             interactor.SetInteractorStyle(style)
             interactor.SetRenderWindow(self.window)
+
+            # Add coordinate axes in the bottom left corner
+            axes = vtk.vtkAxesActor()  # Create a 3D axes actor showing X, Y, and Z axes
+            axes.SetTotalLength(1.5, 1.5, 1.5)  # Set the length of each axis arrow to 1.5 units
+            axes.SetShaftTypeToLine()  # Use simple lines instead of cylinders for the axis shafts (cleaner appearance)
+            axes.SetAxisLabels(1)  # Enable the display of axis labels (X, Y, Z)
+            axes.SetCylinderRadius(0.02)  # Set the radius of the arrow tips to 0.02 units
+
+            # Create the orientation marker widget to display the axes in the corner
+            axes_widget = vtk.vtkOrientationMarkerWidget()  # Create a widget to display the axes actor
+            axes_widget.SetOrientationMarker(axes)  # Attach the axes actor to the widget
+            axes_widget.SetInteractor(interactor)  # Connect the widget to the render window interactor
+            axes_widget.SetViewport(0.0, 0.0, 0.2, 0.2)  # Position in bottom left corner (x_min, y_min, x_max, y_max as fractions of window)
+            axes_widget.SetEnabled(1)  # Enable the widget so it displays in the render window
+            axes_widget.InteractiveOff()  # Disable interaction with the axes widget (it will only rotate with the camera)
 
             # Start the interactor. Code execution will pause here until the user closes the window.
             interactor.Start()
@@ -198,16 +394,32 @@ class Renderer():
             return
 
     def update(self, reset_camera=True):
-        """Builds (or rebuilds) the VTK renderer
+        """Build or rebuild the VTK renderer with current settings.
 
-        :param reset_camera: Resets the render window's camera position if set to True. Defaults to True.
-        :type reset_camera: bool, optional
-        :raises Exception: Visualization failed due to an unexpected error.
+        This method updates the visualization based on the current renderer settings,
+        including deformed shape, loads, contours, and other visual elements. It is
+        automatically called by render_model() and screenshot().
+
+        Parameters
+        ----------
+        reset_camera : bool, optional
+            If True, resets the camera to view the entire model (default: True).
+
+        Raises
+        ------
+        Exception
+            If the model configuration is invalid for the requested visualization.
+
+        Notes
+        -----
+        This method validates that deformed_shape is not used with a load case,
+        and that render_loads requires either a load combination or load case.
         """
 
         # Input validation
         if self.deformed_shape and self.case != None:
-            raise Exception('Deformed shape is only available for load combinations. Deformed shape is not available for load cases.')
+            self.deformed_shape = False
+            warnings.warn('Deformed shape is only available for load combinations. Deformed shape will not be rendered for load cases.', UserWarning)
         if self.model.load_combos == {} and self.render_loads == True and self.case == None:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
@@ -237,6 +449,10 @@ class Renderer():
         for actor in renderer.GetActors():
             renderer.RemoveActor(actor)
 
+        # Clear out all the old view props (2D annotations, etc.)
+        for prop in renderer.GetViewProps():
+            renderer.RemoveViewProp(prop)
+
         # Add actors for each spring
         for vis_spring in vis_springs:
 
@@ -249,7 +465,7 @@ class Renderer():
 
                 # Set the text to follow the camera as the user interacts. This will
                 # require a reset of the camera (see below)
-                vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())    
+                vis_spring.lblActor.SetCamera(renderer.GetActiveCamera())
 
         # Add actors for each member
         for vis_member in vis_members:
@@ -328,6 +544,43 @@ class Renderer():
             renderer.SetBackground(0, 0, 0.5)  # Blue
         elif self.theme == 'print':
             renderer.SetBackground(1, 1, 1)  # White
+
+        # Add text overlay in the top left corner showing load case/combo information
+        if self.show_load_info:
+
+            # Determine which load case or combo is being displayed
+            text_str = None
+            if self.case is not None:
+                text_str = f"Load Case: {self.case}"
+            elif self.combo_name is not None:
+                # Check if this is a modal combination
+                combo = self.model.load_combos.get(self.combo_name)
+                if combo and combo.combo_tags and 'modal' in combo.combo_tags:
+                    # Extract mode number and get frequency
+                    mode_num = int(self.combo_name.split()[1]) - 1  # "Mode 3" -> index 2
+                    if hasattr(self.model, 'frequencies') and mode_num < len(self.model.frequencies):
+                        freq = self.model.frequencies[mode_num]
+                        text_str = f"Load Combo: {self.combo_name} - {freq:.3f} Hz"
+                    else:
+                        text_str = f"Load Combo: {self.combo_name}"
+                else:
+                    text_str = f"Load Combo: {self.combo_name}"
+
+            # Create the corner annotation if there's text to display
+            if text_str:
+                corner_annotation = vtk.vtkCornerAnnotation()
+                corner_annotation.SetText(2, text_str)  # 2 = upper left corner
+                corner_annotation.GetTextProperty().SetFontSize(12)
+                corner_annotation.GetTextProperty().SetFontFamilyToArial()
+
+                # Set color based on theme
+                if self.theme == 'print':
+                    corner_annotation.GetTextProperty().SetColor(0, 0, 0)  # Black text for print theme
+                else:
+                    corner_annotation.GetTextProperty().SetColor(1, 1, 1)  # White text for default theme
+
+                # Add the corner annotation to the renderer
+                renderer.AddViewProp(corner_annotation)
 
         # Reset the camera
         if reset_camera: renderer.ResetCamera()
@@ -604,8 +857,9 @@ class VisNode():
         # Set the mapper for the node's actor
         self.actor.SetMapper(mapper)
 
+
 class VisSpring():
-    
+
     def __init__(self, spring, nodes, annotation_size=5, color=None):
 
         # Generate a line source for the spring
@@ -658,49 +912,49 @@ class VisSpring():
         elif color == 'black':
             self.actor.GetProperty().SetColor(0, 0, 0)         # Black
             self.lblActor.GetProperty().SetColor(0, 0, 0)
-      
+
 # Converts a member object into a member for the viewer
 class VisMember():
 
     # Constructor
     def __init__(self, member, nodes, annotation_size=5, theme='default'):
-    
+
         # Generate a line for the member
         line = vtk.vtkLineSource()
-      
+
         # Step through each node in the model and find the position of the i-node and j-node
         for node in nodes.values():
-        
+
             # Check to see if the current node is the i-node
             if node.name == member.i_node.name:
                 Xi = node.X
                 Yi = node.Y
                 Zi = node.Z
                 line.SetPoint1(Xi, Yi, Zi)
-        
+
             # Check to see if the current node is the j-node
             elif node.name == member.j_node.name:
                 Xj = node.X
                 Yj = node.Y
                 Zj = node.Z
                 line.SetPoint2(Xj, Yj, Zj)
-        
+
         # Set up a mapper for the member
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(line.GetOutputPort())
-      
+
         # Set up an actor for the member
         self.actor = vtk.vtkActor()
         self.actor.SetMapper(mapper)
-      
+
         # Create the text for the member label
         label = vtk.vtkVectorText()
         label.SetText(member.name)
-      
+
         # Set up a mapper for the member label
         lblMapper = vtk.vtkPolyDataMapper()
         lblMapper.SetInputConnection(label.GetOutputPort())
-      
+
         # Set up an actor for the member label
         self.lblActor = vtk.vtkFollower()
         self.lblActor.SetMapper(lblMapper)
@@ -714,14 +968,14 @@ class VisMember():
 
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
-    
+
     def __init__(self, node, scale_factor, annotation_size=5, combo_name='Combo 1'):
-          
+
         # Calculate the node's deformed position
         newX = node.X + scale_factor*(node.DX[combo_name])
         newY = node.Y + scale_factor*(node.DY[combo_name])
         newZ = node.Z + scale_factor*(node.DZ[combo_name])
-            
+
         # Generate a sphere source for the node in its deformed position
         self.source = vtk.vtkSphereSource()
         self.source.SetCenter(newX, newY, newZ)
@@ -729,123 +983,123 @@ class VisDeformedNode():
         self.source.Update()
 
 class VisDeformedMember():
-    
+
     def __init__(self, member, nodes, scale_factor, combo_name='Combo 1'):
-        
+
         # Determine if this member is active for each load combination
         self.active = member.active
-      
+
         L = member.L() # Member length
         T = member.T() # Member local transformation matrix
-      
+
         cos_x = array([T[0,0:3]]) # Direction cosines of local x-axis
         cos_y = array([T[1,0:3]]) # Direction cosines of local y-axis
         cos_z = array([T[2,0:3]]) # Direction cosines of local z-axis
-      
+
         # Find the initial position of the local i-node
         # Step through each node
         for node in nodes.values():
-          
+
             # Check to see if the current node is the i-node
             if node.name == member.i_node.name:
                 Xi = node.X
                 Yi = node.Y
                 Zi = node.Z
-      
+
         # Calculate the local y-axis displacements at 20 points along the member's
         # length
         DY_plot = empty((0, 3))
         for i in range(20):
-                
+
             # Calculate the local y-direction displacement
             dy_tot = member.deflection('dy', L/19*i, combo_name)
-        
+
             # Calculate the scaled displacement in global coordinates
             DY_plot = append(DY_plot, dy_tot*cos_y*scale_factor, axis=0)
-      
+
         # Calculate the local z-axis displacements at 20 points along the member's
         # length
-        DZ_plot = empty((0, 3)) 
+        DZ_plot = empty((0, 3))
         for i in range(20):
-                
+
             # Calculate the local z-direction displacement
             dz_tot = member.deflection('dz', L/19*i, combo_name)
-        
+
             # Calculate the scaled displacement in global coordinates
             DZ_plot = append(DZ_plot, dz_tot*cos_z*scale_factor, axis=0)
-      
+
         # Calculate the local x-axis displacements at 20 points along the member's
         # length
-        DX_plot = empty((0, 3)) 
+        DX_plot = empty((0, 3))
         for i in range(20):
-                
+
             # Displacements in local coordinates
             dx_tot = [[Xi, Yi, Zi]] + (L/19*i + member.deflection('dx', L/19*i, combo_name)*scale_factor)*cos_x
-                  
+
             # Magnified displacements in global coordinates
             DX_plot = append(DX_plot, dx_tot, axis=0)
-        
+
         # Sum the component displacements to obtain overall displacement
         D_plot = DY_plot + DZ_plot + DX_plot
-      
+
         # Generate vtk points
         points = vtk.vtkPoints()
         points.SetNumberOfPoints(len(D_plot))
-      
+
         for i in range(len(D_plot)):
             points.SetPoint(i, D_plot[i, 0], D_plot[i, 1], D_plot[i, 2])
-      
+
         # Generate vtk lines
         lines = vtk.vtkCellArray()
         lines.InsertNextCell(len(D_plot))
-      
+
         for i in range(len(D_plot)):
             lines.InsertCellPoint(i)
-      
+
         # Create a polyline source from the defined points and lines
         self.source = vtk.vtkPolyData()
         self.source.SetPoints(points)
-        self.source.SetLines(lines)   
-                                  
+        self.source.SetLines(lines)
+
 class VisDeformedSpring():
-    
+
     def __init__(self, spring, nodes, scale_factor, combo_name='Combo 1'):
 
         # Determine if this spring is active for each load combination
         self.active = spring.active
-        
+
         # Generate a line source for the spring
         self.source = vtk.vtkLineSource()
-        
+
         # Find the deformed position of the local i-node
         # Step through each node
         for node in nodes.values():
-      
+
             # Check to see if the current node is the i-node
             if node.name == spring.i_node.name:
                 Xi = node.X + node.DX[combo_name]*scale_factor
                 Yi = node.Y + node.DY[combo_name]*scale_factor
                 Zi = node.Z + node.DZ[combo_name]*scale_factor
                 self.source.SetPoint1(Xi, Yi, Zi)
-        
+
             # Check to see if the current node is the i-node
             if node.name == spring.j_node.name:
                 Xj = node.X + node.DX[combo_name]*scale_factor
                 Yj = node.Y + node.DY[combo_name]*scale_factor
                 Zj = node.Z + node.DZ[combo_name]*scale_factor
                 self.source.SetPoint2(Xj, Yj, Zj)
-        
+
         self.source.Update()
-    
+
 class VisPtLoad():
     '''
     Creates a point load for the viewer
     '''
-    
+
     def __init__(self, position, direction, length, label_text: str | None = None, annotation_size=5, theme: str = 'default'):
         '''
         Constructor.
-      
+
         Parameters
         ----------
         position : tuple
@@ -859,19 +1113,19 @@ class VisPtLoad():
         label_text : string | None
           Text that will show up at the tail of the arrow. If set to 'None' no text will be displayed.
         '''
-      
+
         # Create a unit vector in the direction of the 'direction' vector
         unitVector = direction/norm(direction)
-      
+
         # Create a 'vtkAppendPolyData' filter to append the tip and shaft together into a single dataset
         self.polydata = vtk.vtkAppendPolyData()
-      
+
         # Determine if the load is positive or negative
         if length == 0:
             sign = 1
         else:
             sign = abs(length)/length
-      
+
         # Generate the tip of the load arrow
         tip_length = abs(length)/4
         radius = abs(length)/16
@@ -883,20 +1137,20 @@ class VisPtLoad():
         tip.SetHeight(tip_length)
         tip.SetRadius(radius)
         tip.Update()
-      
+
         # Add the arrow tip to the append filter
         self.polydata.AddInputData(tip.GetOutput())
-        
+
         # Create the shaft
         shaft = vtk.vtkLineSource()
         shaft.SetPoint1(position)
         shaft.SetPoint2((position[0]-length*unitVector[0], position[1]-length*unitVector[1], position[2]-length*unitVector[2]))
         shaft.Update()
-      
+
         # Copy and append the shaft data to the append filter
         self.polydata.AddInputData(shaft.GetOutput())
         self.polydata.Update()
-      
+
         # Create a mapper and actor
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(self.polydata.GetOutputPort())
@@ -907,16 +1161,16 @@ class VisPtLoad():
             self.actor.GetProperty().SetColor(0, 1, 0) # Green
         elif theme == 'print':
             self.actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
-        
+
         self.actor.SetMapper(mapper)
-      
+
         # Create the label if needed
         if label_text != None:
-      
+
             # Create the label and set its text
             self.label = vtk.vtkVectorText()
             self.label.SetText(label_text)
-        
+
             # Set up a mapper for the label
             lblMapper = vtk.vtkPolyDataMapper()
             lblMapper.SetInputConnection(self.label.GetOutputPort())
@@ -939,18 +1193,18 @@ class VisDistLoad():
     '''
     Creates a distributed load for the viewer
     '''
-    
+
     def __init__(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5, theme = 'default'):
-      
+
         # Calculate the length of the distributed load
         loadLength = ((position2[0]-position1[0])**2 + (position2[1]-position1[1])**2 + (position2[2]-position1[2])**2)**0.5
-      
+
         # Find the direction cosines for the line the load acts on
         lineDirCos = [(position2[0]-position1[0])/loadLength, (position2[1]-position1[1])/loadLength, (position2[2]-position1[2])/loadLength]
-      
+
         # Find the direction cosines for the direction the load acts in
         dirDirCos = direction/norm(direction)
-      
+
         # Create point loads at intervals roughly equal to 75% of the load's largest length (magnitude)
         # Add text labels to the first and last load arrow
         if loadLength > 0:
@@ -961,39 +1215,39 @@ class VisDistLoad():
         num_steps = max(num_steps, 1)
         step = loadLength/num_steps
         ptLoads = []
-      
+
         for i in range(num_steps + 1):
-      
+
             # Calculate the position (X, Y, Z) of this load arrow's point
             position = (position1[0] + i*step*lineDirCos[0], position1[1] + i*step*lineDirCos[1], position1[2] + i*step*lineDirCos[2])
-        
+
             # Determine the length of this load arrow
             length = length1 + (length2 - length1)/loadLength*i*step
-        
+
             # Determine the label's text
             if i == 0:
                 label_text = label_text1
             elif i == num_steps:
                 label_text = label_text2
-        
+
             # Create the load arrow
             ptLoads.append(VisPtLoad(position, direction, length, label_text, annotation_size, theme))
-          
+
         # Draw a line between the first and last load arrow's tails
         tail_line = vtk.vtkLineSource()
         tail_line.SetPoint1((position1[0] - length1*dirDirCos[0], position1[1] - length1*dirDirCos[1], position1[2] - length1*dirDirCos[2]))
         tail_line.SetPoint2((position2[0] - length2*dirDirCos[0], position2[1] - length2*dirDirCos[1], position2[2] - length2*dirDirCos[2]))
-      
+
         # Combine all the geometry into one 'vtkPolyData' object
         self.polydata = vtk.vtkAppendPolyData()
         for arrow in ptLoads:
             arrow.polydata.Update()
             self.polydata.AddInputData(arrow.polydata.GetOutput())
-        
+
         tail_line.Update()
         self.polydata.AddInputData(tail_line.GetOutput())
         self.polydata.Update()
-      
+
         # Create a mapper and actor for the geometry
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(self.polydata.GetOutputPort())
@@ -1229,18 +1483,18 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
                 element.i_node.contour.append(element.membrane(r_left, s_bot, True, combo_name)[2])
                 element.j_node.contour.append(element.membrane(r_right, s_bot, True, combo_name)[2])
                 element.m_node.contour.append(element.membrane(r_right, s_top, True, combo_name)[2])
-                element.n_node.contour.append(element.membrane(r_left, s_top, True, combo_name)[2])                 
-      
+                element.n_node.contour.append(element.membrane(r_left, s_top, True, combo_name)[2])
+
         # Average the values at each node to obtain a smoothed contour
         for node in model.nodes.values():
             # Prevent divide by zero errors for nodes with no contour values
             if node.contour != []:
-                node.contour = sum(node.contour)/len(node.contour)
+                node.contour = (sum(node.contour)/len(node.contour))[0]  # The [0] converts it from an array to a float
 
 def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_name, render_nodes=True, theme='default'):
     '''
     Renders the deformed shape of a model.
-    
+
     Parameters
     ----------
     model : FEModel3D
@@ -1255,42 +1509,42 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
         related to this value.
     combo_name : string
         The load case used for rendering the deflected shape.
-    
+
     Returns
     -------
     None.
     '''
-    
+
     # Create an append filter to add all the shape polydata to
     append_filter = vtk.vtkAppendPolyData()
-    
+
     # Check if nodes are to be rendered
     if render_nodes == True:
-        
+
         # Add the deformed nodes to the append filter
         for node in model.nodes.values():
-            
+
             vis_node = VisDeformedNode(node, scale_factor, annotation_size, combo_name)
             append_filter.AddInputData(vis_node.source.GetOutput())
-        
+
     # Add the springs to the append filter
     for spring in model.springs.values():
-        
+
         # Only add the spring if it is active for the given load combination
         if spring.active[combo_name] == True:
-            
+
             vis_spring = VisDeformedSpring(spring, model.nodes, scale_factor, combo_name)
             append_filter.AddInputData(vis_spring.source.GetOutput())
-            
+
     # Add the members to the append filter
     for member in model.members.values():
-        
+
         # Only add the member if it is active for the given load combination.
         if member.active[combo_name] == True:
-            
+
             vis_member = VisDeformedMember(member, model.nodes, scale_factor, combo_name)
             append_filter.AddInputData(vis_member.source)
-            
+
     # Create a mapper and actor for the append filter
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(append_filter.GetOutputPort())
@@ -1302,7 +1556,7 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
         actor.GetProperty().SetColor(255/255, 255/255, 0/255)  # Yellow
     elif theme == 'print':
         actor.GetProperty().SetColor(26/255, 26/255, 26/255)  # Dark Grey
-    
+
     # Add the actor to the renderer
     vtk_renderer.AddActor(actor)
 
@@ -1319,6 +1573,9 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
     polygons = vtk.vtkCellArray()
     polygon_points = vtk.vtkPoints()
     polygon_polydata = vtk.vtkPolyData()
+
+    # Track whether any loads have been added to avoid VTK errors with empty append filters
+    has_loads = False
 
     # Get the maximum load magnitudes that will be used to normalize the display scale
     max_pt_load, max_moment, max_dist_load, max_area_load = _MaxLoads(model, combo_name, case)
@@ -1365,6 +1622,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+                has_loads = True
 
     # Step through each member
     for member in model.members.values():
@@ -1418,6 +1676,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
                 ptLoad.lblActor.SetCamera(renderer.GetActiveCamera())
+                has_loads = True
 
         # Step through each member distributed load
         for load in member.DistLoads:
@@ -1454,6 +1713,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 renderer.AddActor(distLoad.lblActors[1])
                 distLoad.lblActors[0].SetCamera(renderer.GetActiveCamera())
                 distLoad.lblActors[1].SetCamera(renderer.GetActiveCamera())
+                has_loads = True
 
     # Step through each plate
     i = 0
@@ -1489,6 +1749,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
 
                 # Add the area load's arrows to the overall load polydata
                 polydata.AddInputData(area_load.polydata.GetOutput())
+                has_loads = True
 
                 # Add the 4 points at the corners of this area load to the list of points
                 polygon_points.InsertNextPoint(area_load.p0[0], area_load.p0[1], area_load.p0[2])
@@ -1523,35 +1784,39 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 polygon_polydata.SetPoints(polygon_points)
                 polygon_polydata.SetPolys(polygons)
 
-    # Set up an actor and mapper for the loads
-    load_mapper = vtk.vtkPolyDataMapper()
-    load_mapper.SetInputConnection(polydata.GetOutputPort())
-    load_actor = vtk.vtkActor()
-    load_actor.SetMapper(load_mapper)
+    # Only create and add actors if there are loads to render (avoids VTK errors with empty append filters)
+    if has_loads:
+        # Set up an actor and mapper for the loads
+        load_mapper = vtk.vtkPolyDataMapper()
+        load_mapper.SetInputConnection(polydata.GetOutputPort())
+        load_actor = vtk.vtkActor()
+        load_actor.SetMapper(load_mapper)
 
-    # Colorize the loads
-    if theme == 'default':
-        load_actor.GetProperty().SetColor(0, 1, 0)  # Green
-    elif theme == 'print':
-        load_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
+        # Colorize the loads
+        if theme == 'default':
+            load_actor.GetProperty().SetColor(0, 1, 0)  # Green
+        elif theme == 'print':
+            load_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
-    # Add the load actor to the renderer
-    renderer.AddActor(load_actor)
+        # Add the load actor to the renderer
+        renderer.AddActor(load_actor)
 
-    # Set up an actor and a mapper for the area load polygons
-    polygon_mapper = vtk.vtkPolyDataMapper()
-    polygon_mapper.SetInputData(polygon_polydata)
-    polygon_actor = vtk.vtkActor()
+    # Only create polygon actors if there are area loads (i > 0 means we added polygons)
+    if i > 0:
+        # Set up an actor and a mapper for the area load polygons
+        polygon_mapper = vtk.vtkPolyDataMapper()
+        polygon_mapper.SetInputData(polygon_polydata)
+        polygon_actor = vtk.vtkActor()
 
-    # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
-    polygon_actor.SetMapper(polygon_mapper)
-    renderer.AddActor(polygon_actor)
+        # polygon_actor.GetProperty().SetOpacity(0.5)      # 50% opacity
+        polygon_actor.SetMapper(polygon_mapper)
+        renderer.AddActor(polygon_actor)
 
-    # Set the color of the area load polygons
-    if theme == 'default':
-        polygon_actor.GetProperty().SetColor(0, 1, 0)  # Green
-    elif theme == 'print':
-        polygon_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
+        # Set the color of the area load polygons
+        if theme == 'default':
+            polygon_actor.GetProperty().SetColor(0, 1, 0)  # Green
+        elif theme == 'print':
+            polygon_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
 def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, scalar_bar_text_size, combo_name, theme='default'):
 
@@ -1613,6 +1878,8 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
         quad.GetPointIds().SetId(3, i*4 + 3)
 
         # Get the contour value for each node
+        # Convert to scalar for NumPy >= 2.4.0 compatibility
+        # Handle cases where contour might be empty list, list with values, or scalar
         r0 = item.i_node.contour
         r1 = item.j_node.contour
         r2 = item.m_node.contour
@@ -1659,7 +1926,7 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
         # Create a `vtkLookupTable` for the colors used to map results
         lut = vtk.vtkLookupTable()
         lut.SetTableRange(min(results), max(results))
-        lut.SetNumberOfColors(256) 
+        lut.SetNumberOfColors(256)
         # The commented code below can be uncommented and modified to change the color scheme
         # ctf = vtk.vtkColorTransferFunction()
         # ctf.SetColorSpaceToDiverging()
@@ -1846,6 +2113,17 @@ def _MaxLoads(model, combo_name=None, case=None):
 
                     if abs(load[0]) > max_area_load:
                         max_area_load = abs(load[0])
+
+    # Prevent division by zero errors by ensuring max values are never zero
+    # If a load type has no loads, set it to 1 to avoid crashes during normalization
+    if max_pt_load == 0:
+        max_pt_load = 1
+    if max_moment == 0:
+        max_moment = 1
+    if max_dist_load == 0:
+        max_dist_load = 1
+    if max_area_load == 0:
+        max_area_load = 1
 
     # Return the maximum loads in the load combination or load case
     return max_pt_load, max_moment, max_dist_load, max_area_load

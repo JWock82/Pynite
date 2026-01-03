@@ -28,6 +28,7 @@ This documentation is just getting started and is a little bare at the moment. K
    plate
    meshes
    analysis
+   modal
    stability
    PDelta
    rendering

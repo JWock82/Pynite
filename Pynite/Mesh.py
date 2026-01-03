@@ -49,6 +49,60 @@ class Mesh():
         self.element_type = 'Quad'          # The type of element used in the mesh
         self.is_generated = False          # A flag indicating whether the mesh has been generated
 
+    def _remove_from_model(self) -> None:
+        """Removes the mesh's nodes and elements from the model in preparation for regeneration.
+        Nodes that are connected to elements outside the mesh are preserved.
+        """
+
+        # Remove all elements in the mesh from the model
+        for element_name in list(self.elements.keys()):
+            element = self.elements[element_name]
+            if element.type == 'Rect' and element_name in self.model.plates:
+                del self.model.plates[element_name]
+            elif element.type == 'Quad' and element_name in self.model.quads:
+                del self.model.quads[element_name]
+
+        # Build a set of nodes that are shared between this mesh and elements outside the mesh
+        # (i.e., nodes that exist in both the mesh and external elements)
+        shared_nodes = set()
+        
+        # Check quads and plates - only add nodes that are actually in BOTH the mesh and the external element
+        for element in list(self.model.quads.values()) + list(self.model.plates.values()):
+            # Check if this element is not in the current mesh
+            if element.name not in self.elements:
+                # Add only the nodes of this element that are also in the mesh
+                if element.i_node.name in self.nodes:
+                    shared_nodes.add(element.i_node.name)
+                if element.j_node.name in self.nodes:
+                    shared_nodes.add(element.j_node.name)
+                if element.m_node.name in self.nodes:
+                    shared_nodes.add(element.m_node.name)
+                if element.n_node.name in self.nodes:
+                    shared_nodes.add(element.n_node.name)
+        
+        # Check members - only add nodes that are actually in BOTH the mesh and the member
+        for member in list(self.model.members.values()):
+            if member.i_node.name in self.nodes:
+                shared_nodes.add(member.i_node.name)
+            if member.j_node.name in self.nodes:
+                shared_nodes.add(member.j_node.name)
+        
+        # Check springs - only add nodes that are actually in BOTH the mesh and the spring
+        for spring in list(self.model.springs.values()):
+            if spring.i_node.name in self.nodes:
+                shared_nodes.add(spring.i_node.name)
+            if spring.j_node.name in self.nodes:
+                shared_nodes.add(spring.j_node.name)
+
+        # Remove nodes from the model only if they're not shared with other elements
+        for node_name in list(self.nodes.keys()):
+            if node_name in self.model.nodes and node_name not in shared_nodes:
+                del self.model.nodes[node_name]
+
+        # Clear the mesh's internal dictionaries
+        self.nodes.clear()
+        self.elements.clear()
+
     def _rename_duplicates(self) -> None:
         """Renames any nodes or elements in the mesh that are already in the model
         """
@@ -718,6 +772,10 @@ class RectangleMesh(Mesh):
     
     def generate(self) -> None:
 
+        # Remove old mesh elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
+
         mesh_size = self.mesh_size
         width = self.width
         height = self.height
@@ -1099,6 +1157,10 @@ class AnnulusMesh(Mesh):
     
     def generate(self) -> None:
         
+        # Remove old mesh elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
+
         mesh_size = self.mesh_size
         r_outer = self.outer_radius
         r_inner = self.inner_radius
@@ -1225,6 +1287,10 @@ class AnnulusRingMesh(Mesh):
         self.generate()
 
     def generate(self) -> None:
+
+        # Remove old mesh elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
 
         n = self.n  # Number of plates in the initial ring
 
@@ -1376,6 +1442,10 @@ class AnnulusTransRingMesh(Mesh):
         self.generate()
 
     def generate(self) -> None:
+
+        # Remove old mesh elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
 
         n = self.n  # Number of plates in the outside of the ring (coarse mesh)
 
@@ -1660,6 +1730,10 @@ class CylinderMesh(Mesh):
     
     def generate(self) -> None:
         
+        # Remove old mesh elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
+
         # Get the mesh thickness and the material name
         thickness = self.thickness
         material_name = self.material_name
@@ -1796,6 +1870,10 @@ class CylinderRingMesh(Mesh):
         """
         Generates the nodes and elements in the mesh.
         """
+
+        # Remove old mesh elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
 
         num_elements = self.num_elements  # Number of quadrilaterals in the ring
         n = self.num_elements
