@@ -4,7 +4,6 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-from math import floor
 from numpy.linalg import solve
 import scipy as sp
 
