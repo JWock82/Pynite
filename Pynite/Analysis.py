@@ -219,9 +219,9 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
                     # Calculate the partitioned initial stiffness matrices. These matrices must be recalculated on each T/C iteration due to tension/compression-only members deactivating or reactivating.
                     if log:
                         print('- Calculating initial stiffness matrix')
-                    K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+                    K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
-                    # The initial stiffness matrices are currently `lil` format which is great for memory, but slow for mathematical operations. They will be converted to `csr` format.
+                    # The initial stiffness matrices are in `coo` format from construction. They will be converted to `csr` format for efficient mathematical operations.
                     K11 = K11.tocsr()
                     K12 = K12.tocsr()
                     K21 = K21.tocsr()
@@ -234,7 +234,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
                     if log: print('- Calculating geometric stiffness matrix')
                     Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
 
-                    # The Kg stiffness matrices are currently `lil` format which is great for memory, but slow for mathematical operations. They will be converted to `csr` format. Note that the `+` operator performs matrix addition on `csr` matrices.
+                    # The Kg stiffness matrices are in `coo` format from construction. They will be converted to `csr` format for efficient addition. Note that the `+` operator performs matrix addition on `csr` matrices.
                     if log: print('- Summing initial & geometric stiffness matrices')
                     K11 = K11 + Kg11.tocsr()
                     K12 = K12 + Kg12.tocsr()
@@ -327,21 +327,20 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
             # Calculate the initial stiffness matrix
             if log: print('- Calculating elastic stiffness matrix [Ke]')
-            K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse).tolil(), D1_indices, D2_indices)
+            K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
             # Calculate the geometric stiffness matrix
             # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
             if log: print('- Calculating geometric stiffness matrix [Kg]')
-            Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False).tolil(), D1_indices, D2_indices)
+            Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
 
             # Calculate the stiffness reduction matrix
             if log: print('- Calculating plastic reduction matrix [Km]')
-            Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse).tolil(), D1_indices, D2_indices)
+            Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse), D1_indices, D2_indices)
 
-            # The stiffness matrices are currently `lil` format which is great for
-            # memory, but slow for mathematical operations. They will be converted to
-            # `csr` format. The `+` operator performs matrix addition on `csr`
-            # matrices.
+            # The stiffness matrices are in `coo` format from construction. They will be
+            # converted to `csr` format for efficient operations. The `+` operator
+            # performs matrix addition on `csr` matrices.
             K11 = K11.tocsr() + Kg11.tocsr() + Km11.tocsr()
             K12 = K12.tocsr() + Kg12.tocsr() + Km12.tocsr()
             K21 = K21.tocsr() + Kg21.tocsr() + Km21.tocsr()
@@ -1145,6 +1144,10 @@ def _partition(model: FEModel3D, unp_matrix: NDArray[float64] | lil_matrix, D1_i
     :return: Partitioned submatrices (or subvectors) based on degree of freedom boundary conditions.
     :rtype: array, array, array, array
     """
+
+    # Convert sparse matrices to CSR so they support efficient slicing
+    if hasattr(unp_matrix, 'tocsr'):
+        unp_matrix = unp_matrix.tocsr()
 
     # Determine if this is a 1D vector or a 2D matrix
 
