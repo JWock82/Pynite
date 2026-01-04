@@ -69,6 +69,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 v2.1.0 (in development)
+* Improved memory management and speed.
 * Meshes can now be regenerated with the `FEModel3D.meshes[mesh_name].generate()` command. This command removes the old mesh and replaces it with an updated one. The mesh will not remove nodes needed by other elements outside the mesh. Note that any loads applied to the old mesh will be lost when its elements and nodes are deleted. This makes meshes truly parametric.
 * Added `FEModel3D.delete_mesh()` to help deleting old meshes properly.
 * Renderers now automatically set the annotation size as 5% of the minimum distance between nodes. You still have the option of overiding this by setting the annotation size manually.
