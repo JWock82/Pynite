@@ -54,7 +54,6 @@ print('Roof level stiffness: ', model.shear_walls['Wall 1'].stiffness('Roof')/12
 # Let's render the wall shear stresses
 from Pynite.Rendering import Renderer
 rndr = Renderer(model)
-rndr.annotation_size = 2
 rndr.combo_name = '1.2D+1.0E'
 rndr.deformed_shape = True
 rndr.deformed_scale = 1000

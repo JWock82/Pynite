@@ -48,7 +48,6 @@ frame.analyze(check_statics=True)
 
 # Render the deformed shape
 rndr = Renderer(frame)
-rndr.annotation_size = 5
 rndr.render_loads = True
 rndr.deformed_shape = True
 rndr.deformed_scale = 100

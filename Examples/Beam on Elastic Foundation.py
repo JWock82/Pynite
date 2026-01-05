@@ -69,7 +69,6 @@ boef.analyze(log=True, check_statics=True)
 # Render the mdoel with the deformed shape using Pynite's buit-in renderer
 from Pynite.Rendering import Renderer
 renderer = Renderer(boef)
-renderer.annotation_size = 1.5
 renderer.deformed_shape = True
 renderer.window_width = 750   # Measured in pixels
 renderer.window_height = 250 

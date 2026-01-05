@@ -67,7 +67,6 @@ model.analyze(log=True, check_statics=True)
 # Render the model and plot the `Mx` moments.
 from Pynite.Rendering import Renderer
 renderer = Renderer(model)
-renderer.annotation_size = 0.2
 renderer.render_loads = True
 renderer.deformed_shape = True
 renderer.deformed_scale = 1000

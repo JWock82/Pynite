@@ -71,7 +71,6 @@ model.analyze()
 # Render the model. Labels and loads will be turned off to speed up interaction.
 from Pynite.Visualization import Renderer
 rndr = Renderer(model)
-rndr.annotation_size = 0.1
 rndr.render_loads = False
 rndr.color_map = 'dz'
 rndr.combo_name = '1.4F'

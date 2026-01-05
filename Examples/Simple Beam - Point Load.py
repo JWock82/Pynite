@@ -46,7 +46,6 @@ simple_beam.analyze(check_statics=True)
 # Render the model
 from Pynite.Visualization import Renderer
 renderer = Renderer(simple_beam)
-renderer.annotation_size = 10
 renderer.deformed_shape = True
 renderer.deformed_scale = 30
 renderer.render_loads = True

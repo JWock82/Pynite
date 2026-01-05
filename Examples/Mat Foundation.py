@@ -29,7 +29,6 @@ model.analyze(log=True, check_statics=True, num_steps=1)
 
 from Pynite.Rendering import Renderer
 rndr = Renderer(model)
-rndr.annotation_size = 0.5
 rndr.combo_name = 'D'
 rndr.deformed_shape = True
 rndr.deformed_scale = 100

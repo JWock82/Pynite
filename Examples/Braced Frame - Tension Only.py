@@ -112,7 +112,6 @@ braced_frame.analyze()
 # height 5 model units (inches) high
 from Pynite.Visualization import Renderer
 rndr = Renderer(braced_frame)
-rndr.annotation_size = 5
 rndr.deformed_shape = True
 rndr.deformed_scale = 50
 rndr.combo_name = '1.2D+1.0W'

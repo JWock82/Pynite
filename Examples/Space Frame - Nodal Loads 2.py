@@ -51,7 +51,6 @@ print('Expected results: ', -0.063, 1.825)
 
 # Render the deformed shape
 rndr = Renderer(frame)
-rndr.annotation_size = 5
 rndr.render_loads = True
 rndr.deformed_shape = True
 rndr.deformed_scale = 40

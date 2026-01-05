@@ -51,7 +51,6 @@ print('Right Support Reacton:', simple_beam.nodes['N2'].RxnFY, 'kip')
 # Render the deformed shape of the beam magnified 100 times, with a text height of 5 inches
 from Pynite.Rendering import Renderer
 renderer = Renderer(simple_beam)
-renderer.annotation_size = 6
 renderer.deformed_shape = True
 renderer.deformed_scale = 100
 renderer.render_loads = True

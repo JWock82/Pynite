@@ -69,11 +69,10 @@ print('Member BD expected axial force: 45.2 Tension')
 print('Member BE calculated axial force: ' + str(truss.members['BE'].max_axial()))
 print('Member BE expected axial force: 112.1 Compression')
 
-# Render the model for viewing. The text height will be set to 50 mm.
+# Render the model for viewing.
 # Because the members in this example are nearly rigid, there will be virtually no deformation. The deformed shape won't be rendered.
 # The program has created a default load case 'Case 1' and a default load combo 'Combo 1' since we didn't specify any. We'll display 'Case 1'.
 renderer = Renderer(truss)
-renderer.annotation_size = 0.05
 renderer.render_loads = True
 renderer.case = 'Case 1'
 renderer.render_model()

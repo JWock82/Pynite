@@ -41,7 +41,6 @@ cantilever.analyze_PDelta(log=True)
 
 from Pynite.Visualization import Renderer
 renderer = Renderer(cantilever)
-renderer.annotation_size = 0.5
 renderer.window_width = 750
 renderer.window_height = 400
 renderer.deformed_shape = True

@@ -70,10 +70,9 @@ MomentFrame.analyze_PDelta(log=True)
 # MomentFrame.analyze()
 # MomentFrame.analyze_linear(log=True)
 
-# Display the deformed shape of the structure magnified 50 times with the text height 5 model units (inches) high
+# Display the deformed shape of the structure magnified 50 times
 from Pynite.Visualization import Renderer
 rndr = Renderer(MomentFrame)
-rndr.annotation_size = 5
 rndr.deformed_shape = True
 rndr.deformed_scale = 50
 rndr.combo_name = '1.2D+1.0W'
