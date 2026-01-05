@@ -55,6 +55,112 @@ class FEModel3D():
 
         self.solution: str | None = None  # Indicates the solution type for the latest run of the model
 
+    # Decorator marks this helper as not needing class/instance state.
+    @staticmethod
+    # Define helper that flattens node DOFs into a single index vector.
+    def _build_dof_vector(*nodes: Node3D) -> NDArray[np.int64]:
+        """Returns the flattened list of global DOF indices for the supplied nodes.
+
+        Example for a 2-node member:
+
+            [i_node*6 + (0..5), j_node*6 + (0..5)] -> 12 indices total.
+
+        Once this vector is created we can operate on entire element sub-matrices via
+        numpy broadcasting, instead of repeating the ``node.ID*6 + local_dof`` math in
+        Python loops.
+        """
+
+        # Preallocate the DOF array (nodes * 6 DOFs each) as 64-bit ints.
+        dofs = np.empty(len(nodes)*6, dtype=np.int64)
+
+        # Build a template 0..5 array to shift per node.
+        local = np.arange(6, dtype=np.int64)
+
+        # Iterate through each supplied node with its ordinal index.
+        for i, node in enumerate(nodes):
+
+            # Compute the slice start for this node's 6 DOFs.
+            start = i*6
+
+            # Fill the slice with the node's base DOF plus the 0..5 offsets.
+            dofs[start:start+6] = node.ID*6 + local
+            
+        # Hand back the populated DOF vector for downstream use.
+        return dofs
+
+    # Decorator again indicates no self access is needed for sparse conversion helper.
+    @staticmethod
+    # Define helper that converts a dense element block into coo-format row/col/data arrays.
+    def _append_sparse_block(dofs: NDArray[np.int64], block: np.ndarray,
+                              row_parts: list[np.ndarray], col_parts: list[np.ndarray],
+                              data_parts: list[np.ndarray]) -> None:
+        """Converts an element sub-matrix into row/col/data arrays for COO assembly.
+
+        Compared to the former nested loops, this function handles the conversion in
+        three numpy statements:
+        1. ``rows = repeat(dofs, size)``
+        2. ``cols = tile(dofs, size)``
+        3. ``data = block.reshape(-1)``
+
+        Optional zero filtering keeps the sparse storage compact.
+        """
+
+        # Ensure we are working with a float ndarray copy of the element block.
+        block = np.asarray(block, dtype=float)
+
+        # Cache the number of DOFs so we know how many row/column pairs we need; the sparse
+        # COO builder needs every (row, col) pair formed by combining each DOF with
+        # every other DOF because each element term contributes to one of those pairs.
+        size = dofs.size
+
+        # Flatten the element block into a 1-D vector matching the row/column pairing order so
+        # ``flat[k]`` lines up with the kth (row, col) pair produced by the repeat/tile step;
+        # this guarantees each coefficient from the local matrix lands on the
+        # matching global DOF pair when we append into COO format.
+        flat = block.reshape(-1)
+
+        # Skip work entirely if this block contains only zeros; many elements (like nodal mass
+        # shells) hand back zero-filled matrices, and filtering them here avoids appending
+        # useless entries into the sparse accumulator.
+        nonzero_mask = flat != 0.0
+
+        # Return immediately when there is nothing to contribute to the sparse matrix.
+        if not np.any(nonzero_mask):
+            return
+
+        # Build the repeated row indices for the full set of row/column combinations; repeating
+        # each DOF ``size`` times yields the row portion of every (row, col) pair needed for COO insertion.
+        rows = np.repeat(dofs, size)
+        
+        # Build the tiled column indices for that same set of combinations; tiling the DOF vector
+        # produces the matching column portion for those same (row, col) pairs.
+        cols = np.tile(dofs, size)
+
+        # Append the nonzero row vector to the running parts list.
+        row_parts.append(rows[nonzero_mask])
+
+        # Append the nonzero column vector to the running parts list.
+        col_parts.append(cols[nonzero_mask])
+        
+        # Append the nonzero data values to the running parts list.
+        data_parts.append(flat[nonzero_mask])
+
+    # Decorator marks this helper as purely functional for dense updates.
+    @staticmethod
+    # Define helper that adds an element block to the dense global matrix via vectorized indices.
+    def _add_dense_block(global_matrix: np.ndarray, dofs: NDArray[np.int64], block: np.ndarray) -> None:
+        """Adds an element block to the dense global matrix using vectorized indexing.
+
+        ``np.ix_(dofs, dofs)`` builds every row/column combination of those DOFs, letting the
+        12x12 or 24x24 block be summed in a single vectorized add.
+        """
+
+        # Convert the block to a float ndarray so dtype math aligns with the global matrix.
+        block = np.asarray(block, dtype=float)
+
+        # Use numpy advanced indexing to add the entire block in one statement.
+        global_matrix[np.ix_(dofs, dofs)] += block
+
     @property
     def load_cases(self) -> List[str]:
         """Returns a list of all the load cases in the model (in alphabetical order).
@@ -1439,8 +1545,14 @@ class FEModel3D():
 
         # Determine if a sparse matrix has been requested
         if sparse == True:
-            # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index. We'll build the matrix from three lists.
-            row, col, data = [], [], []
+            # Instead of pushing one entry at a time, we keep batched row/col/data arrays
+            # per element and concatenate once. This drastically cuts Python overhead.
+            # Initialize the list of per-element row vectors for later concatenation.
+            row_parts: list[np.ndarray] = []
+            # Initialize the list of per-element column vectors for later concatenation.
+            col_parts: list[np.ndarray] = []
+            # Initialize the list of per-element data vectors for later concatenation.
+            data_parts: list[np.ndarray] = []
         else:
             # Initialize a dense matrix of zeros
             K = np.zeros((len(self.nodes)*6, len(self.nodes)*6))
@@ -1455,72 +1567,102 @@ class FEModel3D():
                 # Check for an active spring support
                 if node.spring_DX[2] == True:
                     m, n = node.ID*6, node.ID*6
+                    # Cache the spring stiffness value once for reuse below.
+                    val = float(node.spring_DX[0])
                     if sparse == True:
-                        data.append(float(node.spring_DX[0]))
-                        row.append(m)
-                        col.append(n)
+                        # Record the row index associated with the restrained DOF.
+                        row_parts.append(np.array([m], dtype=np.int64))
+                        # Record the column index associated with the same DOF.
+                        col_parts.append(np.array([n], dtype=np.int64))
+                        # Record the spring stiffness contribution for this DOF.
+                        data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += float(node.spring_DX[0])
+                        K[m, n] += val
 
             if node.spring_DY[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_DY[2] == True:
                     m, n = node.ID*6 + 1, node.ID*6 + 1
+                    # Capture the Y-direction spring stiffness once per DOF.
+                    val = float(node.spring_DY[0])
                     if sparse == True:
-                        data.append(float(node.spring_DY[0]))
-                        row.append(m)
-                        col.append(n)
+                        # Store the row index for the Y spring term.
+                        row_parts.append(np.array([m], dtype=np.int64))
+                        # Store the column index for the Y spring term.
+                        col_parts.append(np.array([n], dtype=np.int64))
+                        # Store the spring stiffness coefficient for this DOF.
+                        data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += float(node.spring_DY[0])
+                        K[m, n] += val
 
             if node.spring_DZ[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_DZ[2] == True:
                     m, n = node.ID*6 + 2, node.ID*6 + 2
+                    # Capture the Z-direction spring stiffness once per DOF.
+                    val = float(node.spring_DZ[0])
                     if sparse == True:
-                        data.append(float(node.spring_DZ[0]))
-                        row.append(m)
-                        col.append(n)
+                        # Store the row index for the Z spring contribution.
+                        row_parts.append(np.array([m], dtype=np.int64))
+                        # Store the column index for the Z spring contribution.
+                        col_parts.append(np.array([n], dtype=np.int64))
+                        # Store the spring stiffness magnitude itself.
+                        data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += float(node.spring_DZ[0])
+                        K[m, n] += val
 
             if node.spring_RX[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_RX[2] == True:
                     m, n = node.ID*6 + 3, node.ID*6 + 3
+                    # Capture the rotational X-direction spring stiffness.
+                    val = float(node.spring_RX[0])
                     if sparse == True:
-                        data.append(float(node.spring_RX[0]))
-                        row.append(m)
-                        col.append(n)
+                        # Store the row index for the RX spring.
+                        row_parts.append(np.array([m], dtype=np.int64))
+                        # Store the column index for the RX spring.
+                        col_parts.append(np.array([n], dtype=np.int64))
+                        # Store the rotational stiffness value for RX.
+                        data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += float(node.spring_RX[0])
+                        K[m, n] += val
 
             if node.spring_RY[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_RY[2] == True:
                     m, n = node.ID*6 + 4, node.ID*6 + 4
+                    # Capture the rotational Y-direction spring stiffness.
+                    val = float(node.spring_RY[0])
                     if sparse == True:
-                        data.append(float(node.spring_RY[0]))
-                        row.append(m)
-                        col.append(n)
+                        # Store the row index for the RY spring.
+                        row_parts.append(np.array([m], dtype=np.int64))
+                        # Store the column index for the RY spring.
+                        col_parts.append(np.array([n], dtype=np.int64))
+                        # Store the rotational stiffness value for RY.
+                        data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += float(node.spring_RY[0])
+                        K[m, n] += val
 
             if node.spring_RZ[0] is not None:
 
                 # Check for an active spring support
                 if node.spring_RZ[2] == True:
                     m, n = node.ID*6 + 5, node.ID*6 + 5
+                    # Capture the rotational Z-direction spring stiffness.
+                    val = float(node.spring_RZ[0])
                     if sparse == True:
-                        data.append(float(node.spring_RZ[0]))
-                        row.append(m)
-                        col.append(n)
+                        # Store the row index for the RZ spring.
+                        row_parts.append(np.array([m], dtype=np.int64))
+                        # Store the column index for the RZ spring.
+                        col_parts.append(np.array([n], dtype=np.int64))
+                        # Store the rotational stiffness value for RZ.
+                        data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += float(node.spring_RZ[0])
+                        K[m, n] += val
 
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
@@ -1528,40 +1670,19 @@ class FEModel3D():
 
             if spring.active[combo_name] == True:
 
-                # Get the spring's global stiffness matrix
-                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                # Build the DOF index vector once and add the whole 12x12 block in one shot.
+                # This mirrors the old nested loops but pushes the work into numpy.
+                # Capture the full set of i/j DOF indices for this spring element.
+                dofs = self._build_dof_vector(spring.i_node, spring.j_node)
+                # Grab the spring's already-transformed global stiffness matrix.
                 spring_K = spring.K()
 
-                # Step through each term in the spring's stiffness matrix
-                # 'a' & 'b' below are row/column indices in the spring's stiffness matrix
-                # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-                for a in range(12):
-
-                    # Determine if index 'a' is related to the i-node or j-node
-                    if a < 6:
-                        # Find the corresponding index 'm' in the global stiffness matrix
-                        m = spring.i_node.ID*6 + a
-                    else:
-                        # Find the corresponding index 'm' in the global stiffness matrix
-                        m = spring.j_node.ID*6 + (a-6)
-
-                    for b in range(12):
-
-                        # Determine if index 'b' is related to the i-node or j-node
-                        if b < 6:
-                            # Find the corresponding index 'n' in the global stiffness matrix
-                            n = spring.i_node.ID*6 + b
-                        else:
-                            # Find the corresponding index 'n' in the global stiffness matrix
-                            n = spring.j_node.ID*6 + (b-6)
-
-                        # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                        if sparse == True:
-                            row.append(m)
-                            col.append(n)
-                            data.append(spring_K[a, b])
-                        else:
-                            K[m, n] += spring_K[a, b]
+                if sparse == True:
+                    # Convert the spring block into sparse row/col/data pieces.
+                    self._append_sparse_block(dofs, spring_K, row_parts, col_parts, data_parts)
+                else:
+                    # Add the spring block directly to the dense global matrix.
+                    self._add_dense_block(K, dofs, spring_K)
 
         # Add stiffness terms for each physical member in the model
         if log: print('- Adding member stiffness terms to global stiffness matrix')
@@ -1573,40 +1694,19 @@ class FEModel3D():
                 # Step through each sub-member in the physical member and add terms
                 for member in phys_member.sub_members.values():
 
-                    # Get the member's global stiffness matrix
-                    # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
+                    # Build the member DOF vector once so we can add the entire 12x12 block,
+                    # keeping parity with the previous (i,j) nested summation.
+                    # Capture the member's i/j DOFs for subsequent block placement.
+                    dofs = self._build_dof_vector(member.i_node, member.j_node)
+                    # Grab the member's global stiffness matrix.
                     member_K = member.K()
 
-                    # Step through each term in the member's stiffness matrix
-                    # 'a' & 'b' below are row/column indices in the member's stiffness matrix
-                    # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-                    for a in range(12):
-
-                        # Determine if index 'a' is related to the i-node or j-node
-                        if a < 6:
-                            # Find the corresponding index 'm' in the global stiffness matrix
-                            m = member.i_node.ID*6 + a
-                        else:
-                            # Find the corresponding index 'm' in the global stiffness matrix
-                            m = member.j_node.ID*6 + (a-6)
-
-                        for b in range(12):
-
-                            # Determine if index 'b' is related to the i-node or j-node
-                            if b < 6:
-                                # Find the corresponding index 'n' in the global stiffness matrix
-                                n = member.i_node.ID*6 + b
-                            else:
-                                # Find the corresponding index 'n' in the global stiffness matrix
-                                n = member.j_node.ID*6 + (b-6)
-
-                            # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                            if sparse == True:
-                                row.append(m)
-                                col.append(n)
-                                data.append(member_K[a, b])
-                            else:
-                                K[m, n] += member_K[a, b]
+                    if sparse == True:
+                        # Append the member block into the sparse assembly lists.
+                        self._append_sparse_block(dofs, member_K, row_parts, col_parts, data_parts)
+                    else:
+                        # Inject the member block into the dense matrix via vectorized indexing.
+                        self._add_dense_block(K, dofs, member_K)
 
         # Add stiffness terms for each quadrilateral in the model
         if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
@@ -1615,49 +1715,17 @@ class FEModel3D():
             # Get the quadrilateral's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
             quad_K = quad.K()
+            # Four nodes -> 24 DOFs. The helper keeps those indices contiguous so the
+            # full block can be added without manual bookkeeping.
+            # Build the 24-entry DOF vector for the quadrilateral element.
+            dofs = self._build_dof_vector(quad.i_node, quad.j_node, quad.m_node, quad.n_node)
 
-            # Step through each term in the quadrilateral's stiffness matrix
-            # 'a' & 'b' below are row/column indices in the quadrilateral's stiffness matrix
-            # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-            for a in range(24):
-
-                # Determine which node the index 'a' is related to
-                if a < 6:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.i_node.ID*6 + a
-                elif a < 12:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.j_node.ID*6 + (a - 6)
-                elif a < 18:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.m_node.ID*6 + (a - 12)
-                else:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = quad.n_node.ID*6 + (a - 18)
-
-                for b in range(24):
-
-                    # Determine which node the index 'b' is related to
-                    if b < 6:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.i_node.ID*6 + b
-                    elif b < 12:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.j_node.ID*6 + (b - 6)
-                    elif b < 18:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.m_node.ID*6 + (b - 12)
-                    else:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = quad.n_node.ID*6 + (b - 18)
-
-                    # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    if sparse == True:
-                        row.append(m)
-                        col.append(n)
-                        data.append(quad_K[a, b])
-                    else:
-                        K[m, n] += quad_K[a, b]
+            if sparse == True:
+                # Append the quad block contributions to the sparse assembly lists.
+                self._append_sparse_block(dofs, quad_K, row_parts, col_parts, data_parts)
+            else:
+                # Add the quad block directly to the dense matrix.
+                self._add_dense_block(K, dofs, quad_K)
 
         # Add stiffness terms for each plate in the model
         if log: print('- Adding plate stiffness terms to global stiffness matrix')
@@ -1666,58 +1734,35 @@ class FEModel3D():
             # Get the plate's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
             plate_K = plate.K()
+            # Same concept as the quad above, but for the rectangular plate element.
+            # Build the DOF vector for the plate's four nodes.
+            dofs = self._build_dof_vector(plate.i_node, plate.j_node, plate.m_node, plate.n_node)
 
-            # Step through each term in the plate's stiffness matrix
-            # 'a' & 'b' below are row/column indices in the plate's stiffness matrix
-            # 'm' & 'n' are corresponding row/column indices in the global stiffness matrix
-            for a in range(24):
-
-                # Determine which node the index 'a' is related to
-                if a < 6:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.i_node.ID*6 + a
-                elif a < 12:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.j_node.ID*6 + (a - 6)
-                elif a < 18:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.m_node.ID*6 + (a - 12)
-                else:
-                    # Find the corresponding index 'm' in the global stiffness matrix
-                    m = plate.n_node.ID*6 + (a - 18)
-
-                for b in range(24):
-
-                    # Determine which node the index 'b' is related to
-                    if b < 6:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.i_node.ID*6 + b
-                    elif b < 12:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.j_node.ID*6 + (b - 6)
-                    elif b < 18:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.m_node.ID*6 + (b - 12)
-                    else:
-                        # Find the corresponding index 'n' in the global stiffness matrix
-                        n = plate.n_node.ID*6 + (b - 18)
-
-                    # Now that 'm' and 'n' are known, place the term in the global stiffness matrix
-                    if sparse == True:
-                        row.append(m)
-                        col.append(n)
-                        data.append(plate_K[a, b])
-                    else:
-                        K[m, n] += plate_K[a, b]
+            if sparse == True:
+                # Append the plate block contributions to the sparse assembly lists.
+                self._append_sparse_block(dofs, plate_K, row_parts, col_parts, data_parts)
+            else:
+                # Add the plate block directly to the dense matrix.
+                self._add_dense_block(K, dofs, plate_K)
 
         if sparse:
-            # The stiffness matrix will be stored as a scipy `coo_matrix`. Scipy's
-            # documentation states that this type of matrix is ideal for efficient
-            # construction of finite element matrices. When converted to another
-            # format, the `coo_matrix` sums values at the same (i, j) index.
-            row = np.array(row)
-            col = np.array(col)
-            data = np.array(data)
+            # Concatenate the per-element contributions into the vectors scipy expects.
+            if row_parts:
+                # Collapse all stored row chunks into one contiguous vector.
+                row = np.concatenate(row_parts)
+                # Collapse all stored column chunks into one contiguous vector.
+                col = np.concatenate(col_parts)
+                # Collapse all stored data chunks into one contiguous vector.
+                data = np.concatenate(data_parts)
+            else:
+                # Provide empty row vector when no elements contributed (edge case).
+                row = np.array([], dtype=np.int64)
+                # Provide empty column vector when no elements contributed (edge case).
+                col = np.array([], dtype=np.int64)
+                # Provide empty data vector when no elements contributed (edge case).
+                data = np.array([], dtype=float)
+
+            # Build the sparse COO matrix from the assembled vectors.
             K = sp.sparse.coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         # Check that there are no nodal instabilities
@@ -1949,8 +1994,13 @@ class FEModel3D():
 
         # Check if a sparse matrix has been requested
         if sparse == True:
-            # The mass matrix will be stored as a scipy `coo_matrix`. Scipy's documentation states that this type of matrix is ideal for efficient construction of finite element matrices. When converted to another format, the `coo_matrix` sums values at the same (i, j) index. We'll build the matrix from three lists.
-            row, col, data = [], [], []
+            # Reuse the same block-based storage approach used for the stiffness matrix.
+            # Initialize list to collect row index vectors per element for mass assembly.
+            row_parts: list[np.ndarray] = []
+            # Initialize list to collect column index vectors per element for mass assembly.
+            col_parts: list[np.ndarray] = []
+            # Initialize list to collect data vectors per element for mass assembly.
+            data_parts: list[np.ndarray] = []
         else:
             # Initialize a dense matrix of zeros
             M = np.zeros((len(self.nodes)*6, len(self.nodes)*6))
@@ -1967,28 +2017,18 @@ class FEModel3D():
                 # Step through each submember in this physical member
                 for member in phys_member.sub_members.values():
 
-                    # Get the combined mass matrix from member
                     member_M = member.M(mass_combo_name, mass_direction, gravity)
+                    # Reuse the same DOF layout as stiffness assembly so mass and stiffness
+                    # stay aligned term-by-term.
+                    # Build the DOF vector shared with stiffness for consistency.
+                    dofs = self._build_dof_vector(member.i_node, member.j_node)
 
-                    # Assembly logic remains the same as stiffness matrix assembly logic
-                    for a in range(12):
-                        if a < 6:
-                            m = member.i_node.ID*6 + a
-                        else:
-                            m = member.j_node.ID*6 + (a - 6)
-
-                        for b in range(12):
-                            if b < 6:
-                                n = member.i_node.ID*6 + b
-                            else:
-                                n = member.j_node.ID*6 + (b - 6)
-
-                            if sparse:
-                                row.append(m)
-                                col.append(n)
-                                data.append(member_M[a, b])
-                            else:
-                                M[m, n] += member_M[a, b]
+                    if sparse:
+                        # Append the member mass block into the sparse lists.
+                        self._append_sparse_block(dofs, member_M, row_parts, col_parts, data_parts)
+                    else:
+                        # Inject the member mass block into the dense matrix.
+                        self._add_dense_block(M, dofs, member_M)
 
         if log:
             print(f' - Converting nodal loads from combo: {mass_combo_name} to mass (translation only)')
@@ -1999,26 +2039,37 @@ class FEModel3D():
             # Get node's mass matrix (translation only, so set characteristic length to `None`)
             node_m = node.M(mass_combo_name, mass_direction, gravity, characteristic_length=None)
 
-            # Add to global mass matrix
-            for a in range(6):
+            # Node-only mass contributes translational DOFs. The helper still works even
+            # though only one node is supplied.
+            # Build the DOF vector for this single node's translational DOFs.
+            dofs = self._build_dof_vector(node)
 
-                for b in range(6):
-
-                    if node_m[a, b] != 0:
-
-                        m = node.ID*6 + a
-                        n = node.ID*6 + b
-
-                        if sparse:
-                            row.append(m)
-                            col.append(n)
-                            data.append(node_m[a, b])
-                        else:
-                            M[m, n] += node_m[a, b]
+            if sparse:
+                # Append the nodal mass block into the sparse lists.
+                self._append_sparse_block(dofs, node_m, row_parts, col_parts, data_parts)
+            else:
+                # Add the nodal mass block directly into the dense matrix.
+                self._add_dense_block(M, dofs, node_m)
 
         # Add sparse option
         if sparse:
-            M = sp.sparse.coo_matrix((np.array(data), (np.array(row), np.array(col))), shape=(len(self.nodes)*6, len(self.nodes)*6))
+            if row_parts:
+                # Concatenate all row vectors contributed by members and nodes.
+                row = np.concatenate(row_parts)
+                # Concatenate all column vectors contributed by members and nodes.
+                col = np.concatenate(col_parts)
+                # Concatenate all data vectors contributed by members and nodes.
+                data = np.concatenate(data_parts)
+            else:
+                # Provide empty row vector when no mass contributions exist.
+                row = np.array([], dtype=np.int64)
+                # Provide empty column vector when no mass contributions exist.
+                col = np.array([], dtype=np.int64)
+                # Provide empty data vector when no mass contributions exist.
+                data = np.array([], dtype=float)
+
+            # Build the sparse COO mass matrix from the assembled vectors.
+            M = sp.sparse.coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         # At this point, we have M, but there could be zero terms along the diagonal indicating DOFs without mass. We'll add an insignificant mass to those terms to get the matrix to solve.
 
@@ -2066,89 +2117,37 @@ class FEModel3D():
         # Initialize a zero vector to hold all the terms
         FER = np.zeros((len(self.nodes) * 6, 1))
 
-        # Step through each physical member in the model
+        # Step through each physical member in the model; each sub-member reports a 12x1 block
+        # that already lives in global coordinates, so we can drop it straight onto the matching
+        # DOFs without touching individual entries.
         for phys_member in self.members.values():
 
             # Step through each sub-member and add terms
             for member in phys_member.sub_members.values():
 
-                # Get the member's global fixed end reaction vector
-                # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-                member_FER = member.FER(combo_name)
+                # Grab the member's fixed-end reactions and add the entire 12x1 block
+                # directly at the matching DOF locations. Casting/reshaping makes sure we have
+                # a flat float vector that aligns with the DOF helper ordering.
+                member_FER = np.asarray(member.FER(combo_name), dtype=float).reshape(-1)
+                dofs = self._build_dof_vector(member.i_node, member.j_node)
+                FER[dofs, 0] += member_FER
 
-                # Step through each term in the member's fixed end reaction vector
-                # 'a' below is the row index in the member's fixed end reaction vector
-                # 'm' below is the corresponding row index in the global fixed end reaction vector
-                for a in range(12):
-
-                    # Determine if index 'a' is related to the i-node or j-node
-                    if a < 6:
-                        # Find the corresponding index 'm' in the global fixed end reaction vector
-                        m = member.i_node.ID * 6 + a
-                    else:
-                        # Find the corresponding index 'm' in the global fixed end reaction vector
-                        m = member.j_node.ID * 6 + (a - 6)
-
-                    # Now that 'm' is known, place the term in the global fixed end reaction vector
-                    FER[m, 0] += member_FER[a, 0]
-
-        # Add terms for each rectangle in the model
+        # Repeat the same block-based add for rectangular plates (24x1 reaction blocks).
         for plate in self.plates.values():
 
-            # Get the quadrilateral's global fixed end reaction vector
-            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            plate_FER = plate.FER(combo_name)
+            # Add the 24x1 plate reactions with the same DOF helper used for stiffness/mass so
+            # the indexing stays consistent across every assembler.
+            plate_FER = np.asarray(plate.FER(combo_name), dtype=float).reshape(-1)
+            dofs = self._build_dof_vector(plate.i_node, plate.j_node, plate.m_node, plate.n_node)
+            FER[dofs, 0] += plate_FER
 
-            # Step through each term in the quadrilateral's fixed end reaction vector
-            # 'a' below is the row index in the quadrilateral's fixed end reaction vector
-            # 'm' below is the corresponding row index in the global fixed end reaction vector
-            for a in range(24):
-
-                # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
-                if a < 6:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.i_node.ID*6 + a
-                elif a < 12:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.j_node.ID*6 + (a - 6)
-                elif a < 18:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.m_node.ID*6 + (a - 12)
-                else:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = plate.n_node.ID*6 + (a - 18)
-
-                # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER[m, 0] += plate_FER[a, 0]
-
-        # Add terms for each quadrilateral in the model
+        # Quadrilaterals follow the same pattern: 24x1 block dropped in via the DOF helper.
         for quad in self.quads.values():
 
-            # Get the quadrilateral's global fixed end reaction vector
-            # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            quad_FER = quad.FER(combo_name)
-
-            # Step through each term in the quadrilateral's fixed end reaction vector
-            # 'a' below is the row index in the quadrilateral's fixed end reaction vector
-            # 'm' below is the corresponding row index in the global fixed end reaction vector
-            for a in range(24):
-
-                # Determine if index 'a' is related to the i-node, j-node, m-node, or n-node
-                if a < 6:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.i_node.ID*6 + a
-                elif a < 12:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.j_node.ID*6 + (a - 6)
-                elif a < 18:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.m_node.ID*6 + (a - 12)
-                else:
-                    # Find the corresponding index 'm' in the global fixed end reaction vector
-                    m = quad.n_node.ID*6 + (a - 18)
-
-                # Now that 'm' is known, place the term in the global fixed end reaction vector
-                FER[m, 0] += quad_FER[a, 0]
+            # Add the 24x1 quad reactions in a single vectorized write via the DOF helper.
+            quad_FER = np.asarray(quad.FER(combo_name), dtype=float).reshape(-1)
+            dofs = self._build_dof_vector(quad.i_node, quad.j_node, quad.m_node, quad.n_node)
+            FER[dofs, 0] += quad_FER
 
         # Return the global fixed end reaction vector
         return FER
@@ -2169,32 +2168,39 @@ class FEModel3D():
         # Get the load combination for the given 'combo_name'
         combo = self.load_combos[combo_name]
 
+        # Map load direction strings to their DOF offsets once so we do not re-run the
+        # if/elif ladder for every single nodal load.
+        dof_lookup = {'FX': 0, 'FY': 1, 'FZ': 2, 'MX': 3, 'MY': 4, 'MZ': 5}
+
         # Add terms for each node in the model
         for node in self.nodes.values():
 
-            # Get the node's ID
-            ID = node.ID
+            # Accumulate this node's six DOF loads locally before writing to the global vector.
+            # This keeps the code vectorized and avoids hammering the global array for every
+            # individual load tuple.
+            local = np.zeros(6, dtype=float)
 
-            # Step through each load factor in the load combination
-            for case, factor in combo.factors.items():
+            for direction, magnitude, case in node.NodeLoads:
+                # Look up the combo factor once per load; loads from unrelated cases are skipped
+                # immediately instead of falling through nested conditionals.
+                factor = combo.factors.get(case)
+                if factor is None:
+                    continue
 
-                # Add the node's loads to the global nodal load vector
-                for load in node.NodeLoads:
+                # Normalize the direction string and map it to the correct DOF slot. Unknown
+                # direction labels are ignored to match the previous behavior.
+                idx = dof_lookup.get(direction.upper())
+                if idx is None:
+                    continue  # Ignore load types outside the standard 6 DOFs
 
-                    if load[2] == case:
+                # Add the scaled load into the local 6-entry accumulator.
+                local[idx] += factor * magnitude
 
-                        if load[0] == 'FX':
-                            P[ID*6 + 0, 0] += factor*load[1]
-                        elif load[0] == 'FY':
-                            P[ID*6 + 1, 0] += factor*load[1]
-                        elif load[0] == 'FZ':
-                            P[ID*6 + 2, 0] += factor*load[1]
-                        elif load[0] == 'MX':
-                            P[ID*6 + 3, 0] += factor*load[1]
-                        elif load[0] == 'MY':
-                            P[ID*6 + 4, 0] += factor*load[1]
-                        elif load[0] == 'MZ':
-                            P[ID*6 + 5, 0] += factor*load[1]
+            # Once all loads for this node are tallied, drop the 6x1 block into the global
+            # vector via the DOF helper. Empty accumulators are skipped to avoid pointless writes.
+            if np.any(local):
+                dofs = self._build_dof_vector(node)
+                P[dofs, 0] += local
 
         # Return the global nodal force vector
         return P
