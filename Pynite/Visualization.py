@@ -2,7 +2,7 @@ from __future__ import annotations # Allows more recent type hints features
 import warnings
 
 from IPython.display import Image
-from numpy import array, empty, append, cross, asarray
+from numpy import array, empty, append, cross, asarray, linspace
 from numpy.linalg import norm
 import vtk
 
@@ -86,6 +86,8 @@ class Renderer():
         self._scalar_bar_text_size = 24
         self._theme = 'default'
         self._show_load_info = True
+        self._member_diagrams = None  # Options: None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
+        self._diagram_scale = 30  # Scale factor for diagram visualization
 
         # Initialize VTK objects
         self.renderer = vtk.vtkRenderer()
@@ -239,6 +241,37 @@ class Renderer():
     @show_load_info.setter
     def show_load_info(self, value):
         self._show_load_info = value
+
+    @property
+    def member_diagrams(self):
+        """Type of internal force/moment diagram to display on members.
+
+        Valid options:
+        - None: No diagrams (default)
+        - 'Fy': Shear force in local y-direction
+        - 'Fz': Shear force in local z-direction
+        - 'My': Bending moment about local y-axis
+        - 'Mz': Bending moment about local z-axis
+        - 'Fx': Axial force along member
+        - 'Tx': Torsional moment about member axis
+        """
+        return self._member_diagrams
+
+    @member_diagrams.setter
+    def member_diagrams(self, value):
+        valid_options = [None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx']
+        if value not in valid_options:
+            raise ValueError(f"member_diagrams must be one of {valid_options}, got {value}")
+        self._member_diagrams = value
+
+    @property
+    def diagram_scale(self):
+        """Scale factor for internal force/moment diagram visualization."""
+        return self._diagram_scale
+
+    @diagram_scale.setter
+    def diagram_scale(self, value):
+        self._diagram_scale = value
 
     def _calculate_auto_annotation_size(self):
         """Calculate automatic annotation size as 5% of shortest node distance.
@@ -581,6 +614,11 @@ class Renderer():
 
                 # Add the corner annotation to the renderer
                 renderer.AddViewProp(corner_annotation)
+
+        # Render member internal force/moment diagrams if requested
+        if self.member_diagrams is not None:
+            _RenderMemberDiagrams(self.model, renderer, self.member_diagrams,
+                                 self.diagram_scale, self.combo_name, self.case, self.theme, self.annotation_size)
 
         # Reset the camera
         if reset_camera: renderer.ResetCamera()
@@ -2127,3 +2165,325 @@ def _MaxLoads(model, combo_name=None, case=None):
 
     # Return the maximum loads in the load combination or load case
     return max_pt_load, max_moment, max_dist_load, max_area_load
+
+class VisMemberDiagram():
+    """Creates a visual representation of internal forces/moments along a member."""
+
+    def __init__(self, member, nodes, diagram_type, scale_factor, combo_name='Combo 1', theme='default', n_points=20, annotation_size=5):
+        """
+        Constructor for member diagram visualization.
+
+        Parameters
+        ----------
+        member : Member3D
+            The member to create a diagram for
+        nodes : dict
+            Dictionary of nodes in the model
+        diagram_type : str
+            Type of diagram: 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
+        scale_factor : float
+            Scale factor for diagram visualization
+        combo_name : str
+            Load combination name
+        theme : str
+            Visual theme ('default' or 'print')
+        n_points : int
+            Number of points to calculate along member
+        annotation_size : float
+            Size for annotations/labels
+        """
+
+        self.polydata = vtk.vtkAppendPolyData()
+        self.label_actors = []  # Store text label actors
+        
+        # Get member information
+        i_node = member.i_node
+        j_node = member.j_node
+        Xi, Yi, Zi = i_node.X, i_node.Y, i_node.Z
+        Xj, Yj, Zj = j_node.X, j_node.Y, j_node.Z
+        L = member.L()
+        
+        # Get transformation matrix for local coordinates
+        T = member.T()
+        cos_x = array([T[0, 0:3]])  # Local x-axis (along member)
+        cos_y = array([T[1, 0:3]])  # Local y-axis
+        cos_z = array([T[2, 0:3]])  # Local z-axis
+        
+        # Member base line
+        member_start = array([Xi, Yi, Zi])
+        member_dir = array([Xj - Xi, Yj - Yi, Zj - Zi])
+        member_unit = member_dir / norm(member_dir)
+        
+        # Determine perpendicular direction for diagram offset
+        if diagram_type in ['Fy', 'My']:
+            perp_dir = cos_y[0]  # Use y direction for offset
+        elif diagram_type in ['Fz', 'Mz']:
+            perp_dir = cos_z[0]  # Use z direction for offset
+        else:
+            perp_dir = cos_y[0]  # Default to y direction
+        
+        # Get result values at points along member
+        from numpy import linspace
+        x_array = linspace(0, L, n_points)
+        
+        if diagram_type == 'Fy':
+            results = member.shear_array('Fy', n_points, combo_name, x_array)
+            y_values = results[1]
+            label = 'Fy'
+            max_value = member.max_shear('Fy', combo_name)
+            min_value = member.min_shear('Fy', combo_name)
+        elif diagram_type == 'Fz':
+            results = member.shear_array('Fz', n_points, combo_name, x_array)
+            y_values = results[1]
+            label = 'Fz'
+            max_value = member.max_shear('Fz', combo_name)
+            min_value = member.min_shear('Fz', combo_name)
+        elif diagram_type == 'My':
+            results = member.moment_array('My', n_points, combo_name, x_array)
+            y_values = results[1]
+            label = 'My'
+            max_value = member.max_moment('My', combo_name)
+            min_value = member.min_moment('My', combo_name)
+        elif diagram_type == 'Mz':
+            results = member.moment_array('Mz', n_points, combo_name, x_array)
+            y_values = results[1]
+            label = 'Mz'
+            max_value = member.max_moment('Mz', combo_name)
+            min_value = member.min_moment('Mz', combo_name)
+        elif diagram_type == 'Fx':
+            results = member.axial_array(n_points, combo_name, x_array)
+            y_values = results[1]
+            label = 'Fx'
+            max_value = member.max_axial(combo_name)
+            min_value = member.min_axial(combo_name)
+        elif diagram_type == 'Tx':
+            results = member.torque_array(n_points, combo_name, x_array)
+            y_values = results[1]
+            label = 'Tx'
+            max_value = member.max_torque(combo_name)
+            min_value = member.min_torque(combo_name)
+        else:
+            return
+        
+        # Find indices of max and min values in the results array
+        max_idx = int(y_values.argmax())
+        min_idx = int(y_values.argmin())
+        
+        # Normalize values for better visualization
+        max_val = max(abs(y_values))
+        if max_val > 0:
+            normalized_values = y_values / max_val
+        else:
+            normalized_values = y_values
+        
+        # Create diagram line (positive and negative sides)
+        points = vtk.vtkPoints()
+        lines = vtk.vtkCellArray()
+        
+        point_idx = 0
+        
+        # Create baseline and diagram lines
+        for i, x in enumerate(x_array):
+            # Position along member
+            pos_along_member = member_start + (x / L) * member_dir
+            # Baseline point (on member axis)
+            pts_idx = points.InsertNextPoint(pos_along_member)
+            point_idx += 1
+        
+        # Add diagram points (displaced from member axis)
+        for i, x in enumerate(x_array):
+            pos_along_member = member_start + (x / L) * member_dir
+            diag_displacement = (normalized_values[i] * scale_factor * 0.5) * perp_dir
+            diagram_pt = pos_along_member + diag_displacement
+            points.InsertNextPoint(diagram_pt)
+            point_idx += 1
+        
+        # Create baseline line
+        baseline_line = vtk.vtkCellArray()
+        baseline_line.InsertNextCell(len(x_array))
+        for i in range(len(x_array)):
+            baseline_line.InsertCellPoint(i)
+        
+        # Create diagram line
+        diagram_line = vtk.vtkCellArray()
+        diagram_line.InsertNextCell(len(x_array))
+        for i in range(len(x_array)):
+            diagram_line.InsertCellPoint(len(x_array) + i)
+        
+        # Create connection lines (vertical lines from baseline to diagram)
+        connections = vtk.vtkCellArray()
+        for i in range(len(x_array)):
+            connections.InsertNextCell(2)
+            connections.InsertCellPoint(i)
+            connections.InsertCellPoint(len(x_array) + i)
+        
+        # Create polydata
+        self.source = vtk.vtkPolyData()
+        self.source.SetPoints(points)
+        self.source.SetLines(baseline_line)
+        
+        # Add diagram line
+        diagram_lines = vtk.vtkPolyData()
+        diagram_lines.SetPoints(points)
+        diagram_lines.SetLines(diagram_line)
+        self.polydata.AddInputData(diagram_lines)
+        
+        # Add connection lines
+        connections_polydata = vtk.vtkPolyData()
+        connections_polydata.SetPoints(points)
+        connections_polydata.SetLines(connections)
+        self.polydata.AddInputData(connections_polydata)
+        
+        # Add baseline
+        baseline_polydata = vtk.vtkPolyData()
+        baseline_polydata.SetPoints(points)
+        baseline_polydata.SetLines(baseline_line)
+        self.polydata.AddInputData(baseline_polydata)
+        
+        self.polydata.Update()
+        
+        # Create mapper and actor
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(self.polydata.GetOutputPort())
+        self.actor = vtk.vtkActor()
+        self.actor.SetMapper(mapper)
+        
+        # Set color based on theme
+        if theme == 'default':
+            self.actor.GetProperty().SetColor(0, 1, 1)  # Cyan for diagrams
+        else:
+            self.actor.GetProperty().SetColor(0, 0, 0)  # Black for print theme
+        
+        # Set line width
+        self.actor.GetProperty().SetLineWidth(1)
+        
+        # Create text labels for max and min values
+        self._create_value_labels(diagram_type, max_idx, min_idx, max_value, min_value, x_array, points, 
+                                 normalized_values, scale_factor, perp_dir, theme, member_start, member_dir, L, annotation_size, member, combo_name)
+    
+    def _create_value_labels(self, diagram_type, max_idx, min_idx, max_value, min_value, x_array, points, 
+                            normalized_values, scale_factor, perp_dir, theme, member_start, member_dir, L, annotation_size, member, combo_name):
+        """Create text labels showing max and min values on the diagram."""
+        
+        # Format values for display (remove trailing zeros)
+        max_str = f"{max_value:.3g}"
+        min_str = f"{min_value:.3g}"
+        
+        # Get x-positions from the array
+        max_x = x_array[max_idx]
+        min_x = x_array[min_idx]
+        
+        # Calculate world positions for labels
+        max_pos = member_start + (max_x / L) * member_dir
+        min_pos = member_start + (min_x / L) * member_dir
+        
+        # Add displacement in perpendicular direction for visibility
+        max_pos = max_pos + (normalized_values[max_idx] * scale_factor * 0.7) * perp_dir
+        min_pos = min_pos + (normalized_values[min_idx] * scale_factor * 0.7) * perp_dir
+        
+        # Text size should scale with annotation_size
+        text_scale = annotation_size
+        
+        # Create max value label using vtkFollower (follows camera)
+        max_text = vtk.vtkFollower()
+        max_label = vtk.vtkVectorText()
+        max_label.SetText(max_str)
+        
+        max_mapper = vtk.vtkPolyDataMapper()
+        max_mapper.SetInputConnection(max_label.GetOutputPort())
+        max_text.SetMapper(max_mapper)
+        
+        # Position the label at the max point
+        max_text.SetPosition(max_pos[0], max_pos[1], max_pos[2])
+        max_text.SetScale(text_scale, text_scale, text_scale)  # Scale text with annotation_size
+        
+        # Configure properties for max
+        max_prop = max_text.GetProperty()
+        if theme == 'default':
+            max_prop.SetColor(0, 1, 1)  # Cyan text
+        else:
+            max_prop.SetColor(0, 0, 0)  # Black text
+        max_prop.SetLineWidth(1)
+        
+        # Create min value label
+        min_text = vtk.vtkFollower()
+        min_label = vtk.vtkVectorText()
+        min_label.SetText(min_str)
+        
+        min_mapper = vtk.vtkPolyDataMapper()
+        min_mapper.SetInputConnection(min_label.GetOutputPort())
+        min_text.SetMapper(min_mapper)
+        
+        # Position the label at the min point
+        min_text.SetPosition(min_pos[0], min_pos[1], min_pos[2])
+        min_text.SetScale(text_scale, text_scale, text_scale)  # Scale text with annotation_size
+        
+        # Configure properties for min
+        min_prop = min_text.GetProperty()
+        if theme == 'default':
+            min_prop.SetColor(0, 1, 1)  # Cyan text
+        else:
+            min_prop.SetColor(0, 0, 0)  # Black text
+        min_prop.SetLineWidth(1)
+        
+        # Store the text actors for renderer integration
+        self.label_actors = [
+            (max_text, max_pos),
+            (min_text, min_pos)
+        ]
+
+
+def _RenderMemberDiagrams(model, renderer, diagram_type, scale_factor, combo_name=None, case=None, theme='default', annotation_size=5):
+    """
+    Renders internal force/moment diagrams on members.
+
+    Parameters
+    ----------
+    model : FEModel3D
+        The finite element model
+    renderer : vtk.vtkRenderer
+        The VTK renderer
+    diagram_type : str
+        Type of diagram to render
+    scale_factor : float
+        Scale factor for diagram visualization
+    combo_name : str
+        Load combination name
+    case : str
+        Load case name
+    theme : str
+        Visual theme
+    annotation_size : float
+        Size for annotations/labels
+    """
+
+    # Determine which combo/case to use
+    if case is None and combo_name is None:
+        combo_name = 'Combo 1'
+    elif case is not None:
+        # For load cases, use the case name as combo_name in the member methods
+        combo_name = case
+    
+    # Create diagrams for each active member
+    for member in model.members.values():
+        
+        # Check if member is active for the specified combo
+        if combo_name not in member.active or not member.active[combo_name]:
+            continue
+        
+        try:
+            vis_diagram = VisMemberDiagram(member, model.nodes, diagram_type, 
+                                          scale_factor, combo_name, theme, annotation_size=annotation_size)
+            renderer.AddActor(vis_diagram.actor)
+            
+            # Add text label actors
+            for label_actor, world_pos in vis_diagram.label_actors:
+                # For vtkFollower actors, set the camera so they always face the viewer
+                label_actor.SetCamera(renderer.GetActiveCamera())
+                
+                # Add the label actor to the renderer
+                renderer.AddActor(label_actor)
+
+        except Exception:
+            # Skip members that can't create diagrams (e.g., inactive members)
+            pass

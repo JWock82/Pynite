@@ -76,6 +76,7 @@ rndr = Renderer(MomentFrame)
 rndr.deformed_shape = True
 rndr.deformed_scale = 50
 rndr.combo_name = '1.2D+1.0W'
+rndr.member_diagrams = 'Mz'
 rndr.render_model(MomentFrame)
 
 # Plot the moment diagram for the beam

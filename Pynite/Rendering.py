@@ -1,7 +1,7 @@
 from __future__ import annotations # Allows more recent type hints features
 from json import load
 import warnings
-from typing import TYPE_CHECKING, Callable, List, Any
+from typing import TYPE_CHECKING, Callable, List, Any, Optional, Union, Tuple
 
 from IPython.display import Image
 import numpy as np
@@ -345,59 +345,56 @@ class Renderer:
         self._spring_label_points = []
         self._spring_labels = []
 
-        # Check if nodes are to be rendered
-        if self.render_nodes == True:
+        # Build visual helper objects. These classes encapsulate geometry and label bookkeeping
+        # so that the renderer logic stays readable while still leveraging PyVista efficiently.
+        vis_nodes: List[VisNode] = []
+        vis_springs: List[VisSpring] = []
+        vis_members: List[VisMember] = []
 
-            if self.theme == 'print':
-                color = 'black'
-            else:
-                color = 'grey'
+        if self.render_nodes:
+            node_color = 'black' if self.theme == 'print' else 'grey'
+            vis_nodes = [VisNode(node, self.annotation_size, node_color) for node in self.model.nodes.values()]
+            for vis_node in vis_nodes:
+                vis_node.add_to_plotter(self.plotter)
 
-            # Plot each node in the model
-            for node in self.model.nodes.values():
-                self.plot_node(node, color)
-
-        # Render node labels
-        label_points = [[node.X, node.Y, node.Z] for node in self.model.nodes.values()]
-        labels = [node.name for node in self.model.nodes.values()]
-
-        self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=True, point_color='grey', point_size=5, shape=None, render_points_as_spheres=True)
-
-        # Check if there are springs in the model
         if self.model.springs:
+            # Undeformed springs are added here; deformed ones come later if requested.
+            vis_springs = [VisSpring(spring, self.annotation_size, 'grey', False, self.deformed_scale, self.combo_name) for spring in self.model.springs.values()]
+            for vis_spring in vis_springs:
+                vis_spring.add_to_plotter(self.plotter)
 
-            # Render the springs
+        if self.model.members:
+            vis_members = [VisMember(member, self.theme) for member in self.model.members.values()]
+            for vis_member in vis_members:
+                vis_member.add_to_plotter(self.plotter)
+
+        # Render the deformed shape if requested. Deformed visuals are built separately so the
+        # undeformed geometry remains visible alongside deformed overlays when desired.
+        if self.deformed_shape:
+            for member in self.model.members.values():
+                vis_def_member = VisDeformedMember(member, self.deformed_scale, self.combo_name)
+                vis_def_member.add_to_plotter(self.plotter)
+
             for spring in self.model.springs.values():
-                self.plot_spring(spring, 'grey')
+                vis_def_spring = VisSpring(spring, self.annotation_size, 'red', True, self.deformed_scale, self.combo_name)
+                vis_def_spring.add_to_plotter(self.plotter)
 
-            # Render the spring labels
+        # Render labels if requested. We gather label locations from the visual helper classes to
+        # avoid duplicating coordinate math here.
+        if self.show_labels and vis_nodes:
+            label_points = [vis_node.label_point for vis_node in vis_nodes]
+            labels = [vis_node.label for vis_node in vis_nodes]
+            self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=True, point_color='grey', point_size=5, shape=None, render_points_as_spheres=True)
+
+        if self.show_labels and vis_springs:
+            self._spring_label_points = [vis_spring.label_point for vis_spring in vis_springs]
+            self._spring_labels = [vis_spring.label for vis_spring in vis_springs]
             self.plotter.add_point_labels(self._spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None, render_points_as_spheres=False)
 
-        # Render the members
-        for member in self.model.members.values():
-            self.plot_member(member)
-
-        # Render the member labels
-        label_points = [[(member.i_node.X+member.j_node.X)/2, (member.i_node.Y+member.j_node.Y)/2, (member.i_node.Z+member.j_node.Z)/2] for member in self.model.members.values()]
-        labels = [member.name for member in self.model.members.values()]
-        self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
-
-        # Render the deformed shape if requested
-        if self.deformed_shape == True:
-
-            # Render deformed nodes
-            # for node in self.model.nodes.values():
-            #     self.plot_deformed_node(node, self.deformed_scale)
-
-            # Render deformed members
-            for member in self.model.members.values():
-                self.plot_deformed_member(member, self.deformed_scale)
-
-            # Render deformed springs
-            for spring in self.model.springs.values():
-                self.plot_spring(spring, 'red', deformed=True)
-
-            # _DeformedShape(self.model, self.deformed_scale, self.annotation_size, self.combo_name, self.render_nodes, self.theme)
+        if self.show_labels and vis_members:
+            label_points = [vis_member.label_point for vis_member in vis_members]
+            labels = [vis_member.label for vis_member in vis_members]
+            self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
 
         # Render the loads if requested
         if (self.combo_name != None or self.case != None) and self.render_loads != False:
@@ -1321,6 +1318,232 @@ class Renderer:
 
                     # Create an area load and get its data
                     self.plot_area_load(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*self.annotation_size, str(sig_fig_round(load_value, 3)), color='green')
+
+
+# === Visualization helper classes ===
+# These PyVista-focused classes mirror the VTK helpers used in Visualization.py. They keep
+# geometry and label construction encapsulated, which keeps Renderer.update readable and makes
+# it easy to swap draw strategies without touching the orchestrating logic.
+
+
+class VisNode:
+    """Visual wrapper for a Node3D using PyVista primitives."""
+
+    def __init__(self, node: 'Node3D', annotation_size: float, color: str) -> None:
+        self.node = node
+        self.annotation_size = annotation_size
+        self.color = color
+        self.label = node.name
+        self.label_point = [node.X, node.Y, node.Z]
+        self.meshes: List[pv.PolyData] = []
+        self._build_geometry()
+
+    def _build_geometry(self) -> None:
+        """Assemble PyVista meshes representing the node and its support conditions."""
+        n = self.node
+        s = self.annotation_size
+
+        # Fixed support: represent with a cube for a compact glyph.
+        if n.support_DX and n.support_DY and n.support_DZ and n.support_RX and n.support_RY and n.support_RZ:
+            self.meshes.append(pv.Cube(center=(n.X, n.Y, n.Z), x_length=s*2, y_length=s*2, z_length=s*2))
+            return
+
+        # Pinned support: use a single cone pointed up.
+        if n.support_DX and n.support_DY and n.support_DZ and not n.support_RX and not n.support_RY and not n.support_RZ:
+            self.meshes.append(pv.Cone(center=(n.X, n.Y - s, n.Z), direction=(0, 1, 0), height=s*2, radius=s*2))
+            return
+
+        # For partial restraints, build individual glyphs for each restraint direction/rotation.
+        if n.support_DX:
+            self.meshes.append(pv.Line((n.X - s, n.Y, n.Z), (n.X + s, n.Y, n.Z)))
+            self.meshes.append(pv.Cone(center=(n.X - s, n.Y, n.Z), direction=(1, 0, 0), height=s*0.6, radius=s*0.3))
+            self.meshes.append(pv.Cone(center=(n.X + s, n.Y, n.Z), direction=(-1, 0, 0), height=s*0.6, radius=s*0.3))
+
+        if n.support_DY:
+            self.meshes.append(pv.Line((n.X, n.Y - s, n.Z), (n.X, n.Y + s, n.Z)))
+            self.meshes.append(pv.Cone(center=(n.X, n.Y - s, n.Z), direction=(0, 1, 0), height=s*0.6, radius=s*0.3))
+            self.meshes.append(pv.Cone(center=(n.X, n.Y + s, n.Z), direction=(0, -1, 0), height=s*0.6, radius=s*0.3))
+
+        if n.support_DZ:
+            self.meshes.append(pv.Line((n.X, n.Y, n.Z - s), (n.X, n.Y, n.Z + s)))
+            self.meshes.append(pv.Cone(center=(n.X, n.Y, n.Z - s), direction=(0, 0, 1), height=s*0.6, radius=s*0.3))
+            self.meshes.append(pv.Cone(center=(n.X, n.Y, n.Z + s), direction=(0, 0, -1), height=s*0.6, radius=s*0.3))
+
+        if n.support_RX:
+            self.meshes.append(pv.Line((n.X - 1.6*s, n.Y, n.Z), (n.X + 1.6*s, n.Y, n.Z)))
+            self.meshes.append(pv.Cube(center=(n.X - 1.9*s, n.Y, n.Z), x_length=s*0.6, y_length=s*0.6, z_length=s*0.6))
+            self.meshes.append(pv.Cube(center=(n.X + 1.9*s, n.Y, n.Z), x_length=s*0.6, y_length=s*0.6, z_length=s*0.6))
+
+        if n.support_RY:
+            self.meshes.append(pv.Line((n.X, n.Y - 1.6*s, n.Z), (n.X, n.Y + 1.6*s, n.Z)))
+            self.meshes.append(pv.Cube(center=(n.X, n.Y - 1.9*s, n.Z), x_length=s*0.6, y_length=s*0.6, z_length=s*0.6))
+            self.meshes.append(pv.Cube(center=(n.X, n.Y + 1.9*s, n.Z), x_length=s*0.6, y_length=s*0.6, z_length=s*0.6))
+
+        if n.support_RZ:
+            self.meshes.append(pv.Line((n.X, n.Y, n.Z - 1.6*s), (n.X, n.Y, n.Z + 1.6*s)))
+            self.meshes.append(pv.Cube(center=(n.X, n.Y, n.Z - 1.9*s), x_length=s*0.6, y_length=s*0.6, z_length=s*0.6))
+            self.meshes.append(pv.Cube(center=(n.X, n.Y, n.Z + 1.9*s), x_length=s*0.6, y_length=s*0.6, z_length=s*0.6))
+
+        # If no supports are present, add a small sphere so the node is still visible.
+        if not self.meshes:
+            self.meshes.append(pv.Sphere(center=(n.X, n.Y, n.Z), radius=0.4*s))
+
+    def add_to_plotter(self, plotter: pv.Plotter) -> None:
+        """Add all prepared meshes to the plotter in one place."""
+        for mesh in self.meshes:
+            plotter.add_mesh(mesh, color=self.color)
+
+
+class VisSpring:
+    """Visual wrapper for a Spring3D with optional deformed rendering."""
+
+    def __init__(self, spring: 'Spring3D', annotation_size: float, color: str, deformed: bool, scale: float, combo_name: Optional[str]) -> None:
+        self.spring = spring
+        self.annotation_size = annotation_size
+        self.color = color
+        self.deformed = deformed
+        self.scale = scale
+        self.combo_name = combo_name
+        self.mesh: Optional[pv.PolyData] = None
+        self.label = spring.name
+        self.label_point: Optional[List[float]] = None
+        self._build_geometry()
+
+    def _build_geometry(self) -> None:
+        i_node = self.spring.i_node
+        j_node = self.spring.j_node
+
+        # Pull coordinates, optionally in deformed configuration.
+        Xi, Yi, Zi = i_node.X, i_node.Y, i_node.Z
+        Xj, Yj, Zj = j_node.X, j_node.Y, j_node.Z
+        if self.deformed and self.combo_name is not None:
+            Xi += i_node.DX[self.combo_name]*self.scale
+            Yi += i_node.DY[self.combo_name]*self.scale
+            Zi += i_node.DZ[self.combo_name]*self.scale
+            Xj += j_node.DX[self.combo_name]*self.scale
+            Yj += j_node.DY[self.combo_name]*self.scale
+            Zj += j_node.DZ[self.combo_name]*self.scale
+
+        direction = np.array([Xj, Yj, Zj]) - np.array([Xi, Yi, Zi])
+        length = np.linalg.norm(direction)
+        if length == 0:
+            # Avoid degenerate geometry; skip drawing this spring.
+            return
+
+        direction = direction / length
+
+        # Build a zig-zag polyline to suggest a spring.
+        arbitrary_vector = np.array([1, 0, 0])
+        if np.allclose(direction, arbitrary_vector) or np.allclose(direction, -arbitrary_vector):
+            arbitrary_vector = np.array([0, 1, 0])
+        perp_vector1 = np.cross(direction, arbitrary_vector)
+        perp_vector1 /= np.linalg.norm(perp_vector1)
+        perp_vector2 = np.cross(direction, perp_vector1)
+        perp_vector2 /= np.linalg.norm(perp_vector2)
+
+        straight_segment_length = length / 10
+        zigzag_length = length - 2 * straight_segment_length
+
+        num_zigs = 4
+        num_points = num_zigs * 2
+        amplitude = self.annotation_size
+        t = np.linspace(0, zigzag_length, num_points)
+        zigzag_pattern = amplitude * np.tile([1, -1], num_zigs)
+        zigzag_points = np.outer(t, direction) + np.outer(zigzag_pattern, perp_vector1)
+
+        start_point = np.array([Xi, Yi, Zi])
+        end_point = np.array([Xj, Yj, Zj])
+        start_segment = start_point + direction * straight_segment_length
+        end_segment = end_point - direction * straight_segment_length
+        zigzag_points += start_segment
+
+        points = np.vstack([start_point, start_segment, zigzag_points, end_segment, end_point])
+        lines = np.zeros((len(points) - 1, 3), dtype=int)
+        lines[:, 0] = 2
+        lines[:, 1] = np.arange(len(points) - 1, dtype=int)
+        lines[:, 2] = np.arange(1, len(points), dtype=int)
+
+        self.mesh = pv.PolyData(points, lines=lines)
+        self.label_point = [(Xi + Xj) / 2, (Yi + Yj) / 2, (Zi + Zj) / 2]
+
+    def add_to_plotter(self, plotter: pv.Plotter) -> None:
+        if self.mesh is not None:
+            plotter.add_mesh(self.mesh, color=self.color, line_width=2)
+
+
+class VisMember:
+    """Visual wrapper for a Member3D as a simple line."""
+
+    def __init__(self, member: 'Member3D', theme: str) -> None:
+        self.member = member
+        self.theme = theme
+        self.mesh: pv.PolyData = self._build_geometry()
+        self.label = member.name
+        self.label_point = [(member.i_node.X + member.j_node.X) / 2,
+                            (member.i_node.Y + member.j_node.Y) / 2,
+                            (member.i_node.Z + member.j_node.Z) / 2]
+
+    def _build_geometry(self) -> pv.PolyData:
+        line = pv.Line()
+        line.points[0] = [self.member.i_node.X, self.member.i_node.Y, self.member.i_node.Z]
+        line.points[1] = [self.member.j_node.X, self.member.j_node.Y, self.member.j_node.Z]
+        return line
+
+    def add_to_plotter(self, plotter: pv.Plotter) -> None:
+        color = 'black' if self.theme == 'print' else 'black'
+        plotter.add_mesh(self.mesh, color=color, line_width=2)
+
+
+class VisDeformedMember:
+    """Visual wrapper for a deformed Member3D polyline."""
+
+    def __init__(self, member: 'Member3D', scale_factor: float, combo_name: Optional[str]) -> None:
+        self.member = member
+        self.scale_factor = scale_factor
+        self.combo_name = combo_name
+        self.mesh: Optional[pv.PolyData] = None
+        self._build_geometry()
+
+    def _build_geometry(self) -> None:
+        if self.combo_name is None:
+            return
+        if not self.member.active:
+            return
+
+        L = self.member.L()
+        T = self.member.T()
+        cos_x = np.array([T[0, 0:3]])
+        cos_y = np.array([T[1, 0:3]])
+        cos_z = np.array([T[2, 0:3]])
+
+        Xi = self.member.i_node.X
+        Yi = self.member.i_node.Y
+        Zi = self.member.i_node.Z
+
+        DY_plot = np.empty((0, 3))
+        for i in range(20):
+            dy_tot = self.member.deflection('dy', L / 19 * i, self.combo_name)
+            DY_plot = np.append(DY_plot, dy_tot * cos_y * self.scale_factor, axis=0)
+
+        DZ_plot = np.empty((0, 3))
+        for i in range(20):
+            dz_tot = self.member.deflection('dz', L / 19 * i, self.combo_name)
+            DZ_plot = np.append(DZ_plot, dz_tot * cos_z * self.scale_factor, axis=0)
+
+        DX_plot = np.empty((0, 3))
+        for i in range(20):
+            dx_tot = [[Xi, Yi, Zi]] + (L / 19 * i + self.member.deflection('dx', L / 19 * i, self.combo_name) * self.scale_factor) * cos_x
+            DX_plot = np.append(DX_plot, dx_tot, axis=0)
+
+        D_plot = DY_plot + DZ_plot + DX_plot
+        if len(D_plot) == 0:
+            return
+
+        self.mesh = pv.lines_from_points(D_plot, close=False)
+
+    def add_to_plotter(self, plotter: pv.Plotter) -> None:
+        if self.mesh is not None:
+            plotter.add_mesh(self.mesh, color='red', line_width=2)
 
 def _PerpVector(v):
     '''

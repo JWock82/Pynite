@@ -39,6 +39,79 @@ The ``Renderer`` object has some default properties you may wish to change. Belo
     my_rndr.scalar_bar = True          # Turns on the scalar bar for plate contours
     my_rndr.scalar_bar_text_size = 24  # Adjusts the text height for the scalar bar
 
+Internal Force and Moment Diagrams
+==================================
+
+You can visualize internal forces and moments directly on members using member diagrams. This is useful for quick visual inspection of shear, moment, axial, and torque distributions along members. Each diagram automatically displays labels showing the maximum and minimum values.
+
+.. code-block:: python
+
+    # Display a moment diagram in the z-direction
+    my_rndr.member_diagrams = 'Mz'
+    my_rndr.diagram_scale = 30      # Adjust diagram size (default: 30)
+    my_rndr.render_model()
+
+Available Diagram Types
+-----------------------
+
+The ``member_diagrams`` property accepts the following values:
+
+- ``'Fy'`` - Shear force in local y-direction
+- ``'Fz'`` - Shear force in local z-direction
+- ``'My'`` - Bending moment about local y-axis
+- ``'Mz'`` - Bending moment about local z-axis
+- ``'Fx'`` - Axial force along member
+- ``'Tx'`` - Torsional moment about member axis
+- ``None`` - No diagrams (default)
+
+Diagram Display Features
+------------------------
+
+- **Diagram Lines**: Visual representation of internal force/moment distribution along members
+- **Value Labels**: Maximum and minimum values are automatically labeled on the diagram
+- **Color Coding**: Diagrams use cyan in default theme and black in print theme for visibility
+
+Diagram Customization
+---------------------
+
+The diagram visualization can be customized with the following property:
+
+- ``diagram_scale`` (float, default=30) - Controls the size of the diagrams. Larger values make diagrams more visually prominent and easier to read labels.
+
+.. code-block:: python
+
+    # Example: Display axial force diagrams with custom scale
+    my_rndr.member_diagrams = 'Fx'
+    my_rndr.diagram_scale = 50       # Larger diagrams with larger labels
+    my_rndr.render_model()
+
+Example: Viewing Different Diagrams
+------------------------------------
+
+You can easily switch between different diagram types:
+
+.. code-block:: python
+
+    # View moment diagram with max/min labels
+    my_rndr.member_diagrams = 'Mz'
+    my_rndr.render_model()
+
+    # Switch to shear diagram
+    my_rndr.member_diagrams = 'Fz'
+    my_rndr.render_model()
+
+    # Display axial forces
+    my_rndr.member_diagrams = 'Fx'
+    my_rndr.render_model()
+
+    # Display torque
+    my_rndr.member_diagrams = 'Tx'
+    my_rndr.render_model()
+
+    # Turn off diagrams
+    my_rndr.member_diagrams = None
+    my_rndr.render_model()
+
 Rendering the Model and Screenshots
 ===================================
 
