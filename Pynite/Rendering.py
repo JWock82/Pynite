@@ -51,6 +51,8 @@ class Renderer:
         self._labels: bool = True
         self._scalar_bar: bool = False
         self._scalar_bar_text_size: int = 24
+        self._member_diagrams: Optional[str] = None  # Options: None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
+        self._diagram_scale: float = 30.0
         self.theme: str = 'default'
 
         # Callback list for post-update customization:
@@ -205,6 +207,37 @@ class Renderer:
     @scalar_bar_text_size.setter
     def scalar_bar_text_size(self, text_size: int) -> None:
         self._scalar_bar_text_size = text_size
+
+    @property
+    def member_diagrams(self) -> Optional[str]:
+        """Type of member diagram to display.
+        
+        Options:
+        - None: No diagrams (default)
+        - 'Fy': Shear force in local y-direction
+        - 'Fz': Shear force in local z-direction
+        - 'My': Bending moment about local y-axis
+        - 'Mz': Bending moment about local z-axis
+        - 'Fx': Axial force
+        - 'Tx': Torsional moment
+        """
+        return self._member_diagrams
+
+    @member_diagrams.setter
+    def member_diagrams(self, diagram_type: Optional[str]) -> None:
+        valid_options = [None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx']
+        if diagram_type not in valid_options:
+            raise ValueError(f"member_diagrams must be one of {valid_options}, got '{diagram_type}'")
+        self._member_diagrams = diagram_type
+
+    @property
+    def diagram_scale(self) -> float:
+        """Scale factor for member diagram visualization. Default is 30.0."""
+        return self._diagram_scale
+
+    @diagram_scale.setter
+    def diagram_scale(self, scale: float) -> None:
+        self._diagram_scale = scale
 
     def _calculate_auto_annotation_size(self) -> float:
         """Calculate automatic annotation size as 5% of shortest node distance.
@@ -408,6 +441,10 @@ class Renderer:
         # Render the plates and quads, if present
         if self.model.quads or self.model.plates:
             self.plot_plates(self.deformed_shape, self.deformed_scale, self.color_map, self.combo_name)
+
+        # Render member diagrams if requested
+        if self.member_diagrams and (self.combo_name is not None or self.case is not None):
+            self.plot_member_diagrams()
 
         # Determine whether to show or hide the scalar bar
         # if self._scalar_bar == False:
@@ -1319,6 +1356,165 @@ class Renderer:
                     # Create an area load and get its data
                     self.plot_area_load(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*self.annotation_size, str(sig_fig_round(load_value, 3)), color='green')
 
+    def plot_member_diagrams(self) -> None:
+        """Renders internal force/moment diagrams on members."""
+        
+        # Determine which combo/case to use
+        combo_name = self.combo_name if self.combo_name is not None else self.case
+        
+        # Create diagrams for each active member
+        for member in self.model.members.values():
+            
+            # Check if member is active for the specified combo
+            if combo_name not in member.active or not member.active[combo_name]:
+                continue
+            
+            try:
+                # Get member information
+                i_node = member.i_node
+                j_node = member.j_node
+                Xi, Yi, Zi = i_node.X, i_node.Y, i_node.Z
+                Xj, Yj, Zj = j_node.X, j_node.Y, j_node.Z
+                L = member.L()
+                
+                # Get transformation matrix for local coordinates
+                T = member.T()
+                cos_x = np.array([T[0, 0:3]])  # Local x-axis (along member)
+                cos_y = np.array([T[1, 0:3]])  # Local y-axis
+                cos_z = np.array([T[2, 0:3]])  # Local z-axis
+                
+                # Member base line
+                member_start = np.array([Xi, Yi, Zi])
+                member_dir = np.array([Xj - Xi, Yj - Yi, Zj - Zi])
+                
+                # Determine perpendicular direction for diagram offset
+                if self.member_diagrams in ['Fy', 'Mz']:
+                    perp_dir = cos_y[0]  # Use y direction for offset
+                elif self.member_diagrams in ['Fz', 'My']:
+                    perp_dir = cos_z[0]  # Use z direction for offset
+                else:
+                    perp_dir = cos_y[0]  # Default to y direction
+                
+                # Get result values at points along member
+                n_points = 20
+                x_array = np.linspace(0, L, n_points)
+                
+                if self.member_diagrams == 'Fy':
+                    results = member.shear_array('Fy', n_points, combo_name, x_array)
+                    y_values = results[1]
+                    max_value = member.max_shear('Fy', combo_name)
+                    min_value = member.min_shear('Fy', combo_name)
+                elif self.member_diagrams == 'Fz':
+                    results = member.shear_array('Fz', n_points, combo_name, x_array)
+                    y_values = results[1]
+                    max_value = member.max_shear('Fz', combo_name)
+                    min_value = member.min_shear('Fz', combo_name)
+                elif self.member_diagrams == 'My':
+                    results = member.moment_array('My', n_points, combo_name, x_array)
+                    y_values = results[1]
+                    max_value = member.max_moment('My', combo_name)
+                    min_value = member.min_moment('My', combo_name)
+                elif self.member_diagrams == 'Mz':
+                    results = member.moment_array('Mz', n_points, combo_name, x_array)
+                    y_values = results[1]
+                    max_value = member.max_moment('Mz', combo_name)
+                    min_value = member.min_moment('Mz', combo_name)
+                elif self.member_diagrams == 'Fx':
+                    results = member.axial_array(n_points, combo_name, x_array)
+                    y_values = results[1]
+                    max_value = member.max_axial(combo_name)
+                    min_value = member.min_axial(combo_name)
+                elif self.member_diagrams == 'Tx':
+                    results = member.torque_array(n_points, combo_name, x_array)
+                    y_values = results[1]
+                    max_value = member.max_torque(combo_name)
+                    min_value = member.min_torque(combo_name)
+                else:
+                    continue
+                
+                # Normalize values for better visualization
+                max_val = max(abs(y_values))
+                if max_val > 0:
+                    normalized_values = y_values / max_val
+                else:
+                    normalized_values = y_values
+                
+                # Create baseline points
+                baseline_points = []
+                for i, x in enumerate(x_array):
+                    pos_along_member = member_start + (x / L) * member_dir
+                    baseline_points.append(pos_along_member)
+                
+                # Create diagram points (displaced from member axis)
+                diagram_points = []
+                for i, x in enumerate(x_array):
+                    pos_along_member = member_start + (x / L) * member_dir
+                    diag_displacement = (normalized_values[i] * self.diagram_scale * 0.5) * perp_dir
+                    diagram_pt = pos_along_member + diag_displacement
+                    diagram_points.append(diagram_pt)
+                
+                # Create baseline line
+                baseline_pts = np.array(baseline_points)
+                baseline_lines = np.zeros((len(baseline_pts)-1, 3), dtype=int)
+                baseline_lines[:, 0] = 2
+                baseline_lines[:, 1] = np.arange(len(baseline_pts)-1, dtype=int)
+                baseline_lines[:, 2] = np.arange(1, len(baseline_pts), dtype=int)
+                baseline_polydata = pv.PolyData(baseline_pts, lines=baseline_lines)
+                
+                # Create diagram line
+                diagram_pts = np.array(diagram_points)
+                diagram_lines = np.zeros((len(diagram_pts)-1, 3), dtype=int)
+                diagram_lines[:, 0] = 2
+                diagram_lines[:, 1] = np.arange(len(diagram_pts)-1, dtype=int)
+                diagram_lines[:, 2] = np.arange(1, len(diagram_pts), dtype=int)
+                diagram_polydata = pv.PolyData(diagram_pts, lines=diagram_lines)
+                
+                # Create connector lines (vertical lines from baseline to diagram)
+                connector_pts_list = []
+                connector_lines_list = []
+                pt_idx = 0
+                for i in range(len(x_array)):
+                    connector_pts_list.append(baseline_points[i])
+                    connector_pts_list.append(diagram_points[i])
+                    connector_lines_list.append([2, pt_idx, pt_idx + 1])
+                    pt_idx += 2
+                
+                if connector_pts_list:
+                    connector_pts = np.array(connector_pts_list)
+                    connector_lines = np.array(connector_lines_list)
+                    connector_polydata = pv.PolyData(connector_pts, lines=connector_lines)
+                    
+                    # Set color based on theme
+                    if self.theme == 'default':
+                        color = (0, 1, 1)  # Cyan
+                    else:
+                        color = (0, 0, 0)  # Black for print
+                    
+                    # Add all diagram components to plotter
+                    self.plotter.add_mesh(baseline_polydata, color=color, line_width=1)
+                    self.plotter.add_mesh(diagram_polydata, color=color, line_width=1)
+                    self.plotter.add_mesh(connector_polydata, color=color, line_width=1)
+                    
+                    # Add value labels at max and min points
+                    if self.show_labels:
+                        max_idx = int(y_values.argmax())
+                        min_idx = int(y_values.argmin())
+                        
+                        # Place labels at the actual diagram points
+                        max_pos = diagram_points[max_idx]
+                        min_pos = diagram_points[min_idx]
+                        
+                        max_str = f"{max_value:.3g}"
+                        min_str = f"{min_value:.3g}"
+                        
+                        # Add text labels (show_points defaults to True)
+                        self.plotter.add_point_labels([max_pos], [max_str], text_color=color, point_color=color, bold=False, shape=None, render_points_as_spheres=False)
+                        self.plotter.add_point_labels([min_pos], [min_str], text_color=color, point_color=color, bold=False, shape=None, render_points_as_spheres=False)
+            
+            except Exception:
+                # Silently skip members that fail to render diagrams
+                pass
+
 
 # === Visualization helper classes ===
 # These PyVista-focused classes mirror the VTK helpers used in Visualization.py. They keep
@@ -1574,6 +1770,7 @@ def _PerpVector(v):
 
     # Return the unit vector
     return [i2, j2, k2]/np.linalg.norm([i2, j2, k2])
+
 
 def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 

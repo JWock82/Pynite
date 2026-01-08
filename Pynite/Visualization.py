@@ -2215,9 +2215,9 @@ class VisMemberDiagram():
         member_unit = member_dir / norm(member_dir)
         
         # Determine perpendicular direction for diagram offset
-        if diagram_type in ['Fy', 'My']:
+        if diagram_type in ['Fy', 'Mz']:
             perp_dir = cos_y[0]  # Use y direction for offset
-        elif diagram_type in ['Fz', 'Mz']:
+        elif diagram_type in ['Fz', 'My']:
             perp_dir = cos_z[0]  # Use z direction for offset
         else:
             perp_dir = cos_y[0]  # Default to y direction
@@ -2369,17 +2369,19 @@ class VisMemberDiagram():
         max_str = f"{max_value:.3g}"
         min_str = f"{min_value:.3g}"
         
-        # Get x-positions from the array
-        max_x = x_array[max_idx]
-        min_x = x_array[min_idx]
+        # Get the actual diagram point positions (which are stored in the VTK points object)
+        # The diagram points start at index n_points in the points array
+        n_points = len(x_array)
+        max_pt_idx = n_points + max_idx
+        min_pt_idx = n_points + min_idx
         
-        # Calculate world positions for labels
-        max_pos = member_start + (max_x / L) * member_dir
-        min_pos = member_start + (min_x / L) * member_dir
+        # Get the world coordinates of the diagram points
+        max_pos = points.GetPoint(max_pt_idx)
+        min_pos = points.GetPoint(min_pt_idx)
         
-        # Add displacement in perpendicular direction for visibility
-        max_pos = max_pos + (normalized_values[max_idx] * scale_factor * 0.7) * perp_dir
-        min_pos = min_pos + (normalized_values[min_idx] * scale_factor * 0.7) * perp_dir
+        # Add small displacement for visibility
+        max_pos = array(max_pos) + (0.2 * scale_factor) * perp_dir
+        min_pos = array(min_pos) + (0.2 * scale_factor) * perp_dir
         
         # Text size should scale with annotation_size
         text_scale = annotation_size
@@ -2393,7 +2395,7 @@ class VisMemberDiagram():
         max_mapper.SetInputConnection(max_label.GetOutputPort())
         max_text.SetMapper(max_mapper)
         
-        # Position the label at the max point
+        # Position the label at the max diagram point
         max_text.SetPosition(max_pos[0], max_pos[1], max_pos[2])
         max_text.SetScale(text_scale, text_scale, text_scale)  # Scale text with annotation_size
         
