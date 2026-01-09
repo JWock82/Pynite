@@ -68,8 +68,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v2.2.0 (in progress)
+v2.2.0
 * Added member diagrams feature for easy visualization of shear, moment, axial, and torsion diagrams along members.
+* Updated documentation for rendering.
 
 v2.1.0
 * Major speed boost and leaner memory usage: the global stiffness/mass assembly plus the nodal load and fixed-end reaction builders now use block-based vectorized writes instead of Python loops, which keeps data in contiguous NumPy buffers rather than thousands of temporary Python objects. The dense solver sees ~15-25% faster `K`/`M` builds in our targeted benchmarks, while sparse solver runs see ~30% faster stiffness assembly in our benchmarks.
