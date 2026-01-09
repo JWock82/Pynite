@@ -1,6 +1,6 @@
-======
-Modal
-======
+==============
+Modal Analysis
+==============
 
 Modal analysis computes a structure's natural frequencies and mode shapes. Pynite provides
 the ``FEModel3D.analyze_modal()`` method which assembles the global stiffness and mass
