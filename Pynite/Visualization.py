@@ -1,3 +1,11 @@
+"""VTK-based visualization helpers for PyNite models.
+
+This module provides a collection of helper classes and functions used by
+``Renderer`` to display undeformed/deformed geometry, loads, contours, and
+member diagrams. The docstrings follow reStructuredText/Numpy style so they can
+be rendered cleanly by Sphinx/ReadTheDocs.
+"""
+
 from __future__ import annotations # Allows more recent type hints features
 import warnings
 
@@ -9,54 +17,24 @@ import vtk
 class Renderer():
     """Renderer for visualizing finite element models using VTK.
 
-    This class provides a flexible interface for rendering 3D finite element models,
-    including nodes, members, springs, plates, and quads. It supports rendering of
-    undeformed and deformed shapes, load visualizations, and stress/force contours.
+    This class provides a flexible interface for rendering 3D finite element
+    models (nodes, members, springs, plates, quads). It can display undeformed
+    and deformed geometry, load glyphs, contours, and internal force diagrams.
 
-    Parameters
-    ----------
-    model : FEModel3D
-        The finite element model to be rendered.
-
-    Attributes
-    ----------
-    annotation_size : float
-        Controls the size of text labels and visual elements (default: 5).
-    deformed_shape : bool
-        Whether to render the deformed shape of the model (default: False).
-    deformed_scale : float
-        Scale factor for deformation visualization (default: 30).
-    render_nodes : bool
-        Whether to render nodes in the visualization (default: True).
-    render_loads : bool
-        Whether to render applied loads (default: True).
-    color_map : str or None
-        Type of stress/force contour to display on plates/quads. Options:
-        'Qx', 'Qy', 'Mx', 'My', 'Mxy', 'Sx', 'Sy', 'Txy' (default: None).
-    combo_name : str or None
-        Name of load combination to visualize. Mutually exclusive with case.
-    case : str or None
-        Name of load case to visualize. Mutually exclusive with combo_name.
-    labels : bool
-        Whether to display text labels for elements (default: True).
-    scalar_bar : bool
-        Whether to display a scalar bar for contour plots (default: False).
-    scalar_bar_text_size : int
-        Font size for scalar bar text (default: 24).
-    theme : str
-        Visual theme: 'default' or 'print' (default: 'default').
-    window_size : tuple
-        Window dimensions as (width, height).
-
-    Examples
-    --------
-    >>> from PyNite import FEModel3D
-    >>> model = FEModel3D()
-    >>> # ... build model ...
-    >>> renderer = Renderer(model)
-    >>> renderer.annotation_size = 6
-    >>> renderer.combo_name = 'Load Combo 1'
-    >>> renderer.render_model()
+    :param FEModel3D model: Finite element model to be rendered.
+    :ivar float annotation_size: Text/marker scale (auto-computed when ``None``).
+    :ivar bool deformed_shape: Toggle deformed-shape display.
+    :ivar float deformed_scale: Scale factor for deformations.
+    :ivar bool render_nodes: Toggle node rendering.
+    :ivar bool render_loads: Toggle load glyph rendering.
+    :ivar str | None color_map: Plate/quad contour result key (``'Qx'``, ``'Mx'``, etc.).
+    :ivar str | None combo_name: Load combination name (exclusive with ``case``).
+    :ivar str | None case: Load case name (exclusive with ``combo_name``).
+    :ivar bool labels: Toggle text labels for elements.
+    :ivar bool scalar_bar: Toggle scalar bar for contours.
+    :ivar int scalar_bar_text_size: Font size for scalar bar labels.
+    :ivar str theme: ``'default'`` or ``'print'`` color theme.
+    :ivar tuple[int, int] window_size: Render window dimensions.
     """
 
     scalar = None
@@ -64,10 +42,7 @@ class Renderer():
     def __init__(self, model):
         """Initialize the renderer with a finite element model.
 
-        Parameters
-        ----------
-        model : FEModel3D
-            The finite element model to render.
+        :param FEModel3D model: The finite element model to render.
         """
         self.model = model
 
@@ -275,12 +250,10 @@ class Renderer():
 
     def _calculate_auto_annotation_size(self):
         """Calculate automatic annotation size as 5% of shortest node distance.
-        
-        Returns
-        -------
-        float
-            Annotation size in model units. Returns 5.0 as fallback if model
-            has fewer than 2 nodes.
+
+        :returns: Annotation size in model units (``5.0`` fallback if <2 nodes
+            or co-located nodes).
+        :rtype: float
         """
         nodes = list(self.model.nodes.values())
         
@@ -310,16 +283,14 @@ class Renderer():
         return min_distance * 0.05
 
     def render_model(self, interact=True, reset_camera=True):
-        """
-        Renders the model in a window
+        """Render the model in a window.
 
-        Parameters
-        ----------
-        interact : bool
-            Suppresses interacting with the window if set to `False`. This can be used to capture a
-            screenshot without pausing the program for the user to interact. Default is `True`.
-        reset_camera : bool
-            Resets the camera if set to `True`. Default is `True`.
+        :param bool interact: If ``False`` suppresses the VTK interactor (useful
+            for scripted screenshots). Defaults to ``True``.
+        :param bool reset_camera: If ``True`` resets the camera before rendering
+            (default ``True``).
+        :returns: The VTK render window.
+        :rtype: vtk.vtkRenderWindow
         """
 
         # Get the render window
@@ -367,21 +338,18 @@ class Renderer():
         return window
 
     def screenshot(self, filepath='console', interact=True, reset_camera=True):
-        """
-        Renders the model in a window. When the window is closed a screenshot is captured.
+        """Render the model and capture a screenshot.
 
-        Parameters
-        ----------
-        filepath : string
-            Sends a screenshot to the specified filepath. The screenshot will be taken when the
-            user closes out of the render window. If `filepath` is set to 'console' the screenshot
-            will be returned as an IPython image. If set to 'BytesIO' it will return the image as a
-            `BytesIO` object. Default is 'console'.
-        interact : bool
-            Suppresses interacting with the window if set to `False`. This can be used to capture a
-            screenshot without pausing the program for the user to interact. Default is `True`.
-        reset_camera : boolju
-            Resets the camera if set to `True`. Default is `True`.
+        :param str filepath: Destination for the PNG. ``'console'`` returns an
+            IPython ``Image``; ``'BytesIO'`` returns a ``BytesIO`` object; any
+            other value is treated as a filesystem path. Defaults to ``'console'``.
+        :param bool interact: When ``True`` (default) start the VTK interactor
+            so the user can orbit/zoom before closing the window.
+        :param bool reset_camera: When ``True`` (default) resets the camera
+            before rendering.
+        :returns: ``Image`` when ``filepath='console'``, ``BytesIO`` when
+            ``filepath='BytesIO'``, otherwise ``None`` after writing to disk.
+        :rtype: IPython.display.Image | io.BytesIO | None
         """
 
         # Render the model in a window and save the window
@@ -427,26 +395,14 @@ class Renderer():
             return
 
     def update(self, reset_camera=True):
-        """Build or rebuild the VTK renderer with current settings.
+        """Rebuild the VTK renderer with current settings.
 
-        This method updates the visualization based on the current renderer settings,
-        including deformed shape, loads, contours, and other visual elements. It is
-        automatically called by render_model() and screenshot().
+        Updates deformed shapes, loads, contours, labels, and diagrams. Called
+        automatically by ``render_model`` and ``screenshot``.
 
-        Parameters
-        ----------
-        reset_camera : bool, optional
-            If True, resets the camera to view the entire model (default: True).
-
-        Raises
-        ------
-        Exception
-            If the model configuration is invalid for the requested visualization.
-
-        Notes
-        -----
-        This method validates that deformed_shape is not used with a load case,
-        and that render_loads requires either a load combination or load case.
+        :param bool reset_camera: If ``True`` resets the camera to fit the model
+            (default ``True``).
+        :raises Exception: If invalid configuration is detected.
         """
 
         # Input validation
@@ -626,9 +582,16 @@ class Renderer():
 
 # Converts a node object into a node for the viewer
 class VisNode():
+    """VTK representation of a node and its supports."""
 
     # Constructor
     def __init__(self, node, annotation_size=5):
+        """Create the VTK actors for a node.
+
+        :param Node3D node: Node to visualize (support flags are displayed).
+        :param float annotation_size: Base scale for spheres, cones, cubes, and
+            label size (default ``5``).
+        """
 
         # Create an append filter to append all the sources related to the node into a single 'PolyData' object
         self.polydata = vtk.vtkAppendPolyData()
@@ -897,8 +860,17 @@ class VisNode():
 
 
 class VisSpring():
+    """VTK representation of a spring element."""
 
     def __init__(self, spring, nodes, annotation_size=5, color=None):
+        """Create the VTK actors for a spring.
+
+        :param Spring3D spring: Spring instance to visualize.
+        :param dict[str, Node3D] nodes: Model nodes used to locate the i/j ends.
+        :param float annotation_size: Base size for labels and arrow heads
+            (default ``5``).
+        :param str | None color: ``'black'`` for black lines; ``None`` uses magenta.
+        """
 
         # Generate a line source for the spring
         line = vtk.vtkLineSource()
@@ -953,9 +925,17 @@ class VisSpring():
 
 # Converts a member object into a member for the viewer
 class VisMember():
+    """VTK representation of a frame/beam member."""
 
     # Constructor
     def __init__(self, member, nodes, annotation_size=5, theme='default'):
+        """Create the VTK actors for a member.
+
+        :param Member3D member: Member to visualize.
+        :param dict[str, Node3D] nodes: Model nodes used to find end coordinates.
+        :param float annotation_size: Base size for labels (default ``5``).
+        :param str theme: ``'default'`` or ``'print'`` to control colors.
+        """
 
         # Generate a line for the member
         line = vtk.vtkLineSource()
@@ -1006,8 +986,16 @@ class VisMember():
 
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
+    """Sphere representing a node in its deformed position."""
 
     def __init__(self, node, scale_factor, annotation_size=5, combo_name='Combo 1'):
+        """Build the VTK geometry for a deformed node.
+
+        :param Node3D node: Node whose displacement results are used.
+        :param float scale_factor: Multiplier applied to translations for display.
+        :param float annotation_size: Radius scale for the sphere (default ``5``).
+        :param str combo_name: Load combination name used to fetch displacements.
+        """
 
         # Calculate the node's deformed position
         newX = node.X + scale_factor*(node.DX[combo_name])
@@ -1021,8 +1009,16 @@ class VisDeformedNode():
         self.source.Update()
 
 class VisDeformedMember():
+    """Polyline representing a member's deformed shape."""
 
     def __init__(self, member, nodes, scale_factor, combo_name='Combo 1'):
+        """Create the deformed polyline for a member.
+
+        :param Member3D member: Member whose deformation is plotted.
+        :param dict[str, Node3D] nodes: Model nodes to locate the member start.
+        :param float scale_factor: Multiplier applied to displacement values.
+        :param str combo_name: Load combination name used for results.
+        """
 
         # Determine if this member is active for each load combination
         self.active = member.active
@@ -1100,8 +1096,16 @@ class VisDeformedMember():
         self.source.SetLines(lines)
 
 class VisDeformedSpring():
+    """Line representation of a spring in its deformed position."""
 
     def __init__(self, spring, nodes, scale_factor, combo_name='Combo 1'):
+        """Create the deformed line for a spring.
+
+        :param Spring3D spring: Spring whose deformation is plotted.
+        :param dict[str, Node3D] nodes: Model nodes to locate end coordinates.
+        :param float scale_factor: Multiplier applied to displacement values.
+        :param str combo_name: Load combination name used for results.
+        """
 
         # Determine if this spring is active for each load combination
         self.active = spring.active
@@ -1130,27 +1134,18 @@ class VisDeformedSpring():
         self.source.Update()
 
 class VisPtLoad():
-    '''
-    Creates a point load for the viewer
-    '''
+    """Arrow representation of a concentrated load."""
 
     def __init__(self, position, direction, length, label_text: str | None = None, annotation_size=5, theme: str = 'default'):
-        '''
-        Constructor.
+        """Create a point-load arrow and optional label.
 
-        Parameters
-        ----------
-        position : tuple
-          A tuple of X, Y and Z coordinates for the point of the load arrow: (X, Y, Z).
-        direction : tuple
-          A tuple indicating the direction vector for the load arrow: (i, j, k).
-        length : number
-          The length of the load arrow.
-        tip_length : number
-          The height of the arrow head.
-        label_text : string | None
-          Text that will show up at the tail of the arrow. If set to 'None' no text will be displayed.
-        '''
+        :param tuple position: Coordinates of the arrow tip ``(X, Y, Z)``.
+        :param tuple direction: Direction vector for the arrow (normalized).
+        :param float length: Arrow length; sign controls pointing direction.
+        :param str | None label_text: Text near the tail; ``None`` hides it.
+        :param float annotation_size: Base scale for text/geometry (default ``5``).
+        :param str theme: ``'default'`` or ``'print'`` color scheme.
+        """
 
         # Create a unit vector in the direction of the 'direction' vector
         unitVector = direction/norm(direction)
@@ -1228,11 +1223,21 @@ class VisPtLoad():
 
 
 class VisDistLoad():
-    '''
-    Creates a distributed load for the viewer
-    '''
+    """Series of arrows representing a distributed load."""
 
     def __init__(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5, theme = 'default'):
+        """Create the VTK actors for a linearly varying load.
+
+        :param tuple position1: Coordinates of the start point of the load.
+        :param tuple position2: Coordinates of the end point of the load.
+        :param tuple direction: Direction vector for each arrow (normalized).
+        :param float length1: Arrow length at ``position1`` (sign indicates direction).
+        :param float length2: Arrow length at ``position2`` (sign indicates direction).
+        :param str label_text1: Label text shown on the first arrow.
+        :param str label_text2: Label text shown on the last arrow.
+        :param float annotation_size: Base scale for geometry (default ``5``).
+        :param str theme: Color theme, ``'default'`` or ``'print'``.
+        """
 
         # Calculate the length of the distributed load
         loadLength = ((position2[0]-position1[0])**2 + (position2[1]-position1[1])**2 + (position2[2]-position1[2])**2)**0.5
@@ -1303,27 +1308,18 @@ class VisDistLoad():
         self.lblActors = [ptLoads[0].lblActor, ptLoads[len(ptLoads) - 1].lblActor]
 
 class VisMoment():
-    '''
-    Creates a concentrated moment for the viewer
-    '''
+    """Arc-and-arrow representation of a concentrated moment."""
 
     def __init__(self, center, direction, radius, label_text=None, annotation_size=5, theme='default'):
-        '''
-        Constructor.
+        """Create the VTK actors for a moment glyph.
 
-        Parameters
-        ----------
-        center : tuple
-          A tuple of X, Y and Z coordinates for center of the moment: (X, Y, Z).
-        direction : tuple
-          A tuple indicating the direction vector for the moment: (i, j, k).
-        radius : number
-          The radius of the moment.
-        tip_length : number
-          The height of the arrow head.
-        label_text : string
-          Text that will show up at the tail of the moment. If set to 'None' no text will be displayed.
-        '''
+        :param tuple center: Center point of the moment arc ``(X, Y, Z)``.
+        :param tuple direction: Direction vector indicating the moment axis.
+        :param float radius: Radius of the circular arc.
+        :param str | None label_text: Text shown near the arrow head; ``None`` hides it.
+        :param float annotation_size: Base scale for text/geometry (default ``5``).
+        :param str theme: ``'default'`` or ``'print'`` to control colors.
+        """
 
         # Create an append filter to store load polydata in
         self.polydata = vtk.vtkAppendPolyData()
@@ -1377,10 +1373,21 @@ class VisMoment():
             self.lblActor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
 class VisAreaLoad():
-    """Used to generate a visual area load for the viewer
-    """
+    """Polygon and arrows used to visualize a uniform area load."""
 
     def __init__(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5, theme='default'):
+        """Create the VTK actors for an area load.
+
+        :param tuple position0: First corner of the loaded area.
+        :param tuple position1: Second corner of the loaded area.
+        :param tuple position2: Third corner of the loaded area.
+        :param tuple position3: Fourth corner of the loaded area.
+        :param tuple direction: Direction vector for the load arrows (normalized).
+        :param float length: Arrow length; sign determines arrow orientation.
+        :param str label_text: Text displayed at a corner arrow.
+        :param float annotation_size: Base scale for text/geometry (default ``5``).
+        :param str theme: Color theme, ``'default'`` or ``'print'``.
+        """
 
         # Create a point load for each corner of the area load
         ptLoads = []
@@ -1415,9 +1422,12 @@ class VisAreaLoad():
             self.label_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
 def _PerpVector(v):
-    '''
-    Returns a unit vector perpendicular to v=[i, j, k]
-    '''
+    """Return a unit vector perpendicular to ``v``.
+
+    :param array-like v: Input vector ``[i, j, k]``.
+    :returns: Unit vector perpendicular to ``v``.
+    :rtype: numpy.ndarray
+    """
 
     i = v[0]
     j = v[1]
@@ -1445,6 +1455,13 @@ def _PerpVector(v):
     return [i2, j2, k2]/norm([i2, j2, k2])
 
 def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
+    """Populate nodal ``contour`` values for plate/quad results.
+
+    :param FEModel3D model: Model whose plate and quad results are used.
+    :param str stress_type: Contour to compute (``'Mx'``, ``'My'``, ``'Mxy'``,
+        ``'Qx'``, ``'Qy'``, ``'Sx'``, ``'Sy'``, ``'Txy'``, or ``'dz'``).
+    :param str combo_name: Load combination name (default ``'Combo 1'``).
+    """
 
     if stress_type != None:
 
@@ -1530,28 +1547,16 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
                 node.contour = (sum(node.contour)/len(node.contour))[0]  # The [0] converts it from an array to a float
 
 def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_name, render_nodes=True, theme='default'):
-    '''
-    Renders the deformed shape of a model.
+    """Render the deformed shape of a model.
 
-    Parameters
-    ----------
-    model : FEModel3D
-        Finite element model to be rendered.
-    renderer : vtk.vtkRenderer
-        The VTK renderer object that will render the model.
-    scale_factor : number
-        The scale factor to apply to the model deformations.
-    annotation_size : number
-        Controls the height of text displayed with the model. The units used for `annotation_size` are
-        the same as those used for lengths in the model. Sizes of other objects (such as nodes) are
-        related to this value.
-    combo_name : string
-        The load case used for rendering the deflected shape.
-
-    Returns
-    -------
-    None.
-    '''
+    :param FEModel3D model: Finite element model to be rendered.
+    :param vtk.vtkRenderer vtk_renderer: Renderer receiving the actor.
+    :param float scale_factor: Scale factor applied to deformations.
+    :param float annotation_size: Base size for spheres/text.
+    :param str combo_name: Load combination name used for displacements.
+    :param bool render_nodes: If ``True`` include deformed nodes (default).
+    :param str theme: ``'default'`` or ``'print'`` color scheme.
+    """
 
     # Create an append filter to add all the shape polydata to
     append_filter = vtk.vtkAppendPolyData()
@@ -1599,6 +1604,17 @@ def _DeformedShape(model, vtk_renderer, scale_factor, annotation_size, combo_nam
     vtk_renderer.AddActor(actor)
 
 def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='default'):
+    """Add load glyphs to a VTK renderer.
+
+    :param FEModel3D model: Model containing loads to draw.
+    :param vtk.vtkRenderer renderer: Renderer receiving the load actors.
+    :param float annotation_size: Base scale for text and arrow geometry.
+    :param str | None combo_name: Load combination name to display (ignored
+        when ``case`` is provided).
+    :param str | None case: Load case name to display (mutually exclusive with
+        ``combo_name``).
+    :param str theme: ``'default'`` or ``'print'`` color scheme.
+    """
 
     # Create an append filter to store all the polydata in. This will allow us to use fewer actors to
     # display all the loads, which will greatly improve rendering speed as the user interacts. VTK
@@ -1857,6 +1873,19 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
             polygon_actor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
 def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, scalar_bar, scalar_bar_text_size, combo_name, theme='default'):
+    """Render plate/quad contours and optional scalar bar.
+
+    :param FEModel3D model: Model containing plates/quads.
+    :param vtk.vtkRenderer renderer: Renderer receiving the contour actors.
+    :param bool deformed_shape: If ``True`` use deformed node positions.
+    :param float deformed_scale: Scale factor for deformations when drawn.
+    :param str | None color_map: Result component to map to colors; ``None``
+        disables contours.
+    :param bool scalar_bar: If ``True`` add a scalar bar legend.
+    :param int scalar_bar_text_size: Font size for scalar bar labels.
+    :param str combo_name: Load combination name used for contour values.
+    :param str theme: ``'default'`` or ``'print'`` color choices.
+    """
 
     # Create a new `vtkCellArray` object to store the elements
     plates = vtk.vtkCellArray()
@@ -2011,6 +2040,15 @@ def _RenderContours(model, renderer, deformed_shape, deformed_scale, color_map, 
     renderer.AddActor(plate_actor)
 
 def _MaxLoads(model, combo_name=None, case=None):
+    """Return maximum load magnitudes for scaling glyphs.
+
+    :param FEModel3D model: Model containing loads.
+    :param str | None combo_name: Load combination name to evaluate.
+    :param str | None case: Load case name to evaluate.
+    :returns: Maximum point load, moment, distributed load, and area load
+        magnitudes (zeros replaced by ones to avoid division by zero).
+    :rtype: tuple[float, float, float, float]
+    """
 
     max_pt_load = 0
     max_moment = 0
@@ -2170,27 +2208,17 @@ class VisMemberDiagram():
     """Creates a visual representation of internal forces/moments along a member."""
 
     def __init__(self, member, nodes, diagram_type, scale_factor, combo_name='Combo 1', theme='default', n_points=20, annotation_size=5):
-        """
-        Constructor for member diagram visualization.
+        """Build a VTK polyline diagram for a member.
 
-        Parameters
-        ----------
-        member : Member3D
-            The member to create a diagram for
-        nodes : dict
-            Dictionary of nodes in the model
-        diagram_type : str
-            Type of diagram: 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
-        scale_factor : float
-            Scale factor for diagram visualization
-        combo_name : str
-            Load combination name
-        theme : str
-            Visual theme ('default' or 'print')
-        n_points : int
-            Number of points to calculate along member
-        annotation_size : float
-            Size for annotations/labels
+        :param Member3D member: Member to diagram.
+        :param dict[str, Node3D] nodes: Model nodes.
+        :param str diagram_type: One of ``'Fy'``, ``'Fz'``, ``'My'``, ``'Mz'``,
+            ``'Fx'``, ``'Tx'``.
+        :param float scale_factor: Scale factor for diagram magnitude.
+        :param str combo_name: Load combination name (default ``'Combo 1'``).
+        :param str theme: Visual theme (``'default'`` or ``'print'``).
+        :param int n_points: Number of sample points along member.
+        :param float annotation_size: Text/label scale.
         """
 
         self.polydata = vtk.vtkAppendPolyData()
@@ -2436,27 +2464,17 @@ class VisMemberDiagram():
 
 
 def _RenderMemberDiagrams(model, renderer, diagram_type, scale_factor, combo_name=None, case=None, theme='default', annotation_size=5):
-    """
-    Renders internal force/moment diagrams on members.
+    """Render internal force/moment diagrams on members.
 
-    Parameters
-    ----------
-    model : FEModel3D
-        The finite element model
-    renderer : vtk.vtkRenderer
-        The VTK renderer
-    diagram_type : str
-        Type of diagram to render
-    scale_factor : float
-        Scale factor for diagram visualization
-    combo_name : str
-        Load combination name
-    case : str
-        Load case name
-    theme : str
-        Visual theme
-    annotation_size : float
-        Size for annotations/labels
+    :param FEModel3D model: The finite element model.
+    :param vtk.vtkRenderer renderer: The VTK renderer.
+    :param str diagram_type: Diagram to render (``'Fy'``, ``'Fz'``, ``'My'``,
+        ``'Mz'``, ``'Fx'``, ``'Tx'``).
+    :param float scale_factor: Scale factor for visualization.
+    :param str | None combo_name: Load combination name.
+    :param str | None case: Load case name.
+    :param str theme: Visual theme.
+    :param float annotation_size: Size for annotations/labels.
     """
 
     # Determine which combo/case to use
