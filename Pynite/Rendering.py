@@ -1,3 +1,10 @@
+"""PyVista-based visualization for PyNite finite element models.
+
+This module provides classes and methods for rendering 3D models with support
+for undeformed/deformed geometry, load glyphs, contours, and internal diagrams.
+Docstrings follow reStructuredText field-list format for Sphinx autodoc.
+"""
+
 from __future__ import annotations # Allows more recent type hints features
 from json import load
 import warnings
@@ -29,13 +36,19 @@ except:
 pv.set_jupyter_backend('trame')
 
 class Renderer:
-    """Used to render finite element models.
+    """Render finite element models using PyVista.
+
+    This class provides methods for rendering 3D models (nodes, members, springs,
+    plates, quads) with deformed shapes, loads, contours, and diagrams.
     """
 
     scalar: Optional[str] = None
 
     def __init__(self, model: FEModel3D) -> None:
+        """Initialize the renderer with a finite element model.
 
+        :param FEModel3D model: Finite element model to render.
+        """
         self.model: FEModel3D = model
 
         # Default settings for rendering
@@ -113,8 +126,8 @@ class Renderer:
     def annotation_size(self) -> float:
         """Size of text annotations and visual elements in model units.
 
-        If not manually set, automatically calculates as 5% of the shortest
-        distance between nodes in the model.
+        Auto-calculated as 5% of shortest distance between nodes if not
+        manually set.
         """
         if self._annotation_size is None or not self._annotation_size_manual:
             # Auto-calculate annotation size
@@ -210,16 +223,9 @@ class Renderer:
 
     @property
     def member_diagrams(self) -> Optional[str]:
-        """Type of member diagram to display.
-        
-        Options:
-        - None: No diagrams (default)
-        - 'Fy': Shear force in local y-direction
-        - 'Fz': Shear force in local z-direction
-        - 'My': Bending moment about local y-axis
-        - 'Mz': Bending moment about local z-axis
-        - 'Fx': Axial force
-        - 'Tx': Torsional moment
+        """Member diagram type to display.
+
+        Options: ``None``, ``'Fy'``, ``'Fz'``, ``'My'``, ``'Mz'``, ``'Fx'``, ``'Tx'``.
         """
         return self._member_diagrams
 
@@ -232,7 +238,7 @@ class Renderer:
 
     @property
     def diagram_scale(self) -> float:
-        """Scale factor for member diagram visualization. Default is 30.0."""
+        """Scale factor for member diagram visualization."""
         return self._diagram_scale
 
     @diagram_scale.setter
@@ -242,11 +248,8 @@ class Renderer:
     def _calculate_auto_annotation_size(self) -> float:
         """Calculate automatic annotation size as 5% of shortest node distance.
 
-        Returns
-        -------
-        float
-            Annotation size in model units. Returns 5.0 as fallback if model
-            has fewer than 2 nodes.
+        :returns: Annotation size in model units (``5.0`` fallback if <2 nodes).
+        :rtype: float
         """
         nodes = list(self.model.nodes.values())
 
@@ -276,16 +279,11 @@ class Renderer:
         return min_distance * 0.05
 
     def render_model(self, reset_camera: bool = True, off_screen: bool = False) -> None:
-        """
-        Renders the model in a window
+        """Render the model in a window.
 
-        Parameters
-        ----------
-        reset_camera : bool
-            Resets the camera if set to `True`. Default is `True`.
-        off_screen : bool
-            Renders off-screen without displaying a window. Useful for testing or
-            generating images in headless environments. Default is `False`.
+        :param bool reset_camera: Reset the camera before rendering (default ``True``).
+        :param bool off_screen: Render off-screen without displaying a window
+            (useful for headless environments, default ``False``).
         """
 
         # Set off-screen mode if requested (for testing/headless environments)
@@ -310,19 +308,15 @@ class Renderer:
             self.plotter.deep_clean()
 
     def screenshot(self, filepath: str = './Pynite_Image.png', interact: bool = True, reset_camera: bool = False) -> None:
-        """
-        Saves a screenshot of the rendered model.
+        """Save a screenshot of the rendered model.
 
-        In non-Jupyter notebook environments, if `interact` is set to `True`, the plotter will show a window that allows you to set the scene prior to the screenshot. Press `q` or click the `X` button when you are ready to capture the screenshot and close the window.
+        In non-Jupyter environments, if ``interact=True`` the user can adjust
+        the view before taking the screenshot (press ``'q'`` to proceed).
+        For Jupyter, use ``render_model`` to set the scene before ``screenshot``.
 
-        For Jupyter notebooks, the scene must be set using `render_model` prior to using `screenshot`.
-
-        :param filepath: The filepath to write the image to.
-        :type filepath: str, optional
-        :param interact: When set to `True` the user can set the scene before the screenshot is taken. Once the scene is set, press 'q' to take the screenshot. Defaults to `True`.
-        :type interact: bool, optional
-        :param reset_camera: Resets the plotter's camera, forcing it to return to the original rendered view for the screenshot. Note that resetting the camera will ignore any changes you've made to the scene via interaction. Defaults to `False`.
-        :type reset_camera: bool, optional
+        :param str filepath: File path to write PNG image (default ``'./Pynite_Image.png'``).
+        :param bool interact: Allow user interaction before screenshot (default ``True``).
+        :param bool reset_camera: Reset camera to original view (default ``False``).
         """
 
         # Update the plotter with the latest geometry
@@ -342,13 +336,12 @@ class Renderer:
             )
 
     def update(self, reset_camera: bool = True) -> None:
-        """
-        Builds or rebuilds the pyvista plotter
+        """Rebuild the PyVista plotter with current settings.
 
-        Parameters
-        ----------
-        reset_camera : bool
-            Resets the camera if set to `True`. Default is `True`.
+        Updates all visual elements (geometry, loads, labels, contours, diagrams)
+        and calls post-update callbacks.
+
+        :param bool reset_camera: Reset camera to fit model (default ``True``).
         """
 
         # Input validation
@@ -469,10 +462,10 @@ class Renderer:
 
 
     def plot_node(self, node: Node3D, color: str = 'grey') -> None:
-        """Adds a node to the plotter
+        """Add a node and its support geometry to the plotter.
 
-        :param node: node
-        :type node: Node3D
+        :param Node3D node: Node to visualize (support conditions displayed).
+        :param str color: Color for nodes/supports (default ``'grey'``).
         """
 
         # Get the node's position
@@ -637,15 +630,12 @@ class Renderer:
                                       color=color)
 
     def plot_member(self, member: Member3D, theme: str = 'default') -> None:
-        """
-        Adds a member to the plotter. This method generates a line representing a structural member between two nodes, and adds it to the plotter with specified theme settings.
+        """Add a member to the plotter.
 
-        Parameters
-        ==========
-        :param member: The structural member to be plotted, containing information about its end nodes.
-        :type member: Member
-        :param theme: The theme for plotting the member. Default is 'default'.
-        :type theme: str
+        Generates a line representing the structural member between its end nodes.
+
+        :param Member3D member: Structural member to plot.
+        :param str theme: Rendering theme (default ``'default'``).
         """
 
         # Generate a line for the member
@@ -664,8 +654,13 @@ class Renderer:
         self.plotter.add_mesh(line, color='black', line_width=2)
 
     def plot_spring(self, spring: Spring3D, color: str = 'grey', deformed: bool = False) -> None:
-        """
-        Adds a spring to the plotter. This method generates a zig-zag line representing a spring between two nodes, and adds it to the plotter with specified theme settings.
+        """Add a spring to the plotter.
+
+        Generates a zig-zag line representing the spring between its end nodes.
+
+        :param Spring3D spring: Spring to visualize.
+        :param str color: Line color (default ``'grey'``).
+        :param bool deformed: Plot deformed shape if ``True`` (default ``False``).
         """
 
         # Scale the spring's zigzags
@@ -747,6 +742,13 @@ class Renderer:
 
 
     def plot_plates(self, deformed_shape: bool, deformed_scale: float, color_map: Optional[str], combo_name: Optional[str]) -> None:
+        """Add plate/quad elements to the plotter with optional contours.
+
+        :param bool deformed_shape: Plot deformed geometry if ``True``.
+        :param float deformed_scale: Scale factor for deformations.
+        :param str | None color_map: Contour result type (``None`` disables contours).
+        :param str | None combo_name: Load combination name for results.
+        """
 
         # Start a list of vertices
         plate_vertices = []
@@ -834,6 +836,12 @@ class Renderer:
             self.plotter.add_mesh(plate_polydata)
 
     def plot_deformed_node(self, node: Node3D, scale_factor: float, color: str = 'grey') -> None:
+        """Add a node in its deformed position to the plotter.
+
+        :param Node3D node: Node to visualize in deformed state.
+        :param float scale_factor: Scale factor for displacements.
+        :param str color: Sphere color (default ``'grey'``).
+        """
 
         # Calculate the node's deformed position
         newX = node.X + scale_factor * (node.DX[self.combo_name])
@@ -847,6 +855,11 @@ class Renderer:
         self.plotter.add_mesh(sphere, color=color)
 
     def plot_deformed_member(self, member: Member3D, scale_factor: float) -> None:
+        """Add a member in its deformed configuration to the plotter.
+
+        :param Member3D member: Member to visualize in deformed state.
+        :param float scale_factor: Scale factor for displacements.
+        """
 
         # Determine if this member is active for each load combination
         if member.active:
@@ -903,6 +916,14 @@ class Renderer:
 
     def plot_pt_load(self, position: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray],
                     length: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
+        """Add a point-load arrow to the plotter.
+
+        :param tuple position: Arrow tip coordinates ``(X, Y, Z)``.
+        :param tuple|ndarray direction: Direction vector (normalized).
+        :param float length: Arrow length; sign determines direction.
+        :param str|float|int|None label_text: Label text (optional).
+        :param str color: Arrow color (default ``'green'``).
+        """
 
         # Create a unit vector in the direction of the 'direction' vector
         unitVector = direction/np.linalg.norm(direction)
@@ -943,6 +964,17 @@ class Renderer:
                       direction: Union[np.ndarray, Tuple[float, float, float]], length1: float, length2: float,
                       label_text1: Optional[Union[str, float, int]], label_text2: Optional[Union[str, float, int]],
                       color: str = 'green') -> None:
+        """Add a linearly varying distributed load to the plotter.
+
+        :param tuple position1: Start point of the load.
+        :param tuple position2: End point of the load.
+        :param ndarray|tuple direction: Load direction vector (normalized).
+        :param float length1: Arrow length at start (sign indicates direction).
+        :param float length2: Arrow length at end (sign indicates direction).
+        :param str|float|int|None label_text1: Label at start.
+        :param str|float|int|None label_text2: Label at end.
+        :param str color: Arrow color (default ``'green'``).
+        """
 
         # Calculate the length of the distributed load
         load_length = ((position2[0] - position1[0])**2 + (position2[1] - position1[1])**2 + (position2[2] - position1[2])**2)**0.5
@@ -994,6 +1026,14 @@ class Renderer:
 
     def plot_moment(self, center: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray],
                     radius: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
+        """Add a concentrated moment to the plotter.
+
+        :param tuple center: Center point of the moment arc.
+        :param tuple|ndarray direction: Direction vector for the moment axis.
+        :param float radius: Arc radius.
+        :param str|float|int|None label_text: Label text (optional).
+        :param str color: Arc and arrow color (default ``'green'``).
+        """
 
         # Convert the direction vector into a unit vector
         v1 = direction/np.linalg.norm(direction)
@@ -1025,6 +1065,17 @@ class Renderer:
             self._load_labels.append(label_text)
 
     def plot_area_load(self, position0, position1, position2, position3, direction, length, label_text, color='green'):
+        """Add an area load (quad with arrows) to the plotter.
+
+        :param tuple position0: First corner of the loaded area.
+        :param tuple position1: Second corner of the loaded area.
+        :param tuple position2: Third corner of the loaded area.
+        :param tuple position3: Fourth corner of the loaded area.
+        :param tuple|ndarray direction: Load direction vector (normalized).
+        :param float length: Arrow length; sign determines orientation.
+        :param str label_text: Label text shown at one corner.
+        :param str color: Polygon and arrow color (default ``'green'``).
+        """
 
         # Find the direction cosines for the direction the load acts in
         dir_dir_cos = direction / np.linalg.norm(direction)
@@ -1047,6 +1098,12 @@ class Renderer:
         self.plotter.add_mesh(quad, color=color)
 
     def _calc_max_loads(self):
+        """Calculate maximum load magnitudes for normalization.
+
+        :returns: Tuple of (max_pt_load, max_moment, max_dist_load, max_area_load)
+            with zero values replaced by 1 to avoid division errors.
+        :rtype: tuple[float, float, float, float]
+        """
 
         max_pt_load = 0
         max_moment = 0
@@ -1203,6 +1260,11 @@ class Renderer:
         return max_pt_load, max_moment, max_dist_load, max_area_load
 
     def plot_loads(self):
+        """Add all loads (nodal, member, plate) to the plotter.
+
+        Renders point loads, moments, distributed loads, and area loads
+        with appropriate glyphs and labels.
+        """
 
         # Get the maximum load magnitudes that will be used to normalize the display scale
         max_pt_load, max_moment, max_dist_load, max_area_load = self._calc_max_loads()
@@ -1357,7 +1419,11 @@ class Renderer:
                     self.plot_area_load(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*self.annotation_size, str(sig_fig_round(load_value, 3)), color='green')
 
     def plot_member_diagrams(self) -> None:
-        """Renders internal force/moment diagrams on members."""
+        """Add internal force/moment diagrams to members.
+
+        Displays member diagrams (Fy, Fz, My, Mz, Fx, Tx) based on the
+        current ``member_diagrams`` setting.
+        """
         
         # Determine which combo/case to use
         combo_name = self.combo_name if self.combo_name is not None else self.case
@@ -1523,9 +1589,18 @@ class Renderer:
 
 
 class VisNode:
-    """Visual wrapper for a Node3D using PyVista primitives."""
+    """Visual wrapper for a Node3D using PyVista primitives.
+
+    Encapsulates construction of node and support-condition glyphs for the plotter.
+    """
 
     def __init__(self, node: 'Node3D', annotation_size: float, color: str) -> None:
+        """Build visual elements for a node.
+
+        :param Node3D node: Node to visualize.
+        :param float annotation_size: Base size for support glyphs.
+        :param str color: Color for all glyphs.
+        """
         self.node = node
         self.annotation_size = annotation_size
         self.color = color
@@ -1535,7 +1610,10 @@ class VisNode:
         self._build_geometry()
 
     def _build_geometry(self) -> None:
-        """Assemble PyVista meshes representing the node and its support conditions."""
+        """Assemble PyVista meshes for the node and support conditions.
+
+        Creates cubes, cones, or lines depending on the node's restraint flags.
+        """
         n = self.node
         s = self.annotation_size
 
@@ -1585,7 +1663,10 @@ class VisNode:
             self.meshes.append(pv.Sphere(center=(n.X, n.Y, n.Z), radius=0.4*s))
 
     def add_to_plotter(self, plotter: pv.Plotter) -> None:
-        """Add all prepared meshes to the plotter in one place."""
+        """Add all prepared meshes to the plotter.
+
+        :param pv.Plotter plotter: Plotter to receive the meshes.
+        """
         for mesh in self.meshes:
             plotter.add_mesh(mesh, color=self.color)
 
@@ -1594,6 +1675,15 @@ class VisSpring:
     """Visual wrapper for a Spring3D with optional deformed rendering."""
 
     def __init__(self, spring: 'Spring3D', annotation_size: float, color: str, deformed: bool, scale: float, combo_name: Optional[str]) -> None:
+        """Build visual elements for a spring.
+
+        :param Spring3D spring: Spring to visualize.
+        :param float annotation_size: Scale for zig-zag amplitude.
+        :param str color: Line color.
+        :param bool deformed: If ``True`` use deformed coordinates.
+        :param float scale: Deformation scale factor.
+        :param str | None combo_name: Load combination for displacements.
+        """
         self.spring = spring
         self.annotation_size = annotation_size
         self.color = color
@@ -1663,6 +1753,10 @@ class VisSpring:
         self.label_point = [(Xi + Xj) / 2, (Yi + Yj) / 2, (Zi + Zj) / 2]
 
     def add_to_plotter(self, plotter: pv.Plotter) -> None:
+        """Add the spring mesh to the plotter.
+
+        :param pv.Plotter plotter: Plotter to receive the mesh.
+        """
         if self.mesh is not None:
             plotter.add_mesh(self.mesh, color=self.color, line_width=2)
 
@@ -1671,6 +1765,11 @@ class VisMember:
     """Visual wrapper for a Member3D as a simple line."""
 
     def __init__(self, member: 'Member3D', theme: str) -> None:
+        """Build visual elements for a member.
+
+        :param Member3D member: Member to visualize.
+        :param str theme: Rendering theme (``'default'`` or ``'print'``).
+        """
         self.member = member
         self.theme = theme
         self.mesh: pv.PolyData = self._build_geometry()
@@ -1686,6 +1785,10 @@ class VisMember:
         return line
 
     def add_to_plotter(self, plotter: pv.Plotter) -> None:
+        """Add the member line to the plotter.
+
+        :param pv.Plotter plotter: Plotter to receive the mesh.
+        """
         color = 'black' if self.theme == 'print' else 'black'
         plotter.add_mesh(self.mesh, color=color, line_width=2)
 
@@ -1694,6 +1797,12 @@ class VisDeformedMember:
     """Visual wrapper for a deformed Member3D polyline."""
 
     def __init__(self, member: 'Member3D', scale_factor: float, combo_name: Optional[str]) -> None:
+        """Build a deformed member polyline.
+
+        :param Member3D member: Member to visualize in deformed state.
+        :param float scale_factor: Scale factor for displacements.
+        :param str | None combo_name: Load combination name for results.
+        """
         self.member = member
         self.scale_factor = scale_factor
         self.combo_name = combo_name
@@ -1738,13 +1847,21 @@ class VisDeformedMember:
         self.mesh = pv.lines_from_points(D_plot, close=False)
 
     def add_to_plotter(self, plotter: pv.Plotter) -> None:
+        """Add the deformed member line to the plotter.
+
+        :param pv.Plotter plotter: Plotter to receive the mesh.
+        """
         if self.mesh is not None:
             plotter.add_mesh(self.mesh, color='red', line_width=2)
 
 def _PerpVector(v):
-    '''
-    Returns a unit vector perpendicular to v=[i, j, k]
-    '''
+    """Return a unit vector perpendicular to ``v``.
+
+    :param v: Input vector ``[i, j, k]``.
+    :type v: array-like
+    :returns: Unit vector perpendicular to ``v``.
+    :rtype: list
+    """
 
     i = v[0]
     j = v[1]
@@ -1773,7 +1890,13 @@ def _PerpVector(v):
 
 
 def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
+    """Populate nodal ``contour`` values for plate/quad results.
 
+    :param FEModel3D model: Model whose plates/quads are processed.
+    :param str stress_type: Contour type (``'Mx'``, ``'My'``, ``'Mxy'``,
+        ``'Qx'``, ``'Qy'``, ``'Sx'``, ``'Sy'``, ``'Txy'``, or ``'dz'``).
+    :param str combo_name: Load combination name (default ``'Combo 1'``).
+    """
     if stress_type != None:
 
         # Erase any previous contours
