@@ -121,11 +121,11 @@ Display stress and result contours on plate and quad elements:
 .. code-block:: python
 
     my_rndr.color_map = None          # No contours (default)
-    my_rndr.color_map = 'Mx'          # Moment about x-axis
-    my_rndr.color_map = 'My'          # Moment about y-axis
+    my_rndr.color_map = 'Mx'          # Moment for bending along (not about) x-axis
+    my_rndr.color_map = 'My'          # Moment for bending along (not about) y-axis
     my_rndr.color_map = 'Mxy'         # Twisting moment
-    my_rndr.color_map = 'Qx'          # Shear in x-direction
-    my_rndr.color_map = 'Qy'          # Shear in y-direction
+    my_rndr.color_map = 'Qx'          # Shear for bending along (not about) the x-axis
+    my_rndr.color_map = 'Qy'          # Shear for bending along (not about) the y-axis
     my_rndr.color_map = 'Sx'          # Membrane stress in x-direction
     my_rndr.color_map = 'Sy'          # Membrane stress in y-direction
     my_rndr.color_map = 'Txy'         # In-plane shear stress
@@ -311,33 +311,6 @@ Renderer Class Reference
 .. autoclass:: Pynite.Visualization.Renderer
    :members:
    :undoc-members:
-
-Feature Comparison: VTK vs PyVista
-==================================
-
-Both renderers support the same core features. Here's a quick reference:
-
-+----------------------------------+-------------------+-------------------+
-| Feature                          | PyVista (Modern)  | VTK (Lightweight) |
-+==================================+===================+===================+
-| Interactive 3D visualization     | ✓                 | ✓                 |
-| Jupyter notebook embedding       | ✓                 | ✓                 |
-| Deformed shapes                  | ✓                 | ✓                 |
-| Member diagrams (Fx, Fy, etc.)   | ✓                 | ✓                 |
-| Plate/quad contours              | ✓                 | ✓                 |
-| Load glyphs                      | ✓                 | ✓                 |
-| Screenshots                      | ✓                 | ✓                 |
-| Publication-quality output       | ✓                 | ✓                 |
-| Node/load visibility toggle      | ✓                 | ✓                 |
-| Customizable themes              | ✓                 | ✓                 |
-+----------------------------------+-------------------+-------------------+
-
-**Key Differences:**
-
-- **PyVista**: Modern, actively maintained, better Jupyter integration, slightly larger package size
-- **VTK**: Direct VTK access for advanced customization, lower memory footprint, works in minimal environments
-
-For most users, **PyVista is recommended** due to its modern API and better notebook support. Use **VTK** if you need lightweight rendering or specific VTK-level control.
 
 Common Visualization Tasks
 =========================
