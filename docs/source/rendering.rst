@@ -2,42 +2,168 @@
 Rendering
 =========
 
-`Pynite` has a built-in ``Rendering`` library to help you visualize your model. This library can be used to produce basic rendererings of the model, loads, the deformed shape, and can generate interactive plots in `Jupyter Notebooks`.
+`Pynite` provides two complementary visualization libraries to help you visualize and analyze your finite element models. Both renderers support interactive visualization, load glyphs, deformed shapes, contour plots, and internal force/moment diagrams. You can choose the renderer that best fits your workflow.
 
-The ``Rendering`` library relies on `Pyvista` which in turn relies on `The Visualization Toolkit (VTK)` by `Kitware`. This library was chosen because it is cross-platform, widely used, regularly maintained, and reliable.
+Choosing a Renderer
+===================
 
-The `Renderer` object
-=====================
+**PyVista Renderer (Recommended for most users)**
 
-`Pynite` uses a ``Renderer`` object in the ``Rendering`` library to do the heavy lifting for you. To create a ``Renderer`` for your model you just create a new instance of the ``Renderer`` class and pass your model to it:
+The ``Rendering`` module uses `PyVista <https://docs.pyvista.org/>`_, a high-level Python interface to `VTK <https://www.vtk.org/>`_ by Kitware. PyVista is modern, actively maintained, and provides an intuitive API. Use this renderer for:
+
+- Interactive 3D visualization and manipulation
+- Jupyter notebook integration with Trame backend
+- Publication-quality renderings
+- Modern Python workflows
 
 .. code-block:: python
 
-    # Import the `Renderer` object
     from Pynite.Rendering import Renderer
+    my_renderer = Renderer(my_model)
+    my_renderer.render_model()
 
-    # Create a `Renderer` for this model
+**VTK Renderer (Alternative)**
+
+The ``Visualization`` module provides direct VTK rendering via ``Renderer`` class. This renderer offers similar features with a slightly different API and may be preferred for:
+
+- Lightweight environments with minimal dependencies
+- Specific VTK customization needs
+- Legacy code compatibility
+
+.. code-block:: python
+
+    from Pynite.Visualization import Renderer
+    my_renderer = Renderer(my_model)
+    my_renderer.render_model()
+
+The Renderer Object
+===================
+
+Both renderers expose a ``Renderer`` class that controls visualization:
+
+.. code-block:: python
+
+    # PyVista renderer (recommended)
+    from Pynite.Rendering import Renderer
     my_rndr = Renderer(my_model)
 
+    # VTK renderer (alternative)
+    from Pynite.Visualization import Renderer
+    my_rndr = Renderer(my_model)
 
-`Renderer` Options
-==================
+Each renderer provides the same core visualization capabilities through a consistent API.
 
-The ``Renderer`` object has some default properties you may wish to change. Below are examples of these options:
+
+`Renderer` Properties and Attributes
+====================================
+
+The ``Renderer`` object has many properties you can adjust to customize your visualization. Below is a comprehensive guide:
+
+Geometry Visibility
+-------------------
+
+Control what parts of the model are displayed:
 
 .. code-block:: python
+
+    my_rndr.render_nodes = True       # Show/hide nodes (default: True)
+    my_rndr.render_loads = True       # Show/hide load glyphs (default: True)
+    my_rndr.labels = True             # Show/hide text labels (default: True, PyVista uses show_labels)
+
+Deformation and Scale
+---------------------
+
+Display and control the deformed shape of the model:
+
+.. code-block:: python
+
+    my_rndr.deformed_shape = True     # Toggle deformed shape display (default: False)
+    my_rndr.deformed_scale = 30       # Scale factor for deformations (default: 30)
+
+Larger scale factors exaggerate deformations for visibility in stiff models.
+
+Annotation and Label Sizing
+---------------------------
+
+Control the size of visual elements relative to your model:
+
+.. code-block:: python
+
+    my_rndr.annotation_size = 5       # Size of text, nodes, and support glyphs (default: auto)
+
+When set to ``None`` (or not set), annotation size is automatically computed as 5% of the shortest distance between nodes. You can manually set it to override:
+
+.. code-block:: python
+
+    my_rndr.annotation_size = 2       # Force smaller annotations
+
+Load Combination and Case Selection
+-----------------------------------
+
+Choose which load results to display:
+
+.. code-block:: python
+
+    my_rndr.combo_name = 'Load Combo 1'  # Render results for a load combination
+    my_rndr.case = None                  # (Mutually exclusive with combo_name)
     
-    my_rndr.deformed_shape = True      # Turns on the deformed shape during rendering
-    my_rndr.annotation_size = 2        # Scales model annotations to 2 model length units
-    my_rndr.deformed_scale = 30        # Sets the scale of deformations
-    my_rndr.render_nodes = False       # Turns off the nodes during rendering
-    my_rndr.render_loads = False       # Turns off load rendering
-    my_rndr.color_map = 'Txy'          # Changes plate contours to show shear stresses
-    my_rndr.combo_name = '1.4D'        # The name of the load combination to render
-    my_rndr.case = None                # The load case to render - ignored if a load combination is specified
-    my_rndr.labels = False             # Turns off label renderings
-    my_rndr.scalar_bar = True          # Turns on the scalar bar for plate contours
-    my_rndr.scalar_bar_text_size = 24  # Adjusts the text height for the scalar bar
+    # To switch to a load case:
+    my_rndr.case = 'Dead Load'           # Automatically clears combo_name
+    my_rndr.combo_name = None
+
+**Note:** Setting ``combo_name`` clears ``case`` and vice versa. Deformed shapes are only available for load combinations, not load cases.
+
+Plate and Quad Contours
+-----------------------
+
+Display stress and result contours on plate and quad elements:
+
+.. code-block:: python
+
+    my_rndr.color_map = None          # No contours (default)
+    my_rndr.color_map = 'Mx'          # Moment about x-axis
+    my_rndr.color_map = 'My'          # Moment about y-axis
+    my_rndr.color_map = 'Mxy'         # Twisting moment
+    my_rndr.color_map = 'Qx'          # Shear in x-direction
+    my_rndr.color_map = 'Qy'          # Shear in y-direction
+    my_rndr.color_map = 'Sx'          # Membrane stress in x-direction
+    my_rndr.color_map = 'Sy'          # Membrane stress in y-direction
+    my_rndr.color_map = 'Txy'         # In-plane shear stress
+
+Scalar Bar for Contours
+-----------------------
+
+Display a legend showing contour value ranges:
+
+.. code-block:: python
+
+    my_rndr.scalar_bar = False             # Hide scalar bar (default)
+    my_rndr.scalar_bar = True              # Show scalar bar
+    my_rndr.scalar_bar_text_size = 24      # Font size for scalar bar labels (default: 24)
+
+Visual Theme
+------------
+
+Switch between rendering themes:
+
+.. code-block:: python
+
+    my_rndr.theme = 'default'         # Dark background (default)
+    my_rndr.theme = 'print'           # White background (better for publications)
+
+The ``'print'`` theme uses black lines and text on white, ideal for generating publication-quality images.
+
+Window Size
+-----------
+
+Control the render window dimensions for both renderers:
+
+.. code-block:: python
+
+    my_rndr.window_width = 1920
+    my_rndr.window_height = 1080
+
+Both VTK and PyVista renderers support ``window_width`` and ``window_height`` properties to set the initial window size.
 
 Internal Force and Moment Diagrams
 ==================================
@@ -115,17 +241,65 @@ You can easily switch between different diagram types:
 Rendering the Model and Screenshots
 ===================================
 
-Once you've got your settings the way you want them, you can render your model using ``render_model``:
+Core Rendering Operations
+---------------------------
+
+**render_model()**
+
+Renders the finite element model with the current visualization settings in an interactive window or Jupyter notebook.
 
 .. code-block:: python
 
     my_rndr.render_model()
 
-You can also create a screenshot using ``screenshot``. Pass the ``filepath`` for the screenshot as a string. Use ``interact=True`` if you want to position the screenshot before capturing it, then it ``q`` to capture it. If you close out of the window instead of hitting ``q`` it will capture the original positioning instead (this is a ``Pyvista`` nuance).
+**screenshot(file_path)**
+
+Captures the current render window as an image and saves it to disk.
 
 .. code-block:: python
 
-    my_rndr.screeenshot(filepath, interact=True)
+    my_rndr.screenshot('path/to/output.png')
+    my_rndr.screenshot('C:\\Users\\username\\Desktop\\model.png')
+
+**update()**
+
+Refreshes the visualization after changing renderer properties without re-rendering the entire model.
+
+.. code-block:: python
+
+    # Change visualization properties
+    my_rndr.deformed_shape = True
+    my_rndr.deformed_scale = 50
+    
+    # Quickly refresh the display
+    my_rndr.update()
+
+Use ``update()`` when you've changed properties like ``deformed_scale``, ``annotation_size``, ``color_map``, or load combination and want to see changes immediately without rebuilding the entire scene.
+
+Interactive Workflow Example
+------------------------------
+
+.. code-block:: python
+
+    from Pynite.Rendering import Renderer  # or Pynite.Visualization
+    
+    # Create renderer
+    my_rndr = Renderer(my_model)
+    
+    # View undeformed shape
+    my_rndr.render_model()
+    
+    # Add deformation and quickly refresh
+    my_rndr.deformed_shape = True
+    my_rndr.deformed_scale = 20
+    my_rndr.update()
+    
+    # Switch diagram type
+    my_rndr.member_diagrams = 'Mz'
+    my_rndr.update()
+    
+    # Save result
+    my_rndr.screenshot('mz_diagram.png')
 
 Renderer Class Reference
 ========================
@@ -133,3 +307,80 @@ Renderer Class Reference
 .. autoclass:: Pynite.Rendering.Renderer
    :members:
    :undoc-members:
+
+.. autoclass:: Pynite.Visualization.Renderer
+   :members:
+   :undoc-members:
+
+Feature Comparison: VTK vs PyVista
+==================================
+
+Both renderers support the same core features. Here's a quick reference:
+
++----------------------------------+-------------------+-------------------+
+| Feature                          | PyVista (Modern)  | VTK (Lightweight) |
++==================================+===================+===================+
+| Interactive 3D visualization     | ✓                 | ✓                 |
+| Jupyter notebook embedding       | ✓                 | ✓                 |
+| Deformed shapes                  | ✓                 | ✓                 |
+| Member diagrams (Fx, Fy, etc.)   | ✓                 | ✓                 |
+| Plate/quad contours              | ✓                 | ✓                 |
+| Load glyphs                      | ✓                 | ✓                 |
+| Screenshots                      | ✓                 | ✓                 |
+| Publication-quality output       | ✓                 | ✓                 |
+| Node/load visibility toggle      | ✓                 | ✓                 |
+| Customizable themes              | ✓                 | ✓                 |
++----------------------------------+-------------------+-------------------+
+
+**Key Differences:**
+
+- **PyVista**: Modern, actively maintained, better Jupyter integration, slightly larger package size
+- **VTK**: Direct VTK access for advanced customization, lower memory footprint, works in minimal environments
+
+For most users, **PyVista is recommended** due to its modern API and better notebook support. Use **VTK** if you need lightweight rendering or specific VTK-level control.
+
+Common Visualization Tasks
+=========================
+
+**View Deformed Shape with Bending Moments**
+
+.. code-block:: python
+
+    my_rndr.deformed_shape = True
+    my_rndr.deformed_scale = 25
+    my_rndr.member_diagrams = 'Mz'
+    my_rndr.diagram_scale = 20
+    my_rndr.render_model()
+
+**Generate Publication-Quality Image**
+
+.. code-block:: python
+
+    my_rndr.theme = 'print'           # White background
+    my_rndr.annotation_size = 3       # Smaller annotations for clarity
+    my_rndr.scalar_bar = True         # Show contour legend
+    my_rndr.member_diagrams = None    # Remove diagrams for clean look
+    my_rndr.render_model()
+    my_rndr.screenshot('figure_01.png')
+
+**Compare Multiple Load Cases**
+
+.. code-block:: python
+
+    load_cases = ['Dead Load', 'Live Load', 'Wind Load']
+    
+    for case_name in load_cases:
+        my_rndr.case = case_name
+        my_rndr.member_diagrams = 'Fx'
+        my_rndr.render_model()
+        my_rndr.screenshot(f'{case_name}.png')
+
+**Visualize Plate Stresses**
+
+.. code-block:: python
+
+    my_rndr.color_map = 'Mxy'         # Twisting moment
+    my_rndr.scalar_bar = True
+    my_rndr.deformed_shape = False
+    my_rndr.render_nodes = False
+    my_rndr.render_model()
