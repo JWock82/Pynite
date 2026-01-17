@@ -1566,9 +1566,10 @@ class Renderer:
                         max_idx = int(y_values.argmax())
                         min_idx = int(y_values.argmin())
                         
-                        # Place labels at the actual diagram points
-                        max_pos = diagram_points[max_idx]
-                        min_pos = diagram_points[min_idx]
+                        # Place labels with offset proportional to annotation_size
+                        label_offset = 0.1 * self.annotation_size
+                        max_pos = np.array(diagram_points[max_idx]) + label_offset * perp_dir
+                        min_pos = np.array(diagram_points[min_idx]) + label_offset * perp_dir
                         
                         max_str = f"{max_value:.3g}"
                         min_str = f"{min_value:.3g}"

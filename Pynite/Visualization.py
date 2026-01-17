@@ -2407,9 +2407,10 @@ class VisMemberDiagram():
         max_pos = points.GetPoint(max_pt_idx)
         min_pos = points.GetPoint(min_pt_idx)
         
-        # Add small displacement for visibility
-        max_pos = array(max_pos) + (0.2 * scale_factor) * perp_dir
-        min_pos = array(min_pos) + (0.2 * scale_factor) * perp_dir
+        # Add displacement for visibility, proportional to annotation_size
+        label_offset = 0.1 * annotation_size
+        max_pos = array(max_pos) + label_offset * perp_dir
+        min_pos = array(min_pos) + label_offset * perp_dir
         
         # Text size should scale with annotation_size
         text_scale = annotation_size
