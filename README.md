@@ -68,6 +68,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v2.2.1 (in progrss)
+* Adjusted member diagram label offsets for clarity.
+
 v2.2.0
 * Added member diagrams feature for easy visualization of shear, moment, axial, and torsion diagrams along members.
 * Updated documentation for rendering.
