@@ -68,7 +68,8 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v2.2.1 (in progrss)
+v2.2.1 (in progress)
+* **Optimized auto-calculated annotation sizing**: The new automatic annotation size calculation feature now uses vectorized NumPy operations and caching for efficient rendering of large models with hundreds or thousands of elements.
 * Adjusted member diagram label offsets for clarity.
 
 v2.2.0

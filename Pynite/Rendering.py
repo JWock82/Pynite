@@ -54,6 +54,7 @@ class Renderer:
         # Default settings for rendering
         self._annotation_size: Optional[float] = None  # None means auto-calculate
         self._annotation_size_manual: bool = False  # Track if user manually set the size
+        self._annotation_size_cached: Optional[float] = None  # Cache to avoid recalculating 2600+ times per render
         self._deformed_shape: bool = False
         self._deformed_scale: float = 30.0
         self._render_nodes: bool = True
@@ -130,8 +131,10 @@ class Renderer:
         manually set.
         """
         if self._annotation_size is None or not self._annotation_size_manual:
-            # Auto-calculate annotation size
-            return self._calculate_auto_annotation_size()
+            # Return cached value if available; calculate once on first access
+            if self._annotation_size_cached is None:
+                self._annotation_size_cached = self._calculate_auto_annotation_size()
+            return self._annotation_size_cached
         return self._annotation_size
 
     @annotation_size.setter
@@ -248,28 +251,37 @@ class Renderer:
     def _calculate_auto_annotation_size(self) -> float:
         """Calculate automatic annotation size as 5% of shortest node distance.
 
+        Uses vectorized NumPy operations for fast computation on large meshes.
+        Result is cached by the annotation_size property to avoid recalculation.
+
         :returns: Annotation size in model units (``5.0`` fallback if <2 nodes).
         :rtype: float
         """
+        from numpy import asarray
+        
         nodes = list(self.model.nodes.values())
 
         # Need at least 2 nodes to calculate distance
         if len(nodes) < 2:
             return 5.0  # Default fallback
 
-        # Calculate minimum distance between any two nodes
+        # Extract node coordinates as numpy array (much faster than nested loops)
+        coords = asarray([[node.X, node.Y, node.Z] for node in nodes])
+        
+        # Calculate pairwise distances using vectorized operations
+        # For each node, compute distance to all other nodes, then find minimum
         min_distance = float('inf')
-
-        for i, node1 in enumerate(nodes):
-            for node2 in nodes[i+1:]:
-                # Calculate Euclidean distance
-                dx = node2.X - node1.X
-                dy = node2.Y - node1.Y
-                dz = node2.Z - node1.Z
-                distance = (dx**2 + dy**2 + dz**2)**0.5
-
-                if distance > 0 and distance < min_distance:
-                    min_distance = distance
+        for i in range(len(coords)):
+            # Vectorized distance calculation for node i to all others
+            diffs = coords[i+1:] - coords[i]
+            distances = (diffs**2).sum(axis=1)**0.5
+            
+            # Find minimum distance from this node to subsequent nodes
+            valid_distances = distances[distances > 0]
+            if len(valid_distances) > 0:
+                local_min = valid_distances.min()
+                if local_min < min_distance:
+                    min_distance = local_min
 
         # If all nodes are at same location, use default
         if min_distance == float('inf') or min_distance == 0:
@@ -343,6 +355,9 @@ class Renderer:
 
         :param bool reset_camera: Reset camera to fit model (default ``True``).
         """
+
+        # Clear annotation size cache to recalculate if model has changed
+        self._annotation_size_cached = None
 
         # Input validation
         if self.deformed_shape and self.case != None:
