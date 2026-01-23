@@ -1,0 +1,20 @@
+# Coverage configuration for Pynite
+# Excludes incomplete features and boilerplate code from coverage reports
+
+[run]
+# Files to omit from coverage measurements during test execution
+omit =
+    */Tri3D.py  # Tri3D is an incomplete feature not yet ready for coverage tracking
+
+[report]
+# Files to omit from coverage reports
+omit =
+    */Tri3D.py  # Tri3D is an incomplete feature not yet ready for coverage tracking
+
+# Lines to exclude from coverage (e.g., defensive programming patterns)
+exclude_lines =
+    pragma: no cover  # Explicit pragma to exclude specific lines
+    def __repr__  # String representations are typically not critical to test
+    raise AssertionError  # Assertions and error handling are often hard to fully test
+    raise NotImplementedError  # Abstract methods that will be overridden
+    if __name__ == .__main__.:  # Script entry point code
