@@ -94,7 +94,28 @@ class ShearWall():
     def add_axial(self, story_name: str, force: float, case: str = 'Case 1') -> None:
         self._axials.append([story_name, force, case])
 
+    def _remove_from_model(self) -> None:
+        """Removes the shear wall's meshes (main wall and flanges), elements, and nodes from the model 
+        in preparation for regeneration.
+        """
+        
+        # Remove the main wall mesh if it exists
+        if self.name in self.model.meshes:
+            self.model.meshes[self.name]._remove_from_model()
+            del self.model.meshes[self.name]
+        
+        # Remove each flange mesh if it exists
+        for i in range(len(self._flanges)):
+            flange_name = self.name + ' Flg ' + str(i + 1)
+            if flange_name in self.model.meshes:
+                self.model.meshes[flange_name]._remove_from_model()
+                del self.model.meshes[flange_name]
+
     def generate(self) -> None:
+
+        # Remove shear wall elements and nodes from the model if regenerating
+        if self.is_generated:
+            self._remove_from_model()
 
         # Identify mesh control points
         x_control: List[float] = [0, self.L]
@@ -293,7 +314,7 @@ class ShearWall():
         # Populate dictionaries of piers and coupling beams for the wall
         self._identify_piers()
         self._identify_coupling_beams()
-        
+
         # Mark the wall as generated
         self.is_generated = True
 
