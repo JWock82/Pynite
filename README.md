@@ -69,7 +69,8 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 v2.2.1 (in progress)
-* **Optimized auto-calculated annotation sizing**: The new automatic annotation size calculation feature now uses vectorized NumPy operations and caching for efficient rendering of large models with hundreds or thousands of elements.
+* Added `ShearWall` mesh auto-regeneration. Whenever a model is solved any old or outdated `ShearWall` meshes are automatically removed and replaced by a rebuild.
+* Optimized auto-calculated annotation sizing: The new automatic annotation size calculation feature now uses vectorized NumPy operations and caching for efficient rendering of large models with hundreds or thousands of elements.
 * Adjusted member diagram label offsets for clarity.
 
 v2.2.0
