@@ -51,6 +51,7 @@ class MatFoundation(RectangleMesh):
         self.name = name
         self.ks = ks
         self.pt_loads = []  # [XZ_coord, direction, magnitude, case]
+        self.needs_update = False  # Flag indicating regeneration is needed due to changes
 
     def add_rect_opening(self, name, X_min, Z_min, X_max, Z_max):
         """Add a rectangular opening to the mat by corner coordinates.
@@ -67,6 +68,8 @@ class MatFoundation(RectangleMesh):
         """
 
         super().add_rect_opening(name, X_min, Z_min, X_max - X_min, Z_max - Z_min)
+        if self.is_generated:
+            self.needs_update = True
 
     def add_mat_pt_load(self, XZ_coord, direction, magnitude, case='Case 1'):
         """Register a concentrated load at an X-Z coordinate on the mat.
@@ -84,6 +87,8 @@ class MatFoundation(RectangleMesh):
         self.x_control.append(XZ_coord[0])
         self.y_control.append(XZ_coord[1])
         self.pt_loads.append([XZ_coord, direction, magnitude, case])
+        if self.is_generated:
+            self.needs_update = True
 
     def generate(self):
         """Generate the mesh, apply point loads, and define soil springs.

@@ -48,6 +48,7 @@ class Mesh():
         self.elements: Dict[str, Union[Quad3D, Plate3D]] = {}  # A dictionary containing the elements in the mesh
         self.element_type = 'Quad'          # The type of element used in the mesh
         self.is_generated = False          # A flag indicating whether the mesh has been generated
+        self.needs_update = False          # A flag indicating whether the mesh needs regeneration due to changes
 
     def _remove_from_model(self) -> None:
         """Removes the mesh's nodes and elements from the model in preparation for regeneration.
@@ -1033,6 +1034,7 @@ class RectangleMesh(Mesh):
 
         # Flag the mesh as generated
         self.is_generated = True
+        self.needs_update = False
 
     def node_local_coords(self, node: Node3D) -> tuple[float, float]:
         """Calculates a node's position in the mesh's local x/y coordinate system.
@@ -1078,8 +1080,9 @@ class RectangleMesh(Mesh):
         self.x_control.append(x_left + width)
         self.y_control.append(y_bott + height)
 
-        # Flag the mesh as not generated yet
-        self.is_generated = False
+        # Flag that regeneration is needed if already generated
+        if self.is_generated:
+            self.needs_update = True
 
 
 class RectOpening():
@@ -1233,6 +1236,7 @@ class AnnulusMesh(Mesh):
         
         # Flag the mesh as generated
         self.is_generated = True
+        self.needs_update = False
 
 #%%
 class AnnulusRingMesh(Mesh):
@@ -1390,6 +1394,7 @@ class AnnulusRingMesh(Mesh):
         
         # Flag the mesh as generated
         self.is_generated = True
+        self.needs_update = False
 
 
 class AnnulusTransRingMesh(Mesh):
@@ -1589,6 +1594,7 @@ class AnnulusTransRingMesh(Mesh):
         
         # Flag the mesh as generated
         self.is_generated = True
+        self.needs_update = False
 
 
 class FrustrumMesh(AnnulusMesh):
@@ -1806,6 +1812,7 @@ class CylinderMesh(Mesh):
         
         # Flag the mesh as generated
         self.is_generated = True
+        self.needs_update = False
 
 #%%
 class CylinderRingMesh(Mesh):
@@ -1994,6 +2001,7 @@ class CylinderRingMesh(Mesh):
             
         # Flag the mesh as generated
         self.is_generated = True
+        self.needs_update = False
         
 def check_mesh_integrity(mesh: Mesh, console_log: bool = True) -> Union[str, List[str], None]:
     """Runs basic integrity checks to ensure the mesh is in sync with its model. Usually you don't

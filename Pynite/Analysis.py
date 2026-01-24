@@ -48,19 +48,19 @@ def _prepare_model(model: FEModel3D, n_modes: int = 0) -> None:
     for i in range(n_modes):
         model.add_load_combo(f'Mode {i + 1}', {}, ['modal'])
 
-    # Generate all basic meshes that haven't been generated yet
+    # Generate all basic meshes that haven't been generated yet or need updating
     for mesh in model.meshes.values():
-        if not mesh.is_generated:
+        if not mesh.is_generated or mesh.needs_update:
             mesh.generate()
 
-    # Generate all shear wall meshes that haven't been generated yet
+    # Generate all shear wall meshes that haven't been generated yet or need updating
     for shear_wall in model.shear_walls.values():
-        if not shear_wall.is_generated:
+        if not shear_wall.is_generated or shear_wall.needs_update:
             shear_wall.generate()
 
-    # Generate all mat foundation meshes that haven't been generated yet
+    # Generate all mat foundation meshes that haven't been generated yet or need updating
     for mat in model.mats.values():
-        if not mat.is_generated:
+        if not mat.is_generated or mat.needs_update:
             mat.generate()
 
     # Activate all springs and members for all load combinations

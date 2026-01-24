@@ -39,6 +39,7 @@ class ShearWall():
         self.piers: Dict[str, Pier] = {}
         self.coupling_beams: Dict[str, CouplingBeam] = {}
         self.is_generated: bool = False
+        self.needs_update: bool = False
         self.asign_material(material_name, thickness)
 
     def asign_material(self, name: str, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
@@ -51,12 +52,20 @@ class ShearWall():
 
         # Store the material parameters
         self._materials.append([name, t, x_start, x_end, y_start, y_end])
+        
+        # Flag that regeneration is needed if already generated
+        if self.is_generated:
+            self.needs_update = True
 
     def add_opening(self, name: str, x_start: float, y_start: float, width: float, height: float, tie: float | None = None) -> None:
         self._openings.append([name, x_start, y_start, width, height, None])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_flange(self, thickness: float, width: float, x: float, y_start: float, y_end: float, material: str, side: Literal['+z', '-z']) -> None:
         self._flanges.append([thickness, width, x, y_start, y_end, material, side])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_support(self, elevation: float | None = None, x_start: float | None = None, x_end: float | None = None) -> None:
 
@@ -71,6 +80,8 @@ class ShearWall():
 
         # Add the supports to the wall
         self._supports.append([elevation, x_start, x_end])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_story(self, story_name: str, elevation: float, x_start: float | None = None, x_end: float | None = None) -> None:
 
@@ -81,6 +92,8 @@ class ShearWall():
 
         # Add the story to the model
         self._stories.append([story_name, elevation, x_start, x_end])
+        if self.is_generated:
+            self.needs_update = True
 
         # Add a load combination to use when calculating the story's stiffness
         self.model.add_load_combo('Stiffness: ' + story_name, {story_name: 1.0}, 'stiffness')
@@ -90,9 +103,13 @@ class ShearWall():
 
     def add_shear(self, story_name: str, force: float, case: str = 'Case 1') -> None:
         self._shears.append([story_name, force, case])
+        if self.is_generated:
+            self.needs_update = True
 
     def add_axial(self, story_name: str, force: float, case: str = 'Case 1') -> None:
         self._axials.append([story_name, force, case])
+        if self.is_generated:
+            self.needs_update = True
 
     def _remove_from_model(self) -> None:
         """Removes the shear wall's meshes (main wall and flanges), elements, and nodes from the model 
@@ -317,6 +334,7 @@ class ShearWall():
 
         # Mark the wall as generated
         self.is_generated = True
+        self.needs_update = False
 
 
     def _identify_piers(self) -> None:
