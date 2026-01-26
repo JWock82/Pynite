@@ -68,7 +68,8 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-v2.2.1 (in progress)
+v2.2.1
+* Normalized member force diagrams across the entire model for visual clarity.
 * Made mesh auto-regeneration smarter and more efficient, targeting only meshes that have been altered since the last run.
 * Added `ShearWall` mesh auto-regeneration. Whenever a model is solved any old or outdated `ShearWall` meshes are automatically removed and replaced by a rebuild.
 * Optimized auto-calculated annotation sizing: The new automatic annotation size calculation feature now uses vectorized NumPy operations and caching for efficient rendering of large models with hundreds or thousands of elements.
