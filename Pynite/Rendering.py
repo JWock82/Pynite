@@ -1433,6 +1433,60 @@ class Renderer:
                     # Create an area load and get its data
                     self.plot_area_load(position0, position1, position2, position3, dir_cos*sign, load_value/max_area_load*5*self.annotation_size, str(sig_fig_round(load_value, 3)), color='green')
 
+    def _get_max_internal_forces(self, diagram_type: str, combo_name: str) -> float:
+        """Calculate maximum internal force/moment magnitudes across all members for consistent scaling.
+
+        :param str diagram_type: Diagram type (``'Fy'``, ``'Fz'``, ``'My'``, ``'Mz'``, ``'Fx'``, ``'Tx'``).
+        :param str combo_name: Load combination name.
+        :returns: Maximum absolute value of the internal force/moment.
+        :rtype: float
+        """
+        
+        max_value = 0
+        
+        # Iterate through all members to find the global maximum
+        for member in self.model.members.values():
+            
+            # Skip inactive members for this combo
+            if combo_name not in member.active or not member.active[combo_name]:
+                continue
+            
+            try:
+                # Get the maximum value for this member based on diagram type
+                if diagram_type == 'Fy':
+                    member_max = member.max_shear('Fy', combo_name)
+                    member_min = member.min_shear('Fy', combo_name)
+                elif diagram_type == 'Fz':
+                    member_max = member.max_shear('Fz', combo_name)
+                    member_min = member.min_shear('Fz', combo_name)
+                elif diagram_type == 'My':
+                    member_max = member.max_moment('My', combo_name)
+                    member_min = member.min_moment('My', combo_name)
+                elif diagram_type == 'Mz':
+                    member_max = member.max_moment('Mz', combo_name)
+                    member_min = member.min_moment('Mz', combo_name)
+                elif diagram_type == 'Fx':
+                    member_max = member.max_axial(combo_name)
+                    member_min = member.min_axial(combo_name)
+                elif diagram_type == 'Tx':
+                    member_max = member.max_torque(combo_name)
+                    member_min = member.min_torque(combo_name)
+                else:
+                    continue
+                
+                # Track the global maximum absolute value
+                max_value = max(max_value, abs(member_max), abs(member_min))
+            
+            except Exception:
+                # Skip members that don't have the requested results
+                continue
+        
+        # Prevent division by zero
+        if max_value == 0:
+            max_value = 1
+        
+        return max_value
+
     def plot_member_diagrams(self) -> None:
         """Add internal force/moment diagrams to members.
 
@@ -1442,6 +1496,9 @@ class Renderer:
         
         # Determine which combo/case to use
         combo_name = self.combo_name if self.combo_name is not None else self.case
+        
+        # Calculate global maximum internal force/moment for consistent scaling across all members
+        global_max = self._get_max_internal_forces(self.member_diagrams, combo_name)
         
         # Create diagrams for each active member
         for member in self.model.members.values():
@@ -1514,9 +1571,9 @@ class Renderer:
                     continue
                 
                 # Normalize values for better visualization
-                max_val = max(abs(y_values))
-                if max_val > 0:
-                    normalized_values = y_values / max_val
+                # Use global_max for consistent scaling across all members
+                if global_max > 0:
+                    normalized_values = y_values / global_max
                 else:
                     normalized_values = y_values
                 

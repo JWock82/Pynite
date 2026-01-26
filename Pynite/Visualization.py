@@ -2217,10 +2217,65 @@ def _MaxLoads(model, combo_name=None, case=None):
     # Return the maximum loads in the load combination or load case
     return max_pt_load, max_moment, max_dist_load, max_area_load
 
+def _MaxInternalForces(model, diagram_type, combo_name):
+    """Calculate maximum internal force/moment magnitudes across all members for consistent scaling.
+
+    :param FEModel3D model: The finite element model.
+    :param str diagram_type: Diagram type (``'Fy'``, ``'Fz'``, ``'My'``, ``'Mz'``, ``'Fx'``, ``'Tx'``).
+    :param str combo_name: Load combination name.
+    :returns: Maximum absolute value of the internal force/moment.
+    :rtype: float
+    """
+
+    max_value = 0
+
+    # Iterate through all members to find the global maximum
+    for member in model.members.values():
+
+        # Skip inactive members for this combo
+        if combo_name not in member.active or not member.active[combo_name]:
+            continue
+
+        try:
+            # Get the maximum value for this member based on diagram type
+            if diagram_type == 'Fy':
+                member_max = member.max_shear('Fy', combo_name)
+                member_min = member.min_shear('Fy', combo_name)
+            elif diagram_type == 'Fz':
+                member_max = member.max_shear('Fz', combo_name)
+                member_min = member.min_shear('Fz', combo_name)
+            elif diagram_type == 'My':
+                member_max = member.max_moment('My', combo_name)
+                member_min = member.min_moment('My', combo_name)
+            elif diagram_type == 'Mz':
+                member_max = member.max_moment('Mz', combo_name)
+                member_min = member.min_moment('Mz', combo_name)
+            elif diagram_type == 'Fx':
+                member_max = member.max_axial(combo_name)
+                member_min = member.min_axial(combo_name)
+            elif diagram_type == 'Tx':
+                member_max = member.max_torque(combo_name)
+                member_min = member.min_torque(combo_name)
+            else:
+                continue
+
+            # Track the global maximum absolute value
+            max_value = max(max_value, abs(member_max), abs(member_min))
+
+        except Exception:
+            # Skip members that don't have the requested results
+            continue
+
+    # Prevent division by zero
+    if max_value == 0:
+        max_value = 1
+
+    return max_value
+
 class VisMemberDiagram():
     """Creates a visual representation of internal forces/moments along a member."""
 
-    def __init__(self, member, nodes, diagram_type, scale_factor, combo_name='Combo 1', theme='default', n_points=20, annotation_size=5):
+    def __init__(self, member, nodes, diagram_type, scale_factor, combo_name='Combo 1', theme='default', n_points=20, annotation_size=5, global_max=None):
         """Build a VTK polyline diagram for a member.
 
         :param Member3D member: Member to diagram.
@@ -2232,6 +2287,8 @@ class VisMemberDiagram():
         :param str theme: Visual theme (``'default'`` or ``'print'``).
         :param int n_points: Number of sample points along member.
         :param float annotation_size: Text/label scale.
+        :param float | None global_max: Global maximum value for consistent scaling across all members.
+            If ``None``, scales based on individual member maximum.
         """
 
         self.polydata = vtk.vtkAppendPolyData()
@@ -2311,9 +2368,10 @@ class VisMemberDiagram():
         min_idx = int(y_values.argmin())
         
         # Normalize values for better visualization
-        max_val = max(abs(y_values))
-        if max_val > 0:
-            normalized_values = y_values / max_val
+        # Use global_max if provided for consistent scaling across all members
+        normalization_max = global_max if global_max is not None else max(abs(y_values))
+        if normalization_max > 0:
+            normalized_values = y_values / normalization_max
         else:
             normalized_values = y_values
         
@@ -2498,6 +2556,9 @@ def _RenderMemberDiagrams(model, renderer, diagram_type, scale_factor, combo_nam
         # For load cases, use the case name as combo_name in the member methods
         combo_name = case
     
+    # Calculate global maximum internal force/moment for consistent scaling across all members
+    global_max = _MaxInternalForces(model, diagram_type, combo_name)
+    
     # Create diagrams for each active member
     for member in model.members.values():
         
@@ -2507,7 +2568,8 @@ def _RenderMemberDiagrams(model, renderer, diagram_type, scale_factor, combo_nam
         
         try:
             vis_diagram = VisMemberDiagram(member, model.nodes, diagram_type, 
-                                          scale_factor, combo_name, theme, annotation_size=annotation_size)
+                                          scale_factor, combo_name, theme, annotation_size=annotation_size, 
+                                          global_max=global_max)
             renderer.AddActor(vis_diagram.actor)
             
             # Add text label actors
