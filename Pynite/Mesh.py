@@ -816,6 +816,11 @@ class RectangleMesh(Mesh):
                 unique_list.append(y_control[i])
         unique_list.append(y_control[-1])
         y_control = unique_list
+
+        # Remove any control points that fall outside the mesh boundaries
+        # Control points outside [0, width] or [0, height] would create elements outside the intended mesh
+        x_control = [val for val in x_control if val >= -1e-10 and val <= width + 1e-10]
+        y_control = [val for val in y_control if val >= -1e-10 and val <= height + 1e-10]
     
         # Each node number will be increased by the offset calculated below
         node_offset = int(self.start_node[1:]) - 1

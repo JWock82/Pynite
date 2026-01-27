@@ -214,7 +214,7 @@ class ShearWall():
             # Identify the global origin for the flange mesh
             if self.plane == 'XY':
                 Xof = self.origin[0] + x
-                Yof = self.origin[0] + y_start
+                Yof = self.origin[1] + y_start
                 Zof = self.origin[2] + z
                 flg_plane = 'YZ'
             elif self.plane == 'XZ':

@@ -68,6 +68,10 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+v2.2.2 (in progress)
+* Bug fix for shear walls with flanges having an origin with their origin at Y != 0.
+* Rectangular meshes now filter out user defined control points that erroneously lie outside their boudaries.
+
 v2.2.1
 * Normalized member force diagrams across the entire model for visual clarity.
 * Made mesh auto-regeneration smarter and more efficient, targeting only meshes that have been altered since the last run.
