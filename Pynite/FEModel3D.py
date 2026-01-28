@@ -2415,7 +2415,7 @@ class FEModel3D():
                                 # The partitioned stiffness matrix originates as `coo` and is converted to `csr`
                                 # format for mathematical operations. The `@` operator performs matrix multiplication
                                 # on sparse matrices.
-                                Delta_D1 = spsolve(K11.tocsr(), np.subtract(np.subtract(Delta_P1, Delta_FER1), K12.tocsr() @ Delta_D2))
+                                Delta_D1 = spsolve(K11, np.subtract(np.subtract(Delta_P1, Delta_FER1), K12 @ Delta_D2))
                                 Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
                             else:
                                 Delta_D1 = solve(K11, np.subtract(np.subtract(Delta_P1, Delta_FER1), np.matmul(K12, Delta_D2)))
