@@ -405,7 +405,7 @@ class Renderer:
                 vis_spring.add_to_plotter(self.plotter)
 
         if self.model.members:
-            vis_members = [VisMember(member, self.theme) for member in self.model.members.values()]
+            vis_members = [VisMember(member, self.theme, self.annotation_size) for member in self.model.members.values()]
             for vis_member in vis_members:
                 vis_member.add_to_plotter(self.plotter)
 
@@ -1837,15 +1837,18 @@ class VisSpring:
 class VisMember:
     """Visual wrapper for a Member3D as a simple line."""
 
-    def __init__(self, member: 'Member3D', theme: str) -> None:
+    def __init__(self, member: 'Member3D', theme: str, annotation_size: float) -> None:
         """Build visual elements for a member.
 
         :param Member3D member: Member to visualize.
         :param str theme: Rendering theme (``'default'`` or ``'print'``).
+        :param float annotation_size: Base size for release symbols.
         """
         self.member = member
         self.theme = theme
+        self.annotation_size = annotation_size
         self.mesh: pv.PolyData = self._build_geometry()
+        self.release_meshes: List[pv.PolyData] = self._build_release_meshes()
         self.label = member.name
         self.label_point = [(member.i_node.X + member.j_node.X) / 2,
                             (member.i_node.Y + member.j_node.Y) / 2,
@@ -1857,6 +1860,63 @@ class VisMember:
         line.points[1] = [self.member.j_node.X, self.member.j_node.Y, self.member.j_node.Z]
         return line
 
+    def _build_release_meshes(self) -> List[pv.PolyData]:
+        releases = self.member.Releases
+        if not releases:
+            return []
+
+        show_i_ry = releases[4]
+        show_i_rz = releases[5]
+        show_j_ry = releases[10]
+        show_j_rz = releases[11]
+
+        if not (show_i_ry or show_i_rz or show_j_ry or show_j_rz):
+            return []
+
+        T = self.member.T()[0:3, 0:3]
+        local_x = T[0, 0:3]
+        local_y = T[1, 0:3]
+        local_z = T[2, 0:3]
+
+        local_x = local_x / np.linalg.norm(local_x)
+        local_y = local_y / np.linalg.norm(local_y)
+        local_z = local_z / np.linalg.norm(local_z)
+
+        radius = self.annotation_size * 0.3
+        member_length = self.member.L()
+        default_offset = self.annotation_size * 1.2
+        short_offset = member_length * 0.05
+        offset = short_offset if default_offset > short_offset else default_offset
+        num_segments = 24
+
+        i_point = np.array([self.member.i_node.X, self.member.i_node.Y, self.member.i_node.Z])
+        j_point = np.array([self.member.j_node.X, self.member.j_node.Y, self.member.j_node.Z])
+
+        release_meshes: List[pv.PolyData] = []
+
+        def add_circle(center: np.ndarray, axis1: np.ndarray, axis2: np.ndarray) -> None:
+            angles = np.linspace(0.0, 2 * np.pi, num_segments, endpoint=False)
+            points = [center + radius * (np.cos(a) * axis1 + np.sin(a) * axis2) for a in angles]
+            release_meshes.append(pv.lines_from_points(np.array(points), close=True))
+
+        if show_i_ry:
+            center = i_point + local_x * offset
+            add_circle(center, local_x, local_z)
+
+        if show_i_rz:
+            center = i_point + local_x * offset
+            add_circle(center, local_x, local_y)
+
+        if show_j_ry:
+            center = j_point - local_x * offset
+            add_circle(center, local_x, local_z)
+
+        if show_j_rz:
+            center = j_point - local_x * offset
+            add_circle(center, local_x, local_y)
+
+        return release_meshes
+
     def add_to_plotter(self, plotter: pv.Plotter) -> None:
         """Add the member line to the plotter.
 
@@ -1864,6 +1924,8 @@ class VisMember:
         """
         color = 'black' if self.theme == 'print' else 'black'
         plotter.add_mesh(self.mesh, color=color, line_width=2)
+        for release_mesh in self.release_meshes:
+            plotter.add_mesh(release_mesh, color=color, line_width=2)
 
 
 class VisDeformedMember:

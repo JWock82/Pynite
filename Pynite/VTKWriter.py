@@ -203,6 +203,31 @@ class VTKWriter:
         ugrid_members.SetPoints(points)
         ugrid_members.SetCells(vtk.VTK_LINE, lines)
 
+        #### MEMBER RELEASES DATA ####
+        # Add member end releases as cell data
+        member_releases = vtk.vtkIntArray()
+        member_releases.SetName("End Releases")
+        member_releases.SetNumberOfComponents(12)  # 12 DOFs (Rx, Ry, Rz, Mx, My, Mz for each end)
+        
+        for i, name in enumerate(["DXi", "DYi", "DZi", "RXi", "RYi", "RZi", "DXj", "DYj", "DZj", "RXj", "RYj", "RZj"]):
+            member_releases.SetComponentName(i, name)
+        
+        cell_id = 0
+        for member in self.model.members.values():
+            if len(member.sub_members) == 0:
+                # Single uninformed element
+                member_releases.InsertTuple12(cell_id, *[int(r) for r in member.Releases])
+                cell_id += 1
+            else:
+                # Multiple sub-members share the same releases
+                for subm in member.sub_members.values():
+                    n = 11  # Number of segments
+                    for _ in range(n - 1):
+                        member_releases.InsertTuple12(cell_id, *[int(r) for r in member.Releases])
+                        cell_id += 1
+        
+        ugrid_members.GetCellData().AddArray(member_releases)
+
         #### MEMBER Data ####
         for combo in self.model.load_combos.keys():
             # Displacement

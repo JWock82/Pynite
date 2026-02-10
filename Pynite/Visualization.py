@@ -475,6 +475,10 @@ class Renderer():
             # Add the actor for the member
             renderer.AddActor(vis_member.actor)
 
+            # Add visualization for member end releases
+            for release_actor in vis_member.release_actors:
+                renderer.AddActor(release_actor)
+
             if self.labels == True:
 
                 # Add the actor for the member label
@@ -950,6 +954,9 @@ class VisMember():
         :param str theme: ``'default'`` or ``'print'`` to control colors.
         """
 
+        self.member = member
+        self.release_actors = []
+
         # Generate a line for the member
         line = vtk.vtkLineSource()
 
@@ -996,6 +1003,96 @@ class VisMember():
         if theme == 'print':
             self.actor.GetProperty().SetColor(0/255, 0/255, 0/255)  # Black
             self.lblActor.GetProperty().SetColor(0/255, 0/255, 0/255) # Black
+
+        # Add visualization for member end releases
+        self._create_release_actors(annotation_size)
+
+    def _create_release_actors(self, annotation_size):
+        """Create VTK actors for rotational end releases.
+
+        Only local y/z rotational releases are shown.
+        
+        :param float annotation_size: Base size for symbol scaling.
+        """
+        from numpy import array, cos, sin, linalg
+        
+        releases = self.member.Releases
+        if not releases:
+            return
+
+        show_i_ry = releases[4]
+        show_i_rz = releases[5]
+        show_j_ry = releases[10]
+        show_j_rz = releases[11]
+
+        if not (show_i_ry or show_i_rz or show_j_ry or show_j_rz):
+            return
+
+        T = self.member.T()[0:3, 0:3]
+        local_x = T[0, 0:3]
+        local_y = T[1, 0:3]
+        local_z = T[2, 0:3]
+
+        local_x = local_x / linalg.norm(local_x)
+        local_y = local_y / linalg.norm(local_y)
+        local_z = local_z / linalg.norm(local_z)
+
+        radius = annotation_size * 0.3
+        member_length = self.member.L()
+        default_offset = annotation_size * 1.2
+        short_offset = member_length * 0.05
+        offset = short_offset if default_offset > short_offset else default_offset
+        num_segments = 24
+
+        i_point = array([self.member.i_node.X, self.member.i_node.Y, self.member.i_node.Z])
+        j_point = array([self.member.j_node.X, self.member.j_node.Y, self.member.j_node.Z])
+        member_color = self.actor.GetProperty().GetColor()
+
+        def create_circle_actor(center, axis1, axis2):
+            angles = linspace(0.0, 2 * 3.14159265, num_segments, endpoint=False)
+            points = vtk.vtkPoints()
+            lines = vtk.vtkCellArray()
+            
+            for i, a in enumerate(angles):
+                pt = center + radius * (cos(a) * axis1 + sin(a) * axis2)
+                points.InsertNextPoint(pt[0], pt[1], pt[2])
+            
+            # Close the circle
+            for i in range(num_segments):
+                line = vtk.vtkLine()
+                line.GetPointIds().SetId(0, i)
+                line.GetPointIds().SetId(1, (i + 1) % num_segments)
+                lines.InsertNextCell(line)
+            
+            polydata = vtk.vtkPolyData()
+            polydata.SetPoints(points)
+            polydata.SetLines(lines)
+            
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputData(polydata)
+            
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+            actor.GetProperty().SetColor(*member_color)
+            actor.GetProperty().SetLineWidth(2)
+            
+            return actor
+
+        if show_i_ry:
+            center = i_point + local_x * offset
+            self.release_actors.append(create_circle_actor(center, local_x, local_z))
+
+        if show_i_rz:
+            center = i_point + local_x * offset
+            self.release_actors.append(create_circle_actor(center, local_x, local_y))
+
+        if show_j_ry:
+            center = j_point - local_x * offset
+            self.release_actors.append(create_circle_actor(center, local_x, local_z))
+
+        if show_j_rz:
+            center = j_point - local_x * offset
+            self.release_actors.append(create_circle_actor(center, local_x, local_y))
 
 # Converts a node object into a node in its deformed position for the viewer
 class VisDeformedNode():
