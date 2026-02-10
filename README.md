@@ -69,6 +69,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 v2.2.2 (in progress)
+* Added bending moment end releases to visualizations.
 * Bug fix for shear walls with flanges having an origin with their origin at Y != 0.
 * Rectangular meshes now filter out user defined control points that erroneously lie outside their boudaries.
 
