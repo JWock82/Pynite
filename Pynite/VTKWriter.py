@@ -216,14 +216,17 @@ class VTKWriter:
         for member in self.model.members.values():
             if len(member.sub_members) == 0:
                 # Single uninformed element
-                member_releases.InsertTuple12(cell_id, *[int(r) for r in member.Releases])
+                member_releases.InsertTuple(cell_id, tuple(int(r) for r in member.Releases))
                 cell_id += 1
             else:
-                # Multiple sub-members share the same releases
+                # Member releases are defined once on the full member (i/j ends).
+                # They are NOT applied per sub-member segment. We only duplicate the
+                # same 12 release flags onto every exported line cell so the metadata is
+                # available regardless of which segment is selected in post-processing.
                 for subm in member.sub_members.values():
                     n = 11  # Number of segments
                     for _ in range(n - 1):
-                        member_releases.InsertTuple12(cell_id, *[int(r) for r in member.Releases])
+                        member_releases.InsertTuple(cell_id, tuple(int(r) for r in member.Releases))
                         cell_id += 1
         
         ugrid_members.GetCellData().AddArray(member_releases)
