@@ -425,16 +425,19 @@ class Renderer:
         if self.show_labels and vis_nodes:
             label_points = [vis_node.label_point for vis_node in vis_nodes]
             labels = [vis_node.label for vis_node in vis_nodes]
+            label_points = np.asarray(label_points, dtype=float)
             self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=True, point_color='grey', point_size=5, shape=None, render_points_as_spheres=True)
 
         if self.show_labels and vis_springs:
             self._spring_label_points = [vis_spring.label_point for vis_spring in vis_springs]
             self._spring_labels = [vis_spring.label for vis_spring in vis_springs]
-            self.plotter.add_point_labels(self._spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None, render_points_as_spheres=False)
+            spring_label_points = np.asarray(self._spring_label_points, dtype=float)
+            self.plotter.add_point_labels(spring_label_points, self._spring_labels, text_color='black', bold=False, shape=None, render_points_as_spheres=False)
 
         if self.show_labels and vis_members:
             label_points = [vis_member.label_point for vis_member in vis_members]
             labels = [vis_member.label for vis_member in vis_members]
+            label_points = np.asarray(label_points, dtype=float)
             self.plotter.add_point_labels(label_points, labels, bold=False, text_color='black', show_points=False, shape=None, render_points_as_spheres=False)
 
         # Render the loads if requested
@@ -444,7 +447,8 @@ class Renderer:
             self.plot_loads()
 
             # Plot the load labels
-            self.plotter.add_point_labels(self._load_label_points, self._load_labels, bold=False, text_color='green', show_points=False, shape=None, render_points_as_spheres=False)
+            load_label_points = np.asarray(self._load_label_points, dtype=float)
+            self.plotter.add_point_labels(load_label_points, self._load_labels, bold=False, text_color='green', show_points=False, shape=None, render_points_as_spheres=False)
 
         # Render the plates and quads, if present
         if self.model.quads or self.model.plates:
@@ -829,7 +833,7 @@ class Renderer:
             i+=1
 
         # Add the vertices and the faces to our lists
-        plate_vertices = np.array(plate_vertices)
+        plate_vertices = np.array(plate_vertices, dtype=float)
         plate_faces = np.array(plate_faces)
 
         # Create a new PyVista dataset to store plate data
