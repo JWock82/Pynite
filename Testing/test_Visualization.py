@@ -1,8 +1,10 @@
 import os
 import pytest
+import vtk
 from io import BytesIO
 from IPython.display import Image
 from Pynite import FEModel3D
+from Pynite import Visualization as VTKVis
 from Pynite.Visualization import Renderer as VTKRenderer
 from Pynite.Rendering import Renderer as PVRenderer
 
@@ -82,6 +84,42 @@ def visual_model():
     m.add_load_combo("1.4D", {"D": 1.4})
     m.analyze_linear()
     return m
+
+
+def minimal_model(nodes):
+    """Create a minimal model with a list of (name, x, y, z) nodes."""
+
+    m = FEModel3D()
+    for name, x, y, z in nodes:
+        m.add_node(name, x, y, z)
+    return m
+
+
+def simple_member_model():
+    """Create a stable member model for diagram/load tests."""
+
+    m = FEModel3D()
+    m.add_node("N1", 0, 0, 0)
+    m.add_node("N2", 10, 0, 0)
+
+    m.def_support("N1", True, True, True, True, True, True)
+    m.def_support("N2", True, True, True, True, True, True)
+
+    m.add_material("Steel", 29000/144, 11200/144, 0.3, 0.49, 36/144)
+    m.add_section("Rect", 20, 100, 200, 150)
+    m.add_member("M1", "N1", "N2", "Steel", "Rect")
+
+    m.add_member_pt_load("M1", "Fy", -1, 5, case="D")
+    m.add_member_dist_load("M1", "Fz", -0.5, -0.5, case="D")
+
+    m.add_load_combo("Combo 1", {"D": 1.0})
+    m.analyze_linear()
+    return m
+
+
+@pytest.fixture(scope="module")
+def diagram_model():
+    return simple_member_model()
 
 @pytest.fixture(params=["VTK", "PV"], scope="function")
 def renderer(request):
@@ -181,6 +219,188 @@ def test_render_model_pipeline():
     set_offscreen(rndr)
     rndr.combo_name = list(model.load_combos.keys())[0]
     rndr.render_model(interact=False)
+
+
+def test_annotation_size_auto_two_nodes():
+    m = minimal_model([("N1", 0, 0, 0), ("N2", 10, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    # Shortest distance is 10, so auto size should be 0.5
+    assert rndr.annotation_size == pytest.approx(0.5)
+
+
+def test_annotation_size_auto_single_node():
+    m = minimal_model([("N1", 0, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    # Fallback for insufficient nodes
+    assert rndr.annotation_size == 5.0
+
+
+def test_annotation_size_auto_colocated_nodes():
+    m = minimal_model([("N1", 0, 0, 0), ("N2", 0, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    # Fallback when all nodes share the same position
+    assert rndr.annotation_size == 5.0
+
+
+def test_annotation_size_manual_override():
+    m = minimal_model([("N1", 0, 0, 0), ("N2", 10, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    rndr.annotation_size = 12.0
+    assert rndr.annotation_size == 12.0
+
+
+def test_case_combo_mutual_exclusion():
+    m = minimal_model([("N1", 0, 0, 0), ("N2", 10, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    rndr.combo_name = "Combo A"
+    assert rndr.combo_name == "Combo A"
+    assert rndr.case is None
+
+    rndr.case = "D"
+    assert rndr.case == "D"
+    assert rndr.combo_name is None
+
+    rndr.combo_name = "Combo B"
+    assert rndr.combo_name == "Combo B"
+    assert rndr.case is None
+
+
+@pytest.mark.parametrize("diagram", ["Fy", "Fz", "My", "Mz", "Fx", "Tx", None])
+def test_member_diagrams_valid_values(diagram):
+    m = minimal_model([("N1", 0, 0, 0), ("N2", 10, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    rndr.member_diagrams = diagram
+    assert rndr.member_diagrams == diagram
+
+
+def test_member_diagrams_invalid_value():
+    m = minimal_model([("N1", 0, 0, 0), ("N2", 10, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    with pytest.raises(ValueError):
+        rndr.member_diagrams = "BadValue"
+
+
+def test_window_size_setter():
+    m = minimal_model([("N1", 0, 0, 0), ("N2", 10, 0, 0)])
+    rndr = VTKRenderer(m)
+
+    rndr.window_size = (800, 600)
+    assert rndr.window_size == (800, 600)
+
+
+def test_visnode_support_fixed_and_pinned():
+    m = FEModel3D()
+    m.add_node("N1", 0, 0, 0)
+    m.add_node("N2", 10, 0, 0)
+
+    m.def_support("N1", True, True, True, True, True, True)
+    m.def_support("N2", True, True, True, False, False, False)
+
+    node_fixed = VTKVis.VisNode(m.nodes["N1"], annotation_size=2)
+    node_pinned = VTKVis.VisNode(m.nodes["N2"], annotation_size=2)
+
+    fixed_cells = node_fixed.polydata.GetOutput().GetNumberOfCells()
+    pinned_cells = node_pinned.polydata.GetOutput().GetNumberOfCells()
+    assert fixed_cells > 0
+    assert pinned_cells > 0
+
+
+@pytest.mark.parametrize(
+    "support_flags",
+    [
+        (True, False, False, False, False, False),
+        (False, True, False, False, False, False),
+        (False, False, True, False, False, False),
+        (False, False, False, True, False, False),
+        (False, False, False, False, True, False),
+        (False, False, False, False, False, True),
+    ],
+)
+def test_visnode_support_partial_conditions(support_flags):
+    m = FEModel3D()
+    m.add_node("N1", 0, 0, 0)
+    m.def_support("N1", *support_flags)
+
+    node_plain = VTKVis.VisNode(m.nodes["N1"], annotation_size=2)
+    cell_count = node_plain.polydata.GetOutput().GetNumberOfCells()
+    assert cell_count > 0
+
+
+def test_member_end_release_visuals():
+    m = FEModel3D()
+    m.add_node("N1", 0, 0, 0)
+    m.add_node("N2", 10, 0, 0)
+    m.add_material("Steel", 29000/144, 11200/144, 0.3, 0.49, 36/144)
+    m.add_section("Rect", 20, 100, 200, 150)
+    m.add_member("M1", "N1", "N2", "Steel", "Rect")
+
+    member = m.members["M1"]
+    member.Releases[4] = True
+    member.Releases[5] = True
+    member.Releases[10] = True
+    member.Releases[11] = True
+
+    vis_member = VTKVis.VisMember(member, m.nodes, annotation_size=2)
+    assert len(vis_member.release_actors) == 4
+
+
+def test_member_end_release_none():
+    m = FEModel3D()
+    m.add_node("N1", 0, 0, 0)
+    m.add_node("N2", 10, 0, 0)
+    m.add_material("Steel", 29000/144, 11200/144, 0.3, 0.49, 36/144)
+    m.add_section("Rect", 20, 100, 200, 150)
+    m.add_member("M1", "N1", "N2", "Steel", "Rect")
+
+    vis_member = VTKVis.VisMember(m.members["M1"], m.nodes, annotation_size=2)
+    assert vis_member.release_actors == []
+
+
+def test_render_nodal_loads():
+    m = FEModel3D()
+    m.add_node("N1", 0, 0, 0)
+    m.def_support("N1", True, True, True, True, True, True)
+
+    for direction, value in [
+        ("FX", 10),
+        ("FY", -15),
+        ("FZ", 5),
+        ("MX", 8),
+        ("MY", -4),
+        ("MZ", 2),
+    ]:
+        m.add_node_load("N1", direction, value, case="D")
+
+    m.add_load_combo("Combo 1", {"D": 1.0})
+    renderer = vtk.vtkRenderer()
+
+    VTKVis._RenderLoads(m, renderer, annotation_size=2, combo_name="Combo 1", case=None)
+    assert renderer.GetActors().GetNumberOfItems() >= 7
+
+
+@pytest.mark.parametrize("diagram_type", ["Fy", "Fz", "My", "Mz", "Fx", "Tx"])
+def test_render_member_diagrams(diagram_model, diagram_type):
+    renderer = vtk.vtkRenderer()
+
+    VTKVis._RenderMemberDiagrams(
+        diagram_model,
+        renderer,
+        diagram_type,
+        scale_factor=10,
+        combo_name="Combo 1",
+        case=None,
+        theme="default",
+        annotation_size=2,
+    )
+
+    assert renderer.GetActors().GetNumberOfItems() > 0
 
 
 # ============================================================================
