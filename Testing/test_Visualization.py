@@ -454,6 +454,69 @@ def test_screenshot_to_file(renderer, tmp_path):
 
 
 # ============================================================================
+# Unit tests for _PrepContour (no rendering required)
+# ============================================================================
+
+def test_prep_contour_dz_quad():
+    """Verify that _PrepContour correctly assigns local DZ displacements to the
+    matching nodes for quadrilateral elements.  Previously, the Quad branch used
+    wrong indices ([[14, 20, 2, 8]]) that swapped node assignments."""
+
+    from Pynite.Visualization import _PrepContour
+
+    model = FEModel3D()
+    model.add_material('Mat', E=30000, G=10000, nu=0.3, rho=0.3)
+    model.add_node('N1', 0, 0, 0)    # i-node
+    model.add_node('N2', 10, 0, 0)   # j-node
+    model.add_node('N3', 10, 10, 0)  # m-node
+    model.add_node('N4', 0, 10, 0)   # n-node
+    model.add_quad('Q1', 'N1', 'N2', 'N3', 'N4', 1.0, 'Mat')
+
+    # Fix the two i/j edge nodes; let the m/n nodes deflect freely.
+    model.def_support('N1', True, True, True, True, True, True)
+    model.def_support('N2', True, True, True, True, True, True)
+
+    # Apply different loads at the two free nodes so their DZ values differ.
+    model.add_node_load('N3', 'FZ', -3)
+    model.add_node_load('N4', 'FZ', -1)
+    model.add_load_combo('Combo 1', {'Case 1': 1.0})
+    model.analyze_linear()
+
+    _PrepContour(model, 'dz', 'Combo 1')
+
+    for name, node in model.nodes.items():
+        assert abs(node.contour - node.DZ['Combo 1']) < 1e-10, (
+            f"Node {name}: contour={node.contour}, DZ={node.DZ['Combo 1']}"
+        )
+
+
+def test_prep_contour_empty_nodes():
+    """Verify that _PrepContour does not raise a ZeroDivisionError for nodes
+    not connected to any plate or quad element."""
+
+    from Pynite.Visualization import _PrepContour
+
+    model = FEModel3D()
+    model.add_node('N1', 0, 0, 0)
+    model.add_node('N2', 10, 0, 0)
+    model.add_material('Steel', 29000, 11200, 0.3, 0.3)
+    model.add_section('S', 10, 100, 200, 1)
+    model.add_member('M1', 'N1', 'N2', 'Steel', 'S')
+    model.def_support('N1', True, True, True, True, True, True)
+    model.def_support('N2', True, True, True, True, True, True)
+    model.add_node_load('N2', 'FY', -10)
+    model.add_load_combo('Combo 1', {'Case 1': 1.0})
+    model.analyze_linear()
+
+    # Should complete without error even though no nodes have plate/quad connections.
+    _PrepContour(model, 'Mx', 'Combo 1')
+
+    # Nodes with no plate/quad connections retain an empty contour list.
+    for node in model.nodes.values():
+        assert node.contour == [], f"Expected empty contour for {node.name}"
+
+
+# ============================================================================
 # Manual entry point for running tests in an IDE
 # ============================================================================
 
