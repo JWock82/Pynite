@@ -1599,12 +1599,9 @@ def _PrepContour(model, stress_type='Mx', combo_name='Combo 1'):
 
             # Determine which stress result has been requested by the user
             if stress_type == 'dz':
-                # Internally Pynite defines the nodes for a rectangular element in the order (i, j, m, n),
-                # while it defines the nodes for a quadrilateral element in the order (m, n, i, j)
-                if element.type == 'Rect':
-                    i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
-                else:
-                    i, j, m, n = element.d(combo_name)[[14, 20, 2, 8], :]
+                # Both rectangular and quadrilateral elements store local displacements in the
+                # order (i, j, m, n) in their d() vectors. Local DZ is at indices 2, 8, 14, 20.
+                i, j, m, n = element.d(combo_name)[[2, 8, 14, 20], :]
                 element.i_node.contour.append(i)
                 element.j_node.contour.append(j)
                 element.m_node.contour.append(m)
