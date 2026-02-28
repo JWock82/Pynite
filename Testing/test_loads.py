@@ -109,3 +109,26 @@ class TestLoads(unittest.TestCase):
             with self.subTest(node=node_name):
                 rxn = Beam.nodes[node_name].RxnFX['Combo 1']
                 self.assertAlmostEqual(rxn/-25.0, 1.0, 2)
+
+    def test_load_cases_include_shear_wall_helper_loads(self):
+
+        model = FEModel3D()
+        model.add_material('Concrete', 3600*144, 1500*144, 0.17, 0.150)
+
+        model.add_shear_wall('SW1', mesh_size=2, length=12, height=10, thickness=1, material_name='Concrete')
+        model.shear_walls['SW1'].add_shear('Level 1', 100, case='SW_Lateral')
+        model.shear_walls['SW1'].add_axial('Level 1', 50, case='SW_Axial')
+
+        self.assertIn('SW_Lateral', model.load_cases)
+        self.assertIn('SW_Axial', model.load_cases)
+
+    def test_load_cases_include_mat_foundation_helper_loads(self):
+
+        model = FEModel3D()
+        model.add_material('Concrete', 3600*144, 1500*144, 0.17, 0.150)
+
+        model.add_mat_foundation('MAT1', mesh_size=2, length_X=20, length_Z=20,
+                                 thickness=1, material_name='Concrete', ks=100)
+        model.mats['MAT1'].add_mat_pt_load([5, 5], 'FY', -25, case='MAT_Point')
+
+        self.assertIn('MAT_Point', model.load_cases)

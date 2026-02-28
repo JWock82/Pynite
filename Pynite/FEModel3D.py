@@ -194,6 +194,25 @@ class FEModel3D():
                 # Get the load case for each plate/quad pressure
                 cases.append(load[1])
 
+        # Step through each shear wall helper
+        for shear_wall in self.shear_walls.values():
+            # Step through each shear wall shear load
+            for load in shear_wall._shears:
+                # Get the load case for each shear wall shear
+                cases.append(load[2])
+
+            # Step through each shear wall axial load
+            for load in shear_wall._axials:
+                # Get the load case for each shear wall axial
+                cases.append(load[2])
+
+        # Step through each mat foundation helper
+        for mat in self.mats.values():
+            # Step through each mat point load
+            for load in mat.pt_loads:
+                # Get the load case for each mat point load
+                cases.append(load[3])
+
         # Remove duplicates and return the list (sorted ascending)
         return sorted(list(dict.fromkeys(cases)))
 
