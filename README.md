@@ -69,6 +69,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 v2.2.2 (in progress)
+* Bug fix: Added shear wall and mat foundation load cases to `FEModel3D.load_cases()`. The list of load cases was sometimes incomplete if these meshes had not yet been generated.
 * Added bending moment end releases to visualizations.
 * Bug fix for shear walls with flanges having an origin with their origin at Y != 0.
 * Rectangular meshes now filter out user defined control points that erroneously lie outside their boudaries.
