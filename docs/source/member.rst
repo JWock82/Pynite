@@ -206,6 +206,84 @@ Axial force and torque are also available, as well as array helpers for sampling
     # Maximum torque in a combination
     Tmax = my_model.members['M1'].max_torque('D+L')
 
+Enveloped Results
+=================
+
+Pynite supports enveloped results across multiple load combinations using **combo tags**. When defining load combinations, you can assign tags to categorize them (e.g. ``'Strength'``, ``'Service'``). You can then pass a list of tags to any ``max_*`` or ``min_*`` method, and Pynite will return the envelope (maximum or minimum) across all combinations that match any of the given tags.
+
+First, assign tags when creating load combinations:
+
+.. code-block:: python
+
+    # Create tagged load combinations
+    my_model.add_load_combo('1.4D', {'D': 1.4}, combo_tags=['Strength'])
+    my_model.add_load_combo('1.2D+1.6L', {'D': 1.2, 'L': 1.6}, combo_tags=['Strength'])
+    my_model.add_load_combo('1.2D+1.6S', {'D': 1.2, 'S': 1.6}, combo_tags=['Strength'])
+    my_model.add_load_combo('D+L', {'D': 1.0, 'L': 1.0}, combo_tags=['Service'])
+    my_model.add_load_combo('D+S', {'D': 1.0, 'S': 1.0}, combo_tags=['Service'])
+
+Then pass a list of tags to retrieve the envelope:
+
+.. code-block:: python
+
+    # Get the maximum strong-axis shear across all 'Strength' combinations
+    Vmax = my_model.members['M1'].max_shear('Fy', ['Strength'])
+
+    # Get the minimum strong-axis moment across all 'Strength' combinations
+    Mmin = my_model.members['M1'].min_moment('Mz', ['Strength'])
+
+    # Get the maximum deflection across all 'Service' combinations
+    dmax = my_model.members['M1'].max_deflection('dy', ['Service'])
+
+    # Get the minimum axial force across all 'Strength' combinations
+    Pmin = my_model.members['M1'].min_axial(['Strength'])
+
+    # Get the maximum torque across all 'Strength' combinations
+    Tmax = my_model.members['M1'].max_torque(['Strength'])
+
+You can also pass multiple tags at once. Any combination that has **any** of the provided tags will be included in the envelope:
+
+.. code-block:: python
+
+    # Envelope across all combinations tagged 'Strength' or 'Service'
+    Vmax = my_model.members['M1'].max_shear('Fy', ['Strength', 'Service'])
+
+The following methods support enveloped results via ``combo_tags``:
+
+- ``max_shear(Direction, combo_tags)`` / ``min_shear(Direction, combo_tags)``
+- ``max_moment(Direction, combo_tags)`` / ``min_moment(Direction, combo_tags)``
+- ``max_axial(combo_tags)`` / ``min_axial(combo_tags)``
+- ``max_torque(combo_tags)`` / ``min_torque(combo_tags)``
+- ``max_deflection(Direction, combo_tags)`` / ``min_deflection(Direction, combo_tags)``
+
+Envelope Diagrams
+-----------------
+
+The plotting methods (``plot_shear``, ``plot_moment``, ``plot_deflection``, ``plot_axial``, ``plot_torque``) also support envelope plotting. Pass a list of combo tags instead of a single combo name and the plot will show each individual combination curve along with thick max/min envelope lines:
+
+.. code-block:: python
+
+    # Plot the strong-axis moment envelope across all 'Strength' combos
+    my_model.members['M1'].plot_moment('Mz', ['Strength'], n_points=100)
+
+    # Plot the shear envelope across all 'Strength' combos
+    my_model.members['M1'].plot_shear('Fy', ['Strength'], n_points=100)
+
+    # Plot the deflection envelope across all 'Service' combos
+    my_model.members['M1'].plot_deflection('dy', ['Service'], n_points=100)
+
+    # Plot the axial force envelope across all 'Strength' combos
+    my_model.members['M1'].plot_axial(['Strength'], n_points=100)
+
+    # Plot the torque envelope across all 'Strength' combos
+    my_model.members['M1'].plot_torque(['Strength'], n_points=100)
+
+.. note::
+
+   When a single string is passed (e.g. ``'1.4D'``), it is treated as a specific load combination
+   name. When a list is passed (e.g. ``['Strength']``), each item is treated as a tag, and all
+   combinations matching any of the tags are enveloped.
+
 Tips and Patterns
 =================
 
@@ -235,29 +313,31 @@ Member API Quick Reference
 
 - Shear
   - ``shear(Direction, x, combo_name='Combo 1')`` where ``Direction`` ∈ {``'Fy'``, ``'Fz'``}
-  - ``max_shear(Direction, combo_name='Combo 1')``, ``min_shear(...)``
+  - ``max_shear(Direction, combo_tags='Combo 1')``, ``min_shear(...)`` — pass a list of tags (e.g. ``['Strength']``) to envelope across combos
   - ``shear_array(Direction, n_points, combo_name='Combo 1', x_array=None)``
 
 - Moment
   - ``moment(Direction, x, combo_name='Combo 1')`` where ``Direction`` ∈ {``'My'``, ``'Mz'``}
-  - ``max_moment(Direction, combo_name='Combo 1')``, ``min_moment(...)``
+  - ``max_moment(Direction, combo_tags='Combo 1')``, ``min_moment(...)`` — pass a list of tags to envelope across combos
   - ``moment_array(Direction, n_points, combo_name='Combo 1', x_array=None)``
 
 - Axial and Torque
-  - ``axial(x, combo_name='Combo 1')``, ``max_axial(...)``, ``min_axial(...)``
+  - ``axial(x, combo_name='Combo 1')``, ``max_axial(combo_tags)``, ``min_axial(combo_tags)`` — pass a list of tags to envelope
   - ``axial_array(n_points, combo_name='Combo 1', x_array=None)``
-  - ``torque(x, combo_name='Combo 1')``, ``max_torque(...)``, ``min_torque(...)``
+  - ``torque(x, combo_name='Combo 1')``, ``max_torque(combo_tags)``, ``min_torque(combo_tags)`` — pass a list of tags to envelope
   - ``torque_array(n_points, combo_name='Combo 1', x_array=None)``
 
 - Deflection
   - ``deflection(Direction, x, combo_name='Combo 1')`` where ``Direction`` ∈ {``'dx'``, ``'dy'``, ``'dz'``}
-  - ``max_deflection(Direction, combo_name='Combo 1')``, ``min_deflection(...)``
+  - ``max_deflection(Direction, combo_tags='Combo 1')``, ``min_deflection(...)`` — pass a list of tags to envelope across combos
   - ``deflection_array(Direction, n_points, combo_name='Combo 1', x_array=None)``
 
 - Plotting
-  - ``plot_shear(Direction, combo_name='Combo 1', n_points=20)`` where ``Direction`` ∈ {``'Fy'``, ``'Fz'``}
-  - ``plot_moment(Direction, combo_name='Combo 1', n_points=20)`` where ``Direction`` ∈ {``'My'``, ``'Mz'``}
-  - ``plot_deflection(Direction, combo_name='Combo 1', n_points=20)`` where ``Direction`` ∈ {``'dx'``, ``'dy'``, ``'dz'``}
+  - ``plot_shear(Direction, combo_name='Combo 1', n_points=20)`` — pass a list of tags to get an envelope diagram
+  - ``plot_moment(Direction, combo_name='Combo 1', n_points=20)`` — pass a list of tags to get an envelope diagram
+  - ``plot_deflection(Direction, combo_name='Combo 1', n_points=20)`` — pass a list of tags to get an envelope diagram
+  - ``plot_axial(combo_name='Combo 1', n_points=20)`` — pass a list of tags to get an envelope diagram
+  - ``plot_torque(combo_name='Combo 1', n_points=20)`` — pass a list of tags to get an envelope diagram
 
 Worked Example
 =================
@@ -314,6 +394,20 @@ API Reference
              axial, max_axial, min_axial, axial_array,
              torque, max_torque, min_torque, torque_array,
              deflection, max_deflection, min_deflection, deflection_array,
-             plot_shear, plot_moment, plot_deflection, L
+             rel_deflection,
+             plot_shear, plot_moment, plot_deflection, plot_axial, plot_torque,
+             L, descritize, find_member
    :undoc-members:
    :show-inheritance:
+
+.. autoclass:: Pynite.Member3D.Member3D
+   :members: shear, max_shear, min_shear, shear_array,
+             moment, max_moment, min_moment, moment_array,
+             axial, max_axial, min_axial, axial_array,
+             torque, max_torque, min_torque, torque_array,
+             deflection, max_deflection, min_deflection, deflection_array,
+             plot_shear, plot_moment, plot_deflection, plot_axial, plot_torque,
+             L
+   :undoc-members:
+   :show-inheritance:
+   :noindex:

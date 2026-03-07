@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Literal, Union, List
 from math import isclose
 
 from numpy import array, zeros, add, subtract, matmul, insert, dot, cross, divide, count_nonzero, concatenate
-from numpy import linspace, vstack, hstack, allclose, radians, sin, cos
+from numpy import linspace, vstack, hstack, allclose, radians, sin, cos, maximum, minimum
 from numpy.linalg import inv, pinv, norm
 
 import Pynite.FixedEndReactions
@@ -1292,42 +1292,62 @@ class Member3D():
         # Return 0 if no valid combos were found
         return Vmin_global if Vmin_global is not None else 0
 
-    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the shear diagram for the member
+        Plots the shear diagram for the member.
 
         Parameters
         ----------
         Direction : string
-            The direction in which to find the moment. Must be one of the following:
+            The direction in which to plot the shear force. Must be one of the following:
                 'Fy' = Shear acting on the local y-axis.
                 'Fz' = Shear acting on the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
-
-        # Segment the member if necessary
-        if self._solved_combo is None or combo_name != self._solved_combo.name:
-            self._segment_member(combo_name)
-            self._solved_combo = self.model.load_combos[combo_name]
 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        x, V = self.shear_array(Direction, n_points, combo_name)
+        if len(combo_names) == 1:
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_names[0] != self._solved_combo.name:
+                self._segment_member(combo_names[0])
+                self._solved_combo = self.model.load_combos[combo_names[0]]
+            x, V = self.shear_array(Direction, n_points, combo_names[0])
+            ax.plot(x, V)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, V = self.shear_array(Direction, n_points, name)
+                ax.plot(x, V, label=name)
+                env_max = V if env_max is None else maximum(env_max, V)
+                env_min = V if env_min is None else minimum(env_min, V)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        Member3D.__plt.plot(x, V)
-        Member3D.__plt.ylabel('Shear')
-        Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Shear')
+        ax.set_xlabel('Location')
         Member3D.__plt.show()
 
     def shear_array(self, Direction: Literal['Fy', 'Fz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
@@ -1581,9 +1601,9 @@ class Member3D():
         return Mmin_global if Mmin_global is not None else 0
 
 
-    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the moment diagram for the member
+        Plots the moment diagram for the member.
 
         Parameters
         ----------
@@ -1591,33 +1611,52 @@ class Member3D():
             The direction in which to plot the moment. Must be one of the following:
                 'My' = Moment about the local y-axis.
                 'Mz' = moment about the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
-
-        # Segment the member if necessary
-        if self._solved_combo is None or combo_name != self._solved_combo.name:
-            self._segment_member(combo_name)
-            self._solved_combo = self.model.load_combos[combo_name]
 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        # Generate the moment diagram coordinates
-        x, M = self.moment_array(Direction, n_points, combo_name)
+        if len(combo_names) == 1:
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_names[0] != self._solved_combo.name:
+                self._segment_member(combo_names[0])
+                self._solved_combo = self.model.load_combos[combo_names[0]]
+            x, M = self.moment_array(Direction, n_points, combo_names[0])
+            ax.plot(x, M)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, M = self.moment_array(Direction, n_points, name)
+                ax.plot(x, M, label=name)
+                env_max = M if env_max is None else maximum(env_max, M)
+                env_min = M if env_min is None else minimum(env_min, M)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        Member3D.__plt.plot(x, M)
-        Member3D.__plt.ylabel('Moment')
-        Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Moment')
+        ax.set_xlabel('Location')
         Member3D.__plt.show()
 
     def moment_array(self, Direction: Literal['My', 'Mz'], n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
@@ -1825,38 +1864,58 @@ class Member3D():
         # Return global minimum or 0 if nothing found
         return Tmin_global if Tmin_global is not None else 0
 
-    def plot_torque(self, combo_name='Combo 1', n_points=20):
+    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the torque diagram for the member.
 
-        Paramters
-        ---------
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        Parameters
+        ----------
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
-
-        # Segment the member if necessary
-        if self._solved_combo is None or combo_name != self._solved_combo.name:
-            self._segment_member(combo_name)
-            self._solved_combo = self.model.load_combos[combo_name]
 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        x, T = self.torque_array(n_points, combo_name)
+        if len(combo_names) == 1:
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_names[0] != self._solved_combo.name:
+                self._segment_member(combo_names[0])
+                self._solved_combo = self.model.load_combos[combo_names[0]]
+            x, T = self.torque_array(n_points, combo_names[0])
+            ax.plot(x, T)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, T = self.torque_array(n_points, name)
+                ax.plot(x, T, label=name)
+                env_max = T if env_max is None else maximum(env_max, T)
+                env_min = T if env_min is None else minimum(env_min, T)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        Member3D.__plt.plot(x, T)
-        Member3D.__plt.ylabel('Torsional Moment (Warping Torsion Not Included)') # Torsion results are for pure torsion. Torsional warping has not been considered
-        Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Torsional Moment (Warping Torsion Not Included)')
+        ax.set_xlabel('Location')
         Member3D.__plt.show()
 
     def torque_array(self, n_points, combo_name='Combo 1', x_array = None) -> NDArray[float64]:
@@ -2039,38 +2098,58 @@ class Member3D():
         # Return the global minimum, or 0 if nothing was found
         return Pmin_global if Pmin_global is not None else 0
 
-    def plot_axial(self, combo_name: str = 'Combo 1', n_points=20) -> None:
+    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
         Plots the axial force diagram for the member.
 
         Parameters
         ----------
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
-
-        # Segment the member if necessary
-        if self._solved_combo is None or combo_name != self._solved_combo.name:
-            self._segment_member(combo_name)
-            self._solved_combo = self.model.load_combos[combo_name]
 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        x, P = self.axial_array(n_points, combo_name)
+        if len(combo_names) == 1:
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_names[0] != self._solved_combo.name:
+                self._segment_member(combo_names[0])
+                self._solved_combo = self.model.load_combos[combo_names[0]]
+            x, P = self.axial_array(n_points, combo_names[0])
+            ax.plot(x, P)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, P = self.axial_array(n_points, name)
+                ax.plot(x, P, label=name)
+                env_max = P if env_max is None else maximum(env_max, P)
+                env_min = P if env_min is None else minimum(env_min, P)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        Member3D.__plt.plot(x, P)
-        Member3D.__plt.ylabel('Axial Force')
-        Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Axial Force')
+        ax.set_xlabel('Location')
         Member3D.__plt.show()
 
     def axial_array(self, n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
@@ -2309,43 +2388,63 @@ class Member3D():
         # Return global minimum or 0 if nothing found
         return dmin_global if dmin_global is not None else 0
 
-    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the deflection diagram for the member
+        Plots the deflection diagram for the member.
 
         Parameters
         ----------
         Direction : string
-            The direction in which to find the deflection. Must be one of the following:
+            The direction in which to plot the deflection. Must be one of the following:
                 'dx' = Deflection in the local x-axis.
                 'dy' = Deflection in the local y-axis.
                 'dz' = Deflection in the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
-
-        # Segment the member if necessary
-        if self._solved_combo is None or combo_name != self._solved_combo.name:
-            self._segment_member(combo_name)
-            self._solved_combo = self.model.load_combos[combo_name]
 
         # Import 'pyplot' if not already done
         if Member3D.__plt is None:
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        x, d = self.deflection_array(Direction, n_points, combo_name)
+        if len(combo_names) == 1:
+            # Segment the member if necessary
+            if self._solved_combo is None or combo_names[0] != self._solved_combo.name:
+                self._segment_member(combo_names[0])
+                self._solved_combo = self.model.load_combos[combo_names[0]]
+            x, d = self.deflection_array(Direction, n_points, combo_names[0])
+            ax.plot(x, d)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, d = self.deflection_array(Direction, n_points, name)
+                ax.plot(x, d, label=name)
+                env_max = d if env_max is None else maximum(env_max, d)
+                env_min = d if env_min is None else minimum(env_min, d)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        Member3D.__plt.plot(x, d)
-        Member3D.__plt.ylabel('Deflection')
-        Member3D.__plt.xlabel('Location')
-        Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Deflection')
+        ax.set_xlabel('Location')
         Member3D.__plt.show()
 
     def deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:

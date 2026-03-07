@@ -1,5 +1,5 @@
 from __future__ import annotations # Allows more recent type hints features
-from typing import Dict, List, Literal, Tuple, TYPE_CHECKING
+from typing import Dict, List, Literal, Tuple, Union, TYPE_CHECKING
 from Pynite.Member3D import Member3D
 
 if TYPE_CHECKING:
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from numpy import float64
     from numpy.typing import NDArray
 
-from numpy import array, dot, linspace, hstack, empty
+from numpy import array, dot, linspace, hstack, empty, maximum, minimum
 from numpy.linalg import norm
 from math import isclose, acos
 
@@ -257,9 +257,9 @@ class PhysMember(Member3D):
                 Vmin = V
         return Vmin
 
-    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the shear diagram for the member
+        Plots the shear diagram for the member.
 
         Parameters
         ----------
@@ -267,8 +267,10 @@ class PhysMember(Member3D):
             The direction in which to plot the shear force. Must be one of the following:
                 'Fy' = Shear in the local y-axis.
                 'Fz' = Shear in the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
@@ -278,19 +280,35 @@ class PhysMember(Member3D):
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        # Generate the shear diagram
-        V_array = self.shear_array(Direction, n_points, combo_name)
-        x = V_array[0]
-        V = V_array[1]
+        if len(combo_names) == 1:
+            x, V = self.shear_array(Direction, n_points, combo_names[0])
+            ax.plot(x, V)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, V = self.shear_array(Direction, n_points, name)
+                ax.plot(x, V, label=name)
+                env_max = V if env_max is None else maximum(env_max, V)
+                env_min = V if env_min is None else minimum(env_min, V)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        PhysMember.__plt.plot(x, V)
-        PhysMember.__plt.ylabel('Shear')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Shear')
+        ax.set_xlabel('Location')
         PhysMember.__plt.show()
 
     def shear_array(self, Direction: Literal['Fy', 'Fz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
@@ -429,19 +447,20 @@ class PhysMember(Member3D):
                 Mmin = M
         return Mmin
 
-    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the moment diagram for the member
+        Plots the moment diagram for the member.
 
         Parameters
         ----------
-
         Direction : string
             The direction in which to plot the moment. Must be one of the following:
                 'My' = Moment about the local y-axis.
-                'Mz' = moment about the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+                'Mz' = Moment about the local z-axis.
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
@@ -451,19 +470,35 @@ class PhysMember(Member3D):
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        # Generate the moment diagram
-        M_array = self.moment_array(Direction, n_points, combo_name)
-        x = M_array[0]
-        M = M_array[1]
+        if len(combo_names) == 1:
+            x, M = self.moment_array(Direction, n_points, combo_names[0])
+            ax.plot(x, M)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, M = self.moment_array(Direction, n_points, name)
+                ax.plot(x, M, label=name)
+                env_max = M if env_max is None else maximum(env_max, M)
+                env_min = M if env_min is None else minimum(env_min, M)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        PhysMember.__plt.plot(x, M)
-        PhysMember.__plt.ylabel('Moment')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Moment')
+        ax.set_xlabel('Location')
         PhysMember.__plt.show()
 
     def moment_array(self, Direction: Literal['My', 'Mz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
@@ -589,14 +624,16 @@ class PhysMember(Member3D):
                 Tmin = T
         return Tmin
 
-    def plot_torque(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the torque diagram for the member
+        Plots the torque diagram for the member.
 
         Parameters
         ----------
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
@@ -606,19 +643,35 @@ class PhysMember(Member3D):
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        # Generate the torque diagram
-        T_array = self.torque_array(n_points, combo_name)
-        x = T_array[0]
-        T = T_array[1]
+        if len(combo_names) == 1:
+            x, T = self.torque_array(n_points, combo_names[0])
+            ax.plot(x, T)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, T = self.torque_array(n_points, name)
+                ax.plot(x, T, label=name)
+                env_max = T if env_max is None else maximum(env_max, T)
+                env_min = T if env_min is None else minimum(env_min, T)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        PhysMember.__plt.plot(x, T)
-        PhysMember.__plt.ylabel('Torque')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Torque')
+        ax.set_xlabel('Location')
         PhysMember.__plt.show()
 
     def torque_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
@@ -721,14 +774,16 @@ class PhysMember(Member3D):
                 Pmin = P
         return Pmin
 
-    def plot_axial(self, combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the axial force diagram for the member
+        Plots the axial force diagram for the member.
 
         Parameters
         ----------
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
@@ -738,19 +793,35 @@ class PhysMember(Member3D):
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        # Generate the axial force array
-        P_array = self.axial_array(n_points, combo_name)
-        x = P_array[0]
-        P = P_array[1]
+        if len(combo_names) == 1:
+            x, P = self.axial_array(n_points, combo_names[0])
+            ax.plot(x, P)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, P = self.axial_array(n_points, name)
+                ax.plot(x, P, label=name)
+                env_max = P if env_max is None else maximum(env_max, P)
+                env_min = P if env_min is None else minimum(env_min, P)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        PhysMember.__plt.plot(x, P)
-        PhysMember.__plt.ylabel('Axial Force')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Axial')
+        ax.set_xlabel('Location')
         PhysMember.__plt.show()
 
     def axial_array(self, n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
@@ -897,9 +968,9 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.rel_deflection(Direction, x_mod, combo_name)
 
-    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
-        Plots the deflection diagram for the member
+        Plots the deflection diagram for the member.
 
         Parameters
         ----------
@@ -907,8 +978,10 @@ class PhysMember(Member3D):
             The direction in which to plot the deflection. Must be one of the following:
                 'dy' = Deflection in the local y-axis.
                 'dz' = Deflection in the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        combo_name : string or list of strings
+            A single load combination name, or a list of combo tags. When a
+            list of tags is provided, each matching combo is plotted and a
+            max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
         """
@@ -918,18 +991,35 @@ class PhysMember(Member3D):
             from matplotlib import pyplot as plt
             PhysMember.__plt = plt
 
+        if isinstance(combo_name, str):
+            combo_names = [combo_name]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_name)]
+
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
-        d_array = self.deflection_array(Direction, n_points, combo_name)
-        x = d_array[0]
-        d = d_array[1]
+        if len(combo_names) == 1:
+            x, d = self.deflection_array(Direction, n_points, combo_names[0])
+            ax.plot(x, d)
+            ax.set_title('Member ' + self.name + '\n' + combo_names[0])
+        else:
+            env_max = None
+            env_min = None
+            for name in combo_names:
+                x, d = self.deflection_array(Direction, n_points, name)
+                ax.plot(x, d, label=name)
+                env_max = d if env_max is None else maximum(env_max, d)
+                env_min = d if env_min is None else minimum(env_min, d)
+            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
+            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.legend(fontsize='small')
+            ax.set_title('Member ' + self.name + '\nEnvelope')
 
-        PhysMember.__plt.plot(x, d)
-        PhysMember.__plt.ylabel('Deflection')
-        PhysMember.__plt.xlabel('Location')
-        PhysMember.__plt.title('Member ' + self.name + '\n' + combo_name)
+        ax.set_ylabel('Deflection')
+        ax.set_xlabel('Location')
         PhysMember.__plt.show()
 
     def deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name='Combo 1', x_array=None) -> NDArray[float64]:
