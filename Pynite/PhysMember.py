@@ -341,11 +341,10 @@ class PhysMember(Member3D):
             env_min = None
             for name in combo_names:
                 x, V = self.shear_array(Direction, n_points, name)
-                ax.plot(x, V, label=name)
                 env_max = V if env_max is None else maximum(env_max, V)
                 env_min = V if env_min is None else minimum(env_min, V)
-            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
-            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.plot(x, env_max, color='green', lw=2, label='Max Envelope')
+            ax.plot(x, env_min, color='red', lw=2, label='Min Envelope')
             ax.legend(fontsize='small')
             ax.set_title('Member ' + self.name + '\nEnvelope')
 
@@ -573,11 +572,10 @@ class PhysMember(Member3D):
             env_min = None
             for name in combo_names:
                 x, M = self.moment_array(Direction, n_points, name)
-                ax.plot(x, M, label=name)
                 env_max = M if env_max is None else maximum(env_max, M)
                 env_min = M if env_min is None else minimum(env_min, M)
-            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
-            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.plot(x, env_max, color='green', lw=2, label='Max Envelope')
+            ax.plot(x, env_min, color='red', lw=2, label='Min Envelope')
             ax.legend(fontsize='small')
             ax.set_title('Member ' + self.name + '\nEnvelope')
 
@@ -796,11 +794,10 @@ class PhysMember(Member3D):
             env_min = None
             for name in combo_names:
                 x, T = self.torque_array(n_points, name)
-                ax.plot(x, T, label=name)
                 env_max = T if env_max is None else maximum(env_max, T)
                 env_min = T if env_min is None else minimum(env_min, T)
-            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
-            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.plot(x, env_max, color='green', lw=2, label='Max Envelope')
+            ax.plot(x, env_min, color='red', lw=2, label='Min Envelope')
             ax.legend(fontsize='small')
             ax.set_title('Member ' + self.name + '\nEnvelope')
 
@@ -1004,11 +1001,10 @@ class PhysMember(Member3D):
             env_min = None
             for name in combo_names:
                 x, P = self.axial_array(n_points, name)
-                ax.plot(x, P, label=name)
                 env_max = P if env_max is None else maximum(env_max, P)
                 env_min = P if env_min is None else minimum(env_min, P)
-            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
-            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.plot(x, env_max, color='green', lw=2, label='Max Envelope')
+            ax.plot(x, env_min, color='red', lw=2, label='Min Envelope')
             ax.legend(fontsize='small')
             ax.set_title('Member ' + self.name + '\nEnvelope')
 
@@ -1244,11 +1240,10 @@ class PhysMember(Member3D):
             env_min = None
             for name in combo_names:
                 x, d = self.deflection_array(Direction, n_points, name)
-                ax.plot(x, d, label=name)
                 env_max = d if env_max is None else maximum(env_max, d)
                 env_min = d if env_min is None else minimum(env_min, d)
-            ax.plot(x, env_max, color='green', alpha=0.4, lw=3, label='Max Envelope')
-            ax.plot(x, env_min, color='red', alpha=0.4, lw=3, label='Min Envelope')
+            ax.plot(x, env_max, color='green', lw=2, label='Max Envelope')
+            ax.plot(x, env_min, color='red', lw=2, label='Min Envelope')
             ax.legend(fontsize='small')
             ax.set_title('Member ' + self.name + '\nEnvelope')
 
