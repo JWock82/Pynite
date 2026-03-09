@@ -240,7 +240,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Vmax = None
         governing_combo = None
@@ -282,7 +282,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Vmin = None
         governing_combo = None
@@ -326,7 +326,7 @@ class PhysMember(Member3D):
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -472,7 +472,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Mmax = None
         governing_combo = None
@@ -514,7 +514,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Mmin = None
         governing_combo = None
@@ -558,7 +558,7 @@ class PhysMember(Member3D):
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -703,7 +703,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Tmax = None
         governing_combo = None
@@ -741,7 +741,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Tmin = None
         governing_combo = None
@@ -781,7 +781,7 @@ class PhysMember(Member3D):
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -911,7 +911,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Pmax = None
         governing_combo = None
@@ -949,7 +949,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         Pmin = None
         governing_combo = None
@@ -989,7 +989,7 @@ class PhysMember(Member3D):
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -1125,7 +1125,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         dmax = None
         governing_combo = None
@@ -1165,7 +1165,7 @@ class PhysMember(Member3D):
             combo_names = [combo_tags]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_tags)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)]
 
         dmin = None
         governing_combo = None
@@ -1229,7 +1229,7 @@ class PhysMember(Member3D):
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = PhysMember.__plt.subplots()
         ax.axhline(0, color='black', lw=1)

@@ -1186,7 +1186,7 @@ class Member3D():
             # Filter combos that contain *any* of the given tags
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         Vmax_global = None  # will store the global maximum across combos
@@ -1255,7 +1255,7 @@ class Member3D():
             # Filter combos that contain *any* of the given tags
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         Vmin_global = None  # will store the global minimum across combos
@@ -1319,7 +1319,7 @@ class Member3D():
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -1488,7 +1488,7 @@ class Member3D():
             # Filter combos that contain *any* of the given tags
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         Mmax_global = None  # will store the global maximum across combos
@@ -1560,7 +1560,7 @@ class Member3D():
             # Filter combos that contain *any* of the given tags
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         Mmin_global = None  # will store the global minimum across combos
@@ -1628,7 +1628,7 @@ class Member3D():
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -1774,7 +1774,7 @@ class Member3D():
         else:
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         # Track global maximum torsion across all combos
@@ -1839,7 +1839,7 @@ class Member3D():
         else:
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         # Track global minimum torsion across all combos
@@ -1899,7 +1899,7 @@ class Member3D():
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -2020,7 +2020,7 @@ class Member3D():
             # If tags are provided, gather all combos that match ANY of the tags
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         # Track the global maximum axial force across all combos
@@ -2085,7 +2085,7 @@ class Member3D():
             # If tags are provided, gather all combos that match ANY of the tags
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         # Track the global minimum axial force across all combos
@@ -2145,7 +2145,7 @@ class Member3D():
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
@@ -2313,7 +2313,7 @@ class Member3D():
         else:
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         # Track global maximum deflection across all combos
@@ -2385,7 +2385,7 @@ class Member3D():
         else:
             combo_names = [
                 name for name, combo in self.model.load_combos.items()
-                if any(tag in combo.combo_tags for tag in combo_tags)
+                if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_tags)
             ]
 
         # Track global minimum deflection across all combos
@@ -2452,7 +2452,7 @@ class Member3D():
             combo_names = [combo_name]
         else:
             combo_names = [name for name, combo in self.model.load_combos.items()
-                           if any(tag in combo.combo_tags for tag in combo_name)]
+                           if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
         fig, ax = Member3D.__plt.subplots()
         ax.axhline(0, color='black', lw=1)
