@@ -72,8 +72,12 @@ def test_beam_internal_forces():
     assert math.isclose(beam.members['M1'].max_shear('Fz', 'D'), 2.5, abs_tol=0.01), 'Fz internal max shear test failed.'
     assert math.isclose(beam.members['M1'].min_shear('Fy', 'D'), -2.5, abs_tol=0.01), 'Fy internal min shear test failed.'
     assert math.isclose(beam.members['M1'].min_shear('Fz', 'D'), -2.5, abs_tol=0.01), 'Fz internal min shear test failed.'
-    assert math.isclose(beam.members['M1'].max_shear('Fy', ['strength']), 9.0, abs_tol=0.01), 'Failed envelope shear test.'
-    assert math.isclose(beam.members['M1'].min_shear('Fz', ['strength']), -9.0, abs_tol=0.01), 'Failed envelope shear test.'
+    max_shear_env, max_shear_combo = beam.members['M1'].max_shear('Fy', ['strength'])
+    assert math.isclose(max_shear_env, 9.0, abs_tol=0.01), 'Failed envelope shear test.'
+    assert max_shear_combo == '1.2D + 1.6L', 'Failed envelope shear governing combo test.'
+    min_shear_env, min_shear_combo = beam.members['M1'].min_shear('Fz', ['strength'])
+    assert math.isclose(min_shear_env, -9.0, abs_tol=0.01), 'Failed envelope shear test.'
+    assert min_shear_combo == '1.2D + 1.6L', 'Failed envelope shear governing combo test.'
 
     # Check the moment diagram
     assert math.isclose(beam.members['M1'].moment('Mz', 0, 'D'), 0, abs_tol=2), 'Mz internal moment test failed at start of member.'
@@ -87,8 +91,11 @@ def test_beam_internal_forces():
     assert math.isclose(beam.members['M1'].min_moment('My', 'D'), -6.25, abs_tol=2), 'My internal min moment test failed.'
     assert math.isclose(beam.members['M1'].max_moment('Mz', 'D'), 0, abs_tol=2), 'Mz internal max moment test failed.'
     assert math.isclose(beam.members['M1'].max_moment('My', 'D'), 0, abs_tol=2), 'My internal max moment test failed.'
-    assert math.isclose(beam.members['M1'].min_moment('Mz', ['strength']), -22.5, abs_tol=2), 'Failed member Mz envelope results test.'
-    assert math.isclose(beam.members['M1'].max_moment('My', ['strength']), 0, abs_tol=2), 'Failed member My envelope results test.'
+    min_moment_env, min_moment_combo = beam.members['M1'].min_moment('Mz', ['strength'])
+    assert math.isclose(min_moment_env, -22.5, abs_tol=2), 'Failed member Mz envelope results test.'
+    assert min_moment_combo == '1.2D + 1.6L', 'Failed member Mz envelope governing combo test.'
+    max_moment_env, max_moment_combo = beam.members['M1'].max_moment('My', ['strength'])
+    assert math.isclose(max_moment_env, 0, abs_tol=2), 'Failed member My envelope results test.'
 
     # Check the deflected shape
     assert math.isclose(beam.members['M1'].deflection('dy', 0, 'D')*12, 0, abs_tol=0.00001), 'dy internal deflection test failed at start of member.'
@@ -102,8 +109,12 @@ def test_beam_internal_forces():
     assert math.isclose(beam.members['M1'].max_deflection('dz', 'D')*12, 0, abs_tol=0.00001), 'dz internal max deflection test failed.'
     assert math.isclose(beam.members['M1'].min_deflection('dz', 'D')*12, 5*(-0.5)*10**4/(384*E*Iz)*12, abs_tol=0.00001), 'dz internal min deflection test failed.'
     assert math.isclose(beam.members['M1'].min_deflection('dy', 'D')*12, 5*(-0.5)*10**4/(384*E*Iy)*12, abs_tol=0.00001), 'dy internal min deflection test failed.'
-    assert math.isclose(beam.members['M1'].min_deflection('dz', ['strength'])*12, 5*(-1.8)*10**4/(384*E*Iz)*12, abs_tol=0.00001), 'Failed member dz envelope test.'
-    assert math.isclose(beam.members['M1'].min_deflection('dy', ['strength'])*12, 5*(-1.8)*10**4/(384*E*Iy)*12, abs_tol=0.00001), 'Failed member dy envelope test.'
+    min_defl_dz, min_defl_dz_combo = beam.members['M1'].min_deflection('dz', ['strength'])
+    assert math.isclose(min_defl_dz*12, 5*(-1.8)*10**4/(384*E*Iz)*12, abs_tol=0.00001), 'Failed member dz envelope test.'
+    assert min_defl_dz_combo == '1.2D + 1.6L', 'Failed member dz envelope governing combo test.'
+    min_defl_dy, min_defl_dy_combo = beam.members['M1'].min_deflection('dy', ['strength'])
+    assert math.isclose(min_defl_dy*12, 5*(-1.8)*10**4/(384*E*Iy)*12, abs_tol=0.00001), 'Failed member dy envelope test.'
+    assert min_defl_dy_combo == '1.2D + 1.6L', 'Failed member dy envelope governing combo test.'
 
 
 if __name__ == '__main__':
