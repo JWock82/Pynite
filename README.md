@@ -68,6 +68,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+2.4.1
+* Fixed a bug where enveloped results did not work if both tagged and untagged combos were in a model.
+
 2.4.0
 * Member `max` and `min` methods now return governing load combination along with the member max/min forces.
 * Bug fix: Quadrilateral element displacements had corners swapped during VTK visualization. This was a relic from the old MITC4 formulation that has been corrected.
