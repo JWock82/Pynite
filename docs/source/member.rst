@@ -222,33 +222,33 @@ First, assign tags when creating load combinations:
     my_model.add_load_combo('D+L', {'D': 1.0, 'L': 1.0}, combo_tags=['Service'])
     my_model.add_load_combo('D+S', {'D': 1.0, 'S': 1.0}, combo_tags=['Service'])
 
-Then pass a list of tags to retrieve the envelope:
+Then pass a list of tags to retrieve the envelope. When a list of tags is passed, the return value is a tuple ``(value, governing_combo_name)`` so you can see which load combination governed:
 
 .. code-block:: python
 
     # Get the maximum strong-axis shear across all 'Strength' combinations
-    Vmax = my_model.members['M1'].max_shear('Fy', ['Strength'])
+    Vmax, combo = my_model.members['M1'].max_shear('Fy', ['Strength'])
 
     # Get the minimum strong-axis moment across all 'Strength' combinations
-    Mmin = my_model.members['M1'].min_moment('Mz', ['Strength'])
+    Mmin, combo = my_model.members['M1'].min_moment('Mz', ['Strength'])
 
     # Get the maximum deflection across all 'Service' combinations
-    dmax = my_model.members['M1'].max_deflection('dy', ['Service'])
+    dmax, combo = my_model.members['M1'].max_deflection('dy', ['Service'])
 
     # Get the minimum axial force across all 'Strength' combinations
-    Pmin = my_model.members['M1'].min_axial(['Strength'])
+    Pmin, combo = my_model.members['M1'].min_axial(['Strength'])
 
     # Get the maximum torque across all 'Strength' combinations
-    Tmax = my_model.members['M1'].max_torque(['Strength'])
+    Tmax, combo = my_model.members['M1'].max_torque(['Strength'])
 
 You can also pass multiple tags at once. Any combination that has **any** of the provided tags will be included in the envelope:
 
 .. code-block:: python
 
     # Envelope across all combinations tagged 'Strength' or 'Service'
-    Vmax = my_model.members['M1'].max_shear('Fy', ['Strength', 'Service'])
+    Vmax, combo = my_model.members['M1'].max_shear('Fy', ['Strength', 'Service'])
 
-The following methods support enveloped results via ``combo_tags``:
+The following methods support enveloped results via ``combo_tags``. When a single string is passed they return a ``float``; when a list of tags is passed they return a ``tuple[float, str]`` containing the governing value and the name of the governing load combination:
 
 - ``max_shear(Direction, combo_tags)`` / ``min_shear(Direction, combo_tags)``
 - ``max_moment(Direction, combo_tags)`` / ``min_moment(Direction, combo_tags)``
@@ -313,23 +313,23 @@ Member API Quick Reference
 
 - Shear
   - ``shear(Direction, x, combo_name='Combo 1')`` where ``Direction`` ∈ {``'Fy'``, ``'Fz'``}
-  - ``max_shear(Direction, combo_tags='Combo 1')``, ``min_shear(...)`` — pass a list of tags (e.g. ``['Strength']``) to envelope across combos
+  - ``max_shear(Direction, combo_tags='Combo 1')``, ``min_shear(...)`` — pass a list of tags to envelope across combos; returns ``(value, governing_combo)`` when a list is passed
   - ``shear_array(Direction, n_points, combo_name='Combo 1', x_array=None)``
 
 - Moment
   - ``moment(Direction, x, combo_name='Combo 1')`` where ``Direction`` ∈ {``'My'``, ``'Mz'``}
-  - ``max_moment(Direction, combo_tags='Combo 1')``, ``min_moment(...)`` — pass a list of tags to envelope across combos
+  - ``max_moment(Direction, combo_tags='Combo 1')``, ``min_moment(...)`` — pass a list of tags to envelope across combos; returns ``(value, governing_combo)`` when a list is passed
   - ``moment_array(Direction, n_points, combo_name='Combo 1', x_array=None)``
 
 - Axial and Torque
-  - ``axial(x, combo_name='Combo 1')``, ``max_axial(combo_tags)``, ``min_axial(combo_tags)`` — pass a list of tags to envelope
+  - ``axial(x, combo_name='Combo 1')``, ``max_axial(combo_tags)``, ``min_axial(combo_tags)`` — pass a list of tags to envelope; returns ``(value, governing_combo)`` when a list is passed
   - ``axial_array(n_points, combo_name='Combo 1', x_array=None)``
-  - ``torque(x, combo_name='Combo 1')``, ``max_torque(combo_tags)``, ``min_torque(combo_tags)`` — pass a list of tags to envelope
+  - ``torque(x, combo_name='Combo 1')``, ``max_torque(combo_tags)``, ``min_torque(combo_tags)`` — pass a list of tags to envelope; returns ``(value, governing_combo)`` when a list is passed
   - ``torque_array(n_points, combo_name='Combo 1', x_array=None)``
 
 - Deflection
   - ``deflection(Direction, x, combo_name='Combo 1')`` where ``Direction`` ∈ {``'dx'``, ``'dy'``, ``'dz'``}
-  - ``max_deflection(Direction, combo_tags='Combo 1')``, ``min_deflection(...)`` — pass a list of tags to envelope across combos
+  - ``max_deflection(Direction, combo_tags='Combo 1')``, ``min_deflection(...)`` — pass a list of tags to envelope across combos; returns ``(value, governing_combo)`` when a list is passed
   - ``deflection_array(Direction, n_points, combo_name='Combo 1', x_array=None)``
 
 - Plotting

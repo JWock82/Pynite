@@ -215,9 +215,9 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.shear(Direction, x_mod, combo_name)
 
-    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
+    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
-        Returns the maximum shear in the member for the given direction
+        Returns the maximum shear in the member for the given direction.
 
         Parameters
         ----------
@@ -225,20 +225,41 @@ class PhysMember(Member3D):
             The direction in which to find the maximum shear. Must be one of the following:
                 'Fy' = Shear acting on the local y-axis
                 'Fz' = Shear acting on the local z-axis
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum shear value.
+            If a list of tags is provided, returns a tuple of the maximum shear
+            value and the name of the governing load combination.
         """
+
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
 
         Vmax = None
-        for member in self.sub_members.values():
-            V = member.max_shear(Direction, combo_name)
-            if Vmax is None or V > Vmax:
-                Vmax = V
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                V = member.max_shear(Direction, name)
+                if Vmax is None or V > Vmax:
+                    Vmax = V
+                    governing_combo = name
+
+        if Vmax is None:
+            Vmax = 0
+        if isinstance(combo_tags, list):
+            return (Vmax, governing_combo)
         return Vmax
 
-    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str = 'Combo 1') -> float:
+    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
-        Returns the minimum shear in the member for the given direction
+        Returns the minimum shear in the member for the given direction.
 
         Parameters
         ----------
@@ -246,15 +267,36 @@ class PhysMember(Member3D):
             The direction in which to find the minimum shear. Must be one of the following:
                 'Fy' = Shear acting on the local y-axis
                 'Fz' = Shear acting on the local z-axis
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum shear value.
+            If a list of tags is provided, returns a tuple of the minimum shear
+            value and the name of the governing load combination.
         """
 
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
+
         Vmin = None
-        for member in self.sub_members.values():
-            V = member.min_shear(Direction, combo_name)
-            if Vmin is None or V < Vmin:
-                Vmin = V
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                V = member.min_shear(Direction, name)
+                if Vmin is None or V < Vmin:
+                    Vmin = V
+                    governing_combo = name
+
+        if Vmin is None:
+            Vmin = 0
+        if isinstance(combo_tags, list):
+            return (Vmin, governing_combo)
         return Vmin
 
     def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
@@ -405,46 +447,88 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.moment(Direction, x_mod, combo_name)
 
-    def max_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
+    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the maximum moment in the member for the given direction.
-        
+
         Parameters
         ----------
         Direction : string
             The direction in which to find the maximum moment. Must be one of the following:
                 'My' = Moment about the local y-axis.
                 'Mz' = Moment about the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the combination itself).
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum moment value.
+            If a list of tags is provided, returns a tuple of the maximum moment
+            value and the name of the governing load combination.
         """
+
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
 
         Mmax = None
-        for member in self.sub_members.values():
-            M = member.max_moment(Direction, combo_name)
-            if Mmax is None or M > Mmax:
-                Mmax = M
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                M = member.max_moment(Direction, name)
+                if Mmax is None or M > Mmax:
+                    Mmax = M
+                    governing_combo = name
+
+        if Mmax is None:
+            Mmax = 0
+        if isinstance(combo_tags, list):
+            return (Mmax, governing_combo)
         return Mmax
 
-    def min_moment(self, Direction: Literal['My', 'Mz'], combo_name: str = 'Combo 1') -> float:
+    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
-        Returns the minimum moment in the member for the given direction
-        
+        Returns the minimum moment in the member for the given direction.
+
         Parameters
         ----------
         Direction : string
             The direction in which to find the minimum moment. Must be one of the following:
                 'My' = Moment about the local y-axis.
                 'Mz' = Moment about the local z-axis.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum moment value.
+            If a list of tags is provided, returns a tuple of the minimum moment
+            value and the name of the governing load combination.
         """
-        
+
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
+
         Mmin = None
-        for member in self.sub_members.values():
-            M = member.min_moment(Direction, combo_name)
-            if Mmin is None or M < Mmin:
-                Mmin = M
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                M = member.min_moment(Direction, name)
+                if Mmin is None or M < Mmin:
+                    Mmin = M
+                    governing_combo = name
+
+        if Mmin is None:
+            Mmin = 0
+        if isinstance(combo_tags, list):
+            return (Mmin, governing_combo)
         return Mmin
 
     def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
@@ -598,30 +682,80 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.torque(x_mod, combo_name)
 
-    def max_torque(self, combo_name: str = 'Combo 1') -> float:
-        
+    def max_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+        """
+        Returns the maximum torsional moment in the member.
+
+        Parameters
+        ----------
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum torque value.
+            If a list of tags is provided, returns a tuple of the maximum torque
+            value and the name of the governing load combination.
+        """
+
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
+
         Tmax = None
-        for member in self.sub_members.values():
-            T = member.max_torque(combo_name)
-            if Tmax is None or T > Tmax:
-                Tmax = T
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                T = member.max_torque(name)
+                if Tmax is None or T > Tmax:
+                    Tmax = T
+                    governing_combo = name
+
+        if Tmax is None:
+            Tmax = 0
+        if isinstance(combo_tags, list):
+            return (Tmax, governing_combo)
         return Tmax
 
-    def min_torque(self, combo_name: str = 'Combo 1') -> float:
+    def min_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the minimum torsional moment in the member.
 
         Parameters
         ----------
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum torque value.
+            If a list of tags is provided, returns a tuple of the minimum torque
+            value and the name of the governing load combination.
         """
 
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
+
         Tmin = None
-        for member in self.sub_members.values():
-            T = member.min_torque(combo_name)
-            if Tmin is None or T < Tmin:
-                Tmin = T
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                T = member.min_torque(name)
+                if Tmin is None or T < Tmin:
+                    Tmin = T
+                    governing_combo = name
+
+        if Tmin is None:
+            Tmin = 0
+        if isinstance(combo_tags, list):
+            return (Tmin, governing_combo)
         return Tmin
 
     def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
@@ -756,22 +890,80 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.axial(x_mod, combo_name)
 
-    def max_axial(self, combo_name: str = 'Combo 1') -> float:
-        
+    def max_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+        """
+        Returns the maximum axial force in the member.
+
+        Parameters
+        ----------
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum axial value.
+            If a list of tags is provided, returns a tuple of the maximum axial
+            value and the name of the governing load combination.
+        """
+
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
+
         Pmax = None
-        for member in self.sub_members.values():
-            P = member.max_axial(combo_name)
-            if Pmax is None or P > Pmax:
-                Pmax = P
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                P = member.max_axial(name)
+                if Pmax is None or P > Pmax:
+                    Pmax = P
+                    governing_combo = name
+
+        if Pmax is None:
+            Pmax = 0
+        if isinstance(combo_tags, list):
+            return (Pmax, governing_combo)
         return Pmax
 
-    def min_axial(self, combo_name: str = 'Combo 1') -> float:
+    def min_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+        """
+        Returns the minimum axial force in the member.
+
+        Parameters
+        ----------
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum axial value.
+            If a list of tags is provided, returns a tuple of the minimum axial
+            value and the name of the governing load combination.
+        """
+
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
 
         Pmin = None
-        for member in self.sub_members.values():
-            P = member.min_axial(combo_name)
-            if Pmin is None or P < Pmin:
-                Pmin = P
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                P = member.min_axial(name)
+                if Pmin is None or P < Pmin:
+                    Pmin = P
+                    governing_combo = name
+
+        if Pmin is None:
+            Pmin = 0
+        if isinstance(combo_tags, list):
+            return (Pmin, governing_combo)
         return Pmin
 
     def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
@@ -910,42 +1102,84 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.deflection(Direction, x_mod, combo_name)
 
-    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
+    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the maximum deflection in the member.
-        
+
         Parameters
         ----------
-        Direction : {'dy', 'dz'}
+        Direction : {'dx', 'dy', 'dz'}
             The direction in which to find the maximum deflection.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum deflection.
+            If a list of tags is provided, returns a tuple of the maximum
+            deflection and the name of the governing load combination.
         """
+
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
 
         dmax = None
-        for member in self.sub_members.values():
-            d = member.max_deflection(Direction, combo_name)
-            if dmax is None or d > dmax:
-                dmax = d
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                d = member.max_deflection(Direction, name)
+                if dmax is None or d > dmax:
+                    dmax = d
+                    governing_combo = name
+
+        if dmax is None:
+            dmax = 0
+        if isinstance(combo_tags, list):
+            return (dmax, governing_combo)
         return dmax
 
-    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1') -> float:
+    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the minimum deflection in the member.
-        
+
         Parameters
         ----------
-        Direction : {'dy', 'dz'}
+        Direction : {'dx', 'dy', 'dz'}
             The direction in which to find the minimum deflection.
-        combo_name : string
-            The name of the load combination to get the results for (not the load combination itself).
+        combo_tags : str or list of str
+            A single load combination name, or a list of combo tags.
+
+        Returns
+        -------
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum deflection.
+            If a list of tags is provided, returns a tuple of the minimum
+            deflection and the name of the governing load combination.
         """
 
+        if isinstance(combo_tags, str):
+            combo_names = [combo_tags]
+        else:
+            combo_names = [name for name, combo in self.model.load_combos.items()
+                           if any(tag in combo.combo_tags for tag in combo_tags)]
+
         dmin = None
-        for member in self.sub_members.values():
-            d = member.min_deflection(Direction, combo_name)
-            if dmin is None or d < dmin:
-                dmin = d
+        governing_combo = None
+        for name in combo_names:
+            for member in self.sub_members.values():
+                d = member.min_deflection(Direction, name)
+                if dmin is None or d < dmin:
+                    dmin = d
+                    governing_combo = name
+
+        if dmin is None:
+            dmin = 0
+        if isinstance(combo_tags, list):
+            return (dmin, governing_combo)
         return dmin
 
     def rel_deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:

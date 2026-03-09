@@ -1154,7 +1154,7 @@ class Member3D():
 
             return 0
 
-    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the maximum shear force in the member for the specified direction
         and load combination(s).
@@ -1174,16 +1174,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The maximum shear value in the specified direction for the given
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
-
-        Notes
-        -----
-        - Unlike moments, shear does not depend on P-Delta effects.
-        - Automatically segments the member if it has not yet been segmented
-        for a load combination.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum shear value.
+            If a list of tags is provided, returns a tuple of the maximum shear
+            value and the name of the governing load combination.
         """
         # Normalize input: single name vs list of tags
         if isinstance(combo_tags, str):
@@ -1196,6 +1190,7 @@ class Member3D():
             ]
 
         Vmax_global = None  # will store the global maximum across combos
+        governing_combo = None
 
         for combo_name in combo_names:
             # Skip inactive combos
@@ -1219,11 +1214,16 @@ class Member3D():
             # Update global maximum
             if Vmax_global is None or Vmax > Vmax_global:
                 Vmax_global = Vmax
+                governing_combo = combo_name
 
-        # Return 0 if no valid combos were found
-        return Vmax_global if Vmax_global is not None else 0
+        # Return result
+        if Vmax_global is None:
+            Vmax_global = 0
+        if isinstance(combo_tags, list):
+            return (Vmax_global, governing_combo)
+        return Vmax_global
 
-    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the minimum shear force in the member for the specified direction
         and load combination(s).
@@ -1243,16 +1243,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The minimum shear value in the specified direction for the given
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
-
-        Notes
-        -----
-        - Unlike moments, shear does not depend on P-Delta effects.
-        - Automatically segments the member if it has not yet been segmented
-        for a load combination.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum shear value.
+            If a list of tags is provided, returns a tuple of the minimum shear
+            value and the name of the governing load combination.
         """
         # Normalize input: single name vs list of tags
         if isinstance(combo_tags, str):
@@ -1265,6 +1259,7 @@ class Member3D():
             ]
 
         Vmin_global = None  # will store the global minimum across combos
+        governing_combo = None
 
         for combo_name in combo_names:
             # Skip inactive combos
@@ -1288,9 +1283,14 @@ class Member3D():
             # Update global minimum
             if Vmin_global is None or Vmin < Vmin_global:
                 Vmin_global = Vmin
+                governing_combo = combo_name
 
-        # Return 0 if no valid combos were found
-        return Vmin_global if Vmin_global is not None else 0
+        # Return result
+        if Vmin_global is None:
+            Vmin_global = 0
+        if isinstance(combo_tags, list):
+            return (Vmin_global, governing_combo)
+        return Vmin_global
 
     def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
@@ -1456,7 +1456,7 @@ class Member3D():
 
             return 0
 
-    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the maximum bending moment in the member for the specified direction
         and load combination(s).
@@ -1476,16 +1476,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The maximum moment value in the specified direction for the given
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
-
-        Notes
-        -----
-        - Includes P-Delta effects if the model's solution is 'P-Delta' or 'Pushover'.
-        - Automatically segments the member if it has not yet been segmented
-        for a load combination.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum moment value.
+            If a list of tags is provided, returns a tuple of the maximum moment
+            value and the name of the governing load combination.
         """
         # Normalize input: single name vs list of tags
         if isinstance(combo_tags, str):
@@ -1498,6 +1492,7 @@ class Member3D():
             ]
 
         Mmax_global = None  # will store the global maximum across combos
+        governing_combo = None
 
         for combo_name in combo_names:
             # Skip inactive combos
@@ -1524,11 +1519,16 @@ class Member3D():
             # Update global maximum
             if Mmax_global is None or Mmax > Mmax_global:
                 Mmax_global = Mmax
+                governing_combo = combo_name
 
-        # Return 0 if no valid combos were found
-        return Mmax_global if Mmax_global is not None else 0
+        # Return result
+        if Mmax_global is None:
+            Mmax_global = 0
+        if isinstance(combo_tags, list):
+            return (Mmax_global, governing_combo)
+        return Mmax_global
 
-    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the minimum bending moment in the member for the specified direction
         and load combination(s).
@@ -1548,16 +1548,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The minimum moment value in the specified direction for the given
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
-
-        Notes
-        -----
-        - Includes P-Delta effects if the model's solution is 'P-Delta' or 'Pushover'.
-        - Automatically segments the member if it has not yet been segmented
-        for a load combination.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum moment value.
+            If a list of tags is provided, returns a tuple of the minimum moment
+            value and the name of the governing load combination.
         """
         # Normalize input: single name vs list of tags
         if isinstance(combo_tags, str):
@@ -1570,6 +1564,7 @@ class Member3D():
             ]
 
         Mmin_global = None  # will store the global minimum across combos
+        governing_combo = None
 
         for combo_name in combo_names:
             # Skip inactive combos
@@ -1596,9 +1591,14 @@ class Member3D():
             # Update global minimum
             if Mmin_global is None or Mmin < Mmin_global:
                 Mmin_global = Mmin
+                governing_combo = combo_name
 
-        # Return 0 if no valid combos were found
-        return Mmin_global if Mmin_global is not None else 0
+        # Return result
+        if Mmin_global is None:
+            Mmin_global = 0
+        if isinstance(combo_tags, list):
+            return (Mmin_global, governing_combo)
+        return Mmin_global
 
 
     def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
@@ -1747,7 +1747,7 @@ class Member3D():
 
             return 0
 
-    def max_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def max_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the maximum torsional moment in the member across the
         specified load combination(s).
@@ -1763,10 +1763,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The maximum torsional moment in the member for the specified
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum torsion value.
+            If a list of tags is provided, returns a tuple of the maximum torsion
+            value and the name of the governing load combination.
         """
         # Normalize input: single combo name or list of tags
         if isinstance(combo_tags, str):
@@ -1779,6 +1779,7 @@ class Member3D():
 
         # Track global maximum torsion across all combos
         Tmax_global = None
+        governing_combo = None
 
         # Loop through each candidate combo
         for combo_name in combo_names:
@@ -1801,12 +1802,17 @@ class Member3D():
             # Update global maximum
             if Tmax_global is None or Tmax > Tmax_global:
                 Tmax_global = Tmax
+                governing_combo = combo_name
 
-        # Return global maximum or 0 if nothing found
-        return Tmax_global if Tmax_global is not None else 0
+        # Return result
+        if Tmax_global is None:
+            Tmax_global = 0
+        if isinstance(combo_tags, list):
+            return (Tmax_global, governing_combo)
+        return Tmax_global
 
 
-    def min_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def min_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the minimum torsional moment in the member across the
         specified load combination(s).
@@ -1822,10 +1828,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The minimum torsional moment in the member for the specified
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum torsion value.
+            If a list of tags is provided, returns a tuple of the minimum torsion
+            value and the name of the governing load combination.
         """
         # Normalize input: single combo name or list of tags
         if isinstance(combo_tags, str):
@@ -1838,6 +1844,7 @@ class Member3D():
 
         # Track global minimum torsion across all combos
         Tmin_global = None
+        governing_combo = None
 
         # Loop through each candidate combo
         for combo_name in combo_names:
@@ -1860,9 +1867,14 @@ class Member3D():
             # Update global minimum
             if Tmin_global is None or Tmin < Tmin_global:
                 Tmin_global = Tmin
+                governing_combo = combo_name
 
-        # Return global minimum or 0 if nothing found
-        return Tmin_global if Tmin_global is not None else 0
+        # Return result
+        if Tmin_global is None:
+            Tmin_global = 0
+        if isinstance(combo_tags, list):
+            return (Tmin_global, governing_combo)
+        return Tmin_global
 
     def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
@@ -1980,7 +1992,7 @@ class Member3D():
 
             return 0
 
-    def max_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def max_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the maximum axial force in the member across the specified
         load combination(s).
@@ -1996,10 +2008,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The maximum axial force in the member for the specified
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum axial value.
+            If a list of tags is provided, returns a tuple of the maximum axial
+            value and the name of the governing load combination.
         """
         # Normalize input: if a string is passed, treat it as a single combo name
         if isinstance(combo_tags, str):
@@ -2013,6 +2025,7 @@ class Member3D():
 
         # Track the global maximum axial force across all combos
         Pmax_global = None
+        governing_combo = None
 
         # Loop through each candidate combo
         for combo_name in combo_names:
@@ -2035,11 +2048,16 @@ class Member3D():
             # Update the global maximum
             if Pmax_global is None or Pmax > Pmax_global:
                 Pmax_global = Pmax
+                governing_combo = combo_name
 
-        # Return the global maximum, or 0 if nothing was found
-        return Pmax_global if Pmax_global is not None else 0
+        # Return result
+        if Pmax_global is None:
+            Pmax_global = 0
+        if isinstance(combo_tags, list):
+            return (Pmax_global, governing_combo)
+        return Pmax_global
 
-    def min_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def min_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the minimum axial force in the member across the specified
         load combination(s).
@@ -2055,10 +2073,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The minimum axial force in the member for the specified
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations or if no segments are available.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum axial value.
+            If a list of tags is provided, returns a tuple of the minimum axial
+            value and the name of the governing load combination.
         """
         # Normalize input: if a string is passed, treat it as a single combo name
         if isinstance(combo_tags, str):
@@ -2072,6 +2090,7 @@ class Member3D():
 
         # Track the global minimum axial force across all combos
         Pmin_global = None
+        governing_combo = None
 
         # Loop through each candidate combo
         for combo_name in combo_names:
@@ -2094,9 +2113,14 @@ class Member3D():
             # Update the global minimum
             if Pmin_global is None or Pmin < Pmin_global:
                 Pmin_global = Pmin
+                governing_combo = combo_name
 
-        # Return the global minimum, or 0 if nothing was found
-        return Pmin_global if Pmin_global is not None else 0
+        # Return result
+        if Pmin_global is None:
+            Pmin_global = 0
+        if isinstance(combo_tags, list):
+            return (Pmin_global, governing_combo)
+        return Pmin_global
 
     def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
@@ -2257,7 +2281,7 @@ class Member3D():
 
             return 0
 
-    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the maximum deflection in the member across the specified
         load combination(s).
@@ -2278,10 +2302,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The maximum deflection in the member for the specified
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the maximum deflection.
+            If a list of tags is provided, returns a tuple of the maximum
+            deflection and the name of the governing load combination.
         """
         # Normalize input: single name or list of tags
         if isinstance(combo_tags, str):
@@ -2294,6 +2318,7 @@ class Member3D():
 
         # Track global maximum deflection across all combos
         dmax_global = None
+        governing_combo = None
 
         # Loop through each candidate combo
         for combo_name in combo_names:
@@ -2318,12 +2343,17 @@ class Member3D():
             # Update global maximum
             if dmax_global is None or dmax > dmax_global:
                 dmax_global = dmax
+                governing_combo = combo_name
 
-        # Return global maximum or 0 if nothing found
-        return dmax_global if dmax_global is not None else 0
+        # Return result
+        if dmax_global is None:
+            dmax_global = 0
+        if isinstance(combo_tags, list):
+            return (dmax_global, governing_combo)
+        return dmax_global
 
 
-    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> float:
+    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
         Returns the minimum deflection in the member across the specified
         load combination(s).
@@ -2344,10 +2374,10 @@ class Member3D():
 
         Returns
         -------
-        float
-            The minimum deflection in the member for the specified
-            combination(s). Returns 0 if the member is inactive for all
-            specified combinations.
+        float or tuple of (float, str)
+            If a single combo name is provided, returns the minimum deflection.
+            If a list of tags is provided, returns a tuple of the minimum
+            deflection and the name of the governing load combination.
         """
         # Normalize input: single name or list of tags
         if isinstance(combo_tags, str):
@@ -2360,6 +2390,7 @@ class Member3D():
 
         # Track global minimum deflection across all combos
         dmin_global = None
+        governing_combo = None
 
         # Loop through each candidate combo
         for combo_name in combo_names:
@@ -2384,9 +2415,14 @@ class Member3D():
             # Update global minimum
             if dmin_global is None or dmin < dmin_global:
                 dmin_global = dmin
+                governing_combo = combo_name
 
-        # Return global minimum or 0 if nothing found
-        return dmin_global if dmin_global is not None else 0
+        # Return result
+        if dmin_global is None:
+            dmin_global = 0
+        if isinstance(combo_tags, list):
+            return (dmin_global, governing_combo)
+        return dmin_global
 
     def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
         """
