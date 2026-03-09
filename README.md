@@ -68,6 +68,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+2.4.2 (in progress)
+* Removed individual load combo plots from member plots when an envelope plot is requested. They cluttered the plots without adding much value.
+
 2.4.1
 * Fixed a bug where enveloped results did not work if both tagged and untagged combos were in a model.
 
