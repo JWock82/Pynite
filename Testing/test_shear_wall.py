@@ -361,6 +361,82 @@ def test_shear_wall_openings():
     # print('Expected rigidity from reference text: ', 1/7.623*E*t, 'kips/in')
 
 
+def test_shear_wall_modification_and_regeneration():
+    """Test the ability to modify a shear wall after generation and then regenerate it.
+    
+    This test creates a shear wall, generates it, analyzes it, and stores the initial stiffness.
+    Then it modifies the wall by adding an opening and regenerates it, and analyzes it again
+    to verify that the modification was successful and the stiffness has changed.
+    """
+    
+    # Create a new finite element model
+    model = FEModel3D()
+    
+    # Define a material for our shear wall
+    fm = 2000/1000*144  # ksf
+    Em = 900*fm  # ksf
+    Gm = 0.4*Em  # ksf
+    nu = 0.17
+    rho_m = 0.140  # kcf
+    model.add_material('CMU', Em, Gm, nu, rho_m)
+    
+    # Create a wall in the 'XY' plane
+    model.add_shear_wall('Wall', mesh_size=2, length=24, height=16, thickness=0.667, 
+                         material_name='CMU', ky_mod=1, plane='XY', origin=[0, 0, 0])
+    
+    # Add support across the entire base of the wall
+    model.shear_walls['Wall'].add_support(elevation=0, x_start=0, x_end=24)
+    
+    # Add a story to the shear wall where loads will be applied
+    model.shear_walls['Wall'].add_story('Roof', elevation=16, x_start=0, x_end=24)
+    
+    # Add a seismic shear force of 100 kips to the roof
+    model.shear_walls['Wall'].add_shear(story_name='Roof', force=100, case='E')
+    
+    # Generate the wall initially
+    model.shear_walls['Wall'].generate()
+    
+    # Add a load combination to the model
+    model.add_load_combo('1.0E', {'E': 1.0}, combo_tags='strength')
+    
+    # Analyze the model for the first time
+    model.analyze_linear(log=True, check_statics=True)
+    
+    # Find the stiffness of the initial wall
+    k_initial = model.shear_walls['Wall'].stiffness('Roof')
+    print(f'Initial wall stiffness: {k_initial:.2f} kips/in')
+    
+    # Count the number of elements before modification
+    num_elements_before = len(model.quads) + len(model.plates)
+    print(f'Number of elements before modification: {num_elements_before}')
+    
+    # Now modify the wall by adding an opening
+    model.shear_walls['Wall'].add_opening('Door', x_start=6, y_start=0, width=6, height=12, tie=None)
+    model.shear_walls['Wall'].add_opening('Window', x_start=16, y_start=8, width=6, height=4, tie=None)
+    
+    # Regenerate the wall with the new openings
+    model.shear_walls['Wall'].generate()
+    
+    # Clear the previous analysis results to prepare for re-analysis
+    # The model needs to be reanalyzed with the modified geometry
+    model.analyze_linear(log=True, check_statics=True)
+    
+    # Find the stiffness of the modified wall
+    k_modified = model.shear_walls['Wall'].stiffness('Roof')
+    print(f'Modified wall stiffness (with openings): {k_modified:.2f} kips/in')
+    
+    # Count the number of elements after modification
+    num_elements_after = len(model.quads) + len(model.plates)
+    print(f'Number of elements after modification: {num_elements_after}')
+    
+    # Verify that the wall was successfully modified and regenerated
+    assert k_modified < k_initial, 'Modified wall should have lower stiffness due to openings.'
+    assert num_elements_after < num_elements_before, 'Modified wall should have fewer elements due to openings.'
+    
+    print('✓ Test passed: Wall was successfully modified and regenerated.')
+
+
 if __name__ == '__main__':
     # test_shear_walls()
-    test_piers_and_coupling_beams()
+    # test_piers_and_coupling_beams()
+    test_shear_wall_modification_and_regeneration()
