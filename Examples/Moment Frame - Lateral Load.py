@@ -87,7 +87,7 @@ MomentFrame.members['Beam'].plot_moment('Mz', combo_name='1.2D+1.0W')
 MomentFrame.members['Col1'].plot_deflection('dy', combo_name='1.2D+1.0W')
 
 # Find the maximum shear in the first column
-print('Column Shear Force:', MomentFrame.members['Col1'].max_shear('Fy', combo_name='1.2D+1.0W'), 'kip')
+print('Column Shear Force:', MomentFrame.members['Col1'].max_shear('Fy', combo_tags='1.2D+1.0W'), 'kip')
 
 # Find the frame lateral drift
 # Note that the deflections are stored as a dictionary in the node object by load combination, so [] are used instead of () below
