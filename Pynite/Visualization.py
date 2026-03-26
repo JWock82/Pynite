@@ -2705,13 +2705,13 @@ def _RenderMemberDiagrams(model, renderer, diagram_type, scale_factor, combo_nam
 class VisLocalCsys:
     """Arrow representation of a member local coordinate system."""
 
-    def __init__(self, position, direction, length, axis, theme: str = "default"):
-        """Create a point-load arrow and optional label.
+    def __init__(self, position, direction, length, axis: str, theme: str = "default"):
+        """Create an arrow representing a member local coordinate system axis.
 
         :param tuple position: Coordinates of the arrow base ``(X, Y, Z)``.
-        :param tuple direction: Direction vector for the arrow (normalized).
-        :param float length: Arrow length; sign controls pointing direction.
-        :param float axis: Which axis we are plotting, one of 'X', 'Y', 'Z'
+        :param tuple direction: Direction vector for the local axis (need not be normalized).
+        :param float length: Visual length of the axis arrow; sign controls pointing direction.
+        :param str axis: Local axis identifier, one of ``'X'``, ``'Y'``, or ``'Z'``.
         :param str theme: ``'default'`` or ``'print'`` color scheme.
         """
 
