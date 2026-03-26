@@ -252,7 +252,7 @@ class Renderer:
 
     @property
     def member_csys(self) -> bool:
-        """Scale factor for member local coordinate system visualization."""
+        """Enable or disable rendering of member local coordinate systems."""
         return self._member_csys
 
     @member_csys.setter
