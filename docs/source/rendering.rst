@@ -238,6 +238,22 @@ You can easily switch between different diagram types:
     my_rndr.member_diagrams = None
     my_rndr.render_model()
 
+Member Local Coordinate System
+==================================
+
+You can visualize the individual member local coordinate systems using the ``member_csys`` option to verify that the intended member orientation has been applied correctly. The color scheme is as follows:
+- **Local X axis** (direction from beam start to beam end): Red
+- **Local Y axis** (strong axis): Green
+- **Local Z axis** (weak axis): Blue
+
+.. code-block:: python
+
+    # Activate plotting of member local coordinate systems
+    my_rndr.member_csys = True
+    my_rndr.member_csys_scale = 30      # Adjust diagram size (default: 30)
+    my_rndr.render_model()
+
+
 Rendering the Model and Screenshots
 ===================================
 

@@ -67,6 +67,8 @@ class Renderer:
         self._scalar_bar_text_size: int = 24
         self._member_diagrams: Optional[str] = None  # Options: None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
         self._diagram_scale: float = 30.0
+        self._member_csys: bool = False
+        self._member_csys_scale: float = 30.0
         self.theme: str = 'default'
 
         # Callback list for post-update customization:
@@ -247,6 +249,24 @@ class Renderer:
     @diagram_scale.setter
     def diagram_scale(self, scale: float) -> None:
         self._diagram_scale = scale
+
+    @property
+    def member_csys(self) -> bool:
+        """Enable or disable rendering of member local coordinate systems."""
+        return self._member_csys
+
+    @member_csys.setter
+    def member_csys(self, render: bool) -> None:
+        self._member_csys = render
+
+    @property
+    def member_csys_scale(self) -> float:
+        """Scale factor for member local coordinate system visualization."""
+        return self._member_csys_scale
+
+    @member_csys_scale.setter
+    def member_csys_scale(self, scale: float) -> None:
+        self._member_csys_scale = scale
 
     def _calculate_auto_annotation_size(self) -> float:
         """Calculate automatic annotation size as 5% of shortest node distance.
@@ -457,6 +477,9 @@ class Renderer:
         # Render member diagrams if requested
         if self.member_diagrams and (self.combo_name is not None or self.case is not None):
             self.plot_member_diagrams()
+
+        if self.member_csys:
+            self.plot_member_local_csys()
 
         # Determine whether to show or hide the scalar bar
         # if self._scalar_bar == False:
@@ -1657,6 +1680,38 @@ class Renderer:
             except Exception:
                 # Silently skip members that fail to render diagrams
                 pass
+
+    def plot_member_local_csys(self) -> None:
+        for member in self.model.members.values():
+            # Get the member local coordinate axes from the member transformation matrix
+            axes = member.T()[:3, :3]
+            # Plot each one as an arrow at the member centre point
+            centre_point = np.array(
+                [
+                    0.5 * (member.i_node.X + member.j_node.X),
+                    0.5 * (member.i_node.Y + member.j_node.Y),
+                    0.5 * (member.i_node.Z + member.j_node.Z),
+                ]
+            )
+            x_axis = pv.Arrow(
+                start=centre_point,
+                direction=axes[0],
+                scale=self.member_csys_scale / 100,
+            )
+            y_axis = pv.Arrow(
+                start=centre_point,
+                direction=axes[1],
+                scale=self.member_csys_scale / 100,
+            )
+            z_axis = pv.Arrow(
+                start=centre_point,
+                direction=axes[2],
+                scale=self.member_csys_scale / 100,
+            )
+            # Use the same color scheme as PyVista's global coordinate system widget
+            self.plotter.add_mesh(x_axis, color="red")
+            self.plotter.add_mesh(y_axis, color="green")
+            self.plotter.add_mesh(z_axis, color="blue")
 
 
 # === Visualization helper classes ===
