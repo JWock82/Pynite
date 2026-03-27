@@ -50,6 +50,9 @@ class Mesh():
         self.is_generated = False          # A flag indicating whether the mesh has been generated
         self.needs_update = False          # A flag indicating whether the mesh needs regeneration due to changes
 
+    def __repr__(self) -> str:
+        return f"Mesh(material_name={self.material_name!r}, thickness={self.thickness})"
+
     def _remove_from_model(self) -> None:
         """Removes the mesh's nodes and elements from the model in preparation for regeneration.
         Nodes that are connected to elements outside the mesh are preserved.
@@ -771,6 +774,9 @@ class RectangleMesh(Mesh):
         self.element_type = element_type
         self.openings: Dict[str, RectOpening] = {}
     
+    def __repr__(self) -> str:
+        return f"RectangleMesh(material_name={self.material_name!r}, width={self.width}, height={self.height}, thickness={self.thickness})"
+
     def generate(self) -> None:
 
         # Remove old mesh elements and nodes from the model if regenerating
@@ -1113,6 +1119,9 @@ class RectOpening():
         self.width = width
         self.height = height
 
+    def __repr__(self) -> str:
+        return f"RectOpening(x_left={self.x_left}, y_bott={self.y_bott}, width={self.width}, height={self.height})"
+
 #%%           
 class AnnulusMesh(Mesh):
     """
@@ -1163,6 +1172,9 @@ class AnnulusMesh(Mesh):
         
         # self.generate()
     
+    def __repr__(self) -> str:
+        return f"AnnulusMesh(material_name={self.material_name!r}, outer_radius={self.outer_radius}, inner_radius={self.inner_radius}, thickness={self.thickness})"
+
     def generate(self) -> None:
         
         # Remove old mesh elements and nodes from the model if regenerating
@@ -1294,6 +1306,9 @@ class AnnulusRingMesh(Mesh):
 
         # Generate the nodes and elements
         self.generate()
+
+    def __repr__(self) -> str:
+        return f"AnnulusRingMesh(material_name={self.material_name!r}, outer_radius={self.outer_radius}, inner_radius={self.inner_radius}, thickness={self.thickness})"
 
     def generate(self) -> None:
 
@@ -1450,6 +1465,9 @@ class AnnulusTransRingMesh(Mesh):
 
         # Create the mesh
         self.generate()
+
+    def __repr__(self) -> str:
+        return f"AnnulusTransRingMesh(material_name={self.material_name!r}, outer_radius={self.r3}, inner_radius={self.inner_radius}, thickness={self.thickness})"
 
     def generate(self) -> None:
 
@@ -1645,6 +1663,9 @@ class FrustrumMesh(AnnulusMesh):
         
         self.height = height
     
+    def __repr__(self) -> str:
+        return f"FrustrumMesh(material_name={self.material_name!r}, large_radius={self.outer_radius}, small_radius={self.inner_radius}, height={self.height}, thickness={self.thickness})"
+
     def generate(self) -> None:
 
         super().generate()
@@ -1739,6 +1760,9 @@ class CylinderMesh(Mesh):
         # Generate the mesh
         self.generate()
     
+    def __repr__(self) -> str:
+        return f"CylinderMesh(material_name={self.material_name!r}, radius={self.radius}, height={self.h}, thickness={self.thickness})"
+
     def generate(self) -> None:
         
         # Remove old mesh elements and nodes from the model if regenerating
@@ -1877,6 +1901,9 @@ class CylinderRingMesh(Mesh):
 
         # Generate the nodes and elements
         self.generate()
+
+    def __repr__(self) -> str:
+        return f"CylinderRingMesh(material_name={self.material_name!r}, radius={self.radius}, height={self.height}, thickness={self.thickness})"
 
     def generate(self) -> None:
         """

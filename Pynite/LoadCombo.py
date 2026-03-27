@@ -20,6 +20,9 @@ class LoadCombo():
         self.combo_tags: List[str] | None = combo_tags   # Used to categorize the load combination (e.g. strength or serviceability)
         self.factors: Dict[str, float] = factors       # A dictionary containing each load case name and associated load factor
     
+    def __repr__(self) -> str:
+        return f"LoadCombo(name={self.name!r}, factors={self.factors!r})"
+
     def AddLoadCase(self, case_name: str, factor: float) -> None:
         '''
         Adds a load case with its associated load factor

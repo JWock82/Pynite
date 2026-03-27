@@ -71,6 +71,9 @@ class Plate3D():
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
     
+    def __repr__(self) -> str:
+        return f"Plate3D(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r}, m_node={self.m_node.name!r}, n_node={self.n_node.name!r})"
+
     def width(self) -> float:
         """
         Returns the width of the plate along its local x-axis

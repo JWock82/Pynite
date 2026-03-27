@@ -84,6 +84,9 @@ class Node3D():
         # Adding a link to the model that Nodes belong to 
         self.model: FEModel3D = model
 
+    def __repr__(self) -> str:
+        return f"Node3D(name={self.name!r}, X={self.X}, Y={self.Y}, Z={self.Z})"
+
     def distance(self, other: 'Node3D') -> float:
         """
         Returns the distance to another node.

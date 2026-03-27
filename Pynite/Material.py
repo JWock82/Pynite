@@ -36,3 +36,6 @@ class Material():
         self.nu: float = nu
         self.rho: float = rho
         self.fy: float | None = fy
+
+    def __repr__(self) -> str:
+        return f"Material(name={self.name!r}, E={self.E}, G={self.G}, nu={self.nu})"

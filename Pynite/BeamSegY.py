@@ -4,6 +4,9 @@ from Pynite.BeamSegZ import BeamSegZ
 # %%
 class BeamSegY(BeamSegZ):
 
+    def __repr__(self) -> str:
+        return f"BeamSegY(x1={self.x1}, x2={self.x2})"
+
     # Returns the moment at a location on the segment
     def moment(self, x: float, P_delta: bool = False) -> float:
         '''

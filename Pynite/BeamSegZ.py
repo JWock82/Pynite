@@ -89,6 +89,9 @@ class BeamSegZ():
         self.EI: float | None = None  # Flexural stiffness of the beam segment
         self.EA: float | None = None  # Axial stiffness of the beam segment
 
+    def __repr__(self) -> str:
+        return f"BeamSegZ(x1={self.x1}, x2={self.x2})"
+
     # Returns the length of the segment
     def Length(self) -> float:
         """

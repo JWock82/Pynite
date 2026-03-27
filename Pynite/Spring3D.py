@@ -43,6 +43,10 @@ class Spring3D():
         self.active: Dict[str, bool] = {} # Key = load combo name, Value = True or False
 
 #%%
+    def __repr__(self) -> str:
+        return f"Spring3D(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r}, ks={self.ks})"
+
+#%%
     def L(self) -> float:
         '''
         Returns the length of the spring.
