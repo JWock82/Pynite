@@ -60,6 +60,9 @@ Specifically:
 The local y-axis is defined as the cross-product of the local z-axis with the local x-axis. In
 other words, the local y-axis is always perpendicular to the member and to the local z-axis.
 
+Rotations are applied by using the right-hand rule, with positive rotations being clockwise if
+looking down the member from the i-node to j-node.
+
 The member local coordinate system can be visualised with the ``Renderer.member_csys`` option.
 
 Positive sign conventions are shown below.
