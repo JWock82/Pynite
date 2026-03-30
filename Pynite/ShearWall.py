@@ -2,6 +2,7 @@ from __future__ import annotations # Allows more recent type hints features
 from math import isclose
 from numpy import average
 import io
+import os
 from typing import TYPE_CHECKING, Literal
 
 from prettytable import PrettyTable
@@ -789,13 +790,25 @@ class ShearWall():
         # Return the story's stiffness:
         return V/(d_max)
 
-    def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './') -> None:
+    def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './', renderer_backend: Literal['vtk', 'pyvista'] = 'pyvista') -> None:
 
-        from Pynite.Rendering import Renderer
+        renderer_backend = renderer_backend.lower()
+
+        if renderer_backend == 'pyvista':
+            from Pynite.Rendering import Renderer
+        elif renderer_backend == 'vtk':
+            from Pynite.Visualization import Renderer
+        else:
+            raise ValueError("renderer_backend must be either 'vtk' or 'pyvista'.")
 
         renderer = Renderer(self.model)
-        renderer.window_width = 750
-        renderer.window_height = 750
+
+        if renderer_backend == 'pyvista':
+            renderer.window_width = 750
+            renderer.window_height = 750
+        else:
+            renderer.window_size = (750, 750)
+
         renderer.annotation_size = self.mesh_size/6
         renderer.deformed_shape = True
         renderer.deformed_scale = 400
@@ -803,18 +816,22 @@ class ShearWall():
         renderer.scalar_bar = True
         renderer.combo_name = combo_name
         renderer.labels = False
-        
-        # Save the shear plot screenshot to this file's directory
-        renderer.color_map = 'Txy'
-        renderer.screenshot(dir_path + '/shear_wall_screenshot1.png', interact=True)
-        
-        # Save the shear plot screenshot to this file's directory
-        renderer.color_map = 'Sy'
-        renderer.screenshot(dir_path + '/shear_wall_screenshot2.png', interact=False, reset_camera=False)
 
-        # Save the pier screenshot to this file's directory
+        # Save the in-plane shear contour screenshot with interaction so users can set the camera.
+        renderer.color_map = 'Txy'
+        renderer.screenshot(os.path.join(dir_path, 'shear_wall_screenshot1.png'), interact=True, reset_camera=True)
+
+        # Save the membrane shear contour screenshot using the same camera position.
+        renderer.color_map = 'Sy'
+        renderer.screenshot(os.path.join(dir_path, 'shear_wall_screenshot2.png'), interact=False, reset_camera=False)
+
+        # Save the pier screenshot to this file's directory.
         pier_sketch = self.draw_piers(show=False)
-        pier_sketch.savefig(dir_path + '/shear_wall_piers.png', format='png')
+        pier_sketch.savefig(os.path.join(dir_path, 'shear_wall_piers.png'), format='png')
+
+        # Save the coupling beam screenshot to this file's directory.
+        beam_sketch = self.draw_coupling_beams(show=False)
+        beam_sketch.savefig(os.path.join(dir_path, 'shear_wall_coupling_beams.png'), format='png')
 
     def print_piers(self, combo_name: str = 'Combo 1') -> None:
         """Tabulates and prints pier results for the shear wall
