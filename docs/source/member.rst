@@ -44,11 +44,23 @@ Local Coordinate System
 Each member starts at its i-node and ends at its j-node. The local x-axis for the member is defined
 by a vector going from the i-node to the j-node.
 
-By default the local z-axis is always horizontal in Pynite, and is on the right-hand side of the
-member.
+By default the local z-axis (typically the member's weak axis) is always parallel to the XZ plane in 
+Pynite, and is on the right-hand side of the member.
+
+Specifically:
+
+- For members parallel to the global y-axis, the local z-axis will be parallel to the global z-axis.
+- For members in the XZ plane, the local y-axis will be parallel to the global y-axis. The member
+  local z-axis is determined by cross product of local x-axis with local y-axis.
+- For other members, the local x-axis is projected into the global XZ plane and the local y-axis is 
+  determined by the cross product of this projected vector and the member local x-axis. The ordering
+  of the cross product is such that the resulting local y-axis has a positive global y component (i.e. 
+  the top of the beam is always pointing in the positive global y direction)
 
 The local y-axis is defined as the cross-product of the local z-axis with the local x-axis. In
 other words, the local y-axis is always perpendicular to the member and to the local z-axis.
+
+The member local coordinate system can be visualised with the ``Renderer.member_csys`` option.
 
 Positive sign conventions are shown below.
 
