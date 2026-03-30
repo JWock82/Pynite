@@ -53,6 +53,9 @@ class MatFoundation(RectangleMesh):
         self.pt_loads = []  # [XZ_coord, direction, magnitude, case]
         self.needs_update = False  # Flag indicating regeneration is needed due to changes
 
+    def __repr__(self) -> str:
+        return f"MatFoundation(name={self.name!r}, self.width={self.width}, self.height={self.height}, self.ks={self.ks})"
+
     def add_rect_opening(self, name, X_min, Z_min, X_max, Z_max):
         """Add a rectangular opening to the mat by corner coordinates.
 

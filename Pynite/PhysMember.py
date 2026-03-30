@@ -31,6 +31,9 @@ class PhysMember(Member3D):
         super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
         self.sub_members: Dict[str, Member3D] = {}
 
+    def __repr__(self) -> str:
+        return f"PhysMember(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r})"
+
     def descritize(self) -> None:
         """
         Subdivides the physical member into sub-members at each node along the physical member

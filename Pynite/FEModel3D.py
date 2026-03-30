@@ -55,6 +55,9 @@ class FEModel3D():
 
         self.solution: str | None = None  # Indicates the solution type for the latest run of the model
 
+    def __repr__(self) -> str:
+        return f"FEModel3D(solution={self.solution!r})"
+
     # Decorator marks this helper as not needing class/instance state.
     @staticmethod
     # Define helper that flattens node DOFs into a single index vector.

@@ -107,6 +107,9 @@ class Renderer:
         self._spring_label_points: List[List[float]] = []
         self._spring_labels: List[str] = []
 
+    def __repr__(self) -> str:
+        return f"Renderer(model={self.model!r})"
+
     @property
     def window_width(self) -> int:
         return self.plotter.window_size[0]

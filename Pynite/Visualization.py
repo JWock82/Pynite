@@ -73,6 +73,9 @@ class Renderer():
         self.window.SetWindowName('Pynite - Simple Finite Element Analysis in Python')
         self.window.AddRenderer(self.renderer)
 
+    def __repr__(self) -> str:
+        return f"Renderer(model={self.model!r})"
+
     @property
     def window_size(self):
         """Window size as (width, height) tuple."""
