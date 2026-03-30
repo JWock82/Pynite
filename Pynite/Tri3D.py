@@ -67,6 +67,9 @@ class Tri3D():
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
     
+    def __repr__(self) -> str:
+        return f"Tri3D(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r}, k_node={self.k_node.name!r})"
+
     def width(self):
         """
         Returns the width of the plate along its local x-axis

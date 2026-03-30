@@ -56,6 +56,9 @@ class Quad3D():
         except:
             raise KeyError('Please define the material ' + str(material_name) + ' before assigning it to plates.')
 
+    def __repr__(self) -> str:
+        return f"Quad3D(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r}, m_node={self.m_node.name!r}, n_node={self.n_node.name!r})"
+
     # def _local_coords(self):
     #     """
     #     Calculates or recalculates and stores the local (x, y) coordinates for each node of the

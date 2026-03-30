@@ -108,6 +108,10 @@ class Member3D():
         self.model: FEModel3D = model
 
 # %%
+    def __repr__(self) -> str:
+        return f"Member3D(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r})"
+
+# %%
     def L(self) -> float:
         """
         Returns the length of the member.

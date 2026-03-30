@@ -32,6 +32,9 @@ class VTKWriter:
         self._quads_written = False
         self.log = log
 
+    def __repr__(self) -> str:
+        return f"VTKWriter(model={self.model!r})"
+
     def write_to_vtk(self, path: str):
         """
         Writes model data into a VTK file using vtkUnstructuredGrid. The resulting file can

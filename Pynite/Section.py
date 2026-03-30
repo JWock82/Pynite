@@ -36,6 +36,9 @@ class Section():
         self.Iz: float = Iz
         self.J: float = J
     
+    def __repr__(self) -> str:
+        return f"Section(name={self.name!r}, A={self.A}, Iy={self.Iy}, Iz={self.Iz}, J={self.J})"
+
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0):
         """
         Method to be overridden by subclasses for determining whether the cross section is
@@ -116,6 +119,9 @@ class SteelSection(Section):
         self.Zz: float = Zz
 
         self.material = model.materials[material_name]
+
+    def __repr__(self) -> str:
+        return f"SteelSection(name={self.name!r}, A={self.A}, Iy={self.Iy}, Iz={self.Iz}, J={self.J})"
 
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0) -> float:
         """

@@ -43,6 +43,9 @@ class ShearWall():
         self.needs_update: bool = False
         self.asign_material(material_name, thickness)
 
+    def __repr__(self) -> str:
+        return f"ShearWall(name={self.name!r}, length={self.L}, height={self.H})"
+
     def asign_material(self, name: str, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
 
         # Data validation: ensure the extents of the material fall within the wall's envelope
@@ -935,6 +938,9 @@ class Pier():
         # This list will be used by the parent shear wall to store a list of only the plates in this pier
         self.plates: List[Quad3D] = []
 
+    def __repr__(self) -> str:
+        return f"Pier(name={self.name!r}, width={self.width}, height={self.height})"
+
     def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
 
         # Initialize the forces in the plate
@@ -994,6 +1000,9 @@ class CouplingBeam():
         self.origin = shear_wall.origin
 
         self.plates: List[Quad3D] = []
+
+    def __repr__(self) -> str:
+        return f"CouplingBeam(name={self.name!r}, length={self.length}, height={self.height})"
 
     def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
 
