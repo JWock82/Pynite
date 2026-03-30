@@ -69,6 +69,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 2.4.2 (in progress)
+* Improved `ShearWall.screenshots()` method. Added coupling beam plots. Added the ability to use the `VTK` renderer instead of the `pyvista` renderer for screenshots.
 * Removed individual load combo plots from member plots when an envelope plot is requested. They cluttered the plots without adding much value.
 
 2.4.1
