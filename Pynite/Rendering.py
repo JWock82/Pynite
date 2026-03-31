@@ -357,18 +357,26 @@ class Renderer:
         # Update the plotter with the latest geometry
         self.update(reset_camera)
 
-        # In a Jupyter notebook pyvista will always take the screenshot prior to allowing user interaction. In order to get interaction before taking the screenshot, `render_model` must be called in a cell before `screenshot`. Since `render_model` will show the plotter, there is no need to show it again when using `screenshot`. This next line prevents showing the plotter twice.
+        # In a Jupyter notebook pyvista will always take the screenshot prior to allowing user
+        # interaction. In order to get interaction before taking the screenshot, `render_model`
+        # must be called in a cell before `screenshot`. Since `render_model` will show the plotter,
+        # there is no need to show it again when using `screenshot`. This next line prevents
+        # showing the plotter twice.
         self.plotter.notebook = False
 
-        # For non-Jupyter environments, determine if the user should interact with the window before capturing the screenshot
-        if interact == False: self.plotter.off_screen = True
-
-        # Save the screenshot to the specified filepath. Note that `auto_close` shuts down the entire plotter after the screenshot is taken, rather than just closing the window. We'll set `auto_close=False` to allow the plotter to remain active. Note that the window must be closed by pressing `q`. Closing it with the 'X' button in the window's corner will close the whole plotter down.
-        self.plotter.show(
-            title='Pynite - Simple Finite Element Anlaysis for Python',
-            screenshot=filepath,
-            auto_close=False
-            )
+        if interact:
+            # For interactive mode, use show() to allow user to adjust the camera.
+            # The screenshot is captured when the user presses 'q'.
+            # Note: auto_close=False keeps the plotter active for subsequent calls.
+            self.plotter.show(
+                title='Pynite - Simple Finite Element Anlaysis for Python',
+                screenshot=filepath,
+                auto_close=False
+                )
+        else:
+            # For non-interactive mode, render the scene and capture screenshot without interaction.
+            # Use off-screen rendering, then capture the screenshot.
+            self.plotter.screenshot(filepath)
 
     def update(self, reset_camera: bool = True) -> None:
         """Rebuild the PyVista plotter with current settings.
@@ -394,10 +402,12 @@ class Renderer:
         self.plotter.clear()
 
         # Set up view and axes (works for both interactive and off-screen modes)
+        # Only reset the view if reset_camera is True, to preserve user's custom camera position
         try:
-            self.plotter.view_xy()
+            if reset_camera:
+                self.plotter.view_xy()
+                self.plotter.set_viewup((0, 1, 0))
             self.plotter.show_axes()
-            self.plotter.set_viewup((0, 1, 0))
         except:
             # Silently fail if not supported in this context
             pass
