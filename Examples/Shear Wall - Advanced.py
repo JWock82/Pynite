@@ -52,26 +52,32 @@ model.analyze_linear(log=True, check_statics=False, check_stability=False)
 print('Roof level stiffness: ', model.shear_walls['Wall 1'].stiffness('Roof')/12)
 
 # Let's render the wall shear stresses
-from Pynite.Rendering import Renderer
-rndr = Renderer(model)
-rndr.combo_name = '1.2D+1.0E'
-rndr.deformed_shape = True
-rndr.deformed_scale = 1000
-rndr.color_map = 'Txy'
-rndr.render_model()
+# from Pynite.Rendering import Renderer
+# rndr = Renderer(model)
+# rndr.combo_name = '1.2D+1.0E'
+# rndr.deformed_shape = True
+# rndr.deformed_scale = 1000
+# rndr.color_map = 'Txy'
+# rndr.render_model()
 
 # Show the wall piers for which results are available
-model.shear_walls['Wall 1'].draw_piers(show=True)
+# model.shear_walls['Wall 1'].draw_piers(show=True)
 
-# Note: press `q` to close the window that pops up and move on. If you hit the `X` in the corner the program will kill the window before we can reuse it below on the coupling beams (sorry - that's a `pyvista` nuance I haven't figures out a workaround for yet)
+# Note: press `q` to close the window that pops up and move on. If you hit the `X` in the corner
+# the program will kill the window before we can reuse it below on the coupling beams (sorry -
+# that's a `pyvista` nuance I haven't figures out a workaround for yet)
+
+model.shear_walls['Wall 1'].screenshots('1.2D+1.0E', renderer_backend='pyvista')
 
 # Print the pier results
 model.shear_walls['Wall 1'].print_piers(combo_name='1.2D+1.0E')
 
 # Show the wall coupling beams for which results are available
-model.shear_walls['Wall 1'].draw_coupling_beams(show=True)
+# model.shear_walls['Wall 1'].draw_coupling_beams(show=True)
 
 # Print the coupling beam results
 model.shear_walls['Wall 1'].print_coupling_beams(combo_name='1.2D+1.0E')
 
-# Note: At this point all the pier and coupling beam results are stored in the `wall.piers` and `wall.coupling_beams` dictionaries for further use if desired.
+# Note: At this point all the pier and coupling beam results are stored in the
+# `model.shear_walls['Wall 1'].piers` and `model.shear_walls['Wall 1'].coupling_beams` dictionaries
+# for further use if desired.
