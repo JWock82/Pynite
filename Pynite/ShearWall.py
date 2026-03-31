@@ -793,7 +793,7 @@ class ShearWall():
         # Return the story's stiffness:
         return V/(d_max)
 
-    def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './', renderer_backend: Literal['vtk', 'pyvista'] = 'pyvista') -> None:
+    def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './', renderer_backend: Literal['vtk', 'pyvista'] = 'vtk') -> None:
 
         renderer_backend = renderer_backend.lower()
 
