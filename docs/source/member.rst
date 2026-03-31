@@ -52,10 +52,10 @@ Specifically:
 - For members parallel to the global y-axis, the local z-axis will be parallel to the global z-axis.
 - For members in the XZ plane, the local y-axis will be parallel to the global y-axis. The member
   local z-axis is determined by cross product of local x-axis with local y-axis.
-- For other members, the local x-axis is projected into the global XZ plane and the local y-axis is 
-  determined by the cross product of this projected vector and the member local x-axis. The ordering
-  of the cross product is such that the resulting local y-axis has a positive global y component (i.e. 
-  the top of the beam is always pointing in the positive global y direction)
+- For other members, the local z-axis is determined by the cross product of the local x-axis
+  projected onto the global XZ plane, and the member local x-axis. The ordering of the cross product
+  is such that the resulting local y-axis has a positive global y component (i.e. the top of the beam
+  is always pointing in the positive global y direction)
 
 The local y-axis is defined as the cross-product of the local z-axis with the local x-axis. In
 other words, the local y-axis is always perpendicular to the member and to the local z-axis.
