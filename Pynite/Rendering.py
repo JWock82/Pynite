@@ -109,7 +109,7 @@ class Renderer:
 
     def __repr__(self) -> str:
         return f"Renderer(model={self.model!r})"
-
+    
     @property
     def window_width(self) -> int:
         return self.plotter.window_size[0]
@@ -442,11 +442,8 @@ class Renderer:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
 
-        # Always refresh the plotter to avoid state corruption from previous show() calls.
+        # Always refresh the plotter to avoid plotter corruption from previous show() calls.
         self._refresh_plotter(off_screen=off_screen)
-
-        # Clear out the old plot (if any)
-        self.plotter.clear()
 
         # Set up view and axes (works for both interactive and off-screen modes)
         # Only reset the view if reset_camera is True, to preserve user's custom camera position
