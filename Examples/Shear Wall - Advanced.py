@@ -67,7 +67,7 @@ print('Roof level stiffness: ', model.shear_walls['Wall 1'].stiffness('Roof')/12
 # the program will kill the window before we can reuse it below on the coupling beams (sorry -
 # that's a `pyvista` nuance I haven't figures out a workaround for yet)
 
-model.shear_walls['Wall 1'].screenshots('1.2D+1.0E', renderer_backend='pyvista')
+model.shear_walls['Wall 1'].screenshots('1.2D+1.0E', renderer_backend='vtk')
 
 # Print the pier results
 model.shear_walls['Wall 1'].print_piers(combo_name='1.2D+1.0E')
