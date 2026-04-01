@@ -328,7 +328,7 @@ class Renderer:
             self.plotter.off_screen = True
 
         # Update the plotter with the latest geometry
-        self.update(reset_camera)
+        self.update(reset_camera, off_screen=off_screen)
 
         # Render the model (code execution will pause here until the user closes the window)
         try:
@@ -355,7 +355,8 @@ class Renderer:
         """
 
         # Update the plotter with the latest geometry
-        self.update(reset_camera)
+        # Use off_screen=False for interactive mode, off_screen=True for non-interactive
+        self.update(reset_camera, off_screen=not interact)
 
         # In a Jupyter notebook pyvista will always take the screenshot prior to allowing user
         # interaction. In order to get interaction before taking the screenshot, `render_model`
@@ -375,16 +376,59 @@ class Renderer:
                 )
         else:
             # For non-interactive mode, render the scene and capture screenshot without interaction.
-            # Use off-screen rendering, then capture the screenshot.
+            # The plotter was created in off-screen mode by _refresh_plotter during update().
+            self.plotter.render()
             self.plotter.screenshot(filepath)
 
-    def update(self, reset_camera: bool = True) -> None:
+    def _refresh_plotter(self, off_screen: bool = False) -> None:
+        """Create a fresh plotter object, preserving camera position and window size.
+
+        PyVista plotters can become corrupted after show() is called and the window
+        is closed by the user. This method creates a new plotter while preserving
+        important states like camera angle and window dimensions.
+        
+        :param bool off_screen: Whether to create plotter in off-screen mode (default ``True``).
+        """
+        # Save the current state before creating a new plotter
+        saved_camera = None
+
+        try:
+            saved_camera = self.plotter.camera_position
+        except Exception:
+            pass
+        
+        try:
+            saved_window_size = self.plotter.window_size
+        except Exception:
+            saved_window_size = (750, 750)  # Default size if we can't get it from the plotter
+        
+        try:
+            saved_notebook = self.plotter.notebook
+        except Exception:
+            saved_notebook = False
+
+        # Create a new plotter with specified off_screen setting
+        self.plotter = pv.Plotter(off_screen=off_screen, notebook=saved_notebook, window_size=saved_window_size)
+        self.plotter.set_background('white')
+        
+        # Restore camera position
+        if saved_camera is not None:
+            try:
+                self.plotter.camera_position = saved_camera
+            except Exception:
+                pass
+        
+        # Re-add the ExitEvent observer for the X button behavior
+        self.plotter.iren.add_observer('ExitEvent', lambda obj, event: obj.TerminateApp())
+
+    def update(self, reset_camera: bool = True, off_screen: bool = False) -> None:
         """Rebuild the PyVista plotter with current settings.
 
         Updates all visual elements (geometry, loads, labels, contours, diagrams)
         and calls post-update callbacks.
 
         :param bool reset_camera: Reset camera to fit model (default ``True``).
+        :param bool off_screen: Render off-screen without displaying a window (default ``False``).
         """
 
         # Clear annotation size cache to recalculate if model has changed
@@ -398,19 +442,18 @@ class Renderer:
             self.render_loads = False
             warnings.warn('Unable to render load combination. No load combinations defined.', UserWarning)
 
+        # Always refresh the plotter to avoid state corruption from previous show() calls.
+        self._refresh_plotter(off_screen=off_screen)
+
         # Clear out the old plot (if any)
         self.plotter.clear()
 
         # Set up view and axes (works for both interactive and off-screen modes)
         # Only reset the view if reset_camera is True, to preserve user's custom camera position
-        try:
-            if reset_camera:
-                self.plotter.view_xy()
-                self.plotter.set_viewup((0, 1, 0))
-            self.plotter.show_axes()
-        except:
-            # Silently fail if not supported in this context
-            pass
+        if reset_camera:
+            self.plotter.view_xy()
+            self.plotter.set_viewup((0, 1, 0))
+        self.plotter.show_axes()
 
         # Clear out internally stored labels (if any)
         self._load_label_points = []
