@@ -36,15 +36,17 @@ def test_plastic_beam():
     plastic_beam.add_member_pt_load('M1', 'Fy', -1.0, 8*12, 'Push')
     plastic_beam.add_node_load('N2', 'FX', -1.0, 'Push')
 
-    # Add a load combination
+    # Add load combinations
+    # Primary combo is required for pushover analysis to have a base case to apply pushover loads to
+    plastic_beam.add_load_combo('Primary', {})
     plastic_beam.add_load_combo('Pushover', {'Push': 1.0})
 
     # Analysis the model
     plastic_beam._not_ready_yet_analyze_pushover(log=True, check_stability=False, push_combo='Pushover', max_iter=30, tol=0.01, sparse=False)
 
-    # Get the resulting moments
-    M_a = plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name='Pushover')
-    M_b = plastic_beam.members['M1'].moment('Mz', x=8.0*12.0, combo_name='Pushover')
+    # Get the resulting moments from the Primary combo (where pushover results are stored)
+    M_a = plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name='Primary')
+    M_b = plastic_beam.members['M1'].moment('Mz', x=8.0*12.0, combo_name='Primary')
     M_ae = 3752
     M_be = -3752
 
