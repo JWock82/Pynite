@@ -253,7 +253,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
                 if solution_step == 2:
 
                     # After the first iteration, the geometric stiffness matrix will be added to the linear elastic stiffness matrix.
-                    Kg11, Kg12, Kg21, Kg22 = _partition(model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
+                    Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
 
                     K11 = K11 + Kg11
                     K12 = K12 + Kg12
@@ -356,7 +356,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
             # Geometric stiffness matrix
             # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
             if log: print('Calculating geometric stiffness matrix [Kg]')
-            Kg11, Kg12, Kg21, Kg22 = _partition(model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
+            Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
 
             # Calculate the stiffness reduction matrix
             if log: print('Calculating plastic reduction matrix [Km]')
