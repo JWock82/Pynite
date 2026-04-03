@@ -141,10 +141,10 @@ class SteelSection(Section):
         Mpy = self.material.fy*self.Zy
         Mpz = self.material.fy*self.Zz
 
-        # Values for p, my, and mz based on actual loads
-        p = fx/Py
-        m_y = my/Mpy
-        m_z = mz/Mpz
+        # Values for p, my, and mz based on actual loads. The interaction equation is always in the positive quadrant, so absolute values are used.
+        p = abs(fx/Py)
+        m_y = abs(my/Mpy)
+        m_z = abs(mz/Mpz)
 
         # "Matrix Structural Analysis, 2nd Edition", Equation 10.18
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
@@ -185,10 +185,15 @@ class SteelSection(Section):
             Mpy = self.material.fy*self.Zy
             Mpz = self.material.fy*self.Zz
 
+            # The interaction equation is always in the positive quadrant, so absolute values are used
+            afx = abs(fx)
+            amy = abs(my)
+            amz = abs(mz)
+
             # Partial derivatives of Phi
-            dPhi_dfx = 18*fx**5*my**2/(Mpy**2*Py**6) + 2*fx/Py**2 + 7.0*fx*mz**2/(Mpz**2*Py**2)
-            dPhi_dmy = 6*fx**6*my/(Mpy**2*Py**6) + 4*my/Mpy**4 + 9.0*my*mz**4/(Mpy**2*Mpz**4)
-            dPhi_dmz = 7.0*fx**2*mz/(Mpz**2*Py**2) + 2*mz/Mpz**2 + 18.0*my**2*mz**3/(Mpy**2*Mpz**4)
+            dPhi_dfx = 18*afx**5*amy**2/(Mpy**2*Py**6) + 2*afx/Py**2 + 7.0*afx*amz**2/(Mpz**2*Py**2)
+            dPhi_dmy = 6*afx**6*amy/(Mpy**2*Py**6) + 4*amy/Mpy**4 + 9.0*amy*amz**4/(Mpy**2*Mpz**4)
+            dPhi_dmz = 7.0*afx**2*amz/(Mpz**2*Py**2) + 2*amz/Mpz**2 + 18.0*amy**2*amz**3/(Mpy**2*Mpz**4)
 
             # Return the gradient
             return np.array([[dPhi_dfx],
