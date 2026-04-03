@@ -302,7 +302,8 @@ class PhysMember(Member3D):
             return (Vmin, governing_combo)
         return Vmin
 
-    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                   figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the shear diagram for the member.
 
@@ -318,6 +319,8 @@ class PhysMember(Member3D):
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -331,7 +334,7 @@ class PhysMember(Member3D):
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = PhysMember.__plt.subplots()
+        fig, ax = PhysMember.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -533,7 +536,8 @@ class PhysMember(Member3D):
             return (Mmin, governing_combo)
         return Mmin
 
-    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the moment diagram for the member.
 
@@ -549,6 +553,8 @@ class PhysMember(Member3D):
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -562,7 +568,7 @@ class PhysMember(Member3D):
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = PhysMember.__plt.subplots()
+        fig, ax = PhysMember.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -759,7 +765,8 @@ class PhysMember(Member3D):
             return (Tmin, governing_combo)
         return Tmin
 
-    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the torque diagram for the member.
 
@@ -771,6 +778,8 @@ class PhysMember(Member3D):
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -784,7 +793,7 @@ class PhysMember(Member3D):
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = PhysMember.__plt.subplots()
+        fig, ax = PhysMember.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -966,7 +975,8 @@ class PhysMember(Member3D):
             return (Pmin, governing_combo)
         return Pmin
 
-    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                   figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the axial force diagram for the member.
 
@@ -978,6 +988,8 @@ class PhysMember(Member3D):
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -991,7 +1003,7 @@ class PhysMember(Member3D):
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = PhysMember.__plt.subplots()
+        fig, ax = PhysMember.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -1201,7 +1213,8 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.rel_deflection(Direction, x_mod, combo_name)
 
-    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                        figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the deflection diagram for the member.
 
@@ -1217,6 +1230,8 @@ class PhysMember(Member3D):
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -1230,7 +1245,7 @@ class PhysMember(Member3D):
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = PhysMember.__plt.subplots()
+        fig, ax = PhysMember.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 

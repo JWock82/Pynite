@@ -1296,7 +1296,8 @@ class Member3D():
             return (Vmin_global, governing_combo)
         return Vmin_global
 
-    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                   figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the shear diagram for the member.
 
@@ -1312,6 +1313,8 @@ class Member3D():
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -1325,7 +1328,7 @@ class Member3D():
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = Member3D.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -1604,7 +1607,8 @@ class Member3D():
         return Mmin_global
 
 
-    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the moment diagram for the member.
 
@@ -1620,6 +1624,8 @@ class Member3D():
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -1633,7 +1639,7 @@ class Member3D():
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = Member3D.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -1878,7 +1884,8 @@ class Member3D():
             return (Tmin_global, governing_combo)
         return Tmin_global
 
-    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the torque diagram for the member.
 
@@ -1890,6 +1897,8 @@ class Member3D():
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -1903,7 +1912,7 @@ class Member3D():
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = Member3D.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -2123,7 +2132,8 @@ class Member3D():
             return (Pmin_global, governing_combo)
         return Pmin_global
 
-    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                   figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the axial force diagram for the member.
 
@@ -2135,6 +2145,8 @@ class Member3D():
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -2148,7 +2160,7 @@ class Member3D():
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = Member3D.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -2424,7 +2436,8 @@ class Member3D():
             return (dmin_global, governing_combo)
         return dmin_global
 
-    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20) -> None:
+    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+                        figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the deflection diagram for the member.
 
@@ -2441,6 +2454,8 @@ class Member3D():
             max/min envelope is shown.
         n_points: int
             The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Import 'pyplot' if not already done
@@ -2454,7 +2469,7 @@ class Member3D():
             combo_names = [name for name, combo in self.model.load_combos.items()
                            if combo.combo_tags is not None and any(tag in combo.combo_tags for tag in combo_name)]
 
-        fig, ax = Member3D.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
@@ -2605,7 +2620,8 @@ class Member3D():
 
             return 0
 
-    def plot_rel_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20) -> None:
+    def plot_rel_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str = 'Combo 1', n_points: int = 20,
+                            figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the deflection diagram for the member
 
@@ -2618,6 +2634,10 @@ class Member3D():
                 'dz' = Deflection in the local z-axis.
         combo_name : string
             The name of the load combination to get the results for (not the combination itself).
+        n_points: int
+            The number of points used to generate the plot
+        figsize : tuple of (float, float)
+            Figure size in inches as (width, height).
         """
 
         # Segment the member if necessary
@@ -2630,7 +2650,7 @@ class Member3D():
             from matplotlib import pyplot as plt
             Member3D.__plt = plt
 
-        fig, ax = Member3D.__plt.subplots()
+        fig, ax = Member3D.__plt.subplots(figsize=figsize)
         ax.axhline(0, color='black', lw=1)
         ax.grid()
 
