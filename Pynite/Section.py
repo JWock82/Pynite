@@ -41,9 +41,8 @@ class Section():
 
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0):
         """
-        Method to be overridden by subclasses for determining whether the cross section is
-        elastic or plastic.
-        
+        Method to be overridden by subclasses for determining whether the cross section is elastic or plastic.
+
         :param fx: Axial force
         :type fx: float
         :param my: y-axis (weak) moment
@@ -125,14 +124,13 @@ class SteelSection(Section):
 
     def Phi(self, fx: float = 0, my: float = 0, mz: float = 0) -> float:
         """
-        A method used to determine whether the cross section is elastic or plastic.
-        Values less than 1 indicate the section is elastic.
+        Determines the stress ratio for the cross section, and by implication, whether it is elastic or plastic. Values less than 1 indicate the section is elastic.
 
-        :param fx: Axial force divided by axial strength.
+        :param fx: Axial force.
         :type fx: float
-        :param my: Weak axis moment divided by weak axis strength.
+        :param my: Weak axis moment.
         :type my: float
-        :param mz: Strong axis moment divided by strong axis strength.
+        :param mz: Strong axis moment.
         :type mz: float
         :return: The total stress ratio for the cross section.
         :rtype: float
@@ -152,7 +150,8 @@ class SteelSection(Section):
         return p**2 + m_z**2 + m_y**4 + 3.5*p**2*m_z**2 + 3*p**6*m_y**2 + 4.5*m_z**4*m_y**2
 
     def G(self, fx: float, my: float, mz: float) -> NDArray[float64]:
-        """Returns the gradient to the material's yield surface for the given load. Used to construct the plastic reduction matrix for nonlinear behavior.
+        """
+        Returns the gradient to the material's yield surface for the given load. Used to construct the plastic reduction matrix for nonlinear behavior.
 
         :param fx: Axial force at the cross-section.
         :type fx: float
@@ -164,7 +163,7 @@ class SteelSection(Section):
         :rtype: NDArray
         """
 
-        # Calculate `Phi` which is essentially a stress check indicating how close to yield we are
+        # Calculate `Phi` for the given loading
         Phi = self.Phi(fx, my, mz)
 
         # If Phi is less than 1.0 the member is still elastic and there is no gradient to the yield surface
@@ -188,7 +187,7 @@ class SteelSection(Section):
 
             # Partial derivatives of Phi
             dPhi_dfx = 18*fx**5*my**2/(Mpy**2*Py**6) + 2*fx/Py**2 + 7.0*fx*mz**2/(Mpz**2*Py**2)
-            dPhi_dmy = 6*fx**6*my/(Mpy**2*Py**6) + 2*my/Mpy**2 + 9.0*my*mz**4/(Mpy**2*Mpz**4)
+            dPhi_dmy = 6*fx**6*my/(Mpy**2*Py**6) + 4*my/Mpy**4 + 9.0*my*mz**4/(Mpy**2*Mpz**4)
             dPhi_dmz = 7.0*fx**2*mz/(Mpz**2*Py**2) + 2*mz/Mpz**2 + 18.0*my**2*mz**3/(Mpy**2*Mpz**4)
 
             # Return the gradient
