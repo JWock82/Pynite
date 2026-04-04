@@ -10,10 +10,10 @@ as displacement results in modal load combinations.
 How it works
 ============
 
-- Assembles the global stiffness matrix ``[K]`` and mass matrix ``[M]`` using the
+- Assembles the global elastic stiffness matrix ``[Ke]`` and mass matrix ``[M]`` using the
   specified ``mass_combo_name`` and ``mass_direction``.
 - Partitions out supported degrees of freedom before solving to avoid singularities.
-- Solves the generalized eigenproblem ``[K]{φ} = λ[M]{φ}`` where ``λ = ω²``. Frequencies
+- Solves the generalized eigenproblem ``[Ke]{φ} = λ[M]{φ}`` where ``λ = ω²``. Frequencies
   are returned in Hz as ``f = ω / (2π)``.
 - Mode shapes (eigenvectors) are expanded back into the model's full DOF set and
   stored in load combinations named ``Mode 1``, ``Mode 2``, etc.

@@ -103,11 +103,11 @@ API Reference
 =============
 
 .. autoclass:: Pynite.Plate3D.Plate3D
-   :members: moment, shear, membrane, K, FER, F, D, T
+   :members: moment, shear, membrane, Ke, FER, F, D, T
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: Pynite.Quad3D.Quad3D
-   :members: moment, shear, membrane, K, FER, F, D, T
+   :members: moment, shear, membrane, Ke, FER, F, D, T
    :undoc-members:
    :show-inheritance:

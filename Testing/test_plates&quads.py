@@ -48,14 +48,14 @@ def test_plate_displacement():
 
     plate_model.def_support('N5', True, True, False, False, False, True)
 
-    # Check to see if the stiffness matrix for each plate is symmetric
-    # print(allclose(plate_model.plates[0].K(), plate_model.plates[0].K().T))
-    # print(allclose(plate_model.plates[1].K(), plate_model.plates[1].K().T))
-    # print(allclose(plate_model.plates[2].K(), plate_model.plates[2].K().T))
-    # print(allclose(plate_model.plates[3].K(), plate_model.plates[3].K().T))
+    # Check to see if the elastic stiffness matrix for each plate is symmetric
+    # print(allclose(plate_model.plates[0].Ke(), plate_model.plates[0].Ke().T))
+    # print(allclose(plate_model.plates[1].Ke(), plate_model.plates[1].Ke().T))
+    # print(allclose(plate_model.plates[2].Ke(), plate_model.plates[2].Ke().T))
+    # print(allclose(plate_model.plates[3].Ke(), plate_model.plates[3].Ke().T))
 
-    # Check to see if the global stiffness matrix is symmetric
-    # print(allclose(plate_model.K(Renumber=True), plate_model.K(Renumber=False).T))
+    # Check to see if the global elastic stiffness matrix is symmetric
+    # print(allclose(plate_model.Ke(Renumber=True), plate_model.Ke(Renumber=False).T))
 
     plate_model.analyze(check_statics=True, sparse=False)
     # Test: displacement of N5 in Z direction

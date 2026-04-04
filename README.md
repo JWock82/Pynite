@@ -69,6 +69,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 2.4.2 (in progress)
+* Refactored all elastic stiffness matrix references from `K` and `k` to `Ke` and `ke`. Most users will not notice this change. Power users who were accessing the stiffness matrices directly will want to note this refactor.  This clarifies the code base by indicating which type of stiffness these matrices represent, and reduces ambiguity in preparation for addition of further geometric `Kg/kg` and plastic `Km/km` stiffness matrices.
 * User's can now control the size of member plots.
 * Corrections to (experimental/developmental) pushover analysis equations. This feature is still in development and not ready for production use yet.
 * Improved `ShearWall.screenshots()` method. Added coupling beam plots. Added the ability to use the `VTK` renderer instead of the `pyvista` renderer for screenshots.
@@ -100,7 +101,7 @@ v2.2.0
 * Updated documentation for rendering.
 
 v2.1.0
-* Major speed boost and leaner memory usage: the global stiffness/mass assembly plus the nodal load and fixed-end reaction builders now use block-based vectorized writes instead of Python loops, which keeps data in contiguous NumPy buffers rather than thousands of temporary Python objects. The dense solver sees ~15-25% faster `K`/`M` builds in our targeted benchmarks, while sparse solver runs see ~30% faster stiffness assembly in our benchmarks.
+* Major speed boost and leaner memory usage: the global stiffness/mass assembly plus the nodal load and fixed-end reaction builders now use block-based vectorized writes instead of Python loops, which keeps data in contiguous NumPy buffers rather than thousands of temporary Python objects. The dense solver sees ~15-25% faster `Ke`/`M` builds in our targeted benchmarks, while sparse solver runs see ~30% faster stiffness assembly in our benchmarks.
 * Meshes can now be regenerated with the `FEModel3D.meshes[mesh_name].generate()` command. This command removes the old mesh and replaces it with an updated one. The mesh will not remove nodes needed by other elements outside the mesh. Note that any loads applied to the old mesh will be lost when its elements and nodes are deleted. This makes meshes truly parametric.
 * Added `FEModel3D.delete_mesh()` to help deleting old meshes properly.
 * Renderers now automatically set the annotation size as 5% of the minimum distance between nodes. You still have the option of overiding this by setting the annotation size manually.

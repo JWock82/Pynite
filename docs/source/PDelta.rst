@@ -8,7 +8,7 @@ P-:math:`\Delta` effects are secondary forces that develop due to the displaceme
 
 There are traditionally 2 types of procedures used to run P-:math:`\Delta` analysis:
 1. The iterative procedure - A basic analysis is rerun considering the effects of the displaced goemetry, leading to further displacements. These further displacements require further iterations until the displacements either converge or diverge.
-2. Use of the geometric stiffness matrix `Kg`- A stiffness matrix that adjusts member stiffnesses for the effects of member axial loads is added to the overall stiffness matrix. This method allows for a direct linear solution if the axial load on the members is known in advance.
+2. Use of the geometric stiffness matrix `Kg` - A geometric stiffness matrix is added to the overall elastic stiffness matrix `Ke`. This adjusts member stiffnesses for the effects of member axial loads and allows for a direct linear solution if the axial load on the members is known in advance.
 
 P-:math:`\delta` effects can be captured by modeling additional nodes along the members length. This forces the analysis to track member internal displacements at the nodes during analysis. In most cases only 2 or 3 intermediate nodes are required. AISC has published an good engineering journal article discussing this method.
 

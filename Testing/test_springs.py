@@ -32,10 +32,10 @@ def test_spring_elements():
 
     system.analyze(True)
 
-    # Check the stiffness matrix
-    K = system.K(sparse=False)[[0, 6, 12, 18]][:, [0, 6, 12, 18]]
+    # Check the elastic stiffness matrix
+    Ke = system.Ke(sparse=False)[[0, 6, 12, 18]][:, [0, 6, 12, 18]]
 
-    assert np.array_equal(K, np.array([[1000, 0, -1000, 0],
+    assert np.array_equal(Ke, np.array([[1000, 0, -1000, 0],
                                        [0, 3000, 0, -3000],
                                        [-1000, 0, 3000, -2000],
                                        [0, -3000, -2000, 5000]]))

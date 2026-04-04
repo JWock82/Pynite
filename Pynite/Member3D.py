@@ -147,40 +147,40 @@ class Member3D():
         return R1_indices, R2_indices
 
 # %%
-    def k(self) -> NDArray[Any]:
+    def ke(self) -> NDArray[Any]:
         """
-        Returns the condensed (and expanded) local stiffness matrix for the member.
+        Returns the condensed (and expanded) local elastic stiffness matrix for the member.
 
-        :return: The condensed local stiffness matrix
+        :return: The condensed local elastic stiffness matrix
         :rtype: ndarray
         """
 
         # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
-        k11, k12, k21, k22 = self._partition(self._k_unc())
+        ke11, ke12, ke21, ke22 = self._partition(self._ke_unc())
 
         # Calculate the condensed local stiffness matrix
-        k_Condensed = subtract(k11, matmul(matmul(k12, inv(k22)), k21))
+        ke_condensed = subtract(ke11, matmul(matmul(ke12, inv(ke22)), ke21))
 
         # Expand the condensed local stiffness matrix
         i = 0
         for DOF in self.Releases:
 
             if DOF == True:
-                k_Condensed = insert(k_Condensed, i, 0, axis=0)
-                k_Condensed = insert(k_Condensed, i, 0, axis=1)
+                ke_condensed = insert(ke_condensed, i, 0, axis=0)
+                ke_condensed = insert(ke_condensed, i, 0, axis=1)
 
             i += 1
 
         # Return the local stiffness matrix, with end releases applied
-        return k_Condensed
+        return ke_condensed
 
 # %%
-    def _k_unc(self) -> NDArray[float64]:
+    def _ke_unc(self) -> NDArray[float64]:
         """
-        Returns the uncondensed local stiffness matrix for the member.
+        Returns the uncondensed local elastic stiffness matrix for the member.
 
-        :return: The uncondensed local stiffness matrix
+        :return: The uncondensed local elastic stiffness matrix
         :rtype: NDArray[float64]
         """
 
@@ -194,7 +194,7 @@ class Member3D():
         L = self.L()
 
         # Create the uncondensed local stiffness matrix
-        k = array([[A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0           ],
+        ke = array([[A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0           ],
                    [0,      12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2,  0,      -12*E*Iz/L**3, 0,             0,      0,            6*E*Iz/L**2 ],
                    [0,      0,             12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0,            0,      0,             -12*E*Iy/L**3, 0,      -6*E*Iy/L**2, 0           ],
                    [0,      0,             0,             G*J/L,  0,            0,            0,      0,             0,             -G*J/L, 0,            0           ],
@@ -208,7 +208,7 @@ class Member3D():
                    [0,      6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            4*E*Iz/L    ]])
 
         # Return the uncondensed local stiffness matrix
-        return k
+        return ke
 
     def kg(self, P: float = 0) -> NDArray[float64]:
         """
@@ -282,7 +282,7 @@ class Member3D():
 
         # Get the elastic local stiffness matrix (for only axial and bending)
         # Note that using the entire stiffness matrix with all terms would lead to an uninvertible term later on
-        ke = self.k()  # [dofs][:, dofs]
+        ke = self.ke()  # [dofs][:, dofs]
 
         # Get the member's axial force
         P = self._fxi
@@ -705,7 +705,7 @@ class Member3D():
         d_total = self.d(combo_name)  # Total displacements acting on the member at the current load stp
         delta_dx_total = d_total[6, 0] - d_total[0, 0]  # Change in displacement across the lenght of the member
         P = self.section.A*self.material.E/self.L()*delta_dx_total  # Axial load acting on the member at the current load step
-        ke = self.k() + self.kg(P)  # Elastic stiffness (including geometric stiffness)
+        ke = self.ke() + self.kg(P)  # Elastic stiffness (including geometric stiffness)
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
@@ -742,7 +742,7 @@ class Member3D():
         R1_indices, R2_indices = self._partition_D()
 
         # Partition the local stiffness matrix and local fixed end reaction vector
-        k11, k12, k21, k22 = self._partition(self._k_unc())
+        k11, k12, k21, k22 = self._partition(self._ke_unc())
         fer1, fer2 = self._partition(self._fer_unc(combo_name))
 
         # Calculate the condensed fixed end reaction vector
@@ -873,7 +873,7 @@ class Member3D():
             # Back-calculate the axial force on the member from the axial strain
             P = (self.d(combo_name)[6, 0] - self.d(combo_name)[0, 0])*self.section.A*self.material.E/self.L()
 
-            return add(matmul(add(self.k(), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
+            return add(matmul(add(self.ke(), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
 
         # Check for a pushover analysis
         elif push_combo is not None and step_num is not None:
@@ -882,7 +882,7 @@ class Member3D():
             P = self._fxi
 
             # Calculate the total stiffness matrix
-            kt = self.k() + self.kg(P) + self.km(combo_name)
+            kt = self.ke() + self.kg(P) + self.km(combo_name)
 
             # Calculate the fixed end reaction vector for this load step
             fer = self.fer(combo_name) + self.fer(push_combo)*step_num
@@ -892,7 +892,7 @@ class Member3D():
 
         else:
 
-            return self.k() @ self.d(combo_name) + self.fer(combo_name)
+            return self.ke() @ self.d(combo_name) + self.fer(combo_name)
 
     def d(self, combo_name='Combo 1') -> NDArray[float64]:
         """
@@ -1014,7 +1014,7 @@ class Member3D():
         return transMatrix
 
     # Member global stiffness matrix
-    def K(self) -> NDArray[float64]:
+    def Ke(self) -> NDArray[float64]:
         """Returns the global elastic stiffness matrix for the member.
 
         :return: The global elastic stiffness matrix for the member.
@@ -1022,7 +1022,7 @@ class Member3D():
         """
 
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(inv(self.T()), self.k()), self.T())
+        return matmul(matmul(inv(self.T()), self.ke()), self.T())
 
     def Kg(self, P: float=0.0):
         """Returns the global geometric stiffness matrix for the member. Used for P-Delta analysis.

@@ -219,7 +219,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
                     # Calculate the partitioned initial stiffness matrices. These matrices must be recalculated on each T/C iteration due to tension/compression-only members deactivating or reactivating.
                     if log:
                         print('- Calculating initial stiffness matrix')
-                    K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+                    K11, K12, K21, K22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
                     # The initial stiffness matrices are in `coo` format from construction. They will be converted to `csr` format for efficient mathematical operations.
                     K11 = K11.tocsr()
@@ -247,7 +247,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
                 if solution_step == 1:
 
                     # Calculate the partitioned initial stiffness matrices. These matrices must be recalculated on each T/C iteration due to tension/compression-only members deactivating or reactivating.
-                    K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+                    K11, K12, K21, K22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
                 # Check if we are ready to calculate the geometric stiffness
                 if solution_step == 2:
@@ -327,7 +327,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
             # Calculate the initial stiffness matrix
             if log: print('- Calculating elastic stiffness matrix [Ke]')
-            K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+            K11, K12, K21, K22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
             # Calculate the geometric stiffness matrix
             # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
@@ -351,7 +351,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
             # Initial stiffness matrix
             if log: print('- Calculating elastic stiffness matrix [Ke]')
-            K11, K12, K21, K22 = _partition(model, model.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+            K11, K12, K21, K22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
             # Geometric stiffness matrix
             # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.

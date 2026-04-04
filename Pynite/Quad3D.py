@@ -520,9 +520,9 @@ class Quad3D():
 
         return Cm
 
-    def k_b(self) -> NDArray[float64]:
+    def ke_b(self) -> NDArray[float64]:
         '''
-        Returns the local stiffness matrix for bending and shear stresses
+        Returns the local elastic stiffness matrix for bending and shear stresses.
         '''
 
         Hb = self.Hb()
@@ -545,7 +545,7 @@ class Quad3D():
 
         # Create the stiffness matrix with bending stiffness terms
         # See 2, Equation 5.94
-        k = ((B1.T @ Hb @ B1)*det_J1 +
+        ke = ((B1.T @ Hb @ B1)*det_J1 +
              (B2.T @ Hb @ B2)*det_J2 +
              (B3.T @ Hb @ B3)*det_J3 +
              (B4.T @ Hb @ B4)*det_J4)
@@ -557,7 +557,7 @@ class Quad3D():
         B4 = self.B_s(-gp,  gp)
 
         # Add shear stiffness terms to the stiffness matrix
-        k += ((B1.T @ Hs @ B1)*det_J1 +
+        ke += ((B1.T @ Hs @ B1)*det_J1 +
               (B2.T @ Hs @ B2)*det_J2 +
               (B3.T @ Hs @ B3)*det_J3 +
               (B4.T @ Hs @ B4)*det_J4)
@@ -574,12 +574,12 @@ class Quad3D():
         # relate to translational stiffness. It seems more rational to only
         # look at the terms relating to rotational stiffness. That will be
         # Pynite's approach.
-        k_rz = min(abs(k[1, 1]), abs(k[2, 2]), abs(k[4, 4]), abs(k[5, 5]),
-                   abs(k[7, 7]), abs(k[8, 8]), abs(k[10, 10]), abs(k[11, 11])
+        ke_rz = min(abs(ke[1, 1]), abs(ke[2, 2]), abs(ke[4, 4]), abs(ke[5, 5]),
+                   abs(ke[7, 7]), abs(ke[8, 8]), abs(ke[10, 10]), abs(ke[11, 11])
                    )/1000
         
         # Initialize the expanded stiffness matrix to all zeros
-        k_exp = np.zeros((24, 24))
+        ke_exp = np.zeros((24, 24))
 
         # Step through each term in the unexpanded stiffness matrix
         # i = Unexpanded matrix row
@@ -612,27 +612,27 @@ class Quad3D():
 
                 # Add the term from the unexpanded matrix into the expanded
                 # matrix
-                k_exp[m, n] = k[i, j]
+                ke_exp[m, n] = ke[i, j]
 
         # Add the drilling degree of freedom's weak spring
-        k_exp[5, 5] = k_rz
-        k_exp[11, 11] = k_rz
-        k_exp[17, 17] = k_rz
-        k_exp[23, 23] = k_rz
+        ke_exp[5, 5] = ke_rz
+        ke_exp[11, 11] = ke_rz
+        ke_exp[17, 17] = ke_rz
+        ke_exp[23, 23] = ke_rz
 
         # Invert the local +y bending sign convention to match Pynite's
-        k_exp[[4, 10, 16, 22], :] *= -1
-        k_exp[:, [4, 10, 16, 22]] *= -1
+        ke_exp[[4, 10, 16, 22], :] *= -1
+        ke_exp[:, [4, 10, 16, 22]] *= -1
 
         # The way the DKMQ element was derived, the positions relating to x
         # and y in the element's stiffness matrix are swapped from Pynite's.
         # Swap them to match Pynite.
-        k_exp[[3, 4, 9, 10, 15, 16, 21, 22], :] = k_exp[[4, 3, 10, 9, 16, 15, 22, 21], :]
-        k_exp[:, [3, 4, 9, 10, 15, 16, 21, 22]] = k_exp[:, [4, 3, 10, 9, 16, 15, 22, 21]]
+        ke_exp[[3, 4, 9, 10, 15, 16, 21, 22], :] = ke_exp[[4, 3, 10, 9, 16, 15, 22, 21], :]
+        ke_exp[:, [3, 4, 9, 10, 15, 16, 21, 22]] = ke_exp[:, [4, 3, 10, 9, 16, 15, 22, 21]]
 
-        return k_exp
+        return ke_exp
 
-    def k_m(self) -> NDArray[float64]:
+    def ke_m(self) -> NDArray[float64]:
         '''
         Returns the local stiffness matrix for membrane (in-plane) stresses.
 
@@ -662,12 +662,12 @@ class Quad3D():
             warnings.warn(f'The Jacobian matrix for quad element {self.name} is less than or equal to zero, indicating the element is invalid or badly distorted.')
 
         # See reference 2 at the bottom of page 353, and reference 2 page 466
-        k = t*((B1.T @ Cm @ B1)*det_J1 +
+        ke = t*((B1.T @ Cm @ B1)*det_J1 +
                (B2.T @ Cm @ B2)*det_J2 +
                (B3.T @ Cm @ B3)*det_J3 +
                (B4.T @ Cm @ B4)*det_J4)
         
-        k_exp = np.zeros((24, 24))
+        ke_exp = np.zeros((24, 24))
 
         # Step through each term in the unexpanded stiffness matrix
         # i = Unexpanded matrix row
@@ -695,20 +695,20 @@ class Quad3D():
                 m, n = round(m), round(n)
 
                 # Add the term from the unexpanded matrix into the expanded matrix
-                k_exp[m, n] = k[i, j]
+                ke_exp[m, n] = ke[i, j]
         
-        return k_exp
+        return ke_exp
 
-    def k(self) -> NDArray[float64]:
+    def ke(self) -> NDArray[float64]:
         '''
-        Returns the quad element's local stiffness matrix.
+        Returns the quad element's local elastic stiffness matrix.
         '''
 
         # Recalculate the local coordinate system
         self._local_coords()
 
         # Sum the bending and membrane stiffness matrices
-        return np.add(self.k_b(), self.k_m())
+        return np.add(self.ke_b(), self.ke_m())
 
     def f(self, combo_name: str='Combo 1') -> NDArray[float64]:
         """
@@ -716,7 +716,7 @@ class Quad3D():
         """
 
         # Calculate and return the plate's local end force vector
-        return np.add(self.k() @ self.d(combo_name), self.fer(combo_name))
+        return np.add(self.ke() @ self.d(combo_name), self.fer(combo_name))
 
     def fer(self, combo_name: str='Combo 1') -> NDArray[float64]:
         """
@@ -855,16 +855,16 @@ class Quad3D():
         # Return the global displacement vector
         return D
 
-    def K(self) -> NDArray[float64]:
+    def Ke(self) -> NDArray[float64]:
         '''
-        Returns the quad element's global stiffness matrix
+        Returns the quad element's global elastic stiffness matrix.
         '''
 
         # Get the transformation matrix
         T = self.T()
 
         # Calculate and return the stiffness matrix in global coordinates
-        return inv(T) @ self.k() @ T
+        return inv(T) @ self.ke() @ T
 
     # Global fixed end reaction vector
     def FER(self, combo_name:str='Combo 1') -> NDArray[float64]:

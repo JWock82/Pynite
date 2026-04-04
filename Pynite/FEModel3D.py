@@ -1546,12 +1546,13 @@ class FEModel3D():
         # Flag the model as unsolved
         self.solution = None
 
-    def K(self, combo_name='Combo 1', log=False, check_stability=True, sparse=True):
-        """Returns the model's global stiffness matrix. The stiffness matrix will be returned in
-           scipy's sparse coo format, which reduces memory usage and can be easily converted to
-           other formats.
+    def Ke(self, combo_name='Combo 1', log=False, check_stability=True, sparse=True):
+        """Returns the model's global elastic stiffness matrix.
 
-        :param combo_name: The load combination to get the stiffness matrix for. Defaults to 'Combo 1'.
+        The elastic stiffness matrix is returned in scipy's sparse COO format by default, which
+        reduces memory usage and can be easily converted to other formats.
+
+        :param combo_name: The load combination to get the elastic stiffness matrix for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
         :param log: Prints updates to the console if set to True. Defaults to False.
         :type log: bool, optional
@@ -1561,7 +1562,7 @@ class FEModel3D():
         :param sparse: Returns a sparse matrix if set to True, and a dense matrix otherwise.
                        Defaults to True.
         :type sparse: bool, optional
-        :return: The global stiffness matrix for the structure.
+        :return: The global elastic stiffness matrix for the structure.
         :rtype: ndarray or coo_matrix
         """
 
@@ -1577,7 +1578,7 @@ class FEModel3D():
             data_parts: list[np.ndarray] = []
         else:
             # Initialize a dense matrix of zeros
-            K = np.zeros((len(self.nodes)*6, len(self.nodes)*6))
+            Ke = np.zeros((len(self.nodes)*6, len(self.nodes)*6))
 
         # Add stiffness terms for each nodal spring in the model
         if log: print('- Adding nodal spring support stiffness terms to global stiffness matrix')
@@ -1599,7 +1600,7 @@ class FEModel3D():
                         # Record the spring stiffness contribution for this DOF.
                         data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += val
+                        Ke[m, n] += val
 
             if node.spring_DY[0] is not None:
 
@@ -1616,7 +1617,7 @@ class FEModel3D():
                         # Store the spring stiffness coefficient for this DOF.
                         data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += val
+                        Ke[m, n] += val
 
             if node.spring_DZ[0] is not None:
 
@@ -1633,7 +1634,7 @@ class FEModel3D():
                         # Store the spring stiffness magnitude itself.
                         data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += val
+                        Ke[m, n] += val
 
             if node.spring_RX[0] is not None:
 
@@ -1650,7 +1651,7 @@ class FEModel3D():
                         # Store the rotational stiffness value for RX.
                         data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += val
+                        Ke[m, n] += val
 
             if node.spring_RY[0] is not None:
 
@@ -1667,7 +1668,7 @@ class FEModel3D():
                         # Store the rotational stiffness value for RY.
                         data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += val
+                        Ke[m, n] += val
 
             if node.spring_RZ[0] is not None:
 
@@ -1684,7 +1685,7 @@ class FEModel3D():
                         # Store the rotational stiffness value for RZ.
                         data_parts.append(np.array([val], dtype=float))
                     else:
-                        K[m, n] += val
+                        Ke[m, n] += val
 
         # Add stiffness terms for each spring in the model
         if log: print('- Adding spring stiffness terms to global stiffness matrix')
@@ -1697,14 +1698,14 @@ class FEModel3D():
                 # Capture the full set of i/j DOF indices for this spring element.
                 dofs = self._build_dof_vector(spring.i_node, spring.j_node)
                 # Grab the spring's already-transformed global stiffness matrix.
-                spring_K = spring.K()
+                spring_Ke = spring.Ke()
 
                 if sparse == True:
                     # Convert the spring block into sparse row/col/data pieces.
-                    self._append_sparse_block(dofs, spring_K, row_parts, col_parts, data_parts)
+                    self._append_sparse_block(dofs, spring_Ke, row_parts, col_parts, data_parts)
                 else:
                     # Add the spring block directly to the dense global matrix.
-                    self._add_dense_block(K, dofs, spring_K)
+                    self._add_dense_block(Ke, dofs, spring_Ke)
 
         # Add stiffness terms for each physical member in the model
         if log: print('- Adding member stiffness terms to global stiffness matrix')
@@ -1721,14 +1722,14 @@ class FEModel3D():
                     # Capture the member's i/j DOFs for subsequent block placement.
                     dofs = self._build_dof_vector(member.i_node, member.j_node)
                     # Grab the member's global stiffness matrix.
-                    member_K = member.K()
+                    member_Ke = member.Ke()
 
                     if sparse == True:
                         # Append the member block into the sparse assembly lists.
-                        self._append_sparse_block(dofs, member_K, row_parts, col_parts, data_parts)
+                        self._append_sparse_block(dofs, member_Ke, row_parts, col_parts, data_parts)
                     else:
                         # Inject the member block into the dense matrix via vectorized indexing.
-                        self._add_dense_block(K, dofs, member_K)
+                        self._add_dense_block(Ke, dofs, member_Ke)
 
         # Add stiffness terms for each quadrilateral in the model
         if log: print('- Adding quadrilateral stiffness terms to global stiffness matrix')
@@ -1736,7 +1737,7 @@ class FEModel3D():
 
             # Get the quadrilateral's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            quad_K = quad.K()
+            quad_Ke = quad.Ke()
             # Four nodes -> 24 DOFs. The helper keeps those indices contiguous so the
             # full block can be added without manual bookkeeping.
             # Build the 24-entry DOF vector for the quadrilateral element.
@@ -1744,10 +1745,10 @@ class FEModel3D():
 
             if sparse == True:
                 # Append the quad block contributions to the sparse assembly lists.
-                self._append_sparse_block(dofs, quad_K, row_parts, col_parts, data_parts)
+                self._append_sparse_block(dofs, quad_Ke, row_parts, col_parts, data_parts)
             else:
                 # Add the quad block directly to the dense matrix.
-                self._add_dense_block(K, dofs, quad_K)
+                self._add_dense_block(Ke, dofs, quad_Ke)
 
         # Add stiffness terms for each plate in the model
         if log: print('- Adding plate stiffness terms to global stiffness matrix')
@@ -1755,17 +1756,17 @@ class FEModel3D():
 
             # Get the plate's global stiffness matrix
             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
-            plate_K = plate.K()
+            plate_Ke = plate.Ke()
             # Same concept as the quad above, but for the rectangular plate element.
             # Build the DOF vector for the plate's four nodes.
             dofs = self._build_dof_vector(plate.i_node, plate.j_node, plate.m_node, plate.n_node)
 
             if sparse == True:
                 # Append the plate block contributions to the sparse assembly lists.
-                self._append_sparse_block(dofs, plate_K, row_parts, col_parts, data_parts)
+                self._append_sparse_block(dofs, plate_Ke, row_parts, col_parts, data_parts)
             else:
                 # Add the plate block directly to the dense matrix.
-                self._add_dense_block(K, dofs, plate_K)
+                self._add_dense_block(Ke, dofs, plate_Ke)
 
         if sparse:
             # Concatenate the per-element contributions into the vectors scipy expects.
@@ -1785,16 +1786,16 @@ class FEModel3D():
                 data = np.array([], dtype=float)
 
             # Build the sparse COO matrix from the assembled vectors.
-            K = sp.sparse.coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
+            Ke = sp.sparse.coo_matrix((data, (row, col)), shape=(len(self.nodes)*6, len(self.nodes)*6))
 
         # Check that there are no nodal instabilities
         if check_stability:
             if log: print('- Checking nodal stability')
-            if sparse: Analysis._check_stability(self, K.tocsr())
-            else: Analysis._check_stability(self, K)
+            if sparse: Analysis._check_stability(self, Ke.tocsr())
+            else: Analysis._check_stability(self, Ke)
 
-        # Return the global stiffness matrix
-        return K
+        # Return the global elastic stiffness matrix
+        return Ke
 
     def Kg(self, combo_name='Combo 1', log=False, sparse=True, first_step=True):
         """Returns the model's global geometric stiffness matrix. Geometric stiffness of plates is not considered.
@@ -2273,9 +2274,9 @@ class FEModel3D():
         # Note that for linear analysis the stiffness matrix can be obtained for any load combination, as it's the same for all of them
         combo_name = list(self.load_combos.keys())[0]
         if sparse == True:
-            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse).tocsr(), D1_indices, D2_indices)
+            K11, K12, K21, K22 = Analysis._partition(self, self.Ke(combo_name, log, check_stability, sparse).tocsr(), D1_indices, D2_indices)
         else:
-            K11, K12, K21, K22 = Analysis._partition(self, self.K(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+            K11, K12, K21, K22 = Analysis._partition(self, self.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
         # Identify which load combinations have the tags the user has given
         combo_list = Analysis._identify_combos(self, combo_tags)
@@ -2423,9 +2424,9 @@ class FEModel3D():
 
                     # Get the partitioned global stiffness matrix K11, K12, K21, K22
                     if sparse == True:
-                        K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse).tocsr(), D1_indices, D2_indices)
+                        K11, K12, K21, K22 = Analysis._partition(self, self.Ke(combo.name, log, check_stability, sparse).tocsr(), D1_indices, D2_indices)
                     else:
-                        K11, K12, K21, K22 = Analysis._partition(self, self.K(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
+                        K11, K12, K21, K22 = Analysis._partition(self, self.Ke(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
 
                     if K11.shape == (0, 0):
                         # All displacements are known, so Delta_D1 is an empty vector
@@ -2579,10 +2580,10 @@ class FEModel3D():
             print('- Assembling global stiffness matrix')
 
         # Assemble and partition the global stiffness matrix
-        K_global = self.K(mass_combo_name, log, check_stability, sparse=True).tocsr()
+        Ke_global = self.Ke(mass_combo_name, log, check_stability, sparse=True).tocsr()
 
         # Partition to remove supported DOFs
-        K11, K12, K21, K22 = Analysis._partition(self, K_global, D1_indices, D2_indices)
+        K11, K12, K21, K22 = Analysis._partition(self, Ke_global, D1_indices, D2_indices)
 
         if log:
             print('- Assembling global mass matrix')

@@ -464,7 +464,7 @@ class MITC4():
         return k_exp
 
 #%%
-    def k(self):
+    def ke(self):
         '''
         Returns the quad element's local stiffness matrix.
         '''
@@ -482,7 +482,7 @@ class MITC4():
         """
         
         # Calculate and return the plate's local end force vector
-        return add(matmul(self.k(), self.d(combo_name)), self.fer(combo_name))
+        return add(matmul(self.ke(), self.d(combo_name)), self.fer(combo_name))
 
 #%%
     def fer(self, combo_name='Combo 1'):
@@ -623,7 +623,7 @@ class MITC4():
         return D
 
 #%%
-    def K(self):
+    def Ke(self):
         '''
         Returns the quad element's global stiffness matrix
         '''
@@ -632,7 +632,7 @@ class MITC4():
         T = self.T()
 
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(inv(T), self.k()), T)
+        return matmul(matmul(inv(T), self.ke()), T)
 
 #%% 
     # Global fixed end reaction vector
