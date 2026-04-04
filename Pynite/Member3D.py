@@ -77,12 +77,12 @@ class Member3D():
             raise NameError(f"No section names '{section_name}'")
 
         # Variables used to track nonlinear material member end forces
-        self._fxi: float = 0
-        self._myi: float = 0
-        self._mzi: float = 0
-        self._fxj: float = 0
-        self._myj: float = 0
-        self._mzj: float = 0
+        self._fxi: dict = {}
+        self._myi: dict = {}
+        self._mzi: dict = {}
+        self._fxj: dict = {}
+        self._myj: dict = {}
+        self._mzj: dict = {}
 
         # Variable used to track plastic load reveral
         self.i_reversal: bool = False
@@ -711,8 +711,8 @@ class Member3D():
         if self.section is None:
             raise Exception(f'Nonlinear material analysis requires member sections to be defined. A section definition is missing for element {self.name}.')
         else:
-            Gi = self.section.G(self._fxi, self._myi, self._mzi)
-            Gj = self.section.G(self._fxj, self._myj, self._mzj)
+            Gi = self.section.G(self._fxi[combo_name], self._myi[combo_name], self._mzi[combo_name])
+            Gj = self.section.G(self._fxj[combo_name], self._myj[combo_name], self._mzj[combo_name])
 
         # Combine the gradients for the i and j-nodes
         zeros_array = zeros((6, 1))

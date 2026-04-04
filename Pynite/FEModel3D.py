@@ -2685,8 +2685,8 @@ class FEModel3D():
             # Reset nonlinear material member end forces to zero
             for phys_member in self.members.values():
                 for sub_member in phys_member.sub_members.values():
-                    sub_member._fxi, sub_member._myi, sub_member._mzi = 0, 0, 0
-                    sub_member._fxj, sub_member._myj, sub_member._mzj = 0, 0, 0
+                    sub_member._fxi, sub_member._myi, sub_member._mzi = {}, {}, {}
+                    sub_member._fxj, sub_member._myj, sub_member._mzj = {}, {}, {}
 
             # Get the partitioned global fixed end reaction vector for the load combination
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
@@ -2732,12 +2732,12 @@ class FEModel3D():
                         f = member.f(combo.name, push_combo, step_num)
 
                         # Store the end forces in the member
-                        member._fxi = f[0, 0]
-                        member._myi = f[4, 0]
-                        member._mzi = f[5, 0]
-                        member._fxj = f[6, 0]
-                        member._myj = f[10, 0]
-                        member._mzj = f[11, 0]
+                        member._fxi[combo.name] = f[0, 0]
+                        member._myi[combo.name] = f[4, 0]
+                        member._mzi[combo.name] = f[5, 0]
+                        member._fxj[combo.name] = f[6, 0]
+                        member._myj[combo.name] = f[10, 0]
+                        member._mzj[combo.name] = f[11, 0]
 
                 # Move on to the next load step
                 step_num += 1
