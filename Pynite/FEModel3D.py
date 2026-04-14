@@ -1839,9 +1839,13 @@ class FEModel3D():
                         # For the first load step take P = 0
                         P = 0
                     else:
-                        # Calculate the member axial force due to axial strain
-                        d = member.d(combo_name)
-                        P = E*A/L*(d[6, 0] - d[0, 0])
+                        if self.solution == 'Pushover':
+                            # Use the axial force at the current nonlinear/inelastic load step
+                            P = member._fxi[combo_name]
+                        else:
+                            # Calculate the member axial force due to linear/elastic axial strain
+                            d = member.d(combo_name)
+                            P = E*A/L*(d[6, 0] - d[0, 0])
 
                     # Get the member's global stiffness matrix
                     # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -2668,22 +2672,22 @@ class FEModel3D():
                     combo.combo_tags.append('primary')
 
         # Identify which load combinations have the tags the user has given
-        # TODO: Remove the pushover combo istelf from `combo_list`
         combo_list = Analysis._identify_combos(self, combo_tags)
         combo_list = [combo for combo in combo_list if combo.name != push_combo]
 
+        # Initialize per-combo pushover debug/result state.
+        self._pushover_history = {}
+        self._pushover_state = {}
+
         # Step through each load combination
         for combo in combo_list:
-
-            # Skip the pushover combo
-            if combo.name == push_combo:
-                continue
 
             if log:
                 print('')
                 print('- Analyzing load combination ' + combo.name)
 
-            # Reset nonlinear material member end forces to zero
+            # Member end forces will be summed across multiple load steps
+            # Set member end force summations to zero
             for phys_member in self.members.values():
                 for sub_member in phys_member.sub_members.values():
                     sub_member._fxi, sub_member._myi, sub_member._mzi = {}, {}, {}
@@ -2699,19 +2703,36 @@ class FEModel3D():
             # This will be used to preload the member with non-pushover loads prior to pushover anlaysis
             Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, 30)
 
-            # The previous step flagged the solution as a P-Delta solution, but we need to indicate that this is actually a Pushover solution so that the calls to Member3D.f() are excecuted considering nonlinear behavior
+            # Seed the nonlinear end-force history with the elastic preload state from the
+            # primary load combination before any pushover increments are applied.
+            for phys_member in self.members.values():
+                for sub_member in phys_member.sub_members.values():
+                    f = sub_member.f(combo.name)
+                    sub_member._fxi[combo.name] = f[0, 0]
+                    sub_member._myi[combo.name] = f[4, 0]
+                    sub_member._mzi[combo.name] = f[5, 0]
+                    sub_member._fxj[combo.name] = f[6, 0]
+                    sub_member._myj[combo.name] = f[10, 0]
+                    sub_member._mzj[combo.name] = f[11, 0]
+
+            # The P-Delta analysis above flagged the solution as a P-Delta solution, but we need to indicate that this is actually a Pushover solution so that the calls to Member3D.f() going forward are executed considering nonlinear behavior
             self.solution = 'Pushover'
 
-            # Get the partitioned global fixed end reaction vector for a pushover load increment
-            FER1_push, FER2_push = Analysis._partition(self, self.FER(push_combo), D1_indices, D2_indices)
-
-            # Get the partitioned global nodal force vector for a pushover load increment
-            P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
-
-            # Get the pushover load step and initialize the load factor
-            load_step = list(self.load_combos[push_combo].factors.values())[0]  # TODO: This line can probably live outside the loop
-            load_factor = load_step
+            # Define the pushover load step and initialize the pushover load factor
+            load_step = list(self.load_combos[push_combo].factors.values())[0]
             step_num = 1
+            load_factor = load_step*step_num
+
+            # Get the partitioned global fixed end reaction vector for the pushover step
+            FER1_push, FER2_push = Analysis._partition(self, self.FER(push_combo), D1_indices, D2_indices)
+            FER1_push *= load_factor
+
+            # Get the partitioned global nodal force vector for the pushover step
+            P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
+            P1_push *= load_factor
+
+            # Capture a step-by-step history for this primary load combination.
+            self._pushover_history[combo.name] = []
 
             # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
             while round(load_factor, 8) <= 1.0:
@@ -2722,23 +2743,47 @@ class FEModel3D():
                     print(f'- Load_factor = {load_factor}')
 
                 # Run the next pushover load step
-                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability)
+                # Note: The validity of the pushover step is checked and handled within the _pushover_step method
+                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol)
 
-                # Update nonlinear material member end forces for each member
-                for phys_member in self.members.values():
+                # Capture step results for debugging and plotting.
+                step_results = {'step_num': step_num, 'load_factor': load_factor, 'members': {}}
 
-                    for member in phys_member.sub_members.values():
+                for phys_member_name, phys_member in self.members.items():
+                    sub_members = list(phys_member.sub_members.values())
+                    first_sub = sub_members[0] if sub_members else None
+                    last_sub = sub_members[-1] if sub_members else None
 
-                        # Calculate the local member end force vector (once)
-                        f = member.f(combo.name, push_combo, step_num)
+                    phi_i = None
+                    phi_j = None
+                    axial_km = None
+                    axial_geom = None
+                    if first_sub is not None and first_sub.section is not None:
+                        axial_km = first_sub._fxi.get(combo.name, 0.0)
+                        phi_i = first_sub.section.Phi(
+                            first_sub._fxi.get(combo.name, 0.0),
+                            first_sub._myi.get(combo.name, 0.0),
+                            first_sub._mzi.get(combo.name, 0.0)
+                        )
+                        d_first = first_sub.d(combo.name)
+                        axial_geom = (d_first[6, 0] - d_first[0, 0])*first_sub.section.A*first_sub.material.E/first_sub.L()
+                    if last_sub is not None and last_sub.section is not None:
+                        phi_j = last_sub.section.Phi(
+                            last_sub._fxj.get(combo.name, 0.0),
+                            last_sub._myj.get(combo.name, 0.0),
+                            last_sub._mzj.get(combo.name, 0.0)
+                        )
 
-                        # Store the end forces in the member
-                        member._fxi[combo.name] = f[0, 0]
-                        member._myi[combo.name] = f[4, 0]
-                        member._mzi[combo.name] = f[5, 0]
-                        member._fxj[combo.name] = f[6, 0]
-                        member._myj[combo.name] = f[10, 0]
-                        member._mzj[combo.name] = f[11, 0]
+                    step_results['members'][phys_member_name] = {
+                        'Mz_x0': phys_member.moment('Mz', x=0.0, combo_name=combo.name),
+                        'Mz_x96': phys_member.moment('Mz', x=min(96.0, phys_member.L()), combo_name=combo.name),
+                        'Phi_i': phi_i,
+                        'Phi_j': phi_j,
+                        'axial_km': axial_km,
+                        'axial_geom': axial_geom,
+                    }
+
+                self._pushover_history[combo.name].append(step_results)
 
                 # Move on to the next load step
                 step_num += 1
@@ -2752,8 +2797,6 @@ class FEModel3D():
             print('- Analysis complete')
             print('')
 
-        # Flag the model as solved
-        self.solution = 'Pushover'
 
     def unique_name(self, dictionary, prefix):
         """Returns the next available unique name for a dictionary of objects.

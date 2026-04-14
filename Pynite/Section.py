@@ -81,6 +81,7 @@ class Section():
                          [dPhi_dmy],
                          [dPhi_dmz]])
 
+
 class SteelSection(Section):
 
     def __init__(self, model: 'FEModel3D', name: str, A: float, Iy: float, Iz: float, J: float, 
@@ -192,7 +193,7 @@ class SteelSection(Section):
 
             # Partial derivatives of Phi
             dPhi_dfx = 18*afx**5*amy**2/(Mpy**2*Py**6) + 2*afx/Py**2 + 7.0*afx*amz**2/(Mpz**2*Py**2)
-            dPhi_dmy = 6*afx**6*amy/(Mpy**2*Py**6) + 4*amy/Mpy**4 + 9.0*amy*amz**4/(Mpy**2*Mpz**4)
+            dPhi_dmy = 6*afx**6*amy/(Mpy**2*Py**6) + 4*amy**3/Mpy**4 + 9.0*amy*amz**4/(Mpy**2*Mpz**4)
             dPhi_dmz = 7.0*afx**2*amz/(Mpz**2*Py**2) + 2*amz/Mpz**2 + 18.0*amy**2*amz**3/(Mpy**2*Mpz**4)
 
             # Return the gradient

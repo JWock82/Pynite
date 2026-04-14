@@ -78,9 +78,15 @@ class Member3D():
 
         # Variables used to track nonlinear material member end forces
         self._fxi: dict = {}
+        self._fyi: dict = {}
+        self._fzi: dict = {}
+        self._mxi: dict = {}
         self._myi: dict = {}
         self._mzi: dict = {}
         self._fxj: dict = {}
+        self._fyj: dict = {}
+        self._fzj: dict = {}
+        self._mxj: dict = {}
         self._myj: dict = {}
         self._mzj: dict = {}
 
@@ -284,8 +290,8 @@ class Member3D():
         # Note that using the entire stiffness matrix with all terms would lead to an uninvertible term later on
         ke = self.ke()  # [dofs][:, dofs]
 
-        # Get the member's axial force
-        P = self._fxi
+        # Get the member's axial force for the requested load combination (based on the latest load step).
+        P = self._fxi[combo_name]
 
         # Get the geometric local stiffness matrix (for only axial and bending)
         kg = self.kg(P)  # [dofs][:, dofs]
@@ -303,25 +309,26 @@ class Member3D():
                 # Gi is a null vector if load reversal is occuring
                 Gi = zeros((6, 1))
             else:
-                Gi = self.section.G(self._fxi, self._myi, self._mzi)
+                fxi = self._fxi.get(combo_name, 0.0)
+                myi = self._myi.get(combo_name, 0.0)
+                mzi = self._mzi.get(combo_name, 0.0)
+                Gi = self.section.G(fxi, myi, mzi)
 
             # Check for load reversal at the j-node
             if self.j_reversal == True:
                 # Gj is a null vector if load reversal is occuring
                 Gj = zeros((6, 1))
             else:
-                Gj = self.section.G(self._fxj, self._myj, self._mzj)
+                fxj = self._fxj.get(combo_name, 0.0)
+                myj = self._myj.get(combo_name, 0.0)
+                mzj = self._mzj.get(combo_name, 0.0)
+                Gj = self.section.G(fxj, myj, mzj)
 
         # Combine the gradients at the i and j-nodes
         zeros_array = zeros((6, 1))
         Gi = vstack((Gi, zeros_array))
         Gj = vstack((zeros_array, Gj))
         G = hstack((Gi, Gj))
-
-        if self.name == 'M1a':
-            M1a_Phi_i = self.section.Phi(self._fxi, self._myi, self._mzi)
-            print(f'M1a Phi_i: {M1a_Phi_i}')
-            # print(f'M1a Gi: {Gi}')
 
         # Calculate the plastic reduction matrix for each end of the element
         # TODO: Note that `ke` below already accounts for P-Delta effects and any member end releases which should spill into `km`. I believe end releases will resolve themselves because of this. We'll see how this tests when we get to testing. If it causes problems when end releases are applied we may need to adjust our calculation of G when end releases are present.
@@ -665,7 +672,6 @@ class Member3D():
         M_global = T.T @ m @ T
 
         return M_global
-
     def lamb(self, model_Delta_D: NDArray[float64], combo_name: str = 'Combo 1', push_combo: str = 'Push', step_num: int = 1) -> NDArray[float64]:
         """
         Returns the `lambda` vector used in pushover analysis.
@@ -702,17 +708,21 @@ class Member3D():
         Delta_d = self.T() @ Delta_D
 
         # Get the elastic local stiffness matrix (includeing goemetric stiffness)
-        d_total = self.d(combo_name)  # Total displacements acting on the member at the current load stp
-        delta_dx_total = d_total[6, 0] - d_total[0, 0]  # Change in displacement across the lenght of the member
-        P = self.section.A*self.material.E/self.L()*delta_dx_total  # Axial load acting on the member at the current load step
+        P = self._fxi[combo_name]
         ke = self.ke() + self.kg(P)  # Elastic stiffness (including geometric stiffness)
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
             raise Exception(f'Nonlinear material analysis requires member sections to be defined. A section definition is missing for element {self.name}.')
         else:
-            Gi = self.section.G(self._fxi[combo_name], self._myi[combo_name], self._mzi[combo_name])
-            Gj = self.section.G(self._fxj[combo_name], self._myj[combo_name], self._mzj[combo_name])
+            fxi = self._fxi.get(combo_name, 0.0)
+            myi = self._myi.get(combo_name, 0.0)
+            mzi = self._mzi.get(combo_name, 0.0)
+            fxj = self._fxj.get(combo_name, 0.0)
+            myj = self._myj.get(combo_name, 0.0)
+            mzj = self._mzj.get(combo_name, 0.0)
+            Gi = self.section.G(fxi, myi, mzi)
+            Gj = self.section.G(fxj, myj, mzj)
 
         # Combine the gradients for the i and j-nodes
         zeros_array = zeros((6, 1))
@@ -858,11 +868,15 @@ class Member3D():
             m22 = unp_matrix[R2_indices, :][:, R2_indices]
             return  m11, m12, m21, m22
 
-    def f(self, combo_name: str='Combo 1', push_combo: str = None, step_num: int = None) -> NDArray[float64]:
+    def f(self, combo_name: str='Combo 1', Delta_d: NDArray[float64]=None, Delta_fer: NDArray[float64]=None) -> NDArray[float64]:
         """Returns the member's local end force vector for the given load combination.
 
         :param combo_name: The load combination to get the local end for vector for. Defaults to 'Combo 1'.
         :type combo_name: str, optional
+        :param Delta_d: The member's local displacement vector for a load step. Only used for nonlinear pushover analysis.
+        :type Delta_d: NDArray[float64]
+        :param Delta_fer: The member's fixed end reaction vector for a load step. Only used for nonlinear pushover analysis.
+        :type Delta_fer: NDArray[float64]
         :return: The member's local end force vector for the given load combination.
         :rtype: array
         """
@@ -875,20 +889,19 @@ class Member3D():
 
             return add(matmul(add(self.ke(), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
 
-        # Check for a pushover analysis
-        elif push_combo is not None and step_num is not None:
+        # Check for a pushover analysis. During post-processing `moment()`, `shear()`, etc.
+        # call this method without explicitly passing `push_combo` and `step_num`, so pull the
+        # accepted step information back from the model when needed.
+        elif self.model.solution == 'Pushover':
 
-            # Calculate the axial force on the member from the latest elasto-plastic member end forces
-            P = self._fxi
+            # Calculate the axial force on the member from the latest elasto-plastic member end forces.
+            P = self._fxi[combo_name]
 
-            # Calculate the total stiffness matrix
-            kt = self.ke() + self.kg(P) + self.km(combo_name)
+            # Calculate the total local stiffness matrix
+            k = self.ke() + self.kg(P) + self.km(combo_name)
 
-            # Calculate the fixed end reaction vector for this load step
-            fer = self.fer(combo_name) + self.fer(push_combo)*step_num
-
-            # Retern the new member end forces
-            return kt @ self.d(combo_name) + fer
+            # Calculate and return the member's local end force vector for the pushover load step
+            return k @ Delta_d + Delta_fer
 
         else:
 
