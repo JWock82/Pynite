@@ -311,7 +311,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
     model.solution = 'P-Delta'
 
 
-def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, Delta_P1: NDArray[float64], Delta_FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, tol: float = 0) -> None:
+def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, Delta_P1: NDArray[float64], Delta_FER1: NDArray[float64], Delta_FER2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, tol: float = 0) -> None:
 
     # Run at least one iteration
     run_step = True
@@ -404,7 +404,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
         # Unpartition the displacement results from the analysis step for the `lamb` calculations below
         Delta_D = _unpartition(model, Delta_D1, D2, D1_indices, D2_indices)
-        Delta_FER = _unpartition(model, Delta_FER1, zeros(D2.shape), D1_indices, D2_indices)
+        Delta_FER = _unpartition(model, Delta_FER1, Delta_FER2, D1_indices, D2_indices)
 
         # Step through each member in the model and check for plastic load reversal.
         for phys_member in model.members.values():

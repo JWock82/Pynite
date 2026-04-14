@@ -2751,7 +2751,7 @@ class FEModel3D():
 
                 # Run the next pushover load step
                 # Note: The validity of the pushover step is checked and handled within the _pushover_step method
-                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol)
+                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol)
 
                 # Capture step results for debugging and plotting.
                 step_results = {'step_num': step_num, 'load_factor': load_factor, 'members': {}}
