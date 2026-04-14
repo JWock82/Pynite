@@ -2690,8 +2690,10 @@ class FEModel3D():
             # Set member end force summations to zero
             for phys_member in self.members.values():
                 for sub_member in phys_member.sub_members.values():
-                    sub_member._fxi, sub_member._myi, sub_member._mzi = {}, {}, {}
-                    sub_member._fxj, sub_member._myj, sub_member._mzj = {}, {}, {}
+                    sub_member._fxi, sub_member._fyi, sub_member._fzi = {}, {}, {}
+                    sub_member._mxi, sub_member._myi, sub_member._mzi = {}, {}, {}
+                    sub_member._fxj, sub_member._fyj, sub_member._fzj = {}, {}, {}
+                    sub_member._mxj, sub_member._myj, sub_member._mzj = {}, {}, {}
 
             # Get the partitioned global fixed end reaction vector for the load combination
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
@@ -2709,9 +2711,15 @@ class FEModel3D():
                 for sub_member in phys_member.sub_members.values():
                     f = sub_member.f(combo.name)
                     sub_member._fxi[combo.name] = f[0, 0]
+                    sub_member._fyi[combo.name] = f[1, 0]
+                    sub_member._fzi[combo.name] = f[2, 0]
+                    sub_member._mxi[combo.name] = f[3, 0]
                     sub_member._myi[combo.name] = f[4, 0]
                     sub_member._mzi[combo.name] = f[5, 0]
                     sub_member._fxj[combo.name] = f[6, 0]
+                    sub_member._fyj[combo.name] = f[7, 0]
+                    sub_member._fzj[combo.name] = f[8, 0]
+                    sub_member._mxj[combo.name] = f[9, 0]
                     sub_member._myj[combo.name] = f[10, 0]
                     sub_member._mzj[combo.name] = f[11, 0]
 
@@ -2723,13 +2731,12 @@ class FEModel3D():
             step_num = 1
             load_factor = load_step*step_num
 
-            # Get the partitioned global fixed end reaction vector for the pushover step
+            # Get the partitioned global fixed end reaction vector for one pushover increment.
+            # The pushover combo factor already defines the increment size.
             FER1_push, FER2_push = Analysis._partition(self, self.FER(push_combo), D1_indices, D2_indices)
-            FER1_push *= load_factor
 
-            # Get the partitioned global nodal force vector for the pushover step
+            # Get the partitioned global nodal force vector for one pushover increment.
             P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
-            P1_push *= load_factor
 
             # Capture a step-by-step history for this primary load combination.
             self._pushover_history[combo.name] = []

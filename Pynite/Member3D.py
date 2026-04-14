@@ -894,6 +894,22 @@ class Member3D():
         # accepted step information back from the model when needed.
         elif self.model.solution == 'Pushover':
 
+            # Post-processing calls this method without incremental load-step data,
+            # so return the accepted accumulated local end-force state.
+            if Delta_d is None or Delta_fer is None:
+                return array([[self._fxi.get(combo_name, 0.0)],
+                              [self._fyi.get(combo_name, 0.0)],
+                              [self._fzi.get(combo_name, 0.0)],
+                              [self._mxi.get(combo_name, 0.0)],
+                              [self._myi.get(combo_name, 0.0)],
+                              [self._mzi.get(combo_name, 0.0)],
+                              [self._fxj.get(combo_name, 0.0)],
+                              [self._fyj.get(combo_name, 0.0)],
+                              [self._fzj.get(combo_name, 0.0)],
+                              [self._mxj.get(combo_name, 0.0)],
+                              [self._myj.get(combo_name, 0.0)],
+                              [self._mzj.get(combo_name, 0.0)]])
+
             # Calculate the axial force on the member from the latest elasto-plastic member end forces.
             P = self._fxi[combo_name]
 

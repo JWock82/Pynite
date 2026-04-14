@@ -343,8 +343,8 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
             # performs matrix addition on `csr` matrices.
             K11 = Ke11.tocsr() + Kg11.tocsr() + Km11.tocsr()
             K12 = Ke12.tocsr() + Kg12.tocsr() + Km12.tocsr()
-            K21 = Ke21.tocsr() + Kg21.tocsr() + Km21.tocsr()
-            K22 = Ke22.tocsr() + Kg22.tocsr() + Km22.tocsr()
+            # K21 = Ke21.tocsr() + Kg21.tocsr() + Km21.tocsr()  # This matrix is not used
+            # K22 = Ke22.tocsr() + Kg22.tocsr() + Km22.tocsr()  # This matrix is not used
 
         # Dense solver
         else:
@@ -364,8 +364,8 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
             K11 = Ke11 + Kg11 + Km11
             K12 = Ke12 + Kg12 + Km12
-            K21 = Ke21 + Kg21 + Km21
-            K22 = Ke22 + Kg22 + Km22
+            # K21 = Ke21 + Kg21 + Km21  # This matrix is not used
+            # K22 = Ke22 + Kg22 + Km22  # This matrix is not used
 
         # Calculate the changes to the global displacement vector
         if log: print('- Calculating changes to the global displacement vector')
@@ -448,22 +448,52 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                 # Step through each sub-member of the physical member
                 for sub_member in phys_member.sub_members.values():
 
-                    # Calculate and sum the member local end forces for this load step
-                    Delta_d = sub_member.T() @ Delta_D[sub_member.i_node.ID*6:sub_member.i_node.ID*6 + 6, 0][sub_member.j_node.ID*6:sub_member.j_node.ID*6 + 6]
-                    Delta_fer = sub_member.T() @ Delta_FER[sub_member.i_node.ID*6:sub_member.i_node.ID*6 + 6, 0][sub_member.j_node.ID*6:sub_member.j_node.ID*6 + 6]
-                    f = sub_member.f(combo_name, Delta_d, Delta_fer)
-                    sub_member._fxi[combo_name] += f[0, 0]
-                    sub_member._fyi[combo_name] += f[1, 0]
-                    sub_member._fzi[combo_name] += f[2, 0]
-                    sub_member._mxi[combo_name] += f[3, 0]
-                    sub_member._myi[combo_name] += f[4, 0]
-                    sub_member._mzi[combo_name] += f[5, 0]
-                    sub_member._fxj[combo_name] += f[6, 0]
-                    sub_member._fyj[combo_name] += f[7, 0]
-                    sub_member._fzj[combo_name] += f[8, 0]
-                    sub_member._mxj[combo_name] += f[9, 0]
-                    sub_member._myj[combo_name] += f[10, 0]
-                    sub_member._mzj[combo_name] += f[11, 0]
+                    # Extract the change in the global displacement and fixed end reaction vectors for this member from the full global vectors. The `reshape` method is used to ensure these are column vectors for the matrix operations below.
+                    Delta_D_member = array([Delta_D[sub_member.i_node.ID*6 + 0, 0],
+                                            Delta_D[sub_member.i_node.ID*6 + 1, 0],
+                                            Delta_D[sub_member.i_node.ID*6 + 2, 0],
+                                            Delta_D[sub_member.i_node.ID*6 + 3, 0],
+                                            Delta_D[sub_member.i_node.ID*6 + 4, 0],
+                                            Delta_D[sub_member.i_node.ID*6 + 5, 0],
+                                            Delta_D[sub_member.j_node.ID*6 + 0, 0],
+                                            Delta_D[sub_member.j_node.ID*6 + 1, 0],
+                                            Delta_D[sub_member.j_node.ID*6 + 2, 0],
+                                            Delta_D[sub_member.j_node.ID*6 + 3, 0],
+                                            Delta_D[sub_member.j_node.ID*6 + 4, 0],
+                                            Delta_D[sub_member.j_node.ID*6 + 5, 0]]).reshape(12, 1)
+                    
+                    Delta_FER_member = array([Delta_FER[sub_member.i_node.ID*6 + 0, 0],
+                                              Delta_FER[sub_member.i_node.ID*6 + 1, 0],
+                                              Delta_FER[sub_member.i_node.ID*6 + 2, 0],
+                                              Delta_FER[sub_member.i_node.ID*6 + 3, 0],
+                                              Delta_FER[sub_member.i_node.ID*6 + 4, 0],
+                                              Delta_FER[sub_member.i_node.ID*6 + 5, 0],
+                                              Delta_FER[sub_member.j_node.ID*6 + 0, 0],
+                                              Delta_FER[sub_member.j_node.ID*6 + 1, 0],
+                                              Delta_FER[sub_member.j_node.ID*6 + 2, 0],
+                                              Delta_FER[sub_member.j_node.ID*6 + 3, 0],
+                                              Delta_FER[sub_member.j_node.ID*6 + 4, 0],
+                                              Delta_FER[sub_member.j_node.ID*6 + 5, 0]]).reshape(12, 1)
+                    
+                    # Convert the global displacement and fixed end reaction vectors to local member vectors
+                    Delta_d = sub_member.T() @ Delta_D_member
+                    Delta_fer = sub_member.T() @ Delta_FER_member
+
+                    # Calculate change in the local end force vector for this load step
+                    Delta_f = sub_member.f(combo_name, Delta_d, Delta_fer)
+                    
+                    sub_member._fxi[combo_name] += Delta_f[0, 0]
+                    sub_member._fyi[combo_name] += Delta_f[1, 0]
+                    sub_member._fzi[combo_name] += Delta_f[2, 0]
+                    sub_member._mxi[combo_name] += Delta_f[3, 0]
+                    sub_member._myi[combo_name] += Delta_f[4, 0]
+                    sub_member._mzi[combo_name] += Delta_f[5, 0]
+                    sub_member._fxj[combo_name] += Delta_f[6, 0]
+                    sub_member._fyj[combo_name] += Delta_f[7, 0]
+                    sub_member._fzj[combo_name] += Delta_f[8, 0]
+                    sub_member._mxj[combo_name] += Delta_f[9, 0]
+                    sub_member._myj[combo_name] += Delta_f[10, 0]
+                    sub_member._mzj[combo_name] += Delta_f[11, 0]
 
         else:
 
