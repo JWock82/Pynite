@@ -1,6 +1,7 @@
 # %%
 # `__future__` import required to use bar operators for optional type annotations
 from __future__ import annotations  # Allows more recent type hints features
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -52,6 +53,7 @@ class FEModel3D():
         self.mats: Dict[str, MatFoundation] = {}       # A dictionary of the model's mat foundations
         self.load_combos: Dict[str, LoadCombo] = {}    # A dictionary of the model's load combinations
         self._D: Dict[str, NDArray[float64]] = {}      # A dictionary of the model's nodal displacements by load combination
+        self._pushover_traces: Dict[str, Dict[str, List]] = {}
 
         self.solution: str | None = None  # Indicates the solution type for the latest run of the model
 
@@ -2646,7 +2648,108 @@ class FEModel3D():
                 print(f'  Mode {i + 1}: {freq:.3f} Hz')
             print('- Modal analysis complete')
 
-    def _not_ready_yet_analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None):
+# %%
+    # Pushover results/query methods live with the pushover solver for locality.
+    def get_pushover_trace(self, combo_name, trace_name):
+        """Returns the recorded history for a named pushover trace."""
+
+        return self._pushover_traces[combo_name][trace_name]
+
+    def plot_pushover_trace(self, trace_name, combo_name=None, combo_names=None, ax=None, filepath=None, dpi=150):
+        """Plots and saves a pushover trace by accepted step number for one load combo or an envelope."""
+
+        import matplotlib.pyplot as plt
+
+        if combo_name is None and combo_names is None:
+            raise ValueError('Either combo_name or combo_names must be specified for pushover trace plotting.')
+
+        if combo_name is not None and combo_names is not None:
+            raise ValueError('Specify either combo_name or combo_names, but not both.')
+
+        created_axes = ax is None
+
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
+
+        if combo_name is not None:
+            trace = self.get_pushover_trace(combo_name, trace_name)
+            steps = list(range(1, len(trace) + 1))
+
+            ax.plot(steps, trace, linewidth=2, label=combo_name)
+            title = f'{trace_name} - {combo_name}'
+            default_name = f'{trace_name}_{combo_name}_pushover_trace.png'
+
+        else:
+            combo_names = list(combo_names)
+            if not combo_names:
+                raise ValueError('combo_names must contain at least one load combination name.')
+
+            max_steps = max(len(self.get_pushover_trace(name, trace_name)) for name in combo_names)
+            steps = []
+            lower = []
+            upper = []
+
+            for step_index in range(max_steps):
+                values = []
+
+                for name in combo_names:
+                    trace = self.get_pushover_trace(name, trace_name)
+                    if step_index < len(trace):
+                        values.append(trace[step_index])
+
+                if values:
+                    steps.append(step_index + 1)
+                    lower.append(min(values))
+                    upper.append(max(values))
+
+            ax.plot(steps, lower, linewidth=1.5, linestyle='--', label='Envelope min')
+            ax.plot(steps, upper, linewidth=1.5, label='Envelope max')
+            ax.fill_between(steps, lower, upper, alpha=0.2)
+            title = f'{trace_name} envelope'
+            default_name = f'{trace_name}_pushover_trace_envelope.png'
+
+        ax.set_xlabel('Step Number')
+        ax.set_ylabel(trace_name)
+        ax.set_title(title)
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+
+        if filepath is None:
+            save_path = Path.cwd()/default_name
+        else:
+            save_path = Path(filepath)
+
+        save_path = save_path.resolve()
+        fig.tight_layout()
+        fig.savefig(save_path, dpi=dpi)
+
+        if created_axes:
+            plt.show()
+
+        return fig, ax, save_path
+
+    def analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None, control_node=None, control_direction='DX', control_limit=None, traces=None):
+
+        if control_limit is not None and control_node is None:
+            raise ValueError('A control node must be specified when a pushover control limit is provided.')
+
+        if control_direction.upper() not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
+            raise ValueError("Pushover control direction must be one of 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'.")
+
+        if control_node is not None and control_node not in self.nodes:
+            raise ValueError(f"Control node '{control_node}' was not found in the model.")
+
+        if traces is not None:
+            if not isinstance(traces, dict):
+                raise ValueError('Pushover traces must be provided as a dictionary of trace names to callables.')
+
+            for trace_name, trace in traces.items():
+                if not callable(trace):
+                    raise ValueError(
+                        f"Pushover trace '{trace_name}' is not callable. Wrap expressions in a lambda or function that accepts combo_name."
+                    )
 
         if log:
             print('+---------------------+')
@@ -2675,9 +2778,9 @@ class FEModel3D():
         combo_list = Analysis._identify_combos(self, combo_tags)
         combo_list = [combo for combo in combo_list if combo.name != push_combo]
 
-        # Initialize per-combo pushover debug/result state.
-        self._pushover_history = {}
+        # Initialize per-combo pushover result state.
         self._pushover_state = {}
+        self._pushover_traces = {}
 
         # Step through each load combination
         for combo in combo_list:
@@ -2738,8 +2841,20 @@ class FEModel3D():
             # Get the partitioned global nodal force vector for one pushover increment.
             P1_push, P2_push = Analysis._partition(self, self.P(push_combo), D1_indices, D2_indices)
 
-            # Capture a step-by-step history for this primary load combination.
-            self._pushover_history[combo.name] = []
+            self._pushover_traces[combo.name] = {
+                trace_name: [] for trace_name in (traces or {})
+            }
+
+            self._pushover_state[combo.name] = {
+                'status': 'running',
+                'step_num': 0,
+                'load_factor': 0.0,
+                'control_node': control_node,
+                'control_direction': control_direction.upper(),
+                'control_limit': control_limit,
+                'control_displacement': None,
+                'message': None,
+            }
 
             # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
             while round(load_factor, 8) <= 1.0:
@@ -2753,48 +2868,50 @@ class FEModel3D():
                 # Note: The validity of the pushover step is checked and handled within the _pushover_step method
                 Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol)
 
-                # Capture step results for debugging and plotting.
-                step_results = {'step_num': step_num, 'load_factor': load_factor, 'members': {}}
+                control_displacement = None
+                if control_node is not None:
+                    node = self.nodes[control_node]
+                    control_displacement = float(getattr(node, control_direction.upper())[combo.name])
 
-                for phys_member_name, phys_member in self.members.items():
-                    sub_members = list(phys_member.sub_members.values())
-                    first_sub = sub_members[0] if sub_members else None
-                    last_sub = sub_members[-1] if sub_members else None
+                if traces is not None:
+                    for trace_name, trace in traces.items():
+                        try:
+                            self._pushover_traces[combo.name][trace_name].append(trace(combo.name))
+                        except Exception as exc:
+                            raise RuntimeError(
+                                f"Error evaluating pushover trace '{trace_name}' for load combination '{combo.name}'."
+                            ) from exc
 
-                    phi_i = None
-                    phi_j = None
-                    axial_km = None
-                    axial_geom = None
-                    if first_sub is not None and first_sub.section is not None:
-                        axial_km = first_sub._fxi.get(combo.name, 0.0)
-                        phi_i = first_sub.section.Phi(
-                            first_sub._fxi.get(combo.name, 0.0),
-                            first_sub._myi.get(combo.name, 0.0),
-                            first_sub._mzi.get(combo.name, 0.0)
-                        )
-                        d_first = first_sub.d(combo.name)
-                        axial_geom = (d_first[6, 0] - d_first[0, 0])*first_sub.section.A*first_sub.material.E/first_sub.L()
-                    if last_sub is not None and last_sub.section is not None:
-                        phi_j = last_sub.section.Phi(
-                            last_sub._fxj.get(combo.name, 0.0),
-                            last_sub._myj.get(combo.name, 0.0),
-                            last_sub._mzj.get(combo.name, 0.0)
-                        )
+                self._pushover_state[combo.name].update({
+                    'step_num': step_num,
+                    'load_factor': load_factor,
+                    'control_displacement': control_displacement,
+                })
 
-                    step_results['members'][phys_member_name] = {
-                        'Mz_x0': phys_member.moment('Mz', x=0.0, combo_name=combo.name),
-                        'Mz_x96': phys_member.moment('Mz', x=min(96.0, phys_member.L()), combo_name=combo.name),
-                        'Phi_i': phi_i,
-                        'Phi_j': phi_j,
-                        'axial_km': axial_km,
-                        'axial_geom': axial_geom,
-                    }
+                if control_limit is not None and control_displacement is not None and abs(control_displacement) >= abs(control_limit):
+                    self._pushover_state[combo.name].update({
+                        'status': 'target_displacement_reached',
+                        'message': (
+                            f"Stopped pushover at step {step_num} for load combination '{combo.name}' "
+                            f"because {control_direction.upper()} at node '{control_node}' reached "
+                            f"{control_displacement:.6g}, exceeding the specified limit of {control_limit:.6g}."
+                        ),
+                    })
 
-                self._pushover_history[combo.name].append(step_results)
+                    if log:
+                        print(f"- {self._pushover_state[combo.name]['message']}")
+
+                    break
 
                 # Move on to the next load step
                 step_num += 1
                 load_factor += load_step
+
+            if self._pushover_state[combo.name]['status'] == 'running':
+                self._pushover_state[combo.name].update({
+                    'status': 'completed',
+                    'message': 'Full pushover load applied.',
+                })
 
         # Calculate reactions for every primary load combination
         Analysis._calc_reactions(self, log, combo_tags=['primary'])
@@ -2804,7 +2921,7 @@ class FEModel3D():
             print('- Analysis complete')
             print('')
 
-
+# %%
     def unique_name(self, dictionary, prefix):
         """Returns the next available unique name for a dictionary of objects.
 

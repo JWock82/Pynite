@@ -6,7 +6,7 @@ Pushover analysis is a powerful way to consider nonlinear behavior in a structur
 
 Here's how it works, step by step, in Pynite:
 
-1. Perform an elastic analysis considering P-Delta effects and tension/compression-only behavior. This will give you the initial displacements and forces in the structure.
+1. An elastic analysis considering P-Delta effects and tension/compression-only behavior is performed first. This gives `Pynite` the initial displacements and forces in the structure.
 3. The loads defined in the pushover load combination will next be applied incrementally. The load factor in the pushover combination should be less than 1.0, since it determines the fraction of the pushover load that will be applied in each iteration. Apply this fraction of the pushover load {dP} and calculate the incremental displacements {d\Delta;} using the relationship {d\Delta;} = [Ke + Kg + Km]^(-1){dP}.
 4. Determine if the load step is valid, as defined by the following criteria:
     a. Check for any tension/compression-only elements or supports that have change status (i.e. a support that was previously in tension may now be in compression, or vice versa) and update the activation status these elements/supports accordingly.
@@ -32,6 +32,10 @@ Determining an Appropriate Load Step
 ====================================
 The load step used for nonlinear analysis is critical. Too large of a load step may lead to multiple plastic mechanisms forming at once, and/or innacurate estimations of plastic stiffness reductions. Too small of a load step will lead to excessive solve time. Generally applying the load 10-20% at a time will be sufficient, but the user is advised to verify that a smaller load step does not lead to significant changes in results.
 
+It is also good practice to define a control displacement limit at a node and stop the pushover once that displacement is reached. This provides a practical guard against runaway post-mechanism response after a collapse mechanism has formed.
+
+You can also define custom traces that are evaluated after each accepted pushover step. This is useful for tracking a member result, a nodal displacement, or any other derived quantity through the analysis.
+
 Creating a Pushover Load Combination & Viewing Results
 ======================================================
 
@@ -50,5 +54,34 @@ With a pushover load combination defined, we are ready to run a pushover analysi
 
 .. code-block:: python
 
-    # Run the pushover anlaysis
-    my_model.analyze_pushover(log=False, check_stability=True, push_load='Push Combo', max_iter=30, tol=0.01, sparse=True, combo_tags=None)
+    # Run the pushover analysis
+    my_model.analyze_pushover(log=False, check_stability=True, push_combo='Push Combo', max_iter=30, tol=0.01, sparse=True, combo_tags=None)
+
+You can stop once a control displacement is reached.
+
+.. code-block:: python
+
+    my_model.analyze_pushover(
+        push_combo='Push Combo',
+        control_node='N3',
+        control_direction='DX',
+        control_limit=6.0,
+    )
+
+The last accepted step is preserved in the model results, and the stop condition is recorded in ``model._pushover_state``.
+
+Custom traces should be defined as callables that accept ``combo_name`` so they are re-evaluated at every pushover step rather than once at setup time.
+
+.. code-block:: python
+
+    traces = {
+        'M1 Moment': lambda combo_name: my_model.members['M1'].moment('Mz', x=96.0, combo_name=combo_name),
+        'Story Drift': lambda combo_name: my_model.nodes['N3'].DX[combo_name] - my_model.nodes['N1'].DX[combo_name],
+    }
+
+    my_model.analyze_pushover(
+        push_combo='Push Combo',
+        traces=traces,
+    )
+
+Each trace is stored in ``model._pushover_traces[combo_name][trace_name]`` as a simple list of values, one per accepted pushover step.

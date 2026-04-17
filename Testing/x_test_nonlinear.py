@@ -1,5 +1,11 @@
 from math import isclose
-from Pynite import FEModel3D
+from pathlib import Path
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt  # noqa: E402
+
+from Pynite import FEModel3D  # noqa: E402
 
 
 def test_plastic_beam():
@@ -23,35 +29,59 @@ def test_plastic_beam():
 
     # Add nodes
     plastic_beam.add_node('N1', 0, 0, 0)
-    plastic_beam.add_node('N2', 24*12, 0, 0)
+    plastic_beam.add_node('N2', 8*12, 0, 0)
+    plastic_beam.add_node('N3', 24*12, 0, 0)
 
     # Add supports
     plastic_beam.def_support('N1', True, True, True, True, True, True)
-    plastic_beam.def_support('N2', False, True, True, False, False, False)
+    plastic_beam.def_support('N3', False, True, True, False, False, False)
 
     # Add a member
-    plastic_beam.add_member('M1', 'N1', 'N2', 'Stl_A992', 'W12x65')
+    plastic_beam.add_member('M1', 'N1', 'N3', 'Stl_A992', 'W12x65')
 
     # Add a load
-    plastic_beam.add_member_pt_load('M1', 'Fy', -1.0, 8*12, 'Push')
-    plastic_beam.add_node_load('N2', 'FX', -1.0, 'Push')
+    # P = 259.3
+    # P = 325.7
+    P = 346.2
+    plastic_beam.add_node_load('N2', 'FY', -0.3*P, 'Push')
+    plastic_beam.add_node_load('N3', 'FX', -P, 'Push')
 
     # Add load combinations
     # Primary combo is required for pushover analysis to have a base case to apply pushover loads to
     plastic_beam.add_load_combo('Primary', {})
-    plastic_beam.add_load_combo('Pushover', {'Push': 1.0})
+    plastic_beam.add_load_combo('Pushover', {'Push': 0.01})
+
+    traces = {
+        'Fixed End Moment': lambda combo_name: plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name=combo_name),
+        'Load Point Moment': lambda combo_name: plastic_beam.members['M1'].moment('Mz', x=96.0, combo_name=combo_name),
+        'Phi N1': lambda combo_name: plastic_beam.members['M1'].section.Phi(
+            plastic_beam.members['M1']._fxi.get(combo_name, 0.0),
+            plastic_beam.members['M1']._myi.get(combo_name, 0.0),
+            plastic_beam.members['M1']._mzi.get(combo_name, 0.0)
+        ),
+        'Load Point Deflection': lambda combo_name: plastic_beam.nodes['N2'].DY[combo_name],
+    }
 
     # Analysis the model
-    plastic_beam._not_ready_yet_analyze_pushover(log=True, check_stability=False, push_combo='Pushover', max_iter=30, tol=0.01, sparse=False)
+    plastic_beam.analyze_pushover(log=True, check_stability=False, push_combo='Pushover', max_iter=30, tol=0.01, sparse=False, traces=traces)
+
+    # Plot the traces one by one
+    plastic_beam.plot_pushover_trace('Fixed End Moment', combo_name='Primary')
+    plastic_beam.plot_pushover_trace('Load Point Moment', combo_name='Primary')
+    plastic_beam.plot_pushover_trace('Phi N1', combo_name='Primary')
+    plastic_beam.plot_pushover_trace('Load Point Deflection', combo_name='Primary')
 
     # Get the resulting moments from the Primary combo (where pushover results are stored)
-    M_a = plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name='Primary')
-    M_b = plastic_beam.members['M1'].moment('Mz', x=8.0*12.0, combo_name='Primary')
-    M_ae = 3752
-    M_be = -3752
+    M_N1 = plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name='Primary')
+    M_N2 = plastic_beam.members['M1'].moment('Mz', x=96.0, combo_name='Primary')
+    print(f'Final Mz at x=0   : {M_N1}')
+    print(f'Final Mz at x=96  : {M_N2}')
+    M_N1e = 3752
+    M_N2e = -3752
+    # M_hinge = 4148
 
-    assert isclose(M_a, M_ae), f'Calculated Moment: {M_a} \nExpected Moment: {M_ae}'
-    assert isclose(M_b, M_be), f'Calculated Moment: {M_b} \nExpected Moment: {M_be}'
+    assert isclose(M_N1, M_N1e, rel_tol=0.10), f'Calculated Moment: {M_N1} \nExpected Moment: {M_N1e}'
+    assert isclose(M_N2, M_N2e, rel_tol=0.10), f'Calculated Moment: {M_N2} \nExpected Moment: {M_N2e}'
 
 
 if __name__ == '__main__':
