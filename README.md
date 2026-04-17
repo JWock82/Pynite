@@ -68,10 +68,10 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-2.4.2 (in progress)
+3.0.0 (in progress)
+* Added pushover analysis! Currently, only steel sections are supported for pushover analysis. The assumed interaction equation used to estimate plastic behavior is currently calibrated toward I-shaped members.
 * Refactored all elastic stiffness matrix references from `K` and `k` to `Ke` and `ke`. Most users will not notice this change. Power users who were accessing the stiffness matrices directly will want to note this refactor.  This clarifies the code base by indicating which type of stiffness these matrices represent, and reduces ambiguity in preparation for addition of further geometric `Kg/kg` and plastic `Km/km` stiffness matrices.
 * User's can now control the size of member plots.
-* Corrections to (experimental/developmental) pushover analysis equations. This feature is still in development and not ready for production use yet.
 * Improved `ShearWall.screenshots()` method. Added coupling beam plots. Added the ability to use the `VTK` renderer instead of the `pyvista` renderer for screenshots.
 * Removed individual load combo plots from member plots when an envelope plot is requested. They cluttered the plots without adding much value.
 
