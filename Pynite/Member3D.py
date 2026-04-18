@@ -296,8 +296,8 @@ class Member3D():
         # Get the geometric local stiffness matrix (for only axial and bending)
         kg = self.kg(P)  # [dofs][:, dofs]
 
-        # Get the total elastic local stiffness matrix
-        ke = add(ke, kg)
+        # Get the total elastic local stiffness matrix including geometric effects
+        keg = add(ke, kg)
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
@@ -337,7 +337,7 @@ class Member3D():
             return zeros((12, 12))
         else:
             # Solve for `km` using a psuedo-inverse (pinv). The psuedo-inverse takes into account that we may have rows of zeros that make the matrix otherwise uninvertable.
-            return -ke @ G @ pinv(G.T @ ke @ G) @ G.T @ ke
+            return -keg @ G @ pinv(G.T @ keg @ G) @ G.T @ keg
 
     def _m_unc(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> NDArray[float64]:
         """
@@ -756,19 +756,19 @@ class Member3D():
         fer1, fer2 = self._partition(self._fer_unc(combo_name))
 
         # Calculate the condensed fixed end reaction vector
-        ferCondensed = subtract(fer1, matmul(matmul(k12, inv(k22)), fer2))
+        fer_condensed = subtract(fer1, matmul(matmul(k12, inv(k22)), fer2))
 
         # Expand the condensed fixed end reaction vector
         i = 0
         for DOF in self.Releases:
 
             if DOF == True:
-                ferCondensed = insert(ferCondensed, i, 0, axis=0)
+                fer_condensed = insert(fer_condensed, i, 0, axis=0)
 
             i += 1
 
         # Return the fixed end reaction vector
-        return ferCondensed
+        return fer_condensed
 
     def _fer_unc(self, combo_name:str = 'Combo 1') -> NDArray[float64]:
         """
@@ -2801,8 +2801,16 @@ class Member3D():
 
         # Get the element local end forces, local fixed end reactions, and local displacements
         f = self.f(combo_name)           # Member local end force vector
-        fer = self._fer_unc(combo_name)  # Member local fixed end reaction vector
+        fer = self._fer_unc(combo_name)  # Member local fixed end reaction vector (uncondensed)
         d = self.d(combo_name)           # Member local displacement vector
+
+        # Pushover combos should include the effects of both the primary and pushover combos in the
+        # fixed end reactions.
+        if self.model.solution == 'Pushover':
+            push_combo = self.model._pushover_state[combo_name]['push_combo']
+            push_step = self.model._pushover_state[combo_name]['step_num']
+            load_factor = self.model._pushover_state[combo_name]['load_factor']
+            fer = fer + self._fer_unc(push_combo)*load_factor*push_step
 
         # Get the local deflections and calculate the slope at the start of the member
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used, so slope-deflection has been applied to solve for it.

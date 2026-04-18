@@ -2826,7 +2826,9 @@ class FEModel3D():
                     sub_member._myj[combo.name] = f[10, 0]
                     sub_member._mzj[combo.name] = f[11, 0]
 
-            # The P-Delta analysis above flagged the solution as a P-Delta solution, but we need to indicate that this is actually a Pushover solution so that the calls to Member3D.f() going forward are executed considering nonlinear behavior
+            # The P-Delta analysis above flagged the solution as a P-Delta solution, but we need to
+            # indicate that this is actually a Pushover solution so that the calls to Member3D.f()
+            # or Member3D._fer_unc() going forward are executed considering nonlinear behavior
             self.solution = 'Pushover'
 
             # Define the pushover load step and initialize the pushover load factor
@@ -2845,7 +2847,10 @@ class FEModel3D():
                 trace_name: [] for trace_name in (traces or {})
             }
 
+            # Initialize the pushover state for this load combination, which will be updated at
+            # each load step and can be queried for results during or after the pushover analysis.
             self._pushover_state[combo.name] = {
+                'push_combo': push_combo,
                 'status': 'running',
                 'step_num': 0,
                 'load_factor': 0.0,
