@@ -2871,8 +2871,13 @@ class Member3D():
             SegmentsY[i].M1 = f[4, 0] + f[2, 0]*x
             SegmentsX[i].T1 = f[3, 0]
 
-            # Step through each load case in the specified load combination
-            for case, factor in combo.factors.items():
+            if self.model.solution == 'Pushover':
+                push_combo = self.model._pushover_state[combo_name]['push_combo']
+                push_step = self.model._pushover_state[combo_name]['step_num']
+
+            # Define a helper function to sum up the effects of a load case on the segment, using
+            # its given factor.
+            def sum_load_effects(case, factor):
 
                 # Add effects of point loads occuring prior to this segment
                 for ptLoad in self.PtLoads:
@@ -3029,6 +3034,15 @@ class Member3D():
 
                                 SegmentsY[i].V1 += (f1[2] + f2[2])/2*(x2 - x1)
                                 SegmentsY[i].M1 += (x1 - x2)*(2*f1[2]*x1 - 3*f1[2]*x + f1[2]*x2 + f2[2]*x1 - 3*f2[2]*x + 2*f2[2]*x2)/6
+
+            # Step through each load case in the specified load combination
+            for case, factor in combo.factors.items():
+                sum_load_effects(case, factor)
+
+            # Do the same for the pushover combo if this is a pushover analysis
+            if self.model.solution == 'Pushover':
+                for case, factor in self.model.load_combos[push_combo].factors.items():
+                    sum_load_effects(case, factor*push_step)
 
     def _extract_vector_results(self, segments: List, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
         """
