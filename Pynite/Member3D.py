@@ -707,9 +707,12 @@ class Member3D():
         # Convert the global changes in displacement to local coordinates
         Delta_d = self.T() @ Delta_D
 
-        # Get the elastic local stiffness matrix (includeing goemetric stiffness)
+        # Get the elastic local stiffness matrix, optionally including geometric stiffness
         P = self._fxi[combo_name]
-        ke = self.ke() + self.kg(P)  # Elastic stiffness (including geometric stiffness)
+        ke = self.ke()
+
+        if getattr(self.model, '_pushover_state', {}).get(combo_name, {}).get('P_Delta', False):
+            ke = ke + self.kg(P)
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
@@ -913,8 +916,12 @@ class Member3D():
             # Calculate the axial force on the member from the latest elasto-plastic member end forces.
             P = self._fxi[combo_name]
 
-            # Calculate the total local stiffness matrix
-            k = self.ke() + self.kg(P) + self.km(combo_name)
+            # Calculate the total local stiffness matrix. Geometric stiffness is only included
+            # when the active pushover analysis has explicitly opted into P-Delta behavior.
+            k = self.ke() + self.km(combo_name)
+
+            if getattr(self.model, '_pushover_state', {}).get(combo_name, {}).get('P_Delta', False):
+                k = k + self.kg(P)
 
             # Calculate and return the member's local end force vector for the pushover load step
             return k @ Delta_d + Delta_fer

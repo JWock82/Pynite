@@ -59,7 +59,7 @@ plastic_beam.add_load_combo('Pushover', {'Push': 0.01})
 # 6" of displacement is ever reached at node 2. 
 control_node = 'N2'
 control_direction = 'DY'
-control_limit = 6.0
+control_limit = -6.0
 
 # We can define traces to track values of interest at each step of the pushover analysis. We can
 # trace just about anything by defining simple functions in a `traces` dictionary. `lambda`
@@ -76,9 +76,12 @@ traces = {
 plastic_beam.analyze_pushover(log=True, check_stability=False, push_combo='Pushover', control_node=control_node, control_direction=control_direction, control_limit=control_limit, traces=traces)
 
 # Plot the traces one by one
-plastic_beam.plot_pushover_trace('Fixed End Moment', combo_name='Primary')
-plastic_beam.plot_pushover_trace('Load Point Moment', combo_name='Primary')
-plastic_beam.plot_pushover_trace('Load Point Deflection', combo_name='Primary')
+# plastic_beam.plot_pushover_trace('Fixed End Moment', combo_name='Primary')
+# plastic_beam.plot_pushover_trace('Load Point Moment', combo_name='Primary')
+# plastic_beam.plot_pushover_trace('Load Point Deflection', combo_name='Primary')
+
+plastic_beam.members['M1'].plot_moment('Mz', combo_name='Primary', n_points=100)
+plastic_beam.members['M1'].plot_deflection('dy', combo_name='Primary', n_points=100)
 
 # Get the final resulting moments from the Primary combo (where pushover results are stored)
 M_N1 = plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name='Primary')

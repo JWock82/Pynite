@@ -166,6 +166,99 @@ def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
     return
 
 
+def _first_order(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30, spring_tolerance: float = 0, member_tolerance: float = 0, num_steps: int = 1) -> None:
+    """Performs the shared first-order elastic/tension-compression-only solution path.
+
+    This helper is used by both ``FEModel3D.analyze`` and pushover preload so the normal
+    first-order workflow lives in one place.
+    """
+
+    # Import `scipy` features if the sparse solver is being used
+    if sparse == True:
+        from scipy.sparse.linalg import spsolve
+
+    # Calculate the incremental enforced displacement vector
+    Delta_D2 = D2/num_steps
+
+    # Calculate the incremental global fixed end reaction vector
+    Delta_FER1 = FER1/num_steps
+
+    # Calculate the incremental global nodal force vector
+    Delta_P1 = P1/num_steps
+
+    # Apply the load incrementally
+    load_step = 1
+    while load_step <= num_steps:
+
+        # Keep track of the number of iterations in this load step
+        iter_count = 1
+        convergence = False
+        divergence = False
+
+        # Iterate until convergence or divergence occurs
+        while convergence == False and divergence == False:
+
+            # Check for tension/compression-only divergence
+            if iter_count > max_iter:
+                divergence = True
+                raise Exception('Model diverged during tension/compression-only analysis')
+
+            # Report which load step we are on
+            if log:
+                print(f'- Analyzing load step #{str(load_step)}')
+
+            # Get the partitioned global stiffness matrix K11, K12, K21, K22
+            if sparse == True:
+                K11, K12, K21, K22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse).tocsr(), D1_indices, D2_indices)
+            else:
+                K11, K12, K21, K22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
+
+            if K11.shape == (0, 0):
+                # All displacements are known, so Delta_D1 is an empty vector
+                Delta_D1 = []
+            else:
+                try:
+                    # Calculate the unknown displacements Delta_D1
+                    if sparse == True:
+                        # The partitioned stiffness matrix originates as `coo` and is converted to `csr`
+                        # format for mathematical operations. The `@` operator performs matrix multiplication
+                        # on sparse matrices.
+                        Delta_D1 = spsolve(K11, subtract(subtract(Delta_P1, Delta_FER1), K12 @ Delta_D2))
+                        Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
+                    else:
+                        Delta_D1 = solve(K11, subtract(subtract(Delta_P1, Delta_FER1), matmul(K12, Delta_D2)))
+                except:
+                    # Return out of the method if 'K' is singular and provide an error message
+                    raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+
+            # Store or sum the calculated displacements to the model and the nodes in the model
+            if load_step == 1:
+                _store_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, model.load_combos[combo_name])
+            else:
+                _sum_displacements(model, Delta_D1, Delta_D2, D1_indices, D2_indices, model.load_combos[combo_name])
+
+            # Check for tension/compression-only convergence at this load step
+            convergence = _check_TC_convergence(model, combo_name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
+
+            if convergence == False:
+
+                if log:
+                    print(f'- Undoing load step #{load_step} due to failed convergence.')
+
+                # Undo the latest analysis step to prepare for re-analysis of the load step
+                _sum_displacements(model, -Delta_D1, -Delta_D2, D1_indices, D2_indices, model.load_combos[combo_name])
+
+            else:
+                # Move on to the next load step
+                load_step += 1
+
+            # Keep track of the number of tension/compression only iterations
+            iter_count += 1
+
+    # Flag the model as solved
+    model.solution = 'Nonlinear TC'
+
+
 def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30) -> None:
     """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material-specific codes. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered by Pynite at this time.
 
@@ -311,7 +404,7 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
     model.solution = 'P-Delta'
 
 
-def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, Delta_P1: NDArray[float64], Delta_FER1: NDArray[float64], Delta_FER2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, tol: float = 0) -> None:
+def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, Delta_P1: NDArray[float64], Delta_FER1: NDArray[float64], Delta_FER2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, tol: float = 0, P_Delta: bool = False) -> None:
 
     # Run at least one iteration
     run_step = True
@@ -329,11 +422,6 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
             if log: print('- Calculating elastic stiffness matrix [Ke]')
             Ke11, Ke12, Ke21, Ke22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
-            # Calculate the geometric stiffness matrix
-            # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
-            if log: print('- Calculating geometric stiffness matrix [Kg]')
-            Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
-
             # Calculate the stiffness reduction matrix
             if log: print('- Calculating plastic reduction matrix [Km]')
             Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse), D1_indices, D2_indices)
@@ -341,10 +429,19 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
             # The stiffness matrices are in `coo` format from construction. They will be
             # converted to `csr` format for efficient operations. The `+` operator
             # performs matrix addition on `csr` matrices.
-            K11 = Ke11.tocsr() + Kg11.tocsr() + Km11.tocsr()
-            K12 = Ke12.tocsr() + Kg12.tocsr() + Km12.tocsr()
-            # K21 = Ke21.tocsr() + Kg21.tocsr() + Km21.tocsr()  # This matrix is not used
-            # K22 = Ke22.tocsr() + Kg22.tocsr() + Km22.tocsr()  # This matrix is not used
+            K11 = Ke11.tocsr() + Km11.tocsr()
+            K12 = Ke12.tocsr() + Km12.tocsr()
+            # K21 = Ke21.tocsr() + Km21.tocsr()  # This matrix is not used
+            # K22 = Ke22.tocsr() + Km22.tocsr()  # This matrix is not used
+
+            if P_Delta:
+                # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
+                if log: print('- Calculating geometric stiffness matrix [Kg]')
+                Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
+                K11 = K11 + Kg11.tocsr()
+                K12 = K12 + Kg12.tocsr()
+                # K21 = K21 + Kg21.tocsr()  # This matrix is not used
+                # K22 = K22 + Kg22.tocsr()  # This matrix is not used
 
         # Dense solver
         else:
@@ -353,19 +450,23 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
             if log: print('- Calculating elastic stiffness matrix [Ke]')
             Ke11, Ke12, Ke21, Ke22 = _partition(model, model.Ke(combo_name, log, check_stability, sparse), D1_indices, D2_indices)
 
-            # Geometric stiffness matrix
-            # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
-            if log: print('Calculating geometric stiffness matrix [Kg]')
-            Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
-
             # Calculate the stiffness reduction matrix
             if log: print('Calculating plastic reduction matrix [Km]')
             Km11, Km12, Km21, Km22 = _partition(model, model.Km(combo_name, push_combo, step_num, log, sparse), D1_indices, D2_indices)
 
-            K11 = Ke11 + Kg11 + Km11
-            K12 = Ke12 + Kg12 + Km12
-            # K21 = Ke21 + Kg21 + Km21  # This matrix is not used
-            # K22 = Ke22 + Kg22 + Km22  # This matrix is not used
+            K11 = Ke11 + Km11
+            K12 = Ke12 + Km12
+            # K21 = Ke21 + Km21  # This matrix is not used
+            # K22 = Ke22 + Km22  # This matrix is not used
+
+            if P_Delta:
+                # The `combo_name` variable in the code below is not the name of the pushover load combination. Rather it is the name of the primary combination that the pushover load will be added to. Axial loads used to develop Kg are calculated from the displacements stored in `combo_name`.
+                if log: print('Calculating geometric stiffness matrix [Kg]')
+                Kg11, Kg12, Kg21, Kg22 = _partition(model, model.Kg(combo_name, log, sparse, False), D1_indices, D2_indices)
+                K11 = K11 + Kg11
+                K12 = K12 + Kg12
+                # K21 = K21 + Kg21  # This matrix is not used
+                # K22 = K22 + Kg22  # This matrix is not used
 
         # Calculate the changes to the global displacement vector
         if log: print('- Calculating changes to the global displacement vector')

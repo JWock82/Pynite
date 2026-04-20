@@ -2398,83 +2398,13 @@ class FEModel3D():
             # Get the partitioned total global fixed end reaction vector
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
 
-            # Calculate the incremental global fixed end reaction vector
-            Delta_FER1 = FER1/num_steps
-
             # Get the partitioned total global nodal force vector
             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
-            # Calculate the incremental global nodal force vector
-            Delta_P1 = P1/num_steps
-
-            # Apply the load incrementally
-            load_step = 1
-            while load_step <= num_steps:
-
-                # Keep track of the number of iterations in this load step
-                iter_count = 1
-                convergence = False
-                divergence = False
-
-                # Iterate until convergence or divergence occurs
-                while convergence == False and divergence == False:
-
-                    # Check for tension/compression-only divergence
-                    if iter_count > max_iter:
-                        divergence = True
-                        raise Exception('Model diverged during tension/compression-only analysis')
-
-                    # Report which load step we are on
-                    if log:
-                        print(f'- Analyzing load step #{str(load_step)}')
-
-                    # Get the partitioned global stiffness matrix K11, K12, K21, K22
-                    if sparse == True:
-                        K11, K12, K21, K22 = Analysis._partition(self, self.Ke(combo.name, log, check_stability, sparse).tocsr(), D1_indices, D2_indices)
-                    else:
-                        K11, K12, K21, K22 = Analysis._partition(self, self.Ke(combo.name, log, check_stability, sparse), D1_indices, D2_indices)
-
-                    if K11.shape == (0, 0):
-                        # All displacements are known, so Delta_D1 is an empty vector
-                        Delta_D1 = []
-                    else:
-                        try:
-                            # Calculate the unknown displacements Delta_D1
-                            if sparse == True:
-                                # The partitioned stiffness matrix originates as `coo` and is converted to `csr`
-                                # format for mathematical operations. The `@` operator performs matrix multiplication
-                                # on sparse matrices.
-                                Delta_D1 = spsolve(K11, np.subtract(np.subtract(Delta_P1, Delta_FER1), K12 @ Delta_D2))
-                                Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
-                            else:
-                                Delta_D1 = solve(K11, np.subtract(np.subtract(Delta_P1, Delta_FER1), np.matmul(K12, Delta_D2)))
-                        except:
-                            # Return out of the method if 'K' is singular and provide an error message
-                            raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
-
-                    # Store or sum the calculated displacements to the model and the nodes in the model
-                    if load_step == 1:
-                        Analysis._store_displacements(self, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
-                    else:
-                        Analysis._sum_displacements(self, Delta_D1, Delta_D2, D1_indices, D2_indices, combo)
-
-                    # Check for tension/compression-only convergence at this load step
-                    convergence = Analysis._check_TC_convergence(self, combo.name, log=log, spring_tolerance=spring_tolerance, member_tolerance=member_tolerance)
-
-                    if convergence == False:
-
-                        if log:
-                            print(f'- Undoing load step #{load_step} due to failed convergence.')
-
-                        # Undo the latest analysis step to prepare for re-analysis of the load step
-                        Analysis._sum_displacements(self, -Delta_D1, -Delta_D2, D1_indices, D2_indices, combo)
-
-                    else:
-                        # Move on to the next load step
-                        load_step += 1
-
-                    # Keep track of the number of tension/compression only iterations
-                    iter_count += 1
+            # Run the shared first-order solution path for this load combination
+            Analysis._first_order(self, combo.name, P1, FER1, D1_indices, D2_indices, D2,
+                                  log, sparse, check_stability, max_iter,
+                                  spring_tolerance, member_tolerance, num_steps)
 
         # Calculate reactions
         Analysis._calc_reactions(self, log, combo_tags)
@@ -2487,9 +2417,6 @@ class FEModel3D():
         # Check statics if requested
         if check_statics == True:
             Analysis._check_statics(self, combo_tags)
-
-        # Flag the model as solved
-        self.solution = 'Nonlinear TC'
 
     def analyze_PDelta(self, log=False, check_stability=True, max_iter=30, sparse=True, combo_tags=None):
         """Performs second order (P-Delta) analysis. This type of analysis is appropriate for most models using beams, columns and braces. Second order analysis is usually required by material specific codes. The analysis is iterative and takes longer to solve. Models with slender members and/or members with combined bending and axial loads will generally have more significant P-Delta effects. P-Delta effects in plates/quads are not considered.
@@ -2730,7 +2657,41 @@ class FEModel3D():
 
         return fig, ax, save_path
 
-    def analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None, control_node=None, control_direction='DX', control_limit=None, traces=None):
+    def analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None, control_node=None, control_direction='DX', control_limit=None, traces=None, P_Delta=False):
+        """Performs a pushover analysis with optional second-order P-Delta effects.
+
+        By default, the initial preload state is established using first-order analysis and the
+        incremental pushover steps omit the geometric stiffness matrix. Set ``P_Delta=True`` to
+        opt into second-order behavior for both the preload and the subsequent pushover steps.
+
+        :param log: Prints updates to the console if set to True. Default is False.
+        :type log: bool, optional
+        :param check_stability: Checks the stiffness matrix for unstable degrees of freedom when
+                                set to True. Defaults to True.
+        :type check_stability: bool, optional
+        :param push_combo: The load combination containing the pushover increment. Defaults to 'Push'.
+        :type push_combo: str, optional
+        :param max_iter: The maximum number of iterations permitted for the preload solver.
+                         Defaults to 30.
+        :type max_iter: int, optional
+        :param tol: Convergence tolerance for pushover step validation checks. Defaults to 0.01.
+        :type tol: float, optional
+        :param sparse: Indicates whether the sparse solver should be used. Defaults to True.
+        :type sparse: bool, optional
+        :param combo_tags: Tags used to select which primary load combinations to run.
+        :type combo_tags: list[str] | None, optional
+        :param control_node: Optional node used to stop the pushover once a target displacement is reached.
+        :type control_node: str | None, optional
+        :param control_direction: Degree of freedom to monitor at the control node.
+        :type control_direction: str, optional
+        :param control_limit: Optional displacement/rotation limit at the control node.
+        :type control_limit: float | None, optional
+        :param traces: Optional dictionary of trace names mapped to callables that accept combo_name.
+        :type traces: dict | None, optional
+        :param P_Delta: Set to True to include geometric stiffness and second-order effects during
+                        pushover analysis. Defaults to False.
+        :type P_Delta: bool, optional
+        """
 
         if control_limit is not None and control_node is None:
             raise ValueError('A control node must be specified when a pushover control limit is provided.')
@@ -2804,9 +2765,16 @@ class FEModel3D():
             # Get the partitioned global nodal force vector for the load combination
             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
-            # Run an elastic P-Delta analysis for the load combination (w/o pushover loads)
-            # This will be used to preload the member with non-pushover loads prior to pushover anlaysis
-            Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, 30)
+            # Preload the primary load combination before any pushover increments are applied.
+            # By default, pushover uses the first-order analysis path. Set `P_Delta=True` to opt
+            # into a second-order preload state.
+            if log:
+                print('- Preloading the primary combination using ' + ('P-Delta' if P_Delta else 'first-order') + ' analysis')
+
+            if P_Delta:
+                Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, max_iter)
+            else:
+                Analysis._first_order(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, max_iter)
 
             # Seed the nonlinear end-force history with the elastic preload state from the
             # primary load combination before any pushover increments are applied.
@@ -2851,6 +2819,7 @@ class FEModel3D():
             # each load step and can be queried for results during or after the pushover analysis.
             self._pushover_state[combo.name] = {
                 'push_combo': push_combo,
+                'P_Delta': P_Delta,
                 'status': 'running',
                 'step_num': 0,
                 'load_factor': 0.0,
@@ -2871,7 +2840,7 @@ class FEModel3D():
 
                 # Run the next pushover load step
                 # Note: The validity of the pushover step is checked and handled within the _pushover_step method
-                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol)
+                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol, P_Delta)
 
                 control_displacement = None
                 if control_node is not None:
