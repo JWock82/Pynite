@@ -2816,8 +2816,7 @@ class Member3D():
         if self.model.solution == 'Pushover':
             push_combo = self.model._pushover_state[combo_name]['push_combo']
             push_step = self.model._pushover_state[combo_name]['step_num']
-            load_factor = self.model._pushover_state[combo_name]['load_factor']
-            fer = fer + self._fer_unc(push_combo)*load_factor*push_step
+            fer = fer + self._fer_unc(push_combo)*push_step
 
         # Get the local deflections and calculate the slope at the start of the member
         # Note 1: The slope may not be available directly from the local displacement vector if member end releases have been used, so slope-deflection has been applied to solve for it.
