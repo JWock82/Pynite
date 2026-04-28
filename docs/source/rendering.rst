@@ -242,6 +242,7 @@ Member Local Coordinate System
 ==================================
 
 You can visualize the individual member local coordinate systems using the ``member_csys`` option to verify that the intended member orientation has been applied correctly. The color scheme is as follows:
+
 - **Local X axis** (direction from beam start to beam end): Red
 - **Local Y axis** (strong axis): Green
 - **Local Z axis** (weak axis): Blue
