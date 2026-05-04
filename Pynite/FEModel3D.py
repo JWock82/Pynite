@@ -2742,6 +2742,7 @@ class FEModel3D():
         # Initialize per-combo pushover result state.
         self._pushover_state = {}
         self._pushover_traces = {}
+        self._pushover_P_Delta = P_Delta
 
         # Step through each load combination
         for combo in combo_list:

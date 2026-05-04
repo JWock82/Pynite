@@ -125,7 +125,7 @@ class BeamSegZ():
         # # Include the P-Delta moment if a P-Delta analysis was run
         if P_delta == True:
             delta_1 = self.delta1
-            delta_x = self.deflection(x)
+            delta_x = self.deflection(x, P_delta)
             M += P1*(delta_x - delta_1)
 
         # Return the computed moment

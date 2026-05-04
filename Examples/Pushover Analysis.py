@@ -1,6 +1,6 @@
 from math import isclose
 
-from Pynite import FEModel3D
+from Pynite.FEModel3D import FEModel3D
 
 
 """
@@ -56,7 +56,7 @@ plastic_beam.add_load_combo('Pushover', {'Push': 0.01})
 # analysis will continue until 100% of the pushover loads are applied, or until the target
 # displacement is reached, whichever comes first. If a collapse mechanism forms without a target
 # displacement defined, the analysis will continue indefinitely. Let's keep stop the analysis if
-# 6" of displacement is ever reached at node 2. 
+# 6" of displacement is ever reached at node 2.
 control_node = 'N2'
 control_direction = 'DY'
 control_limit = -6.0
@@ -73,7 +73,14 @@ traces = {
 }
 
 # Analyze the model
-plastic_beam.analyze_pushover(log=True, check_stability=False, push_combo='Pushover', control_node=control_node, control_direction=control_direction, control_limit=control_limit, traces=traces)
+plastic_beam.analyze_pushover(log=True,
+                              check_stability=False,
+                              push_combo='Pushover',
+                              control_node=control_node,
+                              control_direction=control_direction,
+                              control_limit=control_limit,
+                              traces=traces,
+                              P_Delta=True)
 
 # Plot the traces one by one
 # plastic_beam.plot_pushover_trace('Fixed End Moment', combo_name='Primary')

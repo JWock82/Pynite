@@ -30,7 +30,7 @@ class BeamSegY(BeamSegZ):
 
         if P_delta == True:
             delta1 = self.delta1
-            delta = self.deflection(x)
+            delta = self.deflection(x, P_delta)
             M += P1*(delta - delta1)
 
         return M

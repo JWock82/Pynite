@@ -293,11 +293,17 @@ class Member3D():
         # Get the member's axial force for the requested load combination (based on the latest load step).
         P = self._fxi[combo_name]
 
-        # Get the geometric local stiffness matrix (for only axial and bending)
-        kg = self.kg(P)  # [dofs][:, dofs]
-
-        # Get the total elastic local stiffness matrix including geometric effects
-        keg = add(ke, kg)
+        # Get the total elastic local stiffness matrix, including geometric effects only when
+        # the active solution path has second-order behavior enabled.
+        if self.model.solution == 'P-Delta':
+            keg = add(ke, self.kg(P))
+        elif self.model.solution == 'Pushover':
+            if getattr(self.model, '_pushover_P_Delta', False):
+                keg = add(ke, self.kg(P))
+            else:
+                keg = ke
+        else:
+            keg = ke
 
         # Get the gradient to the failure surface at at each end of the element
         if self.section is None:
@@ -711,7 +717,7 @@ class Member3D():
         P = self._fxi[combo_name]
         ke = self.ke()
 
-        if getattr(self.model, '_pushover_state', {}).get(combo_name, {}).get('P_Delta', False):
+        if getattr(self.model, '_pushover_P_Delta', False):
             ke = ke + self.kg(P)
 
         # Get the gradient to the failure surface at at each end of the element
@@ -913,14 +919,14 @@ class Member3D():
                               [self._myj.get(combo_name, 0.0)],
                               [self._mzj.get(combo_name, 0.0)]])
 
-            # Calculate the axial force on the member from the latest elasto-plastic member end forces.
-            P = self._fxi[combo_name]
+            # Calculate the average axial force on the member from the latest elasto-plastic member end forces.
+            P = (self._fxj[combo_name] + self._fxi[combo_name])/2
 
             # Calculate the total local stiffness matrix. Geometric stiffness is only included
             # when the active pushover analysis has explicitly opted into P-Delta behavior.
             k = self.ke() + self.km(combo_name)
 
-            if getattr(self.model, '_pushover_state', {}).get(combo_name, {}).get('P_Delta', False):
+            if getattr(self.model, '_pushover_P_Delta', False):
                 k = k + self.kg(P)
 
             # Calculate and return the member's local end force vector for the pushover load step
@@ -1458,9 +1464,12 @@ class Member3D():
                 self._solved_combo = self.model.load_combos[combo_name]
 
             # Determine if a P-Delta analysis has been run
-            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            if self.model.solution == 'P-Delta':
                 # Include P-little-delta effects in the moment results
                 P_delta = True
+            elif self.model.solution == 'Pushover':
+                # Only include P-little-delta effects when the pushover step opted into P-Delta
+                P_delta = getattr(self.model, '_pushover_P_Delta', False)
             else:
                 # Do not include P-little delta effects in the moment results
                 P_delta = False
@@ -1537,12 +1546,18 @@ class Member3D():
         governing_combo = None
 
         for combo_name in combo_names:
+
             # Skip inactive combos
             if not self.active.get(combo_name, False):
                 continue
 
-            # Determine if P-Delta (or Pushover) effects should be included
-            P_delta = self.model.solution in ('P-Delta', 'Pushover')
+            # Determine if P-Delta effects should be included
+            if self.model.solution == 'P-Delta':
+                P_Delta = True
+            elif self.model.solution == 'Pushover':
+                P_Delta = getattr(self.model, '_pushover_P_Delta', False)
+            else:
+                P_Delta = False
 
             # If member not yet segmented for this combo, do it
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1556,7 +1571,7 @@ class Member3D():
                 continue
 
             # Get the maximum moment for this combo
-            Mmax = max(segment.max_moment() for segment in segments)
+            Mmax = max(segment.max_moment(P_Delta) for segment in segments)
 
             # Update global maximum
             if Mmax_global is None or Mmax > Mmax_global:
@@ -1613,8 +1628,13 @@ class Member3D():
             if not self.active.get(combo_name, False):
                 continue
 
-            # Determine if P-Delta (or Pushover) effects should be included
-            P_delta = self.model.solution in ('P-Delta', 'Pushover')
+            # Determine if P-Delta effects should be included
+            if self.model.solution == 'P-Delta':
+                P_Delta = True
+            elif self.model.solution == 'Pushover':
+                P_Delta = getattr(self.model, '_pushover_P_Delta', False)
+            else:
+                P_Delta = False
 
             # If member not yet segmented for this combo, do it
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1628,7 +1648,7 @@ class Member3D():
                 continue
 
             # Get the minimum moment for this combo
-            Mmin = min(segment.min_moment(P_delta) for segment in segments)
+            Mmin = min(segment.min_moment(P_Delta) for segment in segments)
 
             # Update global minimum
             if Mmin_global is None or Mmin < Mmin_global:
@@ -1727,9 +1747,12 @@ class Member3D():
             self._solved_combo = self.model.load_combos[combo_name]
 
         # Determine if a P-Delta analysis has been run
-        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+        if self.model.solution == 'P-Delta':
             # Include P-little-delta effects in the moment results
             P_delta = True
+        elif self.model.solution == 'Pushover':
+            # Only include P-little-delta effects when the pushover step opted into P-Delta
+            P_delta = getattr(self.model, '_pushover_P_Delta', False)
         else:
             # Do not include P-little delta effects in the moment results
             P_delta = False
@@ -2279,8 +2302,10 @@ class Member3D():
                 self._segment_member(combo_name)
                 self._solved_combo = self.model.load_combos[combo_name]
 
-            if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+            if self.model.solution == 'P-Delta':
                 P_delta = True
+            elif self.model.solution == 'Pushover':
+                P_delta = getattr(self.model, '_pushover_P_Delta', False)
             else:
                 P_delta = False
 
@@ -2318,12 +2343,12 @@ class Member3D():
 
                     if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
 
-                        return segment.deflection(x - segment.x1)
+                        return segment.deflection(x - segment.x1, P_delta)
 
                 if isclose(x, self.L()):
 
                     lastIndex = len(self.SegmentsY) - 1
-                    return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)
+                    return self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1, P_delta)
 
         else:
 
@@ -2558,9 +2583,12 @@ class Member3D():
             self._solved_combo = self.model.load_combos[combo_name]
 
         # Determine if a P-Delta analysis has been run
-        if self.model.solution == 'P-Delta' or self.model.solution == 'Pushover':
+        if self.model.solution == 'P-Delta':
             # Include P-little-delta effects in the moment results
             P_delta = True
+        elif self.model.solution == 'Pushover':
+            # Only include P-little-delta effects when the pushover step opted into P-Delta
+            P_delta = getattr(self.model, '_pushover_P_Delta', False)
         else:
             # Do not include P-little delta effects in the moment results
             P_delta = False
@@ -2624,6 +2652,14 @@ class Member3D():
             dzj = d[8,0]
             L = self.L()
 
+            # Determine if P-Delta effects should be included in segment deflection evaluations.
+            if self.model.solution == 'P-Delta':
+                P_delta = True
+            elif self.model.solution == 'Pushover':
+                P_delta = getattr(self.model, '_pushover_P_Delta', False)
+            else:
+                P_delta = False
+
             # Check which axis is of interest
             if Direction == 'dy':
 
@@ -2632,12 +2668,12 @@ class Member3D():
 
                     if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
 
-                        return (segment.deflection(x - segment.x1)) - (dyi + (dyj-dyi)/L*x)
+                        return (segment.deflection(x - segment.x1, P_delta)) - (dyi + (dyj-dyi)/L*x)
 
                 if isclose(x, self.L()):
 
                     lastIndex = len(self.SegmentsZ) - 1
-                    return (self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1))-dyj
+                    return (self.SegmentsZ[lastIndex].deflection(x - self.SegmentsZ[lastIndex].x1, P_delta))-dyj
 
             elif Direction == 'dz':
 
@@ -2645,12 +2681,12 @@ class Member3D():
 
                     if round(x,10) >= round(segment.x1,10) and round(x,10) < round(segment.x2,10):
 
-                        return (segment.deflection(x - segment.x1)) - (dzi + (dzj-dzi)/L*x)
+                        return (segment.deflection(x - segment.x1, P_delta)) - (dzi + (dzj-dzi)/L*x)
 
                 if isclose(x, self.L()):
 
                     lastIndex = len(self.SegmentsY) - 1
-                    return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1)) - dzj
+                    return (self.SegmentsY[lastIndex].deflection(x - self.SegmentsY[lastIndex].x1, P_delta)) - dzj
 
         else:
 
@@ -2728,6 +2764,14 @@ class Member3D():
         dzi = d[2, 0]
         dzj = d[8, 0]
 
+        # Determine if P-Delta effects should be included in segment deflection evaluations.
+        if self.model.solution == 'P-Delta':
+            P_delta = True
+        elif self.model.solution == 'Pushover':
+            P_delta = getattr(self.model, '_pushover_P_Delta', False)
+        else:
+            P_delta = False
+
         L = self.L()
         if x_array is None:
             x_array = linspace(0, L, n_points)
@@ -2737,11 +2781,11 @@ class Member3D():
 
         # Check which axis is of interest
         if Direction == 'dy':
-            deflections = self._extract_vector_results(self.SegmentsZ, x_array, 'deflection')[1]
+            deflections = self._extract_vector_results(self.SegmentsZ, x_array, 'deflection', P_delta)[1]
             return vstack((x_array, deflections - (dyi + (dyj-dyi)/L*x_array)))
 
         elif Direction == 'dz':
-            deflections = self._extract_vector_results(self.SegmentsY, x_array, 'deflection')[1]
+            deflections = self._extract_vector_results(self.SegmentsY, x_array, 'deflection', P_delta)[1]
             return vstack((x_array, deflections - (dzi + (dzj-dzi)/L*x_array)))
 
     def _segment_member(self, combo_name='Combo 1'):
@@ -2842,6 +2886,13 @@ class Member3D():
         SegmentsZ[0].delta_x1 = d[0, 0]
         SegmentsY[0].delta_x1 = d[0, 0]
         SegmentsX[0].delta_x1 = d[0, 0]
+        # Check to see if P-Delta effects should be included
+        if self.model.solution == 'P-Delta':
+            P_delta = True
+        elif self.model.solution == 'Pushover':
+            P_delta = getattr(self.model, '_pushover_P_Delta', False)
+        else:
+            P_delta = False
 
         # Add loads to each segment
         for i in range(len(SegmentsZ)):
@@ -2861,11 +2912,11 @@ class Member3D():
 
             # Initialize the slope and displacement at the start of the segment
             if i > 0:  # The first segment has already been initialized
-                SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].Length())
-                SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].Length())
+                SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].Length(), P_delta)
+                SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].Length(), P_delta)
                 SegmentsZ[i].delta_x1 = SegmentsZ[i-1].axial_deflection(SegmentsZ[i-1].Length())
-                SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].Length())
-                SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].Length())
+                SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].Length(), P_delta)
+                SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].Length(), P_delta)
                 SegmentsY[i].delta_x1 = SegmentsY[i-1].axial_deflection(SegmentsY[i-1].Length())
 
             # Add the effects of the beam end forces to the segment
