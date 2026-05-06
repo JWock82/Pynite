@@ -87,8 +87,8 @@ plastic_beam.analyze_pushover(log=True,
 # plastic_beam.plot_pushover_trace('Load Point Moment', combo_name='Primary')
 # plastic_beam.plot_pushover_trace('Load Point Deflection', combo_name='Primary')
 
-plastic_beam.members['M1'].plot_moment('Mz', combo_name='Primary', n_points=100)
-plastic_beam.members['M1'].plot_deflection('dy', combo_name='Primary', n_points=100)
+plastic_beam.members['M1'].plot_moment('Mz', combo_name='Primary', n_points=201)
+plastic_beam.members['M1'].plot_deflection('dy', combo_name='Primary', n_points=201)
 
 # Get the final resulting moments from the Primary combo (where pushover results are stored)
 M_N1 = plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name='Primary')

@@ -645,9 +645,11 @@ class PhysMember(Member3D):
 
             x_subm_array = x_array[filter] - x_o
 
-            # Check if P-Delta analysis was run
+            # Check if second-order effects should be included in sampled moments
             if self.model.solution == 'P-Delta':
                 PDelta = True
+            elif self.model.solution == 'Pushover':
+                PDelta = getattr(self.model, '_pushover_P_Delta', False)
             else:
                 PDelta = False
 
@@ -1324,13 +1326,21 @@ class PhysMember(Member3D):
 
             x_subm_array = x_array[filter] - x_o
 
+            # Check if second-order effects should be included in sampled deflections
+            if self.model.solution == 'P-Delta':
+                PDelta = True
+            elif self.model.solution == 'Pushover':
+                PDelta = getattr(self.model, '_pushover_P_Delta', False)
+            else:
+                PDelta = False
+
             # Check which axis is of interest
             if Direction == 'dx':
                 d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'axial_deflection')
             elif Direction == 'dy':
-                d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'deflection')
+                d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'deflection', PDelta)
             elif Direction == 'dz':
-                d_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'deflection')
+                d_array = self._extract_vector_results(submember.SegmentsY, x_subm_array, 'deflection', PDelta)
             else:
                 raise ValueError(f"Direction must be 'dy' or 'dz'. {Direction} was given.")
 
