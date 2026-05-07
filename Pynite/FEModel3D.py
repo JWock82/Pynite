@@ -1843,7 +1843,7 @@ class FEModel3D():
                     else:
                         if self.solution == 'Pushover':
                             # Use the axial force at the current nonlinear/inelastic load step
-                            P = member._fxi[combo_name]
+                            P = (member._fxi[combo_name] + member._fxj[combo_name])/2
                         else:
                             # Calculate the member axial force due to linear/elastic axial strain
                             d = member.d(combo_name)
