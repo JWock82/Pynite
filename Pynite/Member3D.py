@@ -291,7 +291,7 @@ class Member3D():
         ke = self.ke()  # [dofs][:, dofs]
 
         # Get the member's axial force for the requested load combination (based on the latest load step).
-        P = self._fxi[combo_name]
+        P = (self._fxi[combo_name] + self._fxj[combo_name])/2
 
         # Get the total elastic local stiffness matrix, including geometric effects only when
         # the active solution path has second-order behavior enabled.
@@ -714,7 +714,7 @@ class Member3D():
         Delta_d = self.T() @ Delta_D
 
         # Get the elastic local stiffness matrix, optionally including geometric stiffness
-        P = self._fxi[combo_name]
+        P = (self._fxi[combo_name] + self._fxj[combo_name])/2
         ke = self.ke()
 
         if getattr(self.model, '_pushover_P_Delta', False):
