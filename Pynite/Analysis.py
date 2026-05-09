@@ -404,13 +404,31 @@ def _PDelta(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArr
     model.solution = 'P-Delta'
 
 
-def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, Delta_P1: NDArray[float64], Delta_FER1: NDArray[float64], Delta_FER2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, tol: float = 0, P_Delta: bool = False) -> None:
+def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num: int, Delta_P1: NDArray[float64], Delta_FER1: NDArray[float64], Delta_FER2: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, tol: float = 0, P_Delta: bool = False, max_iter: int = 30) -> None:
 
     # Run at least one iteration
     run_step = True
+    iter_count = 0
+    tc_changed_last = False
+    reversal_locations_last = []
 
     # Run/rerun the load step until convergence occurs
     while run_step == True:
+
+        iter_count += 1
+        if iter_count > max_iter:
+            reasons = []
+            if tc_changed_last:
+                reasons.append('tension/compression-only status changes')
+            if reversal_locations_last:
+                reasons.append('plastic load reversal at ' + ', '.join(reversal_locations_last))
+            if not reasons:
+                reasons.append('non-convergent step validation checks')
+            raise RuntimeError(
+                f"Pushover load step {step_num} for load combination '{combo_name}' did not converge "
+                f"after {max_iter} retries ({'; '.join(reasons)}). "
+                "Reduce the pushover increment, relax nonlinear demands, or increase max_iter."
+            )
 
         # Calculate the partitioned global stiffness matrices
         # Sparse solver
@@ -497,6 +515,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
         run_step = False
         tc_changed = False
         reversal = False
+        reversal_locations = []
 
         # Check for tension/compression-only status changes caused by this tentative load step.
         if _check_TC_convergence(model, combo_name, log, spring_tolerance=tol, member_tolerance=tol) == False:
@@ -521,6 +540,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                     sub_member.i_reversal = True
                     reversal = True
                     run_step = True
+                    reversal_locations.append(f'{sub_member.name} i-node')
                     if log: print(f'- Plastic load reversal encountered at member {sub_member.name} i-node')
 
                 else:
@@ -534,6 +554,7 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                     sub_member.j_reversal = True
                     reversal = True
                     run_step = True
+                    reversal_locations.append(f'{sub_member.name} j-node')
                     if log: print(f'- Plastic load reversal encountered at member {sub_member.name} j-node')
 
                 else:
@@ -597,6 +618,9 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                     sub_member._mzj[combo_name] += Delta_f[11, 0]
 
         else:
+
+            tc_changed_last = tc_changed
+            reversal_locations_last = list(dict.fromkeys(reversal_locations))
 
             # Undo the tentative load step
             _sum_displacements(model, -Delta_D1, D2, D1_indices, D2_indices, model.load_combos[combo_name])

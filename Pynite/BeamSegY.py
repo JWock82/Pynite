@@ -23,15 +23,16 @@ class BeamSegY(BeamSegZ):
         P1 = self.P1
         w1 = self.w1
         w2 = self.w2
-        L = self.Length()
+        L = self.length()
 
         # M = M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L)
         M = -M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
         if P_delta == True:
-            delta1 = self.delta1
-            delta = self.deflection(x, P_delta)
-            M += P1*(delta - delta1)
+
+            delta_1 = self.delta1
+            delta_x = self.deflection(x, P_delta)
+            M += P1*(delta_x - delta_1)
 
         return M
 
@@ -53,7 +54,7 @@ class BeamSegY(BeamSegZ):
         w2 = self.w2
         theta_1 = self.theta1
 
-        L = self.Length()
+        L = self.length()
         EI = self.EI
 
         if P_delta == True:
@@ -73,7 +74,7 @@ class BeamSegY(BeamSegZ):
         w2 = self.w2
         theta_1 = self.theta1
         delta_1 = self.delta1
-        L = self.Length()
+        L = self.length()
         EI = self.EI
 
         # Check if a P-delta solution is requested
@@ -93,7 +94,7 @@ class BeamSegY(BeamSegZ):
         w1 = self.w1
         w2 = self.w2
         V1 = self.V1
-        L = self.Length()
+        L = self.length()
 
         # Find the quadratic equation parameters
         a = (w2-w1)/(2*L)
@@ -138,7 +139,7 @@ class BeamSegY(BeamSegZ):
         w1 = self.w1
         w2 = self.w2
         V1 = self.V1
-        L = self.Length()
+        L = self.length()
 
         # Find the quadratic equation parameters
         a = (w2-w1)/(2*L)

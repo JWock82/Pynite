@@ -291,7 +291,7 @@ class Member3D():
         ke = self.ke()  # [dofs][:, dofs]
 
         # Get the member's axial force for the requested load combination (based on the latest load step).
-        P = (self._fxi[combo_name] + self._fxj[combo_name])/2
+        P = self._fxj[combo_name] - self._fxi[combo_name]
 
         # Get the total elastic local stiffness matrix, including geometric effects only when
         # the active solution path has second-order behavior enabled.
@@ -714,7 +714,7 @@ class Member3D():
         Delta_d = self.T() @ Delta_D
 
         # Get the elastic local stiffness matrix, optionally including geometric stiffness
-        P = (self._fxi[combo_name] + self._fxj[combo_name])/2
+        P = self._fxj[combo_name] - self._fxi[combo_name]
         ke = self.ke()
 
         if getattr(self.model, '_pushover_P_Delta', False):
@@ -920,7 +920,7 @@ class Member3D():
                               [self._mzj.get(combo_name, 0.0)]])
 
             # Calculate the average axial force on the member from the latest elasto-plastic member end forces.
-            P = (self._fxj[combo_name] + self._fxi[combo_name])/2
+            P = self._fxj[combo_name] - self._fxi[combo_name]
 
             # Calculate the total local stiffness matrix. Geometric stiffness is only included
             # when the active pushover analysis has explicitly opted into P-Delta behavior.
@@ -1177,11 +1177,11 @@ class Member3D():
                 # Check which segment 'x' falls on
                 for segment in self.SegmentsZ:
                     if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                        return segment.Shear(x - segment.x1)
+                        return segment.shear(x - segment.x1)
 
                 if isclose(x, self.L()):
                     lastIndex = len(self.SegmentsZ) - 1
-                    return self.SegmentsZ[lastIndex].Shear(x - self.SegmentsZ[lastIndex].x1)
+                    return self.SegmentsZ[lastIndex].shear(x - self.SegmentsZ[lastIndex].x1)
 
             elif Direction == 'Fz':
 
@@ -1189,12 +1189,12 @@ class Member3D():
 
                     if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
 
-                        return segment.Shear(x - segment.x1)
+                        return segment.shear(x - segment.x1)
 
                 if isclose(x, self.L()):
 
                     lastIndex = len(self.SegmentsY) - 1
-                    return self.SegmentsY[lastIndex].Shear(x - self.SegmentsY[lastIndex].x1)
+                    return self.SegmentsY[lastIndex].shear(x - self.SegmentsY[lastIndex].x1)
 
         else:
 
@@ -1804,11 +1804,11 @@ class Member3D():
             # Check which segment 'x' falls on
             for segment in self.SegmentsX:
                 if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                    return segment.Torsion()
+                    return segment.torsion()
 
                 if isclose(x, self.L()):
                     lastIndex = len(self.SegmentsX) - 1
-                    return self.SegmentsX[lastIndex].Torsion()
+                    return self.SegmentsX[lastIndex].torsion()
 
         else:
 
@@ -1864,7 +1864,7 @@ class Member3D():
                 continue
 
             # Get maximum torsion across all segments for this combo
-            Tmax = max(segment.MaxTorsion() for segment in self.SegmentsX)
+            Tmax = max(segment.max_torsion() for segment in self.SegmentsX)
 
             # Update global maximum
             if Tmax_global is None or Tmax > Tmax_global:
@@ -1929,7 +1929,7 @@ class Member3D():
                 continue
 
             # Get minimum torsion across all segments for this combo
-            Tmin = min(segment.MinTorsion() for segment in self.SegmentsX)
+            Tmin = min(segment.min_torsion() for segment in self.SegmentsX)
 
             # Update global minimum
             if Tmin_global is None or Tmin < Tmin_global:
@@ -2912,12 +2912,12 @@ class Member3D():
 
             # Initialize the slope and displacement at the start of the segment
             if i > 0:  # The first segment has already been initialized
-                SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].Length(), P_delta)
-                SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].Length(), P_delta)
-                SegmentsZ[i].delta_x1 = SegmentsZ[i-1].axial_deflection(SegmentsZ[i-1].Length())
-                SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].Length(), P_delta)
-                SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].Length(), P_delta)
-                SegmentsY[i].delta_x1 = SegmentsY[i-1].axial_deflection(SegmentsY[i-1].Length())
+                SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].length(), P_delta)
+                SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].length(), P_delta)
+                SegmentsZ[i].delta_x1 = SegmentsZ[i-1].axial_deflection(SegmentsZ[i-1].length())
+                SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].length(), P_delta)
+                SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].length(), P_delta)
+                SegmentsY[i].delta_x1 = SegmentsY[i-1].axial_deflection(SegmentsY[i-1].length())
 
             # Add the effects of the beam end forces to the segment
             SegmentsZ[i].P1 = f[0, 0]
@@ -3115,7 +3115,7 @@ class Member3D():
         ----------
         segments : List
             List of segment objects. Each segment represents a portion of a structural member
-            and must have properties `x1`, `x2`, and appropriate result methods (e.g. `moment()`, `Shear()`, etc.).
+            and must have properties `x1`, `x2`, and appropriate result methods (e.g. `moment()`, `shear()`, etc.).
 
         x_array : NDArray[float64]
             1D NumPy array of x-coordinates (global positions along the member) at which to evaluate results.
@@ -3148,9 +3148,9 @@ class Member3D():
         # Dispatch table maps the result name to the correct evaluation function
         method_map = {
             "moment": lambda s, x: s.moment(x, P_delta),
-            "shear": lambda s, x: s.Shear(x),
+            "shear": lambda s, x: s.shear(x),
             "axial": lambda s, x: s.axial(x),
-            "torque": lambda s, x: s.Torsion(x),
+            "torque": lambda s, x: s.torsion(x),
             "deflection": lambda s, x: s.deflection(x, P_delta),
             "axial_deflection": lambda s, x: s.axial_deflection(x),
         }

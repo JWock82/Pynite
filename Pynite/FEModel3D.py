@@ -1843,7 +1843,7 @@ class FEModel3D():
                     else:
                         if self.solution == 'Pushover':
                             # Use the axial force at the current nonlinear/inelastic load step
-                            P = (member._fxi[combo_name] + member._fxj[combo_name])/2
+                            P = member._fxj[combo_name] - member._fxi[combo_name]
                         else:
                             # Calculate the member axial force due to linear/elastic axial strain
                             d = member.d(combo_name)
@@ -2671,8 +2671,9 @@ class FEModel3D():
         :type check_stability: bool, optional
         :param push_combo: The load combination containing the pushover increment. Defaults to 'Push'.
         :type push_combo: str, optional
-        :param max_iter: The maximum number of iterations permitted for the preload solver.
-                         Defaults to 30.
+        :param max_iter: The maximum number of iterations permitted for the preload solver and
+                 the maximum number of retries permitted for each pushover load step.
+                 Defaults to 30.
         :type max_iter: int, optional
         :param tol: Convergence tolerance for pushover step validation checks. Defaults to 0.01.
         :type tol: float, optional
@@ -2698,6 +2699,9 @@ class FEModel3D():
 
         if control_direction.upper() not in ('DX', 'DY', 'DZ', 'RX', 'RY', 'RZ'):
             raise ValueError("Pushover control direction must be one of 'DX', 'DY', 'DZ', 'RX', 'RY', or 'RZ'.")
+
+        if max_iter < 1:
+            raise ValueError('max_iter must be at least 1 for pushover analysis.')
 
         if control_node is not None and control_node not in self.nodes:
             raise ValueError(f"Control node '{control_node}' was not found in the model.")
@@ -2841,7 +2845,7 @@ class FEModel3D():
 
                 # Run the next pushover load step
                 # Note: The validity of the pushover step is checked and handled within the _pushover_step method
-                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol, P_Delta)
+                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol, P_Delta, max_iter)
 
                 control_displacement = None
                 if control_node is not None:

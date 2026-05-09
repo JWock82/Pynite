@@ -93,7 +93,7 @@ class BeamSegZ():
         return f"BeamSegZ(x1={self.x1}, x2={self.x2})"
 
     # Returns the length of the segment
-    def Length(self) -> float:
+    def length(self) -> float:
         """
         Returns the length of the segment
         """
@@ -101,12 +101,12 @@ class BeamSegZ():
         return self.x2 - self.x1
 
     # Returns the shear force at a location 'x' on the segment
-    def Shear(self, x: float) -> float:
+    def shear(self, x: float) -> float:
 
         V1 = self.V1
         w1 = self.w1
         w2 = self.w2
-        L = self.Length()
+        L = self.length()
 
         return V1 + w1*x + x**2*(-w1 + w2)/(2*L)
 
@@ -118,7 +118,7 @@ class BeamSegZ():
         P1 = self.P1
         w1 = self.w1
         w2 = self.w2
-        L = self.Length()
+        L = self.length()
 
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
@@ -137,11 +137,11 @@ class BeamSegZ():
         P1 = self.P1
         p1 = self.p1
         p2 = self.p2
-        L = self.Length()
+        L = self.length()
 
         return P1 + (p2 - p1)/(2*L)*x**2 + p1*x
 
-    def Torsion(self, x: float | List[float] = 0) -> float | None | NDArray[Any]:
+    def torsion(self, x: float | List[float] = 0) -> float | None | NDArray[Any]:
         """
         Returns the torsional moment in the segment.
         """
@@ -172,14 +172,21 @@ class BeamSegZ():
         w1 = self.w1
         w2 = self.w2
         theta_1 = self.theta1
-        L = self.Length()
+        L = self.length()
         EI = self.EI
 
         if P_delta == True:
+
+            # Calculate the deflection at the start of the segment and a `x`
             delta_1 = self.delta1
             delta_x = self.deflection(x, P_delta)
+
+            # Calculate the slope at `x` using the calculated deflections to include P-little-delta effects
             theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
+
         else:
+
+            # Calculate the slope at `x` (without including P-little-delta effects)
             theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*M1 + x**4*(w1 - w2)/(24*L))/EI
 
         # Return the calculated slope
@@ -195,18 +202,18 @@ class BeamSegZ():
         w2 = self.w2
         theta_1 = self.theta1
         delta_1 = self.delta1
-        L = self.Length()
+        L = self.length()
         EI = self.EI
 
         # Check if a P-delta solution is requested
         if P_delta == True:
 
-            # Return the calculated deflection, amplified for P-delta effects
-            return (delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1 + P1*delta_1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L))/(1 + P1*x**2/(2*EI))
-
+            # Return the deflection at `x` including P-little-delta effects
+            return (L*V1*x**3/3 + L*w1*x**4/12 + L*(2*EI*delta_1 + 2*EI*theta_1*x - M1*x**2 + P1*delta_1*x**2) + x**5*(-w1 + w2)/60)/(L*(2*EI + P1*x**2))
+        
         else:
 
-            # Return the calcuated deflection
+            # Return the deflection at `x` (without including P-little-delta effects)
             return delta_1 + theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) + x**2*(-M1)/(2*EI) + x**5*(-w1 + w2)/(120*EI*L)
 
     def axial_deflection(self, x: float) -> float:
@@ -215,7 +222,7 @@ class BeamSegZ():
         P1 = self.P1
         p1 = self.p1
         p2 = self.p2
-        L = self.Length()
+        L = self.length()
         EA = self.EA
 
         return delta_x1 - 1/EA*(P1*x + p1*x**2/2 + (p2 - p1)*x**3/(6*L))
@@ -225,7 +232,7 @@ class BeamSegZ():
 
         w1 = self.w1
         w2 = self.w2
-        L = self.Length()
+        L = self.length()
 
         # Determine possible locations of maximum shear
         if w1-w2 == 0:
@@ -240,9 +247,9 @@ class BeamSegZ():
         x3 = L
 
         # Find the shear at each location of interest
-        V1 = self.Shear(x1)
-        V2 = self.Shear(x2)
-        V3 = self.Shear(x3)
+        V1 = self.shear(x1)
+        V2 = self.shear(x2)
+        V3 = self.shear(x3)
 
         # Return the maximum shear
         return max(V1, V2, V3)
@@ -252,7 +259,7 @@ class BeamSegZ():
 
         w1 = self.w1
         w2 = self.w2
-        L = self.Length()
+        L = self.length()
 
         # Determine possible locations of minimum shear
         if w1-w2 == 0:
@@ -267,9 +274,9 @@ class BeamSegZ():
         x3 = L
 
         # Find the shear at each location of interest
-        V1 = self.Shear(x1)
-        V2 = self.Shear(x2)
-        V3 = self.Shear(x3)
+        V1 = self.shear(x1)
+        V2 = self.shear(x2)
+        V3 = self.shear(x3)
 
         # Return the minimum shear
         return min(V1, V2, V3)
@@ -280,7 +287,7 @@ class BeamSegZ():
         w1 = self.w1
         w2 = self.w2
         V1 = self.V1
-        L = self.Length()
+        L = self.length()
 
         # Find the quadratic equation parameters
         a = -(w2-w1)/(2*L)
@@ -325,7 +332,7 @@ class BeamSegZ():
         w1 = self.w1
         w2 = self.w2
         V1 = self.V1
-        L = self.Length()
+        L = self.length()
 
         # Find the quadratic equation parameters
         a = -(w2-w1)/(2*L)
@@ -369,7 +376,7 @@ class BeamSegZ():
 
         p1 = self.p1
         p2 = self.p2
-        L = self.Length()
+        L = self.length()
 
         # Determine possible locations of maximum axial force
         if p1-p2 != 0:
@@ -396,7 +403,7 @@ class BeamSegZ():
 
         p1 = self.p1
         p2 = self. p2
-        L = self.Length()
+        L = self.length()
 
         # Determine possible locations of minimum axial force
         if p1-p2 != 0:
@@ -418,7 +425,7 @@ class BeamSegZ():
         # Return the minimum axial force
         return min(P1, P2, P3)
 
-    def MaxTorsion(self) -> float:
+    def max_torsion(self) -> float:
         """
         Returns the maximum torsional moment in the segment.
         """
@@ -428,7 +435,7 @@ class BeamSegZ():
         # This can be updated in the future for distributed torsional forces
         return self.T1
 
-    def MinTorsion(self) -> float:
+    def min_torsion(self) -> float:
         """
         Returns the minimum torsional moment in the segment.
         """

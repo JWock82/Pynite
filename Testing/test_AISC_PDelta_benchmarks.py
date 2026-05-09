@@ -188,13 +188,84 @@ def test_AISC_benchmark_case2():
     # renderer.member_diagrams = 'Mz'
     # renderer.render_model()
 
-    # column.members['M1'].plot_moment('Mz', 'Combo 4')
+    column.members['M1'].plot_moment('Mz', 'Combo 4')
 
     Mbase_calculated = []
     dtip_calculated = []
     for combo in column.load_combos.values():
-        Mbase_calculated.append(-column.members['M1'].moment('Mz', 0, combo.name)*12)
-        dtip_calculated.append(-column.members['M1'].deflection('dy', 28, combo.name)*12)
+        Mbase_calculated.append(column.members['M1'].moment('Mz', 0, combo.name)*12)
+        dtip_calculated.append(column.members['M1'].deflection('dy', 28, combo.name)*12)
+
+    # Expected results per AISC
+    Mbase_expected = [336, 469, 598, 848]
+    dtip_expected = [-0.901, -1.33, -1.75, -2.56]
+
+    # Check that results are within 1% of expected results
+    for i, val in enumerate(Mbase_calculated):
+        assert math.isclose(Mbase_calculated[i]/Mbase_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {Mbase_calculated[i]} is not within 3% of expected moment {Mbase_expected[i]}"
+        assert math.isclose(dtip_calculated[i]/dtip_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dtip_calculated[i]} is not within 5% of expected deflection {dtip_expected[i]}"
+
+def test_AISC_benchmark_case2_weak_axis():
+
+    column = FEModel3D()
+
+    column.add_node('N1', 0, 0, 0)
+    column.add_node('N2', 0, 28, 0)
+    
+    # Add an internal node to capture P-little-delta effects
+    column.add_node('N4', 0, 28*1/3, 0)
+    column.add_node('N5', 0, 28*2/3, 0)
+
+    column.def_support('N1', True, True, True, True, True, True)
+
+    # Define a material
+    E = 29000*12**2  # ksf
+    G = 11200*12**2  # ksf
+    nu = 0.3
+    rho = 0.490  # kcf
+    column.add_material('Steel', E, G, nu, rho)
+
+    # Define section properties (swapping Iy and Iz to test weak axis bending)
+    Iz = 51.4/12**4  # ft^4
+    Iy = 484/12**4   # ft^4
+    A = 14.1/12**2   # ft^2
+    J = 1.45/12**4   # ft^4
+    column.add_section('ColumnSection', A, Iy, Iz, J)
+
+    # Rotate the column 90 degrees so the weak axis is bending
+    column.add_member('M1', 'N1', 'N2', 'Steel', 'ColumnSection')
+    
+    column.add_node_load('N2', 'FZ', 1, case='P1')
+    column.add_node_load('N2', 'FZ', 1, case='P2')
+    column.add_node_load('N2', 'FZ', 1, case='P3')
+    column.add_node_load('N2', 'FZ', 1, case='P4')
+
+    column.add_node_load('N2', 'FY', -100, 'P2')
+    column.add_node_load('N2', 'FY', -150, 'P3')
+    column.add_node_load('N2', 'FY', -200, 'P4')
+
+    column.add_load_combo('Combo 1', {'P1':1})
+    column.add_load_combo('Combo 2', {'P2':1})
+    column.add_load_combo('Combo 3', {'P3':1})
+    column.add_load_combo('Combo 4', {'P4':1})
+
+    column.analyze_PDelta()
+
+    from Pynite.Visualization import Renderer
+    renderer = Renderer(column)
+    renderer.annotation_size = 0.5
+    renderer.combo_name = 'Combo 4'
+    renderer.deformed_shape = True
+    renderer.member_diagrams = 'My'
+    renderer.render_model()
+
+    column.members['M1'].plot_moment('My', 'Combo 4')
+
+    Mbase_calculated = []
+    dtip_calculated = []
+    for combo in column.load_combos.values():
+        Mbase_calculated.append(column.members['M1'].moment('My', 0, combo.name)*12)
+        dtip_calculated.append(column.members['M1'].deflection('dz', 28, combo.name)*12)
 
     # Expected results per AISC
     Mbase_expected = [-336, -469, -598, -848]
@@ -210,3 +281,4 @@ if __name__ == "__main__":
     test_AISC_benchmark_old()
     test_AISC_benchmark_case1()
     test_AISC_benchmark_case2()
+    test_AISC_benchmark_case2_weak_axis()
