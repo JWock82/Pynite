@@ -68,7 +68,7 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-3.0.0 (in progress)
+3.0.0
 * Added pushover analysis! Currently, only steel sections are supported for pushover analysis. The assumed interaction equation used to estimate plastic behavior is currently calibrated toward I-shaped members.
 * Refactored all elastic stiffness matrix references from `K` and `k` to `Ke` and `ke`. Most users will not notice this change. Power users who were accessing the stiffness matrices directly will want to note this refactor.  This clarifies the code base by indicating which type of stiffness these matrices represent, and reduces ambiguity in preparation for addition of further geometric `Kg/kg` and plastic `Km/km` stiffness matrices.
 * User's can now control the size of member plots.
