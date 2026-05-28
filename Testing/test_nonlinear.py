@@ -68,17 +68,17 @@ def test_plastic_beam():
     )
 
     # Plot the two traces on the same graph for each combo
-    for combo_name, trace_data in plastic_beam._pushover_traces.items():
-        steps = list(range(len(trace_data['M_ba'])))
-        plt.figure()
-        plt.plot(steps, trace_data['M_ba'], label='M_ba (M1a end)')
-        plt.plot(steps, trace_data['M_bc'], label='M_bc (M1b start)')
-        plt.xlabel('Pushover Step')
-        plt.ylabel('Moment at b (kip-in)')
-        plt.title(f'Moment Traces at Node b — Combo: {combo_name}')
-        plt.legend()
-        plt.tight_layout()
-    plt.show()
+    # for combo_name, trace_data in plastic_beam._pushover_traces.items():
+    #     steps = list(range(len(trace_data['M_ba'])))
+    #     plt.figure()
+    #     plt.plot(steps, trace_data['M_ba'], label='M_ba (M1a end)')
+    #     plt.plot(steps, trace_data['M_bc'], label='M_bc (M1b start)')
+    #     plt.xlabel('Pushover Step')
+    #     plt.ylabel('Moment at b (kip-in)')
+    #     plt.title(f'Moment Traces at Node b — Combo: {combo_name}')
+    #     plt.legend()
+    #     plt.tight_layout()
+    # plt.show()
 
     # Compare the traces to each other
     for combo_name, trace_data in plastic_beam._pushover_traces.items():
