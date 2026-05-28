@@ -12,9 +12,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      MPLBACKEND: Agg
-      PYVISTA_OFF_SCREEN: 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -38,23 +35,6 @@ jobs:
         python -m pip install .
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Configure headless rendering for tests
-      run: |
-        cat <<'PY' >/tmp/headless_ci.py
-        import matplotlib
-        matplotlib.use('Agg')
-
-        import Pynite.Visualization as visualization
-
-        _original_render_model = visualization.Renderer.render_model
-
-        def _render_model_headless(self, *args, **kwargs):
-            kwargs.setdefault('interact', False)
-            return _original_render_model(self, *args, **kwargs)
-
-        visualization.Renderer.render_model = _render_model_headless
-        PY
-
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -63,8 +43,6 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test with pytest
-      env:
-        PYTHONPATH: /tmp
       run: |
         xvfb-run -a coverage run --source=Pynite -m pytest
 

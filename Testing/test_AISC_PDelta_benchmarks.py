@@ -188,7 +188,7 @@ def test_AISC_benchmark_case2():
     # renderer.member_diagrams = 'Mz'
     # renderer.render_model()
 
-    column.members['M1'].plot_moment('Mz', 'Combo 4')
+    # column.members['M1'].plot_moment('Mz', 'Combo 4')
 
     Mbase_calculated = []
     dtip_calculated = []
@@ -251,15 +251,15 @@ def test_AISC_benchmark_case2_weak_axis():
 
     column.analyze_PDelta()
 
-    from Pynite.Visualization import Renderer
-    renderer = Renderer(column)
-    renderer.annotation_size = 0.5
-    renderer.combo_name = 'Combo 4'
-    renderer.deformed_shape = True
-    renderer.member_diagrams = 'My'
-    renderer.render_model()
+    # from Pynite.Visualization import Renderer
+    # renderer = Renderer(column)
+    # renderer.annotation_size = 0.5
+    # renderer.combo_name = 'Combo 4'
+    # renderer.deformed_shape = True
+    # renderer.member_diagrams = 'My'
+    # renderer.render_model()
 
-    column.members['M1'].plot_moment('My', 'Combo 4')
+    # column.members['M1'].plot_moment('My', 'Combo 4')
 
     Mbase_calculated = []
     dtip_calculated = []
