@@ -65,7 +65,6 @@ def test_plastic_beam():
         tol=0.01,
         sparse=False,
         traces=traces,
-        P_Delta=True,
     )
 
     # Plot the two traces on the same graph for each combo

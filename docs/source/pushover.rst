@@ -2,12 +2,12 @@
 Pushover Analysis
 =================
 
-Pushover analysis is a powerful way to consider nonlinear behavior in a structure. A pushover load pattern is incrementally added to each load combination analyzed. P-Delta effects and tension/compression-only anlysis is included.
+Pushover analysis is a powerful way to consider nonlinear behavior in a structure. A pushover load pattern is incrementally added to each load combination analyzed. Tension/compression-only behavior is included.
 
 Here's how it works, step by step, in Pynite:
 
-1. An elastic analysis considering P-Delta effects and tension/compression-only behavior is performed first. This gives `Pynite` the initial displacements and forces in the structure.
-3. The loads defined in the pushover load combination will next be applied incrementally. The load factor in the pushover combination should be less than 1.0, since it determines the fraction of the pushover load that will be applied in each iteration. Apply this fraction of the pushover load {dP} and calculate the incremental displacements {d\Delta;} using the relationship {d\Delta;} = [Ke + Kg + Km]^(-1){dP}.
+1. A first-order elastic analysis considering tension/compression-only behavior is performed first. This gives `Pynite` the initial displacements and forces in the structure.
+3. The loads defined in the pushover load combination will next be applied incrementally. The load factor in the pushover combination should be less than 1.0, since it determines the fraction of the pushover load that will be applied in each iteration. Apply this fraction of the pushover load {dP} and calculate the incremental displacements {d\Delta;} using the relationship {d\Delta;} = [Ke + Km]^(-1){dP}.
 4. Determine if the load step is valid, as defined by the following criteria:
     a. Check for any tension/compression-only elements or supports that have change status (i.e. a support that was previously in tension may now be in compression, or vice versa) and update the activation status these elements/supports accordingly.
     b. Check for plastic load reversal in any members, which can be identified by a negative term in a member's {\lambda;} vector. If a negative term is found, the member's {G} vector is reset to a null vector.
@@ -18,6 +18,8 @@ Here's how it works, step by step, in Pynite:
 
 Limitations
 ===========
+*The user-facing pushover API currently uses first-order preload and first-order pushover steps. Pushover + P-Delta integration is deferred for future development.
+
 *Nonlinear member behavior is limited to locations where there are nodes in your model. This is usually sufficient for most cases.
 
 *Nonlinear behavior of plates and quads is not considered in the analysis.

@@ -35,7 +35,7 @@ plastic_beam.add_member('M1', 'N1', 'N3', 'Stl_A992', 'W12x65')
 
 # Define the pushover loads.
 # P = 259.3  # This load causes the first plastic hinge to form at the fixed end (N1)
-P = 325.7  # This load causes a second plastic hinge to form at the load point (N2).
+P = 337.5 # This load causes a second plastic hinge to form at the load point (N2).
 plastic_beam.add_node_load('N2', 'FY', -0.3*P, 'Push')
 plastic_beam.add_node_load('N3', 'FX', -P, 'Push')
 
@@ -79,8 +79,7 @@ plastic_beam.analyze_pushover(log=True,
                               control_node=control_node,
                               control_direction=control_direction,
                               control_limit=control_limit,
-                              traces=traces,
-                              P_Delta=True)
+                              traces=traces)
 
 # Plot the traces one by one
 # plastic_beam.plot_pushover_trace('Fixed End Moment', combo_name='Primary')
