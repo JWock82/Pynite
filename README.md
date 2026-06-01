@@ -24,6 +24,7 @@ For a more detailed discussion on installation options and dependencies see http
 * 3D static analysis of elastic structures.
 * P-&Delta; analysis of frame type structures.
 * Modal analysis of frame type structures.
+* Nonlinear pushover analysis of steel frames.
 * Member point loads, linearly varying distributed loads, and nodal loads are supported.
 * Classify loads by load case and create load combinations from load cases.
 * Produces shear, moment, and deflection results and diagrams for each member.
