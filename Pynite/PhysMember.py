@@ -1334,8 +1334,26 @@ class PhysMember(Member3D):
             else:
                 PDelta = False
 
+            # An inactive submember (e.g. a slack tension-only member) carries no
+            # internal forces, so it stays straight between its end nodes rather
+            # than bending. Use the linear interpolation of its end-node
+            # displacements, which it rides along with, instead of a segment-based
+            # bending shape (see issue #317).
+            if not submember.active[combo_name]:
+                d_loc = submember._inactive_local_disp(combo_name)
+                if Direction == 'dx':
+                    di, dj = d_loc[0, 0], d_loc[6, 0]
+                elif Direction == 'dy':
+                    di, dj = d_loc[1, 0], d_loc[7, 0]
+                elif Direction == 'dz':
+                    di, dj = d_loc[2, 0], d_loc[8, 0]
+                else:
+                    raise ValueError(f"Direction must be 'dx', 'dy' or 'dz'. {Direction} was given.")
+                L_subm = submember.L()
+                d_array = array([x_subm_array, di + (dj - di) * x_subm_array / L_subm])
+
             # Check which axis is of interest
-            if Direction == 'dx':
+            elif Direction == 'dx':
                 d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'axial_deflection')
             elif Direction == 'dy':
                 d_array = self._extract_vector_results(submember.SegmentsZ, x_subm_array, 'deflection', PDelta)

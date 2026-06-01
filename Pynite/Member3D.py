@@ -1147,6 +1147,40 @@ class Member3D():
         # Return the global displacement vector
         return D
 
+    def _inactive_local_disp(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
+        """
+        Returns the member's local end-displacement vector built from *all* of
+        the nodal degrees of freedom.
+
+        Unlike :meth:`D`, the axial end displacements are always included. This
+        is used by the deflection result methods to describe an inactive
+        member's deflected shape. An inactive member (for example a tension-only
+        member that has gone slack during a tension/compression-only analysis)
+        is removed from the global stiffness matrix and therefore carries no
+        internal forces, but it is still physically connected to its nodes and
+        rides along with them. Its deflected shape is consequently the straight
+        chord between its two displaced end nodes, obtained by linearly
+        interpolating the local end displacements returned here.
+        """
+
+        # Read all six degrees of freedom from each end node
+        D = zeros((12, 1))
+        D[0, 0] = self.i_node.DX[combo_name]
+        D[1, 0] = self.i_node.DY[combo_name]
+        D[2, 0] = self.i_node.DZ[combo_name]
+        D[3, 0] = self.i_node.RX[combo_name]
+        D[4, 0] = self.i_node.RY[combo_name]
+        D[5, 0] = self.i_node.RZ[combo_name]
+        D[6, 0] = self.j_node.DX[combo_name]
+        D[7, 0] = self.j_node.DY[combo_name]
+        D[8, 0] = self.j_node.DZ[combo_name]
+        D[9, 0] = self.j_node.RX[combo_name]
+        D[10, 0] = self.j_node.RY[combo_name]
+        D[11, 0] = self.j_node.RZ[combo_name]
+
+        # Rotate the global displacements into the member's local coordinate system
+        return self.T() @ D
+
     def shear(self, Direction: Literal['Fy', 'Fz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the shear at a point along the member's length.
@@ -2352,7 +2386,23 @@ class Member3D():
 
         else:
 
-            return 0
+            # An inactive member carries no internal forces, so it stays straight
+            # between its end nodes rather than bending. It still rides along with
+            # those nodes though, so its deflection is the linear interpolation of
+            # the local end-node displacements rather than zero (see issue #317).
+            d = self._inactive_local_disp(combo_name)
+            L = self.L()
+
+            if Direction == 'dx':
+                di, dj = d[0, 0], d[6, 0]
+            elif Direction == 'dy':
+                di, dj = d[1, 0], d[7, 0]
+            elif Direction == 'dz':
+                di, dj = d[2, 0], d[8, 0]
+            else:
+                raise ValueError(f"Direction must be 'dx', 'dy' or 'dz'. {Direction} was given.")
+
+            return di + (dj - di) * x / L
 
     def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
@@ -2600,6 +2650,26 @@ class Member3D():
         else:
             if any(x_array<0) or any(x_array>L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
+
+        # An inactive member (e.g. a slack tension-only member) carries no
+        # internal forces, so it stays straight between its end nodes instead of
+        # bending. Report the linear interpolation of its end-node displacements,
+        # which it rides along with, rather than a segment-based bending shape
+        # (see issue #317). This mirrors Member3D.deflection().
+        if not self.active[combo_name]:
+
+            d = self._inactive_local_disp(combo_name)
+
+            if Direction == 'dx':
+                di, dj = d[0, 0], d[6, 0]
+            elif Direction == 'dy':
+                di, dj = d[1, 0], d[7, 0]
+            elif Direction == 'dz':
+                di, dj = d[2, 0], d[8, 0]
+            else:
+                raise ValueError(f"Direction must be 'dx', 'dy' or 'dz'. {Direction} was given.")
+
+            return array([x_array, di + (dj - di) * x_array / L])
 
         if P_delta:
             # P-delta analysis is not vectorised yet, do it element-wise
