@@ -7,14 +7,14 @@ Pushover analysis is a powerful way to consider nonlinear behavior in a structur
 Here's how it works, step by step, in Pynite:
 
 1. A first-order elastic analysis considering tension/compression-only behavior is performed first. This gives `Pynite` the initial displacements and forces in the structure.
-3. The loads defined in the pushover load combination will next be applied incrementally. The load factor in the pushover combination should be less than 1.0, since it determines the fraction of the pushover load that will be applied in each iteration. Apply this fraction of the pushover load {dP} and calculate the incremental displacements {d\Delta;} using the relationship {d\Delta;} = [Ke + Km]^(-1){dP}.
-4. Determine if the load step is valid, as defined by the following criteria:
+2. The loads defined in the pushover load combination will next be applied incrementally. The load factor in the pushover combination should be less than 1.0, since it determines the fraction of the pushover load that will be applied in each iteration. Apply this fraction of the pushover load {dP} and calculate the incremental displacements {d\Delta;} using the relationship {d\Delta;} = [Ke + Km]^(-1){dP}.
+3. Determine if the load step is valid, as defined by the following criteria:
     a. Check for any tension/compression-only elements or supports that have change status (i.e. a support that was previously in tension may now be in compression, or vice versa) and update the activation status these elements/supports accordingly.
     b. Check for plastic load reversal in any members, which can be identified by a negative term in a member's {\lambda;} vector. If a negative term is found, the member's {G} vector is reset to a null vector.
-5. Restart at Step 3 using the new conditions if the load step analysis was found to be invalid.
-6. Once the load step has been determined to be valid, sum the calculated incremental displacements for this load step to any displacements from previous load steps.
-7. Repeat steps 3-6 until the full pushover load has been applied.
-8. Go back to step 1 for the next load combination. Repeat until all applicable load combinations have been evaluated for the pushover load.
+4. Restart at Step 2 using the new conditions if the load step analysis was found to be invalid.
+5. Once the load step has been determined to be valid, sum the calculated incremental displacements for this load step to any displacements from previous load steps.
+6. Repeat steps 2-5 until the full pushover load has been applied.
+7. Go back to step 1 for the next load combination. Repeat until all applicable load combinations have been evaluated for the pushover load.
 
 Limitations
 ===========
