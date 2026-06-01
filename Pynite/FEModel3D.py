@@ -2266,10 +2266,6 @@ class FEModel3D():
             print('| Analyzing: Linear |')
             print('+-------------------+')
 
-        # Import `scipy` features if the sparse solver is being used
-        if sparse == True:
-            from scipy.sparse.linalg import spsolve
-
         # Prepare the model for analysis
         Analysis._prepare_model(self)
 
@@ -2308,15 +2304,15 @@ class FEModel3D():
                 D1 = []
             else:
                 try:
-                    # Calculate the unknown displacements D1
+                    # Calculate the unknown displacements D1. The partitioned stiffness matrix
+                    # originates as `coo` and is converted to `csr`/`csc` for mathematical
+                    # operations. `_solve_unknown_disp` also detects global instability (a singular
+                    # matrix) that the bare solvers can silently miss.
                     if sparse == True:
-                        # The partitioned stiffness matrix originates as `coo` and is converted
-                        # to `csr` format for mathematical operations. The `@` operator performs
-                        # matrix multiplication on sparse matrices.
-                        D1 = spsolve(K11.tocsr(), np.subtract(np.subtract(P1, FER1), K12.tocsr() @ D2))
-                        D1 = D1.reshape(len(D1), 1)
+                        rhs = np.subtract(np.subtract(P1, FER1), K12.tocsr() @ D2)
                     else:
-                        D1 = solve(K11, np.subtract(np.subtract(P1, FER1), np.matmul(K12, D2)))
+                        rhs = np.subtract(np.subtract(P1, FER1), np.matmul(K12, D2))
+                    D1 = Analysis._solve_unknown_disp(K11, rhs, sparse, check_stability)
                 except:
                     # Return out of the method if 'K' is singular and provide an error message
                     raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
