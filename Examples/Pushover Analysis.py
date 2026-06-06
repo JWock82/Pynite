@@ -19,6 +19,7 @@ fy = 50  # ksi
 plastic_beam.add_material('Stl_A992', E, G, nu, rho, fy)
 
 # Define a cross-section
+# Note that we are using the (plastic) `add_steel_section` method instead of the generic (elastic)`add_section` method. This is because the pushover analysis requires plastic section properties.
 plastic_beam.add_steel_section('W12x65', 19.1, 20, 533, 1, 15, 96.8, 'Stl_A992')
 
 # Add nodes
@@ -41,8 +42,7 @@ plastic_beam.add_node_load('N3', 'FX', -P, 'Push')
 
 # Add load combinations
 
-# At least one primary elastic combo is required for pushover analysis to have a base case to apply pushover loads to.
-# In this case, the Primary combo has no loads in it, so the pushover loads will be applied to an initially unloaded structure.
+# At least one primary elastic combo is required for pushover analysis to have a base case to apply pushover loads to. In this case, the Primary combo has no loads in it, so the pushover loads will be applied to an initially unloaded structure.
 plastic_beam.add_load_combo('Primary', {})
 
 # The pushover combo defines where the pushover loads are found, and what load factor to apply to
