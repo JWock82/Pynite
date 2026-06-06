@@ -393,29 +393,29 @@
                 <tr>
                     <td>{{ plate.name }}</td>
                     <td>{{ combo.name }}</td>
-                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, 0, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(0, plate.height(), combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(0, plate.height(), combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), plate.height(), combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), plate.height(), combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width(), 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width(), 0, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -423,29 +423,29 @@
                 <tr>
                     <td>{{ quad.name }}</td>
                     <td>{{ combo.name }}</td>
-                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, -1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, -1, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, -1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, -1, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(1, 1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(1, 1, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(-1, 1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(-1, 1, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
             {% endfor %}
@@ -477,11 +477,11 @@
                 <tr>
                     <td>{{ plate.name }}</td>
                     <td>{{ combo.name }}</td>
-                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.shear(plate.width()/2, plate.height()/2, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.moment(plate.width()/2, plate.height()/2, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -489,11 +489,11 @@
                 <tr>
                     <td>{{ quad.name }}</td>
                     <td>{{ combo.name }}</td>
-                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.shear(0, 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.moment(0, 0, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -543,21 +543,21 @@
                     <td>{{ plate.name }}</td>
                     <td>{{ combo.name }}</td>
 
-                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, 0, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(0, plate.height(), combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), plate.height(), combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width(), 0, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -566,21 +566,21 @@
                     <td>{{ quad.name }}</td>
                     <td>{{ combo.name }}</td>
 
-                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, -1, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, -1, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(1, 1, combo_name=combo.name)[2][0]) }}</td>
 
-                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo.name)[0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo.name)[1]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo.name)[2]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(-1, 1, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
             {% endfor %}
@@ -608,9 +608,9 @@
                 <tr>
                     <td>{{ plate.name }}</td>
                     <td>{{ combo.name }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(plate.membrane(plate.width()/2, plate.height()/2, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
@@ -618,9 +618,9 @@
                 <tr>
                     <td>{{ quad.name }}</td>
                     <td>{{ combo.name }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo.name)[0][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo.name)[1][0]) }}</td>
-                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo.name)[2][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo_name=combo.name)[0][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo_name=combo.name)[1][0]) }}</td>
+                    <td>{{ "%.3g" | format(quad.membrane(0, 0, combo_name=combo.name)[2][0]) }}</td>
                 </tr>
                 {% endfor %}
 
