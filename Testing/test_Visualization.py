@@ -73,7 +73,7 @@ def visual_model():
     m.add_node("N8", 0, 10, 20)
 
     # Supports (edges fixed)
-    for n in ["N1", "N2", "N3", "N4"]:
+    for n in ["N1", "N2", "N3", "N4", "N5", "N6", "N7", "N8"]:
         m.def_support(n, True, True, True, True, True, True)
 
     m.add_plate("P1", "N5", "N6", "N7", "N8", 1, 'Steel', 1, 1)
