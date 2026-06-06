@@ -2,8 +2,10 @@ from __future__ import annotations  # Allows more recent type hints features
 from typing import TYPE_CHECKING
 from math import isclose
 
-from numpy import array, atleast_2d, zeros, subtract, matmul, divide, seterr, nanmax
-from numpy.linalg import solve
+import warnings
+
+from numpy import array, atleast_2d, zeros, subtract, matmul, divide, seterr, nanmax, asarray, isfinite
+from numpy.linalg import solve, norm, LinAlgError
 
 from Pynite.LoadCombo import LoadCombo
 
@@ -166,16 +168,85 @@ def _check_stability(model: FEModel3D, K: NDArray[float64]) -> None:
     return
 
 
+# Exception message shared by the global-instability checks below
+_SINGULAR_MSG = ('The stiffness matrix is singular, which implies rigid body motion. The structure '
+                 'is unstable. Aborting analysis.')
+
+
+def _solve_unknown_disp(K11, rhs, sparse: bool = True, check_stability: bool = True, tol: float = 1e-6):
+    """Solves ``K11 @ x = rhs`` for the unknown displacements, raising on a singular stiffness matrix.
+
+    The nodal stability check (:func:`_check_stability`) only catches degrees of freedom with a zero
+    stiffness on the diagonal. It does not catch *global* instability, where every diagonal term is
+    non-zero but the assembled matrix is still rank-deficient -- for example a mechanism created by
+    member end releases (a beam with an internal hinge and no support there), or a structure with
+    insufficient supports (rigid body motion). In those cases the underlying solvers do not reliably
+    report the problem: ``scipy.sparse.linalg.spsolve`` may return ``NaN`` (with only a
+    ``MatrixRankWarning``) or even finite-but-meaningless values, and ``numpy.linalg.solve`` may miss
+    the singularity due to floating point round-off. The model then silently reports erroneous
+    results.
+
+    When ``check_stability`` is ``True`` the computed displacements are verified against equilibrium
+    by measuring the relative residual ``||K11 @ x - rhs|| / ||rhs||``. A stable structure -- even a
+    numerically ill-conditioned one -- solves to within round-off (the direct solvers are backward
+    stable), whereas a singular system yields ``NaN``/``inf`` or finite values with an O(1) residual.
+    For the homogeneous ``rhs == 0`` edge case, an invertible system has the unique solution
+    ``x == 0``; a non-zero solved displacement is therefore treated as unstable. These checks are
+    robust indicators of global instability that, unlike inspecting the factorization's pivot
+    magnitudes, do not misclassify legitimately ill-conditioned but stable models. When
+    ``check_stability`` is ``False`` the bare solvers are used unchanged.
+
+    :param K11: The partitioned stiffness matrix for the unknown displacements (square, ``n``x``n``).
+    :param rhs: The right-hand side vector (shape ``(n, 1)``).
+    :param sparse: Whether ``K11`` is a SciPy sparse matrix. Defaults to ``True``.
+    :param check_stability: Whether to check for global instability after solving. Defaults to ``True``.
+    :param tol: Relative residual above which the matrix is treated as singular. Defaults to ``1e-6``.
+    :raises Exception: If the stiffness matrix is singular (the structure is unstable).
+    :return: The solved displacement vector, shape ``(n, 1)``.
+    """
+
+    singular_warning = False
+    if sparse:
+        from scipy.sparse.linalg import MatrixRankWarning, spsolve
+
+        K = K11.tocsr()
+        # A singular matrix makes `spsolve` emit a `MatrixRankWarning`; we detect that case below via
+        # the residual/finiteness check and raise a descriptive error, so suppress the bare warning.
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter('always', MatrixRankWarning)
+            x = spsolve(K, rhs)
+        singular_warning = any(warning.category is MatrixRankWarning for warning in caught_warnings)
+    else:
+        K = asarray(K11, dtype=float)
+        try:
+            x = solve(K, rhs)
+        except LinAlgError as exc:
+            raise Exception(_SINGULAR_MSG) from exc
+
+    x = asarray(x, dtype=float).reshape(len(x), 1)
+
+    if check_stability:
+        residual = norm(K @ x - rhs)
+        rhs_norm = norm(rhs)
+        if rhs_norm > 0:
+            unstable = residual > tol * rhs_norm
+        else:
+            # For a homogeneous system, an invertible matrix has the unique solution x == 0, so an
+            # absolute displacement tolerance is appropriate here.
+            unstable = norm(x) > tol
+
+        if (sparse and singular_warning) or not isfinite(x).all() or unstable:
+            raise Exception(_SINGULAR_MSG)
+
+    return x
+
+
 def _first_order(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: NDArray[float64], D1_indices: List[int], D2_indices: List[int], D2: NDArray[float64], log: bool = True, sparse: bool = True, check_stability: bool = False, max_iter: int = 30, spring_tolerance: float = 0, member_tolerance: float = 0, num_steps: int = 1) -> None:
     """Performs the shared first-order elastic/tension-compression-only solution path.
 
     This helper is used by both ``FEModel3D.analyze`` and pushover preload so the normal
     first-order workflow lives in one place.
     """
-
-    # Import `scipy` features if the sparse solver is being used
-    if sparse == True:
-        from scipy.sparse.linalg import spsolve
 
     # Calculate the incremental enforced displacement vector
     Delta_D2 = D2/num_steps
@@ -217,19 +288,15 @@ def _first_order(model: FEModel3D, combo_name: str, P1: NDArray[float64], FER1: 
                 # All displacements are known, so Delta_D1 is an empty vector
                 Delta_D1 = []
             else:
-                try:
-                    # Calculate the unknown displacements Delta_D1
-                    if sparse == True:
-                        # The partitioned stiffness matrix originates as `coo` and is converted to `csr`
-                        # format for mathematical operations. The `@` operator performs matrix multiplication
-                        # on sparse matrices.
-                        Delta_D1 = spsolve(K11, subtract(subtract(Delta_P1, Delta_FER1), K12 @ Delta_D2))
-                        Delta_D1 = Delta_D1.reshape(len(Delta_D1), 1)
-                    else:
-                        Delta_D1 = solve(K11, subtract(subtract(Delta_P1, Delta_FER1), matmul(K12, Delta_D2)))
-                except:
-                    # Return out of the method if 'K' is singular and provide an error message
-                    raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+                # Calculate the unknown displacements Delta_D1. The partitioned stiffness matrix
+                # originates as `coo` and is converted to `csr`/`csc` for mathematical operations.
+                # `_solve_unknown_disp` also detects global instability (a singular matrix) that
+                # the bare solvers can silently miss.
+                if sparse == True:
+                    rhs = subtract(subtract(Delta_P1, Delta_FER1), K12 @ Delta_D2)
+                else:
+                    rhs = subtract(subtract(Delta_P1, Delta_FER1), matmul(K12, Delta_D2))
+                Delta_D1 = _solve_unknown_disp(K11, rhs, sparse, check_stability)
 
             # Store or sum the calculated displacements to the model and the nodes in the model
             if load_step == 1:
