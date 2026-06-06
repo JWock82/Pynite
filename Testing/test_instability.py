@@ -8,8 +8,11 @@
 # every diagonal term is non-zero.
 
 import unittest
+from unittest.mock import patch
 
+import numpy as np
 from Pynite import FEModel3D
+from Pynite import Analysis
 
 
 class TestInstabilityDetection(unittest.TestCase):
@@ -79,6 +82,15 @@ class TestInstabilityDetection(unittest.TestCase):
         stable = self._propped_cantilever()
         stable.analyze(sparse=True, check_stability=False, check_statics=False)
         self.assertAlmostEqual(stable.nodes['n1'].RxnFY['Combo 1'], 6.25, places=4)
+
+    def test_zero_rhs_nonzero_solution_is_unstable(self):
+        # In the homogeneous-load case the stable solution is uniquely zero. A nonzero solution from
+        # the solver indicates a singular system and should be treated as unstable.
+        K11 = np.eye(2)
+        rhs = np.zeros((2, 1))
+        with patch('Pynite.Analysis.solve', return_value=np.array([[1.0], [0.0]])):
+            with self.assertRaises(Exception):
+                Analysis._solve_unknown_disp(K11, rhs, sparse=False, check_stability=True)
 
     @staticmethod
     def _hinge_mechanism():

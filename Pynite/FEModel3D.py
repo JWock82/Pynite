@@ -2303,19 +2303,15 @@ class FEModel3D():
                 # All displacements are known, so D1 is an empty vector
                 D1 = []
             else:
-                try:
-                    # Calculate the unknown displacements D1. The partitioned stiffness matrix
-                    # originates as `coo` and is converted to `csr`/`csc` for mathematical
-                    # operations. `_solve_unknown_disp` also detects global instability (a singular
-                    # matrix) that the bare solvers can silently miss.
-                    if sparse == True:
-                        rhs = np.subtract(np.subtract(P1, FER1), K12.tocsr() @ D2)
-                    else:
-                        rhs = np.subtract(np.subtract(P1, FER1), np.matmul(K12, D2))
-                    D1 = Analysis._solve_unknown_disp(K11, rhs, sparse, check_stability)
-                except:
-                    # Return out of the method if 'K' is singular and provide an error message
-                    raise Exception('The stiffness matrix is singular, which implies rigid body motion. The structure is unstable. Aborting analysis.')
+                # Calculate the unknown displacements D1. The partitioned stiffness matrix
+                # originates as `coo` and is converted to `csr`/`csc` for mathematical
+                # operations. `_solve_unknown_disp` also detects global instability (a singular
+                # matrix) that the bare solvers can silently miss.
+                if sparse == True:
+                    rhs = np.subtract(np.subtract(P1, FER1), K12.tocsr() @ D2)
+                else:
+                    rhs = np.subtract(np.subtract(P1, FER1), np.matmul(K12, D2))
+                D1 = Analysis._solve_unknown_disp(K11, rhs, sparse, check_stability)
 
             # Store the calculated displacements to the model and the nodes in the model
             Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)
