@@ -51,8 +51,7 @@ frame.add_steel_section('W27x84', A, Iy, Iz, J, Zy, Zz, 'Steel')
 
 # Define the members of the frame
 frame.add_member('ab', 'a', 'b', 'Steel', 'W10x45')  # Column ab
-frame.add_member('bc', 'b', 'c', 'Steel', 'W27x84')  # Beam bc
-frame.add_member('cd', 'c', 'd', 'Steel', 'W27x84')  # Beam cd
+frame.add_member('bd', 'b', 'd', 'Steel', 'W27x84')  # Beam bd
 frame.add_member('ed', 'e', 'd', 'Steel', 'W10x45')  # Column ed
 
 # Define the supports
@@ -84,6 +83,8 @@ frame.add_load_combo('Pushover', {'Push': 0.01})
 # analysis intended to help visualize the progression of key response quantities.
 traces = {
     'Node d Drift': lambda combo_name: frame.nodes['d'].DX[combo_name]*12,
+    'Moment at c:': lambda combo_name: frame.members['bd'].moment('Mz', x=20.0, combo_name=combo_name),
+    'Moment at d:': lambda combo_name: frame.members['bd'].moment('Mz', x=60.0, combo_name=combo_name),
 }
 
 # Analyze the model
@@ -97,3 +98,5 @@ rndr.render_model()
 
 # Plot the trace of node d's drift throughout the pushover analysis
 frame.plot_pushover_trace('Node d Drift', combo_name='Primary')
+frame.plot_pushover_trace('Moment at c:', combo_name='Primary')
+frame.plot_pushover_trace('Moment at d:', combo_name='Primary')
