@@ -215,7 +215,7 @@ def _solve_unknown_disp(K11, rhs, sparse: bool = True, check_stability: bool = T
         with warnings.catch_warnings(record=True) as caught_warnings:
             warnings.simplefilter('always', MatrixRankWarning)
             x = spsolve(K, rhs)
-        singular_warning = any(issubclass(warning.category, MatrixRankWarning) for warning in caught_warnings)
+        singular_warning = any(warning.category is MatrixRankWarning for warning in caught_warnings)
     else:
         K = asarray(K11, dtype=float)
         try:
@@ -231,9 +231,11 @@ def _solve_unknown_disp(K11, rhs, sparse: bool = True, check_stability: bool = T
         if rhs_norm > 0:
             unstable = residual > tol * rhs_norm
         else:
+            # For a homogeneous system, an invertible matrix has the unique solution x == 0, so an
+            # absolute displacement tolerance is appropriate here.
             unstable = norm(x) > tol
 
-        if singular_warning or not isfinite(x).all() or unstable:
+        if (sparse and singular_warning) or not isfinite(x).all() or unstable:
             raise Exception(_SINGULAR_MSG)
 
     return x
