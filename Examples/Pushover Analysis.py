@@ -67,9 +67,9 @@ control_limit = -6.0
 # combo results for each load combo and load step. Traces are an optional feature for pushover
 # analysis intended to help visualize the progression of key response quantities.
 traces = {
-    'Fixed End Moment': lambda combo_name: plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name=combo_name),
-    'Load Point Moment': lambda combo_name: plastic_beam.members['M1'].moment('Mz', x=96.0, combo_name=combo_name),
-    'Load Point Deflection': lambda combo_name: plastic_beam.nodes['N2'].DY[combo_name],
+    'Fixed End Moment': lambda combo_name, plastic_beam=plastic_beam: plastic_beam.members['M1'].moment('Mz', x=0.0, combo_name=combo_name),
+    'Load Point Moment': lambda combo_name, plastic_beam=plastic_beam: plastic_beam.members['M1'].moment('Mz', x=96.0, combo_name=combo_name),
+    'Load Point Deflection': lambda combo_name, plastic_beam=plastic_beam: plastic_beam.nodes['N2'].DY[combo_name],
 }
 
 # Analyze the model
