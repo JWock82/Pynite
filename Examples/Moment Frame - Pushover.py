@@ -82,9 +82,9 @@ frame.add_load_combo('Pushover', {'Push': 0.01})
 # combo results for each load combo and load step. Traces are an optional feature for pushover
 # analysis intended to help visualize the progression of key response quantities.
 traces = {
-    'Node d Drift': lambda combo_name: frame.nodes['d'].DX[combo_name]*12,
-    'Moment at c:': lambda combo_name: frame.members['bd'].moment('Mz', x=20.0, combo_name=combo_name),
-    'Moment at d:': lambda combo_name: frame.members['bd'].moment('Mz', x=60.0, combo_name=combo_name),
+    'Node d Drift': lambda combo_name, frame=frame: frame.nodes['d'].DX[combo_name]*12,
+    'Moment at c:': lambda combo_name, frame=frame: frame.members['bd'].moment('Mz', x=20.0, combo_name=combo_name),
+    'Moment at d:': lambda combo_name, frame=frame: frame.members['bd'].moment('Mz', x=60.0, combo_name=combo_name),
 }
 
 # Analyze the model
