@@ -4,7 +4,7 @@ from math import isclose
 
 import warnings
 
-from numpy import array, atleast_2d, zeros, subtract, matmul, divide, seterr, nanmax, asarray, isfinite
+from numpy import array, zeros, subtract, matmul, asarray, isfinite
 from numpy.linalg import solve, norm, LinAlgError
 
 from Pynite.LoadCombo import LoadCombo
@@ -1388,7 +1388,8 @@ def _partition_D(model: FEModel3D) -> Tuple[List[int], List[int], NDArray[float6
             D2_indices.append(node.ID*6 + 5)
             D2.append(0.0)
 
-    # Legacy code on the next line. I will leave it here until the line that follows has been proven over time.
+    # Legacy code on the next lines. I will leave it here until the line that follows has been proven over time.
+    # from numpy import atleast_2d
     # D2 = atleast_2d(D2)
 
     # Convert D2 from a list to a matrix
