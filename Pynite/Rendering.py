@@ -68,7 +68,6 @@ class Renderer:
         self._member_diagrams: Optional[str] = None  # Options: None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
         self._diagram_scale: float = 30.0
         self._member_csys: bool = False
-        self._member_csys_scale: float = 30.0
         self.theme: str = 'default'
 
         # Callback list for post-update customization:
@@ -261,15 +260,6 @@ class Renderer:
     @member_csys.setter
     def member_csys(self, render: bool) -> None:
         self._member_csys = render
-
-    @property
-    def member_csys_scale(self) -> float:
-        """Scale factor for member local coordinate system visualization."""
-        return self._member_csys_scale
-
-    @member_csys_scale.setter
-    def member_csys_scale(self, scale: float) -> None:
-        self._member_csys_scale = scale
 
     def _calculate_auto_annotation_size(self) -> float:
         """Calculate automatic annotation size as 5% of shortest node distance.
@@ -1735,6 +1725,9 @@ class Renderer:
                 pass
 
     def plot_member_local_csys(self) -> None:
+        
+        axis_length = self.annotation_size * 3
+
         for member in self.model.members.values():
             # Get the member local coordinate axes from the member transformation matrix
             axes = member.T()[:3, :3]
@@ -1749,17 +1742,17 @@ class Renderer:
             x_axis = pv.Arrow(
                 start=centre_point,
                 direction=axes[0],
-                scale=self.member_csys_scale / 100,
+                scale=axis_length,
             )
             y_axis = pv.Arrow(
                 start=centre_point,
                 direction=axes[1],
-                scale=self.member_csys_scale / 100,
+                scale=axis_length,
             )
             z_axis = pv.Arrow(
                 start=centre_point,
                 direction=axes[2],
-                scale=self.member_csys_scale / 100,
+                scale=axis_length,
             )
             # Use the same color scheme as PyVista's global coordinate system widget
             self.plotter.add_mesh(x_axis, color="red")
