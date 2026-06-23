@@ -1,18 +1,17 @@
 from __future__ import annotations # Allows more recent type hints features
-from typing import Dict, List, Literal, Tuple, Union, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 from Pynite.Member3D import Member3D
 
 if TYPE_CHECKING:
 
     from Pynite.Node3D import Node3D
     from Pynite.FEModel3D import FEModel3D
-    import numpy.typing as npt
     from numpy import float64
     from numpy.typing import NDArray
 
-from numpy import array, dot, linspace, hstack, empty, maximum, minimum
+from numpy import array, linspace, hstack, empty, maximum, minimum
 from numpy.linalg import norm
-from math import isclose, acos
+from math import isclose
 
 class PhysMember(Member3D):
     """
@@ -29,7 +28,7 @@ class PhysMember(Member3D):
                  tension_only: bool = False, comp_only: bool = False) -> None:
 
         super().__init__(model, name, i_node, j_node, material_name, section_name, rotation, tension_only, comp_only)
-        self.sub_members: Dict[str, Member3D] = {}
+        self.sub_members: dict[str, Member3D] = {}
 
     def __repr__(self) -> str:
         return f"PhysMember(name={self.name!r}, i_node={self.i_node.name!r}, j_node={self.j_node.name!r})"
@@ -43,7 +42,7 @@ class PhysMember(Member3D):
         self.sub_members = {}
 
         # Start a new list of nodes along the member
-        int_nodes: List[Tuple[Node3D, float]] = []
+        int_nodes: list[tuple[Node3D, float]] = []
 
         # Create a vector from the i-node to the j-node
         Xi, Yi, Zi = self.i_node.X, self.i_node.Y, self.i_node.Z
@@ -218,7 +217,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.shear(Direction, x_mod, combo_name)
 
-    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum shear in the member for the given direction.
 
@@ -260,7 +259,7 @@ class PhysMember(Member3D):
             return (Vmax, governing_combo)
         return Vmax
 
-    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum shear in the member for the given direction.
 
@@ -302,7 +301,7 @@ class PhysMember(Member3D):
             return (Vmin, governing_combo)
         return Vmin
 
-    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the shear diagram for the member.
@@ -452,7 +451,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.moment(Direction, x_mod, combo_name)
 
-    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum moment in the member for the given direction.
 
@@ -494,7 +493,7 @@ class PhysMember(Member3D):
             return (Mmax, governing_combo)
         return Mmax
 
-    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum moment in the member for the given direction.
 
@@ -536,7 +535,7 @@ class PhysMember(Member3D):
             return (Mmin, governing_combo)
         return Mmin
 
-    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                     figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the moment diagram for the member.
@@ -691,7 +690,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.torque(x_mod, combo_name)
 
-    def max_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_torque(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum torsional moment in the member.
 
@@ -729,7 +728,7 @@ class PhysMember(Member3D):
             return (Tmax, governing_combo)
         return Tmax
 
-    def min_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_torque(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum torsional moment in the member.
 
@@ -767,7 +766,7 @@ class PhysMember(Member3D):
             return (Tmin, governing_combo)
         return Tmin
 
-    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_torque(self, combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                     figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the torque diagram for the member.
@@ -901,7 +900,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.axial(x_mod, combo_name)
 
-    def max_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_axial(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum axial force in the member.
 
@@ -939,7 +938,7 @@ class PhysMember(Member3D):
             return (Pmax, governing_combo)
         return Pmax
 
-    def min_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_axial(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum axial force in the member.
 
@@ -977,7 +976,7 @@ class PhysMember(Member3D):
             return (Pmin, governing_combo)
         return Pmin
 
-    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_axial(self, combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the axial force diagram for the member.
@@ -1115,7 +1114,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.deflection(Direction, x_mod, combo_name)
 
-    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum deflection in the member.
 
@@ -1155,7 +1154,7 @@ class PhysMember(Member3D):
             return (dmax, governing_combo)
         return dmax
 
-    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum deflection in the member.
 
@@ -1215,7 +1214,7 @@ class PhysMember(Member3D):
         member, x_mod = self.find_member(x)
         return member.rel_deflection(Direction, x_mod, combo_name)
 
-    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                         figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the deflection diagram for the member.
@@ -1377,7 +1376,7 @@ class PhysMember(Member3D):
         # Return the results
         return d_array2
 
-    def find_member(self, x: float) -> Tuple[Member3D, float]:
+    def find_member(self, x: float) -> tuple[Member3D, float]:
         """
         Returns the sub-member that the physical member's local point 'x' lies on, and 'x' modified for that sub-member's local coordinate system.
         """

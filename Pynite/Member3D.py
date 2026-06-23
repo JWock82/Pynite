@@ -1,5 +1,5 @@
 from __future__ import annotations  # Allows more recent type hints features
-from typing import TYPE_CHECKING, Literal, Union, List
+from typing import TYPE_CHECKING, Literal
 from math import isclose
 
 from numpy import array, zeros, add, subtract, matmul, insert, dot, cross, divide, count_nonzero, concatenate
@@ -12,7 +12,7 @@ from Pynite.BeamSegY import BeamSegY
 
 if TYPE_CHECKING:
 
-    from typing import Dict, List, Tuple, Optional, Any, Literal
+    from typing import Any, Literal
 
     from numpy import float64
     from numpy.typing import NDArray
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from Pynite.LoadCombo import LoadCombo
 
 
-class Member3D():
+class Member3D:
     """
     A class representing a 3D frame element in a finite element model.
 
@@ -95,17 +95,17 @@ class Member3D():
         self.j_reversal: bool = False
 
         self.rotation: float = rotation  # Member rotation (degrees) about its local x-axis
-        self.PtLoads: List[Tuple] = []  # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
-        self.DistLoads: List[Tuple] = []       # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1', self_weight=False)
-        self.SegmentsZ: List[BeamSegZ] = []       # A list of mathematically continuous beam segments for z-bending
-        self.SegmentsY: List[BeamSegY] = []       # A list of mathematically continuous beam segments for y-bending
-        self.SegmentsX: List[BeamSegZ] = []       # A list of mathematically continuous beam segments for torsion
-        self.Releases: List[bool] = [False, False, False, False, False, False, False, False, False, False, False, False]
+        self.PtLoads: list[tuple] = []  # A list of point loads & moments applied to the element (Direction, P, x, case='Case 1') or (Direction, M, x, case='Case 1')
+        self.DistLoads: list[tuple] = []       # A list of linear distributed loads applied to the element (Direction, w1, w2, x1, x2, case='Case 1', self_weight=False)
+        self.SegmentsZ: list[BeamSegZ] = []       # A list of mathematically continuous beam segments for z-bending
+        self.SegmentsY: list[BeamSegY] = []       # A list of mathematically continuous beam segments for y-bending
+        self.SegmentsX: list[BeamSegZ] = []       # A list of mathematically continuous beam segments for torsion
+        self.Releases: list[bool] = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.tension_only: bool = tension_only  # Indicates whether the member is tension-only
         self.comp_only: bool = comp_only  # Indicates whether the member is compression-only
 
         # Members need to track whether they are active or not for any given load combination. They may become inactive for a load combination during a tension/compression-only analysis. This dictionary will be used when the model is solved.
-        self.active: Dict[str, bool] = {}  # Key = load combo name, Value = True or False
+        self.active: dict[str, bool] = {}  # Key = load combo name, Value = True or False
 
         # The 'Member3D' object will store results for one load combination at a time. To reduce repetative calculations the '_solved_combo' variable will be used to track whether the member needs to be resegmented before running calculations for any given load combination.
         self._solved_combo: LoadCombo | None = None  # The current solved load combination
@@ -130,7 +130,7 @@ class Member3D():
         return self.i_node.distance(self.j_node)
 
 # %%
-    def _partition_D(self) -> Tuple[List[int], List[int]]:
+    def _partition_D(self) -> tuple[list[int], list[int]]:
         """
         Builds lists of unreleased and released degree of freedom indices for the member.
 
@@ -1234,7 +1234,7 @@ class Member3D():
 
             return 0
 
-    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum shear force in the member for the specified direction
         and load combination(s).
@@ -1303,7 +1303,7 @@ class Member3D():
             return (Vmax_global, governing_combo)
         return Vmax_global
 
-    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum shear force in the member for the specified direction
         and load combination(s).
@@ -1372,7 +1372,7 @@ class Member3D():
             return (Vmin_global, governing_combo)
         return Vmin_global
 
-    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_shear(self, Direction: Literal['Fy', 'Fz'], combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the shear diagram for the member.
@@ -1541,7 +1541,7 @@ class Member3D():
 
             return 0
 
-    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum bending moment in the member for the specified direction
         and load combination(s).
@@ -1619,7 +1619,7 @@ class Member3D():
             return (Mmax_global, governing_combo)
         return Mmax_global
 
-    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_moment(self, Direction: Literal['My', 'Mz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum bending moment in the member for the specified direction
         and load combination(s).
@@ -1697,7 +1697,7 @@ class Member3D():
         return Mmin_global
 
 
-    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                     figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the moment diagram for the member.
@@ -1757,7 +1757,7 @@ class Member3D():
         ax.set_xlabel('Location')
         Member3D.__plt.show()
 
-    def moment_array(self, Direction: Literal['My', 'Mz'], n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
+    def moment_array(self, Direction: Literal['My', 'Mz'], n_points: int, combo_name: str = 'Combo 1', x_array: NDArray[float64] | None = None) -> NDArray[float64]:
         """
         Returns the array of the moment in the member for the given direction
 
@@ -1848,7 +1848,7 @@ class Member3D():
 
             return 0
 
-    def max_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_torque(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum torsional moment in the member across the
         specified load combination(s).
@@ -1913,7 +1913,7 @@ class Member3D():
         return Tmax_global
 
 
-    def min_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_torque(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum torsional moment in the member across the
         specified load combination(s).
@@ -1977,7 +1977,7 @@ class Member3D():
             return (Tmin_global, governing_combo)
         return Tmin_global
 
-    def plot_torque(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_torque(self, combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                     figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the torque diagram for the member.
@@ -2095,7 +2095,7 @@ class Member3D():
 
             return 0
 
-    def max_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_axial(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum axial force in the member across the specified
         load combination(s).
@@ -2160,7 +2160,7 @@ class Member3D():
             return (Pmax_global, governing_combo)
         return Pmax_global
 
-    def min_axial(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_axial(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum axial force in the member across the specified
         load combination(s).
@@ -2225,7 +2225,7 @@ class Member3D():
             return (Pmin_global, governing_combo)
         return Pmin_global
 
-    def plot_axial(self, combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_axial(self, combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                    figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the axial force diagram for the member.
@@ -2281,7 +2281,7 @@ class Member3D():
         ax.set_xlabel('Location')
         Member3D.__plt.show()
 
-    def axial_array(self, n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
+    def axial_array(self, n_points: int, combo_name: str = 'Combo 1', x_array: NDArray[float64] | None = None) -> NDArray[float64]:
         """
         Returns the array of the axial force in the member for the given direction
 
@@ -2404,7 +2404,7 @@ class Member3D():
 
             return di + (dj - di) * x / L
 
-    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def max_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the maximum deflection in the member across the specified
         load combination(s).
@@ -2476,7 +2476,7 @@ class Member3D():
         return dmax_global
 
 
-    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
+    def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
         Returns the minimum deflection in the member across the specified
         load combination(s).
@@ -2547,7 +2547,7 @@ class Member3D():
             return (dmin_global, governing_combo)
         return dmin_global
 
-    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
+    def plot_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_name: str | list[str] = 'Combo 1', n_points: int = 20,
                         figsize: tuple[float, float] = (7, 3)) -> None:
         """
         Plots the deflection diagram for the member.
@@ -2608,7 +2608,7 @@ class Member3D():
         ax.set_xlabel('Location')
         Member3D.__plt.show()
 
-    def deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
+    def deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name: str = 'Combo 1', x_array: NDArray[float64] | None = None) -> NDArray[float64]:
         """
         Returns the array of the deflection in the member for the given direction
 
@@ -2804,7 +2804,7 @@ class Member3D():
         Member3D.__plt.title('Member ' + self.name + '\n' + combo_name)
         Member3D.__plt.show()
 
-    def rel_deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name: str = 'Combo 1', x_array: Optional[NDArray[float64]] = None) -> NDArray[float64]:
+    def rel_deflection_array(self, Direction: Literal['dx', 'dy', 'dz'], n_points: int, combo_name: str = 'Combo 1', x_array: NDArray[float64] | None = None) -> NDArray[float64]:
         """
         Returns the array of the relative deflection in the member for the given direction
 
@@ -3171,7 +3171,7 @@ class Member3D():
                 for case, factor in self.model.load_combos[push_combo].factors.items():
                     sum_load_effects(case, factor*push_step)
 
-    def _extract_vector_results(self, segments: List, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
+    def _extract_vector_results(self, segments: list, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
         """
         Extracts result values at specified locations along a structural member using efficient,
         vectorized evaluation of piecewise segment functions.

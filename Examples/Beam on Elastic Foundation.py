@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This example shows how to generate a beam on elastic foundation by using spring supports. All units
 in this model are expressed in terms of kips (force) and inches (length).

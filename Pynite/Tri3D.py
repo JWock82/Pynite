@@ -1,5 +1,5 @@
 from __future__ import annotations # Allows more recent type hints features
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from numpy import zeros, array, matmul, cross, add, float64
 from numpy.linalg import inv, norm, det
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from Pynite.FEModel3D import FEModel3D
 
 #%%
-class Tri3D():
+class Tri3D:
 
     def __init__(self, name: str, i_node: Node3D, j_node: Node3D, k_node: Node3D, 
                  t: float, material_name: str, model: FEModel3D, kx_mod: float = 1.0,
