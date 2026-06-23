@@ -9,13 +9,12 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 if TYPE_CHECKING:
-    from typing import List, Dict, Tuple
     from Pynite.Quad3D import Quad3D
     from Pynite.Plate3D import Plate3D
     import matplotlib.figure
 
 
-class ShearWall():
+class ShearWall:
     """Creates a new shear wall model that allows for modeling of complex shear walls. You can add openings and flanges (wall returns or intersections). Diaphragm levels can be defined in order to apply shear forces along the length of the wall. Diaphragms can be full or partial length. Supports can be applied at any level in the shear wall. Supports can also be full or partial length. A `ky_mod` factor is built in to account for cracking. Shear walls can automatically detect shear wall piers and coupling beams, and sum internal forces in those components.
     """
 
@@ -29,16 +28,16 @@ class ShearWall():
         self.ky_mod = ky_mod
         self.origin = origin
         self.plane = plane
-        self._openings: List[List[str | float | None]] = []
-        self._flanges: List[List[str | float]] = []
-        self._supports: List[List[float]] = []
-        self._stories: List[List[str | float]] = []
-        self._shears: List[List[str | float]] = []
-        self._axials: List[List[str | float]] = []
-        self._materials: List[List[str | float]] = []
-        self.elements: Dict[str, Quad3D | Plate3D] = {}
-        self.piers: Dict[str, Pier] = {}
-        self.coupling_beams: Dict[str, CouplingBeam] = {}
+        self._openings: list[list[str | float | None]] = []
+        self._flanges: list[list[str | float]] = []
+        self._supports: list[list[float]] = []
+        self._stories: list[list[str | float]] = []
+        self._shears: list[list[str | float]] = []
+        self._axials: list[list[str | float]] = []
+        self._materials: list[list[str | float]] = []
+        self.elements: dict[str, Quad3D | Plate3D] = {}
+        self.piers: dict[str, Pier] = {}
+        self.coupling_beams: dict[str, CouplingBeam] = {}
         self.is_generated: bool = False
         self.needs_update: bool = False
         self.asign_material(material_name, thickness)
@@ -166,8 +165,8 @@ class ShearWall():
             self._remove_from_model()
 
         # Identify mesh control points
-        x_control: List[float] = [0, self.L]
-        y_control: List[float] = [0, self.H]
+        x_control: list[float] = [0, self.L]
+        y_control: list[float] = [0, self.H]
 
         for material in self._materials:
             x_control.append(material[2])
@@ -175,7 +174,7 @@ class ShearWall():
             y_control.append(material[4])
             y_control.append(material[5])
 
-        z_control: List[float] = [0]
+        z_control: list[float] = [0]
         for flg in self._flanges:
             if flg[6] == '+z': z_control.append(flg[1])
             else: z_control.append(-flg[1])
@@ -380,8 +379,8 @@ class ShearWall():
         self.piers = {}
 
         # Create a list of x and y coordinates that represent the edges of the wall
-        x_vals: List[float] = [0, self.L]
-        y_vals: List[float] = [0, self.H]
+        x_vals: list[float] = [0, self.L]
+        y_vals: list[float] = [0, self.H]
 
         # Add the edges of the openings to the lists
         for opng in self._openings:
@@ -395,7 +394,7 @@ class ShearWall():
         y_vals = sorted(y_vals)
 
         # Remove duplicate (or near duplicate) values
-        unique_list: List[float] = []
+        unique_list: list[float] = []
         for i in range(len(x_vals) - 1):
             # Only keep the value at `i` if it's not a duplicate or near duplicate of the next value
             if not isclose(x_vals[i], x_vals[i+1]):
@@ -421,7 +420,7 @@ class ShearWall():
             self.piers['P' + str(i+1)] = Pier('P' + str(i+1), x, y, width, height, self)
 
         # Divide the strip piers further into rectanglular piers using the top and bottom of each opening as pier boundaries
-        new_piers: Dict[str, Pier] = {}
+        new_piers: dict[str, Pier] = {}
         pier_count = 1
         for pier in self.piers.values():
             for i in range(len(y_vals) - 1):
@@ -434,7 +433,7 @@ class ShearWall():
         self.piers = new_piers
 
         # Delete any piers that fall within an opening
-        delete_list: List[str] = []
+        delete_list: list[str] = []
         for pier in self.piers.values():
 
             # Check if this pier is inside any of the openings
@@ -511,7 +510,7 @@ class ShearWall():
                     break
 
         # Generate a list of new keys in ascending order
-        new_keys: List[str] = [f'P{i+1}' for i in range(len(self.piers))]
+        new_keys: list[str] = [f'P{i+1}' for i in range(len(self.piers))]
 
         # Replace the old dicionary with one that has updated keys
         self.piers = dict(zip(new_keys, self.piers.values()))
@@ -543,8 +542,8 @@ class ShearWall():
         self.coupling_beams = {}
 
         # Create a list of x and y coordinates that represent the edges of the wall
-        x_vals: List[float] = [0, self.L]
-        y_vals: List[float] = [0, self.H]
+        x_vals: list[float] = [0, self.L]
+        y_vals: list[float] = [0, self.H]
 
         # Add the edges of the openings to the lists
         for opng in self._openings:
@@ -558,7 +557,7 @@ class ShearWall():
         y_vals = sorted(y_vals)
 
         # Remove duplicate (or near duplicate) values
-        unique_list: List[float] = []
+        unique_list: list[float] = []
         for i in range(len(x_vals) - 1):
             # Only keep the value at `i` if it's not a duplicate or near duplicate of the next value
             if not isclose(x_vals[i], x_vals[i+1]):
@@ -584,7 +583,7 @@ class ShearWall():
             self.coupling_beams['B' + str(i+1)] = CouplingBeam('B' + str(i+1), x, y, length, height, self)
 
         # Divide the strips further into rectanglular beams using the left and right of each opening as beam boundaries
-        new_beams: Dict[str, CouplingBeam] = {}
+        new_beams: dict[str, CouplingBeam] = {}
         beam_count = 1
         for beam in self.coupling_beams.values():
             for i in range(len(x_vals) - 1):
@@ -597,7 +596,7 @@ class ShearWall():
         self.coupling_beams = new_beams
 
         # Delete any beams that fall within an opening
-        delete_list: List[str] = []
+        delete_list: list[str] = []
         for beam in self.coupling_beams.values():
            
            # Check if this beam is inside any of the openings
@@ -684,7 +683,7 @@ class ShearWall():
             del self.coupling_beams[beam]
 
         # Generate a list of new keys in ascending order
-        new_keys: List[str] = [f'B{i + 1}' for i in range(len(self.coupling_beams))]
+        new_keys: list[str] = [f'B{i + 1}' for i in range(len(self.coupling_beams))]
 
         # Replace the old dicionary with one that has updated keys
         self.coupling_beams = dict(zip(new_keys, self.coupling_beams.values()))
@@ -929,7 +928,7 @@ class ShearWall():
         print('+----------------------------+')
         print(table)
 
-    def _local2global(self, x: float, y: float, z: float, plane: Literal['XY', 'XZ', 'YZ'] = 'XY') -> List[float]:
+    def _local2global(self, x: float, y: float, z: float, plane: Literal['XY', 'XZ', 'YZ'] = 'XY') -> list[float]:
 
         Xo, Yo, Zo = self.origin[0], self.origin[1], self.origin[2]
 
@@ -949,7 +948,7 @@ class ShearWall():
         return [X, Y, Z]
 
 
-def _global2local(X: float, Y: float, Z: float, origin: List[float] = [0, 0, 0], plane: Literal['XY', 'YZ', 'XZ'] = 'XY') -> List[float]:
+def _global2local(X: float, Y: float, Z: float, origin: list[float] = [0, 0, 0], plane: Literal['XY', 'YZ', 'XZ'] = 'XY') -> list[float]:
 
     Xo, Yo, Zo = origin[0], origin[1], origin[2]
 
@@ -972,7 +971,7 @@ def _global2local(X: float, Y: float, Z: float, origin: List[float] = [0, 0, 0],
 
 
 # %%
-class Pier():
+class Pier:
 
     def __init__(self, name: str, x: float, y: float, width: float, height: float, shear_wall: ShearWall) -> None:
         self.name: str = name
@@ -987,12 +986,12 @@ class Pier():
         self.origin = shear_wall.origin
 
         # This list will be used by the parent shear wall to store a list of only the plates in this pier
-        self.plates: List[Quad3D | Plate3D] = []
+        self.plates: list[Quad3D | Plate3D] = []
 
     def __repr__(self) -> str:
         return f"Pier(name={self.name!r}, width={self.width}, height={self.height})"
 
-    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['bottom', 'top'] = 'bottom') -> Tuple[float, float, float, float]:
+    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['bottom', 'top'] = 'bottom') -> tuple[float, float, float, float]:
         """Return ``(P, M, V, M_over_VL)`` at the pier bottom or top.
 
         ``location`` defaults to ``'bottom'`` for backward compatibility.
@@ -1073,7 +1072,7 @@ class Pier():
 
 
 # %%
-class CouplingBeam():
+class CouplingBeam:
 
     def __init__(self, name: str, x: float, y: float, length: float, height: float, shear_wall: ShearWall) -> None:
 
@@ -1088,13 +1087,13 @@ class CouplingBeam():
         self.plane = shear_wall.plane
         self.origin = shear_wall.origin
 
-        self.plates: List[Quad3D | Plate3D] = []
+        self.plates: list[Quad3D | Plate3D] = []
 
     def __repr__(self) -> str:
 
         return f"CouplingBeam(name={self.name!r}, length={self.length}, height={self.height})"
 
-    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['left', 'right'] = 'left') -> Tuple[float, float, float, float]:
+    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['left', 'right'] = 'left') -> tuple[float, float, float, float]:
         """Return ``(P, M, V, M_over_VH)`` at the beam left or right end.
 
         ``location`` defaults to ``'left'`` for backward compatibility. The
