@@ -14,7 +14,7 @@ from numpy import array, empty, append, cross, asarray, linspace
 from numpy.linalg import norm
 import vtk
 
-class Renderer():
+class Renderer:
     """Renderer for visualizing finite element models using VTK.
 
     This class provides a flexible interface for rendering 3D finite element
@@ -624,7 +624,7 @@ class Renderer():
 
 
 # Converts a node object into a node for the viewer
-class VisNode():
+class VisNode:
     """VTK representation of a node and its supports."""
 
     # Constructor
@@ -902,7 +902,7 @@ class VisNode():
         self.actor.SetMapper(mapper)
 
 
-class VisSpring():
+class VisSpring:
     """VTK representation of a spring element."""
 
     def __init__(self, spring, nodes, annotation_size=5, color=None):
@@ -967,7 +967,7 @@ class VisSpring():
             self.lblActor.GetProperty().SetColor(0, 0, 0)
 
 # Converts a member object into a member for the viewer
-class VisMember():
+class VisMember:
     """VTK representation of a frame/beam member."""
 
     # Constructor
@@ -1121,7 +1121,7 @@ class VisMember():
             self.release_actors.append(create_circle_actor(center, local_x, local_y))
 
 # Converts a node object into a node in its deformed position for the viewer
-class VisDeformedNode():
+class VisDeformedNode:
     """Sphere representing a node in its deformed position."""
 
     def __init__(self, node, scale_factor, annotation_size=5, combo_name='Combo 1'):
@@ -1144,7 +1144,7 @@ class VisDeformedNode():
         self.source.SetRadius(0.6*annotation_size)
         self.source.Update()
 
-class VisDeformedMember():
+class VisDeformedMember:
     """Polyline representing a member's deformed shape."""
 
     def __init__(self, member, nodes, scale_factor, combo_name='Combo 1'):
@@ -1231,7 +1231,7 @@ class VisDeformedMember():
         self.source.SetPoints(points)
         self.source.SetLines(lines)
 
-class VisDeformedSpring():
+class VisDeformedSpring:
     """Line representation of a spring in its deformed position."""
 
     def __init__(self, spring, nodes, scale_factor, combo_name='Combo 1'):
@@ -1269,7 +1269,7 @@ class VisDeformedSpring():
 
         self.source.Update()
 
-class VisPtLoad():
+class VisPtLoad:
     """Arrow representation of a concentrated load."""
 
     def __init__(self, position, direction, length, label_text: str | None = None, annotation_size=5, theme: str = 'default'):
@@ -1358,7 +1358,7 @@ class VisPtLoad():
                 self.lblActor.GetProperty().SetColor(0, 0.75, 0)  # Black
 
 
-class VisDistLoad():
+class VisDistLoad:
     """Series of arrows representing a distributed load."""
 
     def __init__(self, position1, position2, direction, length1, length2, label_text1, label_text2, annotation_size=5, theme = 'default'):
@@ -1443,7 +1443,7 @@ class VisDistLoad():
         # Get the actors for the labels
         self.lblActors = [ptLoads[0].lblActor, ptLoads[len(ptLoads) - 1].lblActor]
 
-class VisMoment():
+class VisMoment:
     """Arc-and-arrow representation of a concentrated moment."""
 
     def __init__(self, center, direction, radius, label_text=None, annotation_size=5, theme='default'):
@@ -1508,7 +1508,7 @@ class VisMoment():
         elif theme == 'print':
             self.lblActor.GetProperty().SetColor(0, 0.75, 0)  # Dark Green
 
-class VisAreaLoad():
+class VisAreaLoad:
     """Polygon and arrows used to visualize a uniform area load."""
 
     def __init__(self, position0, position1, position2, position3, direction, length, label_text, annotation_size=5, theme='default'):
@@ -1794,17 +1794,17 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
 
                 # Display the load
                 if load[0] == 'FX':
-                    ptLoad = VisPtLoad((node.X - 0.6*annotation_size*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad((node.X - 0.6*annotation_size*sign, node.Y, node.Z), [1, 0, 0], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'FY':
-                    ptLoad = VisPtLoad((node.X, node.Y - 0.6*annotation_size*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad((node.X, node.Y - 0.6*annotation_size*sign, node.Z), [0, 1, 0], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'FZ':
-                    ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*annotation_size*sign), [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad((node.X, node.Y, node.Z - 0.6*annotation_size*sign), [0, 0, 1], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'MX':
-                    ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (1*sign, 0, 0), abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'MY':
-                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 1*sign, 0), abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'MZ':
-                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment((node.X, node.Y, node.Z), (0, 0, 1*sign), abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
 
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
@@ -1836,29 +1836,29 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
 
                 # Display the load
                 if load[0] == 'Fx':
-                    ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad(position, dir_cos[0, :], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'Fy':
-                    ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad(position, dir_cos[1, :], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'Fz':
-                    ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad(position, dir_cos[2, :], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'Mx':
-                    ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment(position, dir_cos[0, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'My':
-                    ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment(position, dir_cos[1, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'Mz':
-                    ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment(position, dir_cos[2, :]*sign, abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'FX':
-                    ptLoad = VisPtLoad(position, [1, 0, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad(position, [1, 0, 0], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'FY':
-                    ptLoad = VisPtLoad(position, [0, 1, 0], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad(position, [0, 1, 0], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'FZ':
-                    ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisPtLoad(position, [0, 0, 1], load_value/max_pt_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'MX':
-                    ptLoad = VisMoment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment(position, [1*sign, 0, 0], abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'MY':
-                    ptLoad = VisMoment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment(position, [0, 1*sign, 0], abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
                 elif load[0] == 'MZ':
-                    ptLoad = VisMoment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                    ptLoad = VisMoment(position, [0, 0, 1*sign], abs(load_value)/max_moment*2.5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
 
                 polydata.AddInputData(ptLoad.polydata.GetOutput())
                 renderer.AddActor(ptLoad.lblActor)
@@ -1883,17 +1883,17 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
 
                 # Display the load
                 if load[0] == 'Fx':
-                    distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                    distLoad = VisDistLoad(position1, position2, dir_cos[0, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, f'{w1:.3g}', f'{w2:.3g}', annotation_size)
                 elif load[0] == 'Fy':
-                    distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                    distLoad = VisDistLoad(position1, position2, dir_cos[1, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, f'{w1:.3g}', f'{w2:.3g}', annotation_size)
                 elif load[0] == 'Fz':
-                    distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                    distLoad = VisDistLoad(position1, position2, dir_cos[2, :], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, f'{w1:.3g}', f'{w2:.3g}', annotation_size)
                 elif load[0] == 'FX':
-                    distLoad = VisDistLoad(position1, position2, [1, 0, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                    distLoad = VisDistLoad(position1, position2, [1, 0, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, f'{w1:.3g}', f'{w2:.3g}', annotation_size)
                 elif load[0] == 'FY':
-                    distLoad = VisDistLoad(position1, position2, [0, 1, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                    distLoad = VisDistLoad(position1, position2, [0, 1, 0], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, f'{w1:.3g}', f'{w2:.3g}', annotation_size)
                 elif load[0] == 'FZ':
-                    distLoad = VisDistLoad(position1, position2, [0, 0, 1], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, '{:.3g}'.format(w1), '{:.3g}'.format(w2), annotation_size)
+                    distLoad = VisDistLoad(position1, position2, [0, 0, 1], w1/max_dist_load*5*annotation_size, w2/max_dist_load*5*annotation_size, f'{w1:.3g}', f'{w2:.3g}', annotation_size)
 
                 polydata.AddInputData(distLoad.polydata.GetOutput())
                 renderer.AddActor(distLoad.lblActors[0])
@@ -1932,7 +1932,7 @@ def _RenderLoads(model, renderer, annotation_size, combo_name, case, theme='defa
                 position3 = [plate.n_node.X, plate.n_node.Y, plate.n_node.Z]
 
                 # Create an area load and get its data
-                area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*annotation_size, '{:.3g}'.format(load_value), annotation_size, theme)
+                area_load = VisAreaLoad(position0, position1, position2, position3, dir_cos*sign, abs(load_value)/max_area_load*5*annotation_size, f'{load_value:.3g}', annotation_size, theme)
 
                 # Add the area load's arrows to the overall load polydata
                 polydata.AddInputData(area_load.polydata.GetOutput())
@@ -2392,7 +2392,7 @@ def _MaxInternalForces(model, diagram_type, combo_name):
 
     return max_value
 
-class VisMemberDiagram():
+class VisMemberDiagram:
     """Creates a visual representation of internal forces/moments along a member."""
 
     def __init__(self, member, nodes, diagram_type, scale_factor, combo_name='Combo 1', theme='default', n_points=20, annotation_size=5, global_max=None):
