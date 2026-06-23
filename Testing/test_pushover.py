@@ -2,7 +2,6 @@ from math import isclose
 
 import matplotlib
 matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 from Pynite.FEModel3D import FEModel3D  # noqa: E402
@@ -68,6 +67,7 @@ def test_plastic_beam():
     )
 
     # Plot the two traces on the same graph for each combo
+    # import matplotlib.pyplot as plt
     # for combo_name, trace_data in plastic_beam._pushover_traces.items():
     #     steps = list(range(len(trace_data['M_ba'])))
     #     plt.figure()
