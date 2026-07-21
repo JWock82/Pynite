@@ -968,7 +968,7 @@ class RectangleMesh(Mesh):
         # Go back through the mesh and delete any nodes that are in the openings
         for node in self.nodes.values():
             
-            # Get the node's position in the mesh's local coordinate sytem.
+            # Get the node's position in the mesh's local coordinate system.
             x, y = self.node_local_coords(node)
 
             # Step through each opening in the mesh
