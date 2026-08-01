@@ -79,6 +79,7 @@ class Member3D():
         # Nonlinear local end-force history by load combo.
         # DOF order: [fxi, fyi, fzi, mxi, myi, mzi, fxj, fyj, fzj, mxj, myj, mzj]
         self.f_nonlin: dict = {}
+        self.df_nonlin: dict = {}  # Variable used to track the change in the local end force vector for nonlinear load steps
 
         # Variable used to track plastic load reveral
         self.i_reversal: bool = False
