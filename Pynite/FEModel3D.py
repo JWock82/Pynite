@@ -1843,7 +1843,7 @@ class FEModel3D():
                     else:
                         if self.solution == 'Pushover':
                             # Use the axial force at the current nonlinear/inelastic load step
-                            P = member._fxj[combo_name] - member._fxi[combo_name]
+                            P = member.f_nonlin[combo_name][6] - member.f_nonlin[combo_name][0]
                         else:
                             # Calculate the member axial force due to linear/elastic axial strain
                             d = member.d(combo_name)
@@ -2649,13 +2649,12 @@ class FEModel3D():
 
         return fig, ax, save_path
 
-    def analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None, control_node=None, control_direction='DX', control_limit=None, traces=None):
-        """Performs a pushover analysis using first-order preload and pushover steps.
+    def analyze_pushover(self, log=False, check_stability=True, push_combo='Push', max_iter=30, tol=0.01, sparse=True, combo_tags=None, control_node=None, control_direction='DX', control_limit=None, traces=None, P_Delta=False):
+        """Performs a pushover analysis with optional second-order P-Delta effects.
 
-        Note for future development:
-        Pushover + P-Delta infrastructure is intentionally retained internally, but the public
-        pushover API currently does not expose a P-Delta option until the implementation is
-        production-ready.
+        By default, the initial preload state is established using first-order analysis and the
+        incremental pushover steps omit the geometric stiffness matrix. Set ``P_Delta=True`` to
+        opt into second-order behavior for both the preload and the subsequent pushover steps.
 
         :param log: Prints updates to the console if set to True. Default is False.
         :type log: bool, optional
@@ -2682,6 +2681,9 @@ class FEModel3D():
         :type control_limit: float | None, optional
         :param traces: Optional dictionary of trace names mapped to callables that accept combo_name.
         :type traces: dict | None, optional
+        :param P_Delta: Set to True to include geometric stiffness and second-order effects during
+                pushover analysis. Defaults to False.
+        :type P_Delta: bool, optional
         """
 
         if control_limit is not None and control_node is None:
@@ -2736,9 +2738,7 @@ class FEModel3D():
         # Initialize per-combo pushover result state.
         self._pushover_state = {}
         self._pushover_traces = {}
-        # Keep this internal flag for future developer work on pushover + P-Delta support.
-        # User-facing pushover is currently first-order only.
-        self._pushover_P_Delta = False
+        self._pushover_P_Delta = P_Delta
 
         # Step through each load combination
         for combo in combo_list:
@@ -2751,10 +2751,7 @@ class FEModel3D():
             # Set member end force summations to zero
             for phys_member in self.members.values():
                 for sub_member in phys_member.sub_members.values():
-                    sub_member._fxi, sub_member._fyi, sub_member._fzi = {}, {}, {}
-                    sub_member._mxi, sub_member._myi, sub_member._mzi = {}, {}, {}
-                    sub_member._fxj, sub_member._fyj, sub_member._fzj = {}, {}, {}
-                    sub_member._mxj, sub_member._myj, sub_member._mzj = {}, {}, {}
+                    sub_member.f_nonlin = {}
 
             # Get the partitioned global fixed end reaction vector for the load combination
             FER1, FER2 = Analysis._partition(self, self.FER(combo.name), D1_indices, D2_indices)
@@ -2763,29 +2760,22 @@ class FEModel3D():
             P1, P2 = Analysis._partition(self, self.P(combo.name), D1_indices, D2_indices)
 
             # Preload the primary load combination before any pushover increments are applied.
-            # User-facing pushover currently uses first-order preload only.
+            # By default, pushover uses the first-order analysis path. Set `P_Delta=True` to opt
+            # into a second-order preload state.
             if log:
-                print('- Preloading the primary combination using first-order analysis')
+                print('- Preloading the primary combination using ' + ('P-Delta' if P_Delta else 'first-order') + ' analysis')
 
-            Analysis._first_order(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, max_iter)
+            if P_Delta:
+                Analysis._PDelta(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, max_iter)
+            else:
+                Analysis._first_order(self, combo.name, P1, FER1, D1_indices, D2_indices, D2, False, sparse, check_stability, max_iter)
 
             # Seed the nonlinear end-force history with the elastic preload state from the
             # primary load combination before any pushover increments are applied.
             for phys_member in self.members.values():
                 for sub_member in phys_member.sub_members.values():
                     f = sub_member.f(combo.name)
-                    sub_member._fxi[combo.name] = f[0, 0]
-                    sub_member._fyi[combo.name] = f[1, 0]
-                    sub_member._fzi[combo.name] = f[2, 0]
-                    sub_member._mxi[combo.name] = f[3, 0]
-                    sub_member._myi[combo.name] = f[4, 0]
-                    sub_member._mzi[combo.name] = f[5, 0]
-                    sub_member._fxj[combo.name] = f[6, 0]
-                    sub_member._fyj[combo.name] = f[7, 0]
-                    sub_member._fzj[combo.name] = f[8, 0]
-                    sub_member._mxj[combo.name] = f[9, 0]
-                    sub_member._myj[combo.name] = f[10, 0]
-                    sub_member._mzj[combo.name] = f[11, 0]
+                    sub_member.f_nonlin[combo.name] = f.reshape(12)
 
             # The P-Delta analysis above flagged the solution as a P-Delta solution, but we need to
             # indicate that this is actually a Pushover solution so that the calls to Member3D.f()
@@ -2812,7 +2802,7 @@ class FEModel3D():
             # each load step and can be queried for results during or after the pushover analysis.
             self._pushover_state[combo.name] = {
                 'push_combo': push_combo,
-                'P_Delta': False,
+                'P_Delta': P_Delta,
                 'status': 'running',
                 'step_num': 0,
                 'load_factor': 0.0,
@@ -2833,8 +2823,7 @@ class FEModel3D():
 
                 # Run the next pushover load step
                 # Note: The validity of the pushover step is checked and handled within the _pushover_step method
-                # Keep the internal _pushover_step P_Delta argument for future developer work.
-                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol, False, max_iter)
+                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol, P_Delta, max_iter)
 
                 control_displacement = None
                 if control_node is not None:

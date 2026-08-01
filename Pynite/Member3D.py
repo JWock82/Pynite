@@ -76,19 +76,9 @@ class Member3D():
         except KeyError:
             raise NameError(f"No section names '{section_name}'")
 
-        # Variables used to track nonlinear material member end forces
-        self._fxi: dict = {}
-        self._fyi: dict = {}
-        self._fzi: dict = {}
-        self._mxi: dict = {}
-        self._myi: dict = {}
-        self._mzi: dict = {}
-        self._fxj: dict = {}
-        self._fyj: dict = {}
-        self._fzj: dict = {}
-        self._mxj: dict = {}
-        self._myj: dict = {}
-        self._mzj: dict = {}
+        # Nonlinear local end-force history by load combo.
+        # DOF order: [fxi, fyi, fzi, mxi, myi, mzi, fxj, fyj, fzj, mxj, myj, mzj]
+        self.f_nonlin: dict = {}
 
         # Variable used to track plastic load reveral
         self.i_reversal: bool = False
@@ -291,7 +281,7 @@ class Member3D():
         ke = self.ke()  # [dofs][:, dofs]
 
         # Get the member's axial force for the requested load combination (based on the latest load step).
-        P = self._fxj[combo_name] - self._fxi[combo_name]
+        P = self.f_nonlin[combo_name][6] - self.f_nonlin[combo_name][0]
 
         # Get the total elastic local stiffness matrix, including geometric effects only when
         # the active solution path has second-order behavior enabled.
@@ -315,9 +305,9 @@ class Member3D():
                 # Gi is a null vector if load reversal is occuring
                 Gi = zeros((6, 1))
             else:
-                fxi = self._fxi.get(combo_name, 0.0)
-                myi = self._myi.get(combo_name, 0.0)
-                mzi = self._mzi.get(combo_name, 0.0)
+                fxi = self.f_nonlin[combo_name][0]
+                myi = self.f_nonlin[combo_name][4]
+                mzi = self.f_nonlin[combo_name][5]
                 Gi = self.section.G(fxi, myi, mzi)
 
             # Check for load reversal at the j-node
@@ -325,9 +315,9 @@ class Member3D():
                 # Gj is a null vector if load reversal is occuring
                 Gj = zeros((6, 1))
             else:
-                fxj = self._fxj.get(combo_name, 0.0)
-                myj = self._myj.get(combo_name, 0.0)
-                mzj = self._mzj.get(combo_name, 0.0)
+                fxj = self.f_nonlin[combo_name][6]
+                myj = self.f_nonlin[combo_name][10]
+                mzj = self.f_nonlin[combo_name][11]
                 Gj = self.section.G(fxj, myj, mzj)
 
         # Combine the gradients at the i and j-nodes
@@ -678,6 +668,7 @@ class Member3D():
         M_global = T.T @ m @ T
 
         return M_global
+
     def lamb(self, model_Delta_D: NDArray[float64], combo_name: str = 'Combo 1', push_combo: str = 'Push', step_num: int = 1) -> NDArray[float64]:
         """
         Returns the `lambda` vector used in pushover analysis.
@@ -714,7 +705,7 @@ class Member3D():
         Delta_d = self.T() @ Delta_D
 
         # Get the elastic local stiffness matrix, optionally including geometric stiffness
-        P = self._fxj[combo_name] - self._fxi[combo_name]
+        P = self.f_nonlin[combo_name][6] - self.f_nonlin[combo_name][0]
         ke = self.ke()
 
         if getattr(self.model, '_pushover_P_Delta', False):
@@ -724,12 +715,12 @@ class Member3D():
         if self.section is None:
             raise Exception(f'Nonlinear material analysis requires member sections to be defined. A section definition is missing for element {self.name}.')
         else:
-            fxi = self._fxi.get(combo_name, 0.0)
-            myi = self._myi.get(combo_name, 0.0)
-            mzi = self._mzi.get(combo_name, 0.0)
-            fxj = self._fxj.get(combo_name, 0.0)
-            myj = self._myj.get(combo_name, 0.0)
-            mzj = self._mzj.get(combo_name, 0.0)
+            fxi = self.f_nonlin[combo_name][0]
+            myi = self.f_nonlin[combo_name][4]
+            mzi = self.f_nonlin[combo_name][5]
+            fxj = self.f_nonlin[combo_name][6]
+            myj = self.f_nonlin[combo_name][10]
+            mzj = self.f_nonlin[combo_name][11]
             Gi = self.section.G(fxi, myi, mzi)
             Gj = self.section.G(fxj, myj, mzj)
 
@@ -906,21 +897,10 @@ class Member3D():
             # Post-processing calls this method without incremental load-step data,
             # so return the accepted accumulated local end-force state.
             if Delta_d is None or Delta_fer is None:
-                return array([[self._fxi.get(combo_name, 0.0)],
-                              [self._fyi.get(combo_name, 0.0)],
-                              [self._fzi.get(combo_name, 0.0)],
-                              [self._mxi.get(combo_name, 0.0)],
-                              [self._myi.get(combo_name, 0.0)],
-                              [self._mzi.get(combo_name, 0.0)],
-                              [self._fxj.get(combo_name, 0.0)],
-                              [self._fyj.get(combo_name, 0.0)],
-                              [self._fzj.get(combo_name, 0.0)],
-                              [self._mxj.get(combo_name, 0.0)],
-                              [self._myj.get(combo_name, 0.0)],
-                              [self._mzj.get(combo_name, 0.0)]])
+                return self.f_nonlin[combo_name].reshape(12, 1)
 
             # Calculate the average axial force on the member from the latest elasto-plastic member end forces.
-            P = self._fxj[combo_name] - self._fxi[combo_name]
+            P = self.f_nonlin[combo_name][6] - self.f_nonlin[combo_name][0]
 
             # Calculate the total local stiffness matrix. Geometric stiffness is only included
             # when the active pushover analysis has explicitly opted into P-Delta behavior.
@@ -949,7 +929,6 @@ class Member3D():
         # Calculate and return the local displacement vector
         return self.T() @ self.D(combo_name)
 
-    # Transformation matrix
     def T(self) -> NDArray[float64]:
         """
         Returns the transformation matrix for the member.
@@ -1055,7 +1034,6 @@ class Member3D():
 
         return transMatrix
 
-    # Member global stiffness matrix
     def Ke(self) -> NDArray[float64]:
         """Returns the global elastic stiffness matrix for the member.
 
@@ -1696,7 +1674,6 @@ class Member3D():
             return (Mmin_global, governing_combo)
         return Mmin_global
 
-
     def plot_moment(self, Direction: Literal['My', 'Mz'], combo_name: Union[str, List[str]] = 'Combo 1', n_points: int = 20,
                     figsize: tuple[float, float] = (7, 3)) -> None:
         """
@@ -1911,7 +1888,6 @@ class Member3D():
         if isinstance(combo_tags, list):
             return (Tmax_global, governing_combo)
         return Tmax_global
-
 
     def min_torque(self, combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """
@@ -2310,7 +2286,6 @@ class Member3D():
 
         return self._extract_vector_results(self.SegmentsZ, x_array, 'axial')
 
-
     def deflection(self, Direction: Literal['dx', 'dy', 'dz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
         Returns the deflection at a point along the member's length.
@@ -2474,7 +2449,6 @@ class Member3D():
         if isinstance(combo_tags, list):
             return (dmax_global, governing_combo)
         return dmax_global
-
 
     def min_deflection(self, Direction: Literal['dx', 'dy', 'dz'], combo_tags: Union[str, List[str]] = 'Combo 1') -> Union[float, tuple[float, str]]:
         """

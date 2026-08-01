@@ -81,7 +81,6 @@ class Section():
                          [dPhi_dmy],
                          [dPhi_dmz]])
 
-
 class SteelSection(Section):
 
     def __init__(self, model: 'FEModel3D', name: str, A: float, Iy: float, Iz: float, J: float, 

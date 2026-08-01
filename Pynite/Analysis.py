@@ -670,19 +670,12 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
 
                     # Calculate change in the local end force vector for this load step
                     Delta_f = sub_member.f(combo_name, Delta_d, Delta_fer)
-                    
-                    sub_member._fxi[combo_name] += Delta_f[0, 0]
-                    sub_member._fyi[combo_name] += Delta_f[1, 0]
-                    sub_member._fzi[combo_name] += Delta_f[2, 0]
-                    sub_member._mxi[combo_name] += Delta_f[3, 0]
-                    sub_member._myi[combo_name] += Delta_f[4, 0]
-                    sub_member._mzi[combo_name] += Delta_f[5, 0]
-                    sub_member._fxj[combo_name] += Delta_f[6, 0]
-                    sub_member._fyj[combo_name] += Delta_f[7, 0]
-                    sub_member._fzj[combo_name] += Delta_f[8, 0]
-                    sub_member._mxj[combo_name] += Delta_f[9, 0]
-                    sub_member._myj[combo_name] += Delta_f[10, 0]
-                    sub_member._mzj[combo_name] += Delta_f[11, 0]
+
+                    # TODO: Before accepting `Delta_f`, check if we've overshot any member section
+                    # capacity interaction curves, and adjust the load step if necessary
+
+                    # Store the change in the local end force vector for this load step
+                    sub_member.f_nonlin[combo_name] += Delta_f.reshape(12)
 
         else:
 
@@ -699,6 +692,120 @@ def _pushover_step(model: FEModel3D, combo_name: str, push_combo: str, step_num:
                 else:
                     print('- Restarting load step due to plastic load reversal')
 
+
+def _load_step_ratio(model: FEModel3D, combo_name: str, Delta_f: NDArray[float64]) -> float:
+    """
+    Determines the fraction of the pushover load step that should be applied.
+
+    It is desirable to ensure plastic hinges occur at the end of a load step. This method checks
+    if the current load step has caused any plastic hinges to form. If so, it calculates the
+    fraction of the load step that should be applied to ensure the hinge forms at the end of the
+    load step.
+
+    See Section 12.6 of `Matrix Structural Analysis, Second Edition` for more information.
+    """
+    
+    # Define a local helper method for this method
+    def tal(p, my, mz, dp, dmy, dmz, Phi):
+
+        # Initial guesses
+        tal_l = 0.0  # Lower bound guess
+        tal_u = 1.0  # Upper bound guess
+        tal_r = tal_u  # Assumed initial value of the root we are seeking
+
+        # Counter variable
+        num_iter = 0
+
+        while (not isclose(Phi(p + tal_r*dp, my + tal_r*dmy, mz + tal_r*dmz) - 1.0, 0.0) 
+               and num_iter < 100):
+
+            # Increment the iteration counter
+            num_iter += 1
+
+            # Calculate `Phi` (the utilization ratio) for the lower and upper guesses
+            Phi_tal_l = Phi(p + tal_l*dp, my + tal_l*dmy, mz + tal_l*dmz)
+            Phi_tal_u = Phi(p + tal_u*dp, my + tal_u*dmy, mz + tal_u*dmz)
+
+            # Estimate the root and its `Phi` value
+            tal_r = 1 - (Phi_tal_u - 1.0)*(tal_l - tal_u)/(Phi_tal_l - Phi_tal_u)
+            Phi_tal_r = Phi(p + tal_r*dp, my + tal_r*dmy, mz + tal_r*dmz)
+
+            # Replace the lower or upper guess with the new estimate depending on which (Phi - 1)
+            # one has the same sign as (Phi - 1) for the new root estimate.
+            if (Phi_tal_l - 1.0)*(Phi_tal_r - 1.0) < 0:
+                tal_u = tal_r
+            elif (Phi_tal_u - 1.0)*(Phi_tal_r - 1.0) < 0:
+                tal_l = tal_r
+
+            # Cap the number of iterations to avoid infinite loops
+            if num_iter >= 100:
+                raise Exception('Unable to determine the fraction of the pushover load step that should be applied.')
+
+        # Return the fraction of the pushover load step that should be applied
+        return tal_r
+    
+    # Initilize the lowest value for the fraction of the pushover load step that should be applied
+    tal_min = 1.0
+
+    # Step through each physical member in the model
+    for phys_member in model.members.values():
+
+        # Step through each sub-member of the physical member
+        for sub_member in phys_member.sub_members.values():
+            
+            # Obtain the member's plastic load capacities
+            section = sub_member.section
+            Py = section.material.fy*section.A
+            Mpy = section.material.fy*section.Zy
+            Mpz = section.material.fy*section.Zz
+
+            # Obtain member end forces for the latest load step
+            fxi = sub_member.f_nonlin[combo_name][0]
+            myi = sub_member.f_nonlin[combo_name][4]
+            mzi = sub_member.f_nonlin[combo_name][5]
+            fxj = sub_member.f_nonlin[combo_name][6]
+            myj = sub_member.f_nonlin[combo_name][10]
+            mzj = sub_member.f_nonlin[combo_name][11]
+
+            # Check if the yield surface has been exceeded at the i-end of the member
+            if sub_member.section.Phi(fxi, myi, mzi) > 1.0:
+
+                # Convert the member end forces to nondiminensionalized values
+                p = abs(fxi/Py)
+                m_y = abs(myi/Mpy)
+                m_z = abs(mzi/Mpz)
+
+                dp = abs(Delta_f[0, 0]/Py)
+                dmy = abs(Delta_f[4, 0]/Mpy)
+                dmz = abs(Delta_f[5, 0]/Mpz)
+
+                tal_i = tal(p, m_y, m_z, dp, dmy, dmz, sub_member.section.Phi)
+
+            else: tal_i = 1.0
+
+            # Check if the yield surface has been exceeded at the j-end of the member
+            if sub_member.section.Phi(fxj, myj, mzj) > 1.0:
+
+                # Convert the member end forces to nondiminensionalized values
+                p = abs(fxj/Py)
+                m_y = abs(myj/Mpy)
+                m_z = abs(mzj/Mpz)
+
+                dp = abs(Delta_f[6, 0]/Py)
+                dmy = abs(Delta_f[10, 0]/Mpy)
+                dmz = abs(Delta_f[11, 0]/Mpz)
+
+                tal_j = tal(p, m_y, m_z, dp, dmy, dmz, sub_member.section.Phi)
+
+            else: tal_j = 1.0
+
+            if tal_i < tal_min:
+                tal_min = tal_i
+            if tal_j < tal_min:
+                tal_min = tal_j
+
+    # Return the fraction of the pushover load step that should be applied
+    return tal_min
 
 def _unpartition(model: FEModel3D, V1: NDArray[float64], V2: NDArray[float64], V1_indices: List[int], V2_indices: List[int]) -> NDArray[float64]:
     """Unpartitions a vector and returns it as a global vector including all dofs.
