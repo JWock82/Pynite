@@ -21,3 +21,29 @@ Run tests using `pytest`.
 ```bash
 pytest
 ```
+
+## Linting
+
+Linting is handled by [ruff](https://docs.astral.sh/ruff/), with hooks managed by [prek](https://github.com/j178/prek). The rules live in `ruff.toml`, and currently only check for unused imports (F401).
+
+Install prek outside the project environment, so that git GUI clients can run the hooks without activating a virtualenv:
+
+```bash
+uv tool install prek
+```
+
+`pipx install prek` works too. Then install the git hook:
+
+```bash
+prek install
+```
+
+The configured checks now run against your staged files on every commit, fixing what they can. To run them across the whole repository:
+
+```bash
+prek run --all-files
+```
+
+The same checks run in CI on every pull request.
+
+prek reads `.pre-commit-config.yaml`, which is the standard pre-commit config format, so stock `pre-commit` works against the same config if you already use it. If you want ruff in your editor, install it separately and match the version pinned in `.pre-commit-config.yaml` so it reports the same results as the hook.
