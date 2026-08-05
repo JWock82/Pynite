@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PyNiteFEA"
+version = "3.0.0"
+description = "A simple elastic 3D structural finite element library for Python."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "D. Craig Brinck, PE, SE", email = "Building.Code@outlook.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "matplotlib",
+    "numpy>=2.4.0",
+    "prettytable",
+    "scipy",
+]
+
+[project.optional-dependencies]
+all = [
+    "ipython",
+    "ipywidgets",
+    "jinja2",
+    "pdfkit",
+    "pyvista[all,trame]>=0.43.4",
+    "trame-jupyter-extension",
+    "vtk>=9.3.0",
+]
+vtk = [
+    "ipython",
+    "vtk>=9.3.0",
+]
+pyvista = [
+    "ipywidgets",
+    "pyvista[all,trame]>=0.43.4",
+    "trame-jupyter-extension",
+]
+reporting = [
+    "jinja2",
+    "pdfkit",
+]
+derivations = [
+    "jupyterlab",
+    "sympy",
+]
+
+[project.urls]
+Homepage = "https://github.com/JWock82/Pynite"
+
+[dependency-groups]
+dev = [
+    "coverage",
+    "flake8",
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+include = ["Pynite", "Pynite.*"]
+
+[tool.setuptools.package-data]
+Pynite = ["*html", "*.css", "*Full Logo No Buffer - Transparent.png"]
