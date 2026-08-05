@@ -1,4 +1,3 @@
-import os
 import pytest
 import vtk
 from io import BytesIO

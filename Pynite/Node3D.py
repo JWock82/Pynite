@@ -6,18 +6,16 @@ Created on Thu Nov  2 18:04:56 2017
 """
 from __future__ import annotations  # Allows more recent type hints features
 # %%
-from numpy import array, zeros
+from numpy import zeros
 
 from typing import List, Tuple, Dict, Optional,TYPE_CHECKING
 if TYPE_CHECKING:
 
-    from typing import Dict, List, Tuple, Optional, Any, Literal
+    from typing import Dict, List, Tuple, Optional
 
-    from numpy import float64
     from numpy.typing import NDArray
 
     from Pynite.FEModel3D import FEModel3D
-    from Pynite.LoadCombo import LoadCombo
 
 
 class Node3D():
