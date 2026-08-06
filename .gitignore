@@ -18,4 +18,3 @@ gui.py
 wxTableBases.py
 .env
 apps/*
-.venv/

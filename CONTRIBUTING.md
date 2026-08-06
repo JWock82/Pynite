@@ -21,7 +21,7 @@ dependencies. Install uv, then create the environment and install the project wi
 and optional runtime dependencies:
 
 ```bash
-uv sync --locked --extra all --dev
+uv sync --locked --extra all --all-groups
 ```
 
 When project dependencies change, update `pyproject.toml` and regenerate the committed lockfile:

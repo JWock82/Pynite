@@ -21,11 +21,10 @@ jobs:
       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       with:
         python-version: ${{ matrix.python-version }}
-        version: "0.12.1"
         enable-cache: true
 
     - name: Install the project
-      run: uv sync --locked --extra all --dev
+      run: uv sync --locked --extra all --all-groups
 
     - name: Lint with flake8
       run: |
