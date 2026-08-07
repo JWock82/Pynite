@@ -65,9 +65,6 @@ dev = [
     "pytest",
 ]
 
-[tool.uv]
-required-version = "==0.12.1"
-
 [tool.setuptools.packages.find]
 include = ["Pynite", "Pynite.*"]
 
