@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "PyNiteFEA"
 version = "3.0.0"
-description = "A simple elastic 3D structural finite element library for Python."
+description = "A simple 3D structural finite element library for Python."
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = "MIT"
