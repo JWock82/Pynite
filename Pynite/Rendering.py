@@ -6,11 +6,9 @@ Docstrings follow reStructuredText field-list format for Sphinx autodoc.
 """
 
 from __future__ import annotations # Allows more recent type hints features
-from json import load
 import warnings
-from typing import TYPE_CHECKING, Callable, List, Any, Optional, Union, Tuple
+from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple
 
-from IPython.display import Image
 import numpy as np
 import pyvista as pv
 import math

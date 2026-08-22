@@ -5,6 +5,14 @@ import Pynite
 
 from importlib.metadata import version, PackageNotFoundError
 
+
+__all__ = (
+    "FEModel3D",
+    "ShearWall",
+    "Pynite",
+    "__version__",
+)
+
 try:
     __version__ = version("PyniteFEA")
 except PackageNotFoundError:

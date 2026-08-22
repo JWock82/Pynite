@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-from numpy.linalg import solve
 import scipy as sp
 
 from Pynite.Node3D import Node3D
@@ -2366,7 +2365,7 @@ class FEModel3D():
 
         # Import `scipy` features if the sparse solver is being used
         if sparse == True:
-            from scipy.sparse.linalg import spsolve
+            from scipy.sparse.linalg import spsolve  # noqa: F401
 
         # Prepare the model for analysis
         Analysis._prepare_model(self)
@@ -2432,7 +2431,7 @@ class FEModel3D():
 
         # Import `scipy` features if the sparse solver is being used
         if sparse == True:
-            from scipy.sparse.linalg import spsolve
+            from scipy.sparse.linalg import spsolve  # noqa: F401
 
         # Prepare the model for analysis
         Analysis._prepare_model(self)
