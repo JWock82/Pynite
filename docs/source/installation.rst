@@ -20,7 +20,6 @@ Adding the [all] command is equivalent to running the following additional insta
 
     $ pip install matplotlib
     $ pip install scipy
-    $ pip install pdfkit
     $ pip install jinja2
     $ pip install vtk
     $ pip install pyvista[all,trame]
@@ -51,7 +50,7 @@ Additional Optional Dependencies Included with ``[all]``
 --------------------------------------------------------
 
 * `matplotlib`: used for plotting member diagrams.
-* `PDFKit`: Used for generating pdf reports. In order to generate pdf reports, PDFKit requires you to have wkhtmltopdf installed on your computer. This is a free program available for download at https://wkhtmltopdf.org/downloads.html. Once installed, you'll need to help Pynite find it. On Windows, this can be done by setting your PATH environment variable to include the path to "wkhtmltopdf.exe" after installation. For example, mine is installed at "C:\Program Files\wkhtmltopdf\bin"
+* `wkhtmltopdf`: Used for generating pdf reports. This is a free program available for download at https://wkhtmltopdf.org/downloads.html. Once installed, you'll need to help Pynite find it. On Windows, this can be done by setting your PATH environment variable to include the path to "wkhtmltopdf.exe" after installation. For example, mine is installed at "C:\Program Files\wkhtmltopdf\bin"
 * `jinja2`: Used by `Pynite` for templating reports into HTML prior to HTML-to-pdf conversion. Only needed if you plan to use the PDF reporting features.
 * `pyvista[all, trame]`: Used for interactive visualization in `Jupyter` notebooks.
 * `ipywidgets`: Used for interactive visualization in `Jupyter` notebooks.

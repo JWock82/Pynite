@@ -2165,15 +2165,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pdfkit"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/58/bb/6ddc62b4622776a6514fd749041c2b4bccd343e006d00de590f8090ac8b1/pdfkit-1.0.0.tar.gz", hash = "sha256:992f821e1e18fc8a0e701ecae24b51a2d598296a180caee0a24c0af181da02a9", size = 13288, upload-time = "2021-11-14T19:28:51.672Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/64/1b/26c080096dd93936dccfd32c682bed3d5630a84aae9d493ff68afb2ae0fb/pdfkit-1.0.0-py3-none-any.whl", hash = "sha256:a7a4ca0d978e44fa8310c4909f087052430a6e8e0b1dd7ceef657f139789f96f", size = 12099, upload-time = "2021-11-14T19:28:50.44Z" },
-]
-
-[[package]]
 name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2546,7 +2537,6 @@ all = [
     { name = "ipython" },
     { name = "ipywidgets" },
     { name = "jinja2" },
-    { name = "pdfkit" },
     { name = "pyvista", extra = ["all"] },
     { name = "trame-jupyter-extension" },
     { name = "vtk" },
@@ -2562,7 +2552,6 @@ pyvista = [
 ]
 reporting = [
     { name = "jinja2" },
-    { name = "pdfkit" },
 ]
 vtk = [
     { name = "ipython" },
@@ -2587,8 +2576,6 @@ requires-dist = [
     { name = "jupyterlab", marker = "extra == 'derivations'" },
     { name = "matplotlib" },
     { name = "numpy", specifier = ">=2.4.0" },
-    { name = "pdfkit", marker = "extra == 'all'" },
-    { name = "pdfkit", marker = "extra == 'reporting'" },
     { name = "prettytable" },
     { name = "pyvista", extras = ["all", "trame"], marker = "extra == 'all'", specifier = ">=0.43.4" },
     { name = "pyvista", extras = ["all", "trame"], marker = "extra == 'pyvista'", specifier = ">=0.43.4" },
@@ -3059,7 +3046,7 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" } },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/97/5a3609c4f8d58b039179648e62dd220f89864f56f7357f5d4f45c29eb2cc/scipy-1.17.1.tar.gz", hash = "sha256:95d8e012d8cb8816c226aef832200b1d45109ed4464303e997c5b13122b297c0", size = 30573822, upload-time = "2026-02-23T00:26:24.851Z" }
 wheels = [
@@ -3134,7 +3121,7 @@ resolution-markers = [
     "python_full_version >= '3.12' and python_full_version < '3.14'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" } },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a7/25/c2700dfaf6442b4effaa91af24ebce5dc9d31bb4a69706313aae70d72cd0/scipy-1.18.0.tar.gz", hash = "sha256:67b2ad2ad54c72ca6d04975a9b2df8c3638c34ddd5b28738e94fc2b57929d378", size = 30774447, upload-time = "2026-06-19T15:01:43.456Z" }
 wheels = [

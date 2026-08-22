@@ -32,7 +32,6 @@ all = [
     "ipython",
     "ipywidgets",
     "jinja2",
-    "pdfkit",
     "pyvista[all,trame]>=0.43.4",
     "trame-jupyter-extension",
     "vtk>=9.3.0",
@@ -48,7 +47,6 @@ pyvista = [
 ]
 reporting = [
     "jinja2",
-    "pdfkit",
 ]
 derivations = [
     "jupyterlab",

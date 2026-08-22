@@ -5,7 +5,7 @@ Generates HTML or PDF reports for Pynite FE models.
 
 Key points:
 - Uses Jinja2 to render an HTML template.
-- Optionally converts that HTML into a PDF using pdfkit + wkhtmltopdf.
+- Optionally converts that HTML into a PDF using wkhtmltopdf.
 - Provides a single entry point: `create_report()`.
 """
 
@@ -13,6 +13,8 @@ Key points:
 import os
 import platform
 import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -97,35 +99,60 @@ def create_report(model: FEModel3D,
     kwargs['quads'] = model.quads.values()
     kwargs['load_combos'] = model.load_combos.values()
 
-    # Render HTML from Template
+    # Render HTML once and then route to PDF/HTML output paths.
+    # Keeping a single rendered HTML string ensures both formats stay
+    # visually consistent and avoids duplicating templating logic.
     HTML = template.render(**kwargs)
 
-    # Check if a PDF file has been requested
+    # PDF output path:
+    # This intentionally shells out to wkhtmltopdf directly instead of using
+    # a Python wrapper dependency. This keeps the dependency surface smaller
+    # and avoids wrapper-specific security advisories.
     if format.upper() == 'PDF':
-
-        # Import PDFKit
-        try:
-            import pdfkit
-        except:
-            raise ImportError('PDFKit is not installed. Install it using `pip install pdfkit`.')
-
-        # Attempt to get the wkhtmltopdf path
+        # Resolve wkhtmltopdf from PATH/common install directories.
         wkhtmltopdf_path = get_wkhtmltopdf_path()
 
-        # Notify the user if wkthmltopdf is not found
+        # Fail fast with a clear setup message so users know this is an
+        # environment/configuration problem rather than a report-data problem.
         if wkhtmltopdf_path is None:
             raise Exception('Unable to locate wkhtmltopdf. If it is already installed add it to your system\'s PATH environmental variable so Pynite can find it.')
 
-        # Set up a PDFKit configuration that uses the correct path to wkhtmltopdf
-        config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+        # wkhtmltopdf accepts file/stdin HTML input. We use a temporary file so
+        # local CSS paths resolve predictably across operating systems.
+        with tempfile.TemporaryDirectory() as temp_dir:
+            html_path = Path(temp_dir) / 'pynite_report.html'
+            css_path = path / 'MainStyleSheet.css'
 
-        # Generate the PDF report
-        pdfkit.from_string(
-            HTML,
-            str(output_filepath),
-            css=str(path / 'MainStyleSheet.css'),
-            configuration=config
-        )
+            # Write the rendered markup to a scratch file that is deleted when
+            # the context manager exits.
+            with open(html_path, 'w', encoding='utf-8') as file:
+                file.write(HTML)
+
+            # --enable-local-file-access allows wkhtmltopdf to load the local
+            # stylesheet. --user-style-sheet injects the same CSS used by HTML
+            # report output so layout/formatting remain aligned.
+            result = subprocess.run(
+                [
+                    wkhtmltopdf_path,
+                    '--enable-local-file-access',
+                    '--user-style-sheet', str(css_path),
+                    str(html_path),
+                    str(output_filepath),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            # Bubble up stderr details when available. wkhtmltopdf errors are
+            # often configuration-specific (missing fonts, inaccessible files,
+            # unsupported flags), so preserving stderr makes troubleshooting faster.
+            if result.returncode != 0:
+                stderr = result.stderr.strip()
+                raise RuntimeError(
+                    f'wkhtmltopdf failed to generate the PDF report. {stderr}'
+                    if stderr else 'wkhtmltopdf failed to generate the PDF report.'
+                )
 
         # Notify the user where the report was saved
         if log: print(f"- PDF report generated at: {output_filepath}")
@@ -149,12 +176,14 @@ def get_wkhtmltopdf_path(log: bool = True) -> str | None:
     Returns the full path if found, else None.
     """
 
-    # 1. First check PATH (most common case)
+    # 1. First check PATH (most common case). This is the preferred route
+    # because it respects user-managed installs and virtualized environments.
     path = shutil.which("wkhtmltopdf")
     if path:
         return path
 
-    # 2. Check platform-specific common install locations
+    # 2. Fall back to common install locations by platform to reduce setup
+    # friction for users who installed wkhtmltopdf with default options.
     system = platform.system()
 
     if system == "Windows":
