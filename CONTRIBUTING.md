@@ -14,12 +14,28 @@ If you would like to contribute to Pynite, please review the following guideline
 6. Follow the coding guidelines above. This will make review go much faster.
 7. Pull requests for any active repository `Projects` will usually be given first priorty.
 
-## Testing
+## Development Setup
 
-Run tests using `pytest`.
+Pynite uses [uv](https://docs.astral.sh/uv/) to manage development environments and locked
+dependencies. Install uv, then create the environment and install the project with its test tools
+and optional runtime dependencies:
 
 ```bash
-pytest
+uv sync --locked --extra all --all-groups
+```
+
+When project dependencies change, update `pyproject.toml` and regenerate the committed lockfile:
+
+```bash
+uv lock
+```
+
+## Testing
+
+Run tests inside the managed environment using `uv run`:
+
+```bash
+uv run --locked pytest
 ```
 
 ## Linting
