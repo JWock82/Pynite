@@ -436,7 +436,42 @@ def test_shear_wall_modification_and_regeneration():
     print('✓ Test passed: Wall was successfully modified and regenerated.')
 
 
+def test_pier_plates_are_wall_specific():
+    """Regression test for `sum_forces` picking up plates from unrelated
+    shear walls. Two identical, parallel walls placed at different `origin`
+    values should each end up with their own plates, not each other's.
+    """
+
+    model = FEModel3D()
+
+    model.add_material('CMU', 300000, 120000, 0.17, 0.140)
+
+    # Two identical parallel walls in the 'XY' plane, offset from each other
+    # only in the out-of-plane 'Z' direction.
+    model.add_shear_wall('Wall1', mesh_size=2, length=10, height=10, thickness=0.667,
+                          material_name='CMU', plane='XY', origin=[0, 0, 0])
+    model.shear_walls['Wall1'].add_support(elevation=0, x_start=0, x_end=10)
+    model.shear_walls['Wall1'].generate()
+
+    model.add_shear_wall('Wall2', mesh_size=2, length=10, height=10, thickness=0.667,
+                          material_name='CMU', plane='XY', origin=[0, 0, 20])
+    model.shear_walls['Wall2'].add_support(elevation=0, x_start=0, x_end=10)
+    model.shear_walls['Wall2'].generate()
+
+    pier1 = model.shear_walls['Wall1'].piers['P1']
+    pier2 = model.shear_walls['Wall2'].piers['P1']
+
+    # Each pier should be assigned every plate that makes up its own wall...
+    assert set(pier1.plates) == set(model.meshes['Wall1'].elements.values())
+    assert set(pier2.plates) == set(model.meshes['Wall2'].elements.values())
+
+    # ...and none of the plates belonging to the other wall.
+    assert set(pier1.plates).isdisjoint(model.meshes['Wall2'].elements.values())
+    assert set(pier2.plates).isdisjoint(model.meshes['Wall1'].elements.values())
+
+
 if __name__ == '__main__':
     # test_shear_walls()
     # test_piers_and_coupling_beams()
     test_shear_wall_modification_and_regeneration()
+    test_pier_plates_are_wall_specific()

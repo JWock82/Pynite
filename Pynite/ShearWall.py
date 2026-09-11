@@ -132,6 +132,25 @@ class ShearWall():
                 self.model.meshes[flange_name]._remove_from_model()
                 del self.model.meshes[flange_name]
 
+    def _wall_plates(self) -> List[Quad3D]:
+        """Returns a list of the plates belonging to this shear wall only (its main mesh
+        plus any flange meshes). This is used instead of `self.model.quads.values()` so
+        that plates from other shear walls or meshes elsewhere in the model don't get
+        mistakenly associated with this wall's piers/coupling beams/materials.
+        """
+
+        plates: List[Quad3D] = []
+
+        if self.name in self.model.meshes:
+            plates.extend(self.model.meshes[self.name].elements.values())
+
+        for i in range(len(self._flanges)):
+            flange_name = self.name + ' Flg ' + str(i + 1)
+            if flange_name in self.model.meshes:
+                plates.extend(self.model.meshes[flange_name].elements.values())
+
+        return plates
+
     def generate(self) -> None:
 
         # Remove shear wall elements and nodes from the model if regenerating
@@ -243,8 +262,8 @@ class ShearWall():
         # Merge the flange nodes with the rest of the wall
         self.model.merge_duplicate_nodes()
 
-        # Step through each plate in the model
-        for plate in self.model.quads.values():
+        # Step through each plate belonging to this wall
+        for plate in self._wall_plates():
 
             # Step through each material in the wall
             for material in self._materials:
@@ -486,7 +505,7 @@ class ShearWall():
             pier.name = key
 
         # Assign plates to each pier
-        for plate in self.model.quads.values():
+        for plate in self._wall_plates():
 
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
@@ -659,7 +678,7 @@ class ShearWall():
             beam.name = key
 
         # Assign plates to each beam
-        for plate in self.model.quads.values():
+        for plate in self._wall_plates():
 
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
