@@ -69,8 +69,9 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
-3.0.1
+3.1.0
 * Improved detection of unstable structures.
+* Bug fix for shear walls. Shear walls were erroneously tracking other plates in the model for internal pier/coupling beam force summations, rather than just the plates related to the individual shear wall.
 
 3.0.0
 * Added pushover analysis! Currently, only steel sections are supported for pushover analysis. The assumed interaction equation used to estimate plastic behavior is currently calibrated toward I-shaped members.
