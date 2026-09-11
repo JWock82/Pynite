@@ -13,6 +13,7 @@ from matplotlib.patches import Rectangle
 if TYPE_CHECKING:
     from typing import List, Dict, Tuple
     from Pynite.Quad3D import Quad3D
+    from Pynite.Plate3D import Plate3D
     import matplotlib.figure
 
 
@@ -37,6 +38,7 @@ class ShearWall():
         self._shears: List[List[str | float]] = []
         self._axials: List[List[str | float]] = []
         self._materials: List[List[str | float]] = []
+        self.elements: Dict[str, Quad3D | Plate3D] = {}
         self.piers: Dict[str, Pier] = {}
         self.coupling_beams: Dict[str, CouplingBeam] = {}
         self.is_generated: bool = False
@@ -243,8 +245,15 @@ class ShearWall():
         # Merge the flange nodes with the rest of the wall
         self.model.merge_duplicate_nodes()
 
-        # Step through each plate in the model
-        for plate in self.model.quads.values():
+        # Store the elements belonging to this wall
+        self.elements = {
+            element.name: element
+            for mesh_name in [self.name] + [self.name + ' Flg ' + str(i + 1) for i in range(len(self._flanges))]
+            for element in self.model.meshes[mesh_name].elements.values()
+        }
+
+        # Step through each element in this wall's meshes
+        for plate in self.elements.values():
 
             # Step through each material in the wall
             for material in self._materials:
@@ -339,7 +348,6 @@ class ShearWall():
         # Mark the wall as generated
         self.is_generated = True
         self.needs_update = False
-
 
     def _identify_piers(self) -> None:
 
@@ -486,7 +494,7 @@ class ShearWall():
             pier.name = key
 
         # Assign plates to each pier
-        for plate in self.model.quads.values():
+        for plate in self.elements.values():
 
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
@@ -659,7 +667,7 @@ class ShearWall():
             beam.name = key
 
         # Assign plates to each beam
-        for plate in self.model.quads.values():
+        for plate in self.elements.values():
 
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
@@ -936,7 +944,7 @@ class Pier():
         self.origin = shear_wall.origin
 
         # This list will be used by the parent shear wall to store a list of only the plates in this pier
-        self.plates: List[Quad3D] = []
+        self.plates: List[Quad3D | Plate3D] = []
 
     def __repr__(self) -> str:
         return f"Pier(name={self.name!r}, width={self.width}, height={self.height})"
@@ -999,7 +1007,7 @@ class CouplingBeam():
         self.plane = shear_wall.plane
         self.origin = shear_wall.origin
 
-        self.plates: List[Quad3D] = []
+        self.plates: List[Quad3D | Plate3D] = []
 
     def __repr__(self) -> str:
         return f"CouplingBeam(name={self.name!r}, length={self.length}, height={self.height})"

@@ -135,6 +135,36 @@ def test_piers_and_coupling_beams():
     assert round(M1, 3) == round(M3, 3), 'Failed shear wall pier statics check (sum of moments != 0).'
 
 
+def test_shear_wall_piers_only_include_their_own_elements():
+    model = FEModel3D()
+    model.add_material('Concrete', 1000, 400, 0.2, 0.15)
+
+    for wall_name, origin in [('Wall1', [0, 0, 0]), ('Wall2', [0, 0, 20])]:
+        model.add_shear_wall(
+            wall_name,
+            mesh_size=1,
+            length=2,
+            height=2,
+            thickness=0.5,
+            material_name='Concrete',
+            plane='XY',
+            origin=origin,
+        )
+        model.shear_walls[wall_name].generate()
+
+    wall1_elements = set(model.meshes['Wall1'].elements.values())
+    wall2_elements = set(model.meshes['Wall2'].elements.values())
+
+    wall1_pier_elements = set(model.shear_walls['Wall1'].piers['P1'].plates)
+    wall2_pier_elements = set(model.shear_walls['Wall2'].piers['P1'].plates)
+
+    assert set(model.shear_walls['Wall1'].elements.values()) == wall1_elements
+    assert set(model.shear_walls['Wall2'].elements.values()) == wall2_elements
+    assert wall1_pier_elements == wall1_elements
+    assert wall2_pier_elements == wall2_elements
+    assert wall1_pier_elements.isdisjoint(wall2_pier_elements)
+
+
 def test_quad_shear_wall():
 
     sw = FEModel3D()
