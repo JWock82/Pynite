@@ -28,10 +28,10 @@ model.add_shear_wall('Wall 1', mesh_size, length, height, t, 'Concrete', ky_mod,
 
 # Add an opening to the shear wall
 # The `tie` parameter can be used to add a tie above the top of the opening, forcing piers on either side to work together. This is only necessary for openings at the top of the wall where a drag strut or collector is used. The `tie` parameter accepts a tie's stiffness.
-model.shear_walls['Wall 1'].add_opening('Opng 1', x_start=5, y_start=6, width=4, height=2, tie=None)
+model.shear_walls['Wall 1'].add_opening('Opng 1', x_start=5, y_start=0, width=40, height=20, tie=None)
 
 # Flanges (intersecting wall segments) can affect the behavior of shear walls greatly by increasing the stiffness of the wall or individual wall piers. Building codes typically require flanges to be considered in shear wall analysis. We can add as many flanges as we like to the wall here. The `side` parameter defines which side the flage is on ('+z' or '-z' in the wall's local coordinate system). For a tee-shaped intersection we would specify two flanges, one '+z' and one '-z'.
-model.shear_walls['Wall 1'].add_flange(t, width=3, x=0, y_start=0, y_end=height, material='Concrete', side='+z')
+# model.shear_walls['Wall 1'].add_flange(t, width=3, x=0, y_start=0, y_end=height, material='Concrete', side='+z')
 
 # Add foundations to the model
 # The shear wall needs support. Multiple supports can be specified at multiple elevations to allow for stepped walls to be modeled.
@@ -52,28 +52,26 @@ model.analyze_linear(log=True, check_statics=False, check_stability=False)
 print('Roof level stiffness: ', model.shear_walls['Wall 1'].stiffness('Roof')/12)
 
 # Let's render the wall shear stresses
-# from Pynite.Rendering import Renderer
-# rndr = Renderer(model)
-# rndr.combo_name = '1.2D+1.0E'
-# rndr.deformed_shape = True
-# rndr.deformed_scale = 1000
-# rndr.color_map = 'Txy'
-# rndr.render_model()
+from Pynite.Visualization import Renderer
+rndr = Renderer(model)
+rndr.combo_name = '1.2D+1.0E'
+rndr.deformed_shape = True
+rndr.deformed_scale = 100
+rndr.color_map = 'Sx'
+rndr.scalar_bar = True
+rndr.render_model()
+
+# You can also print screenshots of the wall stress countour
+# model.shear_walls['Wall 1'].screenshots('1.2D+1.0E', renderer_backend='vtk')
 
 # Show the wall piers for which results are available
-# model.shear_walls['Wall 1'].draw_piers(show=True)
-
-# Note: press `q` to close the window that pops up and move on. If you hit the `X` in the corner
-# the program will kill the window before we can reuse it below on the coupling beams (sorry -
-# that's a `pyvista` nuance I haven't figures out a workaround for yet)
-
-model.shear_walls['Wall 1'].screenshots('1.2D+1.0E', renderer_backend='vtk')
+model.shear_walls['Wall 1'].draw_piers(show=True)
 
 # Print the pier results
 model.shear_walls['Wall 1'].print_piers(combo_name='1.2D+1.0E')
 
 # Show the wall coupling beams for which results are available
-# model.shear_walls['Wall 1'].draw_coupling_beams(show=True)
+model.shear_walls['Wall 1'].draw_coupling_beams(show=True)
 
 # Print the coupling beam results
 model.shear_walls['Wall 1'].print_coupling_beams(combo_name='1.2D+1.0E')

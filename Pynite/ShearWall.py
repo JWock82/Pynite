@@ -852,12 +852,14 @@ class ShearWall():
         table = PrettyTable()
 
         # Define the headers
-        table.field_names = ["ID", "Length", "Height", "M/(VL)", "V", "M", "P"]
+        table.field_names = ["ID", "Length", "Height", "Location", "M/(VL)", "V", "M", "P"]
 
-        # Add rows to the table
+        # Add rows to the table for both ends of each pier
         for pier_id, pier in self.piers.items():
-            P, M, V, M_VL = pier.sum_forces(combo_name)
-            table.add_row([pier.name, pier.width, pier.height, M_VL, V, M, P])
+            P_bot, M_bot, V_bot, M_VL_bot = pier.sum_forces(combo_name, 'bottom')
+            P_top, M_top, V_top, M_VL_top = pier.sum_forces(combo_name, 'top')
+            table.add_row([pier.name, pier.width, pier.height, 'Bottom', M_VL_bot, V_bot, M_bot, P_bot])
+            table.add_row([pier.name, pier.width, pier.height, 'Top', M_VL_top, V_top, M_top, P_top])
 
         # Print the table
         print('+-------------------+')
@@ -873,12 +875,14 @@ class ShearWall():
         table = PrettyTable()
 
         # Define the headers
-        table.field_names = ["ID", "Length", "Height", "M/(VH)", "V", "M", "P"]
+        table.field_names = ["ID", "Length", "Height", "Location", "M/(VH)", "V", "M", "P"]
 
-        # Add rows to the table
+        # Add rows to the table for both ends of each coupling beam
         for beam_id, beam in self.coupling_beams.items():
-            P, M, V, M_VL = beam.sum_forces(combo_name)
-            table.add_row([beam.name, beam.length, beam.height, M_VL, V, M, P])
+            P_left, M_left, V_left, M_VH_left = beam.sum_forces(combo_name, 'left')
+            P_right, M_right, V_right, M_VH_right = beam.sum_forces(combo_name, 'right')
+            table.add_row([beam.name, beam.length, beam.height, 'Left', M_VH_left, V_left, M_left, P_left])
+            table.add_row([beam.name, beam.length, beam.height, 'Right', M_VH_right, V_right, M_right, P_right])
 
         # Print the table
         print('+----------------------------+')
@@ -949,7 +953,7 @@ class Pier():
     def __repr__(self) -> str:
         return f"Pier(name={self.name!r}, width={self.width}, height={self.height})"
 
-    def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
+    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['bottom', 'top'] = 'bottom') -> Tuple[float, float, float, float]:
 
         # Initialize the forces in the plate
         P, M, V = 0, 0, 0
@@ -960,30 +964,62 @@ class Pier():
             xi, yi, zi = _global2local(plate.i_node.X, plate.i_node.Y, plate.i_node.Z, self.origin, self.plane)
             xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
 
-            # Determine if this plate is at the bottom of the pier
-            if isclose(yi, self.y):
+            if location == 'bottom':
 
-                # Find and sum the axial forces in this plate
-                Pi = plate.f(combo_name)[1][0]
-                Pj = plate.f(combo_name)[7][0]
-                P += -Pi - Pj
+                # Determine if this plate is at the bottom of the pier
+                if isclose(yi, self.y):
 
-                # Find and sum the moments about the pier's center in this plate
-                xi_p = xi - (self.x + self.width/2)
-                xj_p = xj - (self.x + self.width/2)
-                Mi = plate.f(combo_name)[1][0]*xi_p
-                Mj = plate.f(combo_name)[7][0]*xj_p
-                M += -Mi - Mj
+                    # Find and sum the axial forces in this plate
+                    Pi = plate.f(combo_name)[1][0]
+                    Pj = plate.f(combo_name)[7][0]
+                    P += Pi + Pj
 
-                # Find and sum the shear forces in this plate
-                # Check if this is a flange plate or a web plate
-                if isclose(xi, xj):
-                    Vi = -plate.f(combo_name)[2][0]
-                    Vj = -plate.f(combo_name)[8][0]
-                else:
-                    Vi = -plate.f(combo_name)[0][0]
-                    Vj = -plate.f(combo_name)[6][0]
-                V += -Vi - Vj
+                    # Find and sum the moments about the pier's center in this plate
+                    xi_p = xi - (self.x + self.width/2)
+                    xj_p = xj - (self.x + self.width/2)
+                    Mi = Pi*xi_p
+                    Mj = Pj*xj_p
+                    M += Mi + Mj
+
+                    # Find and sum the shear forces in this plate
+                    # Check if this is a flange plate or a web plate
+                    if isclose(xi, xj):
+                        Vi = -plate.f(combo_name)[2][0]
+                        Vj = -plate.f(combo_name)[8][0]
+                    else:
+                        Vi = -plate.f(combo_name)[0][0]
+                        Vj = -plate.f(combo_name)[6][0]
+                    V += Vi + Vj
+
+            else:
+
+                xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
+                xn, yn, zn = _global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z, self.origin, self.plane)
+
+                # Determine if this plate is at the top of the pier
+                if isclose(ym, self.y + self.height):
+
+                    # Find and sum the axial forces in this plate
+                    Pm = plate.f(combo_name)[13][0]
+                    Pn = plate.f(combo_name)[19][0]
+                    P += -Pm - Pn
+
+                    # Find and sum the moments about the pier's center in this plate
+                    xm_p = xm - (self.x + self.width/2)
+                    xn_p = xn - (self.x + self.width/2)
+                    Mm = Pm*xm_p
+                    Mn = Pn*xn_p
+                    M += -Mm - Mn
+
+                    # Find and sum the shear forces in this plate
+                    # Check if this is a flange plate or a web plate
+                    if isclose(xm, xn):
+                        Vm = -plate.f(combo_name)[14][0]
+                        Vn = -plate.f(combo_name)[20][0]
+                    else:
+                        Vm = -plate.f(combo_name)[12][0]
+                        Vn = -plate.f(combo_name)[18][0]
+                    V += -Vm - Vn
 
         # Calculate the shear span ratio
         M_VL = M/(V*self.width)
@@ -996,6 +1032,7 @@ class Pier():
 class CouplingBeam():
 
     def __init__(self, name: str, x: float, y: float, length: float, height: float, shear_wall: ShearWall) -> None:
+
         self.name: str = name
         self.x: float = x  # The location of the left side of the coupling beam
         self.y: float = y  # The height to the bottom of the coupling beam
@@ -1010,9 +1047,10 @@ class CouplingBeam():
         self.plates: List[Quad3D | Plate3D] = []
 
     def __repr__(self) -> str:
+
         return f"CouplingBeam(name={self.name!r}, length={self.length}, height={self.height})"
 
-    def sum_forces(self, combo_name: str = 'Combo 1') -> Tuple[float, float, float, float]:
+    def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['left', 'right'] = 'left') -> Tuple[float, float, float, float]:
 
         # Initialize plate forces to zero
         P, M, V = 0, 0, 0
@@ -1024,34 +1062,69 @@ class CouplingBeam():
             xj, yj, zj = _global2local(plate.j_node.X, plate.j_node.Y, plate.j_node.Z, self.origin, self.plane)
             xn, yn, zn = _global2local(plate.n_node.X, plate.n_node.Y, plate.n_node.Z, self.origin, self.plane)
 
-            # Determine if this plate is at the left edge of the coupling beam
-            if isclose(xi, self.x):
+            if location == 'left':
 
-                # Check if this is a wall flange plate or a wall web plate
-                if isclose(xi, xj):
+                # Determine if this plate is at the left edge of the coupling beam
+                if isclose(xi, self.x):
 
-                    # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
-                    pass
+                    # Check if this is a wall flange plate or a wall web plate
+                    if isclose(xi, xj):
 
-                else:
+                        # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
+                        pass
 
-                    # Find and sum the axial forces in this plate
-                    Pi = plate.f(combo_name)[0][0]
-                    Pn = plate.f(combo_name)[18][0]
-                    P += -Pi - Pn
+                    else:
 
-                    # Find and sum the moments about the coupling beam's center in this plate
-                    xi_cb = yi - (self.y + self.height/2)
-                    xn_cb = yn - (self.y + self.height/2)
-                    Mi = plate.f(combo_name)[0][0]*xi_cb
-                    Mn = plate.f(combo_name)[18][0]*xn_cb
-                    M += -Mi - Mn
+                        # Find and sum the axial forces in this plate
+                        Pi = plate.f(combo_name)[0][0]
+                        Pn = plate.f(combo_name)[18][0]
+                        P += Pi + Pn
 
-                    # Find and sum the shear forces in this plate
-                    Vi = -plate.f(combo_name)[1][0]
-                    Vn = -plate.f(combo_name)[19][0]
+                        # Find and sum the moments about the coupling beam's center in this plate
+                        yi_cb = yi - (self.y + self.height/2)
+                        yn_cb = yn - (self.y + self.height/2)
+                        Mi = plate.f(combo_name)[0][0]*yi_cb
+                        Mn = plate.f(combo_name)[18][0]*yn_cb
+                        M += -Mi - Mn
 
-                    V += -Vi - Vn
+                        # Find and sum the shear forces in this plate
+                        Vi = -plate.f(combo_name)[1][0]
+                        Vn = -plate.f(combo_name)[19][0]
+
+                        V += -Vi - Vn
+
+            else:
+
+                xm, ym, zm = _global2local(plate.m_node.X, plate.m_node.Y, plate.m_node.Z, self.origin, self.plane)
+
+                # Determine if this plate is at the right edge of the coupling beam
+                if isclose(xj, self.x + self.length):
+
+                    # Check if this is a wall flange plate or a wall web plate
+                    if isclose(xi, xj):
+
+                        # Plates that form wall flanges should not affect coupling beams, so forces will not be summed
+                        pass
+
+                    else:
+
+                        # Find and sum the axial forces in this plate
+                        Pj = plate.f(combo_name)[6][0]
+                        Pm = plate.f(combo_name)[12][0]
+                        P += -Pj - Pm
+
+                        # Find and sum the moments about the coupling beam's center in this plate
+                        yj_cb = yj - (self.y + self.height/2)
+                        ym_cb = ym - (self.y + self.height/2)
+                        Mj = plate.f(combo_name)[6][0]*yj_cb
+                        Mm = plate.f(combo_name)[12][0]*ym_cb
+                        M += Mj + Mm
+
+                        # Find and sum the shear forces in this plate
+                        Vj = -plate.f(combo_name)[7][0]
+                        Vm = -plate.f(combo_name)[13][0]
+
+                        V += Vj + Vm
 
         # Calculate the shear span ratio
         M_VH = M/(V*self.height)

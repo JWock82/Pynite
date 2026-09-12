@@ -87,8 +87,8 @@ def test_shear_walls():
 
 def test_piers_and_coupling_beams():
 
-    # Create a new finite element model
-    model = FEModel3D()
+    # Create a finite element model for a shear wall with a large opening
+    sw_model = FEModel3D()
 
     # Define a material for our shear wall
     fm = 2000/1000*144  # ksf
@@ -96,43 +96,140 @@ def test_piers_and_coupling_beams():
     Gm = 0.4*Em  # ksf
     nu = 0.17
     rho_m = 0.140  # kcf
-    model.add_material('CMU', Em, Gm, nu, rho_m)
-
-    # Create a wall parallel to the 'XY' plane starting at [5, 5, 5]
-    plane = 'YZ'
-    origin = [5, 5, 5]
+    sw_model.add_material('CMU', Em, Gm, nu, rho_m)
 
     # Add a new shear wall to the model
-    model.add_shear_wall('Wall1', mesh_size=1, length=20, height=15, thickness=1, material_name='CMU', ky_mod=1, plane=plane, origin=origin)
+    sw_model.add_shear_wall('Wall1', mesh_size=0.5, length=20, height=15, thickness=1, material_name='CMU', ky_mod=1, plane='XY', origin=[5, 5, 5])
 
     # Add an opening to the wall
-    model.shear_walls['Wall1'].add_opening('Door', x_start=5, y_start=0, width=10, height=10, tie=None)
+    sw_model.shear_walls['Wall1'].add_opening('Garage Door', x_start=3, y_start=0, width=14, height=12, tie=None)
 
     # Add support across the entire base of the wall
-    model.shear_walls['Wall1'].add_support(elevation=0, x_start=0, x_end=20)
+    sw_model.shear_walls['Wall1'].add_support(elevation=0, x_start=0, x_end=20)
 
     # Add a story to the shear wall where loads will be applied
     # Note that `x_start` and `x_end` are optional arguments. If they are omitted, the story's length will default to the full length of the wall. `x_start` and `x_end` can be used to simulate loading from a partial depth diaphragm.
-    model.shear_walls['Wall1'].add_story('Roof', elevation=15, x_start=0, x_end=20)
+    sw_model.shear_walls['Wall1'].add_story('Roof', elevation=15 - 1.5, x_start=0, x_end=20)
 
     # Add a seismic shear force of 100 kips to the roof
-    model.shear_walls['Wall1'].add_shear(story_name='Roof', force=100, case='E')
+    sw_model.shear_walls['Wall1'].add_shear(story_name='Roof', force=100, case='E')
 
     # Add a load combination to the model
-    model.add_load_combo('1.0E', {'E': 1.0}, combo_tags='strength')
+    sw_model.add_load_combo('1.0E', {'E': 1.0}, combo_tags='strength')
 
-    # Analyze the model. Use the linear solver for greater speed
-    model.analyze_linear(log=True, check_statics=True)
+    # Analyze the shear wall model. Use the linear solver for greater speed
+    sw_model.analyze_linear(log=True, check_statics=True)
 
     # model.shear_walls['Wall1'].draw_piers()
 
-    P1, M1, V1, M_VL1 = model.shear_walls['Wall1'].piers['P1'].sum_forces('1.0E')
-    P3, M3, V3, M_VL3 = model.shear_walls['Wall1'].piers['P3'].sum_forces('1.0E')
+    # Obtain the summed forces for the piers and coupling beams in the shear wall
+    P_P1_bot_sw, M_P1_bot_sw, V_P1_bot_sw, MVL_P1_bot_sw = sw_model.shear_walls['Wall1'].piers['P1'].sum_forces('1.0E', 'bottom')
+    P_P1_top_sw, M_P1_top_sw, V_P1_top_sw, MVL_P1_top_sw = sw_model.shear_walls['Wall1'].piers['P1'].sum_forces('1.0E', 'top')
+
+    P_P3_bot_sw, M_P3_bot_sw, V_P3_bot_sw, MVL_P3_bot_sw = sw_model.shear_walls['Wall1'].piers['P3'].sum_forces('1.0E', 'bottom')
+    P_P3_top_sw, M_P3_top_sw, V_P3_top_sw, MVL_P3_top_sw = sw_model.shear_walls['Wall1'].piers['P3'].sum_forces('1.0E', 'top')
+
+    P_B1_L_sw, M_B1_L_sw, V_B1_L_sw, MVH_B1_L_sw = sw_model.shear_walls['Wall1'].coupling_beams['B1'].sum_forces('1.0E', 'left')
+    P_B1_R_sw, M_B1_R_sw, V_B1_R_sw, MVH_B1_R_sw = sw_model.shear_walls['Wall1'].coupling_beams['B1'].sum_forces('1.0E', 'right')
+
+    # Create a beam/column model to represent the shear wall in a simplified manner
+    # This will be used to compare results
+    beam_model = FEModel3D()
+
+    beam_model.add_node('N1', 5+1.5, 0, 0)
+    beam_model.add_node('N2', 5+20-1.5, 0, 0)
+    beam_model.add_node('N3', 5+1.5, 15-1.5, 0)
+    beam_model.add_node('N4', 5+20-1.5, 15-1.5, 0)
+
+    beam_model.def_support('N1', True, True, True, True, True, True)
+    beam_model.def_support('N2', True, True, True, True, True, True)
+
+    beam_model.add_material('CMU', Em, Gm, nu, rho_m)
+    beam_model.add_section('Typ Member', 1*3, 3*1**3/12, 1*3**3/12, 100)
+
+    beam_model.add_member('P1', 'N1', 'N3', 'CMU', 'Typ Member')
+    beam_model.add_member('P3', 'N2', 'N4', 'CMU', 'Typ Member')
+    beam_model.add_member('B1', 'N3', 'N4', 'CMU', 'Typ Member')
+
+    p = 100/(20 - 2*1.5)
+    beam_model.add_member_dist_load('B1', 'FX', p, p, case='E')
+    beam_model.add_load_combo('1.0E', {'E': 1.0}, combo_tags='strength')
+
+    # Analyze the simplified beam model
+    beam_model.analyze()
+
+    # Uncomment to render the shear wall model (for debugging purposes)
+    # from Pynite.Visualization import Renderer
+    # rndr = Renderer(sw_model)
+    # rndr.combo_name = '1.0E'
+    # rndr.render_loads = True
+    # rndr.deformed_shape = True
+    # rndr.deformed_scale = 1000
+    # rndr.color_map = 'Sy'
+    # rndr.render_model()
+
+    # Uncomment to render the simplified beam model (for debugging purposes)
+    # from Pynite.Visualization import Renderer
+    # rndr = Renderer(beam_model)
+    # rndr.combo_name = '1.0E'
+    # rndr.render_loads = True
+    # rndr.member_diagrams = 'Mz'
+    # rndr.render_model()
+
+    # Obtain the summed forces for the members in the simplified beam model
+    P_P1_bot_bm = beam_model.members['P1'].axial(0, '1.0E')
+    M_P1_bot_bm = beam_model.members['P1'].moment('Mz', 0, '1.0E')
+    V_P1_bot_bm = beam_model.members['P1'].shear('Fy', 0, '1.0E')
+
+    P_P1_top_bm = beam_model.members['P1'].axial(12, '1.0E')
+    M_P1_top_bm = beam_model.members['P1'].moment('Mz', 12, '1.0E')
+    V_P1_top_bm = beam_model.members['P1'].shear('Fy', 12, '1.0E')
+
+    P_P3_bot_bm = beam_model.members['P3'].axial(0, '1.0E')
+    M_P3_bot_bm = beam_model.members['P3'].moment('Mz', 0, '1.0E')
+    V_P3_bot_bm = beam_model.members['P3'].shear('Fy', 0, '1.0E')
+
+    P_P3_top_bm = beam_model.members['P3'].axial(12, '1.0E')
+    M_P3_top_bm = beam_model.members['P3'].moment('Mz', 12, '1.0E')
+    V_P3_top_bm = beam_model.members['P3'].shear('Fy', 12, '1.0E')
+
+    P_B1_L_bm = beam_model.members['B1'].axial(1.5, '1.0E')
+    M_B1_L_bm = beam_model.members['B1'].moment('Mz', 1.5, '1.0E')
+    V_B1_L_bm = beam_model.members['B1'].shear('Fy', 1.5, '1.0E')
+
+    P_B1_R_bm = beam_model.members['B1'].axial(20 - 2*1.5, '1.0E')
+    M_B1_R_bm = beam_model.members['B1'].moment('Mz', 20 - 2*1.5, '1.0E')
+    V_B1_R_bm = beam_model.members['B1'].shear('Fy', 20 - 2*1.5, '1.0E')
+
+    # Compare results from the two models.
+    assert abs(P_P1_bot_sw/P_P1_bot_bm - 1.0) < 0.35 and P_P1_bot_sw/P_P1_bot_bm > 0, 'Pier P1 bottom axial force mismatch: ' + str(round(P_P1_bot_sw, 1)) + ' vs ' + str(round(P_P1_bot_bm, 1))
+    assert abs(M_P1_bot_sw/M_P1_bot_bm - 1.0) < 0.35 and M_P1_bot_sw/M_P1_bot_bm > 0, 'Pier P1 bottom moment mismatch: ' + str(round(M_P1_bot_sw, 1)) + ' vs ' + str(round(M_P1_bot_bm, 1))
+    assert abs(V_P1_bot_sw/V_P1_bot_bm - 1.0) < 0.35 and V_P1_bot_sw/V_P1_bot_bm > 0, 'Pier P1 bottom shear mismatch: ' + str(round(V_P1_bot_sw, 1)) + ' vs ' + str(round(V_P1_bot_bm, 1))
+
+    assert abs(P_P1_top_sw/P_P1_top_bm - 1.0) < 0.35 and P_P1_top_sw/P_P1_top_bm > 0, 'Pier P1 top axial force mismatch: ' + str(round(P_P1_top_sw, 1)) + ' vs ' + str(round(P_P1_top_bm, 1))
+    assert abs(M_P1_top_sw/M_P1_top_bm - 1.0) < 0.35 and M_P1_top_sw/M_P1_top_bm > 0, 'Pier P1 top moment mismatch: ' + str(round(M_P1_top_sw, 1)) + ' vs ' + str(round(M_P1_top_bm, 1))
+    assert abs(V_P1_top_sw/V_P1_top_bm - 1.0) < 0.35 and V_P1_top_sw/V_P1_top_bm > 0, 'Pier P1 top shear mismatch: ' + str(round(V_P1_top_sw, 1)) + ' vs ' + str(round(V_P1_top_bm, 1))
+
+    assert abs(P_P3_top_sw/P_P3_top_bm - 1.0) < 0.35 and P_P3_top_sw/P_P3_top_bm > 0, 'Pier P3 top axial force mismatch: ' + str(round(P_P3_top_sw, 1)) + ' vs ' + str(round(P_P3_top_bm, 1))
+    assert abs(M_P3_top_sw/M_P3_top_bm - 1.0) < 0.35 and M_P3_top_sw/M_P3_top_bm > 0, 'Pier P3 top moment mismatch: ' + str(round(M_P3_top_sw, 1)) + ' vs ' + str(round(M_P3_top_bm, 1))
+    assert abs(V_P3_top_sw/V_P3_top_bm - 1.0) < 0.35 and V_P3_top_sw/V_P3_top_bm > 0, 'Pier P3 top shear mismatch: ' + str(round(V_P3_top_sw, 1)) + ' vs ' + str(round(V_P3_top_bm, 1))
+
+    assert abs(P_P3_bot_sw/P_P3_bot_bm - 1.0) < 0.35 and P_P3_bot_sw/P_P3_bot_bm > 0, 'Pier P3 bottom axial force mismatch: ' + str(round(P_P3_bot_sw, 1)) + ' vs ' + str(round(P_P3_bot_bm, 1))
+    assert abs(M_P3_bot_sw/M_P3_bot_bm - 1.0) < 0.35 and M_P3_bot_sw/M_P3_bot_bm > 0, 'Pier P3 bottom moment mismatch: ' + str(round(M_P3_bot_sw, 1)) + ' vs ' + str(round(M_P3_bot_bm, 1))
+    assert abs(V_P3_bot_sw/V_P3_bot_bm - 1.0) < 0.35 and V_P3_bot_sw/V_P3_bot_bm > 0, 'Pier P3 bottom shear mismatch: ' + str(round(V_P3_bot_sw, 1)) + ' vs ' + str(round(V_P3_bot_bm, 1))
+
+    assert abs(P_B1_L_sw/P_B1_L_bm - 1.0) < 0.35 and P_B1_L_sw/P_B1_L_bm > 0, 'Beam B1 left axial force mismatch: ' + str(round(P_B1_L_sw, 1)) + ' vs ' + str(round(P_B1_L_bm, 1))
+    assert abs(M_B1_L_sw/M_B1_L_bm - 1.0) < 0.35 and M_B1_L_sw/M_B1_L_bm > 0, 'Beam B1 left moment mismatch: ' + str(round(M_B1_L_sw, 1)) + ' vs ' + str(round(M_B1_L_bm, 1))
+    assert abs(V_B1_L_sw/V_B1_L_bm - 1.0) < 0.35 and V_B1_L_sw/V_B1_L_bm > 0, 'Beam B1 left shear mismatch: ' + str(round(V_B1_L_sw, 1)) + ' vs ' + str(round(V_B1_L_bm, 1))
+
+    assert abs(P_B1_R_sw/P_B1_R_bm - 1.0) < 0.35 and P_B1_R_sw/P_B1_R_bm > 0, 'Beam B1 right axial force mismatch: ' + str(round(P_B1_R_sw, 1)) + ' vs ' + str(round(P_B1_R_bm, 1))
+    assert abs(M_B1_R_sw/M_B1_R_bm - 1.0) < 0.35 and M_B1_R_sw/M_B1_R_bm > 0, 'Beam B1 right moment mismatch: ' + str(round(M_B1_R_sw, 1)) + ' vs ' + str(round(M_B1_R_bm, 1))
+    assert abs(V_B1_R_sw/V_B1_R_bm - 1.0) < 0.35 and V_B1_R_sw/V_B1_R_bm > 0, 'Beam B1 right shear mismatch: ' + str(round(V_B1_R_sw, 1)) + ' vs ' + str(round(V_B1_R_bm, 1))
 
     # Run a few simple statics checks on the piers
-    assert round(V1, 3) == -50 and round(V3, 3) == -50, 'Failed shear wall pier statics check (sum of shears != 0).'
-    assert round(P1, 3) == -round(P3, 3), 'Failed shear wall pier statics check (sum of axial forces != 0.)'
-    assert round(M1, 3) == round(M3, 3), 'Failed shear wall pier statics check (sum of moments != 0).'
+    assert round(V_P1_bot_sw, 3) == 50 and round(V_P3_bot_sw, 3) == 50, 'Failed shear wall pier statics check (sum of shears != 0).'
+    assert round(P_P1_bot_sw, 3) == -round(P_P3_bot_sw, 3), 'Failed shear wall pier statics check (sum of axial forces != 0.)'
+    assert round(M_P1_bot_sw, 3) == round(M_P3_bot_sw, 3), 'Failed shear wall pier statics check (sum of moments != 0).'
 
 
 def test_shear_wall_piers_only_include_their_own_elements():
@@ -468,5 +565,5 @@ def test_shear_wall_modification_and_regeneration():
 
 if __name__ == '__main__':
     # test_shear_walls()
-    # test_piers_and_coupling_beams()
-    test_shear_wall_modification_and_regeneration()
+    test_piers_and_coupling_beams()
+    # test_shear_wall_modification_and_regeneration()
