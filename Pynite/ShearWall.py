@@ -49,6 +49,11 @@ class ShearWall():
         return f"ShearWall(name={self.name!r}, length={self.L}, height={self.H})"
 
     def asign_material(self, name: str, t: float, x_start: float | None = None, x_end: float | None = None, y_start: float | None = None, y_end: float | None = None) -> None:
+        """Assign a material and thickness to a rectangular wall region.
+
+        Omitted extents default to the full wall. Regenerate the wall, or solve
+        the model, after changing material assignments.
+        """
 
         # Data validation: ensure the extents of the material fall within the wall's envelope
         if x_start is None: x_start = 0
@@ -64,16 +69,27 @@ class ShearWall():
             self.needs_update = True
 
     def add_opening(self, name: str, x_start: float, y_start: float, width: float, height: float, tie: float | None = None) -> None:
-        self._openings.append([name, x_start, y_start, width, height, None])
+        """Add a rectangular opening in the wall's local x-y coordinates.
+
+        ``tie`` is the optional axial rigidity, EA, of a tie spanning the top
+        of the opening. This is useful for modeling collectors between wall piers.
+        """
+        self._openings.append([name, x_start, y_start, width, height, tie])
         if self.is_generated:
             self.needs_update = True
 
     def add_flange(self, thickness: float, width: float, x: float, y_start: float, y_end: float, material: str, side: Literal['+z', '-z']) -> None:
+        """Add a wall return normal to the wall plane at local coordinate ``x``."""
         self._flanges.append([thickness, width, x, y_start, y_end, material, side])
         if self.is_generated:
             self.needs_update = True
 
     def add_support(self, elevation: float | None = None, x_start: float | None = None, x_end: float | None = None) -> None:
+        """Add fixed supports along a horizontal segment of the wall.
+
+        Coordinates are local. Omitted values define support across the wall's
+        full base.
+        """
 
         # Default support settings
         if elevation is None: elevation = 0
@@ -90,6 +106,11 @@ class ShearWall():
             self.needs_update = True
 
     def add_story(self, story_name: str, elevation: float, x_start: float | None = None, x_end: float | None = None) -> None:
+        """Define a diaphragm level where wall shear and axial loads are applied.
+
+        The method also creates a 100-unit stiffness load combination for use
+        with :meth:`stiffness`.
+        """
 
         # Validate input
         if elevation is None: elevation = self.H
@@ -108,11 +129,13 @@ class ShearWall():
         self.add_shear(story_name, 100, case=story_name)
 
     def add_shear(self, story_name: str, force: float, case: str = 'Case 1') -> None:
+        """Apply an in-plane shear force uniformly across a defined story."""
         self._shears.append([story_name, force, case])
         if self.is_generated:
             self.needs_update = True
 
     def add_axial(self, story_name: str, force: float, case: str = 'Case 1') -> None:
+        """Apply a downward axial force uniformly across a defined story."""
         self._axials.append([story_name, force, case])
         if self.is_generated:
             self.needs_update = True
@@ -135,6 +158,10 @@ class ShearWall():
                 del self.model.meshes[flange_name]
 
     def generate(self) -> None:
+        """Generate or regenerate the wall mesh, flanges, supports, and loads.
+
+        The generated wall automatically identifies piers and coupling beams.
+        """
 
         # Remove shear wall elements and nodes from the model if regenerating
         if self.is_generated:
@@ -685,6 +712,11 @@ class ShearWall():
                     beam.plates.append(plate)
 
     def draw_piers(self, show: bool = False) -> None | matplotlib.figure.Figure:
+        """Draw the automatically identified pier layout.
+
+        Set ``show=True`` to display the plot; otherwise the pyplot module is
+        returned for saving or further customization.
+        """
         
         fig, ax = plt.subplots()
 
@@ -704,6 +736,11 @@ class ShearWall():
         else: return plt
 
     def draw_coupling_beams(self, show: bool = False) -> None | matplotlib.figure.Figure:
+        """Draw the automatically identified coupling-beam layout.
+
+        Set ``show=True`` to display the plot; otherwise the pyplot module is
+        returned for saving or further customization.
+        """
         
         fig, ax = plt.subplots()
 
@@ -761,6 +798,7 @@ class ShearWall():
                     self._openings[j], self._openings[j+1] = self._openings[j+1], self._openings[j]
 
     def stiffness(self, story_name: str) -> float:
+        """Return the in-plane stiffness at a story from its 100-unit test load."""
 
         # Validate that the specified story exists in the shear wall
         if not any(story[0] == story_name for story in self._stories):
@@ -802,6 +840,11 @@ class ShearWall():
         return V/(d_max)
 
     def screenshots(self, combo_name: str = 'Combo 1', dir_path: str = './', renderer_backend: Literal['vtk', 'pyvista'] = 'vtk') -> None:
+        """Save shear contours and pier/coupling-beam layout images.
+
+        ``renderer_backend`` may be ``'vtk'`` or ``'pyvista'``. Files are
+        written to ``dir_path``.
+        """
 
         renderer_backend = renderer_backend.lower()
 
@@ -845,8 +888,7 @@ class ShearWall():
         beam_sketch.savefig(os.path.join(dir_path, 'shear_wall_coupling_beams.png'), format='png')
 
     def print_piers(self, combo_name: str = 'Combo 1') -> None:
-        """Tabulates and prints pier results for the shear wall
-        """
+        """Print pier forces at both the bottom and top for a load combination."""
 
         # Create a PrettyTable object
         table = PrettyTable()
@@ -868,8 +910,7 @@ class ShearWall():
         print(table)
 
     def print_coupling_beams(self, combo_name: str = 'Combo 1') -> None:
-        """Tabulates and prints coupling beam results for the shear wall
-        """
+        """Print coupling-beam forces at both the left and right ends."""
 
         # Create a PrettyTable object
         table = PrettyTable()
@@ -954,6 +995,11 @@ class Pier():
         return f"Pier(name={self.name!r}, width={self.width}, height={self.height})"
 
     def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['bottom', 'top'] = 'bottom') -> Tuple[float, float, float, float]:
+        """Return ``(P, M, V, M_over_VL)`` at the pier bottom or top.
+
+        ``location`` defaults to ``'bottom'`` for backward compatibility.
+        The force signs match the internal-result convention used by members.
+        """
 
         # Initialize the forces in the plate
         P, M, V = 0, 0, 0
@@ -1051,6 +1097,11 @@ class CouplingBeam():
         return f"CouplingBeam(name={self.name!r}, length={self.length}, height={self.height})"
 
     def sum_forces(self, combo_name: str = 'Combo 1', location: Literal['left', 'right'] = 'left') -> Tuple[float, float, float, float]:
+        """Return ``(P, M, V, M_over_VH)`` at the beam left or right end.
+
+        ``location`` defaults to ``'left'`` for backward compatibility. The
+        force signs match the internal-result convention used by members.
+        """
 
         # Initialize plate forces to zero
         P, M, V = 0, 0, 0

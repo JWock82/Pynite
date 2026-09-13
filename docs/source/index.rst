@@ -27,6 +27,7 @@ This documentation is just getting started and is a little bare at the moment. K
    member
    plate
    meshes
+   shear_walls
    analysis
    modal
    stability
