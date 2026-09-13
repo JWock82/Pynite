@@ -1,4 +1,3 @@
-from math import isclose
 
 from Pynite.FEModel3D import FEModel3D
 

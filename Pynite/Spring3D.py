@@ -1,9 +1,8 @@
 # %%
 from __future__ import annotations # Allows more recent type hints features
-from numpy import zeros, array, add, subtract, matmul, insert, cross, divide
+from numpy import zeros, array, matmul, cross, divide
 from numpy.linalg import inv
 from math import isclose
-import Pynite.FixedEndReactions
 from Pynite.LoadCombo import LoadCombo
 from typing import TYPE_CHECKING
 

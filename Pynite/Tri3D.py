@@ -1,5 +1,5 @@
 from __future__ import annotations # Allows more recent type hints features
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from numpy import zeros, array, matmul, cross, add, float64
 from numpy.linalg import inv, norm, det

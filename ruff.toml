@@ -1,0 +1,14 @@
+target-version = "py311"
+extend-exclude = [
+    "*.ipynb",
+    ".Archived",
+    "Derivations",
+    "docs",
+    "Resources",
+]
+
+[lint]
+select = [
+    # https://docs.astral.sh/ruff/rules/unused-import/
+    "F401",
+]
