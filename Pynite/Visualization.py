@@ -305,13 +305,17 @@ class Renderer():
         # Return 5% of shortest distance
         return min_distance * 0.05
 
-    def render_model(self, interact=True, reset_camera=True):
+    def render_model(self, interact=True, reset_camera=True, _finalize=True):
         """Render the model in a window.
 
         :param bool interact: If ``False`` suppresses the VTK interactor (useful
             for scripted screenshots). Defaults to ``True``.
         :param bool reset_camera: If ``True`` resets the camera before rendering
             (default ``True``).
+        :param bool _finalize: Internal use only. When ``True`` (default) the
+            render window is finalized once the interactor closes. ``screenshot()``
+            passes ``False`` so it can capture the window's contents first and
+            finalize it itself once that's done.
         :returns: The VTK render window.
         :rtype: vtk.vtkRenderWindow
         """
@@ -356,7 +360,12 @@ class Renderer():
             # Finalize the render window once the user closes out of it. I don't understand everything
             # this does, but I've found screenshots will cause the program to crash if this line is
             # omitted. I have noticed it will shut down the interactor.
-            window.Finalize()
+            #
+            # screenshot() needs to read pixels back out of this window after the interactor closes,
+            # so it defers finalizing (via _finalize=False) until it has done so. Finalizing here
+            # first would hand it a torn-down window to capture from.
+            if _finalize:
+                window.Finalize()
 
         return window
 
@@ -375,8 +384,10 @@ class Renderer():
         :rtype: IPython.display.Image | io.BytesIO | None
         """
 
-        # Render the model in a window and save the window
-        window = self.render_model(interact, reset_camera)
+        # Render the model in a window and save the window. Finalizing is deferred to this
+        # method (see render_model's _finalize parameter) since the window's contents still
+        # need to be captured below.
+        window = self.render_model(interact, reset_camera, _finalize=False)
 
         # Screenshot code
         w2if = vtk.vtkWindowToImageFilter()

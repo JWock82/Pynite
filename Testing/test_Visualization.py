@@ -453,6 +453,56 @@ def test_screenshot_to_file(renderer, tmp_path):
     assert out_file.stat().st_size > 0, "Screenshot file is empty."
 
 
+def test_screenshot_interact_captures_before_finalizing(tmp_path, monkeypatch):
+    """
+    Regression test for #324: ``screenshot(interact=True)`` used to call
+    ``render_model()``, which finalizes the render window as soon as the
+    (simulated) user closes it, and only then captured the window's pixels
+    into ``vtkWindowToImageFilter``. Feeding an already-finalized window to
+    the filter is undefined and raised ``TypeError: SetInput argument 1`` on
+    some VTK builds. The window must be captured before it's finalized.
+    """
+    model = visual_model()
+    rndr = VTKRenderer(model)
+    set_offscreen(rndr)
+    rndr.combo_name = list(model.load_combos.keys())[0]
+
+    # Simulate a user immediately closing the interactive window instead of
+    # blocking on a real event loop.
+    class _NoBlockInteractor(vtk.vtkRenderWindowInteractor):
+        def Start(self):
+            pass
+
+    monkeypatch.setattr(vtk, "vtkRenderWindowInteractor", _NoBlockInteractor)
+
+    events = []
+    real_finalize = rndr.window.Finalize
+
+    def spy_finalize():
+        events.append("finalize")
+        real_finalize()
+
+    monkeypatch.setattr(rndr.window, "Finalize", spy_finalize)
+
+    real_w2if = vtk.vtkWindowToImageFilter
+
+    class _SpyW2IF(real_w2if):
+        def SetInput(self, win):
+            events.append("capture")
+            return real_w2if.SetInput(self, win)
+
+    monkeypatch.setattr(vtk, "vtkWindowToImageFilter", _SpyW2IF)
+
+    out_file = tmp_path / "interact_shot.png"
+    rndr.screenshot(filepath=str(out_file), interact=True)
+
+    assert events.count("finalize") == 1, f"expected exactly 1 finalize, got {events}"
+    assert events.index("capture") < events.index("finalize"), (
+        f"render window was finalized before its contents were captured: {events}"
+    )
+    assert out_file.exists() and out_file.stat().st_size > 0
+
+
 # ============================================================================
 # Manual entry point for running tests in an IDE
 # ============================================================================
