@@ -108,8 +108,6 @@ class TestSection(unittest.TestCase):
 
     def test_section_gradient_calculation(self):
         """Test gradient calculation for base Section class."""
-        section = Section(self.model, 'W8x31', 9.13, 37.1, 110, 0.536)
-        
         # Create a subclass that implements Phi for testing
         class TestSection(Section):
             def Phi(self, fx=0, my=0, mz=0):

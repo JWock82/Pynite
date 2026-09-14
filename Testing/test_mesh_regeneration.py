@@ -74,8 +74,6 @@ def test_mesh_regeneration_with_shared_nodes():
     # Add the external quad with one shared node
     model.add_quad('ExtQuad', shared_node.name, n2, n3, n4, 0.25, 'Steel')
     
-    initial_nodes = set(model.nodes.keys())
-    
     # Regenerate the mesh
     mesh.generate()
     

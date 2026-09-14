@@ -101,13 +101,6 @@ def test_PCA_7_quad():
     # Max/min moment and max hoop tension as determined by PCA.
     My_max_PCA = 14804/1.3/1.7
     My_min_PCA = -3756/1.3/1.7
-    Sx_PCA = 55945/1.3/1.7
-
-    # From Timoshenko Section 117 (p. 485)
-    # The Timoshenko solution yields similar results to the PCA solution, but with a slightly larger margin of error
-    beta = (3*(1 - nu**2)/(R**2*t**2))**0.25  # Equation 275
-    My_max_Tim = (1 - 1/(beta*H))*w*R*H*t/(12*(1 - nu**2))**0.5
-    Qy_max_Tim = -(w*R*H*t)/(12*(1 - nu**2))**0.5*(2*beta - 1/H)
 
     # Find the max/min moments at the top of any element
     My_min = -max([element.moment(0, 1)[1, 0] for element in tank_model.quads.values()])
@@ -190,13 +183,6 @@ def test_PCA_7_rect():
     # Max/min moment and max hoop tension as determined by PCA.
     My_max_PCA = 14804/1.3/1.7
     My_min_PCA = -3756/1.3/1.7
-    Sx_PCA = 55945/1.3/1.7
-
-    # From Timoshenko Section 117 (p. 485)
-    # The Timoshenko solution yields similar results to the PCA solution
-    beta = (3*(1 - nu**2)/(R**2*t**2))**0.25  # Equation 275
-    My_max_Tim = (1 - 1/(beta*H))*w*R*H*t/(12*(1 - nu**2))**0.5
-    Qy_max_Tim = -(w*R*H*t)/(12*(1 - nu**2))**0.5*(2*beta - 1/H)
 
     My_max = tank_model.meshes['MSH1'].max_moment('My')
     My_min = tank_model.meshes['MSH1'].min_moment('My')
