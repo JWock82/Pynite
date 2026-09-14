@@ -105,7 +105,6 @@ class TestAnalysisRegeneration(unittest.TestCase):
         mat.generate()
         
         initial_element_count = len(mat.elements)
-        initial_node_count = len(mat.nodes)
         
         # Add an opening - sets needs_update to True
         mat.add_rect_opening('O1', 5, 5, 10, 10)
