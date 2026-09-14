@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Regression tests for the HTML reporting module (Pynite.Reporting).
 

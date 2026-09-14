@@ -40,7 +40,7 @@ uv run --locked pytest
 
 ## Linting
 
-Linting is handled by [ruff](https://docs.astral.sh/ruff/), with hooks managed by [prek](https://github.com/j178/prek). The rules live in `ruff.toml`, and currently only check for unused imports (F401).
+Linting is handled by [ruff](https://docs.astral.sh/ruff/), with hooks managed by [prek](https://github.com/j178/prek). The rules live in `ruff.toml`.
 
 Install prek outside the project environment, so that git GUI clients can run the hooks without activating a virtualenv:
 
