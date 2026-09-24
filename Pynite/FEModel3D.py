@@ -1419,6 +1419,11 @@ class FEModel3D:
         else:
             end = x2
 
+        # Validate that the load has a strictly positive length. A zero-length
+        # distributed load divides by zero during member segmentation.
+        if end <= start:
+            raise ValueError(f"x2 must be greater than x1. x1={start}, x2={end} was given.")
+
         # Add the distributed load to the member
         try:
             self.members[member_name].DistLoads.append((direction, w1, w2, start, end, case, self_weight))
