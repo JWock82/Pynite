@@ -5,7 +5,6 @@
 from Pynite import FEModel3D
 
 # Import 'Visualization' for rendering the model
-from Pynite import Visualization
 
 # Create a new finite element model
 simple_beam = FEModel3D()

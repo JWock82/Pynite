@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Pynite.FEModel3D import FEModel3D
 
-class Material():
+class Material:
     """
     A class representing a material assigned to a Member3D, Plate or Quad in a finite element model.
 

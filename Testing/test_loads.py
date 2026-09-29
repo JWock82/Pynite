@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 MIT License
 
@@ -6,7 +5,7 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
-from Pynite import FEModel3D, Section
+from Pynite import FEModel3D
 import sys
 from io import StringIO
 
@@ -109,6 +108,32 @@ class TestLoads(unittest.TestCase):
             with self.subTest(node=node_name):
                 rxn = Beam.nodes[node_name].RxnFX['Combo 1']
                 self.assertAlmostEqual(rxn/-25.0, 1.0, 2)
+
+    def test_dist_load_zero_length_rejected(self):
+        '''
+        Tests that a ValueError is raised when a distributed load's start and
+        end locations coincide, since this would divide by zero during
+        member segmentation.
+        '''
+        model = FEModel3D()
+        model.add_node('N1', 0, 0, 0)
+        model.add_node('N2', 10, 0, 0)
+        model.add_material('Steel', 29000*144, 11200*144, 0.3, 0.490)
+        model.add_section('Section', 10/12**2, 23.3/12**4, 340/12**4, 0.569/12**4)
+        model.add_member('M1', 'N1', 'N2', 'Steel', 'Section')
+
+        with self.assertRaises(ValueError):
+            model.add_member_dist_load('M1', 'Fy', -1.0, -2.0, x1=5.0, x2=5.0)
+
+        # A load with a reversed interval should also be rejected
+        with self.assertRaises(ValueError):
+            model.add_member_dist_load('M1', 'Fy', -1.0, -2.0, x1=6.0, x2=5.0)
+
+        # A valid load should still be accepted
+        try:
+            model.add_member_dist_load('M1', 'Fy', -1.0, -2.0, x1=2.0, x2=8.0)
+        except ValueError:
+            self.fail("add_member_dist_load raised ValueError unexpectedly for a valid interval.")
 
     def test_load_cases_include_shear_wall_helper_loads(self):
 

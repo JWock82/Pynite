@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 MIT License
 
@@ -12,7 +11,6 @@ Example 13.14
 
 import unittest
 from Pynite import FEModel3D
-import math
 import sys
 from io import StringIO
 

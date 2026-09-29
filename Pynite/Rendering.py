@@ -6,11 +6,10 @@ Docstrings follow reStructuredText field-list format for Sphinx autodoc.
 """
 
 from __future__ import annotations # Allows more recent type hints features
-from json import load
 import warnings
-from typing import TYPE_CHECKING, Callable, List, Any, Optional, Union, Tuple
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 
-from IPython.display import Image
 import numpy as np
 import pyvista as pv
 import math
@@ -21,7 +20,6 @@ warnings.filterwarnings('ignore', message='.*Points is not a float type.*')
 
 # For type checking only - these imports are only used during type checking
 if TYPE_CHECKING:
-    from typing import List, Union, Tuple, Optional
     from Pynite.Node3D import Node3D
     from Pynite.Member3D import Member3D
     from Pynite.Spring3D import Spring3D
@@ -42,7 +40,7 @@ class Renderer:
     plates, quads) with deformed shapes, loads, contours, and diagrams.
     """
 
-    scalar: Optional[str] = None
+    scalar: str | None = None
 
     def __init__(self, model: FEModel3D) -> None:
         """Initialize the renderer with a finite element model.
@@ -52,20 +50,20 @@ class Renderer:
         self.model: FEModel3D = model
 
         # Default settings for rendering
-        self._annotation_size: Optional[float] = None  # None means auto-calculate
+        self._annotation_size: float | None = None  # None means auto-calculate
         self._annotation_size_manual: bool = False  # Track if user manually set the size
-        self._annotation_size_cached: Optional[float] = None  # Cache to avoid recalculating 2600+ times per render
+        self._annotation_size_cached: float | None = None  # Cache to avoid recalculating 2600+ times per render
         self._deformed_shape: bool = False
         self._deformed_scale: float = 30.0
         self._render_nodes: bool = True
         self._render_loads: bool = True
-        self._color_map: Optional[str] = None
-        self._combo_name: Optional[str] = 'Combo 1'
-        self._case: Optional[str] = None
+        self._color_map: str | None = None
+        self._combo_name: str | None = 'Combo 1'
+        self._case: str | None = None
         self._labels: bool = True
         self._scalar_bar: bool = False
         self._scalar_bar_text_size: int = 24
-        self._member_diagrams: Optional[str] = None  # Options: None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
+        self._member_diagrams: str | None = None  # Options: None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx'
         self._diagram_scale: float = 30.0
         self._member_csys: bool = False
         self.theme: str = 'default'
@@ -74,7 +72,7 @@ class Renderer:
         # This is added because `self.update()` clears the plotter, removing user self.plotter configurations.
         # Functions in this list run after Pynite adds actors, allowing further PyVista customizations
         # (e.g., grid, axes) before render. Each func in this list must accept a `pyvista.Plotter` argument.
-        self.post_update_callbacks: List[Callable[[pv.Plotter], None]] = []
+        self.post_update_callbacks: list[Callable[[pv.Plotter], None]] = []
 
         # Create plotter with off_screen mode if pyvista is set globally to OFF_SCREEN
         # This is important for headless CI/testing environments
@@ -99,12 +97,12 @@ class Renderer:
         self.plotter.iren.add_observer('ExitEvent', lambda obj, event: obj.TerminateApp())
 
         # Initialize load labels
-        self._load_label_points: List[List[float]] = []
-        self._load_labels: List[Union[str, float, int]] = []
+        self._load_label_points: list[list[float]] = []
+        self._load_labels: list[str | float | int] = []
 
         # Initialize spring labels
-        self._spring_label_points: List[List[float]] = []
-        self._spring_labels: List[str] = []
+        self._spring_label_points: list[list[float]] = []
+        self._spring_labels: list[str] = []
 
     def __repr__(self) -> str:
         return f"Renderer(model={self.model!r})"
@@ -179,28 +177,28 @@ class Renderer:
         self._render_loads = render_loads
 
     @property
-    def color_map(self) -> Optional[str]:
+    def color_map(self) -> str | None:
         return self._color_map
 
     @color_map.setter
-    def color_map(self, color_map: Optional[str]) -> None:
+    def color_map(self, color_map: str | None) -> None:
         self._color_map = color_map
 
     @property
-    def combo_name(self) -> Optional[str]:
+    def combo_name(self) -> str | None:
         return self._combo_name
 
     @combo_name.setter
-    def combo_name(self, combo_name: Optional[str]) -> None:
+    def combo_name(self, combo_name: str | None) -> None:
         self._combo_name = combo_name
         self._case = None
 
     @property
-    def case(self) -> Optional[str]:
+    def case(self) -> str | None:
         return self._case
 
     @case.setter
-    def case(self, case: Optional[str]) -> None:
+    def case(self, case: str | None) -> None:
         self._case = case
         self._combo_name = None
 
@@ -229,7 +227,7 @@ class Renderer:
         self._scalar_bar_text_size = text_size
 
     @property
-    def member_diagrams(self) -> Optional[str]:
+    def member_diagrams(self) -> str | None:
         """Member diagram type to display.
 
         Options: ``None``, ``'Fy'``, ``'Fz'``, ``'My'``, ``'Mz'``, ``'Fx'``, ``'Tx'``.
@@ -237,7 +235,7 @@ class Renderer:
         return self._member_diagrams
 
     @member_diagrams.setter
-    def member_diagrams(self, diagram_type: Optional[str]) -> None:
+    def member_diagrams(self, diagram_type: str | None) -> None:
         valid_options = [None, 'Fy', 'Fz', 'My', 'Mz', 'Fx', 'Tx']
         if diagram_type not in valid_options:
             raise ValueError(f"member_diagrams must be one of {valid_options}, got '{diagram_type}'")
@@ -451,9 +449,9 @@ class Renderer:
 
         # Build visual helper objects. These classes encapsulate geometry and label bookkeeping
         # so that the renderer logic stays readable while still leveraging PyVista efficiently.
-        vis_nodes: List[VisNode] = []
-        vis_springs: List[VisSpring] = []
-        vis_members: List[VisMember] = []
+        vis_nodes: list[VisNode] = []
+        vis_springs: list[VisSpring] = []
+        vis_members: list[VisMember] = []
 
         if self.render_nodes:
             node_color = 'black' if self.theme == 'print' else 'grey'
@@ -826,7 +824,7 @@ class Renderer:
         self._spring_label_points.append([(Xi + Xj) / 2, (Yi + Yj) / 2, (Zi + Zj) / 2])
 
 
-    def plot_plates(self, deformed_shape: bool, deformed_scale: float, color_map: Optional[str], combo_name: Optional[str]) -> None:
+    def plot_plates(self, deformed_shape: bool, deformed_scale: float, color_map: str | None, combo_name: str | None) -> None:
         """Add plate/quad elements to the plotter with optional contours.
 
         :param bool deformed_shape: Plot deformed geometry if ``True``.
@@ -999,8 +997,8 @@ class Renderer:
                 line = pv.Line(D_plot[i], D_plot[i+1])
                 self.plotter.add_mesh(line, color='red', line_width=2)
 
-    def plot_pt_load(self, position: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray],
-                    length: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
+    def plot_pt_load(self, position: tuple[float, float, float], direction: tuple[float, float, float] | np.ndarray,
+                    length: float, label_text: str | float | int | None = None, color: str = 'green') -> None:
         """Add a point-load arrow to the plotter.
 
         :param tuple position: Arrow tip coordinates ``(X, Y, Z)``.
@@ -1045,9 +1043,9 @@ class Renderer:
         # Plot the shaft
         self.plotter.add_mesh(shaft, line_width=2, color=color)
 
-    def plot_dist_load(self, position1: Tuple[float, float, float], position2: Tuple[float, float, float],
-                      direction: Union[np.ndarray, Tuple[float, float, float]], length1: float, length2: float,
-                      label_text1: Optional[Union[str, float, int]], label_text2: Optional[Union[str, float, int]],
+    def plot_dist_load(self, position1: tuple[float, float, float], position2: tuple[float, float, float],
+                      direction: np.ndarray | tuple[float, float, float], length1: float, length2: float,
+                      label_text1: str | float | int | None, label_text2: str | float | int | None,
                       color: str = 'green') -> None:
         """Add a linearly varying distributed load to the plotter.
 
@@ -1109,8 +1107,8 @@ class Renderer:
         # Combine all geometry into a single PolyData object
         self.plotter.add_mesh(tail_line, color=color)
 
-    def plot_moment(self, center: Tuple[float, float, float], direction: Union[Tuple[float, float, float], np.ndarray],
-                    radius: float, label_text: Optional[Union[str, float, int]] = None, color: str = 'green') -> None:
+    def plot_moment(self, center: tuple[float, float, float], direction: tuple[float, float, float] | np.ndarray,
+                    radius: float, label_text: str | float | int | None = None, color: str = 'green') -> None:
         """Add a concentrated moment to the plotter.
 
         :param tuple center: Center point of the moment arc.
@@ -1772,7 +1770,7 @@ class VisNode:
     Encapsulates construction of node and support-condition glyphs for the plotter.
     """
 
-    def __init__(self, node: 'Node3D', annotation_size: float, color: str) -> None:
+    def __init__(self, node: Node3D, annotation_size: float, color: str) -> None:
         """Build visual elements for a node.
 
         :param Node3D node: Node to visualize.
@@ -1784,7 +1782,7 @@ class VisNode:
         self.color = color
         self.label = node.name
         self.label_point = [node.X, node.Y, node.Z]
-        self.meshes: List[pv.PolyData] = []
+        self.meshes: list[pv.PolyData] = []
         self._build_geometry()
 
     def _build_geometry(self) -> None:
@@ -1852,7 +1850,7 @@ class VisNode:
 class VisSpring:
     """Visual wrapper for a Spring3D with optional deformed rendering."""
 
-    def __init__(self, spring: 'Spring3D', annotation_size: float, color: str, deformed: bool, scale: float, combo_name: Optional[str]) -> None:
+    def __init__(self, spring: Spring3D, annotation_size: float, color: str, deformed: bool, scale: float, combo_name: str | None) -> None:
         """Build visual elements for a spring.
 
         :param Spring3D spring: Spring to visualize.
@@ -1868,9 +1866,9 @@ class VisSpring:
         self.deformed = deformed
         self.scale = scale
         self.combo_name = combo_name
-        self.mesh: Optional[pv.PolyData] = None
+        self.mesh: pv.PolyData | None = None
         self.label = spring.name
-        self.label_point: Optional[List[float]] = None
+        self.label_point: list[float] | None = None
         self._build_geometry()
 
     def _build_geometry(self) -> None:
@@ -1942,7 +1940,7 @@ class VisSpring:
 class VisMember:
     """Visual wrapper for a Member3D as a simple line."""
 
-    def __init__(self, member: 'Member3D', theme: str, annotation_size: float) -> None:
+    def __init__(self, member: Member3D, theme: str, annotation_size: float) -> None:
         """Build visual elements for a member.
 
         :param Member3D member: Member to visualize.
@@ -1953,7 +1951,7 @@ class VisMember:
         self.theme = theme
         self.annotation_size = annotation_size
         self.mesh: pv.PolyData = self._build_geometry()
-        self.release_meshes: List[pv.PolyData] = self._build_release_meshes()
+        self.release_meshes: list[pv.PolyData] = self._build_release_meshes()
         self.label = member.name
         self.label_point = [(member.i_node.X + member.j_node.X) / 2,
                             (member.i_node.Y + member.j_node.Y) / 2,
@@ -1965,7 +1963,7 @@ class VisMember:
         line.points[1] = [self.member.j_node.X, self.member.j_node.Y, self.member.j_node.Z]
         return line
 
-    def _build_release_meshes(self) -> List[pv.PolyData]:
+    def _build_release_meshes(self) -> list[pv.PolyData]:
         releases = self.member.Releases
         if not releases:
             return []
@@ -1997,7 +1995,7 @@ class VisMember:
         i_point = np.array([self.member.i_node.X, self.member.i_node.Y, self.member.i_node.Z])
         j_point = np.array([self.member.j_node.X, self.member.j_node.Y, self.member.j_node.Z])
 
-        release_meshes: List[pv.PolyData] = []
+        release_meshes: list[pv.PolyData] = []
 
         def add_circle(center: np.ndarray, axis1: np.ndarray, axis2: np.ndarray) -> None:
             angles = np.linspace(0.0, 2 * np.pi, num_segments, endpoint=False)
@@ -2036,7 +2034,7 @@ class VisMember:
 class VisDeformedMember:
     """Visual wrapper for a deformed Member3D polyline."""
 
-    def __init__(self, member: 'Member3D', scale_factor: float, combo_name: Optional[str]) -> None:
+    def __init__(self, member: Member3D, scale_factor: float, combo_name: str | None) -> None:
         """Build a deformed member polyline.
 
         :param Member3D member: Member to visualize in deformed state.
@@ -2046,7 +2044,7 @@ class VisDeformedMember:
         self.member = member
         self.scale_factor = scale_factor
         self.combo_name = combo_name
-        self.mesh: Optional[pv.PolyData] = None
+        self.mesh: pv.PolyData | None = None
         self._build_geometry()
 
     def _build_geometry(self) -> None:

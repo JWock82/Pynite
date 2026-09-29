@@ -1,5 +1,4 @@
 from Pynite import FEModel3D
-from Pynite.Rendering import Renderer
 from math import isclose
 
 

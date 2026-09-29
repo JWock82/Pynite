@@ -10,7 +10,7 @@ from numpy import array, arccos, dot, cross, matmul, add, zeros
 from numpy.linalg import inv, det, norm
 from math import sin, cos
 
-class MITC4():
+class MITC4:
     """
     An isoparametric general quadrilateral element, formulated by superimposing an isoparametric
     MITC4 bending element with an isoparametric plane stress element. Drilling stability is
