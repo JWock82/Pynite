@@ -253,6 +253,24 @@ def test_annotation_size_manual_override():
     assert rndr.annotation_size == 12.0
 
 
+def test_vtk_member_csys_uses_annotation_scale():
+    m = simple_member_model()
+    renderer = vtk.vtkRenderer()
+
+    VTKVis._RenderMemberCsys(m, renderer, theme="default", annotation_size=2)
+
+    actors = renderer.GetActors()
+    assert actors.GetNumberOfItems() == 3
+
+    actors.InitTraversal()
+    first_actor = actors.GetNextActor()
+    bounds = first_actor.GetBounds()
+
+    # Local coordinate axes should be 3x the annotation size, so this arrow
+    # should be about 6 model units long, not the old hard-coded 0.3 units.
+    assert bounds[1] - bounds[0] > 5
+
+
 def test_case_combo_mutual_exclusion():
     m = minimal_model([("N1", 0, 0, 0), ("N2", 10, 0, 0)])
     rndr = VTKRenderer(m)

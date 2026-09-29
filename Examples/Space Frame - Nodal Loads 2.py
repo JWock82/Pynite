@@ -4,7 +4,7 @@
 # Units for this model are kips and inches
 
 # Import 'FEModel3D' and 'Visualization' from 'Pynite'
-from Pynite import FEModel3D
+from Pynite.FEModel3D import FEModel3D
 from Pynite.Visualization import Renderer
 
 # Create a new model
@@ -55,4 +55,5 @@ rndr.render_loads = True
 rndr.deformed_shape = True
 rndr.deformed_scale = 40
 rndr.render_loads = True
+rndr.member_csys = True
 rndr.render_model()
