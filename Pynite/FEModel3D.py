@@ -2785,7 +2785,7 @@ class FEModel3D():
             # Define the pushover load step and initialize the pushover load factor
             load_step = list(self.load_combos[push_combo].factors.values())[0]
             step_num = 1
-            load_factor = load_step*step_num
+            load_factor = 0.0
 
             # Get the partitioned global fixed end reaction vector for one pushover increment.
             # The pushover combo factor already defines the increment size.
@@ -2814,17 +2814,30 @@ class FEModel3D():
             }
 
             # Apply the pushover load in steps, summing deformations as we go, until the full pushover load has been analyzed
-            while round(load_factor, 8) <= 1.0:
+            while round(load_factor, 8) < 1.0:
 
                 # Inform the user which pushover load step we're on
                 if log:
                     print('- Beginning pushover load step #' + str(step_num))
                     print(f'- Load_factor = {load_factor}')
 
-                # Run the next pushover load step
-                # Note: The validity of the pushover step is checked and handled within the _pushover_step method
-                Analysis._pushover_step(self, combo.name, push_combo, step_num, P1_push, FER1_push, FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol, P_Delta, max_iter)
+                cumulative_fraction = 0.0
+                while True:
 
+                    # Run the next pushover load step
+                    # Note: The validity of the pushover step is checked and handled within the _pushover_step method
+                    accepted_fraction = Analysis._pushover_step(self, combo.name, push_combo, step_num, (1-cumulative_fraction)*P1_push, (1-cumulative_fraction)*FER1_push, (1-cumulative_fraction)*FER2_push, D1_indices, D2_indices, D2, log, sparse, check_stability, tol, P_Delta, max_iter)
+
+                    # Determine how much of the load step has been applied so far
+                    cumulative_fraction += (1-cumulative_fraction)*accepted_fraction
+
+                    # Loop until a full load increment has been successfully applied
+                    if round(cumulative_fraction, 4) == 1.0:
+                        break
+
+                # Increment the load factor for the next pushover step
+                load_factor += load_step
+                
                 control_displacement = None
                 if control_node is not None:
                     node = self.nodes[control_node]
@@ -2860,9 +2873,8 @@ class FEModel3D():
 
                     break
 
-                # Move on to the next load step
+                # Move on to the next accepted pushover increment.
                 step_num += 1
-                load_factor += load_step
 
             if self._pushover_state[combo.name]['status'] == 'running':
                 self._pushover_state[combo.name].update({

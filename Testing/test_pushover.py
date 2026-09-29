@@ -5,7 +5,9 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
+from Pynite.Analysis import _load_step_ratio  # noqa: E402
 from Pynite.FEModel3D import FEModel3D  # noqa: E402
+from Pynite.Section import SteelSection  # noqa: E402
 
 
 def test_plastic_beam():
@@ -198,6 +200,38 @@ def test_moment_frame_pushover_example():
 
     # 4) Check final displacement at end of the trace.
     assert 5.0 < drift_trace[-1] < 6.0
+
+
+def test_load_step_ratio_detects_yield_overshoot():
+    """A step that starts below yield but crosses the surface should cut back before it is accepted."""
+
+    class DummySubMember:
+        def __init__(self, section, force, delta_force):
+            self.name = 'M1a'
+            self.section = section
+            self.f_nonlin = {'Primary': np.zeros((12, 1), dtype=float)}
+            self.df_nonlin = {'Primary': np.zeros((12, 1), dtype=float)}
+            self.f_nonlin['Primary'][0, 0] = force
+            self.df_nonlin['Primary'][0, 0] = delta_force
+
+    class DummyMember:
+        def __init__(self, sub_member):
+            self.sub_members = {'M1a': sub_member}
+
+    model = FEModel3D()
+    model.add_material('Steel', 29000, 11200, 0.3, 0.490/12**3, 50)
+    section = SteelSection(model, 'S1', 10.0, 200.0, 300.0, 1.0, 100.0, 150.0, 'Steel')
+
+    Py = section.material.fy * section.A
+    force = 0.5 * Py
+    delta_force = 0.75 * Py
+    model.members = {'M1': DummyMember(DummySubMember(section, force, delta_force))}
+
+    tau = _load_step_ratio(model, 'Primary')
+
+    assert 0.0 < tau < 1.0
+    assert 0.60 < tau < 0.75
+
 
 if __name__ == '__main__':
 

@@ -61,9 +61,9 @@ frame.def_support('b', False, False, True, False, False, False)  # Out-of-plane 
 frame.def_support('d', False, False, True, False, False, False)  # Out-of-plane support at node b
 
 # Define the final pushover load pattern
-frame.add_node_load('b', 'FX', 0.99*6, 'Push')    # 6 kips of horizontal load at node b
-frame.add_node_load('c', 'FY', 0.99*-60, 'Push')  # 60 kips of vertical load at node c
-frame.add_node_load('d', 'FY', 0.99*-120, 'Push') # 120 kips of vertical load at node d
+frame.add_node_load('b', 'FX', 0.88*6, 'Push')    # 6 kips of horizontal load at node b
+frame.add_node_load('c', 'FY', 0.88*-60, 'Push')  # 60 kips of vertical load at node c
+frame.add_node_load('d', 'FY', 0.88*-120, 'Push') # 120 kips of vertical load at node d
 
 # Define load combinations
 # At least one primary elastic combo is required for pushover analysis to have a base case to apply pushover loads to. In this case, the Primary combo has no loads in it, so the pushover loads will be applied to an initially unloaded structure.
@@ -88,7 +88,7 @@ traces = {
 }
 
 # Analyze the model
-frame.analyze_pushover(log=True, push_combo='Pushover', traces=traces)
+frame.analyze_pushover(log=True, push_combo='Pushover', traces=traces, P_Delta=True)
 
 from Pynite.Visualization import Renderer
 rndr = Renderer(frame)

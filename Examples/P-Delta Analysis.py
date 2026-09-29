@@ -49,6 +49,7 @@ renderer.render_model()
 # The moment at the base of the column
 calculated_moment = cantilever.nodes['N1'].RxnMZ['Combo 1']
 calculated_moment2 = cantilever.members['M1'].plot_moment('Mz', 'Combo 1', 100)
+calculated_axial = cantilever.members['M1'].plot_axial('Combo 1', 100)
 
 # The deflection at the top of the column
 calculated_displacement = cantilever.nodes['N6'].DX['Combo 1']*12

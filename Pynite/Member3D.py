@@ -78,8 +78,8 @@ class Member3D():
 
         # Nonlinear local end-force history by load combo.
         # DOF order: [fxi, fyi, fzi, mxi, myi, mzi, fxj, fyj, fzj, mxj, myj, mzj]
-        self.f_nonlin: dict = {}
-        self.df_nonlin: dict = {}  # Variable used to track the change in the local end force vector for nonlinear load steps
+        self.f_nonlin: dict = {}   # Variable used to track the total local end force vector from the end of the previous nonlinear load step
+        self.df_nonlin: dict = {}  # Variable used to track the change in the local end force vector for the current nonlinear load step
 
         # Variable used to track plastic load reveral
         self.i_reversal: bool = False
@@ -274,7 +274,7 @@ class Member3D():
         :rtype: NDArray[float64]
         """
 
-        # List the degrees of freedom associated with axial and bending stiffnesses
+        # List the degrees of freedom associated with  and bending stiffnesses
         # dofs = [0, 3, 4, 6, 9, 10]
 
         # Get the elastic local stiffness matrix (for only axial and bending)
