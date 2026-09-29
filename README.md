@@ -58,7 +58,16 @@ Whether you just need help getting started with Pynite, or are looking to build 
 * If you're looking for more direct guidance on using Pynite, or for help coding a project, I am available on a private consulting basis. You can reach out to me directly at Building.Code@outlook.com to discuss options.
 
 # Sponsors
-* A special thanks to @edson-gusmoes for sponsoring `Pynite`!
+Pynite is downloaded hundreds of thousands of times a month. If your company relies on Pynite in production, or if it's saved you time on a project, please consider sponsoring its continued development through [GitHub Sponsors](https://github.com/sponsors/JWock82). Sponsorships directly fund the time spent fixing bugs, reviewing pull requests, and building new features.
+
+<p>
+  <a href="https://github.com/edson-gusmoes"><img src="https://github.com/edson-gusmoes.png" width="64" height="64" alt="@edson-gusmoes" title="@edson-gusmoes" style="border-radius:50%"/></a>
+</p>
+
+A special thanks to our sponsors:
+* [@edson-gusmoes](https://github.com/edson-gusmoes)
+
+Want your name (or your company's) featured here? [Become a sponsor](https://github.com/sponsors/JWock82) and open a pull request adding yourself to this list!
 
 # Example Projects
 Here's a list of projects that use Pynite:
