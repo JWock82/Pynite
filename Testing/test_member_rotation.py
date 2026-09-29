@@ -44,7 +44,7 @@ def test_beam_rotation():
 
     rndr = Renderer(beam)
     rndr.member_csys = True
-    rndr.render_model()
+    rndr.render_model(interact=False)
 
 
 def test_column_rotation():
