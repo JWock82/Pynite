@@ -1004,9 +1004,12 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
         tension-only member is active but has a maximum axial force greater than the
         `member_tolerance` (indicating compression), or if a compression-only member is active
         but has a minimum axial force less than `-member_tolerance` (indicating tension),
-        that physical member and all its sub-members are deactivated. This action
-        flags the analysis as not converged. A future enhancement is noted to allow elements to
-        reactivate if deformations indicate they should return to an active state.
+        that physical member and all its sub-members are deactivated. Conversely, an
+        inactive tension-only member whose end nodes have moved apart, or an inactive
+        compression-only member whose end nodes have moved closer, is reactivated with its
+        sub-members, since it would carry a force it is able to carry. Either change flags the
+        analysis as not converged. Tension-only and compression-only springs are treated the
+        same way.
     *   **Sub-member Reset**: After checking, the `_solved_combo` flag for all sub-members is
         reset to `None`. This ensures that they will be resegmented and re-evaluated in subsequent
         iterations of the analysis, allowing for further changes as needed for convergence.
@@ -1058,7 +1061,9 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
                     spring[2] = should_be_active
                     convergence = False
 
-    # TODO: Adjust the code below to allow elements to reactivate on subsequent iterations if deformations at element nodes indicate the member goes back into an active state. This will lead to a less conservative and more realistic analysis. Nodal springs (above) already do this.
+    # Members and springs deactivated on an earlier iteration are reactivated below when the
+    # displacements of their end nodes show that they would carry the kind of force they can
+    # (see `_axial_elongation`). Nodal springs (above) already do this.
 
     # Check tension/compression-only springs
     if log:
@@ -1080,6 +1085,19 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
                 if log:
                     print(f'- Deactivating spring {spring.name}')
                 spring.active[combo_name] = False
+                convergence = False
+
+        # Check if an inactive spring has to be reactivated: the force it would carry if it were
+        # active, from the relative displacement of its end nodes, is of the kind it can resist
+        elif spring.tension_only == True or spring.comp_only == True:
+
+            # Axial force the spring would carry if active (tension positive)
+            N = spring.ks*_axial_elongation(spring, combo_name)
+
+            if (spring.tension_only == True and N > spring_tolerance) or                (spring.comp_only == True and N < -spring_tolerance):
+                if log:
+                    print(f'- Reactivating spring {spring.name}')
+                spring.active[combo_name] = True
                 convergence = False
 
     # Check tension/compression only members
@@ -1120,12 +1138,63 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
                 # Flag the analysis as not converged
                 convergence = False
 
+        # Check if an inactive member has to be reactivated: a tension-only member whose end
+        # nodes have moved apart, or a compression-only member whose end nodes have moved
+        # closer, would carry the force it is able to carry, so it can't be left out
+        elif phys_member.tension_only == True or phys_member.comp_only == True:
+
+            # Axial force the member would carry if active (tension positive)
+            N = phys_member.section.A*phys_member.material.E/phys_member.L()*_axial_elongation(phys_member, combo_name)
+
+            if (phys_member.tension_only == True and N > member_tolerance) or                (phys_member.comp_only == True and N < -member_tolerance):
+
+                # Reactivate the physical member
+                if log:
+                    print(f'- Reactivating member {phys_member.name}')
+                phys_member.active[combo_name] = True
+
+                # Reactivate all the sub-members
+                for sub_member in phys_member.sub_members.values():
+                    sub_member.active[combo_name] = True
+
+                # Flag the analysis as not converged
+                convergence = False
+
         # Reset the sub-member's flag to unsolved. This will allow it to resolve for the same load combination after subsequent iterations have made further changes.
         for sub_member in phys_member.sub_members.values():
             sub_member._solved_combo = None
 
     # Return whether the TC analysis has converged
     return convergence
+
+
+def _axial_elongation(element, combo_name: str) -> float:
+    """Returns the change in length of a member or spring along its own axis, from the
+    displacements of its end nodes: positive when the ends move apart.
+
+    Used to decide whether an inactive tension-only or compression-only element has to be
+    reactivated. Its end nodes carry the displacements of the current solution even while the
+    element itself is left out of it.
+
+    :param element: A physical member or a spring, with an ``i_node`` and a ``j_node``.
+    :param combo_name: The name of the load combination.
+    :type combo_name: str
+    :return: The elongation of the element (negative when it shortens).
+    :rtype: float
+    """
+
+    i_node, j_node = element.i_node, element.j_node
+
+    # Unit vector along the element, from the i-node to the j-node
+    L = element.L()
+    dx = (j_node.X - i_node.X)/L
+    dy = (j_node.Y - i_node.Y)/L
+    dz = (j_node.Z - i_node.Z)/L
+
+    # Projection of the relative displacement of the end nodes on that direction
+    return ((j_node.DX[combo_name] - i_node.DX[combo_name])*dx
+            + (j_node.DY[combo_name] - i_node.DY[combo_name])*dy
+            + (j_node.DZ[combo_name] - i_node.DZ[combo_name])*dz)
 
 
 def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: list[str] | None = None) -> None:
