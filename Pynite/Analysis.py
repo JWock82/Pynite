@@ -1004,9 +1004,9 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
         tension-only member is active but has a maximum axial force greater than the
         `member_tolerance` (indicating compression), or if a compression-only member is active
         but has a minimum axial force less than `-member_tolerance` (indicating tension),
-        that physical member and all its sub-members are deactivated. This action
-        flags the analysis as not converged. A future enhancement is noted to allow elements to
-        reactivate if deformations indicate they should return to an active state.
+        that physical member and all its sub-members are deactivated. Inactive members and
+        springs are reactivated when their local end displacements indicate a force they can
+        resist. Either change flags the analysis as not converged.
     *   **Sub-member Reset**: After checking, the `_solved_combo` flag for all sub-members is
         reset to `None`. This ensures that they will be resegmented and re-evaluated in subsequent
         iterations of the analysis, allowing for further changes as needed for convergence.
@@ -1058,8 +1058,6 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
                     spring[2] = should_be_active
                     convergence = False
 
-    # TODO: Adjust the code below to allow elements to reactivate on subsequent iterations if deformations at element nodes indicate the member goes back into an active state. This will lead to a less conservative and more realistic analysis. Nodal springs (above) already do this.
-
     # Check tension/compression-only springs
     if log:
         print('- Checking for tension/compression-only spring convergence')
@@ -1080,6 +1078,18 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
                 if log:
                     print(f'- Deactivating spring {spring.name}')
                 spring.active[combo_name] = False
+                convergence = False
+
+        elif spring.tension_only or spring.comp_only:
+
+            # Spring axial force uses compression-positive sign convention.
+            d = spring.d(combo_name)
+            N = -spring.ks*(d[6, 0] - d[0, 0])
+
+            if (spring.tension_only and N < -spring_tolerance) or (spring.comp_only and N > spring_tolerance):
+                if log:
+                    print(f'- Reactivating spring {spring.name}')
+                spring.active[combo_name] = True
                 convergence = False
 
     # Check tension/compression only members
@@ -1118,6 +1128,24 @@ def _check_TC_convergence(model: FEModel3D, combo_name: str = "Combo 1", log: bo
                     sub_member.active[combo_name] = False
 
                 # Flag the analysis as not converged
+                convergence = False
+
+        elif phys_member.tension_only or phys_member.comp_only:
+
+            # Estimate the axial force from the physical member's local end
+            # displacements, using compression-positive sign convention.
+            d = phys_member.d(combo_name)
+            N = -phys_member.section.A*phys_member.material.E/phys_member.L()*(d[6, 0] - d[0, 0])
+
+            if (phys_member.tension_only and N < -member_tolerance) or (phys_member.comp_only and N > member_tolerance):
+
+                if log:
+                    print(f'- Reactivating member {phys_member.name}')
+                phys_member.active[combo_name] = True
+
+                for sub_member in phys_member.sub_members.values():
+                    sub_member.active[combo_name] = True
+
                 convergence = False
 
         # Reset the sub-member's flag to unsolved. This will allow it to resolve for the same load combination after subsequent iterations have made further changes.

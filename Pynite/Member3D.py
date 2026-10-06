@@ -688,6 +688,9 @@ class Member3D:
         :rtype: NDArray[float64]
         """
 
+        if not self.active[combo_name]:
+            return zeros((2, 1))
+
         # Obtain the change in the member's end displacements from the calculated displacement change vector
         Delta_D = array([model_Delta_D[self.i_node.ID*6 + 0],
                          model_Delta_D[self.i_node.ID*6 + 1],
@@ -881,6 +884,9 @@ class Member3D:
         :return: The member's local end force vector for the given load combination.
         :rtype: array
         """
+
+        if not self.active[combo_name]:
+            return zeros((12, 1))
 
         # Calculate and return the member's local end force vector
         if self.model.solution == 'P-Delta':
@@ -1104,46 +1110,8 @@ class Member3D:
         # Initialize the displacement vector
         D = zeros((12, 1))
 
-        # TODO: I'm not sure this next block is the best way to handle inactive members - need to review
-        # Read in the global displacements from the nodes
-        # Apply axial displacements only if the member is active
-        if self.active[combo_name] == True:
-            D[0, 0] = self.i_node.DX[combo_name]
-            D[6, 0] = self.j_node.DX[combo_name]
-
-        # Apply the remaining displacements
-        D[1, 0] = self.i_node.DY[combo_name]
-        D[2, 0] = self.i_node.DZ[combo_name]
-        D[3, 0] = self.i_node.RX[combo_name]
-        D[4, 0] = self.i_node.RY[combo_name]
-        D[5, 0] = self.i_node.RZ[combo_name]
-        D[7, 0] = self.j_node.DY[combo_name]
-        D[8, 0] = self.j_node.DZ[combo_name]
-        D[9, 0] = self.j_node.RX[combo_name]
-        D[10, 0] = self.j_node.RY[combo_name]
-        D[11, 0] = self.j_node.RZ[combo_name]
-
-        # Return the global displacement vector
-        return D
-
-    def _inactive_local_disp(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
-        """
-        Returns the member's local end-displacement vector built from *all* of
-        the nodal degrees of freedom.
-
-        Unlike :meth:`D`, the axial end displacements are always included. This
-        is used by the deflection result methods to describe an inactive
-        member's deflected shape. An inactive member (for example a tension-only
-        member that has gone slack during a tension/compression-only analysis)
-        is removed from the global stiffness matrix and therefore carries no
-        internal forces, but it is still physically connected to its nodes and
-        rides along with them. Its deflected shape is consequently the straight
-        chord between its two displaced end nodes, obtained by linearly
-        interpolating the local end displacements returned here.
-        """
-
-        # Read all six degrees of freedom from each end node
-        D = zeros((12, 1))
+        # Read all global displacements from the end nodes, whether or not the
+        # member is active. Activity controls force contribution, not kinematics.
         D[0, 0] = self.i_node.DX[combo_name]
         D[1, 0] = self.i_node.DY[combo_name]
         D[2, 0] = self.i_node.DZ[combo_name]
@@ -1157,8 +1125,8 @@ class Member3D:
         D[10, 0] = self.j_node.RY[combo_name]
         D[11, 0] = self.j_node.RZ[combo_name]
 
-        # Rotate the global displacements into the member's local coordinate system
-        return self.T() @ D
+        # Return the global displacement vector
+        return D
 
     def shear(self, Direction: Literal['Fy', 'Fz'], x: float, combo_name: str = 'Combo 1') -> float:
         """
@@ -2366,7 +2334,7 @@ class Member3D:
             # between its end nodes rather than bending. It still rides along with
             # those nodes though, so its deflection is the linear interpolation of
             # the local end-node displacements rather than zero (see issue #317).
-            d = self._inactive_local_disp(combo_name)
+            d = self.d(combo_name)
             L = self.L()
 
             if Direction == 'dx':
@@ -2633,7 +2601,7 @@ class Member3D:
         # (see issue #317). This mirrors Member3D.deflection().
         if not self.active[combo_name]:
 
-            d = self._inactive_local_disp(combo_name)
+            d = self.d(combo_name)
 
             if Direction == 'dx':
                 di, dj = d[0, 0], d[6, 0]

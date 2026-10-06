@@ -90,6 +90,9 @@ class Spring3D:
         combo_name : string
             The name of the load combination to calculate the local end force vector for (not the load combination itself).
         '''
+
+        if not self.active[combo_name]:
+            return zeros((12, 1))
         
         # Calculate and return the spring's local end force vector
         return matmul(self.ke(), self.d(combo_name))
@@ -218,18 +221,15 @@ class Spring3D:
         # Initialize the displacement vector
         D = zeros((12, 1))
         
-        # Read in the global displacements from the nodes
-        # Apply axial displacements only if the spring is active
-        if self.active[combo_name] == True:
-            D[0, 0] = self.i_node.DX[combo_name]
-            D[6, 0] = self.j_node.DX[combo_name]
-
-        # Apply the remaining displacements
+        # Read all global displacements from the end nodes, whether or not the
+        # spring is active. Activity controls force contribution, not kinematics.
+        D[0, 0] = self.i_node.DX[combo_name]
         D[1, 0] = self.i_node.DY[combo_name]
         D[2, 0] = self.i_node.DZ[combo_name]
         D[3, 0] = self.i_node.RX[combo_name]
         D[4, 0] = self.i_node.RY[combo_name]
         D[5, 0] = self.i_node.RZ[combo_name]
+        D[6, 0] = self.j_node.DX[combo_name]
         D[7, 0] = self.j_node.DY[combo_name]
         D[8, 0] = self.j_node.DZ[combo_name]
         D[9, 0] = self.j_node.RX[combo_name]

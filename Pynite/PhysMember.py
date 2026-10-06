@@ -1339,7 +1339,7 @@ class PhysMember(Member3D):
             # displacements, which it rides along with, instead of a segment-based
             # bending shape (see issue #317).
             if not submember.active[combo_name]:
-                d_loc = submember._inactive_local_disp(combo_name)
+                d_loc = submember.d(combo_name)
                 if Direction == 'dx':
                     di, dj = d_loc[0, 0], d_loc[6, 0]
                 elif Direction == 'dy':
