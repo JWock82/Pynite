@@ -59,7 +59,7 @@ def test_pair_not_merged_when_beyond_tolerance():
 def test_cluster_merge_and_element_rewire():
     model = FEModel3D()
     # Tight cluster around origin; all should collapse to first added node
-    n1 = model.add_node("N1", 0.0, 0.0, 0.0)
+    model.add_node("N1", 0.0, 0.0, 0.0)
     n2 = model.add_node("N2", 0.0004, 0.0, 0.0)
     n3 = model.add_node("N3", 0.0, 0.0004, 0.0)
     n4 = model.add_node("N4", 0.0, 0.0, 0.0004)

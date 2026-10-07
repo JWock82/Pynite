@@ -550,12 +550,6 @@ class Renderer:
         :param Node3D node: Node to visualize (support conditions displayed).
         :param str color: Color for nodes/supports (default ``'grey'``).
         """
-
-        # Get the node's position
-        X = node.X # Global X coordinate
-        Y = node.Y # Global Y coordinate
-        Z = node.Z # Global Z coordinate
-
         # Generate any supports that occur at the node
         # Check for a fixed suppport
         if node.support_DX and node.support_DY and node.support_DZ and node.support_RX and node.support_RY and node.support_RZ:
@@ -1585,7 +1579,6 @@ class Renderer:
                 
                 # Get transformation matrix for local coordinates
                 T = member.T()
-                cos_x = np.array([T[0, 0:3]])  # Local x-axis (along member)
                 cos_y = np.array([T[1, 0:3]])  # Local y-axis
                 cos_z = np.array([T[2, 0:3]])  # Local z-axis
                 
