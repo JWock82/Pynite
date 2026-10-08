@@ -104,7 +104,7 @@ class Test_2D_Frame(unittest.TestCase):
 
         # The member's local end displacements: the i-end (N4) is fully fixed,
         # the j-end (N2) deflects under the applied load.
-        d = member._inactive_local_disp('Combo 1')
+        d = member.d('Combo 1')
         dyi, dyj = d[1, 0], d[7, 0]
 
         # The j-end actually moves, so this is a non-trivial check.
