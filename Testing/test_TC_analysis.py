@@ -105,16 +105,16 @@ def test_tc_braced_frame():
         assert frame.members['Br2'].active[combo] == False, "Br2 should be inactive for the lateral load combination"
 
         # Check that the deflections along the length of the inactive brace is the linear interpolation of the member end deflections
-        dy = frame.members['Br1'].deflection_array('dy', 20, combo)
+        dy = frame.members['Br2'].deflection_array('dy', 20, combo)
 
-        # Local transverse (y) displacements of the brace end nodes
-        d = frame.members['Br1'].d(combo)
-        dy_N1 = float(d[1, 0])
-        dy_N4 = float(d[7, 0])
+        # Local transverse (y) displacements of the inactive brace's end nodes (N2 and N3)
+        d = frame.members['Br2'].d(combo)
+        dy_N2 = float(d[1, 0])
+        dy_N3 = float(d[7, 0])
         for i in range(20):
             # Linear interpolation of the deflection along the length of the brace
-            dy_interp = dy_N1 + (dy_N4 - dy_N1) * i / 19
-            assert math.isclose(float(dy[1][i]), dy_interp, rel_tol=1e-5), f"Deflection at point {i} along Br1 does not match linear interpolation"
+            dy_interp = dy_N2 + (dy_N3 - dy_N2) * i / 19
+            assert math.isclose(float(dy[1][i]), dy_interp, rel_tol=1e-5), f"Deflection at point {i} along Br2 does not match linear interpolation"
 
 if __name__ == "__main__":
     test_tc_braced_frame()
