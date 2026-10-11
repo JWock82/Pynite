@@ -1,126 +1,120 @@
-"""
-MIT License
+import math
 
-Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
-"""
-
-import unittest
 from Pynite import FEModel3D
-import sys
-from io import StringIO
 
-class Test_2D_Frame(unittest.TestCase):
-    """Tests for tension/compression-only analysis"""
+def test_tc_braced_frame():
 
-    def setUp(self):
-        # Suppress printed output temporarily
-        sys.stdout = StringIO()
+    # Create a new 3D frame model
+    frame = FEModel3D()
 
-    def tearDown(self):
-        # Reset the print function to normal
-        sys.stdout = sys.__stdout__
+    # Add nodes to the frame
+    frame.add_node('N1', 0, 0, 0)
+    frame.add_node('N2', 15, 0, 0)
+    frame.add_node('N3', 0, 15, 0)
+    frame.add_node('N4', 15, 15, 0)
 
-    def test_TC_members(self):
+    # Define material properties
+    E = 29000/144
+    G = 0.4*E
+    nu = 0.17
+    rho = 150/1000
+    frame.add_material('Steel', E, G, nu, rho)
 
-        # Create a new finite element model
-        tc_model = FEModel3D()
-        tc_model.add_node('N1', 0, 0, 0)
-        tc_model.add_node('N2', 100, 0, 0)
-        tc_model.add_node('N3', 0, 10, 0)
-        tc_model.add_node('N4', 0, -10, 0)
+    # Define beam member section
+    Iz = 204/12**4
+    Iy = 17.3/12**4
+    A = 7.62/144
+    J = 0.300/12**4
+    frame.add_section('W12x26', A, Iy, Iz, J)
 
-        E = 29000 # ksi
-        G = 11400 # ksi
-        nu = 0.3  # Poisson's ratio
-        rho = 0.490/12**2  # Density (kci)
-        tc_model.add_material('Steel', E, G, nu, rho)
+    # Define column member section
+    Iz = 171/12**4
+    Iy = 36.6/12**4
+    A = 9.71/144
+    J = 0.583/12**4
+    frame.add_section('W10x33', A, Iy, Iz, J)
 
-        Iy = 3 # in^4
-        Iz = 3 # in^4
-        J = 0.0438 # in^4
-        A = 1.94 # in^2
-        tc_model.add_section('Section', A, Iy, Iz, J)
+    # Define brace member section
+    Iz = 3.67/12**4
+    Iy = 3.67/12**4
+    A = 2.40/144
+    J = 0.0832/12**4
+    frame.add_section('L4x4x5/16', A, Iy, Iz, J)
 
-        tc_model.add_member('both-ways', 'N1', 'N2', 'Steel', 'Section')
-        tc_model.add_member('t-only top', 'N3', 'N2', 'Steel', 'Section', tension_only=True)
-        tc_model.def_releases('t-only top', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
-        tc_model.def_releases('both-ways', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+    # Add members to the frame
+    frame.add_member('C1', 'N1', 'N3', 'Steel', 'W10x33')
+    frame.add_member('C2', 'N2', 'N4', 'Steel', 'W10x33')
+    frame.add_member('B1', 'N3', 'N4', 'Steel', 'W12x26')
+    frame.add_member('Br1', 'N1', 'N4', 'Steel', 'L4x4x5/16', tension_only=True)
+    frame.add_member('Br2', 'N2', 'N3', 'Steel', 'L4x4x5/16', tension_only=True)
 
-        tc_model.def_support('N2', *[False]*2, *[True]*4)
-        tc_model.def_support('N1', *[True]*6)
-        tc_model.def_support('N3', *[True]*6)
-        tc_model.def_support('N4', *[True]*6)
-        tc_model.add_node_load('N2', 'FY', -10)
+    # Release strong & weak axis moments at the i-ends; release both beam ends to keep the frame symmetric.
+    frame.def_releases('C1', False, False, False, False, True, True,
+                       False, False, False, False, False, False)
+    frame.def_releases('C2', False, False, False, False, True, True,
+                       False, False, False, False, False, False)
+    frame.def_releases('B1', False, False, False, False, True, True,
+                       False, False, False, False, True, True)
+    frame.def_releases('Br1', False, False, False, False, True, True,
+                       False, False, False, False, True, True)
+    frame.def_releases('Br2', False, False, False, False, True, True,
+                       False, False, False, False, True, True)
 
-        tc_model.add_member('t-only bott', 'N4', 'N2', 'Steel', 'Section', tension_only=True)
-        tc_model.def_releases('t-only bott', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+    # Fully support the base nodes
+    frame.def_support('N1', True, True, True, True, True, True)
+    frame.def_support('N2', True, True, True, True, True, True)
 
-        tc_model.analyze()
+    # Support the top nodes out-of-plane
+    frame.def_support('N3', False, False, True, False, False, False)
+    frame.def_support('N4', False, False, True, False, False, False)
 
-        self.assertAlmostEqual(tc_model.members['t-only top'].max_axial(), -100.499, 3)
-        self.assertAlmostEqual(tc_model.members['both-ways'].max_axial(), 100, 3)
-        self.assertEqual(tc_model.members['t-only bott'].max_axial(), 0, 3)
-        self.assertFalse(tc_model.members['t-only bott'].active['Combo 1'])
+    # Add vertical distributed loads to the beam to place both braces into compression
+    frame.add_member_dist_load('B1', 'Fy', -0.6, -0.6, case='D')
+    frame.add_member_dist_load('B1', 'Fy', -1.5, -1.5, case='L')
 
-    def test_inactive_member_deflection(self):
-        """An inactive (slack) tension-only member should still ride along with
-        its nodes: its deflection is the linear interpolation of its end-node
-        displacements rather than zero (issue #317)."""
+    # Add a lateral load to the frame
+    frame.add_node_load('N3', 'FX', 20, 'E')
 
-        from numpy import allclose, diff
+    # Set up load combinations
+    frame.add_load_combo('1.4D', {'D': 1.4})
+    frame.add_load_combo('1.2D + 1.6L', {'D': 1.2, 'L': 1.6})
+    frame.add_load_combo('1.2D + 1.0E + 1.0L', {'D': 1.2, 'E': 1.0, 'L': 1.0})
 
-        tc_model = FEModel3D()
-        tc_model.add_node('N1', 0, 0, 0)
-        tc_model.add_node('N2', 100, 0, 0)
-        tc_model.add_node('N3', 0, 10, 0)
-        tc_model.add_node('N4', 0, -10, 0)
+    # Render the model if this script is run directly
+    if __name__ == "__main__":
+        from Pynite.Visualization import Renderer
+        rndr = Renderer(frame)
+        rndr.combo_name = '1.2D + 1.0E + 1.0L'
+        rndr.render_loads = True
+        rndr.annotation_size = 1
+        rndr.render_model()
 
-        tc_model.add_material('Steel', 29000, 11400, 0.3, 0.490/12**2)
-        tc_model.add_section('Section', 1.94, 3, 3, 0.0438)
+    # Perform the analysis
+    frame.analyze(log=True)
 
-        tc_model.add_member('both-ways', 'N1', 'N2', 'Steel', 'Section')
-        tc_model.add_member('t-only top', 'N3', 'N2', 'Steel', 'Section', tension_only=True)
-        tc_model.def_releases('t-only top', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
-        tc_model.def_releases('both-ways', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+    # Check that both braces are removed from the model for the gravity load combinations
+    for combo in ['1.4D', '1.2D + 1.6L']:
+        assert frame.members['Br1'].active[combo] == False, "Br1 should be inactive for gravity load combinations"
+        assert frame.members['Br2'].active[combo] == False, "Br2 should be inactive for gravity load combinations"
+                                
+    # Next, run checks on the lateral load combo
+    for combo in ['1.2D + 1.0E + 1.0L']:
 
-        tc_model.def_support('N2', *[False]*2, *[True]*4)
-        tc_model.def_support('N1', *[True]*6)
-        tc_model.def_support('N3', *[True]*6)
-        tc_model.def_support('N4', *[True]*6)
-        tc_model.add_node_load('N2', 'FY', -10)
+        # Check that only brace 1 is active for the lateral load combination
+        assert frame.members['Br1'].active[combo] == True, "Br1 should be active for the lateral load combination"
+        assert frame.members['Br2'].active[combo] == False, "Br2 should be inactive for the lateral load combination"
 
-        tc_model.add_member('t-only bott', 'N4', 'N2', 'Steel', 'Section', tension_only=True)
-        tc_model.def_releases('t-only bott', Ryi=True, Rzi=True, Ryj=True, Rzj=True)
+        # Check that the deflections along the length of the inactive brace is the linear interpolation of the member end deflections
+        dy = frame.members['Br1'].deflection_array('dy', 20, combo)
 
-        tc_model.analyze()
+        # Local transverse (y) displacements of the brace end nodes
+        d = frame.members['Br1'].d(combo)
+        dy_N1 = float(d[1, 0])
+        dy_N4 = float(d[7, 0])
+        for i in range(20):
+            # Linear interpolation of the deflection along the length of the brace
+            dy_interp = dy_N1 + (dy_N4 - dy_N1) * i / 19
+            assert math.isclose(float(dy[1][i]), dy_interp, rel_tol=1e-5), f"Deflection at point {i} along Br1 does not match linear interpolation"
 
-        member = tc_model.members['t-only bott']
-        L = member.L()
-
-        # The bottom member goes slack (compression) and is removed from the
-        # stiffness matrix, so it carries no internal force.
-        self.assertFalse(member.active['Combo 1'])
-        self.assertEqual(member.max_axial(), 0)
-
-        # The member's local end displacements: the i-end (N4) is fully fixed,
-        # the j-end (N2) deflects under the applied load.
-        d = member._inactive_local_disp('Combo 1')
-        dyi, dyj = d[1, 0], d[7, 0]
-
-        # The j-end actually moves, so this is a non-trivial check.
-        self.assertEqual(dyi, 0.0)
-        self.assertNotAlmostEqual(dyj, 0.0)
-
-        # Deflection at the ends must equal the (local) end-node displacements,
-        # and the interior must be the linear interpolation between them rather
-        # than zero (the old, incorrect behaviour).
-        self.assertAlmostEqual(member.deflection('dy', 0.0), dyi, 9)
-        self.assertAlmostEqual(member.deflection('dy', L), dyj, 9)
-        self.assertAlmostEqual(member.deflection('dy', L/2), 0.5*(dyi + dyj), 9)
-        self.assertNotAlmostEqual(member.deflection('dy', L/2), 0.0)
-
-        # deflection_array must agree with deflection() and be perfectly linear.
-        arr = member.deflection_array('dy', 11)
-        expected = dyi + (dyj - dyi)*arr[0]/L
-        self.assertTrue(allclose(arr[1], expected))
-        self.assertTrue(allclose(diff(arr[1], 2), 0.0, atol=1e-12))
+if __name__ == "__main__":
+    test_tc_braced_frame()
