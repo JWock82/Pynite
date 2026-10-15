@@ -72,6 +72,9 @@ def test_tc_braced_frame():
     frame.add_member_dist_load('B1', 'Fy', -0.6, -0.6, case='D')
     frame.add_member_dist_load('B1', 'Fy', -1.5, -1.5, case='L')
 
+    # Add the self weight of all members, so the inactive braces carry member loads
+    frame.add_member_self_weight('FY', -1, 'D')
+
     # Add a lateral load to the frame
     frame.add_node_load('N3', 'FX', 20, 'E')
 
@@ -92,29 +95,52 @@ def test_tc_braced_frame():
     # Perform the analysis
     frame.analyze(log=True)
 
-    # Check that both braces are removed from the model for the gravity load combinations
-    for combo in ['1.4D', '1.2D + 1.6L']:
-        assert frame.members['Br1'].active[combo] == False, "Br1 should be inactive for gravity load combinations"
-        assert frame.members['Br2'].active[combo] == False, "Br2 should be inactive for gravity load combinations"
-                                
-    # Next, run checks on the lateral load combo
-    for combo in ['1.2D + 1.0E + 1.0L']:
+    # Check vertical equilibrium for each combo. This includes the self weight of the inactive braces.
+    total_self_weight = sum(m.material.rho*m.section.A*m.L() for m in frame.members.values())
+    dead = 0.6*15 + total_self_weight
+    live = 1.5*15
+    expected_FY = {'1.4D': 1.4*dead,
+                   '1.2D + 1.6L': 1.2*dead + 1.6*live,
+                   '1.2D + 1.0E + 1.0L': 1.2*dead + 1.0*live}
+    for combo, expected in expected_FY.items():
+        reaction_FY = frame.nodes['N1'].RxnFY[combo] + frame.nodes['N2'].RxnFY[combo]
+        assert math.isclose(reaction_FY, expected, rel_tol=1e-6), f"Vertical reactions do not balance the applied loads for {combo}"
 
-        # Check that only brace 1 is active for the lateral load combination
-        assert frame.members['Br1'].active[combo] == True, "Br1 should be active for the lateral load combination"
-        assert frame.members['Br2'].active[combo] == False, "Br2 should be inactive for the lateral load combination"
+    # Check that only brace 1 is active for the lateral load combination (the inactive braces are checked below)
+    assert frame.members['Br1'].active['1.2D + 1.0E + 1.0L'] == True, "Br1 should be active for the lateral load combination"
 
-        # Check that the deflections along the length of the inactive brace is the linear interpolation of the member end deflections
-        dy = frame.members['Br2'].deflection_array('dy', 20, combo)
+    def check_inactive_brace(name, combo):
 
-        # Local transverse (y) displacements of the inactive brace's end nodes (N2 and N3)
-        d = frame.members['Br2'].d(combo)
-        dy_N2 = float(d[1, 0])
-        dy_N3 = float(d[7, 0])
-        for i in range(20):
-            # Linear interpolation of the deflection along the length of the brace
-            dy_interp = dy_N2 + (dy_N3 - dy_N2) * i / 19
-            assert math.isclose(float(dy[1][i]), dy_interp, rel_tol=1e-5), f"Deflection at point {i} along Br2 does not match linear interpolation"
+        brace = frame.members[name]
+        assert brace.active[combo] == False, f"{name} should be inactive for {combo}"
+
+        # An inactive brace has no stiffness, so its end forces are just its fixed end reactions from self weight
+        fer = brace.fer(combo)
+        shear = brace.shear_array('Fy', 5, combo)
+        moment = brace.moment_array('Mz', 5, combo)
+        axial = brace.axial_array(5, combo)
+        assert math.isclose(shear[1][0], fer[1, 0], rel_tol=1e-6), f"{name} i-end shear should equal its fixed end reaction for {combo}"
+        assert math.isclose(moment[1][0], fer[5, 0], abs_tol=1e-9), f"{name} i-end moment should equal its fixed end reaction for {combo}"
+        assert math.isclose(axial[1][0], fer[0, 0], rel_tol=1e-6), f"{name} i-end axial force should equal its fixed end reaction for {combo}"
+
+        # The braces are pinned at both ends, so the moment diagram must close to zero at both ends
+        assert math.isclose(moment[1][-1], 0, abs_tol=1e-9), f"{name} j-end moment should be zero for {combo}"
+
+        # Deflections are a straight line between the end node displacements
+        d = brace.d(combo)
+        for direction, i_dof, j_dof in [('dx', 0, 6), ('dy', 1, 7), ('dz', 2, 8)]:
+            d_i = float(d[i_dof, 0])
+            d_j = float(d[j_dof, 0])
+            d_arr = brace.deflection_array(direction, 5, combo)
+            for k in range(5):
+                assert math.isclose(d_arr[1][k], d_i + (d_j - d_i)*k/4, rel_tol=1e-6, abs_tol=1e-12), f"{name} {direction} deflection is not linear for {combo}"
+
+    # Check the internal results of the inactive braces in each combo they are inactive for
+    check_inactive_brace('Br1', '1.4D')
+    check_inactive_brace('Br2', '1.4D')
+    check_inactive_brace('Br1', '1.2D + 1.6L')
+    check_inactive_brace('Br2', '1.2D + 1.6L')
+    check_inactive_brace('Br2', '1.2D + 1.0E + 1.0L')
 
 if __name__ == "__main__":
     test_tc_braced_frame()

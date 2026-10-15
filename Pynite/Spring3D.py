@@ -54,10 +54,19 @@ class Spring3D:
         return self.i_node.distance(self.j_node)
 
 #%%
-    def ke(self) -> NDArray[float64]:
+    def ke(self, combo_name: str | None = None) -> NDArray[float64]:
         '''
         Returns the local elastic stiffness matrix for the spring.
+
+        Parameters
+        ----------
+        combo_name : string, optional
+            If given and the spring is inactive for this load combination, a zero matrix is returned. If `None` the spring's stiffness is returned regardless of its active state.
         '''
+
+        # An inactive spring has no stiffness for this combo
+        if combo_name is not None and not self.active.get(combo_name, True):
+            return zeros((12, 12))
 
         # Get the spring constant
         ks = self.ks
@@ -91,11 +100,8 @@ class Spring3D:
             The name of the load combination to calculate the local end force vector for (not the load combination itself).
         '''
 
-        if not self.active[combo_name]:
-            return zeros((12, 1))
-        
-        # Calculate and return the spring's local end force vector
-        return matmul(self.ke(), self.d(combo_name))
+        # Calculate and return the spring's local end force vector (zero stiffness when inactive)
+        return matmul(self.ke(combo_name), self.d(combo_name))
 
 #%%
     def d(self, combo_name: str = 'Combo 1') -> NDArray[float64]:

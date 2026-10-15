@@ -1230,7 +1230,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: list[str] |
                     # Sum the sub-member end forces at the node
                     for member in phys_member.sub_members.values():
 
-                        if member.i_node == node and phys_member.active[combo.name] == True:
+                        if member.i_node == node:
 
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed
@@ -1243,7 +1243,7 @@ def _calc_reactions(model: FEModel3D, log: bool = False, combo_tags: list[str] |
                             if node.support_RY: node.RxnMY[combo.name] += member_F[4, 0]
                             if node.support_RZ: node.RxnMZ[combo.name] += member_F[5, 0]
 
-                        elif member.j_node == node and phys_member.active[combo.name] == True:
+                        elif member.j_node == node:
 
                             # Get the member's global force matrix
                             # Storing it as a local variable eliminates the need to rebuild it every time a term is needed

@@ -144,13 +144,19 @@ class Member3D:
         return R1_indices, R2_indices
 
 # %%
-    def ke(self) -> NDArray[Any]:
+    def ke(self, combo_name: str | None = None) -> NDArray[Any]:
         """
         Returns the condensed (and expanded) local elastic stiffness matrix for the member.
 
+        :param combo_name: If given and the member is inactive for this load combination, a zero matrix is returned. If `None` the member's elastic stiffness is returned regardless of its active state. Defaults to `None`.
+        :type combo_name: str, optional
         :return: The condensed local elastic stiffness matrix
         :rtype: ndarray
         """
+
+        # An inactive member (e.g. a slack tension-only member) has no stiffness for this combo
+        if combo_name is not None and not self.active.get(combo_name, True):
+            return zeros((12, 12))
 
         # Partition the local stiffness matrix as 4 submatrices in
         # preparation for static condensation
@@ -885,16 +891,19 @@ class Member3D:
         :rtype: array
         """
 
-        if not self.active[combo_name]:
-            return zeros((12, 1))
+        # Inactive members have zero stiffness, so only their fixed end reactions remain
+        is_active = self.active.get(combo_name, True)
 
         # Calculate and return the member's local end force vector
         if self.model.solution == 'P-Delta':
 
-            # Back-calculate the axial force on the member from the axial strain
-            P = (self.d(combo_name)[6, 0] - self.d(combo_name)[0, 0])*self.section.A*self.material.E/self.L()
+            # Back-calculate the axial force on the member from the axial strain. An inactive member has no stiffness and so no geometric stiffness either.
+            if is_active:
+                P = (self.d(combo_name)[6, 0] - self.d(combo_name)[0, 0])*self.section.A*self.material.E/self.L()
+            else:
+                P = 0.0
 
-            return add(matmul(add(self.ke(), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
+            return add(matmul(add(self.ke(combo_name), self.kg(P)), self.d(combo_name)), self.fer(combo_name))
 
         # Check for a pushover analysis. During post-processing `moment()`, `shear()`, etc.
         # call this method without explicitly passing `push_combo` and `step_num`, so pull the
@@ -911,17 +920,21 @@ class Member3D:
 
             # Calculate the total local stiffness matrix. Geometric stiffness is only included
             # when the active pushover analysis has explicitly opted into P-Delta behavior.
-            k = self.ke() + self.km(combo_name)
+            k = self.ke(combo_name)
 
-            if getattr(self.model, '_pushover_P_Delta', False):
-                k = k + self.kg(P)
+            # The plastic reduction and geometric terms only apply to a member that has stiffness
+            if is_active:
+                k = k + self.km(combo_name)
+
+                if getattr(self.model, '_pushover_P_Delta', False):
+                    k = k + self.kg(P)
 
             # Calculate and return the member's local end force vector for the pushover load step
             return k @ Delta_d + Delta_fer
 
         else:
 
-            return self.ke() @ self.d(combo_name) + self.fer(combo_name)
+            return self.ke(combo_name) @ self.d(combo_name) + self.fer(combo_name)
 
     def d(self, combo_name='Combo 1') -> NDArray[float64]:
         """
@@ -1144,42 +1157,35 @@ class Member3D:
             The name of the load combination to get the results for (not the load combination itself).
         """
 
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        # Segment the member if necessary
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
+            self._segment_member(combo_name)
+            self._solved_combo = self.model.load_combos[combo_name]
 
-            # Segment the member if necessary
-            if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]
+        # Check which direction is of interest
+        if Direction == 'Fy':
 
-            # Check which direction is of interest
-            if Direction == 'Fy':
+            # Check which segment 'x' falls on
+            for segment in self.SegmentsZ:
+                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                    return segment.shear(x - segment.x1)
 
-                # Check which segment 'x' falls on
-                for segment in self.SegmentsZ:
-                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                        return segment.shear(x - segment.x1)
+            if isclose(x, self.L()):
+                lastIndex = len(self.SegmentsZ) - 1
+                return self.SegmentsZ[lastIndex].shear(x - self.SegmentsZ[lastIndex].x1)
 
-                if isclose(x, self.L()):
-                    lastIndex = len(self.SegmentsZ) - 1
-                    return self.SegmentsZ[lastIndex].shear(x - self.SegmentsZ[lastIndex].x1)
+        elif Direction == 'Fz':
 
-            elif Direction == 'Fz':
+            for segment in self.SegmentsY:
 
-                for segment in self.SegmentsY:
+                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
 
-                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                    return segment.shear(x - segment.x1)
 
-                        return segment.shear(x - segment.x1)
+            if isclose(x, self.L()):
 
-                if isclose(x, self.L()):
-
-                    lastIndex = len(self.SegmentsY) - 1
-                    return self.SegmentsY[lastIndex].shear(x - self.SegmentsY[lastIndex].x1)
-
-        else:
-
-            return 0
+                lastIndex = len(self.SegmentsY) - 1
+                return self.SegmentsY[lastIndex].shear(x - self.SegmentsY[lastIndex].x1)
 
     def max_shear(self, Direction: Literal['Fy', 'Fz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
@@ -1220,9 +1226,6 @@ class Member3D:
         governing_combo = None
 
         for combo_name in combo_names:
-            # Skip inactive combos
-            if not self.active.get(combo_name, False):
-                continue
 
             # If member not yet segmented for this combo, do it
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1289,9 +1292,6 @@ class Member3D:
         governing_combo = None
 
         for combo_name in combo_names:
-            # Skip inactive combos
-            if not self.active.get(combo_name, False):
-                continue
 
             # If member not yet segmented for this combo, do it
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1436,57 +1436,50 @@ class Member3D:
             The name of the load combination to get the results for (not the load combination itself).
         """
 
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        # Segment the member if necessary
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
+            self._segment_member(combo_name)
+            self._solved_combo = self.model.load_combos[combo_name]
 
-            # Segment the member if necessary
-            if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]
+        # Determine if a P-Delta analysis has been run
+        if self.model.solution == 'P-Delta':
+            # Include P-little-delta effects in the moment results
+            P_delta = True
+        elif self.model.solution == 'Pushover':
+            # Only include P-little-delta effects when the pushover step opted into P-Delta
+            P_delta = getattr(self.model, '_pushover_P_Delta', False)
+        else:
+            # Do not include P-little delta effects in the moment results
+            P_delta = False
 
-            # Determine if a P-Delta analysis has been run
-            if self.model.solution == 'P-Delta':
-                # Include P-little-delta effects in the moment results
-                P_delta = True
-            elif self.model.solution == 'Pushover':
-                # Only include P-little-delta effects when the pushover step opted into P-Delta
-                P_delta = getattr(self.model, '_pushover_P_Delta', False)
-            else:
-                # Do not include P-little delta effects in the moment results
-                P_delta = False
+        # Check which axis is of interest
+        if Direction == 'My':
 
-            # Check which axis is of interest
-            if Direction == 'My':
+            # Check which segment 'x' falls on
+            for segment in self.SegmentsY:
 
-                # Check which segment 'x' falls on
-                for segment in self.SegmentsY:
+                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
 
-                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                    return segment.moment(x - segment.x1, P_delta)
 
-                        return segment.moment(x - segment.x1, P_delta)
+            if isclose(x, self.L()):
 
-                if isclose(x, self.L()):
+                return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1, P_delta)
 
-                    return self.SegmentsY[-1].moment(x - self.SegmentsY[-1].x1, P_delta)
+        elif Direction == 'Mz':
 
-            elif Direction == 'Mz':
+            for segment in self.SegmentsZ:
 
-                for segment in self.SegmentsZ:
+                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
 
-                    if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                    return segment.moment(x - segment.x1, P_delta)
 
-                        return segment.moment(x - segment.x1, P_delta)
+            if isclose(x, self.L()):
 
-                if isclose(x, self.L()):
-
-                    return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1, P_delta)
-
-            else:
-                raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
+                return self.SegmentsZ[-1].moment(x - self.SegmentsZ[-1].x1, P_delta)
 
         else:
-
-            return 0
+            raise ValueError(f"Direction must be 'My' or 'Mz'. {Direction} was given.")
 
     def max_moment(self, Direction: Literal['My', 'Mz'], combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
@@ -1527,10 +1520,6 @@ class Member3D:
         governing_combo = None
 
         for combo_name in combo_names:
-
-            # Skip inactive combos
-            if not self.active.get(combo_name, False):
-                continue
 
             # Determine if P-Delta effects should be included
             if self.model.solution == 'P-Delta':
@@ -1605,9 +1594,6 @@ class Member3D:
         governing_combo = None
 
         for combo_name in combo_names:
-            # Skip inactive combos
-            if not self.active.get(combo_name, False):
-                continue
 
             # Determine if P-Delta effects should be included
             if self.model.solution == 'P-Delta':
@@ -1773,26 +1759,19 @@ class Member3D:
             The name of the load combination to get the results for (not the load combination itself).
         """
 
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        # Segment the member if necessary
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
+            self._segment_member(combo_name)
+            self._solved_combo = self.model.load_combos[combo_name]
 
-            # Segment the member if necessary
-            if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]
+        # Check which segment 'x' falls on
+        for segment in self.SegmentsX:
+            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                return segment.torsion()
 
-            # Check which segment 'x' falls on
-            for segment in self.SegmentsX:
-                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                    return segment.torsion()
-
-                if isclose(x, self.L()):
-                    lastIndex = len(self.SegmentsX) - 1
-                    return self.SegmentsX[lastIndex].torsion()
-
-        else:
-
-            return 0
+            if isclose(x, self.L()):
+                lastIndex = len(self.SegmentsX) - 1
+                return self.SegmentsX[lastIndex].torsion()
 
     def max_torque(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
@@ -1830,9 +1809,6 @@ class Member3D:
 
         # Loop through each candidate combo
         for combo_name in combo_names:
-            # Skip if inactive for this combo
-            if not self.active.get(combo_name, False):
-                continue
 
             # Re-segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -1894,9 +1870,6 @@ class Member3D:
 
         # Loop through each candidate combo
         for combo_name in combo_names:
-            # Skip if inactive for this combo
-            if not self.active.get(combo_name, False):
-                continue
 
             # Re-segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -2019,26 +1992,19 @@ class Member3D:
             The name of the load combination to get the results for (not the load combination itself).
         """
 
-        # Only calculate results if the member is currently active
-        if self.active[combo_name]:
+        # Segment the member if necessary
+        if self._solved_combo is None or combo_name != self._solved_combo.name:
+            self._segment_member(combo_name)
+            self._solved_combo = self.model.load_combos[combo_name]
 
-            # Segment the member if necessary
-            if self._solved_combo is None or combo_name != self._solved_combo.name:
-                self._segment_member(combo_name)
-                self._solved_combo = self.model.load_combos[combo_name]
+        # Check which segment 'x' falls on
+        for segment in self.SegmentsZ:
+            if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
+                return segment.axial(x - segment.x1)
 
-            # Check which segment 'x' falls on
-            for segment in self.SegmentsZ:
-                if round(x, 10) >= round(segment.x1, 10) and round(x, 10) < round(segment.x2, 10):
-                    return segment.axial(x - segment.x1)
-
-                if isclose(x, self.L()):
-                    lastIndex = len(self.SegmentsZ) - 1
-                    return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
-
-        else:
-
-            return 0
+            if isclose(x, self.L()):
+                lastIndex = len(self.SegmentsZ) - 1
+                return self.SegmentsZ[lastIndex].axial(x - self.SegmentsZ[lastIndex].x1)
 
     def max_axial(self, combo_tags: str | list[str] = 'Combo 1') -> float | tuple[float, str]:
         """
@@ -2077,9 +2043,6 @@ class Member3D:
 
         # Loop through each candidate combo
         for combo_name in combo_names:
-            # Skip if the member is inactive for this combo
-            if not self.active.get(combo_name, False):
-                continue
 
             # Re-segment the member if this combo hasn’t been solved yet
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -2142,9 +2105,6 @@ class Member3D:
 
         # Loop through each candidate combo
         for combo_name in combo_names:
-            # Skip if the member is inactive for this combo
-            if not self.active.get(combo_name, False):
-                continue
 
             # Re-segment the member if this combo hasn’t been solved yet
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -2389,9 +2349,6 @@ class Member3D:
 
         # Loop through each candidate combo
         for combo_name in combo_names:
-            # Skip if member inactive for this combo
-            if not self.active.get(combo_name, False):
-                continue
 
             # Re-segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -2460,9 +2417,6 @@ class Member3D:
 
         # Loop through each candidate combo
         for combo_name in combo_names:
-            # Skip if member inactive for this combo
-            if not self.active.get(combo_name, False):
-                continue
 
             # Re-segment the member if necessary
             if self._solved_combo is None or combo_name != self._solved_combo.name:
@@ -2791,6 +2745,10 @@ class Member3D:
         else:
             if any(x_array < 0) or any(x_array > L):
                 raise ValueError(f"All x values must be in the range 0 to {L}")
+
+        # An inactive member stays straight between its end nodes, so it has no deflection relative to its chord
+        if not self.active[combo_name]:
+            return vstack((x_array, zeros(x_array.shape)))
 
         # Check which axis is of interest
         if Direction == 'dy':
