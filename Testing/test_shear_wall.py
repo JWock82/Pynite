@@ -56,9 +56,6 @@ def test_shear_walls():
     # Analyze the model. Use the linear solver for greater speed
     model.analyze_linear(log=True, check_statics=True)
 
-    # Find the stiffness of the shear wall when a shear is applied to the roof (usefull for rigid diaphragm analysis)
-    k = model.shear_walls[wall_name].stiffness('Roof')
-
     # model.shear_walls[wall_name].draw_coupling_beams(True)
     # model.shear_walls[wall_name].draw_piers(True)
 
