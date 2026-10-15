@@ -79,6 +79,8 @@ Here's a list of projects that use Pynite:
 * Adjusted shear wall pier and coupling beam internal force results sign convention to match the sign convention used for members.
 * Added targeted testing for shear wall pier and coupling beam sign convention and load magnitudes.
 * Added shear wall docstrings and a readthedocs documentation page.
+* Inactive tension-only and compression-only members and springs are now modeled with zero stiffness rather than zeroed local forces. They still ride along with their end nodes, so their local displacements and deflections are always available. Any member loads on an inactive member (e.g. self weight) are now carried through to its end forces and to the support reactions.
+* Member shear, moment, axial, and torque results are now available for inactive members and are consistent between the point, max/min, and array methods. Inactive members still report a straight-line deflection between their end nodes.
 
 3.1.0
 * Improved detection of unstable structures.
