@@ -56,6 +56,9 @@ def test_shear_walls():
     # Analyze the model. Use the linear solver for greater speed
     model.analyze_linear(log=True, check_statics=True)
 
+    # Retain the stiffness example for future rigid diaphragm analysis.
+    k = model.shear_walls[wall_name].stiffness('Roof')  # noqa: F841
+
     # model.shear_walls[wall_name].draw_coupling_beams(True)
     # model.shear_walls[wall_name].draw_piers(True)
 

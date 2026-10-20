@@ -2375,6 +2375,9 @@ class FEModel3D:
         # Get the auxiliary list used to determine how the matrices will be partitioned
         D1_indices, D2_indices, D2 = Analysis._partition_D(self)
 
+        # Retain the incremental enforced displacement vector for future use.
+        Delta_D2 = D2/num_steps  # noqa: F841
+
         # Step through each load combination
         for combo in combo_list:
 
