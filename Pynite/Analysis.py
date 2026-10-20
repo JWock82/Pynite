@@ -754,9 +754,9 @@ def _load_step_ratio(model: FEModel3D, combo_name: str, Delta_f: NDArray[float64
             
             # Obtain the member's plastic load capacities
             section = sub_member.section
-            Py = section.material.fy*section.A
-            Mpy = section.material.fy*section.Zy
-            Mpz = section.material.fy*section.Zz
+            Py = section.material.fy*section.A  # noqa: F841
+            Mpy = section.material.fy*section.Zy  # noqa: F841
+            Mpz = section.material.fy*section.Zz  # noqa: F841
 
             # Obtain member end forces for the latest load step
             fxi = sub_member.f_nonlin[combo_name][0]
