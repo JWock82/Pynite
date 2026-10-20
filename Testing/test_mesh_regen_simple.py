@@ -160,7 +160,6 @@ def test_multiple_meshes_independent_regeneration():
     mesh2.generate()
     
     mesh2_node_count = len(mesh2.nodes)
-    mesh2_element_count = len(mesh2.elements)
     mesh2_nodes = set(mesh2.nodes.keys())
     
     print(f"Mesh1 nodes: {len(mesh1.nodes)}, Mesh2 nodes: {mesh2_node_count}")

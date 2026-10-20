@@ -799,9 +799,9 @@ def _load_step_ratio(model: FEModel3D, combo_name: str) -> float:
             
             # Obtain the member's plastic load capacities
             section = sub_member.section
-            Py = section.material.fy*section.A
-            Mpy = section.material.fy*section.Zy
-            Mpz = section.material.fy*section.Zz
+            Py = section.material.fy*section.A  # noqa: F841
+            Mpy = section.material.fy*section.Zy  # noqa: F841
+            Mpz = section.material.fy*section.Zz  # noqa: F841
 
             # Obtain member end forces prior to the current load step. These may arrive as
             # 1x1 arrays from the nonlinear history bookkeeping, but the section yield function

@@ -2424,14 +2424,12 @@ class VisMemberDiagram:
         
         # Get transformation matrix for local coordinates
         T = member.T()
-        cos_x = array([T[0, 0:3]])  # Local x-axis (along member)
         cos_y = array([T[1, 0:3]])  # Local y-axis
         cos_z = array([T[2, 0:3]])  # Local z-axis
         
         # Member base line
         member_start = array([Xi, Yi, Zi])
         member_dir = array([Xj - Xi, Yj - Yi, Zj - Zi])
-        member_unit = member_dir / norm(member_dir)
         
         # Determine perpendicular direction for diagram offset
         if diagram_type in ['Fy', 'Mz']:
@@ -2448,37 +2446,31 @@ class VisMemberDiagram:
         if diagram_type == 'Fy':
             results = member.shear_array('Fy', n_points, combo_name, x_array)
             y_values = results[1]
-            label = 'Fy'
             max_value = member.max_shear('Fy', combo_name)
             min_value = member.min_shear('Fy', combo_name)
         elif diagram_type == 'Fz':
             results = member.shear_array('Fz', n_points, combo_name, x_array)
             y_values = results[1]
-            label = 'Fz'
             max_value = member.max_shear('Fz', combo_name)
             min_value = member.min_shear('Fz', combo_name)
         elif diagram_type == 'My':
             results = member.moment_array('My', n_points, combo_name, x_array)
             y_values = results[1]
-            label = 'My'
             max_value = member.max_moment('My', combo_name)
             min_value = member.min_moment('My', combo_name)
         elif diagram_type == 'Mz':
             results = member.moment_array('Mz', n_points, combo_name, x_array)
             y_values = results[1]
-            label = 'Mz'
             max_value = member.max_moment('Mz', combo_name)
             min_value = member.min_moment('Mz', combo_name)
         elif diagram_type == 'Fx':
             results = member.axial_array(n_points, combo_name, x_array)
             y_values = results[1]
-            label = 'Fx'
             max_value = member.max_axial(combo_name)
             min_value = member.min_axial(combo_name)
         elif diagram_type == 'Tx':
             results = member.torque_array(n_points, combo_name, x_array)
             y_values = results[1]
-            label = 'Tx'
             max_value = member.max_torque(combo_name)
             min_value = member.min_torque(combo_name)
         else:
@@ -2498,7 +2490,6 @@ class VisMemberDiagram:
         
         # Create diagram line (positive and negative sides)
         points = vtk.vtkPoints()
-        lines = vtk.vtkCellArray()
         
         point_idx = 0
         
@@ -2507,7 +2498,7 @@ class VisMemberDiagram:
             # Position along member
             pos_along_member = member_start + (x / L) * member_dir
             # Baseline point (on member axis)
-            pts_idx = points.InsertNextPoint(pos_along_member)
+            points.InsertNextPoint(pos_along_member)
             point_idx += 1
         
         # Add diagram points (displaced from member axis)
