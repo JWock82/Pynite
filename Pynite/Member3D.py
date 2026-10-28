@@ -468,18 +468,18 @@ class Member3D:
 
         return m
 
-    def _calc_load_mass(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> float:
-        """ Calculates the total mass from a load combination in a specific local direction.
+    def _calc_load_mass(self, mass_combo_name: str, mass_direction: str = 'Y', gravity: float = 1.0) -> list[float]:
+        """ Calculates the total mass from a load combination in a specific global direction.
 
         :param mass_combo_name: Name of the load combination to use for mass calculation.
         :type mass_combo_name: str
-        :param mass_direction: Local direction component to extract: 'X', 'Y', or 'Z'. Defaults to 'Y'.
+        :param mass_direction: Global direction component to extract: 'X', 'Y', or 'Z'. Defaults to 'Y'.
         :type mass_direction: str, optional
         :param gravity: The acceleration due to gravity used for load to mass conversion. Defaults to 1.0.
         :type gravity: float, optional
         :raises NameError: Occurs if `mass_combo_name` is invalid.
-        :return: Total mass in the specified local direction (absolute value) and it's location along the member
-        :rtype: List[float, float]
+        :return: Total mass in the specified global direction (absolute value) and its location along the member.
+        :rtype: list[float]
         """
 
         # Get the mass load combination
@@ -492,7 +492,7 @@ class Member3D:
         sum_force = 0.0
         sum_force_x = 0.0
 
-        # Get the transformation matrix once for efficiency
+        # T maps global components to local components; its transpose maps local to global.
         T_local = self.T()[:3, :3]  # 3x3 rotation matrix
 
         # Define vector for the mass direction
@@ -518,22 +518,16 @@ class Member3D:
 
                     # Convert the point load to a global vector
                     if load_dir == 'Fx':
-                        P_global = T_local.T() @ array([P, 0, 0]) @ T_local
-                        P_global = T_local.T() @ array([P, 0, 0]) @ T_local
+                        P_global = T_local.T @ array([P, 0, 0])
                     elif load_dir == 'Fy':
-                        P_global = T_local.T() @ array([0, P, 0]) @ T_local
-                        P_global = T_local.T() @ array([0, P, 0]) @ T_local
+                        P_global = T_local.T @ array([0, P, 0])
                     elif load_dir == 'Fz':
-                        P_global = T_local.T() @ array([0, 0, P]) @ T_local
-                        P_global = T_local.T() @ array([0, 0, P]) @ T_local
+                        P_global = T_local.T @ array([0, 0, P])
                     elif load_dir == 'FX':
-                        P_global = array([P, 0, 0])
                         P_global = array([P, 0, 0])
                     elif load_dir == 'FY':
                         P_global = array([0, P, 0])
-                        P_global = array([0, P, 0])
                     elif load_dir == 'FZ':
-                        P_global = array([0, 0, P])
                         P_global = array([0, 0, P])
                     else:
                         # Assume zero for any other load directions
@@ -566,14 +560,14 @@ class Member3D:
 
                         # Convert the distributed load to a global vector
                         if load_dir == 'Fx':
-                            w1_global = T_local.T() @ array([w1, 0, 0]) @ T_local
-                            w2_global = T_local.T() @ array([w2, 0, 0]) @ T_local
+                            w1_global = T_local.T @ array([w1, 0, 0])
+                            w2_global = T_local.T @ array([w2, 0, 0])
                         elif load_dir == 'Fy':
-                            w1_global = T_local.T() @ array([0, w1, 0]) @ T_local
-                            w2_global = T_local.T() @ array([0, w2, 0]) @ T_local
+                            w1_global = T_local.T @ array([0, w1, 0])
+                            w2_global = T_local.T @ array([0, w2, 0])
                         elif load_dir == 'Fz':
-                            w1_global = T_local.T() @ array([0, 0, w1]) @ T_local
-                            w2_global = T_local.T() @ array([0, 0, w2]) @ T_local
+                            w1_global = T_local.T @ array([0, 0, w1])
+                            w2_global = T_local.T @ array([0, 0, w2])
                         elif load_dir == 'FX':
                             w1_global = array([w1, 0, 0])
                             w2_global = array([w2, 0, 0])
