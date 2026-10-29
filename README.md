@@ -75,6 +75,7 @@ Here's a list of projects that use Pynite:
 
 # What's New?
 3.2.1
+* Replaced inneficient member `T` matrix inversions with transposes.
 * Fixed local member load transformations when calculating modal mass.
 * Corrected the centroid calculation for linearly varying distributed loads used to locate lumped mass.
 
