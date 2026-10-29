@@ -74,6 +74,10 @@ Here's a list of projects that use Pynite:
 * Phaenotyp (https://github.com/bewegende-Architektur/Phaenotyp) (https://youtu.be/shloSw9HjVI)
 
 # What's New?
+3.2.1
+* Fixed local member load transformations when calculating modal mass.
+* Corrected the centroid calculation for linearly varying distributed loads used to locate lumped mass.
+
 3.2.0
 * Added shear wall pier top results and coupling beam right hand side results to the pier/coupling beam force results output.
 * Adjusted shear wall pier and coupling beam internal force results sign convention to match the sign convention used for members.

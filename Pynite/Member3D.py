@@ -590,12 +590,12 @@ class Member3D:
                         avg_load = (w1_m_comp + w2_m_comp)/2
                         sum_force += factor*avg_load*length_loaded
 
-                        # Identify the point through which the load acts
-                        sum_force_x += factor*avg_load*(w2 - w1)*(w1_m_comp*(x2 - x1)**2/2
-                                                                  + 0.5*(w2_m_comp - w1_m_comp)*(x2 - x1)**2*(2/3))
+                        # Add the first moment of the linearly varying projected load.
+                        sum_force_x += factor*length_loaded/6*((2*x1 + x2)*w1_m_comp
+                                                               + (x1 + 2*x2)*w2_m_comp)
 
         # Identify the load's center of gravity
-        if sum_force_x != 0.0:
+        if sum_force != 0.0:
             total_x = sum_force_x/sum_force
         else:
             total_x = self.L()/2
