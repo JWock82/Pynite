@@ -1056,7 +1056,7 @@ class Member3D:
         """
 
         # Calculate and return the stiffness matrix in global coordinates
-        return matmul(matmul(inv(self.T()), self.ke()), self.T())
+        return matmul(matmul(self.T().T, self.ke()), self.T())
 
     def Kg(self, P: float=0.0):
         """Returns the global geometric stiffness matrix for the member. Used for P-Delta analysis.
@@ -1068,7 +1068,7 @@ class Member3D:
         """
 
         # Calculate and return the geometric stiffness matrix in global coordinates
-        return matmul(matmul(inv(self.T()), self.kg(P)), self.T())
+        return matmul(matmul(self.T().T, self.kg(P)), self.T())
 
     def Km(self, combo_name: str) -> NDArray[float64]:
         """Returns the global plastic reduction matrix for the member. Used to modify member behavior for plastic hinges at the ends.
@@ -1080,7 +1080,7 @@ class Member3D:
         """
 
         # Calculate and return the plastic reduction matrix in global coordinates
-        return matmul(matmul(inv(self.T()), self.km(combo_name)), self.T())
+        return matmul(matmul(self.T().T, self.km(combo_name)), self.T())
 
     def F(self, combo_name: str='Combo 1') -> NDArray[float64]:
         """
@@ -1088,7 +1088,7 @@ class Member3D:
         """
 
         # Calculate and return the global force vector
-        return matmul(inv(self.T()), self.f(combo_name))
+        return matmul(self.T().T, self.f(combo_name))
 
     def FER(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
@@ -1101,7 +1101,7 @@ class Member3D:
         """
 
         # Calculate and return the fixed end reaction vector
-        return matmul(inv(self.T()), self.fer(combo_name))
+        return matmul(self.T().T, self.fer(combo_name))
 
     def D(self, combo_name: str = 'Combo 1') -> NDArray[float64]:
         """
