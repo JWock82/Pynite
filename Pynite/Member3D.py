@@ -3072,7 +3072,7 @@ class Member3D:
 
             # An unreleased end whose rotation about the bending axis is supported has a known slope.
             # Anywhere else the end moment is the more reliable result, as a pinned end's moment is
-            # exactly zero but its slope comes from the approximate global solution.
+            # close to zero but its slope comes from the approximate global solution.
             direction_cosines = self.T()[:3, :3]
 
             def is_fixed(node, released, axis):
