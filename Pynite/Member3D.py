@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Literal
 from math import isclose
 
 from numpy import array, zeros, add, subtract, matmul, insert, dot, cross, divide, count_nonzero, concatenate
-from numpy import linspace, vstack, hstack, allclose, radians, sin, cos, maximum, minimum
-from numpy.linalg import inv, pinv, norm
+from numpy import linspace, vstack, hstack, allclose, radians, sin, cos, maximum, minimum, isfinite, nan
+from numpy.linalg import inv, pinv, norm, solve, LinAlgError
 
 import Pynite.FixedEndReactions
 from Pynite.BeamSegZ import BeamSegZ
@@ -2877,11 +2877,12 @@ class Member3D:
 
             # Initialize the slope and displacement at the start of the segment
             if i > 0:  # The first segment has already been initialized
-                SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].length(), P_delta)
-                SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].length(), P_delta)
+                # These are first-order values. `_solve_P_delta_segments` updates them when needed.
+                SegmentsZ[i].theta1 = SegmentsZ[i-1].slope(SegmentsZ[i-1].length())
+                SegmentsZ[i].delta1 = SegmentsZ[i-1].deflection(SegmentsZ[i-1].length())
                 SegmentsZ[i].delta_x1 = SegmentsZ[i-1].axial_deflection(SegmentsZ[i-1].length())
-                SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].length(), P_delta)
-                SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].length(), P_delta)
+                SegmentsY[i].theta1 = SegmentsY[i-1].slope(SegmentsY[i-1].length())
+                SegmentsY[i].delta1 = SegmentsY[i-1].deflection(SegmentsY[i-1].length())
                 SegmentsY[i].delta_x1 = SegmentsY[i-1].axial_deflection(SegmentsY[i-1].length())
 
             # Add the effects of the beam end forces to the segment
@@ -3065,6 +3066,99 @@ class Member3D:
             if self.model.solution == 'Pushover':
                 for case, factor in self.model.load_combos[push_combo].factors.items():
                     sum_load_effects(case, factor*push_step)
+
+        # Solve the segments for P-little-delta effects now that their loads are known
+        if P_delta:
+
+            # An unreleased end whose rotation about the bending axis is supported has a known slope.
+            # Anywhere else the end moment is the more reliable result, as a pinned end's moment is
+            # exactly zero but its slope comes from the approximate global solution.
+            direction_cosines = self.T()[:3, :3]
+
+            def is_fixed(node, released, axis):
+                supports = (node.support_RX, node.support_RY, node.support_RZ)
+                return not released and all(support or abs(cosine) < 1e-9
+                                            for support, cosine in zip(supports, direction_cosines[axis]))
+
+            i_node, j_node = self.i_node, self.j_node
+            slope_iz = d[5, 0] if is_fixed(i_node, self.Releases[5], 2) else None
+            slope_jz = d[11, 0] if is_fixed(j_node, self.Releases[11], 2) else None
+            slope_iy = d[4, 0] if is_fixed(i_node, self.Releases[4], 1) else None
+            slope_jy = d[10, 0] if is_fixed(j_node, self.Releases[10], 1) else None
+
+            self._solve_P_delta_segments(SegmentsZ, delta2y, slope_iz, slope_jz, -f[11, 0], 1)
+            self._solve_P_delta_segments(SegmentsY, delta2z, slope_iy, slope_jy, f[10, 0], -1)
+
+    def _solve_P_delta_segments(self, segments: list, delta_end: float, slope_start: float | None,
+                                slope_end: float | None, moment_end: float, M_sign: int) -> None:
+        """Solves one bending axis of the member's segments for P-little-delta effects.
+
+        The segments are chained from the start of the member, so the start values have to be found
+        that make the deflected shape meet the conditions at the end of the member. Those conditions
+        are linear in the start values, so three passes down the chain are enough to solve for them.
+
+        If the member is too taut for this to be numerically reliable, or if the equations are
+        singular, the segments are left with their first-order results.
+
+        :param segments: The member's segments for one bending axis, with their loads applied.
+        :param delta_end: The local displacement at the end of the member.
+        :param slope_start: The slope at the start of the member, or `None` if it isn't fixed.
+        :param slope_end: The slope at the end of the member, or `None` if it isn't fixed.
+        :param moment_end: The internal moment at the end of the member, used if `slope_end` is `None`.
+        :param M_sign: The sign of a P*delta moment in the segments' `M1` (1 for z-axis, -1 for y-axis).
+        """
+
+        # In tension the chained solution grows like cosh(k*L) and loses all accuracy on a taut member
+        k_L = sum((max(-segment.P_avg(), 0)/segment.EI)**0.5*segment.length() for segment in segments)
+        if k_L > 30:
+            for segment in segments:
+                segment.beam_column = False
+            return
+
+        # Store the first-order values. Each `M1` leaves out the P*delta moment from earlier segments.
+        first_order = [(s.theta1, s.delta1, s.V1, s.M1) for s in segments]
+
+        def end_conditions(start_value: float, V_change: float) -> NDArray[float64]:
+
+            # The start slope is the unknown, unless it's fixed. Then the start moment is the unknown.
+            segments[0].theta1 = start_value if slope_start is None else slope_start
+            M1_change = 0 if slope_start is None else start_value
+            P_delta_moment = 0
+
+            for i, segment in enumerate(segments):
+
+                if i > 0:
+                    previous = segments[i-1]
+                    segment.theta1 = previous.slope(previous.length(), True)
+                    segment.delta1 = previous.deflection(previous.length(), True)
+                    P_delta_moment += previous.P_avg()*(segment.delta1 - previous.delta1)
+
+                segment.V1 = first_order[i][2] + V_change
+                segment.M1 = first_order[i][3] + M1_change + M_sign*(P_delta_moment - V_change*segment.x1)
+
+            last = segments[-1]
+            end_value = last.moment(last.length(), True) if slope_end is None else last.slope(last.length(), True)
+
+            return array([last.deflection(last.length(), True), end_value])
+
+        target = array([delta_end, moment_end if slope_end is None else slope_end])
+        start_0 = first_order[0][0] if slope_start is None else 0
+
+        base = end_conditions(start_0, 0)
+        per_start = end_conditions(start_0 + 1, 0) - base
+        per_V = end_conditions(start_0, 1) - base
+
+        try:
+            change = solve(array([per_start, per_V]).T, target - base)
+        except LinAlgError:
+            change = array([nan, nan])
+
+        if isfinite(change).all():
+            end_conditions(start_0 + change[0], change[1])
+        else:
+            for segment, (theta1, delta1, V1, M1) in zip(segments, first_order):
+                segment.theta1, segment.delta1, segment.V1, segment.M1 = theta1, delta1, V1, M1
+                segment.beam_column = False
 
     def _extract_vector_results(self, segments: list, x_array: NDArray[float64], result_name: Literal['moment', 'shear', 'axial', 'torque', 'deflection', 'axial_deflection'], P_delta: bool = False) -> NDArray[float64]:
         """

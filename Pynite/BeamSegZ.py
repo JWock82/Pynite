@@ -4,9 +4,10 @@ Created on Mon Nov  6 20:52:31 2017
 @author: D. Craig Brinck, SE
 """
 from __future__ import annotations  # Allows more recent type hints features
+from math import factorial
 from typing import TYPE_CHECKING
 
-from numpy import full
+from numpy import asarray, cos, cosh, float64, full, sin, sinh, where
 
 if TYPE_CHECKING:
     from typing import Any
@@ -87,6 +88,7 @@ class BeamSegZ:
         self.delta_x1: float | None = None  # Axial displacement at start of beam segment
         self.EI: float | None = None  # Flexural stiffness of the beam segment
         self.EA: float | None = None  # Axial stiffness of the beam segment
+        self.beam_column: bool = True  # Whether P-Delta results may use the beam-column solution
 
     def __repr__(self) -> str:
         return f"BeamSegZ(x1={self.x1}, x2={self.x2})"
@@ -114,7 +116,6 @@ class BeamSegZ:
 
         V1 = self.V1
         M1 = self.M1
-        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
         L = self.length()
@@ -122,10 +123,10 @@ class BeamSegZ:
         M = M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
         # # Include the P-Delta moment if a P-Delta analysis was run
-        if P_delta == True:
+        if P_delta == True and self.beam_column:
             delta_1 = self.delta1
             delta_x = self.deflection(x, P_delta)
-            M += P1*(delta_x - delta_1)
+            M += self.P_avg()*(delta_x - delta_1)
 
         # Return the computed moment
         return M
@@ -167,21 +168,16 @@ class BeamSegZ:
 
         V1 = self.V1
         M1 = self.M1
-        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
         theta_1 = self.theta1
         L = self.length()
         EI = self.EI
 
-        if P_delta == True:
+        if P_delta == True and self.beam_column:
 
-            # Calculate the deflection at the start of the segment and a `x`
-            delta_1 = self.delta1
-            delta_x = self.deflection(x, P_delta)
-
-            # Calculate the slope at `x` using the calculated deflections to include P-little-delta effects
-            theta_x = theta_1 - (-V1*x**2/2 - w1*x**3/6 + x*(M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
+            # Calculate the slope at `x` including P-little-delta effects
+            theta_x = self._beam_column_slope(x, theta_1, M1)
 
         else:
 
@@ -191,12 +187,80 @@ class BeamSegZ:
         # Return the calculated slope
         return theta_x
 
+    def P_avg(self) -> float:
+        """Returns the average axial force in the segment, used for P-little-delta effects."""
+
+        return self.axial(self.length()/2)
+
+    def _phi(self, x: float) -> list[float]:
+        """Returns the beam-column functions phi_0(x) to phi_5(x) for this segment's average axial force.
+
+        With lam = P/EI, phi_0(0) = 1 and phi_1'(0) = 1, these satisfy phi_n' = phi_(n-1) and
+        phi_n'' + lam*phi_n = x**(n-2)/(n-2)! for n >= 2. At P = 0 they reduce to x**n/n!, which
+        gives back the first-order segment equations. See `deflection` for how they are used.
+        """
+
+        lam = self.P_avg()/self.EI
+        x = asarray(x, dtype=float64)  # `x` may be a single location or an array of locations
+        z = lam*x**2
+
+        small_z = abs(z) < 1
+
+        # The series is accurate when `z` is small, which is where the closed forms lose accuracy
+        if small_z.any():
+            series = []
+            for n in range(6):
+                term = x**n/factorial(n)
+                total = term
+                for j in range(1, 10):
+                    term = term*(-z)/((2*j + n - 1)*(2*j + n))
+                    total = total + term
+                series.append(total)
+
+            if small_z.all():
+                return series
+
+        # Compression gives trigonometric functions and tension gives hyperbolic ones
+        k = abs(lam)**0.5
+        if lam > 0:
+            closed = [cos(k*x), sin(k*x)/k]
+        else:
+            closed = [cosh(k*x), sinh(k*x)/k]
+
+        # Step up to the higher functions using phi_(n+2) = (x**n/n! - phi_n)/lam
+        for n in range(4):
+            closed.append((x**n/factorial(n) - closed[n])/lam)
+
+        if small_z.any():
+            return [where(small_z, s, c) for s, c in zip(series, closed)]
+
+        return closed
+
+    def _beam_column_slope(self, x: float, theta_1: float, M1: float) -> float:
+        """Returns the first derivative of `_beam_column_deflection` at `x`."""
+
+        phi = self._phi(x)
+        w_slope = (self.w2 - self.w1)/self.length()
+
+        return theta_1*phi[0] + (-M1*phi[1] + self.V1*phi[2] + self.w1*phi[3] + w_slope*phi[4])/self.EI
+
+    def _beam_column_deflection(self, x: float, theta_1: float, M1: float) -> float:
+        """Returns the exact solution of EI*y'' + P*(y - delta1) = -M_first_order(x) at `x`.
+
+        `M_first_order` is the moment without the P-little-delta term, so this equation is the same
+        moment equilibrium used by `moment`: M(x) = M_first_order(x) + P*(y(x) - delta1).
+        """
+
+        phi = self._phi(x)
+        w_slope = (self.w2 - self.w1)/self.length()
+
+        return self.delta1 + theta_1*phi[1] + (-M1*phi[2] + self.V1*phi[3] + self.w1*phi[4] + w_slope*phi[5])/self.EI
+
     # Returns the deflection at a location on the segment
     def deflection(self, x: float, P_delta: bool = False) -> float:
 
         V1 = self.V1
         M1 = self.M1
-        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
         theta_1 = self.theta1
@@ -205,11 +269,11 @@ class BeamSegZ:
         EI = self.EI
 
         # Check if a P-delta solution is requested
-        if P_delta == True:
+        if P_delta == True and self.beam_column:
 
             # Return the deflection at `x` including P-little-delta effects
-            return (L*V1*x**3/3 + L*w1*x**4/12 + L*(2*EI*delta_1 + 2*EI*theta_1*x - M1*x**2 + P1*delta_1*x**2) + x**5*(-w1 + w2)/60)/(L*(2*EI + P1*x**2))
-        
+            return self._beam_column_deflection(x, theta_1, M1)
+
         else:
 
             # Return the deflection at `x` (without including P-little-delta effects)

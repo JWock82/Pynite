@@ -20,7 +20,6 @@ class BeamSegY(BeamSegZ):
 
         V1 = self.V1
         M1 = self.M1
-        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
         L = self.length()
@@ -28,11 +27,11 @@ class BeamSegY(BeamSegZ):
         # M = M1 + V1*x + w1*x**2/2 + x**3*(-w1 + w2)/(6*L)
         M = -M1 - V1*x - w1*x**2/2 - x**3*(-w1 + w2)/(6*L)
 
-        if P_delta == True:
+        if P_delta == True and self.beam_column:
 
             delta_1 = self.delta1
             delta_x = self.deflection(x, P_delta)
-            M += P1*(delta_x - delta_1)
+            M += self.P_avg()*(delta_x - delta_1)
 
         return M
 
@@ -49,7 +48,6 @@ class BeamSegY(BeamSegZ):
 
         V1 = self.V1
         M1 = self.M1
-        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
         theta_1 = self.theta1
@@ -57,10 +55,9 @@ class BeamSegY(BeamSegZ):
         L = self.length()
         EI = self.EI
 
-        if P_delta == True:
-            delta_x = self.deflection(x, P_delta)
-            delta_1 = self.delta1
-            return theta_1 + (-V1*x**2/2 - w1*x**3/6 + x*(-M1 - P1*delta_1 + P1*delta_x) + x**4*(w1 - w2)/(24*L))/EI
+        if P_delta == True and self.beam_column:
+            # This axis uses the opposite sign convention for slope and moment (see `deflection`)
+            return -self._beam_column_slope(x, -theta_1, -M1)
         else:
             return theta_1 + (-V1*x**2/2 - w1*x**3/6 + x*(-M1) + x**4*(w1 - w2)/(24*L))/EI
 
@@ -69,7 +66,6 @@ class BeamSegY(BeamSegZ):
 
         V1 = self.V1
         M1 = self.M1
-        P1 = self.P1
         w1 = self.w1
         w2 = self.w2
         theta_1 = self.theta1
@@ -78,10 +74,10 @@ class BeamSegY(BeamSegZ):
         EI = self.EI
 
         # Check if a P-delta solution is requested
-        if P_delta == True:
+        if P_delta == True and self.beam_column:
 
-            # Return the calculated deflection, amplified for P-delta effects
-            return (delta_1 - theta_1*x + V1*x**3/(6*EI) + w1*x**4/(24*EI) - x**2*(-M1 - P1*delta_1)/(2*EI) - x**5*(w1 - w2)/(120*EI*L))/(1 + P1*x**2/(2*EI))
+            # This axis has the same equation as the z-axis with slope and moment negated
+            return self._beam_column_deflection(x, -theta_1, -M1)
 
         else:
 
