@@ -14,6 +14,23 @@ If you would like to contribute to Pynite, please review the following guideline
 6. Follow the coding guidelines above. This will make review go much faster.
 7. Pull requests for any active repository `Projects` will usually be given first priorty.
 
+## AI-Assisted Contributions
+
+Recently, Pynite has been receiving more contributions than it has in the past. AI is assisting with many if not most of these contributions. AI tools are helpful and may be used to help develop contributions, but it should be used with caution. Pynite is structural engineering software, and AI generated code should be carefully reviewed by humans, line by line, with expertise.
+
+For AI-assisted pull requests:
+
+1. **Disclose AI assistance.** In the pull request description, identify the tools used and briefly explain which parts of the contribution they helped produce or review. Routine editor autocomplete does not need to be disclosed.
+2. **Understand the engineering behind the contribution.** AI is not a substitute for human engineering knowledge or judgment. Where a change involves engineering, understand its underlying principles, assumptions, limitations, and intended use well enough to explain and evaluate them yourself. Do not rely on AI-generated explanations to defend engineering work you do not understand.
+3. **Review and understand the whole change.** Read every changed line, including tests and documentation. Be prepared to explain the implementation, assumptions, and design choices, and to respond to review feedback. Do not submit a pull request you cannot maintain or explain. If you are using Visual Stuio Code, consider setting your session to a "Local" harness session to allow for line-by-line review before accepting sweeping changes.
+4. **Avoid bloat.** AI tools often add unnecessary code, abstractions, dependencies, generated files, or unrelated changes. Remove them before submitting. Keep the contribution as small and simple as the problem allows.
+5. **Keep the code understandable.** AI-generated code can obscure its intent behind complicated logic, indirection, or vague names. Simplify it, use descriptive names, and make the implementation easy for a maintainer to follow. Do not submit code you cannot explain.
+6. **Test the actual change.** Test the change yourself. Don't rely on AI written tests unless you have reviewed them and find them to be meaningful and adequate.
+7. **Comment thoroughly.** AI tools often omit comments. Follow the coding guidelines above: aim for a comment on nearly every line, and explain the reasoning, equations, and assumptions behind the implementation. Review AI generated comments for accuracy and usefulness.
+8. **Check provenance and confidentiality.** Submit only material you have the right to contribute under this project's license. Do not put confidential or third-party material into an AI tool without permission, and verify any references or citations before including them.
+
+Maintainers may ask for clarification or decline contributions that are bloated, difficult to understand, inadequately commented, or not sufficiently reviewed or verified, regardless of how they were produced.
+
 ## Development Setup
 
 Pynite uses [uv](https://docs.astral.sh/uv/) to manage development environments and locked
