@@ -125,10 +125,10 @@ class BeamSegY(BeamSegZ):
             x2 = 0
 
         # Find the moment at each location of interest
-        M1 = self.moment(x1)
-        M2 = self.moment(x2)
-        M3 = self.moment(x3)
-        M4 = self.moment(x4)
+        M1 = self.moment(x1, P_delta)
+        M2 = self.moment(x2, P_delta)
+        M3 = self.moment(x3, P_delta)
+        M4 = self.moment(x4, P_delta)
 
         # Return the maximum moment
         return max(M1, M2, M3, M4)
