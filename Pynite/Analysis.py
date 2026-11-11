@@ -896,21 +896,25 @@ def _unpartition(model: FEModel3D, V1: NDArray[float64], V2: NDArray[float64], V
     :rtype: array
     """
 
+    # Start with a global vector of zeros, one term for each of the 6 dofs at every node
     V = zeros((len(model.nodes)*6, 1))
 
-    # Step through each node in the model
-    for node in model.nodes.values():
+    # Each term in `V1` belongs at the global dof index listed at the same position in
+    # `V1_indices`. NumPy's integer-array indexing places all of them in a single vectorized step.
+    # The previous implementation looped over every dof and searched the index lists with
+    # `list.index()` for each one, which scaled with the square of the number of dofs and became
+    # a bottleneck on large plate/quad models.
+    if len(V1_indices) > 0:
+        # Reshape `V1` to a column so it lines up with the rows being filled, whether it arrives as
+        # an (n, 1) array or as a flat list/array
+        V[V1_indices, :] = asarray(V1, dtype=float).reshape(-1, 1)
 
-        # Step through each degree of freedom at the node
-        for i in range(6):
-
-            # Check if the dof is in the list of known vector terms
-            if node.ID*6 + i in V2_indices:
-                # Get the vector term for the bounded dof
-                V[(node.ID*6 + i, 0)] = V2[V2_indices.index(node.ID*6 + i), 0]
-            else:
-                # Get the vector term for the unbounded dof
-                V[(node.ID*6 + i, 0)] = V1[V1_indices.index(node.ID*6 + i), 0]
+    # Place the terms of `V2` (the dofs with boundary conditions) at their global indices the same
+    # way. `V1_indices` and `V2_indices` never share a dof, so the order of these two steps does
+    # not matter.
+    if len(V2_indices) > 0:
+        # Reshape `V2` to a column, as was done for `V1`
+        V[V2_indices, :] = asarray(V2, dtype=float).reshape(-1, 1)
 
     # Return the vector
     return V
