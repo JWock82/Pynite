@@ -99,7 +99,7 @@ class VTKWriter:
             reaction_constraints.SetNumberOfComponents(6)
 
             displacements = vtk.vtkDoubleArray()
-            displacements.SetName("Displacements D")
+            displacements.SetName(f"Displacements D - {combo}")
             displacements.SetNumberOfComponents(3)
 
             forces = vtk.vtkDoubleArray()

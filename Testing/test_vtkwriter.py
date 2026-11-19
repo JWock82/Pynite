@@ -125,3 +125,34 @@ def test_nodal_load_combination_factors(tmp_path, factors, expected_force, expec
         loads = data.GetArray(f'Loads {label} - Test')
         assert loads.GetTuple3(0) == pytest.approx((0, 0, 0))
         assert loads.GetTuple3(1) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize('combos', [{'Service': 1.0}, {'Service': 1.0, 'Strength': 1.5}])
+def test_nodal_displacements_per_combination(tmp_path, combos):
+    """Keep separately named displacement arrays for each load combination."""
+    model = FEModel3D()
+    model.add_material('Material', 1000, 400, 0.25, 1)
+    model.add_section('Section', 1, 1, 1, 1)
+    model.add_node('A', 0, 0, 0)
+    model.add_node('B', 3, 0, 0)
+    model.add_member('AB', 'A', 'B', 'Material', 'Section')
+    model.def_support('A', True, True, True, True, True, True)
+    model.add_node_load('B', 'FY', -10, 'D')
+    for combo, factor in combos.items():
+        model.add_load_combo(combo, {'D': factor})
+    model.analyze_linear()
+
+    # Cantilever tip deflection is PL^3/(3EI) = -0.09 for the unit-factor combination.
+    path = tmp_path / 'model'
+    VTKWriter(model).write_to_vtk(str(path))
+    reader = vtk.vtkUnstructuredGridReader()
+    reader.SetFileName(str(path) + '_nodes.vtk')
+    reader.ReadAllFieldsOn()
+    reader.Update()
+    data = reader.GetOutput().GetPointData()
+    for combo, factor in combos.items():
+        assert model.nodes['B'].DY[combo] == pytest.approx(-0.09 * factor)
+        displacements = data.GetArray(f'Displacements D - {combo}')
+        assert displacements is not None
+        assert displacements.GetTuple3(0) == pytest.approx((0, 0, 0))
+        assert displacements.GetTuple3(1) == pytest.approx((0, -0.09 * factor, 0))
