@@ -1067,6 +1067,8 @@ class FEModel3D:
         self.nodes.pop(node_name)
 
         # Find any elements attached to the node and remove them
+        self.springs = {name: spring for name, spring in self.springs.items()
+                        if spring.i_node.name != node_name and spring.j_node.name != node_name}
         self.members = {name: member for name, member in self.members.items() if member.i_node.name != node_name and member.j_node.name != node_name}
         self.plates = {name: plate for name, plate in self.plates.items() if plate.i_node.name != node_name and plate.j_node.name != node_name and plate.m_node.name != node_name and plate.n_node.name != node_name}
         self.quads = {name: quad for name, quad in self.quads.items() if quad.i_node.name != node_name and quad.j_node.name != node_name and quad.m_node.name != node_name and quad.n_node.name != node_name}
