@@ -2286,6 +2286,14 @@ class FEModel3D:
         # Identify which load combinations have the tags the user has given
         combo_list = Analysis._identify_combos(self, combo_tags)
 
+        # The stiffness matrix is the same for every load combination, so with the sparse solver it
+        # is factorized only once here and the factorization is reused for each combination below.
+        # `None` means no reusable factorization (dense solver, no unknown displacements, or an
+        # exactly singular matrix, which `_solve_unknown_disp` then reports as before).
+        K11_solver = None
+        if sparse == True and K11.shape != (0, 0):
+            K11_solver = Analysis._factorize_K11(K11)
+
         # Step through each load combination
         for combo in combo_list:
 
@@ -2314,7 +2322,8 @@ class FEModel3D:
                     rhs = np.subtract(np.subtract(P1, FER1), K12.tocsr() @ D2)
                 else:
                     rhs = np.subtract(np.subtract(P1, FER1), np.matmul(K12, D2))
-                D1 = Analysis._solve_unknown_disp(K11, rhs, sparse, check_stability)
+                D1 = Analysis._solve_unknown_disp(K11, rhs, sparse, check_stability,
+                                                  solver=K11_solver)
 
             # Store the calculated displacements to the model and the nodes in the model
             Analysis._store_displacements(self, D1, D2, D1_indices, D2_indices, combo)

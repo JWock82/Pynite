@@ -172,7 +172,39 @@ _SINGULAR_MSG = ('The stiffness matrix is singular, which implies rigid body mot
                  'is unstable. Aborting analysis.')
 
 
-def _solve_unknown_disp(K11, rhs, sparse: bool = True, check_stability: bool = True, tol: float = 1e-6):
+def _factorize_K11(K11):
+    """Factorizes the sparse partitioned stiffness matrix ``K11`` once, so it can be reused.
+
+    In a linear analysis the stiffness matrix is the same for every load combination; only the
+    right-hand side changes. ``spsolve`` factorizes the matrix again on every call, which is the most
+    expensive part of each solution. An LU factorization (``scipy.sparse.linalg.splu``) can be
+    computed once and then applied to any number of right-hand sides at the cost of a forward and a
+    back substitution.
+
+    If the factorization fails (``splu`` raises ``RuntimeError`` when the matrix is exactly
+    singular), ``None`` is returned. The caller then falls back to ``spsolve`` for each load
+    combination, so an unstable model is reported exactly as it was before.
+
+    :param K11: The partitioned stiffness matrix for the unknown displacements (SciPy sparse).
+    :return: A function that takes a right-hand side and returns the solved displacements, or
+             ``None`` if the matrix could not be factorized.
+    """
+
+    from scipy.sparse.linalg import splu
+
+    try:
+        # `splu` requires the compressed sparse column (csc) format
+        lu = splu(K11.tocsc())
+    except RuntimeError:
+        # Exactly singular matrix: let the per-combination `spsolve` path handle and report it
+        return None
+
+    # The `solve` method of the factorization solves K11 @ x = rhs for a given rhs
+    return lu.solve
+
+
+def _solve_unknown_disp(K11, rhs, sparse: bool = True, check_stability: bool = True, tol: float = 1e-6,
+                        solver=None):
     """Solves ``K11 @ x = rhs`` for the unknown displacements, raising on a singular stiffness matrix.
 
     The nodal stability check (:func:`_check_stability`) only catches degrees of freedom with a zero
@@ -200,6 +232,10 @@ def _solve_unknown_disp(K11, rhs, sparse: bool = True, check_stability: bool = T
     :param sparse: Whether ``K11`` is a SciPy sparse matrix. Defaults to ``True``.
     :param check_stability: Whether to check for global instability after solving. Defaults to ``True``.
     :param tol: Relative residual above which the matrix is treated as singular. Defaults to ``1e-6``.
+    :param solver: Optional function returned by :func:`_factorize_K11` for this ``K11``. When given
+                   (sparse case only), it is used instead of ``spsolve``, so the matrix is not
+                   factorized again. The stability check below is applied the same way. Defaults to
+                   ``None``.
     :raises Exception: If the stiffness matrix is singular (the structure is unstable).
     :return: The solved displacement vector, shape ``(n, 1)``.
     """
@@ -209,12 +245,18 @@ def _solve_unknown_disp(K11, rhs, sparse: bool = True, check_stability: bool = T
         from scipy.sparse.linalg import MatrixRankWarning, spsolve
 
         K = K11.tocsr()
-        # A singular matrix makes `spsolve` emit a `MatrixRankWarning`; we detect that case below via
-        # the residual/finiteness check and raise a descriptive error, so suppress the bare warning.
-        with warnings.catch_warnings(record=True) as caught_warnings:
-            warnings.simplefilter('always', MatrixRankWarning)
-            x = spsolve(K, rhs)
-        singular_warning = any(warning.category is MatrixRankWarning for warning in caught_warnings)
+        if solver is not None:
+            # Reuse the factorization computed once by `_factorize_K11` (forward and back
+            # substitution only). A nearly singular matrix is still caught by the residual check below.
+            x = solver(asarray(rhs, dtype=float))
+        else:
+            # A singular matrix makes `spsolve` emit a `MatrixRankWarning`; we detect that case below
+            # via the residual/finiteness check and raise a descriptive error, so suppress the bare
+            # warning.
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                warnings.simplefilter('always', MatrixRankWarning)
+                x = spsolve(K, rhs)
+            singular_warning = any(warning.category is MatrixRankWarning for warning in caught_warnings)
     else:
         K = asarray(K11, dtype=float)
         try:
