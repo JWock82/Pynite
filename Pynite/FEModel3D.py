@@ -2921,48 +2921,54 @@ class FEModel3D:
         Renames all the nodes and elements in the model.
         """
 
+        # Rebuild from snapshots so new names cannot overwrite existing objects.
         # Rename each node in the model
         temp = self.nodes.copy()
+        self.nodes.clear()
         id = 1
         for old_key in temp.keys():
             new_key = 'N' + str(id)
-            self.nodes[new_key] = self.nodes.pop(old_key)
+            self.nodes[new_key] = temp[old_key]
             self.nodes[new_key].name = new_key
             id += 1
 
         # Rename each spring in the model
         temp = self.springs.copy()
+        self.springs.clear()
         id = 1
         for old_key in temp.keys():
             new_key = 'S' + str(id)
-            self.springs[new_key] = self.springs.pop(old_key)
+            self.springs[new_key] = temp[old_key]
             self.springs[new_key].name = new_key
             id += 1
 
         # Rename each member in the model
         temp = self.members.copy()
+        self.members.clear()
         id = 1
         for old_key in temp.keys():
             new_key = 'M' + str(id)
-            self.members[new_key] = self.members.pop(old_key)
+            self.members[new_key] = temp[old_key]
             self.members[new_key].name = new_key
             id += 1
 
         # Rename each plate in the model
         temp = self.plates.copy()
+        self.plates.clear()
         id = 1
         for old_key in temp.keys():
             new_key = 'P' + str(id)
-            self.plates[new_key] = self.plates.pop(old_key)
+            self.plates[new_key] = temp[old_key]
             self.plates[new_key].name = new_key
             id += 1
 
         # Rename each quad in the model
         temp = self.quads.copy()
+        self.quads.clear()
         id = 1
         for old_key in temp.keys():
             new_key = 'Q' + str(id)
-            self.quads[new_key] = self.quads.pop(old_key)
+            self.quads[new_key] = temp[old_key]
             self.quads[new_key].name = new_key
             id += 1
 
