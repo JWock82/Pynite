@@ -40,6 +40,37 @@ class TestMaterial(unittest.TestCase):
 class TestLoadCombo(unittest.TestCase):
     """Tests for LoadCombo class."""
 
+    def test_default_factors_are_independent(self):
+        first, second = LoadCombo('First'), LoadCombo('Second')
+        first.AddLoadCase('D', 1.2)
+        second.AddLoadCase('L', 1.6)
+        self.assertEqual(first.factors, {'D': 1.2})
+        self.assertEqual(second.factors, {'L': 1.6})
+        self.assertEqual(LoadCombo('Later').factors, {})
+        first.DeleteLoadCase('D')
+        self.assertEqual(second.factors, {'L': 1.6})
+
+    def test_default_factors_keep_analysis_combinations_separate(self):
+        model = FEModel3D()
+        model.add_node('Fixed', 0, 0, 0)
+        model.add_node('Tip', 1, 0, 0)
+        model.add_material('Material', 1000, 400, 0.25, 1)
+        model.add_section('Section', 1, 1, 1, 1)
+        model.add_member('Beam', 'Fixed', 'Tip', 'Material', 'Section')
+        model.def_support('Fixed', True, True, True, True, True, True)
+        model.add_node_load('Tip', 'FY', -10, case='D')
+        model.add_node_load('Tip', 'FY', -5, case='L')
+        first, second = LoadCombo('D only'), LoadCombo('L only')
+        first.AddLoadCase('D', 1.2)
+        second.AddLoadCase('L', 1.6)
+        model.load_combos[first.name] = first
+        model.load_combos[second.name] = second
+
+        # Reactions must balance each combination's own factored load.
+        model.analyze_linear()
+        self.assertAlmostEqual(model.nodes['Fixed'].RxnFY['D only'], 12)
+        self.assertAlmostEqual(model.nodes['Fixed'].RxnFY['L only'], 8)
+
     def test_loadcombo_creation_empty(self):
         """Test creating an empty load combination."""
         combo = LoadCombo('D', factors={})

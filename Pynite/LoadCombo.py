@@ -4,20 +4,20 @@ class LoadCombo:
     """A class that stores all the information necessary to define a load combination.
     """
 
-    def __init__(self, name: str, combo_tags: list[str] | None = None, factors: dict[str, float] = {}) -> None:
+    def __init__(self, name: str, combo_tags: list[str] | None = None, factors: dict[str, float] | None = None) -> None:
         """Initializes a new load combination.
 
         :param name: A unique name for the load combination.
         :type name: str
         :param combo_tags: A list of tags for the load combination. This is a list of any strings you would like to use to categorize your load combinations. It is useful for separating load combinations into strength, service, or overstrength combinations as often required by building codes. This parameter has no effect on the analysis, but it can be used to restrict analysis to only the load combinations with the tags you specify.
         :type combo_tags: list, optional
-        :param factors: A dictionary of load case names (`keys`) followed by their load factors (`items`). For example, the load combination 1.2D+1.6L would be represented as follows: `{'D': 1.2, 'L': 1.6}`. Defaults to {}.
+        :param factors: A dictionary of load case names (`keys`) followed by their load factors (`items`). For example, the load combination 1.2D+1.6L would be represented as follows: `{'D': 1.2, 'L': 1.6}`. Defaults to an independent empty dictionary.
         :type factors: dict, optional
         """
         
         self.name: str = name             # A unique user-defined name for the load combination
         self.combo_tags: list[str] | None = combo_tags   # Used to categorize the load combination (e.g. strength or serviceability)
-        self.factors: dict[str, float] = factors       # A dictionary containing each load case name and associated load factor
+        self.factors: dict[str, float] = {} if factors is None else factors       # A dictionary containing each load case name and associated load factor
     
     def __repr__(self) -> str:
         return f"LoadCombo(name={self.name!r}, factors={self.factors!r})"
