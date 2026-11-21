@@ -1,5 +1,6 @@
 from Pynite import FEModel3D
 import numpy as np
+import pytest
 
 
 def test_spring_elements():
@@ -80,6 +81,29 @@ def test_nodal_springs():
     assert model.nodes['N1'].RX['Combo 1'] == -1, 'Faied nodal spring displacement test in RX direction.'
     assert model.nodes['N1'].RY['Combo 1'] == -1, 'Faied nodal spring displacement test in RY direction.'
     assert model.nodes['N1'].RZ['Combo 1'] == -1, 'Faied nodal spring displacement test in RZ direction.'
+
+@pytest.mark.parametrize('analyze_first', [False, True])
+def test_delete_node_removes_connected_springs(analyze_first):
+    """Remove springs at either end of a deleted node and preserve an unrelated spring."""
+    model = FEModel3D()
+    for name, x in [('A', 0), ('C', 2), ('B', 1)]:
+        model.add_node(name, x, 0, 0)
+        model.def_support(name, name == 'A', True, True, True, True, True)
+    model.add_spring('AB', 'A', 'B', 100)
+    model.add_spring('BC', 'B', 'C', 100)
+    model.add_spring('AC', 'A', 'C', 100)
+    model.add_node_load('C', 'FX', 10)
+    if analyze_first:
+        model.analyze_linear()
+        assert model.nodes['C'].DX['Combo 1'] == pytest.approx(10 / 150)
+
+    # B is the j-node of AB and the i-node of BC; AC must remain usable.
+    model.delete_node('B')
+    assert set(model.springs) == {'AC'}
+    model.analyze_linear()
+    assert model.nodes['C'].DX['Combo 1'] == pytest.approx(10 / 100)
+    assert model.nodes['A'].RxnFX['Combo 1'] == pytest.approx(-10)
+
 
 if __name__ == '__main__':
     test_spring_elements()
