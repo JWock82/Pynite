@@ -930,7 +930,7 @@ class FEModel3D:
         # Flag the model as unsolved
         self.solution = None
 
-    def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0], x_control=[], y_control=[]):
+    def add_mat_foundation(self, name, mesh_size, length_X, length_Z, thickness, material_name, ks, origin=[0, 0, 0], x_control=None, y_control=None):
 
         # Check if a name has been provided
         if name:

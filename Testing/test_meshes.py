@@ -1,5 +1,6 @@
 from Pynite import FEModel3D
 from math import isclose
+import pytest
 
 
 def test_rect_mesh_in_plane_stiffness():
@@ -207,6 +208,36 @@ def test_PCA_7_rect():
     assert abs(1 - My_min/My_min_PCA) < 0.08, 'Failed plate cylinder flexure test.'
     assert My_max > 0, 'Failed plate cylinder sign convention test'
     assert abs(1 - Sx/20000) < 0.05, 'Failed plate cylinder hoop tension test.'
+
+
+@pytest.mark.parametrize('same_model', [False, True])
+@pytest.mark.parametrize('explicit_controls', [False, True])
+def test_mat_foundation_control_independence(same_model, explicit_controls):
+    """Default controls stay local to each mat; explicit controls are still honored."""
+    first_model = FEModel3D()
+    first_model.add_material('Material', 200000, 80000, 0.25, 1)
+    first_model.add_mat_foundation('First', 2, 4, 6, 0.2, 'Material', 100)
+    first = first_model.mats['First']
+    first.add_mat_pt_load([1.5, 2.5], 'FY', -10)
+    first.generate()
+
+    second_model = first_model if same_model else FEModel3D()
+    if not same_model:
+        second_model.add_material('Material', 200000, 80000, 0.25, 1)
+    controls = {'x_control': [0.5], 'y_control': [1.5]} if explicit_controls else {}
+    second_model.add_mat_foundation('Second', 1, 2, 3, 0.2, 'Material', 100,
+                                    origin=[10, 0, 10], **controls)
+    second = second_model.mats['Second']
+    second.generate()
+
+    # The second mat's grid must depend only on its own controls and mesh size.
+    x_coords = sorted({n.X - 10 for n in second.nodes.values()})
+    z_coords = sorted({n.Z - 10 for n in second.nodes.values()})
+    expected_x = [0, 0.5, 1.25, 2] if explicit_controls else [0, 1, 2]
+    expected_z = [0, 0.75, 1.5, 2.25, 3] if explicit_controls else [0, 1, 2, 3]
+    assert x_coords == pytest.approx(expected_x)
+    assert z_coords == pytest.approx(expected_z)
+    assert len(second.elements) == (len(expected_x) - 1) * (len(expected_z) - 1)
 
 
 if __name__ == '__main__':
