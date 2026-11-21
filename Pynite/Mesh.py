@@ -229,7 +229,7 @@ class Mesh:
                 if isinstance(combo_tags, str):
                     include = (load_combo.name == combo_tags)
                 elif isinstance(combo_tags, list):
-                    include = any(tag in load_combo.tags for tag in combo_tags)
+                    include = any(tag in (load_combo.combo_tags or []) for tag in combo_tags)
                 else:
                     include = False
 
@@ -319,7 +319,7 @@ class Mesh:
                 if isinstance(combo_tags, str):
                     include = (load_combo.name == combo_tags)
                 elif isinstance(combo_tags, list):
-                    include = any(tag in load_combo.tags for tag in combo_tags)
+                    include = any(tag in (load_combo.combo_tags or []) for tag in combo_tags)
                 else:
                     include = False
 
@@ -414,7 +414,7 @@ class Mesh:
                 if isinstance(combo_tags, str):
                     include = (load_combo.name == combo_tags)
                 elif isinstance(combo_tags, list):
-                    include = any(tag in load_combo.tags for tag in combo_tags)
+                    include = any(tag in (load_combo.combo_tags or []) for tag in combo_tags)
                 else:
                     include = False
 
@@ -505,7 +505,7 @@ class Mesh:
                 if isinstance(combo_tags, str):
                     include = (load_combo.name == combo_tags)
                 elif isinstance(combo_tags, list):
-                    include = any(tag in load_combo.tags for tag in combo_tags)
+                    include = any(tag in (load_combo.combo_tags or []) for tag in combo_tags)
                 else:
                     include = False
 
@@ -593,7 +593,7 @@ class Mesh:
                 if isinstance(combo_tags, str):
                     include = (load_combo.name == combo_tags)
                 elif isinstance(combo_tags, list):
-                    include = any(tag in load_combo.tags for tag in combo_tags)
+                    include = any(tag in (load_combo.combo_tags or []) for tag in combo_tags)
                 else:
                     include = False
 
@@ -685,7 +685,7 @@ class Mesh:
                 if isinstance(combo_tags, str):
                     include = (load_combo.name == combo_tags)
                 elif isinstance(combo_tags, list):
-                    include = any(tag in load_combo.tags for tag in combo_tags)
+                    include = any(tag in (load_combo.combo_tags or []) for tag in combo_tags)
                 else:
                     include = False
 

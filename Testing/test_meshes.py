@@ -1,5 +1,42 @@
 from Pynite import FEModel3D
 from math import isclose
+import pytest
+
+
+@pytest.mark.parametrize('element_type', ['Quad', 'Rect'])
+@pytest.mark.parametrize('method, direction, extreme', [
+    ('max_shear', 'Qy', max), ('min_shear', 'Qy', min),
+    ('max_moment', 'My', max), ('min_moment', 'My', min),
+    ('max_membrane', 'Sxy', max), ('min_membrane', 'Sxy', min),
+])
+def test_mesh_result_combo_tags(element_type, method, direction, extreme):
+    """Tag envelopes match named-combination results for both supported element types."""
+    model = FEModel3D()
+    model.add_material('Material', 200000, 80000, 0.25, 1)
+    model.add_rectangle_mesh('Mesh', 1, 2, 2, 0.2, 'Material', element_type=element_type)
+    mesh = model.meshes['Mesh']
+    mesh.generate()
+    for node in model.nodes.values():
+        if isclose(node.Y, 0):
+            model.def_support(node.name, True, True, True, True, True, True)
+        elif isclose(node.Y, 2):
+            model.add_node_load(node.name, 'FX', 1)
+            model.add_node_load(node.name, 'FZ', 0.1)
+    # None/empty tags and unrelated combinations must be ignored when selecting ULS.
+    for name, factor, tags in [('Untagged', 20, None), ('Empty', 10, []),
+                               ('Positive', 1, ['ULS']), ('Negative', -2, ['ULS']),
+                               ('Other', 5, ['SLS'])]:
+        model.add_load_combo(name, {'Case 1': factor}, tags)
+    model.analyze_linear()
+
+    query = getattr(mesh, method)
+    positive, negative = query(direction, 'Positive'), query(direction, 'Negative')
+    assert max(abs(positive), abs(negative)) > 1e-6
+    expected = extreme(positive, negative)
+    assert query(direction, ['ULS']) == pytest.approx(expected)
+    assert query(direction, ['Missing', 'ULS']) == pytest.approx(expected)
+    assert query(direction, ['Missing']) == 0.0
+    assert query(direction, []) == 0.0
 
 
 def test_rect_mesh_in_plane_stiffness():
