@@ -100,6 +100,51 @@ def test_support_and_spring_support_merge():
     assert f.spring_DY[0] == 5000.0
 
 
+def test_merge_preserves_nodal_loads():
+    model = FEModel3D()
+    for name in ('A', 'B', 'C'):
+        model.add_node(name, 0, 0, 0)
+    model.add_node('Far', 1, 0, 0)
+    model.add_node_load('A', 'FY', -10, 'D')
+    model.add_node_load('B', 'FY', -10, 'D')
+    model.add_node_load('C', 'MZ', 5, 'L')
+    model.add_node_load('Far', 'FX', 40, 'Other')
+
+    assert model.merge_duplicate_nodes() == ['B', 'C']
+    expected = [('FY', -10, 'D'), ('FY', -10, 'D'), ('MZ', 5, 'L')]
+    assert model.nodes['A'].NodeLoads == expected
+    assert model.nodes['Far'].NodeLoads == [('FX', 40, 'Other')]
+    # A repeated merge must not apply any of the loads again.
+    assert model.merge_duplicate_nodes() == []
+    assert model.nodes['A'].NodeLoads == expected
+
+
+def test_merged_node_loads_balance_support_reactions():
+    model = FEModel3D()
+    model.add_node('Fixed', 0, 0, 0)
+    model.add_node('A', 1, 0, 0)
+    model.add_node('B', 1, 0, 0)
+    model.add_material('Material', 1000, 400, 0.25, 1)
+    model.add_section('Section', 1, 1, 1, 1)
+    model.add_member('Beam', 'Fixed', 'B', 'Material', 'Section')
+    model.def_support('Fixed', True, True, True, True, True, True)
+    model.add_node_load('A', 'FY', -10, 'D')
+    model.add_node_load('B', 'FY', -20, 'D')
+    model.add_node_load('B', 'MZ', 3, 'L')
+    model.add_load_combo('D', {'D': 1})
+    model.add_load_combo('Factored', {'D': 1.2, 'L': 1.6})
+
+    model.merge_duplicate_nodes()
+    assert model.members['Beam'].j_node is model.nodes['A']
+    model.analyze_linear()
+    # Reactions balance the forces and moments from both original nodes.
+    fixed = model.nodes['Fixed']
+    assert fixed.RxnFY['D'] == pytest.approx(30)
+    assert fixed.RxnMZ['D'] == pytest.approx(30)
+    assert fixed.RxnFY['Factored'] == pytest.approx(36)
+    assert fixed.RxnMZ['Factored'] == pytest.approx(31.2)
+
+
 if __name__ == "__main__":
     import sys
     import pytest
