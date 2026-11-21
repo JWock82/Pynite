@@ -99,7 +99,7 @@ class VTKWriter:
             reaction_constraints.SetNumberOfComponents(6)
 
             displacements = vtk.vtkDoubleArray()
-            displacements.SetName("Displacements D")
+            displacements.SetName(f"Displacements D - {combo}")
             displacements.SetNumberOfComponents(3)
 
             forces = vtk.vtkDoubleArray()
@@ -132,10 +132,12 @@ class VTKWriter:
                 fl: dict[str,float] = {"X":0,"Y":0,"Z":0}
                 ml: dict[str,float] = {"X":0,"Y":0,"Z":0}
                 for (f_or_m, direction), magnitude, case in node.NodeLoads:
+                    # Apply combination factors; omitted load cases contribute zero.
+                    factor = self.model.load_combos[combo].factors.get(case, 0)
                     if f_or_m == "F":
-                        fl[direction] += magnitude
+                        fl[direction] += magnitude * factor
                     elif f_or_m == "M":
-                        ml[direction] += magnitude
+                        ml[direction] += magnitude * factor
 
                 force_loads.InsertTuple3(node_id, fl["X"], fl["Y"], fl["Z"])
                 moment_loads.InsertTuple3(node_id, ml["X"], ml["Y"], ml["Z"])
