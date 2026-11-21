@@ -5,6 +5,7 @@ Copyright (c) 2020 D. Craig Brinck, SE; tamalone1
 """
 
 import unittest
+import pytest
 from Pynite import FEModel3D
 import sys
 from io import StringIO
@@ -157,3 +158,43 @@ class TestLoads(unittest.TestCase):
         model.mats['MAT1'].add_mat_pt_load([5, 5], 'FY', -25, case='MAT_Point')
 
         self.assertIn('MAT_Point', model.load_cases)
+
+
+@pytest.mark.parametrize('generated', [False, True])
+@pytest.mark.parametrize('helper_type', ['wall', 'mat'])
+def test_delete_loads_clears_helper_loads(helper_type, generated):
+    model = FEModel3D()
+    model.add_material('Concrete', 3605, 1440, 0.17, 0.145)
+    if helper_type == 'wall':
+        model.add_shear_wall('Wall', 1, 2, 2, 0.25, 'Concrete')
+        helper = model.shear_walls['Wall']
+        helper.add_story('Roof', 2)
+        helper.add_support()
+        helper.add_shear('Roof', 10, case='Old')
+        helper.add_axial('Roof', 20, case='Old')
+    else:
+        model.add_mat_foundation('Mat', 1, 2, 2, 0.25, 'Concrete', 100,
+                                 x_control=[], y_control=[])
+        helper = model.mats['Mat']
+        helper.add_mat_pt_load([1, 1], 'FY', -20, case='Old')
+    if generated:
+        helper.generate()
+
+    # Clear stored loads as well as any loads already applied to generated nodes.
+    model.delete_loads()
+    assert model.load_cases == []
+    helper.generate()
+    assert all(not node.NodeLoads for node in model.nodes.values())
+
+    # Geometry and story definitions must remain usable for new loads.
+    if helper_type == 'wall':
+        helper.add_shear('Roof', 7, case='New')
+        helper.add_axial('Roof', 11, case='New')
+    else:
+        helper.add_mat_pt_load([1, 1], 'FY', -11, case='New')
+    helper.generate()
+    assert model.load_cases == ['New']
+    for direction, expected in [('FX', 7 if helper_type == 'wall' else 0), ('FY', -11)]:
+        total = sum(load[1] for node in model.nodes.values()
+                    for load in node.NodeLoads if load[0] == direction)
+        assert total == pytest.approx(expected)

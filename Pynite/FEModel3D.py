@@ -1513,6 +1513,13 @@ class FEModel3D:
         """Deletes all loads from the model along with any results based on the loads.
         """
 
+        # Delete stored helper loads so regeneration cannot restore them.
+        for shear_wall in self.shear_walls.values():
+            shear_wall._shears = []
+            shear_wall._axials = []
+        for mat in self.mats.values():
+            mat.pt_loads = []
+
         # Delete the member loads and the calculated internal forces
         for member in self.members.values():
             member.DistLoads = []
