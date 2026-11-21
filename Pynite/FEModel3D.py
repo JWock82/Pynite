@@ -1010,6 +1010,9 @@ class FEModel3D:
                 # Flag `node_2` as no longer used
                 node_lookup[node_2_name] = None
 
+                # Preserve all applied loads on the surviving node.
+                self.nodes[node_1_name].NodeLoads.extend(self.nodes[node_2_name].NodeLoads)
+
                 # Merge any boundary conditions
                 support_cond = ('support_DX', 'support_DY', 'support_DZ', 'support_RX', 'support_RY', 'support_RZ')
                 for dof in support_cond:

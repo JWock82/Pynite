@@ -78,6 +78,7 @@ Here's a list of projects that use Pynite:
 * Replaced inneficient member `T` matrix inversions with transposes.
 * Fixed local member load transformations when calculating modal mass.
 * Corrected the centroid calculation for linearly varying distributed loads used to locate lumped mass.
+* Fixed nodal loads being lost when merging duplicate nodes.
 
 3.2.0
 * Added shear wall pier top results and coupling beam right hand side results to the pier/coupling beam force results output.
