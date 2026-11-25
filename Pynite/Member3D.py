@@ -3125,6 +3125,10 @@ class Member3D:
         if compute_result is None:
             raise ValueError(f"Unsupported result_name: {result_name}")
 
+        # A submember may contain no sample points when the physical member is sampled sparsely.
+        if x_array.size == 0:
+            return zeros((2, 0))
+
         idx = 0  # Tracks current position in x_array
         n = x_array.size
 
