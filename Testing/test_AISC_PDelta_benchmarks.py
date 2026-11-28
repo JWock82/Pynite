@@ -90,15 +90,18 @@ def test_AISC_benchmark_case1():
     column.add_material('Steel', E, G, nu, rho)
 
     # Define section properties
-    Iy = 51.4/12**4  # ft^4
+    Iy = 484/12**4   # ft^4(Really 51.4/12**4 on the weak axis, but using 484/12**4 to match the benchmark)
     Iz = 484/12**4   # ft^4
     A = 14.1/12**2   # ft^2
     J = 1.45/12**4   # ft^4
     column.add_section('ColumnSection', A, Iy, Iz, J)
 
     column.add_member('M1', 'N1', 'N2', 'Steel', 'ColumnSection')
-    
+
+    # Case P1 = 0 axial force w/strong axis transverse loading
     column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P1')
+
+    # Cases P2 to P4: increasing axial force w/ strong axis transverse loading
     column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P2')
     column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P3')
     column.add_member_dist_load('M1', 'Fy', -0.200, -0.200, case='P4')
@@ -107,10 +110,27 @@ def test_AISC_benchmark_case1():
     column.add_node_load('N2', 'FY', -300, 'P3')
     column.add_node_load('N2', 'FY', -450, 'P4')
 
-    column.add_load_combo('Combo 1', {'P1':1})
-    column.add_load_combo('Combo 2', {'P2':1})
-    column.add_load_combo('Combo 3', {'P3':1})
-    column.add_load_combo('Combo 4', {'P4':1})
+    # Cases P5 to P8: increasing axial force w/ weak axis transverse loading
+    column.add_member_dist_load('M1', 'Fz', -0.200, -0.200, case='P5')
+    column.add_member_dist_load('M1', 'Fz', -0.200, -0.200, case='P6')
+    column.add_member_dist_load('M1', 'Fz', -0.200, -0.200, case='P7')
+    column.add_member_dist_load('M1', 'Fz', -0.200, -0.200, case='P8')
+
+    column.add_node_load('N2', 'FY', -150, 'P6')
+    column.add_node_load('N2', 'FY', -300, 'P7')
+    column.add_node_load('N2', 'FY', -450, 'P8')
+
+    # Strong axis load combinations
+    column.add_load_combo('Combo 1', {'P1': 1})
+    column.add_load_combo('Combo 2', {'P2': 1})
+    column.add_load_combo('Combo 3', {'P3': 1})
+    column.add_load_combo('Combo 4', {'P4': 1})
+
+    # Weak axis load combinations
+    column.add_load_combo('Combo 5', {'P5': 1})
+    column.add_load_combo('Combo 6', {'P6': 1})
+    column.add_load_combo('Combo 7', {'P7': 1})
+    column.add_load_combo('Combo 8', {'P8': 1})
 
     # from Pynite.Visualization import Renderer
     # renderer = Renderer(column)
@@ -120,20 +140,34 @@ def test_AISC_benchmark_case1():
 
     column.analyze_PDelta()
 
-    Mmid_calculated = []
-    dmid_calculated = []
+    # Initialize lists to store calculated moments and deflections at midspan for each load combination
+    Mz_mid_calculated = []
+    My_mid_calculated = []
+    dy_mid_calculated = []
+    dz_mid_calculated = []
+
     for combo in column.load_combos.values():
-        Mmid_calculated.append(-column.members['M1'].moment('Mz', 14, combo.name)*12)
-        dmid_calculated.append(-column.members['M1'].deflection('dy', 14, combo.name)*12)
+
+        if combo.name in ['Combo 1', 'Combo 2', 'Combo 3', 'Combo 4']:
+            Mz_mid_calculated.append(column.members['M1'].moment('Mz', 14, combo.name)*12)
+            dy_mid_calculated.append(column.members['M1'].deflection('dy', 14, combo.name)*12)
+
+        if combo.name in ['Combo 5', 'Combo 6', 'Combo 7', 'Combo 8']:
+            My_mid_calculated.append(column.members['M1'].moment('My', 14, combo.name)*12)
+            dz_mid_calculated.append(column.members['M1'].deflection('dz', 14, combo.name)*12)
 
     # Expected results per AISC
-    Mmid_expected = [235, 269, 313, 375]
-    dmid_expected = [0.197, 0.224, 0.261, 0.311]
+    M_mid_expected = [-235, -269, -313, -375]
+    d_mid_expected = [-0.197, -0.224, -0.261, -0.311]
 
-    # Check that results are within 1% of expected results
-    for i, val in enumerate(Mmid_calculated):
-        assert math.isclose(Mmid_calculated[i]/Mmid_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {Mmid_calculated[i]} is not within 3% of expected moment {Mmid_expected[i]}"
-        assert math.isclose(dmid_calculated[i]/dmid_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dmid_calculated[i]} is not within 5% of expected deflection {dmid_expected[i]}"
+    # Check that results are within 3% for moments and 5% for deflections of expected results
+    for i, val in enumerate(Mz_mid_calculated):
+        assert math.isclose(Mz_mid_calculated[i]/M_mid_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {Mz_mid_calculated[i]} is not within 3% of expected moment {M_mid_expected[i]}"
+        assert math.isclose(dy_mid_calculated[i]/d_mid_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dy_mid_calculated[i]} is not within 5% of expected deflection {d_mid_expected[i]}"
+
+    for i, val in enumerate(My_mid_calculated):
+        assert math.isclose(My_mid_calculated[i]/M_mid_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {My_mid_calculated[i]} is not within 3% of expected moment {M_mid_expected[i]}"
+        assert math.isclose(dz_mid_calculated[i]/d_mid_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dz_mid_calculated[i]} is not within 5% of expected deflection {d_mid_expected[i]}"
 
 def test_AISC_benchmark_case2():
 
@@ -156,14 +190,15 @@ def test_AISC_benchmark_case2():
     column.add_material('Steel', E, G, nu, rho)
 
     # Define section properties
-    Iy = 51.4/12**4  # ft^4
+    Iy = 484/12**4   # ft^4(Really 51.4/12**4 on the weak axis, but using 484/12**4 to match the benchmark)
     Iz = 484/12**4   # ft^4
     A = 14.1/12**2   # ft^2
     J = 1.45/12**4   # ft^4
     column.add_section('ColumnSection', A, Iy, Iz, J)
 
     column.add_member('M1', 'N1', 'N2', 'Steel', 'ColumnSection')
-    
+
+    # Strong axis loads
     column.add_node_load('N2', 'FX', 1, case='P1')
     column.add_node_load('N2', 'FX', 1, case='P2')
     column.add_node_load('N2', 'FX', 1, case='P3')
@@ -173,10 +208,27 @@ def test_AISC_benchmark_case2():
     column.add_node_load('N2', 'FY', -150, 'P3')
     column.add_node_load('N2', 'FY', -200, 'P4')
 
+    # Weak axis loads
+    column.add_node_load('N2', 'FZ', -1, case='P5')
+    column.add_node_load('N2', 'FZ', -1, case='P6')
+    column.add_node_load('N2', 'FZ', -1, case='P7')
+    column.add_node_load('N2', 'FZ', -1, case='P8')
+
+    column.add_node_load('N2', 'FY', -100, 'P6')
+    column.add_node_load('N2', 'FY', -150, 'P7')
+    column.add_node_load('N2', 'FY', -200, 'P8')
+
+    # Strong axis load combinations
     column.add_load_combo('Combo 1', {'P1':1})
     column.add_load_combo('Combo 2', {'P2':1})
     column.add_load_combo('Combo 3', {'P3':1})
     column.add_load_combo('Combo 4', {'P4':1})
+
+    # Weak axis load combinations
+    column.add_load_combo('Combo 5', {'P5':1})
+    column.add_load_combo('Combo 6', {'P6':1})
+    column.add_load_combo('Combo 7', {'P7':1})
+    column.add_load_combo('Combo 8', {'P8':1})
 
     column.analyze_PDelta()
 
@@ -188,97 +240,42 @@ def test_AISC_benchmark_case2():
     # renderer.member_diagrams = 'Mz'
     # renderer.render_model()
 
-    # column.members['M1'].plot_moment('Mz', 'Combo 4')
+    column.members['M1'].plot_moment('Mz', 'Combo 4')
+    column.members['M1'].plot_moment('My', 'Combo 8')
+    
+    column.members['M1'].plot_deflection('dy', 'Combo 4')
+    column.members['M1'].plot_deflection('dz', 'Combo 8')
 
-    Mbase_calculated = []
-    dtip_calculated = []
+    # Initialize lists to store calculated moments and deflections at the base and tip for each load combination
+    Mz_base_calculated = []
+    dy_tip_calculated = []
+    My_base_calculated = []
+    dz_tip_calculated = []
+
     for combo in column.load_combos.values():
-        Mbase_calculated.append(column.members['M1'].moment('Mz', 0, combo.name)*12)
-        dtip_calculated.append(column.members['M1'].deflection('dy', 28, combo.name)*12)
+
+        if combo.name in ['Combo 1', 'Combo 2', 'Combo 3', 'Combo 4']:
+            Mz_base_calculated.append(column.members['M1'].moment('Mz', 0, combo.name)*12)
+            dy_tip_calculated.append(column.members['M1'].deflection('dy', 28, combo.name)*12)
+
+        if combo.name in ['Combo 5', 'Combo 6', 'Combo 7', 'Combo 8']:
+            My_base_calculated.append(column.members['M1'].moment('My', 0, combo.name)*12)
+            dz_tip_calculated.append(column.members['M1'].deflection('dz', 28, combo.name)*12)
 
     # Expected results per AISC
-    Mbase_expected = [336, 469, 598, 848]
-    dtip_expected = [-0.901, -1.33, -1.75, -2.56]
+    M_base_expected = [336, 469, 598, 848]
+    d_tip_expected = [-0.901, -1.33, -1.75, -2.56]
 
-    # Check that results are within 1% of expected results
-    for i, val in enumerate(Mbase_calculated):
-        assert math.isclose(Mbase_calculated[i]/Mbase_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {Mbase_calculated[i]} is not within 3% of expected moment {Mbase_expected[i]}"
-        assert math.isclose(dtip_calculated[i]/dtip_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dtip_calculated[i]} is not within 5% of expected deflection {dtip_expected[i]}"
-
-def test_AISC_benchmark_case2_weak_axis():
-
-    column = FEModel3D()
-
-    column.add_node('N1', 0, 0, 0)
-    column.add_node('N2', 0, 28, 0)
-    
-    # Add an internal node to capture P-little-delta effects
-    column.add_node('N4', 0, 28*1/3, 0)
-    column.add_node('N5', 0, 28*2/3, 0)
-
-    column.def_support('N1', True, True, True, True, True, True)
-
-    # Define a material
-    E = 29000*12**2  # ksf
-    G = 11200*12**2  # ksf
-    nu = 0.3
-    rho = 0.490  # kcf
-    column.add_material('Steel', E, G, nu, rho)
-
-    # Define section properties (swapping Iy and Iz to test weak axis bending)
-    Iz = 51.4/12**4  # ft^4
-    Iy = 484/12**4   # ft^4
-    A = 14.1/12**2   # ft^2
-    J = 1.45/12**4   # ft^4
-    column.add_section('ColumnSection', A, Iy, Iz, J)
-
-    # Rotate the column 90 degrees so the weak axis is bending
-    column.add_member('M1', 'N1', 'N2', 'Steel', 'ColumnSection')
-    
-    column.add_node_load('N2', 'FZ', 1, case='P1')
-    column.add_node_load('N2', 'FZ', 1, case='P2')
-    column.add_node_load('N2', 'FZ', 1, case='P3')
-    column.add_node_load('N2', 'FZ', 1, case='P4')
-
-    column.add_node_load('N2', 'FY', -100, 'P2')
-    column.add_node_load('N2', 'FY', -150, 'P3')
-    column.add_node_load('N2', 'FY', -200, 'P4')
-
-    column.add_load_combo('Combo 1', {'P1':1})
-    column.add_load_combo('Combo 2', {'P2':1})
-    column.add_load_combo('Combo 3', {'P3':1})
-    column.add_load_combo('Combo 4', {'P4':1})
-
-    column.analyze_PDelta()
-
-    # from Pynite.Visualization import Renderer
-    # renderer = Renderer(column)
-    # renderer.annotation_size = 0.5
-    # renderer.combo_name = 'Combo 4'
-    # renderer.deformed_shape = True
-    # renderer.member_diagrams = 'My'
-    # renderer.render_model()
-
-    # column.members['M1'].plot_moment('My', 'Combo 4')
-
-    Mbase_calculated = []
-    dtip_calculated = []
-    for combo in column.load_combos.values():
-        Mbase_calculated.append(column.members['M1'].moment('My', 0, combo.name)*12)
-        dtip_calculated.append(column.members['M1'].deflection('dz', 28, combo.name)*12)
-
-    # Expected results per AISC
-    Mbase_expected = [-336, -469, -598, -848]
-    dtip_expected = [0.901, 1.33, 1.75, 2.56]
-
-    # Check that results are within 1% of expected results
-    for i, val in enumerate(Mbase_calculated):
-        assert math.isclose(Mbase_calculated[i]/Mbase_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {Mbase_calculated[i]} is not within 3% of expected moment {Mbase_expected[i]}"
-        assert math.isclose(dtip_calculated[i]/dtip_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dtip_calculated[i]} is not within 5% of expected deflection {dtip_expected[i]}"
+    # Check that results are within 3% for moments and 5% for deflections of expected results
+    for i, val in enumerate(Mz_base_calculated):
+        assert math.isclose(Mz_base_calculated[i]/M_base_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {Mz_base_calculated[i]} is not within 3% of expected moment {M_base_expected[i]}"
+        assert math.isclose(dy_tip_calculated[i]/d_tip_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dy_tip_calculated[i]} is not within 5% of expected deflection {d_tip_expected[i]}"
+    for i, val in enumerate(My_base_calculated):
+        assert math.isclose(My_base_calculated[i]/M_base_expected[i], 1.0, rel_tol=0.03), f"Calculated moment {My_base_calculated[i]} is not within 3% of expected moment {M_base_expected[i]}"
+        assert math.isclose(dz_tip_calculated[i]/d_tip_expected[i], 1.0, rel_tol=0.05), f"Calculated deflection {dz_tip_calculated[i]} is not within 5% of expected deflection {d_tip_expected[i]}"
 
 if __name__ == "__main__":
 
-    test_AISC_benchmark_old()
+    #test_AISC_benchmark_old()
     test_AISC_benchmark_case1()
     test_AISC_benchmark_case2()
-    test_AISC_benchmark_case2_weak_axis()
